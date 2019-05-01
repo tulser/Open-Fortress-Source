@@ -1773,7 +1773,6 @@ void CBaseObject::CreateObjectGibs( void )
 			pDroppedWeapon->ActivateWhenAtRest();
 
 			// Fill up the ammo pack.
-			pDroppedWeapon->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
 
 			// Calculate the initial impulse on the weapon.
 			Vector vecImpulse( random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( 0.75, 1.25 ) );

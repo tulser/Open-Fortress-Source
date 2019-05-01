@@ -26,6 +26,7 @@
 #include "tf_weapon_builder.h"
 #include "tf_obj.h"
 #include "tf_ammo_pack.h"
+#include "of_dropped_weapon.h"
 #include "datacache/imdlcache.h"
 #include "particle_parse.h"
 #include "props_shared.h"
@@ -106,6 +107,7 @@ ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCV
 ConVar ofd_resistance( "ofd_resistance", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
 ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
+ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
 
 extern ConVar ofd_forceclass;
 extern ConVar ofd_allowteams;
@@ -956,7 +958,7 @@ void CTFPlayer::Spawn()
 	m_bIsIdle = false;
 	m_flPowerPlayTime = 0.0;
 
-	if ( TFGameRules()->IsDMGamemode() )
+	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		UpdatePlayerColor();
 	}
@@ -1051,7 +1053,7 @@ void CTFPlayer::InitClass( void )
 	// Give default items for class.
 	GiveDefaultItems();
 
-	if ( TFGameRules()->IsDMGamemode() )
+	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		UpdatePlayerColor();
 	}	
@@ -1185,7 +1187,7 @@ bool CTFPlayer::RestockAmmo( float PowerupSize )
 				pWeapon->m_iMaxAmmo += pWeapon->GetMaxAmmo() * PowerupSize;
 				if ( pWeapon->m_iMaxAmmo > pWeapon->GetMaxAmmo() )
 					pWeapon->m_iMaxAmmo = pWeapon->GetMaxAmmo();
-					bSuccess = true;
+				bSuccess = true;
 			}
 			
 		}
@@ -1571,7 +1573,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 	}
 	else
 	{
-		if ( !stricmp(pTeamName, g_aTeamNames[TF_TEAM_MERCENARY] ) && (TFGameRules()->IsTeamplay() || !TFGameRules()->IsDMGamemode() ) )
+		if ( !stricmp(pTeamName, g_aTeamNames[TF_TEAM_MERCENARY] ) && (TFGameRules()->IsTeamplay() || !TFGameRules()->IsDMGamemode() ) && !of_allow_special_teams.GetBool() )
 			return;
 
 		for ( int i = TEAM_SPECTATOR; i < TF_TEAM_COUNT; ++i )
@@ -3335,9 +3337,10 @@ void CTFPlayer::AddDamagerToHistory( EHANDLE hDamager )
 	// sanity check: ignore damager if it is on our team.  (Catch-all for 
 	// damaging self in rocket jumps, etc.)
 	CTFPlayer *pDamager = ToTFPlayer( hDamager );
-	if ( !pDamager || ( pDamager->GetTeam() == GetTeam() && !TFGameRules()->IsDMGamemode()))
+	CTFPlayer *pPlayer = this;
+	if (!pDamager || (pDamager->GetTeam() == GetTeam() && pDamager->GetTeamNumber() != TF_TEAM_MERCENARY) || pDamager == pPlayer )
 		return;
-
+	
 	// If this damager is different from the most recent damager, shift the
 	// damagers down and drop the oldest damager.  (If this damager is already
 	// the most recent, we will just update the damage time but not remove
@@ -3477,6 +3480,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
+	DropWeapon();
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
@@ -3802,7 +3806,8 @@ void CTFPlayer::DropAmmoPack( void )
 		return;
 
 	// We need to find bones on the world model, so switch the weapon to it.
-	const char *pszWorldModel = pWeapon->GetWorldModel();
+	const char *pszWorldModel = "models/items/ammopack_medium.mdl";
+	PrecacheModel( pszWorldModel );
 	pWeapon->SetModel( pszWorldModel );
 
 
@@ -3829,6 +3834,121 @@ void CTFPlayer::DropAmmoPack( void )
 		pAmmoPack->GiveAmmo( iPrimary, TF_AMMO_PRIMARY );
 		pAmmoPack->GiveAmmo( iSecondary, TF_AMMO_SECONDARY );
 		pAmmoPack->GiveAmmo( iMetal, TF_AMMO_METAL );
+
+		Vector vecRight, vecUp;
+		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
+
+		// Calculate the initial impulse on the weapon.
+		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
+		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
+		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
+		VectorNormalize( vecImpulse );
+		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );
+		vecImpulse += GetAbsVelocity();
+
+		// Cap the impulse.
+		float flSpeed = vecImpulse.Length();
+		if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
+		{
+			VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
+		}
+
+		if ( pAmmoPack->VPhysicsGetObject() )
+		{
+			// We can probably remove this when the mass on the weapons is correct!
+			pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
+			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
+			pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+		}
+
+		pAmmoPack->SetInitialVelocity( vecImpulse );
+
+		if ( GetTeamNumber() == TF_TEAM_RED )
+			pAmmoPack->m_nSkin = 0;
+		else if ( GetTeamNumber() == TF_TEAM_BLUE)
+			pAmmoPack->m_nSkin = 1;
+		else
+			pAmmoPack->m_nSkin = 2;
+		
+		// Give the ammo pack some health, so that trains can destroy it.
+		pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+		pAmmoPack->m_takedamage = DAMAGE_YES;		
+		pAmmoPack->SetHealth( 900 );
+		
+		pAmmoPack->SetBodygroup( 1, 1 );
+	
+		// Clean up old ammo packs if they exist in the world
+		AmmoPackCleanUp();	
+	}	
+	pWeapon->SetModel( pWeapon->GetViewModel() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::DropWeapon( void )
+{
+	// We want the ammo packs to look like the player's weapon model they were carrying.
+	// except if they are melee or building weapons
+	CTFWeaponBase *pWeapon = NULL;
+	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
+
+	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop )
+	{
+		// Don't drop this one, find another one to drop
+
+		int iWeight = -1;
+
+		// find the highest weighted weapon
+		for (int i = 0;i < WeaponCount(); i++) 
+		{
+			CTFWeaponBase *pWpn = ( CTFWeaponBase *)GetWeapon(i);
+			if ( !pWpn )
+				continue;
+
+			if ( pWpn->GetTFWpnData().m_bDontDrop )
+				continue;
+
+			int iThisWeight = pWpn->GetTFWpnData().iWeight;
+
+			if ( iThisWeight > iWeight )
+			{
+				iWeight = iThisWeight;
+				pWeapon = pWpn;
+			}
+		}
+	}
+	else
+	{
+		pWeapon = pActiveWeapon;
+	}
+
+	// If we didn't find one, bail
+	if ( !pWeapon )
+		return;
+
+	// We need to find bones on the world model, so switch the weapon to it.
+	const char *pszWorldModel = pWeapon->GetWorldModel();
+	pWeapon->SetModel( pszWorldModel );
+
+	
+	// Find the position and angle of the weapons so the "ammo box" matches.
+	Vector vecPackOrigin;
+	QAngle vecPackAngles;
+	if( !CalculateAmmoPackPositionAndAngles( pWeapon, vecPackOrigin, vecPackAngles ) )
+		return;
+
+	int m_iWeaponID = pWeapon->GetWeaponID();
+
+	// Create the ammo pack.
+	CTFDroppedWeapon *pAmmoPack = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
+	Assert( pAmmoPack );
+	if ( pAmmoPack )
+	{
+		// Remove all of the players ammo.
+
+		// Fill up the ammo pack.
+		pAmmoPack->WeaponID = m_iWeaponID;
 
 		Vector vecRight, vecUp;
 		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
@@ -5855,6 +5975,8 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	criteriaSet.AppendCriteria( "killsthislife", UTIL_VarArgs( "%d", iTotalKills ) );
 	criteriaSet.AppendCriteria( "disguised", m_Shared.InCond( TF_COND_DISGUISED ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "invulnerable", m_Shared.InCondUber() ? "1" : "0" );
+	criteriaSet.AppendCriteria( "critboosted", m_Shared.InCond( TF_COND_CRITBOOSTED ) ? "1" : "0" );
+	criteriaSet.AppendCriteria( "shielded", m_Shared.InCondShield() ? "1" : "0" );
 	criteriaSet.AppendCriteria( "beinghealed", m_Shared.InCond( TF_COND_HEALTH_BUFF ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "waitingforplayers", (TFGameRules()->IsInWaitingForPlayers() || TFGameRules()->IsInPreMatch()) ? "1" : "0" );
 

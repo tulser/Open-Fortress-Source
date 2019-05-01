@@ -283,7 +283,7 @@ int CTFViewModel::GetSkin()
 
 	return nSkin;
 }
-
+/*
 //-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------
@@ -386,6 +386,6 @@ IMaterial *CViewModelInvisProxy::GetMaterial()
 }
 
 EXPOSE_INTERFACE( CViewModelInvisProxy, IMaterialProxy, "vm_invis" IMATERIAL_PROXY_INTERFACE_VERSION );
-
+*/
 
 #endif // CLIENT_DLL

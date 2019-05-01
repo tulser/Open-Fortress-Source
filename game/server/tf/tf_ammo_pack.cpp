@@ -13,7 +13,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-
+#define TF_AMMOPACK_PICKUP_SOUND	"AmmoPack.Touch"
 //----------------------------------------------
 
 // Network table.
@@ -126,6 +126,8 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 
 	if ( bSuccess )
 	{
+		CSingleUserRecipientFilter filter( pTFPlayer );
+		EmitSound( filter, entindex(), TF_AMMOPACK_PICKUP_SOUND );
 		UTIL_Remove( this );
 	}
 }

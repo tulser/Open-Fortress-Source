@@ -749,6 +749,8 @@ bool CSpyInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
 }
 
 ConVar tf_teammate_max_invis( "tf_teammate_max_invis", "0.95", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_vm_min_invis( "tf_vm_min_invis", "0.22", FCVAR_DEVELOPMENTONLY, "minimum invisibility value for view model", true, 0.0, true, 1.0 );
+ConVar tf_vm_max_invis( "tf_vm_max_invis", "0.5", FCVAR_DEVELOPMENTONLY, "maximum invisibility value for view model", true, 0.0, true, 1.0 );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -761,7 +763,32 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 
 	if ( !pEnt )
 		return;
+//################################
 
+
+	CTFViewModel *pVM = dynamic_cast<CTFViewModel *>( pEnt );
+	if ( pVM )
+	{
+		C_TFPlayer *pPlayer = ToTFPlayer( pVM->GetOwner() );
+
+		if ( !pPlayer )
+		{
+			m_pPercentInvisible->SetFloatValue( 0.0f );
+			return;
+		}
+
+		float flPercentInvisible = pPlayer->GetPercentInvisible();
+
+		// remap from 0.22 to 0.5
+		// but drop to 0.0 if we're not invis at all
+		float flWeaponInvis = ( flPercentInvisible < 0.01 ) ?
+			0.0 :
+			RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
+
+		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+		return;
+	}
+//################################	
 	C_TFPlayer *pPlayer = ToTFPlayer( pEnt );
 
 	if ( !pPlayer )
@@ -976,8 +1003,7 @@ public:
 		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
 		if ( !pEntity )
 			return;
-		if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
-		{
+
 			Vector vecColor = pEntity->GetItemTintColor();
 
 			if ( vecColor == vec3_origin )
@@ -991,7 +1017,7 @@ public:
 
 			m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
 			return;
-		}
+
 
 		m_pResult->SetVecValue( 1, 1, 1 );
 	}

@@ -112,6 +112,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					{
 						pTFPlayer->Weapon_Detach( pWeapon );
 						UTIL_Remove( pWeapon );
+						pWeapon = NULL;
 					}
 					return bSuccess;
 				}
@@ -132,6 +133,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					{
 						pTFPlayer->Weapon_Detach( pWeapon );
 						UTIL_Remove( pWeapon );
+						pWeapon = NULL;
 					}
 					return bSuccess;
 				}
@@ -156,11 +158,12 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				m_nRenderFX = kRenderFxDistort;
 			}
 		}
-	if ( pWeapon )
-	{
-		pTFPlayer->Weapon_Detach( pWeapon );
-		UTIL_Remove( pWeapon );
-	}
+		if ( pWeapon )
+		{
+			pTFPlayer->Weapon_Detach( pWeapon );
+			UTIL_Remove( pWeapon );
+			pWeapon = NULL;
+		}
 	}
 	return bSuccess;
 

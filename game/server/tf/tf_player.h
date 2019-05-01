@@ -286,6 +286,7 @@ public:
 
 	// Dropping Ammo
 	void DropAmmoPack( void );
+	void DropWeapon( void );
 
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );

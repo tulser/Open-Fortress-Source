@@ -1846,10 +1846,10 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_EMBEDDED( m_Collision ),
 	DEFINE_EMBEDDED( m_Network ),
 
-	DEFINE_FIELD( m_MoveType, FIELD_CHARACTER ),
+	DEFINE_KEYFIELD( m_MoveType, FIELD_CHARACTER, "MoveType" ),
 	DEFINE_FIELD( m_MoveCollide, FIELD_CHARACTER ),
 	DEFINE_FIELD( m_hOwnerEntity, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_CollisionGroup, FIELD_INTEGER ),
+	DEFINE_KEYFIELD( m_CollisionGroup, FIELD_INTEGER, "CollisionGroup" ),
 	DEFINE_PHYSPTR( m_pPhysicsObject),
 	DEFINE_FIELD( m_flElasticity, FIELD_FLOAT ),
 	DEFINE_KEYFIELD( m_flShadowCastDistance, FIELD_FLOAT, "shadowcastdist" ),

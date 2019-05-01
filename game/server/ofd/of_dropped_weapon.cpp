@@ -46,9 +46,6 @@ void CTFDroppedWeapon::Spawn( void )
 	// no pickup until flythink
 	m_bAllowOwnerPickup = false;
 
-	// no ammo to start
-	memset( m_iAmmo, 0, sizeof(m_iAmmo) );
-
 	// Die in 30 seconds
 	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 30, "DieContext" );
 
@@ -79,19 +76,6 @@ void CTFDroppedWeapon::SetInitialVelocity( Vector &vecVelocity )
 	m_vecInitialVelocity = vecVelocity;
 }
 
-int CTFDroppedWeapon::GiveAmmo( int iCount, int iAmmoType )
-{
-	if (iAmmoType == -1 || iAmmoType >= TF_AMMO_COUNT )
-	{
-		Msg("ERROR: Attempting to give unknown ammo type (%d)\n", iAmmoType);
-		return 0;
-	}
-
-	m_iAmmo[iAmmoType] += iCount;
-
-	return iCount;
-}
-
 void CTFDroppedWeapon::FlyThink( void )
 {
 	m_bAllowOwnerPickup = true;
@@ -113,7 +97,9 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		return;
 
 	CBasePlayer *pPlayer = ToBasePlayer( pOther );
-
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) )
+		return;
 	Assert( pPlayer );
 
 	bool bSuccess = true;

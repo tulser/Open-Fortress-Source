@@ -45,6 +45,7 @@
 #include "vphysics/friction.h"
 #include "debugoverlay_shared.h"
 #include "tf_weaponbase_gun.h"
+#include "tf_viewmodel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2457,7 +2458,7 @@ void CWeaponPhysCannon::UpdateElementPosition( void )
 	{
 		if ( pOwner != NULL )	
 		{
-			CBaseViewModel *vm = pOwner->GetViewModel();
+			CBaseViewModel *vm =pOwner->GetViewModel();
 			
 			if ( vm != NULL )
 			{
@@ -3140,8 +3141,8 @@ void CWeaponPhysCannon::DoEffectHolding( void )
 		}
 
 		// Create our beams
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		CBaseEntity *pBeamEnt = pOwner->GetViewModel();
+		CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+		CBaseViewModel *pBeamEnt =pOwner->GetViewModel();
 
 		// Setup the beams
 		m_Beams[0].Init( LookupAttachment( "fork1t" ), 1, pBeamEnt, true );
