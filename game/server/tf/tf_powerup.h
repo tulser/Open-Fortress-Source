@@ -14,6 +14,7 @@
 
 enum powerupsize_t
 {
+	POWERUP_TINY,
 	POWERUP_SMALL,
 	POWERUP_MEDIUM,
 	POWERUP_FULL,
