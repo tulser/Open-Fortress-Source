@@ -344,7 +344,7 @@ void CTargetID::UpdateID( void )
 				g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge" ), 1, wszChargeLevel );
 			}
 			
-			if ( pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || ( pPlayer->InSameTeam( pLocalTFPlayer ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY ) || bDisguisedEnemy )
+			if ( pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || ( pPlayer->InSameTeam( pLocalTFPlayer ) ) || bDisguisedEnemy )
 			{
 				printFormatString = "#TF_playerid_sameteam";
 				bShowHealth = true;
@@ -354,8 +354,9 @@ void CTargetID::UpdateID( void )
 				// We're looking at an enemy who killed us.
 				printFormatString = "#TF_playerid_diffteam";
 				bShowHealth = true;
-			}			
-
+			}
+			if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+				bShowHealth = false;
 			if ( bShowHealth )
 			{
 				C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);

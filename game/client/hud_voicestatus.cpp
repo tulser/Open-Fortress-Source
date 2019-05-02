@@ -15,6 +15,10 @@
 #include "c_playerresource.h"
 #include "voice_common.h"
 #include "vgui_avatarimage.h"
+#if defined (OPENFORTRESS_DLL)
+#include "tf_gamerules.h"
+#include "c_tf_playerresource.h"
+#endif
 
 ConVar *sv_alltalk = NULL;
 
@@ -355,7 +359,21 @@ void CHudVoiceStatus::Paint()
 		float oldAlphaMultiplier = surface()->DrawGetAlphaMultiplier();
 		surface()->DrawSetAlphaMultiplier(oldAlphaMultiplier * m_SpeakingList[i].fAlpha);
 
+#if defined(OPENFORTRESS_DLL)
+		Color c;
+
+		if (TFGameRules() && TFGameRules()->IsDMGamemode())
+		{
+			C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
+			c = tf_PR->GetPlayerColor(playerId);
+		}
+		else
+		{
+			c = g_PR->GetTeamColor(g_PR ? g_PR->GetTeam(playerId) : TEAM_UNASSIGNED);
+		}
+#else
 		Color c = g_PR->GetTeamColor( g_PR ? g_PR->GetTeam(playerId) : TEAM_UNASSIGNED );
+#endif
 
 		c[3] = 128;
 

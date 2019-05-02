@@ -68,7 +68,7 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ORIGINAL; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER_DM; }
 	
 	void	ActivateSoldierModel( void );
 	void	ActivateQuakeModel( void );

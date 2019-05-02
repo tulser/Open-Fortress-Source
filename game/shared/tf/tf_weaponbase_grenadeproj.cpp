@@ -220,6 +220,8 @@ void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
 					}
 					break;
 				case TF_TEAM_MERCENARY:
+					if (!pPlayer)
+						break;
 					float r = pPlayer->m_vecPlayerColor.x * 255;
 					float g = pPlayer->m_vecPlayerColor.y * 255;
 					float b = pPlayer->m_vecPlayerColor.z * 255;

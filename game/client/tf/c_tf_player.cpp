@@ -92,7 +92,7 @@ ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO,
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 
-IMaterial	*g_pHeadLabelMaterial[2] = { NULL, NULL }; 
+IMaterial	*g_pHeadLabelMaterial[3] = { NULL, NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
 
 extern CBaseEntity *BreakModelCreateSingle( CBaseEntity *pOwner, breakmodel_t *pModel, const Vector &position, 

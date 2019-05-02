@@ -8,24 +8,24 @@
 #include "tier0/memdbgon.h"
 
 #ifdef OPENFORTRESS_DLL
-ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","15" );
+ConVar sk_item_healthkit_mega( "sk_item_healthkit_mega","100" );
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
 #include "tf_player.h"
 
-#define TF_HEALTHKIT_PICKUP_SOUND	"HealthKitTiny.Touch"
+#define TF_HEALTHKIT_PICKUP_SOUND	"HealthKitMega.Touch"
 
-bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSound = true)
+bool ITEM_GiveTFMegaAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSound = true)
 {
 	bool bSuccess = false;
 	int iHealthRestored = 0;
-	int iHealthToAdd = sk_item_healthkit_tiny.GetInt();
+	int iHealthToAdd = sk_item_healthkit_mega.GetInt();
 
 	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 	if (!pTFPlayer)
 		return false;
 
-	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth() );
+	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetMaxHealth() );
 	iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_IGNORE_MAXHEALTH );
 	
 	if (iHealthRestored)
@@ -35,13 +35,13 @@ bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSo
 }
 #endif
 
-class CHealthKitTiny : public CTFPowerup
+class CHealthKitMega : public CTFPowerup
 {
 public:
 
-	virtual const char *GetPowerupModel(void) { return "models/items/medkit_overheal.mdl"; }
+	virtual const char *GetPowerupModel(void) { return "models/items/medkit_mega.mdl"; }
 
-	DECLARE_CLASS(CHealthKitTiny, CTFPowerup);
+	DECLARE_CLASS(CHealthKitMega, CTFPowerup);
 
 	void Spawn(void)
 	{
@@ -59,7 +59,7 @@ public:
 
 	bool MyTouch(CBasePlayer *pPlayer)
 	{
-		if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))
+		if (ITEM_GiveTFMegaAmmoHealth(pPlayer, PackRatios[POWERUP_MEGA]))
 		{
 			CSingleUserRecipientFilter filter(pPlayer);
 			EmitSound(filter, entindex(), TF_HEALTHKIT_PICKUP_SOUND);
@@ -69,8 +69,8 @@ public:
 	}
 };
 
-LINK_ENTITY_TO_CLASS(item_healthkit_tiny, CHealthKitTiny);
-PRECACHE_REGISTER(item_healthkit_tiny);
+LINK_ENTITY_TO_CLASS(item_healthkit_mega, CHealthKitMega);
+PRECACHE_REGISTER(item_healthkit_mega);
 
 
 

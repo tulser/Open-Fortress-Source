@@ -1085,6 +1085,8 @@ public:
 	virtual void SetViewModel( void );
 	virtual const char *GetShootSound( int iIndex ) const;
 	
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_PHYSCANNON; }
+	
 #ifndef CLIENT_DLL
 	CNetworkQAngle	( m_attachedAnglesPlayerSpace );
 #else
@@ -1572,11 +1574,10 @@ void CWeaponPhysCannon::PuntNonVPhysics( CBaseEntity *pEntity, const Vector &for
 
 #ifndef CLIENT_DLL
 	CTakeDamageInfo	info;
-	
 	info.SetAttacker( GetOwner() );
 	info.SetInflictor( this );
 	info.SetDamage( 50.0f );
-	info.SetDamageType(DMG_DISSOLVE);
+	info.SetDamageType( GetDamageType() );
 	info.SetDamageForce( forward );	// Scale?
 	info.SetDamagePosition( tr.endpos );
 

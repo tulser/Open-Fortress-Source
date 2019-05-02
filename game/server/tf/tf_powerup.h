@@ -18,7 +18,8 @@ enum powerupsize_t
 	POWERUP_SMALL,
 	POWERUP_MEDIUM,
 	POWERUP_FULL,
-
+	POWERUP_MEGA,
+	
 	POWERUP_SIZES,
 };
 
