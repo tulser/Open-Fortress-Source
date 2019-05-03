@@ -76,7 +76,23 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	
+	CTFAssaultRifle() 
+	{
+		m_bInBurst = false;
+	}
+	
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_ASSAULTRIFLE; }
+
+	virtual int		GetBurstSize( void ) { return 3; };
+	void			BurstThink( void );
+	void			PrimaryAttack( void );
+	void			BasePrimaryAttack( void );
+	
+	virtual float	GetBurstCycleRate( void ) { return 0.5; }
+	
+protected:
+	int		m_iBurstSize;
+	bool	m_bInBurst;
 };
 
 
