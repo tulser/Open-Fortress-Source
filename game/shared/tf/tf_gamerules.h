@@ -337,8 +337,12 @@ public:
 	int		m_iBirthdayMode;
 
 #ifdef GAME_DLL
+	virtual const char* GetMusicName( bool activeRound );
+
+	/*
 	virtual const char *GetMusicNamePreRound( void );
 	virtual const char *GetMusicNameActiveRound( void );
+	*/
 
 	bool	NPC_ShouldDropGrenade( CBasePlayer *pRecipient );
 	bool	NPC_ShouldDropHealth( CBasePlayer *pRecipient );

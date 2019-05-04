@@ -3860,45 +3860,50 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 #endif
 
 #ifdef GAME_DLL
-ConVar rara_testmusic("rara_testmusic", "0", FCVAR_CHEAT | FCVAR_HIDDEN);
 
+ConVar ofd_debug_musicname( "ofd_debug_musicname", "0",  FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+const char *CTFGameRules::GetMusicName( bool activeRound )
+{
+	const char *songbase = ( activeRound ? "Music.ActiveRound." : "Music.PreRound.");
+
+	static char result[ MAX_PATH ];
+	V_memset( result, 0, sizeof( result ) ); //Clear memory
+
+	V_strncpy( result, songbase, sizeof( result ) );
+	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ) );
+
+	if ( ofd_debug_musicname.GetBool() )
+		DevMsg( "GetMusicName: Returning %s\n", result );
+
+	return result;
+}
+
+/*
 const char *CTFGameRules::GetMusicNamePreRound(void)
 {
-	const char *songtest = "Music.PreRound.Test";
 	const char *songbase = "Music.PreRound.";
-	const char *mapname = STRING(gpGlobals->mapname);
 
-	char tempresult[MAX_PATH];
+	char result[MAX_PATH];
+	V_memset( result, 0, sizeof( result ) ); //Clear memory
 
-	strcpy(tempresult, songbase);
-	strcat(tempresult, mapname);
-
-	if (rara_testmusic.GetBool())
-		return songtest;
-
-	const char *result = (const char*)tempresult;
+	V_strncpy( result, songbase, sizeof( result ));
+	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ));
 
 	return result;
 }
 
 const char *CTFGameRules::GetMusicNameActiveRound(void)
 {
-	const char *songtest2 = "Music.ActiveRound.Test";
-	const char *songbase2 = "Music.ActiveRound.";
-	const char *mapname2 = STRING(gpGlobals->mapname);
+	const char *songbase = "Music.ActiveRound.";
 
-	char tempresult2[MAX_PATH];
+	char result[ MAX_PATH ];
+	V_memset( result, 0, sizeof( result ) ); //Clear memory
 
-	strcpy(tempresult2, songbase2);
-	strcat(tempresult2, mapname2);
+	V_strncpy( result, songbase, sizeof( result ) );
+	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ) );
 
-	if (rara_testmusic.GetBool())
-		return songtest2;
-
-	const char *result2 = (const char*)tempresult2;
-
-	return result2;
-}
+	return result;
+}*/
 
 	//-----------------------------------------------------------------------------
 	// Purpose: Whether or not the NPC should drop a health vial
