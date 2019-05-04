@@ -402,9 +402,15 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_INVULNERABLE:
 		OnAddInvulnerable();
 		break;
+		
 	case TF_COND_SPAWNPROTECT:
 		OnAddInvulnerable();
 		break;
+
+	case TF_COND_SHIELD:
+		OnAddShield();
+		break;
+		
 	case TF_COND_TELEPORTED:
 		OnAddTeleported();
 		break;
@@ -481,9 +487,15 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_INVULNERABLE:
 		OnRemoveInvulnerable();
 		break;
+		
 	case TF_COND_SPAWNPROTECT:
 		OnRemoveInvulnerable();
 		break;
+	
+	case TF_COND_SHIELD:
+		OnRemoveShield();
+		break;	
+	
 	case TF_COND_TELEPORTED:
 		OnRemoveTeleported();
 		break;
@@ -938,6 +950,54 @@ void CTFPlayerShared::OnAddInvulnerable( void )
 void CTFPlayerShared::OnRemoveInvulnerable( void )
 {
 #ifdef CLIENT_DLL
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#endif
+}
+
+void CTFPlayerShared::OnAddShield( void )
+{
+#ifdef CLIENT_DLL
+
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		char *pEffectName = NULL;
+
+		switch( m_pOuter->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffectName = "effects/invuln_overlay_blue";
+			break;
+		case TF_TEAM_RED:
+			pEffectName =  "effects/invuln_overlay_red";
+			break;
+		case TF_TEAM_MERCENARY:
+			pEffectName = "effects/invuln_overlay_mercenary";
+			break;
+		default:
+			pEffectName = "effects/invuln_overlay_blue";
+			break;
+		}
+
+		IMaterial *pMaterial = materials->FindMaterial( pEffectName, TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+	m_pOuter->UpdatePartyHat();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemoveShield( void )
+{
+#ifdef CLIENT_DLL
+	m_pOuter->UpdatePartyHat();
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );

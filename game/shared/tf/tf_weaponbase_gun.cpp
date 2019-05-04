@@ -368,10 +368,12 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 #ifdef GAME_DLL
 	
 	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+	int iQuakeCvar = 0;
+	iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "ofd_use_quake_rl"));
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
-	if ( bCenter )
+	if ( bCenter && iQuakeCvar )
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
@@ -380,14 +382,14 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
-		if ( bCenter )
+		if ( bCenter && iQuakeCvar )
 			vecOffset.z = 0.0f;
 		else
 			vecOffset.z = 8.0f;
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( vecSrc, angForward, pPlayer, pPlayer );
+	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );

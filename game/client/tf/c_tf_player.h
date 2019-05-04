@@ -264,6 +264,7 @@ public:
 
 	Vector				m_vecPlayerColor;	
 	void UpdatePartyHat( void );
+	bool WearsPartyHat( void );
 	
 private:
 
@@ -368,6 +369,7 @@ public:
 
 	bool			m_bUpdatePartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
+	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
 	
 	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
 	virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);

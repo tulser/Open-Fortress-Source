@@ -104,7 +104,7 @@ ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Mak
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
 ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
-ConVar ofd_resistance( "ofd_resistance", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
+ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
 ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
 ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
@@ -747,6 +747,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 			PrecacheModel( pszArmModel );
 		}
 	}
+	PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
 //	const char *pszArmModel = GetPlayerClassData(i)->m_szArmModelName;
 //	if ( pszArmModel && pszArmModel[0] )
 //	{
@@ -760,7 +761,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 		PrecacheModel( "models/effects/bday_hat.mdl" );
 	}
-
+	
 	// Precache player class sounds
 	for ( i = TF_FIRST_NORMAL_CLASS; i < TF_CLASS_COUNT_ALL; ++i )
 	{

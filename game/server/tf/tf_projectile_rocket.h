@@ -10,6 +10,7 @@
 #endif
 
 #include "tf_weaponbase_rocket.h"
+#include "tf_weaponbase.h"
 #include "iscorer.h"
 
 
@@ -25,7 +26,7 @@ public:
 	DECLARE_NETWORKCLASS();
 
 	// Creation.
-	static CTFProjectile_Rocket *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
+	static CTFProjectile_Rocket *Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
 	virtual void Spawn();
 	virtual void Precache();
 

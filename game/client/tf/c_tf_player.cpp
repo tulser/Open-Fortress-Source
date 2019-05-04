@@ -91,6 +91,7 @@ ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets 
 ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
+#define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
 IMaterial	*g_pHeadLabelMaterial[3] = { NULL, NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
@@ -1794,6 +1795,27 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
+	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
+	{
+		if ( m_hShieldEffect )
+		{
+			m_hShieldEffect->Release();
+		}
+		if ( !m_Shared.InCond( TF_COND_SHIELD ) )
+			return;
+		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
+			return;
+		m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+		if ( m_hShieldEffect )
+		{
+			int iVisibleTeam = GetTeamNumber();
+			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			{
+				iVisibleTeam = m_Shared.GetDisguiseTeam();
+			}
+			m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
+		}
+	}
 	if ( TFGameRules() && TFGameRules()->IsBirthday() && IsAlive() && 
 		GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
 	{
@@ -1815,7 +1837,7 @@ void C_TFPlayer::UpdatePartyHat( void )
 			}
 			m_hPartyHat->m_nSkin = iVisibleTeam - 2;
 		}
-	}
+	}	
 }
 
 //-----------------------------------------------------------------------------

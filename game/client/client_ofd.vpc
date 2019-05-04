@@ -59,6 +59,7 @@ $Project "Client (OFD)"
 		$File	"worldlight.h"
 		$File	"hud_base_account.cpp"
 		$File	"hud_base_account.h"
+		$File	"sixense\in_sixense.cpp"
 		
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
 

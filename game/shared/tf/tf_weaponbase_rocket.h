@@ -18,6 +18,7 @@
 #else
 #include "baseanimating.h"
 #include "smoke_trail.h"
+#include "tf_weaponbase.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -78,7 +79,7 @@ public:
 
 	DECLARE_DATADESC();
 
-	static CTFBaseRocket *Create( const char *szClassname, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL );	
+	static CTFBaseRocket *Create( CTFWeaponBase *pWeapon, const char *szClassname, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL );	
 
 	virtual void	RocketTouch( CBaseEntity *pOther );
 	void			Explode( trace_t *pTrace, CBaseEntity *pOther );
@@ -98,6 +99,8 @@ public:
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
+	
+	int m_hWeaponID;
 
 protected:
 

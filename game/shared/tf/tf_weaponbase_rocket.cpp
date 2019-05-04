@@ -5,6 +5,8 @@
 //=============================================================================//
 #include "cbase.h"
 #include "tf_weaponbase_rocket.h"
+#include "tf_gamerules.h"
+#include "tf_weaponbase.h"
 
 // Server specific.
 #ifdef GAME_DLL
@@ -201,16 +203,18 @@ int CTFBaseRocket::DrawModel( int flags )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFBaseRocket *CTFBaseRocket::Create( const char *pszClassname, const Vector &vecOrigin, 
+CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszClassname, const Vector &vecOrigin, 
 									  const QAngle &vecAngles, CBaseEntity *pOwner )
 {
-	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::Create( pszClassname, vecOrigin, vecAngles, pOwner ) );
+	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::CreateNoSpawn( pszClassname, vecOrigin, vecAngles, pOwner ) );
 	if ( !pRocket )
 		return NULL;
 
 	// Initialize the owner.
 	pRocket->SetOwnerEntity( pOwner );
-
+	
+	pRocket->m_hWeaponID = pWeapon->GetWeaponID();
+	
 	// Spawn.
 	pRocket->Spawn();
 
@@ -312,8 +316,8 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 
 	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
 	float flRadius = GetRadius();
-	if ( GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER_DM )
-		flRadius *= 0.1;
+	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
+		flRadius *= 0.75;
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 
 	// Debug!

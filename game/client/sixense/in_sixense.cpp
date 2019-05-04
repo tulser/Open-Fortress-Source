@@ -2430,7 +2430,7 @@ void SixenseInput::SetView( float flInputSampleFrametime, CUserCmd *pCmd )
 		spin_speed[ROLL] = 0.f;
 	}
 
-#if defined( TF_CLIENT_DLL )
+#if defined( CLIENT_DLL )
 
 	static bool last_charge = false, charging = false;
 	bool charge_started=false, charge_stopped=false;
@@ -2500,7 +2500,7 @@ void SixenseInput::SetView( float flInputSampleFrametime, CUserCmd *pCmd )
 	QAngle new_viewangles = FixAngles( m_pFPSViewAngles->getViewAngles() );
 
 
-#if defined( TF_CLIENT_DLL )
+#if defined( CLIENT_DLL )
 	// Dont turn when charging
 	if( !charging )
 	{
