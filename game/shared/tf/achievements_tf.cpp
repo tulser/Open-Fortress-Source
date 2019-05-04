@@ -109,7 +109,7 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 
 		static const char *szComponents[] =
 		{
-			"cp_dustbowl", "cp_granary", "cp_gravelpit", "cp_well", "ctf_2fort", "tc_hydro"
+			"dm_skate", "dm_wiseau", "dm_backfort", "dm_congo", "dm_2fort", "tc_hydro"
 		};		
 		m_pszComponentNames = szComponents;
 		m_iNumComponents = ARRAYSIZE( szComponents );
