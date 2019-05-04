@@ -710,8 +710,8 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
 
-	PrecacheScriptSound( TFGameRules()->GetMusicNamePreRound() );
-	PrecacheScriptSound( TFGameRules()->GetMusicNameActiveRound() );
+	PrecacheScriptSound( TFGameRules()->GetMusicName( false ) );
+	PrecacheScriptSound( TFGameRules()->GetMusicName( true ) );
 	
 
 	BaseClass::Precache();
@@ -974,7 +974,7 @@ void CTFPlayer::Spawn()
 	{
 		for (int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++)
 		{
-			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicNamePreRound());
+			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicName( false ));
 		}
 
 		DevMsg("playing round preround music\n");
@@ -983,7 +983,7 @@ void CTFPlayer::Spawn()
 	{
 		for (int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++)
 		{
-			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicNameActiveRound());
+			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicName( true ));
 		}
 
 		DevMsg("playing round active music\n");

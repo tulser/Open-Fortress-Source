@@ -354,8 +354,12 @@ public:
 	CNetworkVar( bool, m_bUsesHL2Hull );
 	CNetworkVar( bool, m_bIsTeamplay ); //Used to check if of_logic_dm has teamplay enabled
 #ifdef GAME_DLL
+	virtual const char* GetMusicName( bool activeRound );
+
+	/*
 	virtual const char *GetMusicNamePreRound( void );
 	virtual const char *GetMusicNameActiveRound( void );
+	*/
 
 	bool	NPC_ShouldDropGrenade( CBasePlayer *pRecipient );
 	bool	NPC_ShouldDropHealth( CBasePlayer *pRecipient );
