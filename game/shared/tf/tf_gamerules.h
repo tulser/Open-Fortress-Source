@@ -72,6 +72,21 @@ public:
 	void	InputSetMercenaryTeamRole( inputdata_t &inputdata );
 
 	virtual void Activate();
+	
+	bool m_bUsesHL2Hull;
+#endif
+};
+
+class CTFLogicDM : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicDM, CBaseEntity);
+	void	Spawn(void);
+	
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	bool m_bIsTeamplay;
+	bool m_bDontCountKills;
 #endif
 };
 
@@ -201,8 +216,6 @@ public:
 
 	virtual const char *GetGameTypeName( void ){ return g_aGameTypeNames[m_nGameType]; }
 	virtual int GetGameType( void ){ return m_nGameType; }
-	virtual bool GetDMType( void ){ return m_nbIsDM; }
-	virtual bool GetTDM( void ){ return m_nbIsTeamplay; }
 
 	virtual bool FlagsMayBeCapped( void );
 	virtual bool WeaponSpawnersMayBeUsed( void );
@@ -329,13 +342,17 @@ public:
 	int	 m_iPreviousRoundWinners;
 	CNetworkVar( int, TF_HUNTED_COUNT ); // Type of game this map is (CTF, CP)
 	CNetworkVar( bool, m_nbIsDM ); // Is Deathmatch On?
-	CNetworkVar( bool, m_nbIsTeamplay ); // Is Teamplay? On?
+	CNetworkVar( bool, m_nbIsTeamplay ); // Is Teamplay On?
+	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
 	virtual bool	IsDMGamemode(void) { return m_nbIsDM; }
 	virtual bool	IsTeamplay(void) { return m_nbIsTeamplay; }
+	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	int		m_iBirthdayMode;
-
+	
+	CNetworkVar( bool, m_bUsesHL2Hull );
+	CNetworkVar( bool, m_bIsTeamplay ); //Used to check if of_logic_dm has teamplay enabled
 #ifdef GAME_DLL
 	virtual const char *GetMusicNamePreRound( void );
 	virtual const char *GetMusicNameActiveRound( void );

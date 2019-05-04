@@ -17,6 +17,7 @@
 #include "baseobject_shared.h"
 #include "coordsize.h"
 
+
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
 	#include "c_world.h"
@@ -27,9 +28,10 @@
 #else
 	#include "tf_player.h"
 	#include "team.h"
+	#include "shareddefs.h"
 #endif
 
-ConVar	tf_maxspeed( "tf_maxspeed", "400", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar	tf_maxspeed( "tf_maxspeed", "400", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar	tf_showspeed( "tf_showspeed", "0", FCVAR_REPLICATED  );
 ConVar	tf_avoidteammates( "tf_avoidteammates", "1", FCVAR_REPLICATED | FCVAR_CHEAT  );
 ConVar  tf_solidobjects( "tf_solidobjects", "1", FCVAR_REPLICATED | FCVAR_CHEAT  );
@@ -161,7 +163,7 @@ void CTFGameMovement::PlayerMove()
 
 Vector CTFGameMovement::GetPlayerViewOffset( bool ducked ) const
 {
-	return ducked ? VEC_DUCK_VIEW : ( m_pTFPlayer->GetClassEyeHeight() );
+	return ducked ? VEC_DUCK_VIEW_SCALED (m_pTFPlayer) : ( m_pTFPlayer->GetClassEyeHeight() );
 }
 
 //-----------------------------------------------------------------------------

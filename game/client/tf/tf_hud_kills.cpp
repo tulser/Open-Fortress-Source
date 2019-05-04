@@ -98,7 +98,7 @@ bool CTFHudKills::ShouldDraw( void )
 	{
 		return false;
 	}
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 		return CHudElement::ShouldDraw();
 	else
 		return false;

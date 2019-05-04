@@ -180,6 +180,7 @@ public:
 	void InputToggleSound( inputdata_t &inputdata );
 	void InputPitch( inputdata_t &inputdata );
 	void InputVolume( inputdata_t &inputdata );
+	void InputAddVolume( inputdata_t &inputdata );
 	void InputFadeIn( inputdata_t &inputdata );
 	void InputFadeOut( inputdata_t &inputdata );
 
@@ -231,6 +232,7 @@ BEGIN_DATADESC( CAmbientGeneric )
 	DEFINE_INPUTFUNC(FIELD_VOID, "ToggleSound", InputToggleSound ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "Pitch", InputPitch ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "Volume", InputVolume ),
+	DEFINE_INPUTFUNC(FIELD_FLOAT, "AddVolume", InputAddVolume ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "FadeIn", InputFadeIn ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "FadeOut", InputFadeOut ),
 
@@ -378,6 +380,16 @@ void CAmbientGeneric::InputVolume( inputdata_t &inputdata )
 	SendSound( SND_CHANGE_VOL );
 }
 
+void CAmbientGeneric::InputAddVolume( inputdata_t &inputdata )
+{
+	//
+	// Multiply the input value by ten since volumes are expected to be from 0 - 100.
+	//
+	m_dpv.vol = clamp( RoundFloatToInt( inputdata.value.Float() * 10.f )+m_dpv.vol, 0, 100 );
+	m_dpv.volfrac = m_dpv.vol << 8;
+
+	SendSound( SND_CHANGE_VOL );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Input handler for fading in volume over time.

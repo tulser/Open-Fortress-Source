@@ -96,7 +96,8 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY);
-ConVar mp_teamplay( "mp_teamplay", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
+ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
+ConVar of_usehlhull( "of_usehlhull", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -151,7 +152,23 @@ static CViewVectors g_TFViewVectors(
 	Vector(  10,  10,  10 ),	//VEC_OBS_HULL_MAX	(m_vObsHullMax) observer hull max
 												
 	Vector( 0, 0, 14 )		//VEC_DEAD_VIEWHEIGHT (m_vDeadViewHeight) dead view height
-);							
+);
+
+static CViewVectors g_HLViewVectors(
+	Vector( 0, 0, 64 ),			//VEC_VIEW (m_vView)
+								
+	Vector(-16, -16, 0 ),		//VEC_HULL_MIN (m_vHullMin)
+	Vector( 16,  16,  72 ),		//VEC_HULL_MAX (m_vHullMax)
+													
+	Vector(-16, -16, 0 ),		//VEC_DUCK_HULL_MIN (m_vDuckHullMin)
+	Vector( 16,  16,  36 ),		//VEC_DUCK_HULL_MAX	(m_vDuckHullMax)
+	Vector( 0, 0, 28 ),			//VEC_DUCK_VIEW		(m_vDuckView)
+													
+	Vector(-10, -10, -10 ),		//VEC_OBS_HULL_MIN	(m_vObsHullMin)
+	Vector( 10,  10,  10 ),		//VEC_OBS_HULL_MAX	(m_vObsHullMax)
+													
+	Vector( 0, 0, 14 )			//VEC_DEAD_VIEWHEIGHT (m_vDeadViewHeight)
+);					
 
 Vector g_TFClassViewVectors[12] =
 {
@@ -172,6 +189,10 @@ Vector g_TFClassViewVectors[12] =
 
 const CViewVectors *CTFGameRules::GetViewVectors() const
 {
+
+	if ( m_bUsesHL2Hull && of_usehlhull.GetInt() < 0 || of_usehlhull.GetInt() > 0 )
+		return &g_HLViewVectors;
+
 	return &g_TFViewVectors;
 }
 
@@ -186,6 +207,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropString( RECVINFO(m_pszTeamGoalStringMercenary)),
 	RecvPropBool( RECVINFO( m_nbIsDM ) ),
 	RecvPropBool( RECVINFO( m_nbIsTeamplay ) ),
+	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
+	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 3, SPROP_UNSIGNED ),
@@ -194,6 +217,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropString( SENDINFO( m_pszTeamGoalStringMercenary ) ),
 	SendPropBool( SENDINFO( m_nbIsDM ) ),
 	SendPropBool( SENDINFO( m_nbIsTeamplay ) ),
+	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
+	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -227,6 +252,9 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGameRulesProxy, DT_TFGameRulesProxy )
 
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFGameRulesProxy )
+	//Keyfields
+	DEFINE_KEYFIELD( m_bUsesHL2Hull , FIELD_BOOLEAN, "UsesHL2Hull"),
+
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetRedTeamRespawnWaveTime", InputSetRedTeamRespawnWaveTime ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetBlueTeamRespawnWaveTime", InputSetBlueTeamRespawnWaveTime ),
@@ -342,26 +370,31 @@ void CTFGameRulesProxy::InputSetMercenaryTeamRole( inputdata_t &inputdata )
 void CTFGameRulesProxy::Activate()
 {
 	TFGameRules()->Activate();
+	TFGameRules()->m_bUsesHL2Hull = m_bUsesHL2Hull;
 
 	BaseClass::Activate();
 }
 #endif
 
+
+LINK_ENTITY_TO_CLASS(of_logic_dm, CTFLogicDM);
 //-----------------------------------------------------------------------------
 // DM Logic 
 //-----------------------------------------------------------------------------
-
-class CTFLogicDM : public CBaseEntity
-{
-public:
-	DECLARE_CLASS(CTFLogicDM, CBaseEntity);
-	void	Spawn(void);
-};
-
-LINK_ENTITY_TO_CLASS(of_logic_dm, CTFLogicDM);
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFLogicDM )
+	//Keyfields
+	DEFINE_KEYFIELD( m_bIsTeamplay, FIELD_BOOLEAN, "IsTeamplay"),
+	DEFINE_KEYFIELD( m_bDontCountKills, FIELD_BOOLEAN, "DontCountKills"),
+END_DATADESC()
+#endif
 
 void CTFLogicDM::Spawn(void)
 {
+	#ifdef GAME_DLL
+	TFGameRules()->m_bIsTeamplay = m_bIsTeamplay;
+	TFGameRules()->m_nbDontCountKills = m_bDontCountKills;
+	#endif
 	BaseClass::Spawn();
 }
 
@@ -759,7 +792,7 @@ void CTFGameRules::Activate()
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
 		m_nbIsDM = true;
-		if (mp_teamplay.GetBool() || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") )
+		if ( (  ( ( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") ) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
 			m_nbIsTeamplay = true;
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n", NULL);
@@ -1480,7 +1513,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				}
 			}
 			
-			if ( TFGameRules()->IsDMGamemode() && CountActivePlayers() > 0 )
+			if ( TFGameRules()->IsDMGamemode() && CountActivePlayers() > 0 && !TFGameRules()->DontCountKills() )
 			{
 				int iFragLimit = fraglimit.GetInt();
 				

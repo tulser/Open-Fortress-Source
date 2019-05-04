@@ -102,6 +102,7 @@ CBaseEntity* CTFPowerup::Respawn( void )
 {
 	m_bRespawning = true;
 	CBaseEntity *pReturn = BaseClass::Respawn();
+	EmitSound( STRING( m_iszSpawnSound ) );
 	
 	// Override the respawn time
 	if ( bInitialDelay )
@@ -123,7 +124,6 @@ void CTFPowerup::Materialize( void )
 	if ( !m_bDisabled )
 	{
 		// changing from invisible state to visible.
-		EmitSound( STRING( m_iszSpawnSound ) );
 		m_nRenderFX = kRenderFxNone;
 		RemoveEffects( EF_NODRAW );
 	}

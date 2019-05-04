@@ -1091,7 +1091,7 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	if ( !pPlayer )
 		return;
 
-	float flTime = gpGlobals->curtime + flReloadTime;
+	float flTime = gpGlobals->curtime + flReloadTime ;
 
 	// Set next player attack time (weapon independent).
 	pPlayer->m_flNextAttack = flTime;
@@ -1104,7 +1104,7 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	//m_flNextSecondaryAttack = flTime;
 
 	// Set next idle time (based on reloading).
-	SetWeaponIdleTime( flTime );
+	SetWeaponIdleTime( flTime - flReloadTime + SequenceDuration() );
 }
 
 // -----------------------------------------------------------------------------
@@ -1229,11 +1229,12 @@ void CTFWeaponBase::ItemPostFrame( void )
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
 		{
-			if ( GetActivity() != ACT_VM_RELOAD )
-//			{
-//				SetNextThink( gpGlobals->curtime + SequenceDuration() - GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload );
-//				SetThink(); 
-//			}
+			if ( GetActivity() == ACT_VM_RELOAD )
+			{
+//				SetNextThink(  );
+//				float waittime = gpGlobals->curtime + SequenceDuration() /* - GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload*/; 
+//				SetWeaponIdleTime( waittime );
+			}
 			WeaponIdle();
 			
 		}
