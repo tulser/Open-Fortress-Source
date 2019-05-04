@@ -131,8 +131,8 @@ void CTFDiscordRPC::SetLogo( void )
 	const char *pszGameType = "";
 	const char *pszImageLarge = "ico";
 	
-	if ( engine->IsConnected() )
-	{
+	if ( TFGameRules( ) && engine->IsConnected() )
+	{	
 		if (TFGameRules()->GetGameType() == TF_GAMETYPE_UNDEFINED)
 		{
 			pszGameType = "";
