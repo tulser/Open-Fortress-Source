@@ -708,7 +708,10 @@ bool CTFWeaponBase::ReloadSingly( void )
 			// Play weapon and player animations.
 			if ( SendWeaponAnim( ACT_RELOAD_START ) )
 			{
-				SetReloadTimer( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeReloadStart );
+				if ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeReloadStart )
+					SetReloadTimer( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeReloadStart );
+				else
+					SetReloadTimer( SequenceDuration() );
 			}
 			else
 			{
