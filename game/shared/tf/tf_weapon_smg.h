@@ -18,6 +18,8 @@
 #define CTFAssaultRifle C_TFAssaultRifle
 #endif
 
+
+
 //=============================================================================
 //
 // TF Weapon Sub-machine gun.
@@ -68,6 +70,17 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_TOMMYGUN; }
 };
 
+
+
+//=============================================================================
+//
+// Assault Rifle cvars
+//
+//=============================================================================
+ConVar ofd_weapon_assaultrifle_burstshots( "ofd_weapon_assaultrifle_burstshots", "3", FCVAR_GAMEDLL );
+ConVar ofd_weapon_assaultrifle_bursttime( "ofd_weapon_assaultrifle_bursttime", "0.1", FCVAR_GAMEDLL );
+ConVar ofd_weapon_assaultrifle_time_between_bursts( "ofd_weapon_assaultrifle_time_between_bursts", "0.2", FCVAR_GAMEDLL );
+
 // AR
 class CTFAssaultRifle : public CTFSMG
 {
@@ -78,21 +91,31 @@ public:
 	
 	CTFAssaultRifle() 
 	{
-		m_bInBurst = false;
+		m_iShotsDue = 0;
+		m_flNextShotTime = 0.0f;
 	}
 	
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_ASSAULTRIFLE; }
 
-	virtual int		GetBurstSize( void ) { return 3; };
-	void			BurstThink( void );
-	void			PrimaryAttack( void );
-	void			BasePrimaryAttack( void );
+	void			BurstFire( void );
+	void			BeginBurstFire( void );
+	void			Shoot( void );
+
+	virtual bool	Reload( void );
+
+	virtual void	ItemPostFrame( void );
+
+	bool InBurst( )
+	{
+		return m_iShotsDue > 0;
+	}
 	
-	virtual float	GetBurstCycleRate( void ) { return 0.5; }
+	virtual float	GetBurstTotalTime( void ) { return ofd_weapon_assaultrifle_bursttime.GetFloat() * ofd_weapon_assaultrifle_burstshots.GetInt(); }
 	
 protected:
-	int		m_iBurstSize;
-	bool	m_bInBurst;
+	CNetworkVar(float, m_flNextShotTime);
+
+	CNetworkVar( int, m_iShotsDue );
 };
 
 
