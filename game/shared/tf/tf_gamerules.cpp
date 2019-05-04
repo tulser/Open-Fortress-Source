@@ -97,7 +97,7 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 // Open Fortress Convars
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY);
 ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
-ConVar of_usehlhull( "of_usehlhull", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
+ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
@@ -190,7 +190,7 @@ Vector g_TFClassViewVectors[12] =
 const CViewVectors *CTFGameRules::GetViewVectors() const
 {
 
-	if ( m_bUsesHL2Hull && of_usehlhull.GetInt() < 0 || of_usehlhull.GetInt() > 0 )
+	if ( m_bUsesHL2Hull && of_usehl2hull.GetInt() < 0 || of_usehl2hull.GetInt() > 0 )
 		return &g_HLViewVectors;
 
 	return &g_TFViewVectors;
@@ -209,6 +209,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_nbIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
+	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 3, SPROP_UNSIGNED ),
@@ -219,6 +220,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_nbIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
+	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 #endif
 END_NETWORK_TABLE()
 
