@@ -248,9 +248,7 @@ protected:
 	void UpdateReloadTimers( bool bStart );
 	void SetReloadTimer( float flReloadTime );
 	bool ReloadSingly( void );
-	bool ReloadsAll( void );
 	void ReloadSinglyPostFrame( void );
-	void ReloadsAllPostFrame( void );
 
 protected:
 

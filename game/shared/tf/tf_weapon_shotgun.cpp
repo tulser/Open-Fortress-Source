@@ -68,7 +68,10 @@ CTFShotgun::CTFShotgun()
 {
 	m_bReloadsSingly = true;
 }
-
+CTFSuperShotgun::CTFSuperShotgun()
+{
+	m_bReloadsSingly = false;
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------

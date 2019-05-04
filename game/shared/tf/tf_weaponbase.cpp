@@ -620,9 +620,6 @@ bool CTFWeaponBase::Reload( void )
 		if ( Clip1() >= GetMaxClip1())
 			return false;
 	}
-	// Reload all + reload canceling
-	if ( m_bReloadsAll )
-		return ReloadsAll();
 	// Reload one object at a time.
 	if ( m_bReloadsSingly )
 		return ReloadSingly();
@@ -711,7 +708,7 @@ bool CTFWeaponBase::ReloadSingly( void )
 			// Play weapon and player animations.
 			if ( SendWeaponAnim( ACT_RELOAD_START ) )
 			{
-				SetReloadTimer( SequenceDuration() );
+				SetReloadTimer( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeReloadStart );
 			}
 			else
 			{
@@ -816,142 +813,6 @@ bool CTFWeaponBase::ReloadSingly( void )
 	}
 }
 
-bool CTFWeaponBase::ReloadsAll( void )
-{
-	// Don't reload.
-	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
-		return false;
-
-	// Get the current player.
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( !pPlayer )
-		return false;
-
-	// check to see if we're ready to reload
-	switch ( m_iReloadMode )
-	{
-	case TF_RELOAD_START:
-		{
-			// Play weapon and player animations.
-			if ( SendWeaponAnim( ACT_RELOAD_START ) )
-			{
-				SetReloadTimer( SequenceDuration() );
-			}
-			else
-			{
-				// Update the reload timers with script values.
-				UpdateReloadTimers( true );
-			}
-
-			// Next reload the shells.
-			m_iReloadMode.Set( TF_RELOADING );
-
-			m_iReloadStartClipAmount = Clip1();
-
-			return true;
-		}
-	case TF_RELOADING:
-		{
-			// Did we finish the reload start?  Now we can reload a rocket.
-			if ( m_flTimeWeaponIdle > gpGlobals->curtime )
-				return false;
-
-			// Play weapon reload animations and sound.
-			if ( Clip1() == m_iReloadStartClipAmount )
-			{
-				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD );
-			}
-			else
-			{
-				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_LOOP );
-			}
-
-			m_bReloadedThroughAnimEvent = false;
-
-			if ( SendWeaponAnim( ACT_VM_RELOAD ) )
-			{
-				if ( sv_reloadsync.GetFloat() <= 0  )
-				{
-					SetReloadTimer( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload );
-				}
-				else
-				{
-					SetReloadTimer( sv_reloadsync.GetFloat() );
-				}
-			}
-			else
-			{
-				// Update the reload timers.
-				UpdateReloadTimers( false );
-			}
-
-#ifndef CLIENT_DLL
-			if (m_bQuakeRLHack)
-				WeaponSound( RELOAD_NPC );
-			else
-				WeaponSound( RELOAD );
-#endif
-
-			// Next continue to reload shells?
-			m_iReloadMode.Set( TF_RELOADING_CONTINUE );
-			return true;
-		}
-	case TF_RELOADING_CONTINUE:
-		{
-			// Did we finish the reload start?  Now we can finish reloading the rocket.
-			if ( m_flTimeWeaponIdle > gpGlobals->curtime )
-				return false;
-
-			// If we have ammo, remove ammo and add it to clip
-			if ( MaxAmmo() > 0 && !m_bReloadedThroughAnimEvent )
-			{
-				if( of_infiniteammo.GetBool() != 1 )
-					m_iMaxAmmo -= GetMaxClip1() - m_iClip1;
-				m_iClip1 =  GetMaxClip1();
-			}
-			
-			m_iReloadMode.Set( TF_RELOAD_FINISH );
-			if ( Clip1() == GetMaxClip1() || MaxAmmo() <= 0 )
-			{
-				m_iReloadMode.Set( TF_RELOAD_FINISH );
-			}
-			else
-			{
-				m_iReloadMode.Set( TF_RELOADING );
-			}
-
-			return true;
-		}
-
-	case TF_RELOAD_FINISH:
-		{
-			if ( SendWeaponAnim( ACT_RELOAD_FINISH ) )
-			{
-				// We're done, allow primary attack as soon as we like
-				SetReloadTimer( SequenceDuration() );
-			}
-
-			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_END );
-
-			m_iReloadMode.Set( TF_RELOAD_START );
-			return true;
-		}
-	default:
-		{
-			if ( SendWeaponAnim( ACT_RELOAD_FINISH ) )
-			{
-				// We're done, allow primary attack as soon as we like
-				SetReloadTimer( SequenceDuration() );
-			}
-
-			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_END );
-
-			m_iReloadMode.Set( TF_RELOAD_START );
-			return true;
-		}
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pEvent - 
@@ -1031,7 +892,6 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	// First, see if we have a reload animation
 	if ( SendWeaponAnim( iActivity ) )
 	{
-//		flReloadTime = SequenceDuration();
 		flReloadTime = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload;  
 		if ( bReloadSecondary )
 		{
@@ -1091,7 +951,7 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	if ( !pPlayer )
 		return;
 
-	float flTime = gpGlobals->curtime + flReloadTime ;
+	float flTime = gpGlobals->curtime + flReloadTime;
 
 	// Set next player attack time (weapon independent).
 	pPlayer->m_flNextAttack = flTime;
@@ -1104,7 +964,10 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	//m_flNextSecondaryAttack = flTime;
 
 	// Set next idle time (based on reloading).
-	SetWeaponIdleTime( flTime - flReloadTime + SequenceDuration() );
+	if ( !m_bReloadsSingly )
+		SetWeaponIdleTime( flTime - flReloadTime + SequenceDuration() );
+	else
+		SetWeaponIdleTime( flTime );
 }
 
 // -----------------------------------------------------------------------------
@@ -1217,10 +1080,6 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		ReloadSinglyPostFrame();
 	}
-	else if ( m_bReloadsAll )
-	{
-		ReloadsAllPostFrame();
-	}
 	// -----------------------
 	//  No buttons down
 	// -----------------------
@@ -1229,14 +1088,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
 		{
-			if ( GetActivity() == ACT_VM_RELOAD )
-			{
-//				SetNextThink(  );
-//				float waittime = gpGlobals->curtime + SequenceDuration() /* - GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeReload*/; 
-//				SetWeaponIdleTime( waittime );
-			}
 			WeaponIdle();
-			
 		}
 	}
 }
@@ -1258,22 +1110,6 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 	}
 }
 
-void CTFWeaponBase::ReloadsAllPostFrame( void )
-{
-	
-	if ( m_flTimeWeaponIdle > gpGlobals->curtime )
-		return;
-
-	// if the clip is empty and we have ammo remaining, 
-	if (  (  /* ( Clip1() == 0 )  &&  */ ( MaxAmmo() > 0 ) )  ||
-		// or we are already in the process of reloading but not finished
-		( m_iReloadMode != TF_RELOAD_START ) )
-	{
-		// reload/continue reloading
-		Reload();
-	}
-	
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

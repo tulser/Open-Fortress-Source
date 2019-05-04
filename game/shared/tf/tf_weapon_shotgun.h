@@ -111,6 +111,8 @@ public:
 	DECLARE_CLASS(CTFSuperShotgun, CTFShotgun);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+	
+	CTFSuperShotgun();
 
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_SUPERSHOTGUN; }
 };

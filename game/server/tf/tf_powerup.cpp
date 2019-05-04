@@ -102,7 +102,6 @@ CBaseEntity* CTFPowerup::Respawn( void )
 {
 	m_bRespawning = true;
 	CBaseEntity *pReturn = BaseClass::Respawn();
-	EmitSound( STRING( m_iszSpawnSound ) );
 	
 	// Override the respawn time
 	if ( bInitialDelay )
@@ -127,6 +126,7 @@ void CTFPowerup::Materialize( void )
 		m_nRenderFX = kRenderFxNone;
 		RemoveEffects( EF_NODRAW );
 	}
+	EmitSound( STRING( m_iszSpawnSound ) );
 	m_bRespawning = false;
 	bInitialDelay = false;
 	SetTouch( &CItem::ItemTouch );
