@@ -251,7 +251,6 @@ private:
 	void HandleTaunting( void );
 
 	void OnPlayerClassChange( void );
-	void UpdatePartyHat( void );
 
 	void InitInvulnerableMaterial( void );
 
@@ -264,6 +263,7 @@ private:
 public:
 
 	Vector				m_vecPlayerColor;	
+	void UpdatePartyHat( void );
 	
 private:
 

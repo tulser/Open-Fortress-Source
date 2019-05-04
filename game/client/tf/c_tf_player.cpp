@@ -1794,14 +1794,15 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && !IsLocalPlayer() && IsAlive() && 
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && IsAlive() && 
 		GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
 	{
 		if ( m_hPartyHat )
 		{
 			m_hPartyHat->Release();
 		}
-
+		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
+			return;
 		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
 
 		// C_PlayerAttachedModel::Create can return NULL!
@@ -1925,6 +1926,7 @@ void C_TFPlayer::TurnOnTauntCam( void )
 	{
 		m_hItem->UpdateVisibility();
 	}
+	UpdatePartyHat();
 }
 
 //-----------------------------------------------------------------------------
@@ -1934,7 +1936,9 @@ void C_TFPlayer::TurnOffTauntCam( void )
 {
 	if ( !IsLocalPlayer() )
 		return;	
-
+	
+	
+	
 	Vector vecOffset = g_ThirdPersonManager.GetCameraOffsetAngles();
 
 	tf_tauntcam_pitch.SetValue( vecOffset[PITCH] - m_angTauntPredViewAngles[PITCH] );

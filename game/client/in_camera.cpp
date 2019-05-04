@@ -16,6 +16,7 @@
 #include "tier0/vprof.h"
 #include "debugoverlay_shared.h"
 #include "cam_thirdperson.h"
+#include "c_tf_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -687,6 +688,11 @@ void CInput::CAM_ToThirdPerson(void)
 	}
 
 	cam_command.SetValue( 0 );
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pLocalTFPlayer )
+	{
+		pLocalTFPlayer->UpdatePartyHat();
+	}
 }
 
 /*
@@ -703,10 +709,11 @@ void CInput::CAM_ToFirstPerson(void)
 	cam_command.SetValue( 0 );
 
 	// Let the local player know
-	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
-	if ( localPlayer )
+	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pLocalTFPlayer )
 	{
-		localPlayer->ThirdPersonSwitch( false );
+		pLocalTFPlayer->ThirdPersonSwitch( false );
+		pLocalTFPlayer->UpdatePartyHat();
 	}
 }
 
