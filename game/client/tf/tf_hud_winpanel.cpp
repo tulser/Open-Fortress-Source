@@ -23,6 +23,7 @@
 #include "vgui_avatarimage.h"
 #include "fmtstr.h"
 #include "teamplayroundbased_gamerules.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -309,8 +310,8 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 
 			if ( bShow )
 			{
-				// set the player labels to team color
-				Color clr = g_PR->GetTeamColor( g_PR->GetTeam( iPlayerIndex ) );				
+				// set the player labels to team or player color
+				Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(iPlayerIndex) : g_PR->GetTeamColor(g_PR->GetTeam(iPlayerIndex));
 				pPlayerName->SetFgColor( clr );
 				pPlayerClass->SetFgColor( clr );
 				pPlayerScore->SetFgColor( clr );
