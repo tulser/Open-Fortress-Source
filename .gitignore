@@ -110,3 +110,4 @@ vgui2/vgui_controls/generated_proto/htmlmessages.pb.cc
 /materialsystem/stdshaders/Debug_dx9_open_fortress
 /materialsystem/stdshaders/Release_dx9_open_fortress
 /store_symbols.ini
+lib/public/raytrace.lib

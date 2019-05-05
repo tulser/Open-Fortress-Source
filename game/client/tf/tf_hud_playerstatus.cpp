@@ -427,6 +427,8 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 				// scale the flashing image based on how much health bonus we currently have
 				float flBoostMaxAmount = ( iMaxBuffedHealth ) - m_nMaxHealth;
 				float flPercent = ( m_nHealth - m_nMaxHealth ) / flBoostMaxAmount;
+				if (flPercent > 1.0f)
+					flPercent = 1.0f;
 
 				int nPosAdj = RoundFloatToInt( flPercent * m_nHealthBonusPosAdj );
 				int nSizeAdj = 2 * nPosAdj;
