@@ -47,6 +47,7 @@
 	#include "hl2orange.spa.h"
 	#include "hltvdirector.h"
 	#include "globalstate.h"
+    #include "igameevents.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1538,6 +1539,15 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
 							{
+								IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_round_win" );
+
+							    gameeventmanager->FireEvent( event );
+#ifdef _DEBUG
+								if(gameeventmanager->FireEvent( event = gameeventmanager->CreateEvent( "teamplay_round_win" )))
+								{
+									DevMsg("TRIGGERD EVENT\n");
+								}
+#endif
 								GoToIntermission();
 							}
 						}
