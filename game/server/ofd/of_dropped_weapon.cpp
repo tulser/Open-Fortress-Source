@@ -10,11 +10,14 @@
 #include "ammodef.h"
 #include "tf_gamerules.h"
 #include "explode.h"
+#include "in_buttons.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //----------------------------------------------
+
+extern ConVar ofd_multiweapons;
 
 // Network table.
 IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
@@ -113,15 +116,48 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		{
 			bSuccess=false;
 		}
+		if ( !ofd_multiweapons.GetBool() )
+		{
+			bSuccess=false;
+			if ( pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )
+			{
+				pTFPlayer->DropWeapon( pCarriedWeapon );
+				if ( pCarriedWeapon )
+				{
+					pTFPlayer->Weapon_Detach( pCarriedWeapon );
+					UTIL_Remove( pCarriedWeapon );
+					pCarriedWeapon = NULL;				
+				}
+				CSingleUserRecipientFilter filter( pTFPlayer );
+				EmitSound( filter, entindex(), "AmmoPack.Touch" );
+				CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
+				pGivenWeapon->GiveTo( pPlayer );		
+				UTIL_Remove( this );
+				if ( pWeapon )
+				{
+					pTFPlayer->Weapon_Detach( pWeapon );
+					UTIL_Remove( pWeapon );
+					pWeapon = NULL;
+				}
+				return;
+			}
+		}
+		
 	}
-
 	if ( bSuccess )
 	{
-//		EmitSound( filter, entindex(), STRING(m_iszPickupSound) );
-		pWeapon->GiveTo( pPlayer );		
+		CSingleUserRecipientFilter filter( pTFPlayer );
+		EmitSound( filter, entindex(), "AmmoPack.Touch" );
+		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
+		pGivenWeapon->GiveTo( pPlayer );		
 		UTIL_Remove( this );
 	}
-
+	if ( pWeapon )
+	{
+		pTFPlayer->Weapon_Detach( pWeapon );
+		UTIL_Remove( pWeapon );
+		pWeapon = NULL;
+	}
 }
 
 //-----------------------------------------------------------------------------

@@ -3481,7 +3481,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	DropWeapon();
+	DropWeapon( m_Shared.GetActiveTFWeapon()  );
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
@@ -3887,12 +3887,11 @@ void CTFPlayer::DropAmmoPack( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropWeapon( void )
+void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon )
 {
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
-	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
 
 	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop )
 	{

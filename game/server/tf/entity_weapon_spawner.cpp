@@ -11,6 +11,7 @@
 #include "tf_weapon_builder.h"
 #include "tf_gamerules.h"
 #include "tf_team.h"
+#include "in_buttons.h"
 #include "engine/IEngineSound.h"
 #include "entity_weapon_spawner.h"
 
@@ -19,6 +20,7 @@
 //#define TF_WEAPON_PICKUP_SOUND		"AmmoPack.Touch"
 
 extern ConVar ofd_instagib;
+extern ConVar ofd_multiweapons;
 
 ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Weapons dont dissapeer.");
 ConVar ofd_allow_allclass_pickups( "ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
@@ -94,8 +96,19 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
 		{		
 			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pTFPlayer->GetWeapon( iWeapon );
-			if ( pCarriedWeapon == pWeapon || ( !ofd_allow_allclass_pickups.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) ) 
+			if ( !ofd_multiweapons.GetBool() && pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )
 			{
+					pTFPlayer->DropWeapon( pCarriedWeapon );
+					if ( pCarriedWeapon )
+					{
+						pTFPlayer->Weapon_Detach( pCarriedWeapon );
+						UTIL_Remove( pCarriedWeapon );
+						pCarriedWeapon = NULL;				
+					}
+			}
+			else if ( pCarriedWeapon == pWeapon || ( !ofd_allow_allclass_pickups.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) ) 
+			{
+				bSuccess = false;
 				if ( pTFPlayer->RestockAmmo(0.5f) )
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );
@@ -106,6 +119,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 					else
 					{
+						bSuccess = true;
 						m_nRenderFX = kRenderFxDistort;
 					}
 					if ( pWeapon )
@@ -114,7 +128,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 						UTIL_Remove( pWeapon );
 						pWeapon = NULL;
 					}
-					return bSuccess;
+					
 				}
 				int iMaxMetal = pTFPlayer->GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];
 				if ( pTFPlayer->GiveAmmo( ceil(iMaxMetal * PackRatios[GetPowerupSize()]), TF_AMMO_METAL, true ) )
@@ -127,6 +141,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 					else
 					{
+						bSuccess = true;
 						m_nRenderFX = kRenderFxDistort;
 					}
 					if ( pWeapon )
@@ -137,13 +152,27 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 					return bSuccess;
 				}
-			return bSuccess;
+				return bSuccess;
 			}
 		}
 		// did we give them anything?
 		if ( bSuccess )
 		{
-		
+			if ( !ofd_multiweapons.GetBool() )
+			{
+				if ( pTFPlayer->m_nButtons & IN_USE )
+				{}
+				else
+				{
+					if ( pWeapon )
+					{
+						pTFPlayer->Weapon_Detach( pWeapon );
+						UTIL_Remove( pWeapon );
+						pWeapon = NULL;
+					}					
+					return false;
+				}
+			}
 			CSingleUserRecipientFilter filter( pTFPlayer );
 			EmitSound( filter, entindex(), STRING(m_iszPickupSound) );
 			
@@ -165,8 +194,8 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			pWeapon = NULL;
 		}
 	}
+	
 	return bSuccess;
-
 }
 
 CWeaponSpawner::CWeaponSpawner()
