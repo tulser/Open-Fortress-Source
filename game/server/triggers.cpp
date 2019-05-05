@@ -781,13 +781,13 @@ bool CTriggerHurt::HurtEntity( CBaseEntity *pOther, float damage )
 void CTriggerHurt::HurtThink()
 {
 	// if I hurt anyone, think again
-	if ( HurtAllTouchers( 0.5 ) <= 0 )
+	if ( HurtAllTouchers( 0.2 ) <= 0 )
 	{
 		SetThink(NULL);
 	}
 	else
 	{
-		SetNextThink( gpGlobals->curtime + 0.5f );
+		SetNextThink( gpGlobals->curtime + 0.2f );
 	}
 }
 
@@ -2834,7 +2834,7 @@ void CAI_ChangeHintGroup::InputActivate( inputdata_t &inputdata )
 #define SF_CAMERA_PLAYER_SNAP_TO		16
 #define SF_CAMERA_PLAYER_NOT_SOLID		32
 #define SF_CAMERA_PLAYER_INTERRUPT		64
-
+#define SF_CAMERA_PLAYER_SETFOV         128
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2879,6 +2879,8 @@ private:
 	int	  m_state;
 	Vector m_vecMoveDir;
 
+	float m_fov;
+	float m_fovSpeed;
 
 	string_t m_iszTargetAttachment;
 	int	  m_iAttachmentIndex;
@@ -2935,6 +2937,9 @@ BEGIN_DATADESC( CTriggerCamera )
 	DEFINE_FIELD( m_nPlayerButtons, FIELD_INTEGER ),
 	DEFINE_FIELD( m_nOldTakeDamage, FIELD_INTEGER ),
 
+	DEFINE_KEYFIELD( m_fov, FIELD_FLOAT, "fov" ),
+	DEFINE_KEYFIELD( m_fovSpeed, FIELD_FLOAT, "fov_rate" ),
+
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
@@ -2944,6 +2949,16 @@ BEGIN_DATADESC( CTriggerCamera )
 	DEFINE_OUTPUT( m_OnEndFollow, "OnEndFollow" ),
 
 END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+	
+//CTriggerCamera::CTriggerCamera()
+//{
+//	m_fov = 90;
+//	m_fovSpeed = 1;
+//}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3105,6 +3120,18 @@ void CTriggerCamera::Enable( void )
 		m_bSnapToGoal = true;
 	}
 
+	if (HasSpawnFlags(SF_CAMERA_PLAYER_SETFOV))
+	{
+		if (pPlayer)
+		{
+			if (pPlayer->GetFOVOwner() && (FClassnameIs(pPlayer->GetFOVOwner(), "point_viewcontrol_multiplayer") || FClassnameIs(pPlayer->GetFOVOwner(), "point_viewcontrol")))
+			{
+				pPlayer->ClearZoomOwner();
+			}
+			pPlayer->SetFOV(this, m_fov, m_fovSpeed);
+		}
+	}
+
 	if ( HasSpawnFlags(SF_CAMERA_PLAYER_TARGET ) )
 	{
 		m_hTarget = m_hPlayer;
@@ -3212,33 +3239,39 @@ void CTriggerCamera::Enable( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTriggerCamera::Disable( void )
+void CTriggerCamera::Disable(void)
 {
-	if ( m_hPlayer && m_hPlayer->IsAlive() )
+	if (m_hPlayer)
 	{
-		if ( HasSpawnFlags( SF_CAMERA_PLAYER_NOT_SOLID ) )
+		CBasePlayer *pBasePlayer = (CBasePlayer*)m_hPlayer.Get();
+
+		if (pBasePlayer->IsAlive())
 		{
-			m_hPlayer->RemoveSolidFlags( FSOLID_NOT_SOLID );
+			if (HasSpawnFlags(SF_CAMERA_PLAYER_NOT_SOLID))
+			{
+				pBasePlayer->RemoveSolidFlags(FSOLID_NOT_SOLID);
+			}
+
+			pBasePlayer->SetViewEntity(NULL);
+			pBasePlayer->EnableControl(TRUE);
+			pBasePlayer->m_Local.m_bDrawViewmodel = true;
 		}
 
-		((CBasePlayer*)m_hPlayer.Get())->SetViewEntity( m_hPlayer );
-		((CBasePlayer*)m_hPlayer.Get())->EnableControl(TRUE);
-
-		// Restore the player's viewmodel
-		if ( ((CBasePlayer*)m_hPlayer.Get())->GetActiveWeapon() )
+		if (HasSpawnFlags(SF_CAMERA_PLAYER_SETFOV))
 		{
-			((CBasePlayer*)m_hPlayer.Get())->GetActiveWeapon()->RemoveEffects( EF_NODRAW );
+			pBasePlayer->SetFOV(this, 0, m_fovSpeed);
 		}
+
 		//return the player to previous takedamage state
 		m_hPlayer->m_takedamage = m_nOldTakeDamage;
 	}
 
 	m_state = USE_OFF;
 	m_flReturnTime = gpGlobals->curtime;
-	SetThink( NULL );
+	SetThink(NULL);
 
 	m_OnEndFollow.FireOutput(this, this); // dvsents2: what is the best name for this output?
-	SetLocalAngularVelocity( vec3_angle );
+	SetLocalAngularVelocity(vec3_angle);
 
 	DispatchUpdateTransmitState();
 }
