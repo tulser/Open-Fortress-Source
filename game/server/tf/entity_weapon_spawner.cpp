@@ -152,6 +152,12 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 					return bSuccess;
 				}
+				if ( pWeapon )
+				{
+					pTFPlayer->Weapon_Detach( pWeapon );
+					UTIL_Remove( pWeapon );
+					pWeapon = NULL;
+				}
 				return bSuccess;
 			}
 		}
