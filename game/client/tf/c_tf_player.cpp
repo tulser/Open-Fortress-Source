@@ -89,6 +89,7 @@ ConVar ofd_color_g( "ofd_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets me
 ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
 ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
+ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
@@ -386,7 +387,10 @@ void C_TFRagdoll::CreateTFRagdoll()
 		}
 		else if ( m_iTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			m_nSkin = 4;
+			if ( ofd_tennisball.GetBool() )
+				m_nSkin = 6;
+			else
+				m_nSkin = 4;
 		}
 		else
 		{
@@ -3093,7 +3097,7 @@ int C_TFPlayer::GetSkin()
 	{
 		iVisibleTeam = m_Shared.GetDisguiseTeam();
 	}
-	
+
 	int nSkin;
 
 	switch( iVisibleTeam )
@@ -3106,7 +3110,10 @@ int C_TFPlayer::GetSkin()
 		nSkin = 1;
 		break;
 	case TF_TEAM_MERCENARY:
-		nSkin = 4;
+		if ( ofd_tennisball.GetBool() )
+			nSkin = 6;
+		else
+			nSkin = 4;
 		break;
 	default:
 		nSkin = 0;
@@ -3126,7 +3133,10 @@ int C_TFPlayer::GetSkin()
 				nSkin = 3;
 				break;
 			case TF_TEAM_MERCENARY:
-				nSkin = 5;
+				if ( ofd_tennisball.GetBool() )
+					nSkin = 7;
+				else
+					nSkin = 5;
 				break;
 			default:
 				nSkin = 2;

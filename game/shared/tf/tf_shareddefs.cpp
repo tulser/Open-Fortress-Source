@@ -192,6 +192,18 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_COUNT",	// end marker, do not add below here 
 };
 
+int AliasToWeaponID( const char *alias )
+{
+	if (alias)
+	{
+		for( int i=0; g_aWeaponNames[i] != NULL; ++i )
+			if (!Q_stricmp( g_aWeaponNames[i], alias ))
+				return i;
+	}
+
+	return TF_WEAPON_NONE;
+}
+
 int g_aWeaponDamageTypes[] =
 {
 	DMG_GENERIC,	// TF_WEAPON_NONE
