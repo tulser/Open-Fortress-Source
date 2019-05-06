@@ -1539,15 +1539,19 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
 							{
-								IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_round_win" );
+								IGameEvent *event = gameeventmanager->CreateEvent( "death_match_end" );
 
-							    gameeventmanager->FireEvent( event );
-#ifdef _DEBUG
-								if(gameeventmanager->FireEvent( event = gameeventmanager->CreateEvent( "teamplay_round_win" )))
+							
+
+								//check if the event has been triggerd
+								if( event )
 								{
+									FillOutTeamplayRoundWinEvent( event );
+									gameeventmanager->FireEvent( event );
+#ifdef _DEBUG
 									DevMsg("TRIGGERD EVENT\n");
-								}
 #endif
+								}
 								GoToIntermission();
 							}
 						}

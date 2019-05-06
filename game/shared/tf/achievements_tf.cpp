@@ -118,7 +118,7 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 
 	virtual void ListenForEvents()
 	{
-		ListenForGameEvent( "teamplay_round_win" );
+		ListenForGameEvent( "death_match_end" );
 	}
 
 	virtual void Event_OnRoundComplete( float flRoundTime, IGameEvent *event )
@@ -127,7 +127,7 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 		if ( flTeamplayStartTime > 0 ) 
 		{	
 			// has the player been present and on a game team since the start of this round (minus a grace period)?
-			if ( flTeamplayStartTime < ( gpGlobals->curtime - flRoundTime ) + TF_FULL_ROUND_GRACE_PERIOD )
+			if ( flTeamplayStartTime < ( gpGlobals->curtime - flRoundTime ))
 			{
 				// yes, the achievement is satisfied for this map, set the corresponding bit
 				OnComponentEvent( m_pAchievementMgr->GetMapName() );
@@ -190,7 +190,7 @@ class CAchievementTFGetHeadshots: public CBaseAchievement
 	void Init() 
 	{
 		SetFlags( ACH_LISTEN_PLAYER_KILL_ENEMY_EVENTS | ACH_SAVE_GLOBAL );
-		SetGoal( 25 );		
+		SetGoal( 100 );		
 	}
 
 	virtual void Event_EntityKilled( CBaseEntity *pVictim, CBaseEntity *pAttacker, CBaseEntity *pInflictor, IGameEvent *event ) 
@@ -207,7 +207,7 @@ class CAchievementTFGetHeadshots: public CBaseAchievement
 	void OnPlayerStatsUpdate()
 	{
 		// when stats are updated by server, use most recent stat value
-		ClassStats_t &classStats = CTFStatPanel::GetClassStats( TF_CLASS_SNIPER );
+		ClassStats_t &classStats = CTFStatPanel::GetClassStats( TF_CLASS_MERCENARY );
 		int iOldCount = m_iCount;
 		m_iCount = classStats.accumulated.m_iStat[TFSTAT_HEADSHOTS];
 		if ( m_iCount != iOldCount )
@@ -215,7 +215,7 @@ class CAchievementTFGetHeadshots: public CBaseAchievement
 			m_pAchievementMgr->SetDirty( true );
 		}
 
-		if ( IsLocalTFPlayerClass( TF_CLASS_SNIPER ) )
+		if ( IsLocalTFPlayerClass( TF_CLASS_MERCENARY ) )
 		{
 			EvaluateNewAchievement();
 		}
