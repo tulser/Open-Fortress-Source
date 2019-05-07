@@ -118,7 +118,7 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 
 	virtual void ListenForEvents()
 	{
-		ListenForGameEvent( "death_match_end" );
+		ListenForGameEvent( "teamplay_round_win" );
 	}
 
 	virtual void Event_OnRoundComplete( float flRoundTime, IGameEvent *event )
@@ -126,12 +126,8 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 		float flTeamplayStartTime = m_pAchievementMgr->GetTeamplayStartTime();
 		if ( flTeamplayStartTime > 0 ) 
 		{	
-			// has the player been present and on a game team since the start of this round (minus a grace period)?
-			if ( flTeamplayStartTime < ( gpGlobals->curtime - flRoundTime ))
-			{
-				// yes, the achievement is satisfied for this map, set the corresponding bit
-				OnComponentEvent( m_pAchievementMgr->GetMapName() );
-			}
+			// yes, the achievement is satisfied for this map, set the corresponding bit
+				OnComponentEvent( m_pAchievementMgr->GetMapName());
 		}
 	}
 };

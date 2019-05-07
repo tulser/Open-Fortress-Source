@@ -1,9 +1,9 @@
-//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+///========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
 //
 // Purpose: The TF Game rules 
 //
 // $NoKeywords: $
-//=============================================================================
+///=============================================================================
 #include "cbase.h"
 #include "tf_gamerules.h"
 #include "ammodef.h"
@@ -108,6 +108,30 @@ ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to 
 #endif
 
 #ifdef GAME_DLL
+//listner class creates a listener for the mEvent and returns the mEvent as true
+class CMyListener : public IGameEventListener2
+{
+	CMyListener()
+	{
+		// add myself as client-side listener for this event
+		gameeventmanager->AddListener(this, "teamplay_round_win", false);
+	}
+	//this is the event checker
+	void FireGameEvent(IGameEvent* mEvent)
+	{
+		// check event type and print message
+		// check if the event has been triggerd
+		if (!strcmp("teamplay_round_win", mEvent->GetName()))
+		{
+			//prints a DevMsg of what team won its allways going to be merc
+			//thats why we only print this Msg if we are in developer mode and debug
+			//-Nbc66
+#ifdef _DEBUG
+			DevMsg("TEAM WON %i\n", mEvent->GetInt("team"));
+#endif
+										}
+									 }
+								};
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
 	ConVarRef var( pConVar );
@@ -400,6 +424,7 @@ void CTFLogicDM::Spawn(void)
 	#endif
 	BaseClass::Spawn();
 }
+
 
 class CTFLogicTDM : public CBaseEntity
 {
@@ -1403,6 +1428,14 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 	bool CTFGameRules::ClientCommand( CBaseEntity *pEdict, const CCommand &args )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( pEdict );
+		
+		//loads event file which has information for our event
+		//must be allways loaded first to be abel to acces it's information
+		//-Nbc66
+		//plus
+		//loads mod event file which has the event named "teamplay_round_win" allready defined inside of it
+		//fuck the event manager -Nbc66
+		gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");
 
 		const char *pcmd = args[0];
 		if ( FStrEq( pcmd, "objcmd" ) )
@@ -1533,25 +1566,26 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					else
 					{
 						// check if any player is over the frag limit
+						// and creates a game event for achivement shit because why not
+						//i allready want to die
+						//-Nbc66
 						for (int i = 1; i <= gpGlobals->maxClients; i++)
 						{
 							CBasePlayer *pPlayer = UTIL_PlayerByIndex(i);
 
 							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
 							{
-								IGameEvent *event = gameeventmanager->CreateEvent( "death_match_end" );
+						
+								IGameEvent *mEvent = gameeventmanager->CreateEvent( "teamplay_round_win" );
 
-							
-
-								//check if the event has been triggerd
-								if( event )
+								if(mEvent)
 								{
-									FillOutTeamplayRoundWinEvent( event );
-									gameeventmanager->FireEvent( event );
-#ifdef _DEBUG
-									DevMsg("TRIGGERD EVENT\n");
-#endif
+									//sets the team to team mercenary
+									mEvent->SetString("team", pPlayer->GetTeam()->GetName());
 								}
+								//fire the event and go straight to Intermission
+								//-Nbc66
+								gameeventmanager->FireEvent(mEvent);
 								GoToIntermission();
 							}
 						}

@@ -115,7 +115,7 @@ public:
 	// removes a listener 
 	virtual void RemoveListener( IGameEventListener2 *listener) = 0;
 
-	// create an event by name, but doesn't fire it. returns NULL is event is not
+	// create an event by name, but doesn't fire it. returns NULL if event is not
 	// known or no listener is registered for it. bForce forces the creation even if no listener is active
 	virtual IGameEvent *CreateEvent( const char *name, bool bForce = false ) = 0;
 
