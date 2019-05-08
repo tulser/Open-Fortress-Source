@@ -125,6 +125,6 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_PYRO; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_MERCENARY; }
 };
 #endif // TF_WEAPON_SHOTGUN_H

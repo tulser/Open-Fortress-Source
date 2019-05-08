@@ -333,6 +333,7 @@ private:
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
+	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );

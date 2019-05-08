@@ -39,6 +39,7 @@ struct WeaponData_t
 	float 	m_flMeleeRange;
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
+	
 
 	void Init( void )
 	{
@@ -105,6 +106,8 @@ public:
 	char					szMercenaryViewModel[MAX_WEAPON_STRING];	
 	char					szCivilianViewModel[MAX_WEAPON_STRING];	
 
+	char m_nProjectileModel[MAX_WEAPON_STRING];
+	
 	// Muzzle flash
 	char	m_szMuzzleFlashModel[128];
 	float	m_flMuzzleFlashModelDuration;

@@ -169,11 +169,11 @@ void CTFMinigun::SharedAttack()
 	}
 
 
-	if ( pPlayer->m_nButtons & IN_ATTACK )
+	if ( pPlayer->m_nButtons & IN_ATTACK || ( pPlayer->m_nButtons & IN_ATTACK2 && GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
 	{
 		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	}
-	else if ( pPlayer->m_nButtons & IN_ATTACK2 )
+	else if ( pPlayer->m_nButtons & IN_ATTACK2 && GetWeaponID()!= TF_WEAPON_GATLINGGUN )
 	{
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	}
@@ -230,8 +230,6 @@ void CTFMinigun::SharedAttack()
 		{
 			if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE )
 			{
-				if ( GetWeaponID() == TF_WEAPON_GATLINGGUN )
-					WindDown();
 #ifdef GAME_DLL
 				pPlayer->ClearWeaponFireScene();
 				pPlayer->SpeakWeaponFire( MP_CONCEPT_WINDMINIGUN );
@@ -316,10 +314,8 @@ void CTFMinigun::SecondaryAttack( void )
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return;
-	if ( GetWeaponID() == TF_WEAPON_GATLINGGUN )
-		WindDown();
-	else
-		SharedAttack();
+	
+	SharedAttack();
 }
 
 //-----------------------------------------------------------------------------
@@ -337,7 +333,8 @@ void CTFMinigun::WindUp( void )
 
 	// Set the appropriate firing state.
 	m_iWeaponState = AC_STATE_STARTFIRING;
-	pPlayer->m_Shared.AddCond( TF_COND_AIMING );
+	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+		pPlayer->m_Shared.AddCond( TF_COND_AIMING );
 
 #ifndef CLIENT_DLL
 	pPlayer->StopRandomExpressions();
@@ -347,7 +344,6 @@ void CTFMinigun::WindUp( void )
 	WeaponSoundUpdate();
 #endif
 
-	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
 		pPlayer->TeamFortress_SetSpeed();// Update player's speed
 }
 
@@ -412,7 +408,8 @@ void CTFMinigun::WindDown( void )
 
 	// Set the appropriate firing state.
 	m_iWeaponState = AC_STATE_IDLE;
-	pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
+	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
 #ifdef CLIENT_DLL
 	WeaponSoundUpdate();
 #else
@@ -423,8 +420,7 @@ void CTFMinigun::WindDown( void )
 	m_flTimeWeaponIdle = gpGlobals->curtime + 2.0;
 
 	// Update player's speed
-	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
-		pPlayer->TeamFortress_SetSpeed();
+	pPlayer->TeamFortress_SetSpeed();
 
 #ifdef CLIENT_DLL
 	m_flBarrelTargetVelocity = 0;

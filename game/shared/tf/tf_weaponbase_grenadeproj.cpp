@@ -264,12 +264,12 @@ void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
 //-----------------------------------------------------------------------------
 CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles, 
 													   const Vector &velocity, const AngularImpulse &angVelocity, 
-													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags )
+													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags, CBaseEntity *pWeapon)
 {
 	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::Create( szName, position, angles, pOwner ) );
 	if ( pGrenade )
 	{
-		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
+		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo, pWeapon);
 	}
 
 	return pGrenade;
@@ -279,7 +279,7 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
-									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo )
+									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, CBaseEntity *pWeapon )
 {
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
@@ -298,7 +298,10 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
-	
+
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
+	if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
+	SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )

@@ -309,7 +309,7 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
 //-----------------------------------------------------------------------------
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
-																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate )
+																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, CBaseEntity *pWeapon )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( bRemoteDetonate ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
@@ -318,7 +318,7 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 		pGrenade->SetPipebombMode( bRemoteDetonate );
 		DispatchSpawn( pGrenade );
 
-		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo );
+		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo, pWeapon );
 
 #ifdef _X360 
 		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE )
@@ -346,6 +346,8 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Spawn()
 {
+	Precache();
+	
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Set this to max, so effectively they do not self-implode.
@@ -375,8 +377,12 @@ void CTFGrenadePipebombProjectile::Spawn()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Precache()
 {
+	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
+	
 	PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
 	PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
+	if ( pLauncher )
+		PrecacheModel( pLauncher->GetTFWpnData().m_nProjectileModel );
 	PrecacheParticleSystem( "stickybombtrail_blue" );
 	PrecacheParticleSystem( "stickybombtrail_red" );
 	PrecacheParticleSystem( "stickybombtrail_dm" );
@@ -395,8 +401,9 @@ void CTFGrenadePipebombProjectile::SetPipebombMode( bool bRemoteDetonate )
 	}
 	else
 	{
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+			SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
 	}
+	
 }
 
 //-----------------------------------------------------------------------------

@@ -49,6 +49,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	szMercenaryViewModel[0] = 0;
 	szCivilianViewModel[0] = 0;
 	
+	m_nProjectileModel[0] = 0;
 
 	m_szMuzzleFlashModel[0] = '\0';
 	m_flMuzzleFlashModelDuration = 0;
@@ -79,7 +80,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	int i;
 
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
-
+	
+	Q_strncpy( m_nProjectileModel, pKeyValuesData->GetString( "ProjectileModel" ), MAX_WEAPON_STRING );
 	// Primary fire mode.
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage				= pKeyValuesData->GetInt( "Damage", 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nInstagibDamage		= pKeyValuesData->GetInt( "InstagibDamage", 0 );

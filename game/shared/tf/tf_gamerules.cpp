@@ -1,9 +1,9 @@
-///========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
 //
 // Purpose: The TF Game rules 
 //
 // $NoKeywords: $
-///=============================================================================
+//=============================================================================
 #include "cbase.h"
 #include "tf_gamerules.h"
 #include "ammodef.h"
@@ -225,8 +225,8 @@ REGISTER_GAMERULES_CLASS( CTFGameRules );
 
 BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
-
 	RecvPropInt( RECVINFO( m_nGameType ) ),
+	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
 	RecvPropString( RECVINFO(m_pszTeamGoalStringMercenary)),
@@ -803,7 +803,8 @@ void CTFGameRules::Activate()
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
 	m_nbIsDM = false;
 	m_nbIsTeamplay = false;
-
+	
+	m_nCurrFrags.Set(0);
 	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
 
 	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*> (gEntList.FindEntityByClassname(NULL, "item_teamflag"));
@@ -1436,7 +1437,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		//loads mod event file which has the event named "teamplay_round_win" allready defined inside of it
 		//fuck the event manager -Nbc66
 		gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");
-
 		const char *pcmd = args[0];
 		if ( FStrEq( pcmd, "objcmd" ) )
 		{
@@ -1557,6 +1557,16 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				{
 					if ( TFGameRules()->IsTeamplay() )
 					{
+						if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() )
+						{
+							m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore();
+							FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_RED), TFTeamMgr()->GetTeam(TF_TEAM_RED), USE_TOGGLE, 0 );
+						}
+						else if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() )
+						{
+							m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore();
+							FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_BLUE), TFTeamMgr()->GetTeam(TF_TEAM_BLUE), USE_TOGGLE, 0 );
+						}						
 						if ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= iFragLimit || TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= iFragLimit )
 						{
 							SendTeamScoresEvent();
@@ -1572,16 +1582,29 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 						for (int i = 1; i <= gpGlobals->maxClients; i++)
 						{
 							CBasePlayer *pPlayer = UTIL_PlayerByIndex(i);
-
+							if ( pPlayer )
+							{
+								if ( m_nCurrFrags < pPlayer->FragCount() )
+								{
+									m_nCurrFrags = pPlayer->FragCount();
+									FireTargets( "game_fragincrease", pPlayer, pPlayer, USE_TOGGLE, 0 );
+								}
+							}					
 							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
 							{
-						
-								IGameEvent *mEvent = gameeventmanager->CreateEvent( "teamplay_round_win" );
+								IGameEvent *mEvent = gameeventmanager->CreateEvent( "teamplay_round_win" );						
+								IGameEvent *event = gameeventmanager->CreateEvent( "death_match_end" );
 
-								if(mEvent)
+								//check if the event has been triggerd
+								if( event )
 								{
 									//sets the team to team mercenary
 									mEvent->SetString("team", pPlayer->GetTeam()->GetName());
+									FillOutTeamplayRoundWinEvent( event );
+									gameeventmanager->FireEvent( event );
+#ifdef _DEBUG
+									DevMsg("TRIGGERD EVENT\n");
+#endif
 								}
 								//fire the event and go straight to Intermission
 								//-Nbc66
