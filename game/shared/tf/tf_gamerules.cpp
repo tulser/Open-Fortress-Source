@@ -238,6 +238,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringMercenary ) ),
@@ -424,7 +425,6 @@ void CTFLogicDM::Spawn(void)
 	#endif
 	BaseClass::Spawn();
 }
-
 
 class CTFLogicTDM : public CBaseEntity
 {
