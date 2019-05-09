@@ -88,6 +88,9 @@ public:
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PISTOL_AKIMBO; }
 	bool			PrimaryAttackSwapsActivities( void ){ return true; }
+	
+	virtual acttable_t *ActivityList( int &iActivityCount );
+	static acttable_t m_acttablePistolAkimbo[];
 };
 
 
