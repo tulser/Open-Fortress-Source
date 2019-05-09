@@ -63,6 +63,7 @@ ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | F
 
 ConVar ofd_forceclass( "ofd_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
 ConVar ofd_allowteams( "ofd_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
+ConVar ofd_berserk_speed( "ofd_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
 extern ConVar of_infiniteammo;
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
@@ -899,6 +900,32 @@ void CTFPlayerShared::OnAddBerserk( void )
 {
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Mercenary.LaughEvil01" );
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		char *pEffectName = NULL;
+
+		pEffectName = "effects/berserk_overlay";
+
+		IMaterial *pMaterial = materials->FindMaterial( pEffectName, TEXTURE_GROUP_CLIENT_EFFECTS, false );
+		if ( !IsErrorMaterial( pMaterial ) )
+		{
+			view->SetScreenOverlayMaterial( pMaterial );
+		}
+	}
+#else
+	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
+	if ( pTFPlayer )
+	{
+		DevMsg("Bruh");
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( "TF_WEAPON_BERSERK" );
+		if ( pWeapon )
+		{
+			DevMsg("Nah");
+			pWeapon->GiveTo( pTFPlayer );
+			pTFPlayer->Weapon_Switch(pWeapon, pWeapon->GetSlot() );
+		}
+	}
+	m_pOuter->TeamFortress_SetSpeed();
 #endif
 }
 
@@ -906,6 +933,23 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 {
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Mercenary.NegativeVocalization01" );
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		view->SetScreenOverlayMaterial( NULL );
+	}
+#else
+	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );	
+	if ( pTFPlayer )
+	{
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetActiveWeapon();
+		if ( pWeapon )
+		{
+			pTFPlayer->Weapon_Detach( pWeapon );
+			UTIL_Remove( pWeapon );
+			pTFPlayer->Weapon_Switch( pTFPlayer->GetLastWeapon() );
+		}
+	}
+	m_pOuter->TeamFortress_SetSpeed();
 #endif
 }
 //-----------------------------------------------------------------------------
@@ -2221,7 +2265,13 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			}
 		}
 	}
+	// if they're a sniper, and they're aiming, their speed must be 80 or less
+	if ( m_Shared.InCond( TF_COND_BERSERK ) )
+	{
+		if (maxfbspeed < ofd_berserk_speed.GetFloat())
+			maxfbspeed = ofd_berserk_speed.GetFloat();
 
+	}
 	// if they're a sniper, and they're aiming, their speed must be 80 or less
 	if ( m_Shared.InCond( TF_COND_AIMING ) )
 	{

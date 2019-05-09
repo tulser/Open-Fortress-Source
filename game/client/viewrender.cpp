@@ -53,6 +53,7 @@
 #include "clientmode_shared.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#include "tf_gamerules.h"
 
 #ifdef PORTAL
 //#include "C_Portal_Player.h"
@@ -4712,8 +4713,15 @@ sky3dparams_t *CSkyboxView::PreRender3dSkyboxWorld( SkyboxVisibility_t nSkyboxVi
 
 	// render the 3D skybox
 	if ( !r_3dsky.GetInt() )
-		return NULL;
-
+	{	
+		if ( TFGameRules() )
+		{
+			if ( !TFGameRules()->Force3DSkybox())
+				return NULL;
+		}
+		else
+			return NULL;
+	}
 	C_BasePlayer *pbp = C_BasePlayer::GetLocalPlayer();
 
 	// No local player object yet...

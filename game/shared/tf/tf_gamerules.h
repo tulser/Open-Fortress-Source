@@ -74,6 +74,7 @@ public:
 	virtual void Activate();
 	
 	bool m_bUsesHL2Hull;
+	bool m_bForce3DSkybox;
 #endif
 };
 
@@ -350,10 +351,13 @@ public:
 	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
+	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	int		m_iBirthdayMode;
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );
+	CNetworkVar( bool, m_bForce3DSkybox );
 	CNetworkVar( bool, m_bIsTeamplay ); //Used to check if of_logic_dm has teamplay enabled
+	
 #ifdef GAME_DLL
 	virtual const char* GetMusicName( bool activeRound );
 

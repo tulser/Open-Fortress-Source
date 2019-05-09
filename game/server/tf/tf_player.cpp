@@ -7,6 +7,7 @@
 
 #include "cbase.h"
 #include "tf_player.h"
+#include "baseanimating.h"
 #include "tf_gamerules.h"
 #include "tf_gamestats.h"
 #include "KeyValues.h"
@@ -3530,12 +3531,25 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Ragdoll, gib, or death animation.
 	bool bRagdoll = true;
 	bool bGib = false;
-
 	// See if we should gib.
 	if ( ShouldGib( info ) )
 	{
 		bGib = true;
 		bRagdoll = false;
+	}
+	else if ( ShouldGib( info ) == false )
+	{
+		bool bRagdollCreated = false;
+		if ( (info.GetDamageType() & DMG_DISSOLVE) && CanBecomeRagdoll() )
+		{
+			int nDissolveType = ENTITY_DISSOLVE_NORMAL;
+			if ( info.GetDamageType() & DMG_SHOCK )
+			{
+				nDissolveType = ENTITY_DISSOLVE_ELECTRICAL;
+			}
+
+			bRagdollCreated = Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
+		}
 	}
 	else
 	// See if we should play a custom death animation.
@@ -5282,7 +5296,6 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
 	{
 		m_nRenderFX = kRenderFxRagdoll;
 	}
-
 	// Save ragdoll handle.
 	m_hRagdoll = pRagdoll;
 }
