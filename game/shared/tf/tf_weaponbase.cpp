@@ -394,7 +394,7 @@ const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 		return GetTFWpnData().szHeavyViewModel;	
 	if ( bEngi && GetTFWpnData().szEngineerViewModel[0] != 0  )
 		return GetTFWpnData().szEngineerViewModel;	
-	if ( bMedic && GetTFWpnData().szScoutViewModel[0] != 0 )
+	if ( bMedic && GetTFWpnData().szMedicViewModel[0] != 0 )
 		return GetTFWpnData().szMedicViewModel;	
 	if ( bSniper && GetTFWpnData().szSniperViewModel[0] != 0 )
 		return GetTFWpnData().szSniperViewModel;

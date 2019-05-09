@@ -62,6 +62,8 @@ SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 
+static const char *s_PipebombModel;
+
 #ifdef GAME_DLL
 static string_t s_iszTrainName;
 #endif
@@ -186,7 +188,6 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 		m_bPulsed = false;
 
 		pPlayer->m_Shared.UpdateParticleColor( pParticle );
-
 		CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
 
 		if ( pLauncher )
@@ -315,11 +316,23 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 	if ( pGrenade )
 	{
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
+		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
+		DevMsg("Test");
+		if ( pTFWeapon )
+		{
+			DevMsg(" Please for the love of god ");
+			if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
+			{
+				s_PipebombModel =  pTFWeapon->GetTFWpnData().m_nProjectileModel;	
+			}
+			else
+			{
+				s_PipebombModel = NULL;
+			}
+		}
 		pGrenade->SetPipebombMode( bRemoteDetonate );
 		DispatchSpawn( pGrenade );
-
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo, pWeapon );
-
 #ifdef _X360 
 		if ( pGrenade->m_iType != TF_GL_MODE_REMOTE_DETONATE )
 		{
@@ -346,8 +359,6 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Spawn()
 {
-	Precache();
-	
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Set this to max, so effectively they do not self-implode.
@@ -360,7 +371,11 @@ void CTFGrenadePipebombProjectile::Spawn()
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 	}
-
+	if ( s_PipebombModel )
+	{
+		PrecacheModel( s_PipebombModel );
+		SetModel( s_PipebombModel );
+	}
 	BaseClass::Spawn();
 
 	m_bTouched = false;
@@ -376,13 +391,9 @@ void CTFGrenadePipebombProjectile::Spawn()
 // Purpose:
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Precache()
-{
-	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
-	
+{	
 	PrecacheModel( TF_WEAPON_PIPEBOMB_MODEL );
 	PrecacheModel( TF_WEAPON_PIPEGRENADE_MODEL );
-	if ( pLauncher )
-		PrecacheModel( pLauncher->GetTFWpnData().m_nProjectileModel );
 	PrecacheParticleSystem( "stickybombtrail_blue" );
 	PrecacheParticleSystem( "stickybombtrail_red" );
 	PrecacheParticleSystem( "stickybombtrail_dm" );
@@ -395,15 +406,20 @@ void CTFGrenadePipebombProjectile::Precache()
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::SetPipebombMode( bool bRemoteDetonate )
 {
+	Precache();
 	if ( bRemoteDetonate )
 	{
 		m_iType.Set( TF_GL_MODE_REMOTE_DETONATE );
 	}
 	else
 	{
-			SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
 	}
-	
+	if ( s_PipebombModel )
+	{
+		PrecacheModel( s_PipebombModel );
+		SetModel( s_PipebombModel );
+	}
 }
 
 //-----------------------------------------------------------------------------

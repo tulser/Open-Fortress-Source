@@ -50,6 +50,8 @@ public:
 	virtual float	GetProjectileSpeed( void );
 
 	virtual bool	Reload( void );
+	
+	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
 
 	virtual int GetMaxClip1( void ) const;
 	virtual int GetDefaultClip1( void ) const;

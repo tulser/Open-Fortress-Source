@@ -5,6 +5,7 @@
 //=============================================================================
 #include "cbase.h"
 #include "tf_weapon_grenadelauncher.h"
+#include "tf_weapon_grenade_pipebomb.h"
 #include "tf_fx_shared.h"
 
 // Client specific.
@@ -192,6 +193,25 @@ void CTFGrenadeLauncher::LaunchGrenade( void )
 float CTFGrenadeLauncher::GetProjectileSpeed( void )
 {
 	return TF_GRENADE_LAUNCER_MIN_VEL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add pipebombs to our list as they're fired
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFGrenadeLauncher::FireProjectile( CTFPlayer *pPlayer )
+{
+	CBaseEntity *pProjectile = BaseClass::FireProjectile( pPlayer );
+	if ( pProjectile )
+	{
+#ifdef GAME_DLL
+		// If we've gone over the max pipebomb count, detonate the oldest
+
+		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
+		pPipebomb->SetLauncher( this );
+ #endif
+	}
+
+	return pProjectile;
 }
 
 //-----------------------------------------------------------------------------

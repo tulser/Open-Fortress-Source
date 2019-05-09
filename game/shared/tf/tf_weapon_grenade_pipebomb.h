@@ -49,8 +49,6 @@ public:
 
 	virtual void	UpdateOnRemove( void );
 
-
-
 #ifdef CLIENT_DLL
 
 	virtual void OnDataChanged( DataUpdateType_t updateType );
@@ -77,7 +75,7 @@ public:
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 
 	void			SetPipebombMode( bool bRemoteDetonate );
-
+	
 	virtual void	PipebombTouch( CBaseEntity *pOther );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 

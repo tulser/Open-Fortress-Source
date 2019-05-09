@@ -298,11 +298,14 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
-
+/*
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
 	if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
-	SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
-
+	{
+		PrecacheModel(pTFWeapon->GetTFWpnData().m_nProjectileModel);
+		SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
+	}
+*/
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{
