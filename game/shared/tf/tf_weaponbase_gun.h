@@ -76,7 +76,7 @@ private:
 
 public:
 	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }
-	bool			m_bSwapFire;
+	CNetworkVar( bool,	m_bSwapFire );
 };
 
 #endif // TF_WEAPONBASE_GUN_H

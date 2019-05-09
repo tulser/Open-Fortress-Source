@@ -38,6 +38,13 @@ extern ConVar ofd_instagib;
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseGun, DT_TFWeaponBaseGun )
 
 BEGIN_NETWORK_TABLE( CTFWeaponBaseGun, DT_TFWeaponBaseGun )
+// Client specific.
+#ifdef CLIENT_DLL
+	RecvPropBool( RECVINFO( m_bSwapFire ) ),
+// Server specific.
+#else
+	SendPropBool( SENDINFO( m_bSwapFire ) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
@@ -51,6 +58,9 @@ DEFINE_THINKFUNC( ZoomOut ),
 DEFINE_THINKFUNC( ZoomIn ),
 END_DATADESC()
 #endif
+
+
+
 
 ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
 extern ConVar of_infiniteammo;
