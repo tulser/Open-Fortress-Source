@@ -247,6 +247,7 @@ BEGIN_SIMPLE_DATADESC( CPlayerState )
 	// DEFINE_FIELD( hltv, FIELD_BOOLEAN ),
 	// DEFINE_FIELD( replay, FIELD_BOOLEAN ),
 	// DEFINE_FIELD( frags, FIELD_INTEGER ),
+	// DEFINE_FIELD( gglevel, FIELD_INTEGER ),
 	// DEFINE_FIELD( deaths, FIELD_INTEGER ),
 END_DATADESC()
 
@@ -363,6 +364,7 @@ BEGIN_DATADESC( CBasePlayer )
 
 	DEFINE_FIELD( m_iFrags, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iDeaths, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iGGLevel, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bAllowInstantSpawn, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextDecalTime, FIELD_TIME ),
 	//DEFINE_AUTO_ARRAY( m_szTeamName, FIELD_STRING ), // mp
@@ -2921,6 +2923,15 @@ void CBasePlayer::IncrementFragCount( int nCount )
 {
 	m_iFrags += nCount;
 	pl.frags = m_iFrags;
+}
+
+void CBasePlayer::ResetGGLevel()
+{
+	m_iGGLevel = 0;
+}
+void CBasePlayer::IncrementGGLevel( int nCount )
+{
+	m_iGGLevel += nCount;
 }
 
 void CBasePlayer::ResetDeathCount()
@@ -9033,6 +9044,12 @@ int	CPlayerInfo::GetFragCount()
 { 
 	Assert( m_pParent );
 	return m_pParent->FragCount(); 
+}
+
+int	CPlayerInfo::GetGGLevel() 
+{ 
+	Assert( m_pParent );
+	return m_pParent->GGLevel(); 
 }
 
 int	CPlayerInfo::GetDeathCount() 

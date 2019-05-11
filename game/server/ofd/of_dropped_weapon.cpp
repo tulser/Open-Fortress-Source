@@ -18,6 +18,7 @@
 //----------------------------------------------
 
 extern ConVar ofd_multiweapons;
+extern ConVar ofd_allow_allclass_pickups;
 
 // Network table.
 IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
@@ -93,7 +94,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	if( !pOther->IsAlive() )
 		return;	
-	
+	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		return;
 	//Don't let the person who threw this ammo pick it up until it hits the ground.
 	//This way we can throw ammo to people, but not touch it as soon as we throw it ourselves
 	if( GetOwnerEntity() == pOther && m_bAllowOwnerPickup == false )
@@ -101,7 +103,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	CBasePlayer *pPlayer = ToBasePlayer( pOther );
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) )
+	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !ofd_allow_allclass_pickups.GetBool() )
 		return;
 	Assert( pPlayer );
 

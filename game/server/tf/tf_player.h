@@ -353,7 +353,6 @@ public:
 public:
 	CNetworkVector( m_vecPlayerColor );
 	CTFPlayerShared m_Shared;
-
 	int	    item_list;			// Used to keep track of which goalitems are 
 								// affecting the player at any time.
 								// GoalItems use it to keep track of their own 
@@ -388,6 +387,7 @@ public:
 	virtual bool Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 	virtual void Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget , const Vector *pVelocity );
 
+	void 				CTFPlayer::UpdateGunGameLevel( void );
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 

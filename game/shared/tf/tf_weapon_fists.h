@@ -57,7 +57,7 @@ public:
 
 	CTFBerserk() {}
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_BERSERK; }
-
+	int			GetGGLevel( void ){ return 999; }
 
 private:
 

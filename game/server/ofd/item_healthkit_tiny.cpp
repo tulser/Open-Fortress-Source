@@ -43,26 +43,42 @@ public:
 
 	DECLARE_CLASS(CHealthKitTiny, CTFPowerup);
 
+	string_t m_iszModel=MAKE_STRING( "" );
+	string_t m_iszModelOLD=MAKE_STRING( "" );
+	string_t m_iszPickupSound=MAKE_STRING( "HealthKitTiny.Touch" );
+	DECLARE_DATADESC();
 	void Spawn(void)
 	{
 		Precache();
-		SetModel(GetPowerupModel());
-
+		if ( m_iszModel==MAKE_STRING( "" ) )
+		{
+			if ( m_iszModelOLD!=MAKE_STRING( "" ) )
+				SetModel( STRING(m_iszModelOLD) );
+			else
+				SetModel( GetPowerupModel() );
+		}
+		else SetModel( STRING(m_iszModel) );
 		BaseClass::Spawn();
 	}
-
 	void Precache(void)
 	{
-		PrecacheModel(GetPowerupModel());
-		PrecacheScriptSound(TF_HEALTHKIT_PICKUP_SOUND);
-	}
+		if ( m_iszModel==MAKE_STRING( "" ) )
+		{
+			if ( m_iszModelOLD!=MAKE_STRING( "" ) )
+				PrecacheModel( STRING(m_iszModelOLD) );
+			else
+				PrecacheModel( GetPowerupModel() );
+		}
+		else PrecacheModel( STRING(m_iszModel) );	
+		PrecacheScriptSound( STRING(m_iszPickupSound) );
+	}	
 
 	bool MyTouch(CBasePlayer *pPlayer)
 	{
 		if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))
 		{
 			CSingleUserRecipientFilter filter(pPlayer);
-			EmitSound(filter, entindex(), TF_HEALTHKIT_PICKUP_SOUND);
+			EmitSound(filter, entindex(), STRING(m_iszPickupSound));
 			AddEffects( EF_NODRAW );
 		}
 		return true;
@@ -72,5 +88,11 @@ public:
 LINK_ENTITY_TO_CLASS(item_healthkit_tiny, CHealthKitTiny);
 PRECACHE_REGISTER(item_healthkit_tiny);
 
+BEGIN_DATADESC(CHealthKitTiny)
 
+// Inputs.
+DEFINE_KEYFIELD( m_iszModel, FIELD_STRING, "model" ),
+DEFINE_KEYFIELD( m_iszModelOLD, FIELD_STRING, "powerup_model" ),
+DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
 
+END_DATADESC()

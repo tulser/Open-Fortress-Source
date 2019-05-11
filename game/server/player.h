@@ -193,6 +193,7 @@ public:
 	virtual int			GetTeamIndex();
 	virtual void		ChangeTeam( int iTeamNum );
 	virtual int			GetFragCount();
+	virtual int			GetGGLevel();
 	virtual int			GetDeathCount();
 	virtual bool		IsConnected();
 	virtual int			GetArmorValue();
@@ -659,6 +660,7 @@ public:
 
 	// Accessor methods
 	int		FragCount() const		{ return m_iFrags; }
+	int		GGLevel() const			{ return m_iGGLevel; }
 	int		DeathCount() const		{ return m_iDeaths;}
 	bool	IsConnected() const		{ return m_iConnected != PlayerDisconnected; }
 	bool	IsDisconnecting() const	{ return m_iConnected == PlayerDisconnecting; }
@@ -684,9 +686,12 @@ public:
 	virtual void	ResetPerRoundStats( void ) { return; }
 	void			AllowInstantSpawn( void ) { m_bAllowInstantSpawn = true; }
 
-	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount(); }
+	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel(); }
 	void	ResetFragCount();
 	void	IncrementFragCount( int nCount );
+	
+	void	ResetGGLevel();
+	void	IncrementGGLevel( int nCount );	
 
 	void	ResetDeathCount();
 	void	IncrementDeathCount( int nCount );
@@ -1036,6 +1041,7 @@ private:
 
 	int						m_iFrags;
 	int						m_iDeaths;
+	int 					m_iGGLevel;
 
 	float					m_flNextDecalTime;// next time this player can spray a decal
 

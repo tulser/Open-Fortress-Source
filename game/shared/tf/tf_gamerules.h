@@ -36,7 +36,6 @@
 	
 	#define CTFGameRules C_TFGameRules
 	#define CTFGameRulesProxy C_TFGameRulesProxy
-
 #else
 
 	extern BOOL no_cease_fire_text;
@@ -88,6 +87,20 @@ public:
 	DECLARE_DATADESC();
 	bool m_bIsTeamplay;
 	bool m_bDontCountKills;
+#endif
+};
+
+class CTFLogicGG : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicGG, CBaseEntity);
+	CTFLogicGG();
+	void	Spawn(void);
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	string_t	m_iszWeaponName[50];
+	bool		m_bListOnly;
+	int			m_iMaxLevel = 0;
 #endif
 };
 
@@ -346,9 +359,17 @@ public:
 	CNetworkVar( bool, m_nbIsDM ); // Is Deathmatch On?
 	CNetworkVar( bool, m_nbIsTeamplay ); // Is Teamplay On?
 	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
+	CNetworkVar( bool, m_nbIsGG ); // Is Gun Game On?
+	
+	string_t 		m_iszWeaponName[50];
+
+	int				m_iMaxLevel;
+	bool			m_bListOnly;
+	
 	virtual bool	IsDMGamemode(void) { return m_nbIsDM; }
 	virtual bool	IsTeamplay(void) { return m_nbIsTeamplay; }
 	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
+	virtual bool	IsGGGamemode(void) { return m_nbIsGG; }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
@@ -390,7 +411,6 @@ inline CTFGameRules* TFGameRules()
 {
 	return static_cast<CTFGameRules*>(g_pGameRules);
 }
-
 
 #ifdef GAME_DLL
 	bool EntityPlacementTest( CBaseEntity *pMainEnt, const Vector &vOrigin, Vector &outPos, bool bDropToGround );

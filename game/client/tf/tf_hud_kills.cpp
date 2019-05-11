@@ -98,7 +98,7 @@ bool CTFHudKills::ShouldDraw( void )
 	{
 		return false;
 	}
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode() ) && !TFGameRules()->DontCountKills() )
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -150,7 +150,10 @@ void CTFHudKills::OnThink()
 			
 			UpdateKillLabel( true );
 			SetDialogVariable( "Kills",m_nKills );
-			SetDialogVariable( "FragLimit", fraglimit.GetInt()  );
+			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel );
+			else
+				SetDialogVariable( "FragLimit", fraglimit.GetInt()  );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.1f;

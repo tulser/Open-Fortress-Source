@@ -118,6 +118,11 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int	GetDamageType() const { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
 	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 
+	int			GetGGLevel( void ){ return m_iGGLevel; }
+	void		SetGGLevel( int level ){ m_iGGLevel = level; }
+	
+	bool		NeverStrip( void ){ return m_bNeverStrip; }
+	
 	// View model.
 	virtual const char *GetViewModel( int iViewModel = 0 ) const;
 
@@ -258,6 +263,7 @@ protected:
 	bool			m_bInAttack;
 	bool			m_bInAttack2;
 	bool			m_bCurrentAttackIsCrit;
+	bool			m_bNeverStrip;
 
 	CNetworkVar(	bool,	m_bLowered );
 
@@ -269,6 +275,7 @@ protected:
 	float			m_flLastCritCheckTime;
 	int				m_iLastCritCheckFrame;
 	int				m_iCurrentSeed;
+	int				m_iGGLevel;
 
 	char			m_szTracerName[MAX_TRACER_NAME];
 

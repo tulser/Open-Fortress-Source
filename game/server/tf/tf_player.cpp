@@ -1255,16 +1255,47 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 		UTIL_Remove( pWpn );
 	}
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::UpdateGunGameLevel()
+{
+	m_Shared.RemoveCond( TF_COND_AIMING );
+	m_Shared.RemoveCond( TF_COND_ZOOMED );
+	TeamFortress_SetSpeed();
+	int level = GGLevel();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)GiveNamedItem( STRING(TFGameRules()->m_iszWeaponName[level]) );
+	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
+	{
+		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		if ( pWeapon && ( pWeapon->GetGGLevel()< level || pWeapon->GetSlot() == pNewWeapon->GetSlot()) && !pWeapon->NeverStrip())
+		{
+			Weapon_Detach( pWeapon );
+			UTIL_Remove( pWeapon );
+			pWeapon = NULL;
+		}
+	}
+	if ( pNewWeapon )
+	{
+		pNewWeapon->GiveTo(this);
+		pNewWeapon->SetGGLevel(level);
+		Weapon_Switch(pNewWeapon, pNewWeapon->GetSlot() );
+	}
+	else
+	{
+		SwitchToNextBestWeapon( NULL );
+	}
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
 	StripWeapons();
-	DevMsg("%d\n", GetCarriedWeapons());
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	if( ofd_instagib.GetInt() == 0 )
+	if( ofd_instagib.GetInt() == 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() )
+	{
 		for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; iWeapon++ )
 		{
 			if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
@@ -1315,7 +1346,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				}
 			}
 		}
-	else
+	}
+	if ( ofd_instagib.GetInt() > 0)
 	{
 		for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
 		{
@@ -1355,6 +1387,22 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 						}
 					}
 		}	
+	}
+	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+	{
+			pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
+			CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)GiveNamedItem( STRING(TFGameRules()->m_iszWeaponName[GGLevel()]) );
+			if ( pWeapon && pWeapon->GetSlot() != pNewWeapon->GetSlot() )
+			{
+					pWeapon->SetGGLevel(999);
+					pWeapon->DefaultTouch( this );
+			}
+			if ( pNewWeapon )
+			{
+					pNewWeapon->SetGGLevel(GGLevel());
+					pNewWeapon->DefaultTouch( this );
+			}
+	
 	}
 	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
 	{
@@ -3400,6 +3448,18 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
 
+		if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		{
+			IncrementGGLevel(1);
+			DevMsg("%d \n", GGLevel());
+			DevMsg("Bruh \n");
+			if ( GGLevel() < TFGameRules()->m_iMaxLevel )
+			{
+				DevMsg("Moment \n");
+				UpdateGunGameLevel();
+			}
+		}		
+		
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
 		if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
@@ -3461,7 +3521,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		pPlayerAttacker = ToTFPlayer( info.GetAttacker() );
 	}
-
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the rag doll to burn if the player was burning and was not a pryo (who only burns momentarily)
 	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
@@ -3537,8 +3596,14 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		bGib = true;
 		bRagdoll = false;
 	}
-	else if ( ShouldGib( info ) == false )
+	else
+	// See if we should play a custom death animation.
 	{
+		if ( PlayDeathAnimation( info, info_modified ) )
+		{
+			bRagdoll = false;
+		}
+	}
 		bool bRagdollCreated = false;
 		if ( (info.GetDamageType() & DMG_DISSOLVE) && CanBecomeRagdoll() )
 		{
@@ -3550,16 +3615,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 			bRagdollCreated = Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
 		}
-	}
-	else
-	// See if we should play a custom death animation.
-	{
-		if ( PlayDeathAnimation( info, info_modified ) )
-		{
-			bRagdoll = false;
-		}
-	}
-
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
 	if( pPlayerAttacker )
@@ -3604,7 +3659,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		// if this was suicide, recalculate attacker to see if we want to award the kill to a recent damager
 //		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
 	}
-
 	BaseClass::Event_Killed( info_modified );
 	
 	if ( info.GetDamageType() & DMG_DISSOLVE )

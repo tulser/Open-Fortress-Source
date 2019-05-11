@@ -92,6 +92,7 @@ public:
 	bool	m_bHasTeamSkins_Viewmodel;
 	bool	m_bHasTeamSkins_Worldmodel;
 	bool	m_bUsesCritAnimation;
+	bool	m_bNeverStrip;
 	
 	//Viewmodels
 	char					szScoutViewModel[MAX_WEAPON_STRING];

@@ -56,7 +56,7 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
-	if ( ofd_instagib.GetInt() <= 0 ) {
+	if ( ofd_instagib.GetInt() <= 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() ) {
 	Precache();
 	if (m_iszWeaponModel==MAKE_STRING( "" )) m_iszWeaponModel=m_iszWeaponModelOLD;
 	SetModel( STRING(m_iszWeaponModel) );

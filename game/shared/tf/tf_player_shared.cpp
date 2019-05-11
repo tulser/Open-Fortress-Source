@@ -165,6 +165,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
+	
 	// Spy
 	SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
 	SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
@@ -916,11 +917,9 @@ void CTFPlayerShared::OnAddBerserk( void )
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
 	{
-		DevMsg("Bruh");
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( "TF_WEAPON_BERSERK" );
 		if ( pWeapon )
 		{
-			DevMsg("Nah");
 			pWeapon->GiveTo( pTFPlayer );
 			pTFPlayer->Weapon_Switch(pWeapon, pWeapon->GetSlot() );
 		}
@@ -946,7 +945,10 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 		{
 			pTFPlayer->Weapon_Detach( pWeapon );
 			UTIL_Remove( pWeapon );
-			pTFPlayer->Weapon_Switch( pTFPlayer->GetLastWeapon() );
+			if ( pTFPlayer->GetLastWeapon() )
+				pTFPlayer->Weapon_Switch( pTFPlayer->GetLastWeapon() );
+			else
+				pTFPlayer->SwitchToNextBestWeapon( NULL );
 		}
 	}
 	m_pOuter->TeamFortress_SetSpeed();

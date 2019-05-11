@@ -200,7 +200,7 @@ public:
 	bool	IsPlayerDominated( int iPlayerIndex );
 	bool	IsPlayerDominatingMe( int iPlayerIndex );
 	void	SetPlayerDominatingMe( CTFPlayer *pPlayer, bool bDominated );
-
+	
 private:
 
 	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );

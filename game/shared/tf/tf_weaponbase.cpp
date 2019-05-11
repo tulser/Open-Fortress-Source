@@ -198,6 +198,8 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iLastCritCheckFrame = 0;
 	m_bCurrentAttackIsCrit = false;
 	m_iCurrentSeed = -1;
+	m_iGGLevel = -1;
+	m_bNeverStrip = false;
 
 	m_bQuakeRLHack = false;
 }
@@ -231,7 +233,7 @@ void CTFWeaponBase::Spawn()
 	Vector vecOrigin = GetAbsOrigin();
 	SetAbsOrigin( Vector( vecOrigin.x, vecOrigin.y, vecOrigin.z + 5.0f ) );
 #endif
-
+	m_bNeverStrip = GetTFWpnData().m_bNeverStrip;
 	m_szTracerName[0] = '\0';
 }
 
@@ -240,7 +242,7 @@ void CTFWeaponBase::Spawn()
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() )
+	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 
 	return GetWpnData().iSlot;
@@ -251,7 +253,7 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetPosition( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
 }

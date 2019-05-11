@@ -81,6 +81,24 @@ static int g_TauntCamAchievements[] =
 	0,		// TF_CLASS_COUNT_ALL,
 };
 
+string_t m_iszDefaultWeaponName[50] =
+{
+	MAKE_STRING("tf_weapon_pistol_mercenary"),
+	MAKE_STRING("tf_weapon_pistol_akimbo"),
+	MAKE_STRING("tf_weapon_revolver_mercenary"),
+	MAKE_STRING("tf_weapon_tommygun"),
+	MAKE_STRING("tf_weapon_nailgun"),
+	MAKE_STRING("tf_weapon_flamethrower"),
+	MAKE_STRING("tf_weapon_shotgun_mercenary"),
+	MAKE_STRING("tf_weapon_supershotgun"),
+	MAKE_STRING("tf_weapon_railgun"),
+	MAKE_STRING("tf_weapon_gatlinggun"),
+	MAKE_STRING("tf_weapon_pipebomblauncher"),
+	MAKE_STRING("tf_weapon_grenadelauncher_mercenary"),
+	MAKE_STRING("tf_weapon_rocketlauncher_dm"),
+	MAKE_STRING("tf_weapon_knife")	
+};
+
 extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
@@ -99,7 +117,7 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY);
 ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-
+ConVar ofg_force( "ofg_force", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -234,6 +252,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_nbIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
+	RecvPropBool( RECVINFO( m_nbIsGG ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
 #else
@@ -247,6 +266,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_nbIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
+	SendPropBool( SENDINFO( m_nbIsGG ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
 #endif
@@ -427,6 +447,100 @@ void CTFLogicDM::Spawn(void)
 	TFGameRules()->m_bIsTeamplay = m_bIsTeamplay;
 	TFGameRules()->m_nbDontCountKills = m_bDontCountKills;
 	#endif
+	BaseClass::Spawn();
+}
+
+
+LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
+//-----------------------------------------------------------------------------
+// DM Logic 
+//-----------------------------------------------------------------------------
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFLogicGG )
+	//Keyfields
+	DEFINE_KEYFIELD( m_bListOnly, FIELD_BOOLEAN, "ListOnly"),
+	
+	DEFINE_KEYFIELD(m_iszWeaponName[0],  FIELD_STRING, "WeaponName01"),
+	DEFINE_KEYFIELD(m_iszWeaponName[1],  FIELD_STRING, "WeaponName02"),
+	DEFINE_KEYFIELD(m_iszWeaponName[2],  FIELD_STRING, "WeaponName03"),
+	DEFINE_KEYFIELD(m_iszWeaponName[3],  FIELD_STRING, "WeaponName04"),
+	DEFINE_KEYFIELD(m_iszWeaponName[4],  FIELD_STRING, "WeaponName05"),
+	DEFINE_KEYFIELD(m_iszWeaponName[5],  FIELD_STRING, "WeaponName06"),
+	DEFINE_KEYFIELD(m_iszWeaponName[6],  FIELD_STRING, "WeaponName07"),
+	DEFINE_KEYFIELD(m_iszWeaponName[7],  FIELD_STRING, "WeaponName08"),
+	DEFINE_KEYFIELD(m_iszWeaponName[8],  FIELD_STRING, "WeaponName09"),
+	DEFINE_KEYFIELD(m_iszWeaponName[9],  FIELD_STRING, "WeaponName10"),
+	DEFINE_KEYFIELD(m_iszWeaponName[10], FIELD_STRING, "WeaponName11"),
+	DEFINE_KEYFIELD(m_iszWeaponName[11], FIELD_STRING, "WeaponName12"),
+	DEFINE_KEYFIELD(m_iszWeaponName[12], FIELD_STRING, "WeaponName13"),
+	DEFINE_KEYFIELD(m_iszWeaponName[13], FIELD_STRING, "WeaponName14"),
+	DEFINE_KEYFIELD(m_iszWeaponName[14], FIELD_STRING, "WeaponName15"),
+	DEFINE_KEYFIELD(m_iszWeaponName[15], FIELD_STRING, "WeaponName16"),
+	DEFINE_KEYFIELD(m_iszWeaponName[16], FIELD_STRING, "WeaponName17"),
+	DEFINE_KEYFIELD(m_iszWeaponName[17], FIELD_STRING, "WeaponName18"),
+	DEFINE_KEYFIELD(m_iszWeaponName[18], FIELD_STRING, "WeaponName19"),
+	DEFINE_KEYFIELD(m_iszWeaponName[19], FIELD_STRING, "WeaponName20"),
+	DEFINE_KEYFIELD(m_iszWeaponName[20], FIELD_STRING, "WeaponName21"),
+	DEFINE_KEYFIELD(m_iszWeaponName[21], FIELD_STRING, "WeaponName22"),
+	DEFINE_KEYFIELD(m_iszWeaponName[22], FIELD_STRING, "WeaponName23"),
+	DEFINE_KEYFIELD(m_iszWeaponName[23], FIELD_STRING, "WeaponName24"),
+	DEFINE_KEYFIELD(m_iszWeaponName[24], FIELD_STRING, "WeaponName25"),
+	DEFINE_KEYFIELD(m_iszWeaponName[25], FIELD_STRING, "WeaponName26"),
+	DEFINE_KEYFIELD(m_iszWeaponName[26], FIELD_STRING, "WeaponName27"),
+	DEFINE_KEYFIELD(m_iszWeaponName[27], FIELD_STRING, "WeaponName28"),
+	DEFINE_KEYFIELD(m_iszWeaponName[28], FIELD_STRING, "WeaponName29"),
+	DEFINE_KEYFIELD(m_iszWeaponName[29], FIELD_STRING, "WeaponName30"),
+	DEFINE_KEYFIELD(m_iszWeaponName[30], FIELD_STRING, "WeaponName31"),
+	DEFINE_KEYFIELD(m_iszWeaponName[31], FIELD_STRING, "WeaponName32"),
+	DEFINE_KEYFIELD(m_iszWeaponName[32], FIELD_STRING, "WeaponName33"),
+	DEFINE_KEYFIELD(m_iszWeaponName[33], FIELD_STRING, "WeaponName34"),
+	DEFINE_KEYFIELD(m_iszWeaponName[34], FIELD_STRING, "WeaponName35"),
+	DEFINE_KEYFIELD(m_iszWeaponName[35], FIELD_STRING, "WeaponName36"),
+	DEFINE_KEYFIELD(m_iszWeaponName[36], FIELD_STRING, "WeaponName37"),
+	DEFINE_KEYFIELD(m_iszWeaponName[37], FIELD_STRING, "WeaponName38"),
+	DEFINE_KEYFIELD(m_iszWeaponName[38], FIELD_STRING, "WeaponName39"),
+	DEFINE_KEYFIELD(m_iszWeaponName[39], FIELD_STRING, "WeaponName40"),
+	DEFINE_KEYFIELD(m_iszWeaponName[40], FIELD_STRING, "WeaponName41"),	
+	DEFINE_KEYFIELD(m_iszWeaponName[41], FIELD_STRING, "WeaponName42"),
+	DEFINE_KEYFIELD(m_iszWeaponName[42], FIELD_STRING, "WeaponName43"),
+	DEFINE_KEYFIELD(m_iszWeaponName[43], FIELD_STRING, "WeaponName44"),
+	DEFINE_KEYFIELD(m_iszWeaponName[44], FIELD_STRING, "WeaponName45"),
+	DEFINE_KEYFIELD(m_iszWeaponName[45], FIELD_STRING, "WeaponName46"),
+	DEFINE_KEYFIELD(m_iszWeaponName[46], FIELD_STRING, "WeaponName47"),
+	DEFINE_KEYFIELD(m_iszWeaponName[47], FIELD_STRING, "WeaponName48"),
+	DEFINE_KEYFIELD(m_iszWeaponName[48], FIELD_STRING, "WeaponName49"),
+	DEFINE_KEYFIELD(m_iszWeaponName[49], FIELD_STRING, "WeaponName50"),
+END_DATADESC()
+#endif
+
+CTFLogicGG::CTFLogicGG()
+{
+#ifdef GAME_DLL
+	for ( int i = 0; i < 50; i++ )
+	{
+		m_iszWeaponName[i] = MAKE_STRING("NULL");
+		TFGameRules()->m_iszWeaponName[i] = MAKE_STRING("");
+	}
+#endif
+}
+
+void CTFLogicGG::Spawn(void)
+{
+#ifdef GAME_DLL
+	int y = 0;
+	m_iMaxLevel = 0;
+	for ( int i = 0; i < 50; i++ )
+	{
+		if ( m_iszWeaponName[i] != MAKE_STRING("NULL") )
+		{
+			m_iMaxLevel++;
+			TFGameRules()->m_iszWeaponName[y] = m_iszWeaponName[i];
+			y++;
+		}
+	}
+	TFGameRules()->m_iMaxLevel = m_iMaxLevel;
+	TFGameRules()->m_bListOnly = m_bListOnly;
+#endif
 	BaseClass::Spawn();
 }
 
@@ -685,6 +799,7 @@ CTFGameRules::CTFGameRules()
 	
 	m_nbIsDM = false;
 	m_nbIsTeamplay = false;
+	m_nbIsGG = false;
 
 	// Initialize the classes here.
 	InitPlayerClasses();
@@ -708,7 +823,14 @@ CTFGameRules::CTFGameRules()
 	m_pszTeamGoalStringMercenary.GetForModify()[0] = '\0';
 
 	m_flLastHealthDropTime = 0.0f;
-	m_flLastGrenadeDropTime = 0.0f;
+	m_flLastGrenadeDropTime = 0.0f;	
+	
+	//Stickynote
+	for( int i = 0; i<50 ; i++ )
+	{
+		m_iszWeaponName[i] = m_iszDefaultWeaponName[i];
+	}
+	m_iMaxLevel = 14;
 }
 
 //-----------------------------------------------------------------------------
@@ -807,6 +929,7 @@ void CTFGameRules::Activate()
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
 	m_nbIsDM = false;
 	m_nbIsTeamplay = false;
+	m_nbIsGG = false;
 	
 	m_nCurrFrags.Set(0);
 	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
@@ -846,6 +969,15 @@ void CTFGameRules::Activate()
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
 		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 50 );
+		mp_disable_respawn_times.SetValue(1);
+	}
+	
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofg_force.GetBool() )
+	{
+		m_nbIsGG = true;
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
+		engine->ServerCommand("exec config_gg.cfg \n");
+		engine->ServerExecute();
 		mp_disable_respawn_times.SetValue(1);
 		return;
 	}
@@ -1556,10 +1688,11 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			if ( TFGameRules()->IsDMGamemode() && CountActivePlayers() > 0 && !TFGameRules()->DontCountKills() )
 			{
 				int iFragLimit = fraglimit.GetInt();
-				
+				if ( TFGameRules()->IsGGGamemode() )
+						iFragLimit = m_iMaxLevel;
 				if (iFragLimit > 0) 
 				{
-					if ( TFGameRules()->IsTeamplay() )
+					if ( TFGameRules()->IsTeamplay() && !TFGameRules()->IsGGGamemode() )
 					{
 						if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() )
 						{
@@ -1619,7 +1752,24 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					}
 				}
 			}
-		}
+			
+			if ( TFGameRules()->IsGGGamemode() && CountActivePlayers() > 0 )
+			{
+						// check if any player is over the frag limit
+						// and creates a game event for achivement shit because why not
+						//i allready want to die
+						//-Nbc66
+						for (int i = 1; i <= gpGlobals->maxClients; i++)
+						{
+							CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
+							if (pPlayer && pPlayer->GGLevel() == m_iMaxLevel )
+							{
+								GoToIntermission();
+							}
+						}
+			}			
+			
+		} // Game playerdie
 
 		BaseClass::Think();
 	}

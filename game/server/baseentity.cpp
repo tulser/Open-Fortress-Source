@@ -3042,7 +3042,7 @@ bool CBaseEntity::NameMatchesComplex( const char *pszNameOrWildcard )
 
 bool CBaseEntity::ClassMatchesComplex( const char *pszClassOrWildcard )
 {
-	return NamesMatch( pszClassOrWildcard, m_iClassname );
+	return NamesMatch(pszClassOrWildcard, m_iClassname);
 }
 
 void CBaseEntity::MakeDormant( void )
