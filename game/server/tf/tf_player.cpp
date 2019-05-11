@@ -3447,8 +3447,8 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	if ( pVictim->IsPlayer() )
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
-
-		if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
+		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pTFVictim != pTFAttacker )
 		{
 			IncrementGGLevel(1);
 			DevMsg("%d \n", GGLevel());
