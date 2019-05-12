@@ -569,6 +569,9 @@ public:
 	float				m_flPowerPlayTime;
 	void				SetHandsModel( const char* model );
 	void				SetCustomModel( inputdata_t &inputdata );
+	void				AddMoney( inputdata_t &inputdata );
+	void				SetMoney( inputdata_t &inputdata );
+	void				InputStripWeapons( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;
 	bool				IsAllowedToPickupWeapons( void ) { return true; }
 	bool				Weapon_CanUse( void ) { return true; }

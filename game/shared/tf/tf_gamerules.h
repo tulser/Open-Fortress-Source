@@ -74,6 +74,7 @@ public:
 	
 	bool m_bUsesHL2Hull;
 	bool m_bForce3DSkybox;
+	bool m_bUsesMoney;
 #endif
 };
 
@@ -375,10 +376,12 @@ public:
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
+	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
 	int		m_iBirthdayMode;
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );
 	CNetworkVar( bool, m_bForce3DSkybox );
+	CNetworkVar( bool, m_bUsesMoney );
 	CNetworkVar( bool, m_bIsTeamplay ); //Used to check if of_logic_dm has teamplay enabled
 	
 #ifdef GAME_DLL

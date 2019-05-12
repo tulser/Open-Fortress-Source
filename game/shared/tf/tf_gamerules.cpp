@@ -255,6 +255,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_nbIsGG ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
+	RecvPropBool( RECVINFO( m_bUsesMoney ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), 3, SPROP_UNSIGNED ),
@@ -269,6 +270,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_nbIsGG ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
+	SendPropBool( SENDINFO( m_bUsesMoney ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -305,6 +307,7 @@ BEGIN_DATADESC( CTFGameRulesProxy )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bUsesHL2Hull , FIELD_BOOLEAN, "UsesHL2Hull"),
 	DEFINE_KEYFIELD( m_bForce3DSkybox , FIELD_BOOLEAN, "Force3DSkybox"),
+	DEFINE_KEYFIELD( m_bUsesMoney , FIELD_BOOLEAN, "UsesMoney"),
 
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetRedTeamRespawnWaveTime", InputSetRedTeamRespawnWaveTime ),
@@ -423,6 +426,7 @@ void CTFGameRulesProxy::Activate()
 	TFGameRules()->Activate();
 	TFGameRules()->m_bUsesHL2Hull = m_bUsesHL2Hull;
 	TFGameRules()->m_bForce3DSkybox = m_bForce3DSkybox;
+	TFGameRules()->m_bUsesMoney = m_bUsesMoney;
 
 	BaseClass::Activate();
 }

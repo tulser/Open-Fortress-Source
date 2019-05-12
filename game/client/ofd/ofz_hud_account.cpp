@@ -1,64 +1,152 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "hud_base_account.h"
+#include "hud.h"
+#include "hudelement.h"
+#include "hud_macros.h"
+#include "hud_numericdisplay.h"
+#include <KeyValues.h>
+#include <vgui/IScheme.h>
+#include <vgui/ILocalize.h>
+#include <vgui/ISurface.h>
+#include <vgui/ISystem.h>
+#include <vgui_controls/AnimationController.h>
+#include "iclientmode.h"
+#include "tf_shareddefs.h"
+#include <vgui_controls/EditablePanel.h>
+#include <vgui_controls/ImagePanel.h>
+#include <vgui/ISurface.h>
+#include <vgui/IImage.h>
+#include <vgui_controls/Label.h>
+
+#include "tf_controls.h"
+#include "in_buttons.h"
+#include "tf_imagepanel.h"
+#include "c_team.h"
 #include "c_tf_player.h"
-#include "clientmode_tf.h"
+#include "ihudlcd.h"
+#include "ofz_hud_account.h"
 #include "tf_gamerules.h"
+#include "c_tf_playerresource.h"
+#include "multiplay_gamerules.h"
 
 using namespace vgui;
 
-class CHudAccount : public CHudBaseAccount
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
+
+ConVar ofd_disablemoneycount( "ofd_disablemoneycount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable moneycount showing in your HUD" );
+
+DECLARE_HUDELEMENT( CTFHudMoney );
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFHudMoney::CTFHudMoney( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudMoney" ) 
 {
-public:
-	DECLARE_CLASS_SIMPLE( CHudAccount, CHudBaseAccount );
+	Panel *pParent = g_pClientMode->GetViewport();
+	SetParent( pParent );
 
-	CHudAccount( const char *name );
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
 
-	virtual bool ShouldDraw();
-	virtual int	GetPlayerAccount( void );
-	virtual vgui::AnimationController *GetAnimationController( void );
-};
+	hudlcd->SetGlobalStat( "(money)", "0" );
 
-DECLARE_HUDELEMENT( CHudAccount );
-
-CHudAccount::CHudAccount( const char *pName ) :
-CHudBaseAccount( "HudAccount" )
-{
-	SetHiddenBits( HIDEHUD_PLAYERDEAD );
-	SetIndent( false ); // don't indent small numbers in the drawing code - we're doing it manually
+	m_nMoney	= 0;
+	m_flNextThink = 0.0f;
 }
 
-bool CHudAccount::ShouldDraw()
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudMoney::Reset()
+{
+	m_flNextThink = gpGlobals->curtime + 0.05f;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudMoney::ApplySchemeSettings( IScheme *pScheme )
+{
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	// load control settings...
+	LoadControlSettings( "resource/UI/HudMoney.res" );
+
+	m_pMoney = dynamic_cast<CTFLabel *>( FindChildByName( "Money" ) );
+	m_pMoneyShadow = dynamic_cast<CTFLabel *>( FindChildByName( "MoneyShadow" ) );
+
+	m_nMoney	= -1;
+	m_flNextThink = 0.0f;
+
+	UpdateMoneyLabel( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFHudMoney::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if (pPlayer)
-		return (!pPlayer->IsObserver());
-	else
+
+	if ( !pPlayer || ( TFGameRules() && !TFGameRules()->UsesMoney() ) )
+	{
 		return false;
-	
+	}
+	return CHudElement::ShouldDraw();;
 }
 
-// How much money does the player have
-int	CHudAccount::GetPlayerAccount( void )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudMoney::UpdateMoneyLabel( bool bMoney )
 {
+	if ( m_pMoney && m_pMoneyShadow )
+	{
+		if ( m_pMoney->IsVisible() != bMoney )
+		{
+			m_pMoney->SetVisible( bMoney );
+			m_pMoneyShadow->SetVisible( bMoney );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get ammo info from the weapon and update the displays.
+//-----------------------------------------------------------------------------
+void CTFHudMoney::OnThink()
+{
+	// Get the player and active weapon.
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+//	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+	
+	if ( m_flNextThink < gpGlobals->curtime )
+	{
+		if ( !pPlayer )
+		{
+			hudlcd->SetGlobalStat( "(money)", "n/a" );
 
-	if( !pPlayer )
-		return 0;
+			// turn off our ammo counts
+			UpdateMoneyLabel( false );
 
-	return (int)pPlayer->GetAccount();
-}
+			m_nMoney = 0;
+		}
+		else
+		{
+			// Get the ammo in our clip.
+			int nMoney = (int)pPlayer->GetAccount();
+			
+			hudlcd->SetGlobalStat( "(money)", VarArgs( "%d $", nMoney ) );
+			m_nMoney = nMoney;
+			
+			UpdateMoneyLabel( true );
+			SetDialogVariable( "Money", VarArgs( "$ %d",m_nMoney ) );
+		}
 
-vgui::AnimationController *CHudAccount::GetAnimationController( void )
-{
-	vgui::AnimationController *pController = g_pClientMode->GetViewportAnimationController();
-
-	Assert( pController );
-
-	return pController;
+		m_flNextThink = gpGlobals->curtime + 0.1f;
+	}
 }

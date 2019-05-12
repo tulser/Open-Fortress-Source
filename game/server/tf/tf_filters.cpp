@@ -151,3 +151,72 @@ void CFilterTFClass::InputRoundActivate( inputdata_t &input )
 {
 
 }
+
+//=============================================================================
+//
+// Team Fortress Class Filter
+//
+class CFilterTFMoney : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterTFMoney, CBaseFilter );
+
+public:
+
+	void InputRoundSpawn( inputdata_t &inputdata );
+	void InputRoundActivate( inputdata_t &inputdata );
+
+	inline bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity );
+
+private:
+
+	int m_iszMoneyAmount;
+	int m_iszCheckType;
+
+	DECLARE_DATADESC();
+};
+
+BEGIN_DATADESC( CFilterTFMoney )
+
+DEFINE_KEYFIELD( m_iszMoneyAmount, FIELD_INTEGER, "moneyamount" ),
+DEFINE_KEYFIELD( m_iszCheckType, FIELD_INTEGER, "checktype" ),
+// Inputs.
+DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
+
+END_DATADESC()
+
+
+LINK_ENTITY_TO_CLASS( filter_tf_money, CFilterTFMoney );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CFilterTFMoney::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
+{
+	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >(pEntity);
+	if (!pPlayer)
+		return false;
+	
+	switch (m_iszCheckType) 
+	{
+		case 0: 
+			return ( pPlayer->m_iAccount > m_iszMoneyAmount );
+			break;		
+		case 1:
+			return ( pPlayer->m_iAccount < m_iszMoneyAmount );
+			break;	
+		case 2:
+			return ( pPlayer->m_iAccount == m_iszMoneyAmount );
+			break;		
+		default:
+			return false;
+			break;
+	}
+	return false;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CFilterTFMoney::InputRoundActivate( inputdata_t &input )
+{
+
+}

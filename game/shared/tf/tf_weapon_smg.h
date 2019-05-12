@@ -88,13 +88,13 @@ public:
 	DECLARE_CLASS(CTFAssaultRifle, CTFSMG);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
-	
+
 	CTFAssaultRifle() 
 	{
 		m_iShotsDue = 0;
 		m_flNextShotTime = 0.0f;
 	}
-	
+
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_ASSAULTRIFLE; }
 
 	void			BurstFire( void );

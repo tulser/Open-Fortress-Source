@@ -2549,7 +2549,7 @@ float C_TFPlayer::GetEffectiveInvisibilityLevel( void )
 
 	// If this is a teammate of the local player or viewer is observer,
 	// dont go above a certain max invis
-	if ( !IsEnemyPlayer() )
+	if ( !IsEnemyPlayer() || GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		float flMax = tf_teammate_max_invis.GetFloat();
 		if ( flPercentInvisible > flMax )

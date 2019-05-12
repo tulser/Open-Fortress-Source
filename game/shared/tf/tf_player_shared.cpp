@@ -768,7 +768,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			RemoveCondUber();//Stickynote
 		}
 	}
-
+	
 	if ( InCond( TF_COND_STEALTHED_BLINK ) )
 	{
 		if ( TF_SPY_STEALTH_BLINKTIME/*tf_spy_stealth_blink_time.GetFloat()*/ < ( gpGlobals->curtime - m_flLastStealthExposeTime ) )
@@ -776,6 +776,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			RemoveCond( TF_COND_STEALTHED_BLINK );
 		}
 	}
+	
 	
 	if ( InCond( TF_COND_CRITBOOSTED )  )
 	{
@@ -1427,7 +1428,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 		{
 			flTargetInvis = 0.0f;
 		}
-	}
+	} 
 
 	flTargetInvis *= flTargetInvisScale;
 	m_flInvisibility = clamp( flTargetInvis, 0.0f, 1.0f );

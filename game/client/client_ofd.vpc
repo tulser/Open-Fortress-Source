@@ -35,6 +35,7 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\ofd\ofd_physgauntlet.cpp"
 			$File	"$SRCDIR\game\shared\ofd\ofd_physgauntlet.h"
 			$File	"ofd\ofz_hud_account.cpp"
+			$File	"ofd\ofz_hud_account.h"
 		}
 		
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"

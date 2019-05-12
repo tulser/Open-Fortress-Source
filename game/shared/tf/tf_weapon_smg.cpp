@@ -76,6 +76,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_tommygun );
 IMPLEMENT_NETWORKCLASS_ALIASED( TFAssaultRifle, DT_WeaponAssaultRifle )
 
 BEGIN_NETWORK_TABLE( CTFAssaultRifle, DT_WeaponAssaultRifle )
+
 #if defined( CLIENT_DLL )
 	RecvPropInt( RECVINFO( m_iShotsDue ) ),
 	RecvPropFloat( RECVINFO(m_flNextShotTime ) ),
@@ -83,16 +84,17 @@ BEGIN_NETWORK_TABLE( CTFAssaultRifle, DT_WeaponAssaultRifle )
 	SendPropInt( SENDINFO( m_iShotsDue ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropFloat( SENDINFO( m_flNextShotTime ), 0, SPROP_CHANGES_OFTEN ),
 #endif
+
 END_NETWORK_TABLE()
 
-#if defined( CLIENT_DLL )
-BEGIN_PREDICTION_DATA( CTFAssaultRifle )
 
+BEGIN_PREDICTION_DATA( CTFAssaultRifle )
+#if defined( CLIENT_DLL )
 	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
-
-END_PREDICTION_DATA()
 #endif
+END_PREDICTION_DATA()
+
 
 LINK_ENTITY_TO_CLASS( tf_weapon_assaultrifle, CTFAssaultRifle );
 PRECACHE_WEAPON_REGISTER( tf_weapon_assaultrifle );
@@ -227,4 +229,3 @@ void CTFAssaultRifle::BeginBurstFire(void)
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + ofd_weapon_assaultrifle_time_between_bursts.GetFloat();
 }
-

@@ -263,7 +263,10 @@ int SendProxyArrayLength_PlayerObjects( const void *pStruct, int objectID )
 }
 
 BEGIN_DATADESC( CTFPlayer )
-	DEFINE_INPUTFUNC( FIELD_STRING, "setcustommodel", SetCustomModel )
+	DEFINE_INPUTFUNC( FIELD_STRING, "setcustommodel", SetCustomModel ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "addmoney", AddMoney ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "setmoney", SetMoney ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "stripweapons", InputStripWeapons )
 END_DATADESC()
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
@@ -6792,7 +6795,23 @@ void CTFPlayer::SetCustomModel(inputdata_t &inputdata)
 	DevMsg("CTFPlayer::SetCustomModel - Input successful, data input %s\n", inputdata.value.String());
 }
 
+void CTFPlayer::AddMoney(inputdata_t &inputdata)
+{
+	int money =inputdata.value.Int();
+	DevMsg("Money for everybody, but mostly for me \n %d \n", money);
+	AddAccount( money );
+}
 
+void CTFPlayer::SetMoney(inputdata_t &inputdata)
+{
+	int money =inputdata.value.Int();
+	m_iAccount = money;
+}
+
+void CTFPlayer::InputStripWeapons(inputdata_t &inputdata)
+{
+	StripWeapons();
+}
 
 void CTFPlayer::GiveAllItems()
 {
