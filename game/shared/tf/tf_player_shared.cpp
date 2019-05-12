@@ -64,6 +64,11 @@ ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | F
 ConVar ofd_forceclass( "ofd_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
 ConVar ofd_allowteams( "ofd_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
 ConVar ofd_berserk_speed( "ofd_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
+ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
+
+ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
+ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
+
 extern ConVar of_infiniteammo;
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f

@@ -101,6 +101,7 @@ public:
 	string_t	m_iszWeaponName[50];
 	bool		m_bListOnly;
 	int			m_iMaxLevel = 0;
+	int			m_iRequiredKills = 2;
 #endif
 };
 
@@ -365,6 +366,7 @@ public:
 
 	int				m_iMaxLevel;
 	bool			m_bListOnly;
+	int				m_iRequiredKills;
 	
 	virtual bool	IsDMGamemode(void) { return m_nbIsDM; }
 	virtual bool	IsTeamplay(void) { return m_nbIsTeamplay; }

@@ -83,19 +83,19 @@ static int g_TauntCamAchievements[] =
 
 string_t m_iszDefaultWeaponName[50] =
 {
-	MAKE_STRING("tf_weapon_pistol_mercenary"),
-	MAKE_STRING("tf_weapon_pistol_akimbo"),
+	MAKE_STRING("tf_weapon_railgun"),
+	MAKE_STRING("tf_weapon_rocketlauncher_dm"),
+	MAKE_STRING("tf_weapon_grenadelauncher_mercenary"),
+	MAKE_STRING("tf_weapon_gatlinggun"),
+	MAKE_STRING("tf_weapon_flamethrower"),
+	MAKE_STRING("tf_weapon_smg_mercenary"),
+	MAKE_STRING("tf_weapon_supershotgun"),
 	MAKE_STRING("tf_weapon_revolver_mercenary"),
+	MAKE_STRING("tf_weapon_shotgun_mercenary"),
 	MAKE_STRING("tf_weapon_tommygun"),
 	MAKE_STRING("tf_weapon_nailgun"),
-	MAKE_STRING("tf_weapon_flamethrower"),
-	MAKE_STRING("tf_weapon_shotgun_mercenary"),
-	MAKE_STRING("tf_weapon_supershotgun"),
-	MAKE_STRING("tf_weapon_railgun"),
-	MAKE_STRING("tf_weapon_gatlinggun"),
-	MAKE_STRING("tf_weapon_pipebomblauncher"),
-	MAKE_STRING("tf_weapon_grenadelauncher_mercenary"),
-	MAKE_STRING("tf_weapon_rocketlauncher_dm"),
+	MAKE_STRING("tf_weapon_pistol_akimbo"),
+	MAKE_STRING("tf_weapon_pistol_mercenary"),	
 	MAKE_STRING("tf_weapon_knife")	
 };
 
@@ -459,6 +459,7 @@ LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
 BEGIN_DATADESC( CTFLogicGG )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bListOnly, FIELD_BOOLEAN, "ListOnly"),
+	DEFINE_KEYFIELD( m_iRequiredKills, FIELD_INTEGER, "RequiredKills"),
 	
 	DEFINE_KEYFIELD(m_iszWeaponName[0],  FIELD_STRING, "WeaponName01"),
 	DEFINE_KEYFIELD(m_iszWeaponName[1],  FIELD_STRING, "WeaponName02"),
@@ -540,6 +541,7 @@ void CTFLogicGG::Spawn(void)
 	}
 	TFGameRules()->m_iMaxLevel = m_iMaxLevel;
 	TFGameRules()->m_bListOnly = m_bListOnly;
+	TFGameRules()->m_iRequiredKills = m_iRequiredKills;
 #endif
 	BaseClass::Spawn();
 }
@@ -831,6 +833,7 @@ CTFGameRules::CTFGameRules()
 		m_iszWeaponName[i] = m_iszDefaultWeaponName[i];
 	}
 	m_iMaxLevel = 14;
+	m_iRequiredKills = 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -1689,7 +1692,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			{
 				int iFragLimit = fraglimit.GetInt();
 				if ( TFGameRules()->IsGGGamemode() )
-						iFragLimit = m_iMaxLevel;
+						iFragLimit = (m_iMaxLevel * m_iRequiredKills) - m_iRequiredKills+1;
 				if (iFragLimit > 0) 
 				{
 					if ( TFGameRules()->IsTeamplay() && !TFGameRules()->IsGGGamemode() )

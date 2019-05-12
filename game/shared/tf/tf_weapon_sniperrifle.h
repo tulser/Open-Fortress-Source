@@ -14,6 +14,7 @@
 
 #if defined( CLIENT_DLL )
 #define CTFSniperRifle C_TFSniperRifle
+#define CTFRailgun C_TFRailgun
 #define CSniperDot C_SniperDot
 #endif
 
@@ -33,7 +34,7 @@ public:
 	CSniperDot( void );
 	~CSniperDot( void );
 
-	static CSniperDot *Create( const Vector &origin, CBaseEntity *pOwner = NULL, bool bVisibleDot = true );
+	static CSniperDot *Create( const Vector &origin , int damage, CBaseEntity *pOwner = NULL, bool bVisibleDot = true);
 	void		ResetChargeTime( void ) { m_flChargeStartTime = gpGlobals->curtime; }
 
 	// Attributes.
@@ -43,6 +44,8 @@ public:
 	void        Update( CBaseEntity *pTarget, const Vector &vecOrigin, const Vector &vecNormal );
 	CBaseEntity	*GetTargetEntity( void )				{ return m_hTargetEnt; }
 
+	int m_nDamage = -1;
+	
 // Client specific.
 #ifdef CLIENT_DLL
 
@@ -138,6 +141,17 @@ private:
 	bool m_bRezoomAfterShot;
 
 	CTFSniperRifle( const CTFSniperRifle & );
+};
+
+class CTFRailgun: public CTFSniperRifle
+{
+public:
+
+	DECLARE_CLASS( CTFRailgun, CTFSniperRifle );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_RAILGUN; }
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_H

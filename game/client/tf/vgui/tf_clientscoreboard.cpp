@@ -47,7 +47,7 @@ using namespace vgui;
 extern bool IsInCommentaryMode( void );
 extern ConVar ofd_allowteams;
 extern ConVar fraglimit;
-
+extern ConVar of_allow_special_teams;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -120,6 +120,7 @@ void CTFClientScoreBoardDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	SetBorder( NULL );
 	SetVisible( false );
 
+	SetZPos(80);	// guarantee it shows above the scope
 	Reset();
 }
 
@@ -134,11 +135,25 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
     {
         LoadControlSettings("Resource/UI/scoreboarddm.res");
-        m_pPlayerListBlue->SetVisible( false );
+		if ( ofd_allowteams.GetBool() )
+		{
+			m_pPlayerListBlue->SetVisible( true );
+			m_pPlayerListRed->SetVisible( true );			
+		}
+		else
+		{
+			m_pPlayerListBlue->SetVisible( false );
+			m_pPlayerListRed->SetVisible( false );			
+		}
     }
     else
+	{
+		if ( of_allow_special_teams.GetBool() )
+			m_pPlayerListMercenary->SetVisible( true );
+		else
+			m_pPlayerListMercenary->SetVisible( false );
         LoadControlSettings("Resource/UI/scoreboard.res");
-	
+	}
 	if ( m_pImageList == NULL )
 	{
 		InvalidateLayout( true, true );
@@ -213,8 +228,13 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 	pPlayerList->AddColumnToSection( 0, "status", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_CENTER, m_iStatusWidth );
 	pPlayerList->AddColumnToSection( 0, "nemesis", "", SectionedListPanel::COLUMN_IMAGE, m_iNemesisWidth );
 	pPlayerList->AddColumnToSection( 0, "class", "", 0, m_iClassWidth );
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
-		pPlayerList->AddColumnToSection( 0, "kills", "#TF_Scoreboard_Kills", SectionedListPanel::COLUMN_RIGHT, m_iKillsWidth );
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsGGGamemode() )
+	{
+		if ( !TFGameRules()->DontCountKills() )
+			pPlayerList->AddColumnToSection( 0, "kills", "#TF_Scoreboard_Kills", SectionedListPanel::COLUMN_RIGHT, m_iKillsWidth );
+	}
+	else if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		pPlayerList->AddColumnToSection( 0, "level", "#TF_ScoreBoard_GGLevel", SectionedListPanel::COLUMN_RIGHT, m_iKillsWidth );
 	else
 		pPlayerList->AddColumnToSection( 0, "score", "#TF_Scoreboard_Score", SectionedListPanel::COLUMN_RIGHT, m_iScoreWidth );
 	pPlayerList->AddColumnToSection( 0, "ping", "#TF_Scoreboard_Ping", SectionedListPanel::COLUMN_RIGHT, m_iPingWidth );
@@ -251,9 +271,25 @@ void CTFClientScoreBoardDialog::Update()
 	UpdateSpectatorList();
 	UpdatePlayerDetails();
 	MoveToCenterOfScreen();
+	wchar_t string1[1024];
+	wchar_t wzMaxLevel[128];
+	wchar_t wzFragLimit[128];
 	
-	SetDialogVariable( "FragLimit", VarArgs( "%d Frags", fraglimit.GetInt() ) );
-
+	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+	{
+		_snwprintf( wzMaxLevel, ARRAYSIZE( wzMaxLevel ), L"%i", TFGameRules()->m_iMaxLevel );
+		g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_LevelLimit" ), 1, wzMaxLevel );
+		SetDialogVariable( "FragLimit", string1 );
+	}
+	else if ( TFGameRules() )
+	{	
+		_snwprintf( wzFragLimit, ARRAYSIZE( wzFragLimit ), L"%i", fraglimit.GetInt() );
+		g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Fraglimit" ), 1, wzFragLimit );
+		if ( !TFGameRules()->DontCountKills())
+			SetDialogVariable( "FragLimit", string1 );
+		else
+			SetDialogVariable( "FragLimit", "" );
+	}
 	// update every second
 	m_fNextUpdateTime = gpGlobals->curtime + 1.0f; 
 }
@@ -402,7 +438,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 			const char *szName = tf_PR->GetPlayerName( playerIndex );
 			int score = tf_PR->GetTotalScore( playerIndex );
 			int kills = tf_PR->GetPlayerScore( playerIndex );
-			
+			int level = tf_PR->GetGGLevel( playerIndex );
 
 			KeyValues *pKeyValues = new KeyValues( "data" );
 
@@ -410,6 +446,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 			pKeyValues->SetString( "name", szName );
 			pKeyValues->SetInt( "score", score );
 			pKeyValues->SetInt( "kills", kills );
+			pKeyValues->SetInt( "level", level );
 
 			// can only see class information if we're on the same team
 			if ( !AreEnemyTeams( g_PR->GetTeam( playerIndex ), localteam ) && !( localteam == TEAM_UNASSIGNED ) )
@@ -601,6 +638,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	SetDialogVariable( "playername", tf_PR->GetPlayerName( playerIndex ) );
 	SetDialogVariable( "playerscore", GetPointsString( tf_PR->GetTotalScore( playerIndex ) ) );
 	Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(playerIndex) : g_PR->GetTeamColor(g_PR->GetTeam(playerIndex));
+	
 	m_pLabelPlayerName->SetFgColor( clr );
 	m_pImagePanelHorizLine->SetFillColor( clr );
 

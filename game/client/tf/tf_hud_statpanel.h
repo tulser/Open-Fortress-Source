@@ -125,6 +125,7 @@ private:
 	bool						m_bStatsChanged;
 	bool						m_bLocalFileTrusted;		// do we believe our local stats data file has not been tampered with
 	CTFClassImage				*m_pClassImage;
+	CTFClassImage				*m_pClassImageColorless;
 
 	bool						m_bShouldBeVisible;
 };

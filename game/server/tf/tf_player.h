@@ -134,6 +134,10 @@ public:
 
 	void				SetHealthBuffTime( float flTime )		{ m_flHealthBuffTime = flTime; }
 
+	int					GetLevelProgress( void ) { return m_iLevelProgress; }
+	void				SetLevelProgress( int count ) { m_iLevelProgress = count; }
+	void				IncrementLevelProgress( int count ) { m_iLevelProgress += count; }
+	
 	CTFWeaponBase		*GetActiveTFWeapon( void ) const;
 
 	void				SaveMe( void );
@@ -522,6 +526,7 @@ private:
 	int					m_LastDamageType;
 	int					m_iDeathFlags;				// TF_DEATH_* flags with additional death info
 	int					m_iMaxSentryKills;			// most kills by a single sentry
+	int					m_iLevelProgress = 0;
 
 	bool				m_bPlayedFreezeCamSound;
 

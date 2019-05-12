@@ -11,6 +11,7 @@
 #include "hud_numericdisplay.h"
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
+#include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
 #include <vgui/ISystem.h>
 #include <vgui_controls/AnimationController.h>
@@ -143,17 +144,31 @@ void CTFHudKills::OnThink()
 			// Get the ammo in our clip.
 			int iIndex = GetLocalPlayerIndex();
 			int nKills = tf_PR->GetPlayerScore( iIndex );
+			int nGGLevel = tf_PR->GetGGLevel( iIndex );
 			
 			hudlcd->SetGlobalStat( "(kills)", VarArgs( "%d", nKills ) );
-
-			m_nKills = nKills;
+			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+				m_nKills = nGGLevel;
+			else
+				m_nKills = nKills;
 			
 			UpdateKillLabel( true );
 			SetDialogVariable( "Kills",m_nKills );
+			wchar_t string1[1024];
+			
+			
+			
 			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
-				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel );
+			{
+				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel  );
+				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_GGLevel" ), 1, 1 );
+			}
 			else
+			{
 				SetDialogVariable( "FragLimit", fraglimit.GetInt()  );
+				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Kills" ), 1, 1 );
+			}
+			SetDialogVariable( "killslabel", string1 );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.1f;

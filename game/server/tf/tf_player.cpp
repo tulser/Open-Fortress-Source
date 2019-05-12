@@ -41,7 +41,6 @@
 #include "sceneentity.h"
 #include "fmtstr.h"
 #include "tf_weapon_sniperrifle.h"
-#include "tf_weapon_railgun.h"
 #include "tf_weapon_minigun.h"
 #include "trigger_area_capture.h"
 #include "triggers.h"
@@ -104,11 +103,7 @@ ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLIC
 ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes ever non projectile weapon headshot." );
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
-ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
-
-ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
-ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
 
 extern ConVar ofd_forceclass;
 extern ConVar ofd_allowteams;
@@ -118,6 +113,9 @@ extern ConVar sv_maxunlag;
 extern ConVar tf_damage_disablespread;
 extern ConVar tf_gravetalk;
 extern ConVar tf_spectalk;
+extern ConVar of_allow_special_teams;
+extern ConVar ofd_spawnprotecttime;
+extern ConVar ofe_huntedcount;
 
 ConVar ofd_teamplay_collision("ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable collission with teammates in tdm modes");
 
@@ -3450,13 +3448,18 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
 		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pTFVictim != pTFAttacker )
 		{
-			IncrementGGLevel(1);
-			DevMsg("%d \n", GGLevel());
-			DevMsg("Bruh \n");
-			if ( GGLevel() < TFGameRules()->m_iMaxLevel )
+			if ( GGLevel() == TFGameRules()->m_iMaxLevel-1 )
+				IncrementLevelProgress(TFGameRules()->m_iRequiredKills);
+			else
+				IncrementLevelProgress(1);
+			if ( GetLevelProgress() >= TFGameRules()->m_iRequiredKills )
 			{
-				DevMsg("Moment \n");
-				UpdateGunGameLevel();
+				SetLevelProgress(0);
+				IncrementGGLevel(1);
+				if ( GGLevel() < TFGameRules()->m_iMaxLevel )
+				{
+					UpdateGunGameLevel();
+				}
 			}
 		}		
 		

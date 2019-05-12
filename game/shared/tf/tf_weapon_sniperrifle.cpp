@@ -27,8 +27,6 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
 #define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0
-#define	TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN		50
-#define TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX		150
 #define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
@@ -36,6 +34,16 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
+// Railgun
+#define TF_WEAPON_RAILGUN_CHARGE_PER_SEC	100.0
+#define TF_WEAPON_RAILGUN_UNCHARGE_PER_SEC	75.0
+#define TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB	9999
+#define TF_WEAPON_RAILGUN_RELOAD_TIME		1.5f
+#define TF_WEAPON_RAILGUN_ZOOM_TIME			0.3f
+
+#define TF_WEAPON_RAILGUN_NO_CRIT_AFTER_ZOOM_TIME	0.0f
+
+ConVar ofd_instagib( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable instagib.", true, 0, true, 2  );
 
 //=============================================================================
 //
@@ -71,6 +79,18 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_sniperrifle, CTFSniperRifle );
 PRECACHE_WEAPON_REGISTER( tf_weapon_sniperrifle );
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFRailgun, DT_WeaponRailgun )
+
+BEGIN_NETWORK_TABLE( CTFRailgun, DT_WeaponRailgun )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFRailgun )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_Railgun, CTFRailgun );
+PRECACHE_WEAPON_REGISTER( tf_weapon_Railgun );
 
 //=============================================================================
 //
@@ -284,8 +304,8 @@ void CTFSniperRifle::ItemPostFrame( void )
 #endif
 
 	// Start charging when we're zoomed in, and allowed to fire
-	if ( pPlayer->m_Shared.IsJumping() )
-	{
+//	if ( pPlayer->m_Shared.IsJumping() )
+//	{
 		// Unzoom if we're jumping
 //		if ( IsZoomed() )
 //		{
@@ -294,13 +314,13 @@ void CTFSniperRifle::ItemPostFrame( void )
 
 //		m_flChargedDamage = 0.0f;
 //		m_bRezoomAfterShot = false;
-	}
-	else if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+//	}
+/*	else */ if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX );
+			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) );
 		}
 		else
 		{
@@ -512,7 +532,7 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return max( m_flChargedDamage, TF_WEAPON_SNIPERRIFLE_DAMAGE_MIN );
+	return max( m_flChargedDamage, m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
 }
 
 //-----------------------------------------------------------------------------
@@ -520,6 +540,9 @@ float CTFSniperRifle::GetProjectileDamage( void )
 //-----------------------------------------------------------------------------
 int	CTFSniperRifle::GetDamageType( void ) const
 {
+	if ( GetWeaponID() == TF_WEAPON_RAILGUN )
+		return BaseClass::GetDamageType();
+
 	// Only do hit location damage if we're zoomed
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
@@ -546,7 +569,7 @@ void CTFSniperRifle::CreateSniperDot( void )
 		return;
 
 	// Create the sniper dot, but do not make it visible yet.
-	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), pPlayer, true );
+	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage , pPlayer, true );
 	m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
 
 #endif
@@ -623,13 +646,13 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	if ( pPlayer )
 	{
 		// no crits if they're not zoomed
-		if ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() )
+		if ( GetWeaponID() != TF_WEAPON_RAILGUN && ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() ) )
 		{
 			return false;
 		}
 
 		// no crits for 0.2 seconds after starting to zoom
-		if ( ( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME )
+		if ( GetWeaponID() != TF_WEAPON_RAILGUN && (( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME ))
 		{
 			return false;
 		}
@@ -648,7 +671,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 float CTFSniperRifle::GetHUDDamagePerc( void )
 {
-	return (m_flChargedDamage / TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX);
+	return (m_flChargedDamage / ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ));
 }
 
 //-----------------------------------------------------------------------------
@@ -762,7 +785,7 @@ CSniperDot::~CSniperDot( void )
 // Input  : &origin - 
 // Output : CSniperDot
 //-----------------------------------------------------------------------------
-CSniperDot *CSniperDot::Create( const Vector &origin, CBaseEntity *pOwner, bool bVisibleDot )
+CSniperDot *CSniperDot::Create( const Vector &origin, int damage, CBaseEntity *pOwner, bool bVisibleDot )
 {
 // Client specific.
 #ifdef CLIENT_DLL
@@ -771,7 +794,6 @@ CSniperDot *CSniperDot::Create( const Vector &origin, CBaseEntity *pOwner, bool 
 
 // Server specific.
 #else
-
 	// Create the sniper dot entity.
 	CSniperDot *pDot = static_cast<CSniperDot*>( CBaseEntity::Create( "env_sniperdot", origin, QAngle( 0.0f, 0.0f, 0.0f ) ) );
 	if ( !pDot )
@@ -781,6 +803,7 @@ CSniperDot *CSniperDot::Create( const Vector &origin, CBaseEntity *pOwner, bool 
 	pDot->SetMoveType( MOVETYPE_NONE );
 	pDot->AddSolidFlags( FSOLID_NOT_SOLID );
 	pDot->AddEffects( EF_NOSHADOW );
+	pDot->m_nDamage = damage;
 	UTIL_SetSize( pDot, -Vector( 4.0f, 4.0f, 4.0f ), Vector( 4.0f, 4.0f, 4.0f ) );
 
 	// Set owner.
@@ -870,7 +893,7 @@ int CSniperDot::DrawModel( int flags )
 	pRenderContext->Bind( m_hSpriteMaterial, this );
 
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
-	float flStrength = RemapValClamped( flLifeTime, 0.0, TF_WEAPON_SNIPERRIFLE_DAMAGE_MAX / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
+	float flStrength = RemapValClamped( flLifeTime, 0.0, m_nDamage *3 / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
 
 	color32 innercolor = { 255, 255, 255, 255 };
 	color32 outercolor = { 255, 255, 255, 128 };
