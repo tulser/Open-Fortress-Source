@@ -155,34 +155,48 @@ void CTFPistol::PrimaryAttack( void )
 //Act tables for Merc
 acttable_t CTFPistol::m_acttablePistol[] =
 {
-	{ ACT_MP_STAND_IDLE,					ACT_MERC_STAND_PISTOL,				false },
-	{ ACT_MP_CROUCH_IDLE,					ACT_MERC_CROUCH_PISTOL,				false },
-	{ ACT_MP_RUN,							ACT_MERC_RUN_PISTOL,				false },
-	{ ACT_MP_WALK,							ACT_MP_WALK_SECONDARY,				false },
-	{ ACT_MP_AIRWALK,						ACT_MP_AIRWALK_SECONDARY,			false },
-	{ ACT_MP_CROUCHWALK,					ACT_MERC_CROUCHWALK_PISTOL,			false },
-	{ ACT_MP_JUMP,							ACT_MP_JUMP_SECONDARY,				false },
-	{ ACT_MP_JUMP_START,					ACT_MP_JUMP_START_SECONDARY,		false },
-	{ ACT_MP_JUMP_FLOAT,					ACT_MP_JUMP_FLOAT_SECONDARY,		false },
-	{ ACT_MP_JUMP_LAND,						ACT_MP_JUMP_LAND_SECONDARY,			false },
-	{ ACT_MP_SWIM,							ACT_MERC_SWIM_PISTOL,				false },
+	{ ACT_MP_STAND_IDLE,					ACT_MERC_STAND_PISTOL_MERCENARY,			false },
+	{ ACT_MP_CROUCH_IDLE,					ACT_MERC_CROUCH_PISTOL_MERCENARY,			false },
+	{ ACT_MP_RUN,							ACT_MERC_RUN_PISTOL_MERCENARY,				false },
+	{ ACT_MP_WALK,							ACT_MERC_WALK_PISTOL_MERCENARY,			false },
+	{ ACT_MP_AIRWALK,						ACT_MERC_AIRWALK_PISTOL_MERCENARY,			false },
+	{ ACT_MP_CROUCHWALK,					ACT_MERC_CROUCHWALK_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP,							ACT_MERC_JUMP_PISTOL_MERCENARY,			false },
+	{ ACT_MP_JUMP_START,					ACT_MERC_JUMP_START_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP_FLOAT,					ACT_MERC_JUMP_FLOAT_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP_LAND,						ACT_MERC_JUMP_LAND_PISTOL_MERCENARY,		false },
+	{ ACT_MP_SWIM,							ACT_MERC_SWIM_PISTOL_MERCENARY,			false },
 
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MERC_ATTACK_STAND_PISTOL,		false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MERC_ATTACK_CROUCH_PISTOL,		false },
-	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MERC_ATTACK_SWIM_PISTOL,		false },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MERC_ATTACK_STAND_PISTOL_MERCENARY,	false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MERC_ATTACK_CROUCH_PISTOL_MERCENARY,	false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MERC_ATTACK_SWIM_PISTOL_MERCENARY,		false },
 
-	{ ACT_MP_RELOAD_STAND,					ACT_MERC_RELOAD_STAND_PISTOL,		false },
-	{ ACT_MP_RELOAD_CROUCH,					ACT_MERC_RELOAD_CROUCH_PISTOL,		false },
-	{ ACT_MP_RELOAD_SWIM,					ACT_MERC_RELOAD_SWIM_PISTOL,		false },
+	{ ACT_MP_RELOAD_STAND,					ACT_MERC_RELOAD_STAND_PISTOL_MERCENARY,	false },
+	{ ACT_MP_RELOAD_CROUCH,					ACT_MERC_RELOAD_CROUCH_PISTOL_MERCENARY,	false },
+	{ ACT_MP_RELOAD_SWIM,					ACT_MERC_RELOAD_SWIM_PISTOL_MERCENARY,		false },
+};
 
-	{ ACT_MP_GESTURE_FLINCH,				ACT_MP_GESTURE_FLINCH_SECONDARY,	false },
+acttable_t CTFPistol_Mercenary::m_acttablePistolMercenary[] =
+{
+	{ ACT_MP_STAND_IDLE,					ACT_MERC_STAND_PISTOL_MERCENARY,			false },
+	{ ACT_MP_CROUCH_IDLE,					ACT_MERC_CROUCH_PISTOL_MERCENARY,			false },
+	{ ACT_MP_RUN,							ACT_MERC_RUN_PISTOL_MERCENARY,				false },
+	{ ACT_MP_WALK,							ACT_MERC_WALK_PISTOL_MERCENARY,			false },
+	{ ACT_MP_AIRWALK,						ACT_MERC_AIRWALK_PISTOL_MERCENARY,			false },
+	{ ACT_MP_CROUCHWALK,					ACT_MERC_CROUCHWALK_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP,							ACT_MERC_JUMP_PISTOL_MERCENARY,			false },
+	{ ACT_MP_JUMP_START,					ACT_MERC_JUMP_START_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP_FLOAT,					ACT_MERC_JUMP_FLOAT_PISTOL_MERCENARY,		false },
+	{ ACT_MP_JUMP_LAND,						ACT_MERC_JUMP_LAND_PISTOL_MERCENARY,		false },
+	{ ACT_MP_SWIM,							ACT_MERC_SWIM_PISTOL_MERCENARY,			false },
 
-	{ ACT_MP_GESTURE_VC_HANDMOUTH,			ACT_MP_GESTURE_VC_HANDMOUTH_SECONDARY,	false },
-	{ ACT_MP_GESTURE_VC_FINGERPOINT,		ACT_MP_GESTURE_VC_FINGERPOINT_SECONDARY,	false },
-	{ ACT_MP_GESTURE_VC_FISTPUMP,			ACT_MP_GESTURE_VC_FISTPUMP_SECONDARY,	false },
-	{ ACT_MP_GESTURE_VC_THUMBSUP,			ACT_MP_GESTURE_VC_THUMBSUP_SECONDARY,	false },
-	{ ACT_MP_GESTURE_VC_NODYES,				ACT_MP_GESTURE_VC_NODYES_SECONDARY,	false },
-	{ ACT_MP_GESTURE_VC_NODNO,				ACT_MP_GESTURE_VC_NODNO_SECONDARY,	false },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MERC_ATTACK_STAND_PISTOL_MERCENARY,	false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MERC_ATTACK_CROUCH_PISTOL_MERCENARY,	false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MERC_ATTACK_SWIM_PISTOL_MERCENARY,		false },
+
+	{ ACT_MP_RELOAD_STAND,					ACT_MERC_RELOAD_STAND_PISTOL_MERCENARY,	false },
+	{ ACT_MP_RELOAD_CROUCH,					ACT_MERC_RELOAD_CROUCH_PISTOL_MERCENARY,	false },
+	{ ACT_MP_RELOAD_SWIM,					ACT_MERC_RELOAD_SWIM_PISTOL_MERCENARY,		false },
 };
 
 acttable_t CTFPistol_Akimbo::m_acttablePistolAkimbo[] =
@@ -206,22 +220,17 @@ acttable_t CTFPistol_Akimbo::m_acttablePistolAkimbo[] =
 	{ ACT_MP_RELOAD_STAND,					ACT_MERC_RELOAD_STAND_PISTOL_AKIMBO,	false },
 	{ ACT_MP_RELOAD_CROUCH,					ACT_MERC_RELOAD_CROUCH_PISTOL_AKIMBO,	false },
 	{ ACT_MP_RELOAD_SWIM,					ACT_MERC_RELOAD_SWIM_PISTOL_AKIMBO,		false },
-
-	{ ACT_MP_GESTURE_FLINCH,				ACT_MERC_GESTURE_FLINCH_PISTOL_AKIMBO,	false },
-
 };
 
 //Act table remapping for Merc
 acttable_t *CTFPistol::ActivityList( int &iActivityCount )
 {
-#if 0
 	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
 	{
 		iActivityCount = ARRAYSIZE(m_acttablePistol);
 		return m_acttablePistol;
 	}
 	else
-#endif
 	{
 		return BaseClass::ActivityList(iActivityCount);
 	}
@@ -229,11 +238,23 @@ acttable_t *CTFPistol::ActivityList( int &iActivityCount )
 
 acttable_t *CTFPistol_Akimbo::ActivityList( int &iActivityCount )
 {
-
 	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
 	{
 		iActivityCount = ARRAYSIZE(m_acttablePistolAkimbo);
 		return m_acttablePistolAkimbo;
+	}
+	else
+	{
+		return BaseClass::ActivityList(iActivityCount);
+	}
+}
+
+acttable_t *CTFPistol_Mercenary::ActivityList( int &iActivityCount )
+{
+	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
+	{
+		iActivityCount = ARRAYSIZE(m_acttablePistolMercenary);
+		return m_acttablePistolMercenary;
 	}
 	else
 	{
