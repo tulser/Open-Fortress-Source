@@ -9,6 +9,7 @@
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
 #include "c_tf_team.h"
+#include "c_tf_player.h"
 #include "c_tf_playerresource.h"
 #include <inetchannelinfo.h>
 #include "discord_rpc.h"
@@ -130,6 +131,57 @@ void CTFDiscordRPC::SetLogo( void )
 {
 	const char *pszGameType = "";
 	const char *pszImageLarge = "ico";
+	//string for seting the picture of the class
+	//you should name small the picture affter the class itself ex: Scout.jpg, Soldier.jpg, Pyro.jpg ...
+	//you get it
+	//-Nbc66
+	const char *pszImageSmall = "";
+	C_TFPlayer *pTFPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
+	
+	//checks the players class
+	if (pTFPlayer)
+	{
+		if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SCOUT))
+		{
+			pszImageSmall = "Scout";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SOLDIER))
+		{
+			pszImageSmall = "Soldier";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_PYRO))
+		{
+			pszImageSmall = "Pyro";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_DEMOMAN))
+		{
+			pszImageSmall = "Demoman";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_HEAVYWEAPONS))
+		{
+			pszImageSmall = "Heavy";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_ENGINEER))
+		{
+			pszImageSmall = "Engineer";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_MEDIC))
+		{
+			pszImageSmall = "Medic";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SNIPER))
+		{
+			pszImageSmall = "Sniper";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SPY))
+		{
+			pszImageSmall = "Spy";
+		}
+		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY))
+		{
+			pszImageSmall = "Mercenary";
+		}
+	}
 	
 	if ( TFGameRules( ) && engine->IsConnected() )
 	{	
@@ -145,7 +197,7 @@ void CTFDiscordRPC::SetLogo( void )
 		{
 			pszGameType = "Control Point";
 		}
-		else if (TFGameRules()->IsDMGamemode())
+		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_DM)
 		{
 			pszGameType = "Deathmatch";
 		}
@@ -157,11 +209,15 @@ void CTFDiscordRPC::SetLogo( void )
 		{
 			pszGameType = "Escort";
 		}
+		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_GG)
+		{
+			pszGameType = "Gun Game";
+		}
 	}
 	
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
-
+	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
 	// we can have class icon here like tf2c discord
 	//m_sDiscordRichPresence.smallImageKey = "logo-small";
 	//m_sDiscordRichPresence.smallImageText = "";

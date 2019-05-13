@@ -79,6 +79,7 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_TDM",
 	"#Gametype_ESC",
 	"#Gametype_ZS",
+	"#Gametype_GG"
 };
 
 //-----------------------------------------------------------------------------
