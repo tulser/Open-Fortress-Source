@@ -233,15 +233,10 @@ void CTFDiscordRPC::SetLogo( void )
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
-<<<<<<< Updated upstream
+
 	m_sDiscordRichPresence.smallImageText = pszImageSmall;
-=======
-<<<<<<< HEAD
 	m_sDiscordRichPresence.smallImageText = pszImageText;
-=======
 	m_sDiscordRichPresence.smallImageText = pszImageSmall;
->>>>>>> df4e0e42aafc73d59989030bdd3cd5d011e41651
->>>>>>> Stashed changes
 	// we can have class icon here like tf2c discord
 	//m_sDiscordRichPresence.smallImageKey = "logo-small";
 	//m_sDiscordRichPresence.smallImageText = "";
