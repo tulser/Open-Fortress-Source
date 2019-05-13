@@ -32,7 +32,7 @@ ConVar cl_richpresence_printmsg( "cl_richpresence_printmsg", "0", FCVAR_ARCHIVE,
 ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Discord Rich Presence. Requires a game restart.");
 
 //#define DISCORD_LIBRARY_DLL "discord-rpc.dll"
-#define DISCORD_APP_ID	"558662173736566794"
+#define DISCORD_APP_ID	"577632370602278912"
 
 // update once every 10 seconds. discord has an internal rate limiter of 15 seconds as well
 #define DISCORD_UPDATE_RATE 10.0f
@@ -312,52 +312,52 @@ void CTFDiscordRPC::SetLogo( void )
 			//in the discord aplication upercase so now we have to use 2 chars insted of one
 			//:ascended:
 			//-Nbc66
-			pszImageSmall = "scout";
+			pszImageSmall = "scout_ffa";
 			pszImageText = "Scout";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER))
 		{
-			pszImageSmall = "soldier";
+			pszImageSmall = "soldier_ffa";
 			pszImageText = "Soldier";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_PYRO))
 		{
-			pszImageSmall = "pyro";
+			pszImageSmall = "pyro_ffa";
 			pszImageText = "Pyro";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN))
 		{
-			pszImageSmall = "demoman";
+			pszImageSmall = "demo_ffa";
 			pszImageText = "Demoman";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS))
 		{
-			pszImageSmall = "heavy";
+			pszImageSmall = "heavy_ffa";
 			pszImageText = "Heavy";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
 		{
-			pszImageSmall = "engineer";
+			pszImageSmall = "engineer_ffa";
 			pszImageText = "Engineer";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC))
 		{
-			pszImageSmall = "medic";
+			pszImageSmall = "medic_ffa";
 			pszImageText = "Medic";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER))
 		{
-			pszImageSmall = "sniper";
+			pszImageSmall = "sniper_ffa";
 			pszImageText = "Sniper";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SPY))
 		{
-			pszImageSmall = "spy";
+			pszImageSmall = "spy_ffa";
 			pszImageText = "Spy";
 		}
 		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MERCENARY))
 		{
-			pszImageSmall = "mercenary";
+			pszImageSmall = "merc_ffa";
 			pszImageText = "Mercenary";
 		}
 	}
