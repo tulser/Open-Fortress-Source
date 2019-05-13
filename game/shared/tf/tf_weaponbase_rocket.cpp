@@ -316,7 +316,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 
 	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
 	float flRadius = GetRadius();
-	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
+	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM ||  m_hWeaponID == TF_WEAPON_SUPER_ROCKETLAUNCHER )
 		flRadius *= 0.75;
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 

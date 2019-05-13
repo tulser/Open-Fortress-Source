@@ -40,6 +40,8 @@ struct WeaponData_t
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
 	
+	float	m_flBurstFireDelay;				// Time to delay between firing
+	int		m_nBurstSize;
 
 	void Init( void )
 	{
@@ -59,6 +61,8 @@ struct WeaponData_t
 		m_flProjectileSpeed = 0.0f;
 		m_flSmackDelay = 0.0f;
 		m_bUseRapidFireCrits = false;
+		
+		m_flBurstFireDelay = 0.0f;
 	};
 };
 

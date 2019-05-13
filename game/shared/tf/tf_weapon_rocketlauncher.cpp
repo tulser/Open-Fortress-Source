@@ -54,6 +54,11 @@ CTFRocketLauncher::CTFRocketLauncher()
 	m_bReloadsSingly = true;
 }
 
+CTFSuperRocketLauncher::CTFSuperRocketLauncher()
+{
+	m_bReloadsSingly = false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
@@ -236,6 +241,18 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS(tf_weapon_rocketlauncher_dm, CTFOriginal);
 PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
 
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
+
+BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFSuperRocketLauncher )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_super_rocketlauncher, CTFSuperRocketLauncher);
+PRECACHE_WEAPON_REGISTER(tf_weapon_super_rocketlauncher);
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

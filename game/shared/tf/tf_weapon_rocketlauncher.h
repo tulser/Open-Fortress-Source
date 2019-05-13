@@ -16,6 +16,7 @@
 #ifdef CLIENT_DLL
 #define CTFRocketLauncher C_TFRocketLauncher
 #define CTFOriginal C_TFOriginal
+#define CTFSuperRocketLauncher C_TFSuperRocketLauncher
 #endif
 
 //=============================================================================
@@ -86,6 +87,18 @@ private:
 	CNetworkVar( int, m_iQuakeWorldIndex);
 };
 
+class CTFSuperRocketLauncher : public CTFOriginal
+{
+public:
+	DECLARE_CLASS( CTFSuperRocketLauncher, CTFOriginal );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	CTFSuperRocketLauncher();
+	
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
+	
+};
 
 // Server specific
 #ifdef GAME_DLL

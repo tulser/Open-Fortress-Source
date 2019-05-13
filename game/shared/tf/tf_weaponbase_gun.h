@@ -24,6 +24,16 @@
 //
 // Weapon Base Melee Gun
 //
+
+//=============================================================================
+//
+// Assault Rifle cvars
+//
+//=============================================================================
+extern ConVar ofd_weapon_assaultrifle_burstshots;
+extern ConVar ofd_weapon_assaultrifle_bursttime;
+extern ConVar ofd_weapon_assaultrifle_time_between_bursts;
+
 class CTFWeaponBaseGun : public CTFWeaponBase
 {
 public:
@@ -70,10 +80,27 @@ public:
 
 	virtual void PlayWeaponShootSound( void );
 
+	void			BurstFire( void );
+	void			BeginBurstFire( void );
+	virtual bool	Reload( void );
+
+	virtual void	ItemPostFrame( void );
+
+	bool InBurst( )
+	{
+		return m_iShotsDue > 0;
+	}
+	
+	virtual float	GetBurstTotalTime( void ) { return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
+	
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
 
+	CNetworkVar(float, m_flNextShotTime);
+
+	CNetworkVar( int, m_iShotsDue );	
+	
 public:
 	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }
 	CNetworkVar( bool,	m_bSwapFire );

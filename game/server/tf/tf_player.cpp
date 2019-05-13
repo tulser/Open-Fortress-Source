@@ -2998,7 +2998,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 						CTFWeaponBase *pWeapon = ToTFPlayer( info.GetAttacker() )->GetActiveTFWeapon();
 						if ( pWeapon )
 						{
-							if ( pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER || pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER_DM )
+							if ( pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER || pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER_DM || pWeapon->GetWeaponID() == TF_WEAPON_SUPER_ROCKETLAUNCHER)
 							{
 								// Rocket launcher only has half the bonus of the other weapons at short range
 								flRandomDamage *= 0.5;
