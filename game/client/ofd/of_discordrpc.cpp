@@ -199,47 +199,43 @@ void CTFDiscordRPC::SetLogo( void )
 	}
 	
 	if ( TFGameRules( ) && engine->IsConnected() )
-	{	
-		if (TFGameRules()->GetGameType() == TF_GAMETYPE_UNDEFINED)
+	{
+		if (TFGameRules()->GetGameType() == TF_GAMETYPE_GG)
 		{
-			pszGameType = "";
+			pszGameType = "Gun Game";
+		}
+		else if (TFGameRules()->IsDMGamemode())
+		{
+			if (TFGameRules()->IsTeamplay())
+				pszGameType = "Team Deathmatch";
+			else
+				pszGameType = "Deathmatch";
 		}
 		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_CTF)
 		{
 			pszGameType = "Capture The Flag";
+			pszImageLarge = "tf_ico";
 		}
 		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_CP)
 		{
 			pszGameType = "Control Point";
-		}
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_DM)
-		{
-			pszGameType = "Deathmatch";
-		}
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_TDM)
-		{
-			pszGameType = "Team Deathmatch";
-		}		
+			pszImageLarge = "tf_ico";
+		}	
 		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_ESC)
 		{
 			pszGameType = "Escort";
+			pszImageLarge = "tf_ico";
 		}
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_GG)
+		else 			
 		{
-			pszGameType = "Gun Game";
+			pszGameType = "";
 		}
 	}
 	
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
-
 	m_sDiscordRichPresence.smallImageText = pszImageSmall;
-	m_sDiscordRichPresence.smallImageText = pszImageText;
-	m_sDiscordRichPresence.smallImageText = pszImageSmall;
-	// we can have class icon here like tf2c discord
-	//m_sDiscordRichPresence.smallImageKey = "logo-small";
-	//m_sDiscordRichPresence.smallImageText = "";
 }
 
 void CTFDiscordRPC::InitializeDiscord()

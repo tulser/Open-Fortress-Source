@@ -48,6 +48,7 @@ public:
 	CTFWeaponBaseGun();
 
 	virtual void PrimaryAttack();
+	virtual void ItemPostFrame();
 	virtual void SecondaryAttack( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 	
@@ -84,22 +85,9 @@ public:
 	void			BeginBurstFire( void );
 	virtual bool	Reload( void );
 
-	virtual void	ItemPostFrame( void );
-
-	bool InBurst( )
-	{
-		return m_iShotsDue > 0;
-	}
-	
-	virtual float	GetBurstTotalTime( void ) { return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
-	
 private:
 
-	CTFWeaponBaseGun( const CTFWeaponBaseGun & );
-
-	CNetworkVar(float, m_flNextShotTime);
-
-	CNetworkVar( int, m_iShotsDue );	
+	CTFWeaponBaseGun( const CTFWeaponBaseGun & );	
 	
 public:
 	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }

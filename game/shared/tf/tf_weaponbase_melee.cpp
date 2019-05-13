@@ -8,6 +8,7 @@
 #include "tf_weaponbase_melee.h"
 #include "effect_dispatch_data.h"
 #include "tf_gamerules.h"
+#include "in_buttons.h"
 
 // Server specific.
 #if !defined( CLIENT_DLL )
@@ -178,7 +179,7 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 	SendPlayerAnimEvent( pPlayer );
 
 	DoViewModelAnimation();
-
+if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	// Set next attack times.
 	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 
@@ -219,14 +220,32 @@ void CTFWeaponBaseMelee::SendPlayerAnimEvent( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::ItemPostFrame()
 {
-	// Check for smack.
-	if ( m_flSmackTime > 0.0f && gpGlobals->curtime > m_flSmackTime )
+	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 )
+	{
+		if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
+			BurstFire();
+
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
+		if ( !pOwner )
+			return;
+
+		if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime  )
+		{
+			BeginBurstFire();
+		}
+	}
+	// Check for smack.	
+	if ( (m_flSmackTime > 0.0f && gpGlobals->curtime > m_flSmackTime)  )
 	{
 		Smack();
 		m_flSmackTime = -1.0f;
 	}
-
 	BaseClass::ItemPostFrame();
+}
+
+void CTFWeaponBaseMelee::BurstFire( void )
+{
+	BaseClass::BurstFire();
 }
 
 bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )

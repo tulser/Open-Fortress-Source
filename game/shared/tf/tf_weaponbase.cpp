@@ -134,6 +134,13 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
 #endif
+#if defined( CLIENT_DLL )
+	RecvPropInt( RECVINFO( m_iShotsDue ) ),
+	RecvPropFloat( RECVINFO(m_flNextShotTime ) ),
+#else
+	SendPropInt( SENDINFO( m_iShotsDue ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropFloat( SENDINFO( m_flNextShotTime ), 0, SPROP_CHANGES_OFTEN ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBase )
@@ -142,6 +149,10 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bLowered, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+#endif
+#if defined( CLIENT_DLL )
+	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
+	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
 #endif
 END_PREDICTION_DATA()
 
@@ -484,6 +495,30 @@ bool CTFWeaponBase::Deploy( void )
 
 	return bDeploy;
 }
+
+void CTFWeaponBase::BurstFire( void )
+{
+	PrimaryAttack();
+	WeaponSound( SINGLE );
+	m_iShotsDue--;
+	m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//
+//
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::BeginBurstFire(void)
+{
+	if (InBurst() )
+		return;
+
+	m_iShotsDue = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize;
+
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1056,6 +1091,7 @@ void CTFWeaponBase::ItemBusyFrame( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemPostFrame( void )
 {
+	
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 	{

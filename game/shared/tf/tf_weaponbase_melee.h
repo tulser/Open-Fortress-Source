@@ -40,6 +40,7 @@ public:
 	virtual bool	CanBeSelected()									{ return true; }
 	virtual void	Precache();
 	virtual void	ItemPostFrame();
+	virtual void	BurstFire();
 	virtual void	Spawn();
 	virtual void	PrimaryAttack();
 	virtual void	SecondaryAttack();

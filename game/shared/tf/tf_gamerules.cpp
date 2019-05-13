@@ -958,7 +958,6 @@ void CTFGameRules::Activate()
 		if ( (  ( ( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") ) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
 			m_nbIsTeamplay = true;
-			m_nGameType.Set(TF_GAMETYPE_TDM);
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n", NULL);
 			engine->ServerCommand("exec config_tdm.cfg \n");
 			engine->ServerExecute();
@@ -966,7 +965,6 @@ void CTFGameRules::Activate()
 		else 
 		{
 			m_nbIsTeamplay = false;
-			m_nGameType.Set(TF_GAMETYPE_DM);
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server DM gamemode config file\n", NULL);
 			engine->ServerCommand("exec config_dm.cfg \n");
 			engine->ServerExecute();
@@ -984,7 +982,6 @@ void CTFGameRules::Activate()
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofg_force.GetBool() )
 	{
 		m_nbIsGG = true;
-		m_nGameType.Set(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
 		engine->ServerCommand("exec config_gg.cfg \n");
 		engine->ServerExecute();

@@ -46,21 +46,9 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGun, DT_TFWeaponBaseGun )
 #else
 	SendPropBool( SENDINFO( m_bSwapFire ) ),
 #endif
-#if defined( CLIENT_DLL )
-	RecvPropInt( RECVINFO( m_iShotsDue ) ),
-	RecvPropFloat( RECVINFO(m_flNextShotTime ) ),
-#else
-	SendPropInt( SENDINFO( m_iShotsDue ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropFloat( SENDINFO( m_flNextShotTime ), 0, SPROP_CHANGES_OFTEN ),
-#endif
-
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
-#if defined( CLIENT_DLL )
-	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
-	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
-#endif
 END_PREDICTION_DATA()
 
 // Server specific.
@@ -71,10 +59,6 @@ DEFINE_THINKFUNC( ZoomOut ),
 DEFINE_THINKFUNC( ZoomIn ),
 END_DATADESC()
 #endif
-
-ConVar ofd_weapon_assaultrifle_burstshots( "ofd_weapon_assaultrifle_burstshots", "3", FCVAR_GAMEDLL );
-ConVar ofd_weapon_assaultrifle_bursttime( "ofd_weapon_assaultrifle_bursttime", "0.1", FCVAR_GAMEDLL );
-ConVar ofd_weapon_assaultrifle_time_between_bursts( "ofd_weapon_assaultrifle_time_between_bursts", "0.2", FCVAR_GAMEDLL );
 
 ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
 extern ConVar of_infiniteammo;
@@ -102,24 +86,6 @@ bool CTFWeaponBaseGun::Reload( void )
 	return BaseClass::Reload( );
 }
 
-void CTFWeaponBaseGun::ItemPostFrame( void )
-{
-if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 )
-{
-	if ( InBurst( ) && m_flNextShotTime < gpGlobals->curtime )
-		BurstFire( );
-
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
-	if ( !pOwner )
-		return;
-
-	if ( pOwner->IsAlive( ) && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime )
-	{
-		BeginBurstFire( );
-	}
-}
-	BaseClass::ItemPostFrame();
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -128,15 +94,12 @@ if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::BurstFire( void )
 {
-	if ( m_iClip1 == 0 )
+	if ( m_iClip1 <= 0 )
 	{
 		m_iShotsDue = 0;
 		return;
 	}
-	PrimaryAttack( );
-	WeaponSound( SINGLE );
-	m_iShotsDue--;
-	m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+	BaseClass::BurstFire();
 }
 
 //-----------------------------------------------------------------------------
@@ -146,12 +109,7 @@ void CTFWeaponBaseGun::BurstFire( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::BeginBurstFire(void)
 {
-	if (m_bFireOnEmpty || InBurst())
-		return;
-
-	m_iShotsDue = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize;
-
-	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay;
+	BaseClass::BeginBurstFire();
 }
 
 //-----------------------------------------------------------------------------
@@ -244,6 +202,27 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		m_iReloadMode.Set( TF_RELOAD_START );
 	}
 }	
+
+void CTFWeaponBaseGun::ItemPostFrame( void )
+{
+	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 )
+	{
+		if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
+			BurstFire();
+
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
+		if ( !pOwner )
+			return;
+
+		if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
+		{
+			BeginBurstFire();
+		}
+	}
+
+	BaseClass::ItemPostFrame();	
+	
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:

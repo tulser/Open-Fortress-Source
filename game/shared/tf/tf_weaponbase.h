@@ -154,6 +154,17 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// Activities.
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
+	
+	void			BurstFire( void );
+	void			BeginBurstFire( void );
+
+	bool InBurst( )
+	{
+		return m_iShotsDue > 0;
+	}
+	
+	virtual float	GetBurstTotalTime( void ) { return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
+		
 
 	virtual void SetWeaponVisible( bool visible );
 
@@ -286,6 +297,10 @@ protected:
 #endif
 
 	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );
+
+	CNetworkVar(float, m_flNextShotTime);
+
+	CNetworkVar( int, m_iShotsDue );
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };
