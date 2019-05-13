@@ -10,6 +10,8 @@
 #include "tf_gamerules.h"
 #include "c_tf_team.h"
 #include "c_tf_player.h"
+#include "achievementmgr.h"
+#include "baseachievement.h"
 #include "c_tf_playerresource.h"
 #include <inetchannelinfo.h>
 #include "discord_rpc.h"
@@ -138,7 +140,37 @@ void CTFDiscordRPC::SetLogo( void )
 	const char *pszImageSmall = "";
 	const char *pszImageText = "";
 	C_TFPlayer *pTFPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
+
+	//cheks if player is connected and sets the map name
+	//image should be named affter the map name
+	//ex: dm_wiseau.jpg, dm_2fort.jpg..
+	//remmber kai its case sensitive
+	//-Nbc66
+	if (engine->IsConnected())
+	{
+
+		pszImageLarge = m_szLatchedMapname;
+		if (Q_strcmp("dm_skate", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_skate";
+		}
+		else if (Q_strcmp("dm_aerowalk", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_aerowalk";
+		}
+		else
+		{
+			//this is the image it defaults to if the map is not defiende rn
+			//you can make it default to the "ico" but idk i think something else
+			//might be better
+			//-Nbc66
+			pszImageLarge = "missing";
+		}
 	
+	}
+
+
+
 	//checks the players class
 	if (pTFPlayer)
 	{
@@ -235,7 +267,7 @@ void CTFDiscordRPC::SetLogo( void )
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
-	m_sDiscordRichPresence.smallImageText = pszImageSmall;
+	m_sDiscordRichPresence.smallImageText = pszImageText;
 }
 
 void CTFDiscordRPC::InitializeDiscord()
