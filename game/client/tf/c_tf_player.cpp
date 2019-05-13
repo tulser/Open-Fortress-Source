@@ -59,6 +59,7 @@
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
 #include "c_tf_team.h"
+#include "c_entitydissolve.h"
 
 #if defined( CTFPlayer )
 #undef CTFPlayer

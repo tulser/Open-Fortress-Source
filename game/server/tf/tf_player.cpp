@@ -3610,17 +3610,17 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			bRagdoll = false;
 		}
 	}
-		bool bRagdollCreated = false;
-		if ( (info.GetDamageType() & DMG_DISSOLVE) && CanBecomeRagdoll() )
+	bool bRagdollCreated = false;
+	if ( (info.GetDamageType() & DMG_DISSOLVE) )
+	{
+		int nDissolveType = ENTITY_DISSOLVE_NORMAL;
+		if ( info.GetDamageType() & DMG_SHOCK )
 		{
-			int nDissolveType = ENTITY_DISSOLVE_NORMAL;
-			if ( info.GetDamageType() & DMG_SHOCK )
-			{
-				nDissolveType = ENTITY_DISSOLVE_ELECTRICAL;
-			}
-
-			bRagdollCreated = Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
+			nDissolveType = ENTITY_DISSOLVE_ELECTRICAL;
 		}
+
+		bRagdollCreated = Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
+	}
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
 	if( pPlayerAttacker )
@@ -3666,15 +3666,12 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 //		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
 	}
 	BaseClass::Event_Killed( info_modified );
-	
+	bool bDissolve = false;
 	if ( info.GetDamageType() & DMG_DISSOLVE )
 	{
-		if ( m_hRagdoll )
-		{
-			m_hRagdoll->GetBaseAnimating()->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
-		}
+		bDissolve = true;
 	}
-
+	
 	CTFPlayer *pInflictor = ToTFPlayer( info.GetInflictor() );
 	if ( ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() ) && pInflictor )
 	{				
@@ -3688,7 +3685,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
 	{
-		CreateRagdollEntity( bGib, bBurning );
+		CreateRagdollEntity( bGib, bBurning, bDissolve );
 	}
 
 	// Don't overflow the value for this.
@@ -5313,13 +5310,13 @@ void CTFPlayer::RemoveTeleportEffect( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::CreateRagdollEntity( void )
 {
-	CreateRagdollEntity( false, false );
+	CreateRagdollEntity( false, false, false );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Create a ragdoll entity to pass to the client.
 //-----------------------------------------------------------------------------
-void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
+void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve )
 {
 	// If we already have a ragdoll destroy it.
 	CTFRagdoll *pRagdoll = dynamic_cast<CTFRagdoll*>( m_hRagdoll.Get() );
@@ -5344,6 +5341,8 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning )
 		pRagdoll->m_bBurning = bBurning;
 		pRagdoll->m_iTeam = GetTeamNumber();
 		pRagdoll->m_iClass = GetPlayerClass()->GetClassIndex();
+		if ( bDissolve )
+			pRagdoll->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
 	}
 
 	// Turn off the player.
