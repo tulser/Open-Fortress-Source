@@ -424,6 +424,9 @@ CTFPlayer::CTFPlayer()
 	m_iAccount = 0;
 
 	m_pPlayerAISquad = 0;
+	
+    ConVarRef scissor( "r_flashlightscissor" );
+    scissor.SetValue( "0" );
 }
 
 

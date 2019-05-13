@@ -73,7 +73,8 @@ BEGIN_DATADESC( CEnvProjectedTexture )
 	DEFINE_KEYFIELD( m_bLightWorld, FIELD_BOOLEAN, "lightworld" ),
 	DEFINE_KEYFIELD( m_bCameraSpace, FIELD_BOOLEAN, "cameraspace" ),
 	DEFINE_KEYFIELD( m_flAmbient, FIELD_FLOAT, "ambient" ),
-	DEFINE_AUTO_ARRAY_KEYFIELD( m_SpotlightTextureName, FIELD_CHARACTER, "texturename" ),
+	//DEFINE_AUTO_ARRAY_KEYFIELD( m_SpotlightTextureName, FIELD_CHARACTER, "texturename" ),
+	DEFINE_AUTO_ARRAY( m_SpotlightTextureName, FIELD_CHARACTER ),
 	DEFINE_KEYFIELD( m_nSpotlightTextureFrame, FIELD_INTEGER, "textureframe" ),
 	DEFINE_KEYFIELD( m_flNearZ, FIELD_FLOAT, "nearz" ),
 	DEFINE_KEYFIELD( m_flFarZ, FIELD_FLOAT, "farz" ),
@@ -108,7 +109,7 @@ IMPLEMENT_SERVERCLASS_ST( CEnvProjectedTexture, DT_EnvProjectedTexture )
 	SendPropString( SENDINFO( m_SpotlightTextureName ) ),
 	SendPropInt( SENDINFO( m_nSpotlightTextureFrame ) ),
 	SendPropFloat( SENDINFO( m_flNearZ ), 16, SPROP_ROUNDDOWN, 0.0f,  500.0f ),
-	SendPropFloat( SENDINFO( m_flFarZ ),  18, SPROP_ROUNDDOWN, 0.0f, 1500.0f ),
+	SendPropFloat( SENDINFO( m_flFarZ ),  18, SPROP_ROUNDDOWN, 0.0f, 5500.0f ),
 	SendPropInt( SENDINFO( m_nShadowQuality ), 1, SPROP_UNSIGNED ),  // Just one bit for now
 END_SEND_TABLE()
 
@@ -135,7 +136,7 @@ CEnvProjectedTexture::CEnvProjectedTexture( void )
 	m_LinearFloatLightColor.Init( 1.0f, 1.0f, 1.0f );
 	m_flAmbient = 0.0f;
 	m_flNearZ = 4.0f;
-	m_flFarZ = 750.0f;
+	m_flFarZ = 5550.0f;
 	m_nShadowQuality = 0;
 }
 
@@ -160,6 +161,10 @@ bool CEnvProjectedTexture::KeyValue( const char *szKeyName, const char *szValue 
 		Vector tmp;
 		UTIL_ColorStringToLinearFloatColor( tmp, szValue );
 		m_LinearFloatLightColor = tmp;
+	}
+	else if ( FStrEq(szKeyName, "texturename" ) )
+	{
+		Q_strcpy( m_SpotlightTextureName.GetForModify(), szValue );
 	}
 	else
 	{
@@ -239,7 +244,17 @@ void CEnvProjectedTexture::Activate( void )
 
 void CEnvProjectedTexture::InitialThink( void )
 {
-	m_hTargetEntity = gEntList.FindEntityByName( NULL, m_target );
+	if ( m_hTargetEntity == NULL && m_target != NULL_STRING )
+		m_hTargetEntity = gEntList.FindEntityByName( NULL, m_target );
+	if ( m_hTargetEntity == NULL )
+		return;
+	 
+	Vector vecToTarget = (m_hTargetEntity->GetAbsOrigin() - GetAbsOrigin());
+	QAngle vecAngles;
+	VectorAngles( vecToTarget, vecAngles );
+	SetAbsAngles( vecAngles );
+	 
+	SetNextThink( gpGlobals->curtime + 0.1 );
 }
 
 int CEnvProjectedTexture::UpdateTransmitState()
