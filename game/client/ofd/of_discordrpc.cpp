@@ -158,6 +158,138 @@ void CTFDiscordRPC::SetLogo( void )
 		{
 			pszImageLarge = "dm_aerowalk";
 		}
+		else if (Q_strcmp("dm_2fort", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_2fort";
+		}
+		else if (Q_strcmp("dm_backfort", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_backfort";
+		}
+		else if (Q_strcmp("dm_blockfort", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_blockfort";
+		}
+		else if (Q_strcmp("dm_bloodrun", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_bloodrun";
+		}
+		else if (Q_strcmp("dm_boxy", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_boxy";
+		}
+		else if (Q_strcmp("dm_bricks", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_bricks";
+		}
+		else if (Q_strcmp("dm_chthon", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_chthon";
+		}
+		else if (Q_strcmp("dm_congo", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_congo";
+		}
+		else if (Q_strcmp("dm_corpseyard", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_corpseyard";
+		}
+		else if (Q_strcmp("dm_cs16_mansion", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_cs16_mansion";
+		}
+		else if (Q_strcmp("dm_darkzone", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_darkzone";
+		}
+		else if (Q_strcmp("dm_deadsimple", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_deadsimple";
+		}
+		else if (Q_strcmp("dm_degrootkeep", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_degrootkeep";
+		}
+		else if (Q_strcmp("dm_dmc_dm2", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_dmc_dm2";
+		}
+		else if (Q_strcmp("dm_entryway", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_entryway";
+		}
+		else if (Q_strcmp("dm_framework", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_framework";
+		}
+		else if (Q_strcmp("dm_greenback", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_greenback";
+		}
+		else if (Q_strcmp("dm_hangar", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_hangar";
+		}
+		else if (Q_strcmp("dm_hardcore", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_hardcore";
+		}
+		else if (Q_strcmp("dm_harvest", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_harvest";
+		}
+		else if (Q_strcmp("dm_hl2dm_runoff", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_hl2dm_runoff";
+		}
+		else if (Q_strcmp("dm_johnny", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_johnny";
+		}
+		else if (Q_strcmp("dm_junkyard", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_junkyard";
+		}
+		else if (Q_strcmp("dm_longestyard", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_longestyard";
+		}
+		else if (Q_strcmp("dm_lumberyard", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_lumberyard";
+		}
+		else if (Q_strcmp("dm_minecraft", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_minecraft";
+		}
+		else if (Q_strcmp("dm_office", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_office";
+		}
+		else if (Q_strcmp("dm_thebadplace", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_thebadplace";
+		}
+		else if (Q_strcmp("dm_tvland", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_tvland";
+		}
+		else if (Q_strcmp("dm_watergate", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_watergate";
+		}
+		else if (Q_strcmp("dm_wiseau", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_wiseau";
+		}
+		else if (Q_strcmp("dm_wiseau_classic", pszImageLarge) == 0)
+		{
+			pszImageLarge = "dm_wiseau_classic";
+		}
+		else if (Q_strcmp("esc_tfc_hunted_test", pszImageLarge) == 0)
+		{
+			pszImageLarge = "esc_tfc_hunted_test";
+		}
 		else
 		{
 			//this is the image it defaults to if the map is not defiende rn
