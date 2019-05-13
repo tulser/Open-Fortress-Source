@@ -136,50 +136,65 @@ void CTFDiscordRPC::SetLogo( void )
 	//you get it
 	//-Nbc66
 	const char *pszImageSmall = "";
+	const char *pszImageText = "";
 	C_TFPlayer *pTFPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
 	
 	//checks the players class
 	if (pTFPlayer)
 	{
-		if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SCOUT))
+		if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT))
 		{
-			pszImageSmall = "Scout";
+			//we have to have these 2 chars set because bum kai forgot to name the pictures
+			//in the discord aplication upercase so now we have to use 2 chars insted of one
+			//:ascended:
+			//-Nbc66
+			pszImageSmall = "scout";
+			pszImageText = "Scout";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SOLDIER))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER))
 		{
-			pszImageSmall = "Soldier";
+			pszImageSmall = "soldier";
+			pszImageText = "Soldier";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_PYRO))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_PYRO))
 		{
-			pszImageSmall = "Pyro";
+			pszImageSmall = "pyro";
+			pszImageText = "Pyro";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_DEMOMAN))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN))
 		{
-			pszImageSmall = "Demoman";
+			pszImageSmall = "demoman";
+			pszImageText = "Demoman";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_HEAVYWEAPONS))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS))
 		{
-			pszImageSmall = "Heavy";
+			pszImageSmall = "heavy";
+			pszImageText = "Heavy";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_ENGINEER))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
 		{
-			pszImageSmall = "Engineer";
+			pszImageSmall = "engineer";
+			pszImageText = "Engineer";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_MEDIC))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC))
 		{
-			pszImageSmall = "Medic";
+			pszImageSmall = "medic";
+			pszImageText = "Medic";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SNIPER))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER))
 		{
-			pszImageSmall = "Sniper";
+			pszImageSmall = "sniper";
+			pszImageText = "Sniper";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_SPY))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SPY))
 		{
-			pszImageSmall = "Spy";
+			pszImageSmall = "spy";
+			pszImageText = "Spy";
 		}
-		else if (pTFPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY))
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MERCENARY))
 		{
-			pszImageSmall = "Mercenary";
+			pszImageSmall = "mercenary";
+			pszImageText = "Mercenary";
 		}
 	}
 	
@@ -218,7 +233,15 @@ void CTFDiscordRPC::SetLogo( void )
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
+<<<<<<< Updated upstream
 	m_sDiscordRichPresence.smallImageText = pszImageSmall;
+=======
+<<<<<<< HEAD
+	m_sDiscordRichPresence.smallImageText = pszImageText;
+=======
+	m_sDiscordRichPresence.smallImageText = pszImageSmall;
+>>>>>>> df4e0e42aafc73d59989030bdd3cd5d011e41651
+>>>>>>> Stashed changes
 	// we can have class icon here like tf2c discord
 	//m_sDiscordRichPresence.smallImageKey = "logo-small";
 	//m_sDiscordRichPresence.smallImageText = "";
