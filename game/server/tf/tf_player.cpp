@@ -263,10 +263,10 @@ int SendProxyArrayLength_PlayerObjects( const void *pStruct, int objectID )
 }
 
 BEGIN_DATADESC( CTFPlayer )
-	DEFINE_INPUTFUNC( FIELD_STRING, "setcustommodel", SetCustomModel ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "addmoney", AddMoney ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "setmoney", SetMoney ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "stripweapons", InputStripWeapons )
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetCustomModel", SetCustomModel ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddMoney", AddMoney ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoney", SetMoney ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "StripWeapons", InputStripWeapons )
 END_DATADESC()
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
