@@ -235,8 +235,6 @@ void CTFDiscordRPC::SetLogo( void )
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
 
 	m_sDiscordRichPresence.smallImageText = pszImageSmall;
-	m_sDiscordRichPresence.smallImageText = pszImageText;
-	m_sDiscordRichPresence.smallImageText = pszImageSmall;
 	// we can have class icon here like tf2c discord
 	//m_sDiscordRichPresence.smallImageKey = "logo-small";
 	//m_sDiscordRichPresence.smallImageText = "";
