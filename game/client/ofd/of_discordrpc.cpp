@@ -360,6 +360,10 @@ void CTFDiscordRPC::SetLogo( void )
 			pszImageSmall = "merc_ffa";
 			pszImageText = "Mercenary";
 		}
+		else if (pTFPlayer->IsPlayerClass(TF_CLASS_UNDEFINED))
+		{
+			pszImageLarge = "spectator";
+		}
 	}
 	
 	if ( TFGameRules( ) && engine->IsConnected() )
