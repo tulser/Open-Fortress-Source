@@ -2123,7 +2123,7 @@ void CServerGameDLL::LoadSpecificMOTDMsg( const ConVar &convar, const char *pszS
 }
 
 // keeps track of which chapters the user has unlocked
-ConVar sv_unlockedchapters( "sv_unlockedchapters", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+ConVar sv_unlockedchapters( "sv_unlockedchapters", "99", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates which chapters are unlocked
@@ -2198,13 +2198,13 @@ void UpdateChapterRestrictions( const char *mapname )
 		}
 
 		// ok we have the string, see if it's newer
-		const char *unlockedChapter = sv_unlockedchapters.GetString();
+		const char *unlockedChapter = "99";
 		int nUnlockedChapter = atoi( unlockedChapter );
 
 		if ( nUnlockedChapter < nNewChapter )
 		{
 			// ok we're at a higher chapter, unlock
-			sv_unlockedchapters.SetValue( nNewChapter );
+			sv_unlockedchapters.SetValue( 99 );
 
 			// HACK: Call up through a better function than this? 7/23/07 - jdw
 			if ( IsX360() )

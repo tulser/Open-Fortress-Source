@@ -1080,12 +1080,14 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 		pViewModel->SetAbsOrigin( GetAbsOrigin() );
 		pViewModel->SetOwner( this );
 		pViewModel->SetIndex( iViewModel );
+		pViewModel->RemoveEffects(EF_BONEMERGE);
 		DispatchSpawn( pViewModel );
 		pViewModel->FollowEntity( this, false );
+		pViewModel->SetParent( NULL );
 		m_hViewModel.Set( iViewModel, pViewModel );
 	}
 	
-	CTFViewModel* vmhands = static_cast<CTFViewModel*>(CreateEntityByName("tf_handmodel"));
+	CTFViewModel *vmhands = ( CTFViewModel * )CreateEntityByName( "tf_viewmodel" );
 	if ( vmhands && iViewModel+2 != 3 )
 	{
 		vmhands->SetAbsOrigin( GetAbsOrigin() );
@@ -1095,8 +1097,7 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 		DispatchSpawn(vmhands);
 		vmhands->m_nSkin = m_nSkin;
 		vmhands->SetLocalOrigin( vec3_origin );
-		vmhands->FollowEntity( pViewModel );
-		vmhands->AddEffects(EF_BONEMERGE);
+		vmhands->FollowEntity( pViewModel, true );
 		vmhands->SetModel( GetPlayerClass()->GetArmModelName() );
 		vmhands->SetLightingOrigin( pViewModel->GetLightingOrigin() );
 		m_hViewModel.Set( iViewModel+2, vmhands );
@@ -1400,6 +1401,10 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			{
 					pWeapon->SetGGLevel(999);
 					pWeapon->DefaultTouch( this );
+			}
+			else
+			{
+				UTIL_Remove(pWeapon);
 			}
 			if ( pNewWeapon )
 			{

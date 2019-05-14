@@ -5,15 +5,16 @@
 //=============================================================================//
 
 #include "cbase.h"
+#include "tf_weaponbase.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-class CWeaponCubemap : public CBaseCombatWeapon
+class CWeaponCubemap : public CTFWeaponBase
 {
 public:
 
-	DECLARE_CLASS( CWeaponCubemap, CBaseCombatWeapon );
+	DECLARE_CLASS( CWeaponCubemap, CTFWeaponBase );
 
 	void	Precache( void );
 

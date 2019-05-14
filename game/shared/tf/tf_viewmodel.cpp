@@ -29,6 +29,11 @@ LINK_ENTITY_TO_CLASS( tf_viewmodel, CTFViewModel );
 IMPLEMENT_NETWORKCLASS_ALIASED( TFViewModel, DT_TFViewModel )
 
 BEGIN_NETWORK_TABLE( CTFViewModel, DT_TFViewModel )
+#ifndef CLIENT_DLL
+SendPropEHandle(SENDINFO_NAME(m_hMoveParent, moveparent)),
+#else
+RecvPropInt(RECVINFO_NAME(m_hNetworkMoveParent, moveparent), 0, RecvProxy_IntToMoveParent),
+#endif
 END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_handmodel, CTFHandModel );
