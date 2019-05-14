@@ -322,6 +322,12 @@ BEGIN_DATADESC( CTFGameRulesProxy )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTeamRole", InputSetRedTeamRole ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTeamRole", InputSetBlueTeamRole ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMercenaryTeamRole", InputSetMercenaryTeamRole ),
+	
+	DEFINE_OUTPUT( m_OutputIsCTF,	"IsCTF" ),
+	DEFINE_OUTPUT( m_OutputIsCP,	"IsCP" ),
+	DEFINE_OUTPUT( m_OutputIsDM,	"IsDM" ),
+	DEFINE_OUTPUT( m_OutputIsTeamplay,	"IsTeamplay" ),
+	DEFINE_OUTPUT( m_OutputIsGunGame,	"IsGunGame" ),
 END_DATADESC()
 
 //-----------------------------------------------------------------------------
@@ -940,7 +946,6 @@ void CTFGameRules::Activate()
 	
 	m_nCurrFrags.Set(0);
 	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
-
 	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*> (gEntList.FindEntityByClassname(NULL, "item_teamflag"));
 	if (pFlag)
 	{
@@ -982,6 +987,7 @@ void CTFGameRules::Activate()
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofg_force.GetBool() )
 	{
 		m_nbIsGG = true;
+		
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
 		engine->ServerCommand("exec config_gg.cfg \n");
 		engine->ServerExecute();
@@ -999,6 +1005,31 @@ void CTFGameRules::Activate()
 		return;
 	}
 	
+}
+
+void CTFGameRules::FireGamemodeOutputs()
+{
+#ifdef GAME_DLL
+	CTFGameRulesProxy *pProxy = dynamic_cast<CTFGameRulesProxy*> (gEntList.FindEntityByClassname(NULL, "tf_gamerules"));
+	if ( pProxy )
+	{
+		switch ( GetGameType() )
+		{
+			case TF_GAMETYPE_CTF:
+				pProxy->FireCTFOutput();
+				break;
+			case TF_GAMETYPE_CP:
+				pProxy->FireCPOutput();
+				break;
+		}
+		if ( IsDMGamemode() )
+			pProxy->FireDMOutput();
+		if ( IsTeamplay() )
+			pProxy->FireTeamplayOutput();
+		if ( IsGGGamemode() )
+			pProxy->FireGunGameOutput();
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1160,6 +1191,9 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
+
+	FireGamemodeOutputs();
+
 	for ( int i = 0; i < MAX_TEAMS; i++ )
 	{
 		ObjectiveResource()->SetBaseCP( -1, i );

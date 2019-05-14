@@ -54,6 +54,7 @@
 #include "basemodelpanel.h"
 #include "c_team.h"
 #include "collisionutils.h"
+#include "tf_viewmodel.h"
 // for spy material proxy
 #include "proxyentity.h"
 #include "materialsystem/imaterial.h"
@@ -3309,13 +3310,8 @@ int	C_TFPlayer::DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags 
 	{
 		// Force the invulnerable material
 		modelrender->ForcedMaterialOverride( *pPlayer->GetInvulnMaterialRef() );
+		ret = pViewmodel->DrawOverriddenViewmodel( flags );
 		
-		CTFHandModel* vmhands = dynamic_cast<CTFHandModel*>( pViewmodel );
-		if ( vmhands )
-			ret = vmhands->DrawOverriddenViewmodel( flags );
-		else
-			ret = pViewmodel->DrawOverriddenViewmodel( flags ); //checking the tf_viewmodel stuff
-
 		modelrender->ForcedMaterialOverride( NULL );
 	}
 

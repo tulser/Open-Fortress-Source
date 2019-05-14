@@ -75,6 +75,18 @@ public:
 	bool m_bUsesHL2Hull;
 	bool m_bForce3DSkybox;
 	bool m_bUsesMoney;
+	
+	COutputEvent m_OutputIsCTF;
+	COutputEvent m_OutputIsCP;
+	COutputEvent m_OutputIsDM;
+	COutputEvent m_OutputIsTeamplay;
+	COutputEvent m_OutputIsGunGame;
+	
+	void	FireCTFOutput(void) {m_OutputIsCTF.FireOutput(NULL,this);}
+	void	FireCPOutput(void) {m_OutputIsCP.FireOutput(NULL,this);}
+	void	FireDMOutput(void) {m_OutputIsDM.FireOutput(NULL,this);}
+	void	FireTeamplayOutput(void) {m_OutputIsTeamplay.FireOutput(NULL,this);}
+	void	FireGunGameOutput(void) {m_OutputIsGunGame.FireOutput(NULL,this); DevMsg("Fricking fricks");}
 #endif
 };
 
@@ -377,6 +389,7 @@ public:
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
+	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );

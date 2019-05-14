@@ -1460,7 +1460,7 @@ void CBaseGameStats::SetHL2UnlockedChapterStatistic( void )
 					++search;
 
 				// read the value
-				int iChapter = Q_atoi( search );
+				int iChapter =99;
 				m_BasicStats.m_nHL2ChaptureUnlocked = iChapter;
 			}
 
