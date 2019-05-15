@@ -132,7 +132,7 @@ void CTFDiscordRPC::SetLogo( void )
 	const char *pszGameType = "";
 	const char *pszImageLarge = "ico";
 	//string for seting the picture of the class
-	//you should name small the picture affter the class itself ex: Scout.jpg, Soldier.jpg, Pyro.jpg ...
+	//you should name the small picture affter the class itself ex: Scout.jpg, Soldier.jpg, Pyro.jpg ...
 	//you get it
 	//-Nbc66
 	const char *pszImageSmall = "";
@@ -218,6 +218,7 @@ void CTFDiscordRPC::SetLogo( void )
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;
+	m_sDiscordRichPresence.smallImageText = pszImageSmall;
 	// we can have class icon here like tf2c discord
 	//m_sDiscordRichPresence.smallImageKey = "logo-small";
 	//m_sDiscordRichPresence.smallImageText = "";
