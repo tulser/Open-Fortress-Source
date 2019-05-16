@@ -8,6 +8,7 @@
 #include "of_discordrpc.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
+#include "tf_shareddefs.h"
 #include "c_tf_team.h"
 #include "c_tf_player.h"
 #include "achievementmgr.h"
@@ -290,6 +291,10 @@ void CTFDiscordRPC::SetLogo( void )
 		{
 			pszImageLarge = "esc_tfc_hunted_test";
 		}
+		else if (Q_strcmp("ctf_johnny", pszImageLarge) == 0)
+		{
+			pszImageLarge = "ctf_johnny";
+		}
 		else
 		{
 			//this is the image it defaults to if the map is not defiende rn
@@ -302,10 +307,10 @@ void CTFDiscordRPC::SetLogo( void )
 	}
 
 
-
 	//checks the players class
 	if (pTFPlayer)
 	{
+
 		if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT))
 		{
 			//we have to have these 2 chars set because bum kai forgot to name the pictures
@@ -360,9 +365,10 @@ void CTFDiscordRPC::SetLogo( void )
 			pszImageSmall = "merc_ffa";
 			pszImageText = "Mercenary";
 		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_UNDEFINED))
+		else if (pTFPlayer->InLocalTeam() == TEAM_SPECTATOR)
 		{
-			pszImageLarge = "spectator";
+			pszImageSmall = "spectator";
+			pszImageText = "Spectating";
 		}
 	}
 	
