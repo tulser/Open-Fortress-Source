@@ -8,7 +8,6 @@
 #include "of_discordrpc.h"
 #include "c_team_objectiveresource.h"
 #include "tf_gamerules.h"
-#include "tf_shareddefs.h"
 #include "c_tf_team.h"
 #include "c_tf_player.h"
 #include "achievementmgr.h"
@@ -37,6 +36,78 @@ ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Disc
 
 // update once every 10 seconds. discord has an internal rate limiter of 15 seconds as well
 #define DISCORD_UPDATE_RATE 10.0f
+
+// placeholder code SUCKS i go to BED.
+#define MAP_COUNT 36
+
+// TODO give these better fitting names and move them to .h
+const char *g_aClassImage[] =
+{
+	"undefined_ffa",
+	"scout_ffa",
+	"sniper_ffa",
+	"soldier_ffa",
+	"demo_ffa",
+	"medic_ffa",
+	"heavy_ffa",
+	"pyro_ffa",
+	"spy_ffa",
+	"engineer_ffa",
+	"merc_ffa",
+	"civilian_ffa"
+};
+
+const char *g_aGameTypeNames_NonLocalized[] = // Move me?
+{
+	"Undefined",
+	"Capture the Flag",
+	"Control Point",
+	"Deathmatch",
+	"Team Deathmatch",
+	"Escort",
+	"Zombie Survival",
+	"Gun Game"
+};
+
+const char *g_aMapList[] =
+{
+	"dm_2fort",
+	"dm_aerowalk",
+	"dm_backfort",
+	"dm_blockfort",
+	"dm_bloodrun",
+	"dm_boxy",
+	"dm_bricks",
+	"dm_chthon",
+	"dm_congo",
+	"dm_corpseyard",
+	"dm_cs16_mansion",
+	"dm_darkzone",
+	"dm_deadsimple",
+	"dm_degrootkeep",
+	"dm_dmc_dm2",
+	"dm_entryway",
+	"dm_framework",
+	"dm_greenback",
+	"dm_hangar",
+	"dm_hardcore",
+	"dm_harvest",
+	"dm_hl2dm_runoff",
+	"dm_johnny",
+	"dm_junkyard",
+	"dm_longestyard",
+	"dm_lumberyard",
+	"dm_minecraft",
+	"dm_office",
+	"dm_skate",
+	"dm_thebadplace",
+	"dm_tvland",
+	"dm_watergate",
+	"dm_wiseau",
+	"dm_wiseau_classic",
+	"esc_tfc_hunted_test",
+	"ctf_johnny"
+};
 
 CTFDiscordRPC g_discordrpc;
 
@@ -134,6 +205,7 @@ void CTFDiscordRPC::SetLogo( void )
 {
 	const char *pszGameType = "";
 	const char *pszImageLarge = "ico";
+	const char *pMapIcon = "missing";
 	//string for seting the picture of the class
 	//you should name the small picture affter the class itself ex: Scout.jpg, Soldier.jpg, Pyro.jpg ...
 	//you get it
@@ -149,261 +221,50 @@ void CTFDiscordRPC::SetLogo( void )
 	//-Nbc66
 	if (engine->IsConnected())
 	{
-
-		pszImageLarge = m_szLatchedMapname;
-		if (Q_strcmp("dm_skate", pszImageLarge) == 0)
+		if (pszImageLarge != m_szLatchedMapname)
 		{
-			pszImageLarge = "dm_skate";
+			for (int i=0; i<MAP_COUNT; i++)
+			{
+				if ( V_strcmp(g_aMapList[i], m_szLatchedMapname) )
+				{
+					pMapIcon = m_szLatchedMapname;
+					break;
+				}
+			}
 		}
-		else if (Q_strcmp("dm_aerowalk", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_aerowalk";
-		}
-		else if (Q_strcmp("dm_2fort", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_2fort";
-		}
-		else if (Q_strcmp("dm_backfort", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_backfort";
-		}
-		else if (Q_strcmp("dm_blockfort", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_blockfort";
-		}
-		else if (Q_strcmp("dm_bloodrun", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_bloodrun";
-		}
-		else if (Q_strcmp("dm_boxy", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_boxy";
-		}
-		else if (Q_strcmp("dm_bricks", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_bricks";
-		}
-		else if (Q_strcmp("dm_chthon", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_chthon";
-		}
-		else if (Q_strcmp("dm_congo", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_congo";
-		}
-		else if (Q_strcmp("dm_corpseyard", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_corpseyard";
-		}
-		else if (Q_strcmp("dm_cs16_mansion", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_cs16_mansion";
-		}
-		else if (Q_strcmp("dm_darkzone", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_darkzone";
-		}
-		else if (Q_strcmp("dm_deadsimple", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_deadsimple";
-		}
-		else if (Q_strcmp("dm_degrootkeep", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_degrootkeep";
-		}
-		else if (Q_strcmp("dm_dmc_dm2", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_dmc_dm2";
-		}
-		else if (Q_strcmp("dm_entryway", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_entryway";
-		}
-		else if (Q_strcmp("dm_framework", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_framework";
-		}
-		else if (Q_strcmp("dm_greenback", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_greenback";
-		}
-		else if (Q_strcmp("dm_hangar", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_hangar";
-		}
-		else if (Q_strcmp("dm_hardcore", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_hardcore";
-		}
-		else if (Q_strcmp("dm_harvest", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_harvest";
-		}
-		else if (Q_strcmp("dm_hl2dm_runoff", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_hl2dm_runoff";
-		}
-		else if (Q_strcmp("dm_johnny", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_johnny";
-		}
-		else if (Q_strcmp("dm_junkyard", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_junkyard";
-		}
-		else if (Q_strcmp("dm_longestyard", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_longestyard";
-		}
-		else if (Q_strcmp("dm_lumberyard", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_lumberyard";
-		}
-		else if (Q_strcmp("dm_minecraft", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_minecraft";
-		}
-		else if (Q_strcmp("dm_office", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_office";
-		}
-		else if (Q_strcmp("dm_thebadplace", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_thebadplace";
-		}
-		else if (Q_strcmp("dm_tvland", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_tvland";
-		}
-		else if (Q_strcmp("dm_watergate", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_watergate";
-		}
-		else if (Q_strcmp("dm_wiseau", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_wiseau";
-		}
-		else if (Q_strcmp("dm_wiseau_classic", pszImageLarge) == 0)
-		{
-			pszImageLarge = "dm_wiseau_classic";
-		}
-		else if (Q_strcmp("esc_tfc_hunted_test", pszImageLarge) == 0)
-		{
-			pszImageLarge = "esc_tfc_hunted_test";
-		}
-		else if (Q_strcmp("ctf_johnny", pszImageLarge) == 0)
-		{
-			pszImageLarge = "ctf_johnny";
-		}
-		else
-		{
-			//this is the image it defaults to if the map is not defiende rn
-			//you can make it default to the "ico" but idk i think something else
-			//might be better
-			//-Nbc66
-			pszImageLarge = "missing";
-		}
-	
+		pszImageLarge = pMapIcon;
 	}
 
-
 	//checks the players class
-	if (pTFPlayer)
+	if ( pTFPlayer )
 	{
+		int iClass = pTFPlayer->GetPlayerClass()->GetClassIndex();
 
-		if (pTFPlayer->IsPlayerClass(TF_CLASS_SCOUT))
+		if ( pTFPlayer->GetTeamNumber() != TEAM_SPECTATOR )
 		{
-			//we have to have these 2 chars set because bum kai forgot to name the pictures
-			//in the discord aplication upercase so now we have to use 2 chars insted of one
-			//:ascended:
-			//-Nbc66
-			pszImageSmall = "scout_ffa";
-			pszImageText = "Scout";
+			pszImageSmall = g_aClassImage[iClass];
+			pszImageText = g_aPlayerClassNames_NonLocalized[iClass];
 		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SOLDIER))
-		{
-			pszImageSmall = "soldier_ffa";
-			pszImageText = "Soldier";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_PYRO))
-		{
-			pszImageSmall = "pyro_ffa";
-			pszImageText = "Pyro";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_DEMOMAN))
-		{
-			pszImageSmall = "demo_ffa";
-			pszImageText = "Demoman";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_HEAVYWEAPONS))
-		{
-			pszImageSmall = "heavy_ffa";
-			pszImageText = "Heavy";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_ENGINEER))
-		{
-			pszImageSmall = "engineer_ffa";
-			pszImageText = "Engineer";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MEDIC))
-		{
-			pszImageSmall = "medic_ffa";
-			pszImageText = "Medic";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SNIPER))
-		{
-			pszImageSmall = "sniper_ffa";
-			pszImageText = "Sniper";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_SPY))
-		{
-			pszImageSmall = "spy_ffa";
-			pszImageText = "Spy";
-		}
-		else if (pTFPlayer->IsPlayerClass(TF_CLASS_MERCENARY))
-		{
-			pszImageSmall = "merc_ffa";
-			pszImageText = "Mercenary";
-		}
-		else if (pTFPlayer->InLocalTeam() == TEAM_SPECTATOR)
+		else
 		{
 			pszImageSmall = "spectator";
 			pszImageText = "Spectating";
 		}
 	}
 	
+	// Game Mode
 	if ( TFGameRules( ) && engine->IsConnected() )
 	{
-		if (TFGameRules()->GetGameType() == TF_GAMETYPE_GG)
-		{
-			pszGameType = "Gun Game";
-		}
-		else if (TFGameRules()->IsDMGamemode())
-		{
-			if (TFGameRules()->IsTeamplay())
-				pszGameType = "Team Deathmatch";
+		int iGameType = TFGameRules()->GetGameType();
+
+		pszGameType = g_aGameTypeNames_NonLocalized[iGameType];
+
+		// Having DM run on TF_GAMETYPE_UNDEFINED is already hacky.
+		if ( TFGameRules()->IsDMGamemode() && iGameType == TF_GAMETYPE_UNDEFINED )
+			if ( TFGameRules()->IsTeamplay() )
+				pszGameType = g_aGameTypeNames_NonLocalized[TF_GAMETYPE_TDM];
 			else
-				pszGameType = "Deathmatch";
-		}
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_CTF)
-		{
-			pszGameType = "Capture The Flag";
-			pszImageLarge = "tf_ico";
-		}
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_CP)
-		{
-			pszGameType = "Control Point";
-			pszImageLarge = "tf_ico";
-		}	
-		else if (TFGameRules()->GetGameType() == TF_GAMETYPE_ESC)
-		{
-			pszGameType = "Escort";
-			pszImageLarge = "tf_ico";
-		}
-		else 			
-		{
-			pszGameType = "";
-		}
+				pszGameType = g_aGameTypeNames_NonLocalized[TF_GAMETYPE_DM];
 	}
 	
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
@@ -515,7 +376,7 @@ void CTFDiscordRPC::FireGameEvent( IGameEvent *event )
 {
 	const char * type = event->GetName();
 
-	if ( Q_strcmp( type, "server_spawn" ) == 0 )
+	if ( !Q_strcmp( type, "server_spawn" ) )
 	{
 		Q_strncpy( m_szLatchedHostname, event->GetString( "hostname" ), 255 );
 	}
