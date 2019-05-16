@@ -670,6 +670,9 @@ bool CObjectSentrygun::FindTarget()
 		CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeam->GetPlayer( iPlayer ) );
 		if ( pTargetPlayer == NULL )
 			continue;
+		
+		if ( pTargetPlayer == pPlayer )
+			continue;
 
 		// Make sure the player is alive.
 		if ( !pTargetPlayer->IsAlive() )
@@ -710,7 +713,11 @@ bool CObjectSentrygun::FindTarget()
 			CBaseObject *pTargetObject = pTeam->GetObject( iObject );
 			if ( !pTargetObject )
 				continue;
-
+			
+			if ( pTargetObject == this )
+				continue;
+			if ( pTargetObject->GetOwner() == pPlayer )
+				continue;
 			vecTargetCenter = pTargetObject->GetAbsOrigin();
 			vecTargetCenter += pTargetObject->GetViewOffset();
 			VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );

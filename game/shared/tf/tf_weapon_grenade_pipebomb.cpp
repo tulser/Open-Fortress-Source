@@ -435,6 +435,7 @@ void CTFGrenadePipebombProjectile::BounceSound( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Detonate()
 {
+	SetTimer( gpGlobals->curtime );
 	if ( ShouldNotDetonate() )
 	{
 		RemoveGrenade();
@@ -447,7 +448,6 @@ void CTFGrenadePipebombProjectile::Detonate()
 		RemoveGrenade();
 		return;
 	}
-
 	BaseClass::Detonate();
 }
 

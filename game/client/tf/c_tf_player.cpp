@@ -1006,24 +1006,24 @@ public:
 
 			m_pResult->SetVecValue( r, g, b );
 			return;
+		
 		}
 		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
 		if ( !pEntity )
 			return;
 
-			Vector vecColor = pEntity->GetItemTintColor();
+		Vector vecColor = pEntity->GetItemTintColor();
 
-			if ( vecColor == vec3_origin )
+		if ( vecColor == vec3_origin )
+		{
+			C_BaseEntity *pOwner = pEntity->GetItemTintColorOwner();
+			if ( pOwner )
 			{
-				C_BaseEntity *pOwner = pEntity->GetItemTintColorOwner();
-				if ( pOwner )
-				{
-					vecColor = pOwner->GetItemTintColor();
-				}
+				vecColor = pOwner->GetItemTintColor();
 			}
-
-			m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
-			return;
+		}
+		m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
+		return;
 
 
 		m_pResult->SetVecValue( 1, 1, 1 );

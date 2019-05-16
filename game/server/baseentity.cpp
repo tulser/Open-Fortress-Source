@@ -1567,7 +1567,7 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		Assert( force != vec3_origin && offset != vec3_origin );
 #else
 		// this was spamming the console for Payload maps in TF (trigger_hurt entity on the front of the cart)
-		if ( !TFGameRules() || TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
+		if ( !TFGameRules() || !TFGameRules()->InGameType(TF_GAMETYPE_ESCORT)  )
 		{
 			Assert( force != vec3_origin && offset != vec3_origin );
 		}

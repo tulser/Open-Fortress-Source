@@ -1589,9 +1589,9 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 //			Most often a team_control_point_master saying that the
 //			round timer expired 
 //-----------------------------------------------------------------------------
-void CTeamplayRoundBasedRules::SetStalemate( int iReason, bool bForceMapReset /* = true */, bool bSwitchTeams /* = false */ )
+void CTeamplayRoundBasedRules::SetStalemate( int iReason, bool bForceMapReset /* = true */, bool bSwitchTeams /* = false */, bool arena )
 {
-	if ( !mp_stalemate_enable.GetBool() )
+	if ( !mp_stalemate_enable.GetBool() && !arena )
 	{
 		SetWinningTeam( TEAM_UNASSIGNED, WINREASON_STALEMATE, bForceMapReset, bSwitchTeams );
 		return;

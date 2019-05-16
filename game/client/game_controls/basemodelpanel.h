@@ -18,7 +18,9 @@
 #include "KeyValues.h"
 
 class C_SceneEntity;
-
+extern ConVar ofd_color_r;
+extern ConVar ofd_color_g;
+extern ConVar ofd_color_b;
 
 class CModelPanelModel : public C_BaseFlex
 {
@@ -28,7 +30,14 @@ public:
 
 	virtual bool IsMenuModel() const{ return true; }
 	
-	virtual const Vector &GetItemTintColor( void ) { return m_vecModelColor; }
+	Vector 	bruh;
+	virtual const Vector	&GetItemTintColor( void ) 
+	{ 
+		bruh.x = ofd_color_r.GetFloat()/255.0f ;
+		bruh.y = ofd_color_g.GetFloat()/255.0f;
+		bruh.z = ofd_color_b.GetFloat()/255.0f;
+		return bruh; 
+	}	
 	void SetModelColor( const Vector &vecColor ) { m_vecModelColor = vecColor; }
 private:
 	Vector m_vecModelColor;

@@ -2123,7 +2123,7 @@ void CServerGameDLL::LoadSpecificMOTDMsg( const ConVar &convar, const char *pszS
 }
 
 // keeps track of which chapters the user has unlocked
-ConVar sv_unlockedchapters( "sv_unlockedchapters", "99", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+extern ConVar sv_unlockedchapters;
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates which chapters are unlocked

@@ -688,7 +688,7 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 		return;
 
 	// only draw the flag panel for CTF maps
-	if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CTF )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
 	{
 		// turn on the flag panel
 		if ( m_pFlagPanel && !m_pFlagPanel->IsVisible() )
@@ -702,7 +702,7 @@ void CTFHudObjectiveStatus::SetVisiblePanels( void )
 			m_pControlPointIconsPanel->SetVisible( false );
 		}
 	}
-	else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
+	else if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 	{
 		// turn on the control point icons
 		if ( m_pControlPointIconsPanel && !m_pControlPointIconsPanel->IsVisible() )

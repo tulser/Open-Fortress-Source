@@ -356,11 +356,11 @@ void CTFMapInfoMenu::LoadMapPage( const char *mapName )
 
 		if ( TFGameRules() )
 		{
-			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CTF )
+			if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
 			{
 				pszDefault = "maps/default_ctf.txt";
 			}
-			else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
+			else if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 			{
 				pszDefault = "maps/default_cp.txt";
 			}

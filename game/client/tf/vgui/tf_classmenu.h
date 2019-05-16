@@ -55,6 +55,7 @@ public:
 				// stop the panel from running any VCD data
 				pModelPanel->DeleteVCDData();
 			}
+
 		}
 
 		CTFRichText *pRichText = dynamic_cast<CTFRichText *>(FindChildByName( "classInfo" ) );
@@ -66,6 +67,7 @@ public:
 		BaseClass::SetVisible( state );
 	}
 };
+
 
 //-----------------------------------------------------------------------------
 // 

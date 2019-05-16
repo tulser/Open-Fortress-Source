@@ -9,6 +9,7 @@
 #include "tf_team.h"
 #include "engine/IEngineSound.h"
 #include "entity_condpowerup.h"
+#include "of_dropped_powerup.h"
 
 #include "tier0/memdbgon.h"
 
@@ -72,10 +73,13 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		if ( !pTFPlayer )
 			return false;
-		
+		if ( pTFPlayer->m_Shared.InCond(m_bCondition) )
+			return false;
 		bSuccess = true;
-
+		Vector vecPackOrigin;
+		QAngle vecPackAngles;
 		pTFPlayer->m_Shared.AddCond( m_bCondition , m_bCondDuration );
+		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );
 		EmitSound( STRING( m_iszPickupSound ) );
 		m_nRenderFX = kRenderFxDistort;
 	}

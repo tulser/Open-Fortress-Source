@@ -18,13 +18,17 @@
 
 class C_SceneEntity;
 
+extern ConVar ofd_color_r;
+extern ConVar ofd_color_g;
+extern ConVar ofd_color_b;
 
 class CModelPanelModel : public C_BaseFlex
 {
 public:
 	CModelPanelModel(){}
 	DECLARE_CLASS( CModelPanelModel, C_BaseFlex );
-
+	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
+	virtual const Vector	&GetItemTintColor( void ) { return color; }	
 	virtual bool IsMenuModel() const{ return true; }
 };
 
@@ -90,6 +94,9 @@ public:
 			m_pszModelName = NULL;
 		}
 	}
+	
+	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
+	virtual const Vector	&GetItemTintColor( void ) { return color; }		
 
 public:
 	const char	*m_pszModelName;
@@ -135,7 +142,8 @@ public:
 		m_Animations.PurgeAndDeleteElements();
 		m_AttachedModelsInfo.PurgeAndDeleteElements();
 	}
-
+	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
+	virtual const Vector	&GetItemTintColor( void ) { return color; }	
 public:
 	const char	*m_pszModelName;
 	const char	*m_pszModelName_HWM;
@@ -172,10 +180,10 @@ public:
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
 
 	void	SetDefaultAnimation( const char *pszName );
-
+	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
+	virtual const Vector	&GetItemTintColor( void ) { return color; }	
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event );
-
 protected:
 	virtual void ParseModelInfo( KeyValues *inResourceData );
 	virtual void SetupModel( void );

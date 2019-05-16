@@ -88,7 +88,7 @@ public:
 
 	// A game has been won by the specified team
 	virtual void SetWinningTeam( int team, int iWinReason, bool bForceMapReset = true, bool bSwitchTeams = false, bool bDontAddScore = false, bool bFinal = false ) { return; }
-	virtual void SetStalemate( int iReason, bool bForceMapReset = true, bool bSwitchTeams = false ) { return; }
+	virtual void SetStalemate( int iReason, bool bForceMapReset = true, bool bSwitchTeams = false, bool arena = false ) { return; }
 
 	// Used to determine if all players should switch teams
 	virtual void SetSwitchTeams( bool bSwitch ){ m_bSwitchTeams = bSwitch; }

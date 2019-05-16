@@ -30,6 +30,7 @@ public:
 	virtual CBaseEntity* Respawn( void );
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
+	void	SetWeaponModel( void );
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 	string_t m_iszWeaponName=MAKE_STRING( "tf_weapon_scattergun" );

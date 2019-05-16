@@ -83,9 +83,9 @@ static int g_TauntCamAchievements[] =
 
 string_t m_iszDefaultWeaponName[50] =
 {
-	MAKE_STRING("tf_weapon_railgun"),
 	MAKE_STRING("tf_weapon_rocketlauncher_dm"),
 	MAKE_STRING("tf_weapon_grenadelauncher_mercenary"),
+	MAKE_STRING("tf_weapon_railgun"),
 	MAKE_STRING("tf_weapon_gatlinggun"),
 	MAKE_STRING("tf_weapon_flamethrower"),
 	MAKE_STRING("tf_weapon_smg_mercenary"),
@@ -248,26 +248,20 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
 	RecvPropString( RECVINFO(m_pszTeamGoalStringMercenary)),
-	RecvPropBool( RECVINFO( m_nbIsDM ) ),
-	RecvPropBool( RECVINFO( m_nbIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
-	RecvPropBool( RECVINFO( m_nbIsGG ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
 	RecvPropBool( RECVINFO( m_bUsesMoney ) ),
 #else
 
-	SendPropInt( SENDINFO( m_nGameType ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringMercenary ) ),
-	SendPropBool( SENDINFO( m_nbIsDM ) ),
-	SendPropBool( SENDINFO( m_nbIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
-	SendPropBool( SENDINFO( m_nbIsGG ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
 	SendPropBool( SENDINFO( m_bUsesMoney ) ),
@@ -583,7 +577,31 @@ void CTFLogicESC::Spawn(void)
 {
 	BaseClass::Spawn();
 }
+class CTFLogicArena : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicArena, CBaseEntity);
+	void	Spawn(void);
+	
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	COutputEvent m_ArenaRoundStart;
+#endif
+	
+};
 
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFLogicArena )
+	DEFINE_OUTPUT( m_ArenaRoundStart,	"OnArenaRoundStart" ),
+END_DATADESC()
+#endif
+
+LINK_ENTITY_TO_CLASS(tf_logic_arena, CTFLogicArena);
+
+void CTFLogicArena::Spawn(void)
+{
+	BaseClass::Spawn();
+}
 
 // (We clamp ammo ourselves elsewhere).
 ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
@@ -807,11 +825,7 @@ CTFGameRules::CTFGameRules()
 #endif
 
 	// Initialize the game type
-	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
-	
-	m_nbIsDM = false;
-	m_nbIsTeamplay = false;
-	m_nbIsGG = false;
+//	m_nGameType.Set( TF_GAMETYPE_UNDEFINED );
 
 	// Initialize the classes here.
 	InitPlayerClasses();
@@ -844,6 +858,18 @@ CTFGameRules::CTFGameRules()
 	}
 	m_iMaxLevel = 14;
 	m_iRequiredKills = 2;
+}
+
+bool CTFGameRules::InGametype( int nGametype )
+{	
+	Assert( nGametype >= 0 && nGametype < TF_GAMETYPE_LAST );
+	return ( ( m_nGameType & (1<<nGametype) ) != 0 );
+}
+
+void CTFGameRules::AddGametype( int nGametype )
+{
+	Assert( nGametype >= 0 && nGametype < TF_GAMETYPE_LAST );
+	m_nGameType |= (1<<nGametype);
 }
 
 //-----------------------------------------------------------------------------
@@ -940,36 +966,32 @@ void CTFGameRules::Activate()
 	tf_maxspeed.SetValue(400);
 	sv_airaccelerate.SetValue(10);
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
-	m_nbIsDM = false;
-	m_nbIsTeamplay = false;
-	m_nbIsGG = false;
 	
 	m_nCurrFrags.Set(0);
-	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
+//	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
 	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*> (gEntList.FindEntityByClassname(NULL, "item_teamflag"));
 	if (pFlag)
 	{
-		m_nGameType.Set(TF_GAMETYPE_CTF);
+		AddGametype(TF_GAMETYPE_CTF);
 	}
 
 	if (g_hControlPointMasters.Count())
 	{
-		m_nGameType.Set(TF_GAMETYPE_CP);
+		AddGametype(TF_GAMETYPE_CP);
 	}
 
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
-		m_nbIsDM = true;
+		AddGametype(TF_GAMETYPE_DM);
 		if ( (  ( ( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") ) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
-			m_nbIsTeamplay = true;
+			AddGametype(TF_GAMETYPE_TDM);
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n", NULL);
 			engine->ServerCommand("exec config_tdm.cfg \n");
 			engine->ServerExecute();
 		}
 		else 
 		{
-			m_nbIsTeamplay = false;
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server DM gamemode config file\n", NULL);
 			engine->ServerCommand("exec config_dm.cfg \n");
 			engine->ServerExecute();
@@ -986,23 +1008,24 @@ void CTFGameRules::Activate()
 	
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofg_force.GetBool() )
 	{
-		m_nbIsGG = true;
-		
+		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
 		engine->ServerCommand("exec config_gg.cfg \n");
 		engine->ServerExecute();
 		mp_disable_respawn_times.SetValue(1);
-		return;
 	}
 	
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) )
 	{
 		TF_HUNTED_COUNT = 0;
-		m_nGameType.Set(TF_GAMETYPE_ESC);
+		AddGametype(TF_GAMETYPE_ESC);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Escort gamemode config file\n", NULL);
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
-		return;
+	}
+	if (gEntList.FindEntityByClassname(NULL, "tf_gamemode_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
+	{
+		AddGametype(TF_GAMETYPE_ARENA);
 	}
 	
 }
@@ -1013,20 +1036,15 @@ void CTFGameRules::FireGamemodeOutputs()
 	CTFGameRulesProxy *pProxy = dynamic_cast<CTFGameRulesProxy*> (gEntList.FindEntityByClassname(NULL, "tf_gamerules"));
 	if ( pProxy )
 	{
-		switch ( GetGameType() )
-		{
-			case TF_GAMETYPE_CTF:
+		if ( InGametype( TF_GAMETYPE_CTF ) )
 				pProxy->FireCTFOutput();
-				break;
-			case TF_GAMETYPE_CP:
+		if ( InGametype( TF_GAMETYPE_CP ) )
 				pProxy->FireCPOutput();
-				break;
-		}
-		if ( IsDMGamemode() )
+		if ( InGametype( TF_GAMETYPE_DM ) )
 			pProxy->FireDMOutput();
 		if ( IsTeamplay() )
 			pProxy->FireTeamplayOutput();
-		if ( IsGGGamemode() )
+		if ( InGametype( TF_GAMETYPE_GG ) )
 			pProxy->FireGunGameOutput();
 	}
 #endif
@@ -1256,6 +1274,24 @@ void CTFGameRules::SetupOnRoundStart( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundRunning( void )
 {
+	if ( IsArenaGamemode() )
+	{
+		TeamplayGameRules()->SetStalemate( 0, false, false, true );
+		if ( TeamplayRoundBasedRules()->m_hPreviousActiveTimer.Get() )
+		{
+			CTeamRoundTimer *pTimer = dynamic_cast<CTeamRoundTimer*>( m_hPreviousActiveTimer.Get() );
+			if ( pTimer && !pTimer->StartPaused() )
+			{
+				pTimer->ResumeTimer();
+			}
+		}
+
+		TeamplayRoundBasedRules()->SetInWaitingForPlayers( false );
+	}
+	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
+	if (pArena)
+		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
+	
 	// Let out control point masters know that the round has started
 	for ( int i = 0; i < g_hControlPointMasters.Count(); i++ )
 	{

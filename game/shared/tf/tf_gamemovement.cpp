@@ -44,7 +44,7 @@ ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCV
 #if defined (CLIENT_DLL)
 ConVar 	ofd_jumpsound( "ofd_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Hough" );
 #endif
-#define TF_MAX_SPEED   400
+#define TF_MAX_SPEED   720
 
 #define TF_WATERJUMP_FORWARD  30
 #define TF_WATERJUMP_UP       300

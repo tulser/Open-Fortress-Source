@@ -56,25 +56,54 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
-	if ( ofd_instagib.GetInt() <= 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() ) {
-	Precache();
-	if (m_iszWeaponModel==MAKE_STRING( "" )) m_iszWeaponModel=m_iszWeaponModelOLD;
-	SetModel( STRING(m_iszWeaponModel) );
-	BaseClass::Spawn();
-	ResetSequence( LookupSequence("spin") );
+	if ( ofd_instagib.GetInt() <= 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() ) 
+	{
+		Precache();
+		SetWeaponModel();
+		BaseClass::Spawn();
+		ResetSequence( LookupSequence("spin") );
 	}
 }
 
-
+void CWeaponSpawner::SetWeaponModel( void )
+{
+	if ( m_iszWeaponModel == MAKE_STRING( "" ) )
+	{
+		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) )
+		{
+			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( STRING(m_iszWeaponName) );
+			if ( pWeapon )
+				SetModel( pWeapon->GetWorldModel() );
+			return;
+		}
+		else
+			m_iszWeaponModel = m_iszWeaponModelOLD;
+	}
+	SetModel( STRING(m_iszWeaponModel) );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Precache function for the ammopack
 //-----------------------------------------------------------------------------
 void CWeaponSpawner::Precache( void )
 {
-	if (m_iszWeaponModel==MAKE_STRING( "" )) m_iszWeaponModel=m_iszWeaponModelOLD;
-	PrecacheModel( STRING(m_iszWeaponModel) );
 	PrecacheScriptSound( STRING( m_iszPickupSound) );
+	if ( m_iszWeaponModel == MAKE_STRING( "" ) )
+	{
+		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) )
+		{
+			CTFWeaponBase *pWeapon = (CTFWeaponBase *)CreateEntityByName( STRING(m_iszWeaponName) );
+			if ( pWeapon )
+			{
+				DevMsg("Guess te model is %s \n", (MAKE_STRING(pWeapon->GetWorldModel())) );
+				PrecacheModel( pWeapon->GetWorldModel() );
+			}
+			return;
+		}
+		else
+			m_iszWeaponModel = m_iszWeaponModelOLD;
+	}
+	PrecacheModel( STRING(m_iszWeaponModel) );
 }
 
 //-----------------------------------------------------------------------------

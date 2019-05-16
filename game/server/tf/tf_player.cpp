@@ -118,6 +118,7 @@ extern ConVar ofd_spawnprotecttime;
 extern ConVar ofe_huntedcount;
 
 ConVar ofd_teamplay_collision("ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable collission with teammates in tdm modes");
+ConVar ofd_dynamic_color_update("ofd_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Update player color imidiatley.");
 
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -449,6 +450,9 @@ void CTFPlayer::TFPlayerThink()
 		m_iszExpressionScene = NULL_STRING;
 		UpdateExpression();
 	}
+	
+	if ( ofd_dynamic_color_update.GetBool() )
+		UpdatePlayerColor();
 
 	// Check to see if we are in the air and taunting.  Stop if so.
 /*	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )

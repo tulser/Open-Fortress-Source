@@ -322,11 +322,11 @@ void CTF_Presence::FireGameEvent( IGameEvent *event )
 #if defined( _X360 )
 		if ( TFGameRules() && !m_bIsInCommentary )
 		{
-			if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CP )
+			if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 			{
 				UserSetContext( XBX_GetPrimaryUserId(), X_CONTEXT_PRESENCE, CONTEXT_PRESENCE_TF_CP, true );
 			}
-			else if ( TFGameRules()->GetGameType() == TF_GAMETYPE_CTF )
+			else if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
 			{
 				// ctf games start tied
 				int zeroscore = 0;

@@ -245,6 +245,8 @@ public:
 	virtual const char *GetGameTypeName( void ){ return g_aGameTypeNames[m_nGameType]; }
 	virtual int GetGameType( void ){ return m_nGameType; }
 
+	
+
 	virtual bool FlagsMayBeCapped( void );
 	virtual bool WeaponSpawnersMayBeUsed( void );
 
@@ -370,10 +372,7 @@ public:
 	bool m_bControlSpawnsPerTeam[ MAX_TEAMS ][ MAX_CONTROL_POINTS ];
 	int	 m_iPreviousRoundWinners;
 	CNetworkVar( int, TF_HUNTED_COUNT ); // Type of game this map is (CTF, CP)
-	CNetworkVar( bool, m_nbIsDM ); // Is Deathmatch On?
-	CNetworkVar( bool, m_nbIsTeamplay ); // Is Teamplay On?
 	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
-	CNetworkVar( bool, m_nbIsGG ); // Is Gun Game On?
 	
 	string_t 		m_iszWeaponName[50];
 
@@ -381,16 +380,20 @@ public:
 	bool			m_bListOnly;
 	int				m_iRequiredKills;
 	
-	virtual bool	IsDMGamemode(void) { return m_nbIsDM; }
-	virtual bool	IsTeamplay(void) { return m_nbIsTeamplay; }
+	virtual bool	IsDMGamemode(void) { return InGametype( TF_GAMETYPE_DM ); }
+	virtual bool	IsTeamplay(void) { return InGametype( TF_GAMETYPE_TDM ); }
 	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
-	virtual bool	IsGGGamemode(void) { return m_nbIsGG; }
+	virtual bool	IsGGGamemode(void) { return InGametype( TF_GAMETYPE_GG ); }
+	virtual bool	IsArenaGamemode(void) { return InGametype( TF_GAMETYPE_ARENA ); }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
 	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
+	
+	bool InGametype( int nGametype );
+	void AddGametype( int nGametype );	
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );
 	CNetworkVar( bool, m_bForce3DSkybox );

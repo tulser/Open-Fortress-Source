@@ -892,7 +892,10 @@ void CTFPlayerShared::OnAddCritBoosted( void )
 {
 #ifdef CLIENT_DLL
 	m_pOuter->OnAddCritBoosted();
-	m_pOuter->EmitSound( "Mercenary.LaughEvil01" );
+#else
+	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
+	if ( pTFPlayer )
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
 #endif
 }
 
@@ -900,13 +903,15 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 {
 #ifdef CLIENT_DLL
 	m_pOuter->OnRemoveCritBoosted();
-	m_pOuter->EmitSound( "Mercenary.NegativeVocalization01" );
+#else
+	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
+	if ( pTFPlayer )
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE );
 #endif
 }
 void CTFPlayerShared::OnAddBerserk( void )
-{
+{	
 #ifdef CLIENT_DLL
-	m_pOuter->EmitSound( "Mercenary.LaughEvil01" );
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		char *pEffectName = NULL;
@@ -923,6 +928,7 @@ void CTFPlayerShared::OnAddBerserk( void )
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
 	{
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( "TF_WEAPON_BERSERK" );
 		if ( pWeapon )
 		{
@@ -935,9 +941,8 @@ void CTFPlayerShared::OnAddBerserk( void )
 }
 
 void CTFPlayerShared::OnRemoveBerserk( void )
-{
+{		
 #ifdef CLIENT_DLL
-	m_pOuter->EmitSound( "Mercenary.NegativeVocalization01" );
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );
@@ -946,6 +951,7 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );	
 	if ( pTFPlayer )
 	{
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE );
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetActiveWeapon();
 		if ( pWeapon )
 		{

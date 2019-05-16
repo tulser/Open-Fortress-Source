@@ -11,7 +11,7 @@
 #include "tf_gamerules.h"
 
 extern ConVar of_infiniteammo;
-
+ConVar sv_unlockedchapters( "sv_unlockedchapters", "99", FCVAR_ARCHIVE | FCVAR_USERINFO );
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------

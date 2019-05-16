@@ -218,7 +218,7 @@ public:
 	string_t GetLastPlayedRound( void );
 
 	virtual void SetWinningTeam( int team, int iWinReason, bool bForceMapReset = true, bool bSwitchTeams = false, bool bDontAddScore = false, bool bFinal = false ) OVERRIDE;
-	virtual void SetStalemate( int iReason, bool bForceMapReset = true, bool bSwitchTeams = false );
+	virtual void SetStalemate( int iReason, bool bForceMapReset = true, bool bSwitchTeams = false, bool arena = false );
 
 	virtual void SetRoundOverlayDetails( void ){ return; }
 
@@ -237,6 +237,7 @@ public:
 
 	bool IsGameUnderTimeLimit( void );
 
+	void		 SetInWaitingForPlayers( bool bWaitingForPlayers );
 protected:
 	virtual void Think( void );
 
@@ -245,7 +246,6 @@ protected:
 
 	// Game beginning / end handling
 	virtual void GoToIntermission( void );
-	void		 SetInWaitingForPlayers( bool bWaitingForPlayers );
 	void		 CheckWaitingForPlayers( void );
 	void		 CheckRestartRound( void );
 	bool		 CheckTimeLimit( void );
@@ -329,7 +329,9 @@ protected:
 	bool						m_bResetRoundsPlayed;
 
 	// Stalemate
+public:
 	EHANDLE						m_hPreviousActiveTimer;
+protected:
 	CHandle<CTeamRoundTimer>	m_hStalemateTimer;
 	float						m_flStalemateStartTime;
 
