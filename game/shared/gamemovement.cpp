@@ -4541,7 +4541,7 @@ void CGameMovement::Duck( void )
 	}
 }
 
-static ConVar sv_optimizedmovement( "sv_optimizedmovement", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
+static ConVar sv_optimizedmovement( "sv_optimizedmovement", "1", FCVAR_REPLICATED );
 
 //-----------------------------------------------------------------------------
 // Purpose: 

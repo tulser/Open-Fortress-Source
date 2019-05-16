@@ -245,7 +245,7 @@ void CAchievementNotificationPanel::SetXAndWide( Panel *pPanel, int x, int wide 
 	pPanel->SetWide( wide );
 }
 
-CON_COMMAND_F( achievement_notification_test, "Test the hud notification UI", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( achievement_notification_test, "Test the hud notification UI", FCVAR_CHEAT )
 {
 	static int iCount=0;
 

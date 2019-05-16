@@ -1023,7 +1023,7 @@ void S_SoundEmitterSystemFlush( void )
 #if defined( CLIENT_DLL )
 CON_COMMAND_F( cl_soundemitter_flush, "Flushes the sounds.txt system (client only)", FCVAR_CHEAT )
 #else
-CON_COMMAND_F( sv_soundemitter_flush, "Flushes the sounds.txt system (server only)", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( sv_soundemitter_flush, "Flushes the sounds.txt system (server only)", FCVAR_CHEAT )
 #endif
 {
 	S_SoundEmitterSystemFlush( );
@@ -1035,7 +1035,7 @@ CON_COMMAND_F( sv_soundemitter_flush, "Flushes the sounds.txt system (server onl
 
 #if !defined( _XBOX )
 
-CON_COMMAND_F( sv_soundemitter_filecheck, "Report missing wave files for sounds and game_sounds files.", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( sv_soundemitter_filecheck, "Report missing wave files for sounds and game_sounds files.", FCVAR_CHEAT )
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
@@ -1044,7 +1044,7 @@ CON_COMMAND_F( sv_soundemitter_filecheck, "Report missing wave files for sounds 
 	DevMsg( "---------------------------\nTotal missing files %i\n", missing );
 }
 
-CON_COMMAND_F( sv_findsoundname, "Find sound names which reference the specified wave files.", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( sv_findsoundname, "Find sound names which reference the specified wave files.", FCVAR_CHEAT )
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;

@@ -204,7 +204,7 @@ static ConVar s_UseNetworkVars( "UseNetworkVars", "1", FCVAR_CHEAT, "For profili
 
 extern ConVar sv_noclipduringpause;
 ConVar sv_massreport( "sv_massreport", "0" );
-ConVar sv_force_transmit_ents( "sv_force_transmit_ents", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Will transmit all entities to client, regardless of PVS conditions (will still skip based on transmit flags, however)." );
+ConVar sv_force_transmit_ents( "sv_force_transmit_ents", "0", FCVAR_CHEAT, "Will transmit all entities to client, regardless of PVS conditions (will still skip based on transmit flags, however)." );
 
 ConVar sv_autosave( "sv_autosave", "1", 0, "Set to 1 to autosave game on level transition. Does not affect autosave triggers." );
 ConVar *sv_maxreplay = NULL;

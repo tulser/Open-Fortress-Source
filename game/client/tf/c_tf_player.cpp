@@ -77,9 +77,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar tf_playergib_forceup( "tf_playersgib_forceup", "1.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Upward added velocity for gibs." );
-ConVar tf_playergib_force( "tf_playersgib_force", "500.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Gibs force." );
-ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Max gib speed." );
+ConVar tf_playergib_forceup( "tf_playersgib_forceup", "1.0", FCVAR_CHEAT, "Upward added velocity for gibs." );
+ConVar tf_playergib_force( "tf_playersgib_force", "500.0", FCVAR_CHEAT, "Gibs force." );
+ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT, "Max gib speed." );
 
 ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, sniper rifle will re-zoom after firing a zoomed shot." );
 
@@ -755,9 +755,9 @@ bool CSpyInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
 	return ( bInvis && bTint );
 }
 
-ConVar tf_teammate_max_invis( "tf_teammate_max_invis", "0.95", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_vm_min_invis( "tf_vm_min_invis", "0.22", FCVAR_DEVELOPMENTONLY, "minimum invisibility value for view model", true, 0.0, true, 1.0 );
-ConVar tf_vm_max_invis( "tf_vm_max_invis", "0.5", FCVAR_DEVELOPMENTONLY, "maximum invisibility value for view model", true, 0.0, true, 1.0 );
+ConVar tf_teammate_max_invis( "tf_teammate_max_invis", "0.95", FCVAR_CHEAT );
+ConVar tf_vm_min_invis( "tf_vm_min_invis", "0.22", FCVAR_CHEAT, "Minimum invisibility value for view model", true, 0.0, true, 1.0 );
+ConVar tf_vm_max_invis( "tf_vm_max_invis", "0.5", FCVAR_CHEAT, "Maximum invisibility value for view model", true, 0.0, true, 1.0 );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1918,9 +1918,9 @@ void C_TFPlayer::ShowNemesisIcon( bool bShow )
 static Vector TF_TAUNTCAM_HULL_MIN( -9.0f, -9.0f, -9.0f );
 static Vector TF_TAUNTCAM_HULL_MAX( 9.0f, 9.0f, 9.0f );
 
-static ConVar tf_tauntcam_yaw( "tf_tauntcam_yaw", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-static ConVar tf_tauntcam_pitch( "tf_tauntcam_pitch", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-static ConVar tf_tauntcam_dist( "tf_tauntcam_dist", "110", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+static ConVar tf_tauntcam_yaw( "tf_tauntcam_yaw", "0", FCVAR_CHEAT );
+static ConVar tf_tauntcam_pitch( "tf_tauntcam_pitch", "0", FCVAR_CHEAT );
+static ConVar tf_tauntcam_dist( "tf_tauntcam_dist", "110", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -2200,7 +2200,7 @@ void C_TFPlayer::UpdateLookAt( void )
 #define TF_AVOID_MAX_RADIUS_SQR		5184.0f			// Based on player extents and max buildable extents.
 #define TF_OO_AVOID_MAX_RADIUS_SQR	0.00019f
 
-ConVar tf_max_separation_force ( "tf_max_separation_force", "256", FCVAR_DEVELOPMENTONLY );
+ConVar tf_max_separation_force ( "tf_max_separation_force", "256", FCVAR_CHEAT );
 
 extern ConVar cl_forwardspeed;
 extern ConVar cl_backspeed;
@@ -3763,7 +3763,7 @@ static void cc_tf_crashclient()
 	C_TFPlayer *pPlayer = NULL;
 	pPlayer->ComputeFxBlend();
 }
-static ConCommand tf_crashclient( "tf_crashclient", cc_tf_crashclient, "Crashes this client for testing.", FCVAR_DEVELOPMENTONLY );
+static ConCommand tf_crashclient( "tf_crashclient", cc_tf_crashclient, "Crashes this client for testing.", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -3793,7 +3793,7 @@ static void cc_tf_debugsentrydmg()
 		}
 	}
 }
-static ConCommand tf_debugsentrydamage( "tf_debugsentrydamage", cc_tf_debugsentrydmg, "", FCVAR_DEVELOPMENTONLY );
+static ConCommand tf_debugsentrydamage( "tf_debugsentrydamage", cc_tf_debugsentrydmg, "", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: HL1's view bob, roll and idle effects.

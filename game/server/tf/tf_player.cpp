@@ -85,19 +85,19 @@ extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
-ConVar tf_playerstatetransitions( "tf_playerstatetransitions", "-2", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
+ConVar tf_playerstatetransitions( "tf_playerstatetransitions", "-2", FCVAR_CHEAT, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
 ConVar tf_playergib( "tf_playergib", "1", FCVAR_PROTECTED, "Allow player gibbing." );
 
-ConVar tf_weapon_ragdoll_velocity_min( "tf_weapon_ragdoll_velocity_min", "100", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_weapon_ragdoll_velocity_max( "tf_weapon_ragdoll_velocity_max", "150", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_weapon_ragdoll_maxspeed( "tf_weapon_ragdoll_maxspeed", "300", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_weapon_ragdoll_velocity_min( "tf_weapon_ragdoll_velocity_min", "100", FCVAR_CHEAT );
+ConVar tf_weapon_ragdoll_velocity_max( "tf_weapon_ragdoll_velocity_max", "150", FCVAR_CHEAT );
+ConVar tf_weapon_ragdoll_maxspeed( "tf_weapon_ragdoll_maxspeed", "300", FCVAR_CHEAT );
 
-ConVar tf_damageforcescale_other( "tf_damageforcescale_other", "6.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_damageforcescale_self_soldier( "tf_damageforcescale_self_soldier", "10.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
-ConVar tf_damagescale_self_soldier( "tf_damagescale_self_soldier", "0.60", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_damageforcescale_other( "tf_damageforcescale_other", "6.0", FCVAR_CHEAT );
+ConVar tf_damageforcescale_self_soldier( "tf_damageforcescale_self_soldier", "10.0", FCVAR_CHEAT );
+ConVar tf_damagescale_self_soldier( "tf_damagescale_self_soldier", "0.60", FCVAR_CHEAT );
 
-ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_DEVELOPMENTONLY );
-ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_DEVELOPMENTONLY );
+ConVar tf_damage_lineardist( "tf_damage_lineardist", "0", FCVAR_CHEAT );
+ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_CHEAT );
 
 ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLICATED , "Max time after a voice command until player can do another one" );
 ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes ever non projectile weapon headshot." );
@@ -357,7 +357,7 @@ void cc_CreatePredictionError_f()
 	pEnt->SetAbsOrigin( pEnt->GetAbsOrigin() + Vector( 63, 0, 0 ) );
 }
 
-ConCommand cc_CreatePredictionError( "CreatePredictionError", cc_CreatePredictionError_f, "Create a prediction error", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConCommand cc_CreatePredictionError( "CreatePredictionError", cc_CreatePredictionError_f, "Create a prediction error", FCVAR_CHEAT );
 
 // Hint callbacks
 bool HintCallbackNeedsResources_Sentrygun( CBasePlayer *pPlayer )
@@ -2801,7 +2801,7 @@ static float DamageForce( const Vector &size, float damage, float scale )
 	return force;
 }
 
-ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6567,7 +6567,7 @@ void DebugParticles( const CCommand &args )
 	}
 }
 
-static ConCommand sv_debug_stuck_particles( "sv_debug_stuck_particles", DebugParticles, "Debugs particles attached to the player under your crosshair.", FCVAR_DEVELOPMENTONLY );
+static ConCommand sv_debug_stuck_particles( "sv_debug_stuck_particles", DebugParticles, "Debugs particles attached to the player under your crosshair." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Debug concommand to set the player on fire
@@ -6577,7 +6577,7 @@ void IgnitePlayer()
 	CTFPlayer *pPlayer = ToTFPlayer( ToTFPlayer( UTIL_PlayerByIndex( 1 ) ) );
 	pPlayer->m_Shared.Burn( pPlayer );
 }
-static ConCommand cc_IgnitePlayer( "tf_ignite_player", IgnitePlayer, "Sets you on fire", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+static ConCommand cc_IgnitePlayer( "tf_ignite_player", IgnitePlayer, "Sets you on fire", FCVAR_CHEAT );
 
 
 //-----------------------------------------------------------------------------
@@ -6653,7 +6653,7 @@ void TestRR( const CCommand &args )
 static ConCommand tf_testrr( "tf_testrr", TestRR, "Force the player under your crosshair to speak a response rule concept. Format is tf_testrr <concept>, or tf_testrr <player name> <concept>", FCVAR_CHEAT );
 
 
-CON_COMMAND_F( tf_crashclients, "testing only, crashes about 50 percent of the connected clients.", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( tf_crashclients, "Testing only, crashes about 50 percent of the connected clients.", FCVAR_CHEAT )
 {
 	for ( int i = 1; i < gpGlobals->maxClients; ++i )
 	{

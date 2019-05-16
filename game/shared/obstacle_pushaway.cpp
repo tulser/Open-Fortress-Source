@@ -11,7 +11,7 @@
 #if defined( CSTRIKE_DLL )
 #define SV_PUSH_CONVAR_FLAGS  (FCVAR_REPLICATED)
 #else
-#define SV_PUSH_CONVAR_FLAGS  (FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY)
+#define SV_PUSH_CONVAR_FLAGS  (FCVAR_REPLICATED)
 #endif // CSTRIKE_DLL
 
 //-----------------------------------------------------------------------------------------------------

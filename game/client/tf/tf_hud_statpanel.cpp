@@ -943,7 +943,7 @@ void RefreshPlayerStats()
 	}
 }
 
-ConCommand teststatpanel( "teststatpanel", TestStatPanel, "", FCVAR_DEVELOPMENTONLY );
-ConCommand hidestatpanel( "hidestatpanel", HideStatPanel, "", FCVAR_DEVELOPMENTONLY );
+ConCommand teststatpanel( "teststatpanel", TestStatPanel, "", FCVAR_CHEAT );
+ConCommand hidestatpanel( "hidestatpanel", HideStatPanel, "", FCVAR_CHEAT );
 ConCommand resetplayerstats( "resetplayerstats", ResetPlayerStats, "" );
-ConCommand refreshplayerstats( "refreshplayerstats", RefreshPlayerStats, "", FCVAR_DEVELOPMENTONLY );
+ConCommand refreshplayerstats( "refreshplayerstats", RefreshPlayerStats, "", FCVAR_CHEAT );

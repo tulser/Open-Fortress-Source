@@ -86,7 +86,7 @@ PRECACHE_REGISTER(obj_dispenser);
 #define DISPENSER_DROP_SECONDARY	40
 #define DISPENSER_DROP_METAL		40
 
-ConVar obj_dispenser_heal_rate( "obj_dispenser_heal_rate", "10.0", FCVAR_CHEAT |FCVAR_DEVELOPMENTONLY );
+ConVar obj_dispenser_heal_rate( "obj_dispenser_heal_rate", "10.0", FCVAR_CHEAT );
 
 class CDispenserTouchTrigger : public CBaseTrigger
 {

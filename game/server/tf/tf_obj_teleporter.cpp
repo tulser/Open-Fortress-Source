@@ -59,8 +59,8 @@ PRECACHE_REGISTER( obj_teleporter_entrance );
 
 #define BUILD_TELEPORTER_EFFECT_TIME			12.0	// seconds that player glows after teleporting
 
-ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
-ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
+ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
+ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
 
 LINK_ENTITY_TO_CLASS( obj_teleporter_entrance,	CObjectTeleporter_Entrance );
 LINK_ENTITY_TO_CLASS( obj_teleporter_exit,		CObjectTeleporter_Exit );

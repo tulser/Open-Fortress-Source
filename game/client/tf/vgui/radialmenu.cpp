@@ -31,7 +31,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar cl_fastradial( "cl_fastradial", "1", FCVAR_DEVELOPMENTONLY, "If 1, releasing the button on a radial menu executes the highlighted button" );
+ConVar cl_fastradial( "cl_fastradial", "1", "If 1, releasing the button on a radial menu executes the highlighted button" );
 ConVar RadialMenuDebug( "cl_rosetta_debug", "0" );
 ConVar cl_rosetta_line_inner_radius( "cl_rosetta_line_inner_radius", "25" );
 ConVar cl_rosetta_line_outer_radius( "cl_rosetta_line_outer_radius", "45" );

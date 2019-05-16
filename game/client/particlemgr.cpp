@@ -1794,7 +1794,7 @@ void CParticleMgr::BuildParticleSimList( CUtlVector< ParticleSimListEntry_t > &l
 	}
 }
 
-static ConVar r_particle_timescale( "r_particle_timescale", "1.0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+static ConVar r_particle_timescale( "r_particle_timescale", "1.0", FCVAR_CHEAT );
 
 static int CountChildParticleSystems( CParticleCollection *p )
 {

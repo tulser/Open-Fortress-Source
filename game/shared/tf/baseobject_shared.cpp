@@ -24,7 +24,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar tf_obj_build_rotation_speed( "tf_obj_build_rotation_speed", "250", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY, "Degrees per second to rotate building when player alt-fires during placement." );
+ConVar tf_obj_build_rotation_speed( "tf_obj_build_rotation_speed", "250", FCVAR_REPLICATED | FCVAR_CHEAT, "Degrees per second to rotate building when player alt-fires during placement." );
 
 //-----------------------------------------------------------------------------
 // Purpose: Parse our model and create the buildpoints in it
@@ -216,7 +216,7 @@ void CBaseObject::SetObjectOnBuildPoint( int iPoint, CBaseObject *pObject )
 	m_BuildPoints[iPoint].m_hObject = pObject;
 }
 
-ConVar tf_obj_max_attach_dist( "tf_obj_max_attach_dist", "160", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar tf_obj_max_attach_dist( "tf_obj_max_attach_dist", "160", FCVAR_REPLICATED | FCVAR_CHEAT );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -303,7 +303,7 @@ CBaseObject	*CBaseObject::GetParentObject( void )
 	return NULL;
 }
 
-static ConVar sv_ignore_hitboxes( "sv_ignore_hitboxes", "0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Disable hitboxes" );
+static ConVar sv_ignore_hitboxes( "sv_ignore_hitboxes", "0", FCVAR_REPLICATED, "Disable hitboxes" );
 
 bool CBaseObject::TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr )
 {

@@ -109,12 +109,12 @@ extern ConVar of_bunnyhop_max_speed_factor;
 extern ConVar tf_maxspeed;
 extern ConVar sv_airaccelerate;
 
-ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "If set to 1, teams must capture control points linearly." );
-ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Amount of time that players are allowed to change class in stalemates." );
+ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
+ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
-ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY);
+ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 ConVar ofg_force( "ofg_force", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
@@ -1375,7 +1375,7 @@ void CTFGameRules::InitTeams( void )
 }
 
 
-ConVar tf_fixedup_damage_radius ( "tf_fixedup_damage_radius", "1", FCVAR_DEVELOPMENTONLY );
+ConVar tf_fixedup_damage_radius ( "tf_fixedup_damage_radius", "1", FCVAR_CHEAT );
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &info - 
@@ -4162,7 +4162,7 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 
 #ifdef GAME_DLL
 
-ConVar ofd_debug_musicname( "ofd_debug_musicname", "0",  FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+ConVar ofd_debug_musicname( "ofd_debug_musicname", "0",  FCVAR_CHEAT );
 const char *CTFGameRules::GetMusicName( bool activeRound )
 {
 	const char *songbase = ( activeRound ? "Music.ActiveRound." : "Music.PreRound.");

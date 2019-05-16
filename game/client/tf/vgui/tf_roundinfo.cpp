@@ -345,7 +345,7 @@ void RoundInfoOverlay::SetState( int iPrevState, int iCurrentState, int iNextBat
 }
 
 
-ConVar tf_roundinfo_pause( "tf_roundinfo_pause", "0", FCVAR_DEVELOPMENTONLY );
+ConVar tf_roundinfo_pause( "tf_roundinfo_pause", "0", FCVAR_CHEAT );
 
 void RoundInfoOverlay::OnTick( void )
 {

@@ -42,7 +42,7 @@ private:
 
 };
 
-static ConVar tf_debug_weapontrail( "tf_debug_weapontrail", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
+static ConVar tf_debug_weapontrail( "tf_debug_weapontrail", "0", FCVAR_CHEAT );
 
 // Network table.
 IMPLEMENT_CLIENTCLASS_DT( C_TFAmmoPack, DT_AmmoPack, CTFAmmoPack )

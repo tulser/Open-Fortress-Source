@@ -1941,7 +1941,7 @@ acttable_t CTFWeaponBase::m_acttablePDA[] =
 	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_PDA,	false },
 };
 
-ConVar mp_forceactivityset( "mp_forceactivityset", "-1", FCVAR_CHEAT|FCVAR_REPLICATED|FCVAR_DEVELOPMENTONLY );
+ConVar mp_forceactivityset( "mp_forceactivityset", "-1", FCVAR_CHEAT|FCVAR_REPLICATED );
 
 acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 {
