@@ -11,6 +11,10 @@
 #include "tf_weaponbase.h"
 #include "time.h"
 #include "tf_shareddefs.h"
+#include <vgui/IScheme.h>
+#include <vgui/ILocalize.h>
+#include "tier3/tier3.h"
+
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
@@ -52,6 +56,8 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+using namespace vgui;
 
 #define ITEM_RESPAWN_TIME	10.0f
 
@@ -147,9 +153,9 @@ class CMyListener : public IGameEventListener2
 #ifdef _DEBUG
 			DevMsg("TEAM WON %i\n", mEvent->GetInt("team"));
 #endif
-										}
-									 }
-								};
+		}
+	}
+};
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
 	ConVarRef var( pConVar );
@@ -3884,6 +3890,29 @@ const char *CTFGameRules::GetTeamGoalString( int iTeam )
 	if ( iTeam == TF_TEAM_MERCENARY )
 		return m_pszTeamGoalStringMercenary.Get();
 	return NULL;
+}
+
+const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
+{
+	wchar_t *GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_UNDEFINED]);
+	if ( InGametype( TF_GAMETYPE_GG ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_GG]);
+	else if ( InGametype( TF_GAMETYPE_DM ) )
+	{
+		if ( InGametype( TF_GAMETYPE_TDM ) )
+			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_TDM]);
+		else
+			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DM]);
+	}
+	if ( InGametype( TF_GAMETYPE_CP ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
+	if ( InGametype( TF_GAMETYPE_CTF ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
+	if ( InGametype( TF_GAMETYPE_ARENA ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
+	if ( InGametype( TF_GAMETYPE_ESC ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
+	return GameType;
 }
 
 #ifdef GAME_DLL

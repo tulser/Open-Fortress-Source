@@ -117,9 +117,9 @@ void CTFMapInfoMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
 	}
 	else
 	{
-		if ( GameRules() )
+		if ( TFGameRules() )
 		{
-			SetDialogVariable( "gamemode", g_pVGuiLocalize->Find( GameRules()->GetGameTypeName() ) );
+			SetDialogVariable( "gamemode", TFGameRules()->GetLocalizedGameTypeName() );
 		}
 	}
 }

@@ -242,10 +242,7 @@ public:
 
 	virtual void FireGameEvent( IGameEvent *event );
 
-	virtual const char *GetGameTypeName( void ){ return g_aGameTypeNames[m_nGameType]; }
-	virtual int GetGameType( void ){ return m_nGameType; }
-
-	
+	virtual const wchar_t *GetLocalizedGameTypeName( void );
 
 	virtual bool FlagsMayBeCapped( void );
 	virtual bool WeaponSpawnersMayBeUsed( void );

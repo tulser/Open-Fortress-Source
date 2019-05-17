@@ -17,6 +17,7 @@
 #include <game/client/iviewport.h>
 #include "spectatorgui.h"
 #include "gamerules.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -109,7 +110,7 @@ void CIntroMenu::ShowPanel( bool bShow )
 
 		if ( GameRules() )
 		{
-			SetDialogVariable( "gamemode", g_pVGuiLocalize->Find( GameRules()->GetGameTypeName() ) );
+			SetDialogVariable( "gamemode", TFGameRules()->GetLocalizedGameTypeName() );
 		}
 
 		SetMouseInputEnabled( true );

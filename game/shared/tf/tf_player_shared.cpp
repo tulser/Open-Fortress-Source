@@ -15,6 +15,7 @@
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "in_buttons.h"
+#include "fmtstr.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -906,7 +907,10 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
-		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE );
+	{
+		CFmtStrN<128> modifiers( "inpowerup:yes");
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
+	}
 #endif
 }
 void CTFPlayerShared::OnAddBerserk( void )
@@ -928,7 +932,8 @@ void CTFPlayerShared::OnAddBerserk( void )
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
 	{
-		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
+		CFmtStrN<128> modifiers( "poweruptype:TF_COND_BERSERK");	
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE, modifiers );
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( "TF_WEAPON_BERSERK" );
 		if ( pWeapon )
 		{
@@ -951,7 +956,8 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );	
 	if ( pTFPlayer )
 	{
-		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE );
+		CFmtStrN<128> modifiers( "inpowerup:yes");
+		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetActiveWeapon();
 		if ( pWeapon )
 		{

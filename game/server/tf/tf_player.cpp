@@ -3480,6 +3480,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
+		const char *pszDamageType = "damagetype:none";
 		if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
 		{
 			pszCustomDeath = "customdeath:sentrygun";
@@ -3511,8 +3512,13 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszDomination = "domination:dominated";
 		}
-
-		CFmtStrN<128> modifiers( "%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[ pTFVictim->GetPlayerClass()->GetClassIndex() ] );
+		
+		if ( info.GetDamageType() & DMG_BLAST )
+		{
+			pszDamageType = "blast";
+		}
+		
+		CFmtStrN<128> modifiers( "%s,%s,victimclass:%s,damagetype:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[ pTFVictim->GetPlayerClass()->GetClassIndex() ], pszDamageType);
 		SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
 	}
 	else

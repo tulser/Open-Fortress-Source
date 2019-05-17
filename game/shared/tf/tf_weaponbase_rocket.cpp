@@ -212,7 +212,7 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 
 	// Initialize the owner.
 	pRocket->SetOwnerEntity( pOwner );
-	
+	if (pWeapon)
 	pRocket->m_hWeaponID = pWeapon->GetWeaponID();
 	
 	// Spawn.
