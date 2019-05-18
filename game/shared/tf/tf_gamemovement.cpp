@@ -363,18 +363,6 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// Check to see if the player is a scout.
 	bool bScout = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SCOUT );
-#ifdef CLIENT_DLL
-	bool bSoldier = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SOLDIER );
-	bool bPyro = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_PYRO );
-	bool bDemo = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_DEMOMAN );
-	bool bHeavy = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_HEAVYWEAPONS );
-	bool bEngi = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_ENGINEER );
-	bool bMedic = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MEDIC );
-	bool bSniper = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SNIPER );
-	bool bSpy = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SPY );
-	bool bCivilian = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_CIVILIAN );
-	bool bMercenary = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY );
-#endif
 	bool bAirDash = false;
 	bool bOnGround = ( player->GetGroundEntity() != NULL );
 
@@ -389,11 +377,9 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 
 	// Cannot jump while in the unduck transition.
-	if ( ( player->m_Local.m_bDucking && (  player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) && !of_crouchjump.GetBool() )
-	{
+	if ( !of_crouchjump.GetBool() && ( player->m_Local.m_bDucking && ( player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) )
 		return false;
-	}
-	
+
 	// Cannot jump again until the jump button has been released.
 	if ( mv->m_nOldButtons & IN_JUMP)
 	{
@@ -474,31 +460,14 @@ bool CTFGameMovement::CheckJumpButton()
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
 #ifdef CLIENT_DLL
-if ( ofd_jumpsound.GetBool() )
-{
-	if ( bScout )
-		m_pTFPlayer->EmitSound( "Scout.Jumpsound" );
-	else if ( bSoldier )
-		m_pTFPlayer->EmitSound( "Soldier.Jumpsound" );
-	else if ( bPyro )	
-		m_pTFPlayer->EmitSound( "Pyro.Jumpsound" );
-	else if ( bDemo )
-		m_pTFPlayer->EmitSound( "Demoman.Jumpsound" );
-	else if ( bHeavy )
-		m_pTFPlayer->EmitSound( "Heavy.Jumpsound" );
-	else if ( bEngi )
-		m_pTFPlayer->EmitSound( "Engineer.Jumpsound" );
-	else if ( bMedic )
-		m_pTFPlayer->EmitSound( "Medic.Jumpsound" );
-	else if ( bSniper )
-		m_pTFPlayer->EmitSound( "Sniper.Jumpsound" );
-	else if ( bSpy )
-		m_pTFPlayer->EmitSound( "Spy.Jumpsound" );	
-	else if ( bCivilian )
-		m_pTFPlayer->EmitSound( "Civilian.Jumpsound" );
-	else if ( bMercenary )
-		m_pTFPlayer->EmitSound( "Mercenary.Jumpsound" );
-}
+	if ( ofd_jumpsound.GetBool() )
+	{
+		char jmpSound[128];
+		const char *TFClassName = g_aPlayerClassNames_NonLocalized[ m_pTFPlayer->GetPlayerClass()->GetClassIndex() ];
+
+		Q_snprintf(jmpSound, sizeof(jmpSound), "%s.Jumpsound", TFClassName);
+		m_pTFPlayer->EmitSound( jmpSound );
+	}
 #endif
 	return true;
 }

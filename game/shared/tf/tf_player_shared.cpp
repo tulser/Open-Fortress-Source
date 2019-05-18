@@ -65,6 +65,8 @@ ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | F
 ConVar ofd_forceclass( "ofd_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
 ConVar ofd_allowteams( "ofd_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
 ConVar ofd_berserk_speed( "ofd_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
+ConVar ofd_berserk_speed_factor( "ofd_berserk_speed_factor", "1.33", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode. (factor mode)");
+ConVar ofd_berserk_speed_mode( "ofd_berserk_speed_mode", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "TESTING Switch between strict mode and factor mode");
 ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
 ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
@@ -2288,8 +2290,16 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	// if they're a sniper, and they're aiming, their speed must be 80 or less
 	if ( m_Shared.InCond( TF_COND_BERSERK ) )
 	{
-		if (maxfbspeed < ofd_berserk_speed.GetFloat())
-			maxfbspeed = ofd_berserk_speed.GetFloat();
+		if (ofd_berserk_speed_mode.GetFloat())
+		{
+			if ( maxfbspeed < maxfbspeed * ofd_berserk_speed_factor.GetFloat() )
+				maxfbspeed *= ofd_berserk_speed_factor.GetFloat();
+		}
+		else
+		{
+			if (maxfbspeed < ofd_berserk_speed.GetFloat())
+				maxfbspeed = ofd_berserk_speed.GetFloat();
+		}
 
 	}
 	// if they're a sniper, and they're aiming, their speed must be 80 or less

@@ -66,7 +66,8 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Team Deathmatch",
 	"Escort",
 	"Zombie Survival",
-	"Gun Game"
+	"Gun Game",
+	"Arena"
 };
 
 const char *g_aMapList[] =
@@ -225,7 +226,7 @@ void CTFDiscordRPC::SetLogo( void )
 		{
 			for (int i=0; i<MAP_COUNT; i++)
 			{
-				if ( V_strcmp(g_aMapList[i], m_szLatchedMapname) )
+				if ( V_strcmp( g_aMapList[i], m_szLatchedMapname ) == 0 )
 				{
 					pMapIcon = m_szLatchedMapname;
 					break;
@@ -295,7 +296,7 @@ bool CTFDiscordRPC::NeedToUpdate()
 	if ( m_bErrored || m_szLatchedMapname[0] == '\0')
 		return false;
 
-	return gpGlobals->curtime >= m_flLastUpdatedTime + DISCORD_UPDATE_RATE;
+	return gpGlobals->realtime >= m_flLastUpdatedTime + DISCORD_UPDATE_RATE;
 }
 
 void CTFDiscordRPC::Reset()
@@ -387,7 +388,7 @@ void CTFDiscordRPC::UpdateRichPresence()
 	if (!NeedToUpdate())
 		return;
 
-	m_flLastUpdatedTime = gpGlobals->curtime;
+	m_flLastUpdatedTime = gpGlobals->realtime;
 
 	if ( engine->IsConnected() )
 	{
@@ -426,5 +427,5 @@ void CTFDiscordRPC::LevelInit( const char *szMapname )
 	// discord api may not yet be loaded, so latch
 	Q_strcpy(m_szLatchedMapname, szMapname);
 	// important, clear last update time as well
-	m_flLastUpdatedTime = max(0, gpGlobals->curtime - DISCORD_UPDATE_RATE);
+	m_flLastUpdatedTime = max(0, gpGlobals->realtime - DISCORD_UPDATE_RATE);
 }
