@@ -35,7 +35,7 @@ class CBaseClientRenderTargets : public IClientRenderTargets
 	DECLARE_CLASS_GAMEROOT( CBaseClientRenderTargets, IClientRenderTargets );
 public:
 	// Interface called by engine during material system startup.
-	virtual void InitClientRenderTargets ( IMaterialSystem* pMaterialSystem, IMaterialSystemHardwareConfig* pHardwareConfig, int iWaterTextureSize = 1024, int iCameraTextureSize = 256 );
+	virtual void InitClientRenderTargets ( IMaterialSystem* pMaterialSystem, IMaterialSystemHardwareConfig* pHardwareConfig, int iWaterTextureSize = 1024, int iCameraTextureSize = 1024 );
 	// Shutdown all custom render targets here.
 	virtual void ShutdownClientRenderTargets ( void );
 
@@ -57,7 +57,7 @@ protected:
 	// Init functions for the common render targets
 	ITexture* CreateWaterReflectionTexture( IMaterialSystem* pMaterialSystem, int iSize = 1024 );
 	ITexture* CreateWaterRefractionTexture( IMaterialSystem* pMaterialSystem, int iSize = 1024 );
-	ITexture* CreateCameraTexture( IMaterialSystem* pMaterialSystem, int iSize = 256 );
+	ITexture* CreateCameraTexture( IMaterialSystem* pMaterialSystem, int iSize = 1024 );
 
 };
 
