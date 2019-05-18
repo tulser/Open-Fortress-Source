@@ -94,7 +94,7 @@ void CClientSideEffect::Destroy( void )
 	m_bActive = false;
 }
 
-#define MAX_EFFECTS 256
+#define MAX_EFFECTS 512
 
 //-----------------------------------------------------------------------------
 // Purpose: Implements effects list interface
