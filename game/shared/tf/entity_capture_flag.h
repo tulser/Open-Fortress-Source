@@ -15,7 +15,7 @@
 #define CCaptureFlag C_CaptureFlag
 #endif
 
-#define TF_FLAG_THINK_TIME			1.0f
+#define TF_FLAG_THINK_TIME			0.1f
 #define	TF_FLAG_OWNER_PICKUP_TIME	3.0f
 
 #define TF_FLAG_MODEL				"models/flag/briefcase.mdl"
@@ -200,6 +200,10 @@ public:
 	bool			IsDropped( void );
 	bool			IsHome( void );
 	bool			IsStolen( void );
+public:
+
+	CNetworkVar( float,	m_flReturnTime );		// Set Time until the flag is placed back at spawn.
+	CNetworkVar( float, m_flSetNeutralTime );	// Set Time until the flag becomes neutral (used for the invade gametype)
 
 private:
 

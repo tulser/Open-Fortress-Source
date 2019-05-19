@@ -60,10 +60,10 @@ const char *g_aClassImage[] =
 const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 {
 	"Undefined",
-	"Capture the Flag",
-	"Control Point",
 	"Deathmatch",
 	"Team Deathmatch",
+	"Capture the Flag",
+	"Control Point",
 	"Escort",
 	"Zombie Survival",
 	"Gun Game",
@@ -256,16 +256,14 @@ void CTFDiscordRPC::SetLogo( void )
 	// Game Mode
 	if ( TFGameRules( ) && engine->IsConnected() )
 	{
-		int iGameType = TFGameRules()->GetGameType();
-
-		pszGameType = g_aGameTypeNames_NonLocalized[iGameType];
-
-		// Having DM run on TF_GAMETYPE_UNDEFINED is already hacky.
-		if ( TFGameRules()->IsDMGamemode() && iGameType == TF_GAMETYPE_UNDEFINED )
-			if ( TFGameRules()->IsTeamplay() )
-				pszGameType = g_aGameTypeNames_NonLocalized[TF_GAMETYPE_TDM];
-			else
-				pszGameType = g_aGameTypeNames_NonLocalized[TF_GAMETYPE_DM];
+		for ( int i = 0; i < TF_GAMETYPE_LAST; i++ )
+		{
+			if ( TFGameRules( )->InGametype(i) )
+			{
+				pszGameType = g_aGameTypeNames_NonLocalized[i];
+			}
+				
+		}
 	}
 	
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;

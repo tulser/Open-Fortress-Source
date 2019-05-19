@@ -21,6 +21,7 @@
 #include "c_tf_team.h"
 #include "tf_hud_objectivestatus.h"
 #include "view.h"
+#include "glow_outline_effect.h"
 
 extern CUtlVector<int>	g_Flags;
 
@@ -70,7 +71,9 @@ BEGIN_NETWORK_TABLE( CCaptureFlag, DT_CaptureFlag )
 	SendPropInt( SENDINFO( m_nGameType ), 5, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nFlagStatus ), 3, SPROP_UNSIGNED ),
 	SendPropTime( SENDINFO( m_flResetTime ) ),
+	SendPropTime( SENDINFO( m_flReturnTime ) ),
 	SendPropTime( SENDINFO( m_flNeutralTime ) ),
+	SendPropTime( SENDINFO( m_flSetNeutralTime ) ),
 	SendPropTime( SENDINFO( m_flMaxResetTime ) ),
 	SendPropEHandle( SENDINFO( m_hPrevOwner ) ),
 #else
@@ -78,7 +81,9 @@ BEGIN_NETWORK_TABLE( CCaptureFlag, DT_CaptureFlag )
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropInt( RECVINFO( m_nFlagStatus ) ),
 	RecvPropTime( RECVINFO( m_flResetTime ) ),
+	RecvPropTime( RECVINFO( m_flReturnTime ) ),
 	RecvPropTime( RECVINFO( m_flNeutralTime ) ),
+	RecvPropTime( RECVINFO( m_flSetNeutralTime ) ),
 	RecvPropTime( RECVINFO( m_flMaxResetTime ) ),
 	RecvPropEHandle( RECVINFO( m_hPrevOwner ) ),
 #endif
@@ -88,8 +93,8 @@ BEGIN_DATADESC( CCaptureFlag )
 
 	// Keyfields.
 	DEFINE_KEYFIELD( m_nGameType, FIELD_INTEGER, "GameType" ),
-	DEFINE_KEYFIELD( m_flResetTime, FIELD_INTEGER, "ReturnTime"),
-	
+	DEFINE_KEYFIELD( m_flReturnTime, FIELD_FLOAT, "ReturnTime"),
+	DEFINE_KEYFIELD( m_flSetNeutralTime, FIELD_FLOAT, "NeutralTime"),
 #ifdef GAME_DLL
 
 	// Inputs.
@@ -820,8 +825,10 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 				}
 			}
 		}
-
-		SetFlagReturnIn( TF_CTF_RESET_TIME );
+		if (m_flReturnTime)
+			SetFlagReturnIn( m_flReturnTime );
+		else
+			SetFlagReturnIn( TF_CTF_RESET_TIME );
 	}
 	else if ( m_nGameType == TF_FLAGTYPE_INVADE )
 	{
@@ -848,8 +855,14 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 			}
 		}
 
-		SetFlagReturnIn( TF_INVADE_RESET_TIME );
-		SetFlagNeutralIn( TF_INVADE_NEUTRAL_TIME );
+		if (m_flReturnTime)
+			SetFlagReturnIn( m_flReturnTime );
+		else
+			SetFlagReturnIn( TF_CTF_RESET_TIME );
+		if (m_flSetNeutralTime)
+			SetFlagNeutralIn( m_flSetNeutralTime );
+		else
+			SetFlagNeutralIn( TF_INVADE_NEUTRAL_TIME );		
 	}
 	else if ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND )
 	{
@@ -870,7 +883,10 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 			}
 		}
 
-		SetFlagReturnIn( TF_AD_RESET_TIME );
+		if (m_flReturnTime)
+			SetFlagReturnIn( m_flReturnTime );
+		else
+			SetFlagReturnIn( TF_CTF_RESET_TIME );
 	}
 
 	// Reset the flag's angles.

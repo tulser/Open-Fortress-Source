@@ -1029,7 +1029,7 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
 	}
-	if (gEntList.FindEntityByClassname(NULL, "tf_gamemode_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
+	if (gEntList.FindEntityByClassname(NULL, "tf_loic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
 	}
@@ -2477,7 +2477,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			CalcDominationAndRevenge( pAssister, pTFPlayerVictim, true, &iDeathFlags );
 		}
 
-		if (IsTeamplay() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim))
+		if (IsTeamplay() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() )
 		{
 			TFTeamMgr()->AddTeamScore( pTFPlayerScorer->GetTeamNumber(), 1 );
 		}
