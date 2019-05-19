@@ -1029,7 +1029,7 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
 	}
-	if (gEntList.FindEntityByClassname(NULL, "tf_loic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
 	}
