@@ -1273,7 +1273,7 @@ void CTFPlayerShared::OnAddBurning( void )
 		else if ( m_pOuter->GetTeamNumber() == TF_TEAM_BLUE )
 			pEffectName = "burningplayer_blue";
 		else
-			pEffectName = "burningplayer_mercenary";
+			pEffectName = "burningplayer_dm";
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN_FOLLOW );
 
 		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
