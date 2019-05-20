@@ -544,7 +544,7 @@ bool CObjectDispenser::CouldHealTarget( CBaseEntity *pTarget )
 			iPlayerTeam = pTFPlayer->m_Shared.GetDisguiseTeam();
 		}
 
-		if ( iPlayerTeam != iTeam )
+		if ( iPlayerTeam != iTeam || ( iPlayerTeam == TF_TEAM_MERCENARY && pTFPlayer != GetOwner() ) )
 		{
 			return false;
 		}

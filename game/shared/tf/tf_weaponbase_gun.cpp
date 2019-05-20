@@ -407,7 +407,9 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	}
 	else
 	{
-		CTraceFilterIgnoreTeammates filter( pPlayer, COLLISION_GROUP_NONE, pPlayer->GetTeamNumber() );
+		int team = pPlayer->GetTeamNumber();
+		if ( team == TF_TEAM_MERCENARY ) team = 0;		
+		CTraceFilterIgnoreTeammates filter( pPlayer, COLLISION_GROUP_NONE, team );
 		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
 	}
 

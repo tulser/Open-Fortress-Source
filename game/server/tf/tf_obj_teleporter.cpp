@@ -278,6 +278,7 @@ void CObjectTeleporter::OnGoActive( void )
 	SetActivity( ACT_OBJ_IDLE );
 
 	SetContextThink( &CObjectTeleporter::TeleporterThink, gpGlobals->curtime + 0.1, TELEPORTER_THINK_CONTEXT );
+	DevMsg("Set touch \n");
 	SetTouch( &CObjectTeleporter::TeleporterTouch );
 
 	SetState( TELEPORTER_STATE_IDLE );
@@ -346,6 +347,7 @@ void CObjectTeleporter::Precache()
 //-----------------------------------------------------------------------------
 void CObjectTeleporter::TeleporterTouch( CBaseEntity *pOther )
 {
+	DevMsg("Teleporter Touch Start \n");
 	if ( IsDisabled() )
 	{
 		return;
@@ -365,16 +367,43 @@ void CObjectTeleporter::TeleporterTouch( CBaseEntity *pOther )
 	{
 		return;
 	}
-
+	DevMsg("Before team Number \n");
 	// if its not a teammate of the builder, notify the builder
 	if ( pBuilder->GetTeamNumber() != pOther->GetTeamNumber() )
 	{
 		// Don't teleport enemies
 		return;
 	}
-
+	DevMsg("Passed team number \n");
 	// is this an entrance and do we have an exit?
 	if ( GetType() == OBJ_TELEPORTER_ENTRANCE )
+	{		
+		if ( ( m_iState == TELEPORTER_STATE_READY ) )
+		{
+				DevMsg("Ready \n");
+			// are we able to teleport?
+			if ( pPlayer->HasTheFlag() )
+			{
+				// If they have the flag, print a warning that you can't tele with the flag
+				CSingleUserRecipientFilter filter( pPlayer );
+				TFGameRules()->SendHudNotification( filter, HUD_NOTIFY_NO_TELE_WITH_FLAG );
+				return;
+			}
+			
+			// get the velocity of the player touching the teleporter
+			if ( pPlayer->GetAbsVelocity().Length() < 5.0 )
+			{
+				CObjectTeleporter *pDest = GetMatchingTeleporter();
+		
+				if ( pDest )
+				{
+					DevMsg("Teleporting \n");
+					TeleporterSend( pPlayer );
+				}
+			}
+		}
+	}
+	else if ( GetType() == OBJ_TELEPORTER_EXIT )
 	{		
 		if ( ( m_iState == TELEPORTER_STATE_READY ) )
 		{
@@ -622,7 +651,7 @@ void CObjectTeleporter::TeleporterThink( void )
 						// kill players
 						if ( pEnts[i]->IsPlayer() )
 						{
-							if ( !pTeleportingPlayer->InSameTeam(pEnts[i]) )
+							if ( !pTeleportingPlayer->InSameTeam(pEnts[i]) || pTeleportingPlayer->GetTeamNumber() == TF_TEAM_MERCENARY  )
 							{
 								hPlayersToKill.AddToTail( pEnts[i] );
 							}

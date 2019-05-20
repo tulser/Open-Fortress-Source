@@ -61,6 +61,7 @@ ConVar tf_fastbuild("tf_fastbuild", "0", FCVAR_CHEAT );
 ConVar tf_obj_ground_clearance( "tf_obj_ground_clearance", "32", FCVAR_CHEAT, "Object corners can be this high above the ground" );
 
 extern short g_sModelIndexFireball;
+extern ConVar of_infiniteammo;
 
 // Minimum distance between 2 objects to ensure player movement between them
 #define MINIMUM_OBJECT_SAFE_DISTANCE		100
@@ -1094,8 +1095,8 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 			((CTFPlayer*)pBuilder)->HintMessage( HINT_ENGINEER_USE_WRENCH_ONOWN );
 		}
 		*/
-
 		int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
+		if ( of_infiniteammo.GetBool() ) iAmountPlayerPaidForMe = 1;
 		if ( !iAmountPlayerPaidForMe )
 		{
 			// Player couldn't afford to pay for me, so abort
@@ -1246,10 +1247,11 @@ void CBaseObject::SetHealth( float flHealth )
 //-----------------------------------------------------------------------------
 void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vecDir, trace_t *ptr )
 {
+
 	// Prevent team damage here so blood doesn't appear
 	if ( inputInfo.GetAttacker() )
 	{
-		if ( InSameTeam(inputInfo.GetAttacker()) )
+		if ( InSameTeam(inputInfo.GetAttacker()) && ( inputInfo.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || inputInfo.GetAttacker() == GetOwner() ) )
 		{
 			// Pass Damage to enemy attachments
 			int iNumObjects = GetNumObjectsOnMe();
@@ -1490,7 +1492,7 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 	// Check teams
 	if ( info.GetAttacker() )
 	{
-		if ( InSameTeam(info.GetAttacker()) )
+		if ( InSameTeam(info.GetAttacker()) && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetOwner() ) )
 			return 0;
 	}
 
