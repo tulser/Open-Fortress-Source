@@ -35,6 +35,8 @@
 #ifndef _XBOX
 ConVar hud_saytext_time( "hud_saytext_time", "12", 0 );
 ConVar cl_showtextmsg( "cl_showtextmsg", "1", 0, "Enable/disable text messages printing on the screen." );
+ConVar cl_chatmsgsound( "cl_chatmsgsound", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Enable/disable text message notification sounds." );
+ConVar cl_chatmsgvolume( "cl_chatmsgvolume", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Text message volume.", true, 0.0f, true, 1.0f );
 ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Stores the chat filter settings " );
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
 ConVar cl_mute_all_comms("cl_mute_all_comms", "1", FCVAR_ARCHIVE, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
@@ -781,8 +783,18 @@ void CBaseHudChat::MsgFunc_SayText( bf_read &msg )
 		Printf( CHAT_FILTER_NONE, "%s", hudtextmessage->LookupString( szString ) );
 	}
 
-	CLocalPlayerFilter filter;
-	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
+	if ( cl_chatmsgsound.GetInt() )
+	{
+		CSoundParameters params;
+		CLocalPlayerFilter filter;
+
+		if ( C_BaseEntity::GetParametersForSound( "HudChat.Message", params, NULL ) )
+		{
+			params.volume *= cl_chatmsgvolume.GetFloat();
+
+			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, params );
+		}
+	}
 
 	Msg( "%s", szString );
 }
@@ -839,8 +851,18 @@ void CBaseHudChat::MsgFunc_SayText2( bf_read &msg )
 
 		Msg( "%s\n", RemoveColorMarkup(ansiString) );
 
-		CLocalPlayerFilter filter;
-		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );
+		if ( cl_chatmsgsound.GetInt() )
+		{
+			CSoundParameters params;
+			CLocalPlayerFilter filter;
+
+			if ( C_BaseEntity::GetParametersForSound( "HudChat.Message", params, NULL ) )
+			{
+				params.volume *= cl_chatmsgvolume.GetFloat();
+
+				C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, params );
+			}
+		}
 	}
 	else
 	{
