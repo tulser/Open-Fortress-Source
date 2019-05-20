@@ -908,7 +908,7 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 	m_pOuter->OnRemoveCritBoosted();
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
-	if ( pTFPlayer )
+	if ( pTFPlayer && pTFPlayer->IsAlive() )
 	{
 		CFmtStrN<128> modifiers( "inpowerup:yes");
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
@@ -956,7 +956,7 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	}
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );	
-	if ( pTFPlayer )
+	if ( pTFPlayer && pTFPlayer->IsAlive() )
 	{
 		CFmtStrN<128> modifiers( "inpowerup:yes");
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );

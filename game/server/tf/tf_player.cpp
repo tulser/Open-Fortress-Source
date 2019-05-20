@@ -62,6 +62,8 @@
 #include "ai_interactions.h"
 #include "ai_squad.h"
 #include "npc_alyx_episodic.h"
+#include "player_pickup.h"
+#include "eventqueue.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2401,6 +2403,71 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	return BaseClass::ClientCommand( args );
 }
 
+
+void CTFPlayer::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
+{
+	// can't pick up what you're standing on
+	if ( GetGroundEntity() == pObject )
+		return;
+	
+	if ( bLimitMassAndSize == true )
+	{
+		if ( CBasePlayer::CanPickupObject( pObject, 9001, 9001 ) == false )
+			 return;
+	}
+
+	// Can't be picked up if NPCs are on me
+	if ( pObject->HasNPCsOnIt() )
+		return;
+
+	PlayerPickupObject( this, pObject );
+}
+
+float CTFPlayer::GetHeldObjectMass( IPhysicsObject *pHeldObject )
+{
+	float mass = PlayerPickupGetHeldObjectMass( m_hUseEntity, pHeldObject );
+	if ( mass == 0.0f )
+	{
+		mass = PhysCannonGetHeldObjectMass( GetActiveWeapon(), pHeldObject );
+	}
+	return mass;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Force the player to drop any physics objects he's carrying
+//-----------------------------------------------------------------------------
+void CTFPlayer::ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldingThis )
+{
+	if ( PhysIsInCallback() )
+	{
+		variant_t value;
+		g_EventQueue.AddEvent( this, "ForceDropPhysObjects", value, 0.01f, pOnlyIfHoldingThis, this );
+		return;
+	}
+
+#ifdef HL2_EPISODIC
+	if ( hl2_episodic.GetBool() )
+	{
+		CBaseEntity *pHeldEntity = PhysCannonGetHeldEntity( GetActiveWeapon() );
+		if( pHeldEntity && pHeldEntity->ClassMatches( "grenade_helicopter" ) )
+		{
+			return;
+		}
+	}
+#endif
+
+	// Drop any objects being handheld.
+	ClearUseEntity();
+
+	// Then force the physcannon to drop anything it's holding, if it's our active weapon
+	PhysCannonForceDrop( GetActiveWeapon(), NULL );
+}
+
+void CTFPlayer::InputForceDropPhysObjects( inputdata_t &data )
+{
+	ForceDropOfCarriedPhysObjects( data.pActivator );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3565,7 +3632,15 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	DropWeapon( m_Shared.GetActiveTFWeapon()  );
+	if (m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+	{
+		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
+		DropWeapon( pTFPistol );
+		DropWeapon( pTFPistol );
+		pTFPistol = NULL;
+	}
+	else
+		DropWeapon( m_Shared.GetActiveTFWeapon()  );
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
@@ -3982,7 +4057,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon )
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
 
-	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop )
+	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop || pActiveWeapon->GetWeaponID() == TF_WEAPON_BUILDER || pActiveWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_DESTROY )
 	{
 		// Don't drop this one, find another one to drop
 
