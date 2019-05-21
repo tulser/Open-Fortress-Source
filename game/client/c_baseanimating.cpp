@@ -3756,6 +3756,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 	switch( event )
 	{
+
 		//mag eject
 	case AE_CL_MAG_EJECT:
 		
@@ -3769,7 +3770,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 			{
 				if (pOwner)
 				{
-					int iAttachment = pGun->LookupAttachment("CLIP");
+					int iAttachment = pGun->LookupAttachment("magazine");
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
