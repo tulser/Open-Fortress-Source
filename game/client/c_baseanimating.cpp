@@ -3767,7 +3767,8 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 		break;
 		
 		//mag eject
-	case AE_CL_MAG_EJECT:
+	case AE_CL_MAG_EJECT2:
+    case AE_CL_MAG_EJECT:
 		
 		if (pOwner)
 		{
@@ -3775,9 +3776,17 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 			if (pGun->GetTFWpnData().m_bDropsMag)
 			{
 				pGun->SetBodygroup(pTFInfo->m_iMagBodygroup, 0);
-				if (pOwner)
+				if (event == AE_CL_MAG_EJECT)
 				{
 					int iAttachment = pGun->LookupAttachment("magazine");
+					Vector vecSrc;
+					QAngle vecAng;
+					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
+					tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+				}
+				if (event == AE_CL_MAG_EJECT2)
+				{
+					int iAttachment = pGun->LookupAttachment("magazine2");
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);

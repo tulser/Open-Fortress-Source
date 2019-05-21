@@ -94,7 +94,8 @@ typedef enum
 
 	//event for magazine ejection
 	AE_CL_MAG_EJECT,
-	AE_CL_MAG_UNEJECT
+	AE_CL_MAG_UNEJECT,
+	AE_CL_MAG_EJECT2
 } Animevent;
 
 
