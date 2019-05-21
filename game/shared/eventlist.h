@@ -93,7 +93,8 @@ typedef enum
 	LAST_SHARED_ANIMEVENT,
 
 	//event for magazine ejection
-	AE_CL_MAG_EJECT
+	AE_CL_MAG_EJECT,
+	AE_CL_MAG_UNEJECT
 } Animevent;
 
 
