@@ -58,6 +58,7 @@
 #include "tf_weaponbase.h"
 #include "tf_player_shared.h"
 #include "c_tf_player.h"
+#include "tempent.h"
 
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
@@ -3775,9 +3776,11 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 		//mag eject
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
-		
+	{
+		DevMsg("GUN \n");
 		if (pOwner && pGun)
 		{
+			DevMsg("GUN \n");
 			model_t *pModel = (model_t*)engine->LoadModel(pTFInfo->m_szMagModel);
 			if (pGun->GetTFWpnData().m_bDropsMag)
 			{
@@ -3788,7 +3791,14 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
-					tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+					int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
+					C_LocalTempEntity *pTemp = tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+					if ( pTemp == NULL )
+						break;
+					pTemp->SetGravity( 0.4 );
+					pTemp->hitSound = BOUNCE_SHOTSHELL;
+					pTemp->flags = flags;
+					pTemp->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 				}
 				if (event == AE_CL_MAG_EJECT2)
 				{
@@ -3796,10 +3806,18 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
-					tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+					int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
+					C_LocalTempEntity *pTemp = tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+					if ( pTemp == NULL )
+						break;
+					pTemp->SetGravity( 0.4 );
+					pTemp->hitSound = BOUNCE_SHOTSHELL;
+					pTemp->flags = flags;
+					pTemp->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 				}
 			}
 		}
+	}
 		break;
 
 	case AE_CL_CREATE_PARTICLE_EFFECT:
