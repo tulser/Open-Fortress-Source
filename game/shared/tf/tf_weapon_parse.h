@@ -41,7 +41,6 @@ struct WeaponData_t
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
 
-
 	
 	float	m_flBurstFireDelay;				// Time to delay between firing
 	int		m_nBurstSize;
@@ -103,7 +102,7 @@ public:
 	
 	// Mag
 	char    m_szMagModel[128];
-
+	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
 	bool    m_bDropsMag;
 
 

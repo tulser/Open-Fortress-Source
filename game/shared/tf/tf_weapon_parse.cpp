@@ -82,6 +82,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	int i;
 	m_bDropsMag = pKeyValuesData->GetBool("DropsMag");
 	Q_strncpy(m_szMagModel, pKeyValuesData->GetString("MagModel", "magmodel_none"), sizeof(m_szMagModel));
+	m_iMagBodygroup = pKeyValuesData->GetInt("MagBodygroup");
 
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
 	
