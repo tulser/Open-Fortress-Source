@@ -3752,15 +3752,21 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	Vector attachOrigin;
 	QAngle attachAngles; 
 
-	CTFPlayer *pOwner = ToTFPlayer(this);
-	CTFWeaponBase *pGun = NULL;
-	const CTFWeaponInfo *pTFInfo = NULL;
+    CTFPlayer *pOwner = ToTFPlayer(this);
+    CTFWeaponBase *pGun = NULL;
+    const CTFWeaponInfo *pTFInfo = NULL;
+    if (pOwner)
+    {
+        pGun = pOwner->GetActiveTFWeapon();
+        if ( pGun )
+             pTFInfo = &pGun->GetTFWpnData();
+    }	
 	switch( event )
 	{
 
 	case AE_CL_MAG_UNEJECT:
 		
-		if (pOwner)
+		if (pOwner && pGun)
 		{
 			pGun->SetBodygroup(pTFInfo->m_iMagBodygroup, 1);
 		}
@@ -3770,7 +3776,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
 		
-		if (pOwner)
+		if (pOwner && pGun)
 		{
 			model_t *pModel = (model_t*)engine->LoadModel(pTFInfo->m_szMagModel);
 			if (pGun->GetTFWpnData().m_bDropsMag)

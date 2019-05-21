@@ -3632,7 +3632,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	if (m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+	if (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
 		DropWeapon( pTFPistol );

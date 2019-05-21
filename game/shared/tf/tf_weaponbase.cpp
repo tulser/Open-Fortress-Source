@@ -2279,7 +2279,10 @@ int CTFWeaponBase::GetSkin()
 
 bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& origin, const QAngle& angles, int event, const char *options )
 {
-	if( event == 6002 )
+	switch ( event )
+	{
+
+	case 6002:
 	{
 		CEffectData data;
 		pViewModel->GetAttachment( atoi(options), data.m_vOrigin, data.m_vAngles );
@@ -2287,7 +2290,8 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		DispatchEffect( "TF_EjectBrass", data );
 		return true;
 	}
-	if ( event == AE_WPN_INCREMENTAMMO )
+	break;
+	case AE_WPN_INCREMENTAMMO:
 	{
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 
@@ -2299,8 +2303,43 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		}
 
 		m_bReloadedThroughAnimEvent = true;
-
+		
 		return true;
+	}
+	break;
+	case AE_CL_BODYGROUP_SET_VALUE:
+	{
+			DevMsg("AE_CL_BODYGROUP_SET_VALUE event fired \n");
+			int value;
+			char token[256];
+			char szBodygroupName[256];
+
+			const char *p = options;
+
+			// Bodygroup Name
+			p = nexttoken(token, p, ' ');
+			Q_strncpy( szBodygroupName, token, sizeof(szBodygroupName) );
+
+			// Get the desired value
+			p = nexttoken(token, p, ' ');
+			value = token[0] ? atoi( token ) : 0;
+
+			int index = FindBodygroupByName( szBodygroupName );
+			if ( index >= 0 )
+			{
+				SetBodygroup( index, value );
+				CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
+
+				if ( pTFPlayer )
+				{
+					if ( pTFPlayer->GetViewModel() )
+					{
+						pTFPlayer->GetViewModel()->SetBodygroup( index, value );
+					}
+				}
+			}
+	}
+	break;
 	}
 
 	return BaseClass::OnFireEvent( pViewModel, origin, angles, event, options );

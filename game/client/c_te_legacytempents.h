@@ -16,6 +16,10 @@ class C_BaseEntity;
 class C_LocalTempEntity;
 struct model_t;
 
+#define TE_RIFLE_SHELL 1024
+#define TE_PISTOL_SHELL 2048
+#define TE_SHOTGUN_SHELL 4096
+
 #include "mempool.h"
 #include "utllinkedlist.h"
 

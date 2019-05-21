@@ -96,13 +96,9 @@ C_LocalTempEntity::C_LocalTempEntity()
 }
 
 
-#if defined( CSTRIKE_DLL ) || defined (SDK_DLL )
 
-#define TE_RIFLE_SHELL 1024
-#define TE_PISTOL_SHELL 2048
-#define TE_SHOTGUN_SHELL 4096
 
-#endif
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Prepare a temp entity for creation
@@ -2191,26 +2187,23 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 		}
 		break;
 
-#ifdef CSTRIKE_DLL
-
-		case TE_PISTOL_SHELL:
+	case TE_PISTOL_SHELL:
 		{
 			soundname = "Bounce.PistolShell";
 		}
 		break;
 
-		case TE_RIFLE_SHELL:
+	case TE_RIFLE_SHELL:
 		{
 			soundname = "Bounce.RifleShell";
 		}
 		break;
 
-		case TE_SHOTGUN_SHELL:
+	case TE_SHOTGUN_SHELL:
 		{
 			soundname = "Bounce.ShotgunShell";
 		}
 		break;
-#endif
 	}
 
 	zvel = abs( pTemp->GetVelocity()[2] );

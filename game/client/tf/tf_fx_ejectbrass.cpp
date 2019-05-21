@@ -10,9 +10,6 @@
 #include "tf_shareddefs.h"
 #include "tf_weapon_parse.h"
 
-#define TE_RIFLE_SHELL 1024
-#define TE_PISTOL_SHELL 2048
-
 extern CTFWeaponInfo *GetTFWeaponInfo( int iWeapon );
 
 //-----------------------------------------------------------------------------
@@ -61,9 +58,17 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	pTemp->m_vecTempEntAngVelocity[0] = random->RandomFloat(-512,511);
 	pTemp->m_vecTempEntAngVelocity[1] = random->RandomFloat(-255,255);
 	pTemp->m_vecTempEntAngVelocity[2] = random->RandomFloat(-255,255);
-
-	pTemp->hitSound = TE_PISTOL_SHELL;
-
+//	string_t shotgun = MAKE_STRING( "models/weapons/shells/shell_shotgun.mdl" );
+	model_t *pShotgunShell = (model_t *)engine->LoadModel( "models/weapons/shells/shell_shotgun.mdl" );
+	if ( pModel == pShotgunShell )
+	{
+		DevMsg("eh");
+		pTemp->hitSound = BOUNCE_SHOTSHELL;
+	}
+	else
+	{
+		pTemp->hitSound = BOUNCE_SHELL;
+	}
 	pTemp->SetGravity( 0.4 );
 
 	pTemp->m_flSpriteScale = 10;

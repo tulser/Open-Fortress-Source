@@ -64,7 +64,7 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_sword );
 CTFBottle::CTFBottle()
 {
 }
-
+/*
 void CTFBottle::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
@@ -116,3 +116,4 @@ void CTFBottle::Smack( void )
 		SwitchBodyGroups();
 	}
 }
+*/

@@ -1891,11 +1891,6 @@ void CWeaponPhysCannon::PrimaryAttack( void )
 	}
 	else
 	{
-		if ( pEntity->VPhysicsIsFlesh( ) )
-		{
-			DryFire();
-			return;
-		}
 		PuntVPhysics( pEntity, forward, tr );
 	}
 }
@@ -2757,9 +2752,6 @@ bool CWeaponPhysCannon::CanPickupObject( CBaseEntity *pTarget )
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 	
 	if ( pOwner && pOwner->GetGroundEntity() == pTarget )
-		return false;
-
-	if ( pTarget->VPhysicsIsFlesh( ) )
 		return false;
 
 	IPhysicsObject *pObj = pTarget->VPhysicsGetObject();	
