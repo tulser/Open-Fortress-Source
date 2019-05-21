@@ -500,6 +500,8 @@ QAngle CGrabController::TransformAnglesFromPlayerSpace( const QAngle &anglesIn, 
 
 void CGrabController::AttachEntity( CBasePlayer *pPlayer, CBaseEntity *pEntity, IPhysicsObject *pPhys, bool bIsMegaPhysCannon, const Vector &vGrabPosition, bool bUseGrabPosition )
 {
+	if (!pEntity || !pPlayer || !pPhys )
+		return;
 	// play the impact sound of the object hitting the player
 	// used as feedback to let the player know he picked up the object
 #ifndef CLIENT_DLL
@@ -510,7 +512,7 @@ void CGrabController::AttachEntity( CBasePlayer *pPlayer, CBaseEntity *pEntity, 
 	pPhys->GetPosition( &position, &angles );
 	// If it has a preferred orientation, use that instead.
 #ifndef CLIENT_DLL
-	Pickup_GetPreferredCarryAngles( pEntity, pPlayer, pPlayer->EntityToWorldTransform(), angles );
+		Pickup_GetPreferredCarryAngles( pEntity, pPlayer, pPlayer->EntityToWorldTransform(), angles );
 #endif
 
 //	ComputeMaxSpeed( pEntity, pPhys );
