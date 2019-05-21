@@ -18,6 +18,7 @@
 // TF Weapon Info
 //
 
+
 struct WeaponData_t
 {
 	int		m_nDamage;
@@ -39,6 +40,8 @@ struct WeaponData_t
 	float 	m_flMeleeRange;
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
+
+
 	
 	float	m_flBurstFireDelay;				// Time to delay between firing
 	int		m_nBurstSize;
@@ -98,6 +101,12 @@ public:
 	bool	m_bUsesCritAnimation;
 	bool	m_bNeverStrip;
 	
+	// Mag
+	char    m_szMagModel[128];
+
+	bool    m_bDropsMag;
+
+
 	//Viewmodels
 	char					szScoutViewModel[MAX_WEAPON_STRING];
 	char					szSoldierViewModel[MAX_WEAPON_STRING];

@@ -91,6 +91,9 @@ typedef enum
 	AE_TAUNT_DISABLE_MOVE,
 
 	LAST_SHARED_ANIMEVENT,
+
+	//event for magazine ejection
+	AE_CL_MAG_EJECT
 } Animevent;
 
 

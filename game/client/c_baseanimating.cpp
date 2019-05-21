@@ -54,6 +54,10 @@
 #include "replay/replay_ragdoll.h"
 #include "studio_stats.h"
 #include "tier1/callqueue.h"
+#include "tf_weapon_parse.h"
+#include "tf_weaponbase.h"
+#include "tf_player_shared.h"
+#include "c_tf_player.h"
 
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
@@ -3748,8 +3752,33 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	Vector attachOrigin;
 	QAngle attachAngles; 
 
+	CTFPlayer *pOwner = ToTFPlayer(this);
+
 	switch( event )
 	{
+		//mag eject
+	case AE_CL_MAG_EJECT:
+		
+		if (pOwner)
+		{
+			CTFWeaponBase *pGun = pOwner->GetActiveTFWeapon();
+
+			const CTFWeaponInfo *pTFInfo = &pGun->GetTFWpnData();
+			model_t *pModel = (model_t*)engine->LoadModel(pTFInfo->m_szMagModel);
+			if (pGun->GetTFWpnData().m_bDropsMag)
+			{
+				if (pOwner)
+				{
+					int iAttachment = pGun->LookupAttachment("CLIP");
+					Vector vecSrc;
+					QAngle vecAng;
+					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
+					tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
+				}
+			}
+		}
+		break;
+
 	case AE_CL_CREATE_PARTICLE_EFFECT:
 		{
 			int iAttachment = -1;
