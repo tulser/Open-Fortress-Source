@@ -1578,7 +1578,7 @@ void CWeaponPhysCannon::PuntNonVPhysics( CBaseEntity *pEntity, const Vector &for
 	info.SetInflictor( this );
 	info.SetDamage( 50.0f );
 	info.SetDamageType( GetDamageType() );
-	info.SetDamageForce( forward );	// Scale?
+	info.SetDamageForce( forward*100 );	// Scale?
 	info.SetDamagePosition( tr.endpos );
 
 	m_hLastPuntedObject = pEntity;

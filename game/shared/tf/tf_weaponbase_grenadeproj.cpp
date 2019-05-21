@@ -138,14 +138,6 @@ void CTFWeaponBaseGrenadeProj::Spawn()
 {
 	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
-	if (of_muzzlelight.GetBool())
-	{
-		AddEffects(EF_DIMLIGHT);
-	}
-	else
-	{
-		RemoveEffects(EF_DIMLIGHT);
-	}
 
 	CreateLightEffects();
 }
@@ -173,15 +165,6 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 		vCurOrigin = GetLocalOrigin();
 		interpolator.AddToHead( changeTime, &vCurOrigin, false );
 
-		if (of_muzzlelight.GetBool())
-		{
-			AddEffects(EF_DIMLIGHT);
-		}
-		else
-		{
-			RemoveEffects(EF_DIMLIGHT);
-		}
-
 		CreateLightEffects();
 	}
 }
@@ -193,6 +176,7 @@ void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
 	{
 		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 		dlight_t *dl;
+		AddEffects(EF_DIMLIGHT);
 		if ( IsEffectActive(EF_DIMLIGHT) )
 		{
 			dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);

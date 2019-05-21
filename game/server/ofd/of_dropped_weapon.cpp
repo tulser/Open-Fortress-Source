@@ -108,7 +108,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	Assert( pPlayer );
 
 	bool bSuccess = true;
-		
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY )
+		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
 	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )

@@ -908,7 +908,7 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 	m_pOuter->OnRemoveCritBoosted();
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
-	if ( pTFPlayer )
+	if ( pTFPlayer && pTFPlayer->IsAlive() )
 	{
 		CFmtStrN<128> modifiers( "inpowerup:yes");
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
@@ -956,7 +956,7 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	}
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );	
-	if ( pTFPlayer )
+	if ( pTFPlayer && pTFPlayer->IsAlive() )
 	{
 		CFmtStrN<128> modifiers( "inpowerup:yes");
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
@@ -1273,7 +1273,7 @@ void CTFPlayerShared::OnAddBurning( void )
 		else if ( m_pOuter->GetTeamNumber() == TF_TEAM_BLUE )
 			pEffectName = "burningplayer_blue";
 		else
-			pEffectName = "burningplayer_mercenary";
+			pEffectName = "burningplayer_dm";
 		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN_FOLLOW );
 
 		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;

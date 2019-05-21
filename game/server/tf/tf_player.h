@@ -13,6 +13,7 @@
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
 #include "hl2_playerlocaldata.h"
+#include "hl2_player.h"
 
 class CTFPlayer;
 class CTFTeam;
@@ -208,6 +209,14 @@ public:
 	virtual bool		ClientCommand( const CCommand &args );
 	void				ClientHearVox( const char *pSentence );
 	void				DisplayLocalItemStatus( CTFGoal *pGoal );
+	
+	// physics interactions
+	virtual void		PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize );
+	virtual void		ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis );
+	virtual float		GetHeldObjectMass( IPhysicsObject *pHeldObject );
+	
+	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }
+	void				InputForceDropPhysObjects( inputdata_t &data );
 
 	int					BuildObservableEntityList( void );
 	virtual int			GetNextObserverSearchStartPoint( bool bReverse ); // Where we should start looping the player list in a FindNextObserverTarget call
