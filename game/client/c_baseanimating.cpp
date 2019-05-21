@@ -3753,8 +3753,8 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	QAngle attachAngles; 
 
 	CTFPlayer *pOwner = ToTFPlayer(this);
-	CTFWeaponBase *pGun = pOwner->GetActiveTFWeapon();
-	const CTFWeaponInfo *pTFInfo = &pGun->GetTFWpnData();
+	CTFWeaponBase *pGun = NULL;
+	const CTFWeaponInfo *pTFInfo = NULL;
 	switch( event )
 	{
 
