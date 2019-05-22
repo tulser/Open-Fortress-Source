@@ -606,6 +606,8 @@ public:
 	void				MissedAR2AltFire() {;}
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
+	
+	virtual void			Weapon_Equip( CBaseCombatWeapon *pWeapon );
 
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 

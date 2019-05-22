@@ -7776,4 +7776,20 @@ void CTFPlayer::StopLoopingSounds( void )
 	BaseClass::StopLoopingSounds();
 }
 
+//-----------------------------------------------------------------------------
+// Shuts down sounds
+//-----------------------------------------------------------------------------
+void CTFPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
+{
+	BaseClass::Weapon_Equip( pWeapon );
+
+	bool bShouldSwitch = ShouldAutoSwitchWeapons();
+
+	// should we switch to this item?
+	if ( bShouldSwitch )
+	{
+//		Weapon_Switch( pWeapon );
+	}
+}
+
 ConVar	sk_battery("sk_battery", "0");
