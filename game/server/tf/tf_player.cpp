@@ -1034,7 +1034,28 @@ void CTFPlayer::Regenerate( void )
 	// restore it after we reset out class values.
 	int iCurrentHealth = GetHealth();
 	m_bRegenerating = true;
-	InitClass();
+	
+	// Set initial health and armor based on class.
+	SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+	SetHealth( GetMaxHealth() );
+
+	SetArmorValue( GetPlayerClass()->GetMaxArmor() );
+
+	// Init the anim movement vars
+	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
+	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
+
+	// RestockAmmo
+	RestockAmmo( 1.0f );
+	RestockClips( 1.0f );
+	RestockMetal( 1.0f );
+	RestockCloak( 1.0f );
+
+	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
+	{
+		UpdatePlayerColor();
+	}
+	
 	m_bRegenerating = false;
 	if ( iCurrentHealth > GetHealth() )
 	{
@@ -1068,7 +1089,7 @@ void CTFPlayer::InitClass( void )
 	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		UpdatePlayerColor();
-	}	
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1149,8 +1170,12 @@ void CTFPlayer::GiveDefaultItems()
 	}
 	
 	// Give weapons.
-	ManageRegularWeapons( pData );
-
+	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		ManageGunGameWeapons( pData );
+	else if ( ofd_instagib.GetInt() > 0 )
+		ManageInstagibWeapons( pData );
+	else
+		ManageRegularWeapons( pData );
 	// Give a builder weapon for each object the player class is allowed to build
 	ManageBuilderWeapons( pData );
 }
@@ -1185,22 +1210,26 @@ int CTFPlayer::GetCarriedWeapons( void )
 	return WeaponCount;
 }
 
-bool CTFPlayer::RestockAmmo( float PowerupSize )
+int CTFPlayer::RestockClips( float PowerupSize )
 {
-	bool bSuccess = false;
+	int bSuccess = false;
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons(); iWeapon++ )
+	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 		//If we have a weapon in this slot, count up
 		if ( pWeapon )
 		{
-			if ( pWeapon->m_iMaxAmmo < pWeapon->GetMaxAmmo() )
+			if ( pWeapon->m_iClip1 < pWeapon->GetMaxClip1() )
 			{
-				pWeapon->m_iMaxAmmo += pWeapon->GetMaxAmmo() * PowerupSize;
-				if ( pWeapon->m_iMaxAmmo > pWeapon->GetMaxAmmo() )
-					pWeapon->m_iMaxAmmo = pWeapon->GetMaxAmmo();
-				bSuccess = true;
+				pWeapon->m_iClip1 += pWeapon->GetMaxClip1() * PowerupSize;
+				bSuccess = pWeapon->GetMaxClip1() * PowerupSize;
+				if ( pWeapon->m_iClip1 > pWeapon->GetMaxClip1() )
+				{
+					bSuccess -= pWeapon->m_iClip1 - pWeapon->GetMaxClip1();
+					pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
+				}
+				
 			}
 			
 		}
@@ -1208,6 +1237,52 @@ bool CTFPlayer::RestockAmmo( float PowerupSize )
 	return bSuccess;
 }
 
+int CTFPlayer::RestockAmmo( float PowerupSize )
+{
+	int bSuccess = false;
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
+	{
+		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		//If we have a weapon in this slot, count up
+		if ( pWeapon )
+		{
+			if ( pWeapon->m_iReserveAmmo < pWeapon->GetMaxReserveAmmo() )
+			{
+				pWeapon->m_iReserveAmmo += pWeapon->GetMaxReserveAmmo() * PowerupSize;
+				bSuccess = pWeapon->GetMaxReserveAmmo() * PowerupSize;
+				if ( pWeapon->m_iReserveAmmo > pWeapon->GetMaxReserveAmmo() )
+				{
+					bSuccess -= pWeapon->m_iReserveAmmo - pWeapon->GetMaxReserveAmmo();
+					pWeapon->m_iReserveAmmo = pWeapon->GetMaxReserveAmmo();
+				}
+				
+			}
+			
+		}
+	}
+	return bSuccess;
+}
+int CTFPlayer::RestockMetal( float PowerupSize )
+{
+	int bSuccess = false;
+	int iMaxMetal = GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];
+	if ( GiveAmmo( ceil(iMaxMetal * PowerupSize), TF_AMMO_METAL, true ) )
+		bSuccess = ( ceil(iMaxMetal * PowerupSize), TF_AMMO_METAL, true );
+	return bSuccess;
+}
+int CTFPlayer::RestockCloak( float PowerupSize )
+{
+	int bSuccess = false;
+	
+	float flCloak = m_Shared.GetSpyCloakMeter();
+	if ( flCloak < 100.0f )
+	{
+		m_Shared.SetSpyCloakMeter( min( 100.0f, flCloak + PowerupSize * 100.0f ) );
+		bSuccess = min( 100.0f, flCloak + PowerupSize * 100.0f );
+	}	
+	return bSuccess;
+}
 
 
 //-----------------------------------------------------------------------------
@@ -1418,6 +1493,99 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 					pNewWeapon->DefaultTouch( this );
 			}
 	
+	}
+	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
+	{
+		if( GetActiveWeapon() != NULL ) break;
+		if ( m_bRegenerating == false )
+		{
+			SetActiveWeapon( NULL );
+			Weapon_Switch( Weapon_GetSlot( iWeapon ) );
+			Weapon_SetLast( Weapon_GetSlot( iWeapon++) );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+
+	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
+	{
+		
+		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+			
+		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_RAILGUN )
+		{
+			if ( ofd_instagib.GetInt() == 1 )
+			{
+				if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROWBAR )
+				{
+					Weapon_Detach( pWeapon );
+					UTIL_Remove( pWeapon );
+				}
+			}
+			else
+			{
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );
+			}
+		}
+		else 
+		{
+			pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_railgun" );
+			if ( pWeapon )
+			{
+				pWeapon->DefaultTouch( this );
+			}
+			if ( ofd_instagib.GetInt() == 1 )
+			{
+				pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
+				if ( pWeapon )
+				{
+					pWeapon->DefaultTouch( this );
+				}
+			}
+		}
+	}
+	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
+	{
+		if( GetActiveWeapon() != NULL ) break;
+		if ( m_bRegenerating == false )
+		{
+			SetActiveWeapon( NULL );
+			Weapon_Switch( Weapon_GetSlot( iWeapon ) );
+			Weapon_SetLast( Weapon_GetSlot( iWeapon++) );
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	
+	pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
+	CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)GiveNamedItem( STRING(TFGameRules()->m_iszWeaponName[GGLevel()]) );
+	if ( pWeapon && pWeapon->GetSlot() != pNewWeapon->GetSlot() )
+	{
+			pWeapon->SetGGLevel(999);
+			pWeapon->DefaultTouch( this );
+	}
+	else
+	{
+		UTIL_Remove(pWeapon);
+	}
+	if ( pNewWeapon )
+	{
+			pNewWeapon->SetGGLevel(GGLevel());
+			pNewWeapon->DefaultTouch( this );
 	}
 	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
 	{
@@ -3983,9 +4151,9 @@ void CTFPlayer::DropAmmoPack( void )
 		return;
 
 	// Fill the ammo pack with unused player ammo, if out add a minimum amount.
-	int iPrimary = max( 5, pWeapon->MaxAmmo() );
-	int iSecondary = max( 5, pWeapon->MaxAmmo() );
-	int iMetal = max( 5, pWeapon->MaxAmmo() );	
+	int iPrimary = max( 5, pWeapon->GetMaxReserveAmmo() );
+	int iSecondary = max( 5, pWeapon->GetMaxReserveAmmo() );
+	int iMetal = max( 5, pWeapon->GetMaxReserveAmmo() );	
 
 	// Create the ammo pack.
 	CTFAmmoPack *pAmmoPack = CTFAmmoPack::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );

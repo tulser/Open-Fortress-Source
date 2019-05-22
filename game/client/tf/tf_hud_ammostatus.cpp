@@ -128,7 +128,7 @@ bool CTFHudWeaponAmmo::ShouldDraw( void )
 	{
 		return false;
 	}
-	if ( pWeapon->GetMaxAmmo() == -1 )
+	if ( pWeapon->GetMaxReserveAmmo() == -1 )
 		return false;
 
 	return CHudElement::ShouldDraw();
@@ -200,12 +200,12 @@ void CTFHudWeaponAmmo::OnThink()
 			// Clip ammo not used, get total ammo count.
 			if ( nAmmo1 < 0 )
 			{
-				nAmmo1 = pWeapon->MaxAmmo();
+				nAmmo1 = pWeapon->ReserveAmmo();
 			}
 			// Clip ammo, so the second ammo is the total ammo.
 			else
 			{
-				nAmmo2 = pWeapon->MaxAmmo();
+				nAmmo2 = pWeapon->ReserveAmmo();
 			}
 			
 			hudlcd->SetGlobalStat( "(ammo_primary)", VarArgs( "%d", nAmmo1 ) );

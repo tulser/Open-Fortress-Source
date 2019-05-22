@@ -88,7 +88,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_iState = m_iOldState = WEAPON_NOT_CARRIED;
 	m_iClip1 = -1;
 	m_iClip2 = -1;
-	m_iMaxAmmo = -1;
+	m_iReserveAmmo = -1;
 	m_iPrimaryAmmoType = -1;
 	m_iSecondaryAmmoType = -1;
 #endif
@@ -164,7 +164,7 @@ void CBaseCombatWeapon::GiveDefaultAmmo( void )
 		SetSecondaryAmmoCount( GetDefaultClip2() );
 		m_iClip2 = WEAPON_NOCLIP;
 	}
-	m_iMaxAmmo = GetDefaultAmmo();
+	m_iReserveAmmo = GetDefaultReserveAmmo();
 }
 
 //-----------------------------------------------------------------------------
@@ -364,16 +364,16 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CBaseCombatWeapon::GetMaxAmmo( void ) const
+int CBaseCombatWeapon::GetMaxReserveAmmo( void ) const
 {
-	return GetWpnData().iMaxAmmo;
+	return GetWpnData().iMaxReserveAmmo;
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CBaseCombatWeapon::GetDefaultAmmo( void ) const
+int CBaseCombatWeapon::GetDefaultReserveAmmo( void ) const
 {
-	return GetWpnData().iDefaultAmmo;
+	return GetWpnData().iDefaultReserveAmmo;
 }
 
 //-----------------------------------------------------------------------------
@@ -640,13 +640,13 @@ bool CBaseCombatWeapon::HasAmmo( void )
 		return true;
 	if ( GetWeaponFlags() & ITEM_FLAG_SELECTONEMPTY )
 		return true;
-	if ( m_iMaxAmmo <= 0 )
+	if ( m_iReserveAmmo <= 0 )
 		return false;
 	
 	CBasePlayer *player = ToBasePlayer( GetOwner() );
 	if ( !player )
 		return false;
-	return ( m_iClip1 > 0 || m_iMaxAmmo || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
+	return ( m_iClip1 > 0 || m_iReserveAmmo || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -944,7 +944,7 @@ bool CBaseCombatWeapon::ShouldDisplayReloadHUDHint()
 		// I'm owned by a player, I use clips, I have less then half a clip loaded. Now, does the player have more ammo?
 		if ( pOwner )
 		{
-			if ( m_iMaxAmmo > 0 ) 
+			if ( m_iReserveAmmo > 0 ) 
 				return true;
 		}
 	}
@@ -1267,13 +1267,13 @@ bool CBaseCombatWeapon::HasPrimaryAmmo( void )
 	CBaseCombatCharacter		*pOwner = GetOwner();
 	if ( pOwner )
 	{
-		if ( m_iMaxAmmo > 0 ) 
+		if ( m_iReserveAmmo > 0 ) 
 			return true;
 	}
 	else
 	{
 		// No owner, so return how much primary ammo I have along with me.
-		if( m_iMaxAmmo > 0 )
+		if( m_iReserveAmmo > 0 )
 			return true;
 	}
 
@@ -1771,7 +1771,7 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
-			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && m_iMaxAmmo<=0 )) )
+			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && m_iReserveAmmo<=0 )) )
 		{
 			HandleFireOnEmpty();
 		}
@@ -2006,7 +2006,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 		return false;
 
 	// If I don't have any spare ammo, I can't reload
-	if ( m_iMaxAmmo <= 0 )
+	if ( m_iReserveAmmo <= 0 )
 		return false;
 
 	bool bReload = false;
@@ -2015,7 +2015,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary	= MIN(iClipSize1 - m_iClip1, m_iMaxAmmo );
+		int primary	= MIN(iClipSize1 - m_iClip1, m_iReserveAmmo );
 		if ( primary != 0 )
 		{
 			bReload = true;
@@ -2174,7 +2174,7 @@ void CBaseCombatWeapon::CheckReload( void )
 			}
 
 			// If out of ammo end reload
-			if ( m_iMaxAmmo <=0 )
+			if ( m_iReserveAmmo <=0 )
 			{
 				FinishReload();
 				return;
@@ -2185,7 +2185,7 @@ void CBaseCombatWeapon::CheckReload( void )
 				// Add them to the clip
 				m_iClip1 += 1;
 				if ( of_infiniteammo.GetBool() != 1 ) 
-					m_iMaxAmmo -= 1;
+					m_iReserveAmmo -= 1;
 
 				Reload();
 				return;
@@ -2224,10 +2224,10 @@ void CBaseCombatWeapon::FinishReload( void )
 		// If I use primary clips, reload primary
 		if ( UsesClipsForAmmo1() )
 		{
-			int primary	= MIN( GetMaxClip1() - m_iClip1, m_iMaxAmmo );	
+			int primary	= MIN( GetMaxClip1() - m_iClip1, m_iReserveAmmo );	
 			m_iClip1 += primary;
 			if ( of_infiniteammo.GetBool() != 1 ) 
-				m_iMaxAmmo -= primary;
+				m_iReserveAmmo -= primary;
 		}
 
 		// If I use secondary clips, reload secondary
@@ -2371,9 +2371,9 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	}
 	else
 	{
-		info.m_iShots = MIN( info.m_iShots, m_iMaxAmmo );
+		info.m_iShots = MIN( info.m_iShots, m_iReserveAmmo );
 		if ( of_infiniteammo.GetBool() != 1 ) 
-			m_iMaxAmmo -= info.m_iShots;
+			m_iReserveAmmo -= info.m_iShots;
 	}
 
 	info.m_flDistance = MAX_TRACE_LENGTH;
@@ -2390,7 +2390,7 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 
 	pPlayer->FireBullets( info );
 
-	if (!m_iClip1 && m_iMaxAmmo <= 0)
+	if (!m_iClip1 && m_iReserveAmmo <= 0)
 	{
 		// HEV suit - indicate out of ammo condition
 		pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0); 
@@ -2645,7 +2645,8 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_PRED_FIELD( m_iPrimaryAmmoType, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iClip1, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
-	DEFINE_PRED_FIELD( m_iClip2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
+	DEFINE_PRED_FIELD( m_iClip2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),	
+	DEFINE_PRED_FIELD( m_iReserveAmmo, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),		
 
 	DEFINE_PRED_FIELD( m_nViewModelIndex, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 
@@ -2706,6 +2707,7 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip1, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip2, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iReserveAmmo, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bAltFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fMinRange1, FIELD_FLOAT ),
@@ -2864,6 +2866,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flNextSecondaryAttack ) ),
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
 
 #if defined( TF_DLL ) || defined ( TF_MOD )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
@@ -2874,6 +2877,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	RecvPropTime( RECVINFO( m_flNextSecondaryAttack ) ),
 	RecvPropInt( RECVINFO( m_nNextThinkTick ) ),
 	RecvPropTime( RECVINFO( m_flTimeWeaponIdle ) ),
+	RecvPropInt( RECVINFO( m_iReserveAmmo )),
 #endif
 END_NETWORK_TABLE()
 
@@ -2884,7 +2888,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
-	SendPropIntWithMinusOneFlag( SENDINFO( m_iMaxAmmo ), 8 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
 	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
 	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
 
@@ -2899,7 +2903,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #else
 	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip1 )),
 	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip2 )),
-	RecvPropIntWithMinusOneFlag( RECVINFO( m_iMaxAmmo )),
+	RecvPropInt( RECVINFO( m_iReserveAmmo )),
 	RecvPropInt( RECVINFO(m_iPrimaryAmmoType )),
 	RecvPropInt( RECVINFO(m_iSecondaryAmmoType )),
 
@@ -2917,12 +2921,14 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
 	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
 	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
 	SendPropEHandle( SENDINFO(m_hOwner) ),
 #else
 	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
 	RecvPropDataTable("LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalActiveWeaponData)),
 	RecvPropInt( RECVINFO(m_iViewModelIndex)),
 	RecvPropInt( RECVINFO(m_iWorldModelIndex)),
+	RecvPropInt( RECVINFO( m_iReserveAmmo )),
 	RecvPropInt( RECVINFO(m_iState), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
 	RecvPropEHandle( RECVINFO(m_hOwner ) ),
 #endif

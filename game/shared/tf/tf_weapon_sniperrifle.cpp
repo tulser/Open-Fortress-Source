@@ -320,7 +320,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) );
+			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, ( GetDamage() ) );
 		}
 		else
 		{
@@ -412,7 +412,7 @@ void CTFSniperRifle::ZoomIn( void )
 	if ( !pPlayer )
 		return;
 
-	if ( MaxAmmo() <= 0 )
+	if ( ReserveAmmo() <= 0 )
 		return;
 
 	BaseClass::ZoomIn();
@@ -474,7 +474,7 @@ void CTFSniperRifle::ZoomOut( void )
 void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( MaxAmmo() <= 0 )
+	if ( ReserveAmmo() <= 0 )
 	{
 		HandleFireOnEmpty();
 		return;
@@ -489,7 +489,7 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	if ( IsZoomed() )
 	{
 		// If we have more bullets, zoom out, play the bolt animation and zoom back in
-		if( MaxAmmo() > 0 )
+		if( ReserveAmmo() > 0 )
 		{
 			SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
 		}
@@ -532,7 +532,7 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return max( m_flChargedDamage, m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
+	return max( m_flChargedDamage, GetDamage() );
 }
 
 //-----------------------------------------------------------------------------
@@ -569,7 +569,7 @@ void CTFSniperRifle::CreateSniperDot( void )
 		return;
 
 	// Create the sniper dot, but do not make it visible yet.
-	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage , pPlayer, true );
+	m_hSniperDot = CSniperDot::Create( GetAbsOrigin(), GetDamage() , pPlayer, true );
 	m_hSniperDot->ChangeTeam( pPlayer->GetTeamNumber() );
 
 #endif
@@ -671,7 +671,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 float CTFSniperRifle::GetHUDDamagePerc( void )
 {
-	return (m_flChargedDamage / ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ));
+	return (m_flChargedDamage / ( GetDamage() ));
 }
 
 //-----------------------------------------------------------------------------

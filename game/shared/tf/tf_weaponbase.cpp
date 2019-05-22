@@ -51,6 +51,7 @@ ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Used for syncing up reloads" );
 extern ConVar tf_useparticletracers;
+extern ConVar ofd_instagib;
 
 //=============================================================================
 //
@@ -267,6 +268,15 @@ int CTFWeaponBase::GetPosition( void ) const
 	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFWeaponBase::GetDamage( void ) const
+{
+		if ( ofd_instagib.GetInt() == 0 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 
 // -----------------------------------------------------------------------------
@@ -651,7 +661,7 @@ bool CTFWeaponBase::Reload( void )
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
 		// If I don't have any spare ammo, I can't reload
-		if ( MaxAmmo() <= 0 )
+		if ( ReserveAmmo() <= 0 )
 			return false;
 
 		if ( Clip1() >= GetMaxClip1())
@@ -817,14 +827,14 @@ bool CTFWeaponBase::ReloadSingly( void )
 				return false;
 
 			// If we have ammo, remove ammo and add it to clip
-			if ( MaxAmmo() > 0 && !m_bReloadedThroughAnimEvent )
+			if ( ReserveAmmo() > 0 && !m_bReloadedThroughAnimEvent )
 			{
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
 				if ( of_infiniteammo.GetBool() != 1 ) 
-					m_iMaxAmmo -= 1;
+					m_iReserveAmmo -= 1;
 			}
 
-			if ( Clip1() == GetMaxClip1() || MaxAmmo() <= 0 )
+			if ( Clip1() == GetMaxClip1() || ReserveAmmo() <= 0 )
 			{
 				m_iReloadMode.Set( TF_RELOAD_FINISH );
 			}
@@ -864,11 +874,11 @@ void CTFWeaponBase::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCh
 	{
 		if ( pEvent->event == AE_WPN_INCREMENTAMMO )
 		{
-			if ( m_iMaxAmmo > 0 && !m_bReloadedThroughAnimEvent )
+			if ( m_iReserveAmmo > 0 && !m_bReloadedThroughAnimEvent )
 			{
 				m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
 				if ( of_infiniteammo.GetBool () != 1 )
-					m_iMaxAmmo -= 1;
+					m_iReserveAmmo -= 1;
 					
 			}
 
@@ -896,7 +906,7 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
-		int primary	= min( iClipSize1 - m_iClip1, MaxAmmo() );
+		int primary	= min( iClipSize1 - m_iClip1, ReserveAmmo() );
 		if ( primary != 0 )
 		{
 			bReloadPrimary = true;
@@ -1142,7 +1152,7 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 	if ( m_flTimeWeaponIdle > gpGlobals->curtime )
 		return;
 	// if the clip is empty and we have ammo remaining, 
-	if ( ( ( Clip1() < GetMaxClip1() ) && ( MaxAmmo() > 0 ) ) ||
+	if ( ( ( Clip1() < GetMaxClip1() ) && ( ReserveAmmo() > 0 ) ) ||
 		// or we are already in the process of reloading but not finished
 		( m_iReloadMode != TF_RELOAD_START ) )
 	{
@@ -2295,11 +2305,11 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 	{
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 
-		if ( pPlayer && MaxAmmo() > 0 && !m_bReloadedThroughAnimEvent )
+		if ( pPlayer && ReserveAmmo() > 0 && !m_bReloadedThroughAnimEvent )
 		{
 			m_iClip1 = min( ( m_iClip1 + 1 ), GetMaxClip1() );
 			if( of_infiniteammo.GetBool() != 1 )
-				m_iMaxAmmo -= 1;
+				m_iReserveAmmo -= 1;
 		}
 
 		m_bReloadedThroughAnimEvent = true;
@@ -2355,7 +2365,6 @@ ShadowType_t CTFWeaponBase::ShadowCastType( void )
 
 	return BaseClass::ShadowCastType();
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
 //-----------------------------------------------------------------------------

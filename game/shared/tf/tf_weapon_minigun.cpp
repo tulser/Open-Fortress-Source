@@ -238,7 +238,7 @@ void CTFMinigun::SharedAttack()
 
 				m_flNextSecondaryAttack = m_flNextPrimaryAttack = m_flTimeWeaponIdle = gpGlobals->curtime + 0.1;
 			}
-			else if ( MaxAmmo() <= 0 )
+			else if ( ReserveAmmo() <= 0 )
 			{
 				m_iWeaponState = AC_STATE_DRYFIRE;
 			}
@@ -269,7 +269,7 @@ void CTFMinigun::SharedAttack()
 	case AC_STATE_DRYFIRE:
 		{
 			m_flStartedFiringAt = -1;
-			if ( MaxAmmo() > 0 )
+			if ( ReserveAmmo() > 0 )
 			{
 				m_iWeaponState = AC_STATE_FIRING;
 			}
@@ -285,7 +285,7 @@ void CTFMinigun::SharedAttack()
 			m_flStartedFiringAt = -1;
 			if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
 			{
-				if ( MaxAmmo() > 0 )
+				if ( ReserveAmmo() > 0 )
 				{
 #ifdef GAME_DLL
 					pPlayer->ClearWeaponFireScene();

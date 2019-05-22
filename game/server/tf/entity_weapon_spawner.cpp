@@ -14,6 +14,7 @@
 #include "in_buttons.h"
 #include "engine/IEngineSound.h"
 #include "entity_weapon_spawner.h"
+#include "tf_weapon_parse.h"
 
 #include "tier0/memdbgon.h"
 
@@ -72,8 +73,12 @@ void CWeaponSpawner::SetWeaponModel( void )
 		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) )
 		{
 			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( STRING(m_iszWeaponName) );
-			if ( pWeapon )
-				SetModel( pWeapon->GetWorldModel() );
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+			Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
+			if ( pWeapon && pWeaponInfo )
+				SetModel( pWeaponInfo->szWorldModel );
 			return;
 		}
 		else
@@ -92,11 +97,15 @@ void CWeaponSpawner::Precache( void )
 	{
 		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) )
 		{
-			CTFWeaponBase *pWeapon = (CTFWeaponBase *)CreateEntityByName( STRING(m_iszWeaponName) );
-			if ( pWeapon )
+			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( STRING(m_iszWeaponName) );
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+			Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
+			if ( pWeapon && pWeaponInfo )
 			{
-				DevMsg("Guess te model is %s \n", (MAKE_STRING(pWeapon->GetWorldModel())) );
-				PrecacheModel( pWeapon->GetWorldModel() );
+				DevMsg("Guess te model is %s \n", (MAKE_STRING(pWeaponInfo->szWorldModel)) );
+				PrecacheModel( pWeaponInfo->szWorldModel );
 			}
 			return;
 		}
@@ -159,6 +168,27 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 					
 				}
+				if ( pTFPlayer->RestockCloak(0.5f) )
+				{
+					CSingleUserRecipientFilter filter( pTFPlayer );
+					EmitSound( filter, entindex(), STRING(m_iszPickupSound) );
+					if ( mp_weaponstay.GetBool() )
+					{
+						bSuccess = false;
+					}
+					else
+					{
+						bSuccess = true;
+						m_nRenderFX = kRenderFxDistort;
+					}
+					if ( pWeapon )
+					{
+						pTFPlayer->Weapon_Detach( pWeapon );
+						UTIL_Remove( pWeapon );
+						pWeapon = NULL;
+					}
+					
+				}				
 				int iMaxMetal = pTFPlayer->GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];
 				if ( pTFPlayer->GiveAmmo( ceil(iMaxMetal * PackRatios[GetPowerupSize()]), TF_AMMO_METAL, true ) )
 				{

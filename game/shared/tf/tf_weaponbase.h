@@ -132,6 +132,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool ReloadOrSwitchWeapons( void );
 	virtual int				GetSlot( void ) const;
 	virtual int				GetPosition( void ) const;
+	virtual int				GetDamage( void ) const;
 	
 	// Attacks.
 	virtual void PrimaryAttack();

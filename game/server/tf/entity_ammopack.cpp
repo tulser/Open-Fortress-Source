@@ -108,6 +108,8 @@ bool CAmmoPack::MyTouch( CBasePlayer *pPlayer )
 		{
 			bSuccess = true;
 		}
+		if ( pTFPlayer->RestockCloak(PackRatios[GetPowerupSize()]) )
+			bSuccess = true;	
 		// did we give them anything?
 		if ( bSuccess )
 		{

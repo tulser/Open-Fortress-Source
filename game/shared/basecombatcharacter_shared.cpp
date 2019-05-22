@@ -82,7 +82,7 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 			return false;
 	}
 
-	if ( !pWeapon->HasAnyAmmo() && !pWeapon->MaxAmmo() )
+	if ( !pWeapon->HasAnyAmmo() && !pWeapon->ReserveAmmo() )
 		return false;
 
 	if ( !pWeapon->CanDeploy() )

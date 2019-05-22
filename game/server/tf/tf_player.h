@@ -402,6 +402,8 @@ public:
 
 	void 				CTFPlayer::UpdateGunGameLevel( void );
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
+	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
+	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
@@ -429,8 +431,10 @@ public:
 	CTFWeaponBase		*Weapon_OwnsThisID( int iWeaponID );
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 
-	bool				RestockAmmo( float PowerupSize );
-	
+	int				RestockClips( float PowerupSize );
+	int				RestockAmmo( float PowerupSize );
+	int				RestockMetal( float PowerupSize );
+	int				RestockCloak( float PowerupSize );
 private:
 
 	int					GetAutoTeam( void );

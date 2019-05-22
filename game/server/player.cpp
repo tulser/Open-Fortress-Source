@@ -203,32 +203,7 @@ void CC_GiveCurrentAmmo( void )
 
 		if( pWeapon )
 		{
-			if( pWeapon->UsesPrimaryAmmo() )
-			{
-				int ammoIndex = pWeapon->GetPrimaryAmmoType();
-
-				if( ammoIndex != -1 )
-				{
-					int giveAmount;
-					giveAmount = GetAmmoDef()->MaxCarry(ammoIndex);
-					pPlayer->GiveAmmo( giveAmount, GetAmmoDef()->GetAmmoOfIndex(ammoIndex)->pName );
-				}
-			}
-			if( pWeapon->UsesSecondaryAmmo() && pWeapon->HasSecondaryAmmo() )
-			{
-				// Give secondary ammo out, as long as the player already has some
-				// from a presumeably natural source. This prevents players on XBox
-				// having Combine Balls and so forth in areas of the game that
-				// were not tested with these items.
-				int ammoIndex = pWeapon->GetSecondaryAmmoType();
-
-				if( ammoIndex != -1 )
-				{
-					int giveAmount;
-					giveAmount = GetAmmoDef()->MaxCarry(ammoIndex);
-					pPlayer->GiveAmmo( giveAmount, GetAmmoDef()->GetAmmoOfIndex(ammoIndex)->pName );
-				}
-			}
+			pWeapon->m_iReserveAmmo = pWeapon->GetMaxReserveAmmo(); 
 		}
 	}
 }

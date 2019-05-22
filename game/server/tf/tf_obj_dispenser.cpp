@@ -339,12 +339,8 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 	int iTotalPickedUp = 0;
 
 	// primary
-	int iPrimary = pPlayer->GiveAmmo( DISPENSER_DROP_PRIMARY, TF_AMMO_PRIMARY );
-	iTotalPickedUp += iPrimary;
-
-	// secondary
-	int iSecondary = pPlayer->GiveAmmo( DISPENSER_DROP_SECONDARY, TF_AMMO_SECONDARY );
-	iTotalPickedUp += iSecondary;
+	int Primary = pPlayer->RestockAmmo( DISPENSER_DROP_PRIMARY );
+	iTotalPickedUp += Primary;
 
 	// metal
 	int iMetal = pPlayer->GiveAmmo( min( m_iAmmoMetal, DISPENSER_DROP_METAL ), TF_AMMO_METAL );

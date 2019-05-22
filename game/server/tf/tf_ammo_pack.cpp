@@ -123,7 +123,19 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 	bool bSuccess = false;
 	if ( pTFPlayer->RestockAmmo( 0.5f ) )
 			bSuccess = true;
-
+	if ( pTFPlayer->RestockCloak( 0.5f ) )
+			bSuccess = true;
+		
+	int iAmmoTaken = 0;
+	int i;
+	for ( i=0;i<TF_AMMO_COUNT;i++ )
+	{
+		
+		iAmmoTaken += pTFPlayer->GiveAmmo(m_iAmmo[i], i);
+		if ( iAmmoTaken > 0 )
+			bSuccess = true;
+	}
+	
 	if ( bSuccess )
 	{
 		CSingleUserRecipientFilter filter( pTFPlayer );
