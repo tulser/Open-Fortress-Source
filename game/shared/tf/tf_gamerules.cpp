@@ -123,7 +123,7 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-ConVar ofg_force( "ofg_force", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
+ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -1012,7 +1012,7 @@ void CTFGameRules::Activate()
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofg_force.GetBool() )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_gungame.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
@@ -2354,6 +2354,89 @@ void CTFGameRules::ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValu
 			}
 		}
 	}
+}
+
+void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
+{
+	BaseClass::GetTaggedConVarList( pCvarTagList );
+	
+		// ofd_instagib
+	KeyValues *pKeyValues = new KeyValues( "ofd_instagib" );
+	pKeyValues->SetString( "convar", "ofd_instagib" );
+	pKeyValues->SetString( "tag", "instagib" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+	
+		// ofd_gungame
+	pKeyValues = new KeyValues( "ofd_gungame" );
+	pKeyValues->SetString( "convar", "ofd_gungame" );
+	pKeyValues->SetString( "tag", "gungame" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+	
+		// of_infiniteammo
+	pKeyValues = new KeyValues( "of_infiniteammo" );
+	pKeyValues->SetString( "convar", "of_infiniteammo" );
+	pKeyValues->SetString( "tag", "infiniteammo" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+	
+		// of_noreload
+	pKeyValues = new KeyValues( "of_noreload" );
+	pKeyValues->SetString( "convar", "of_noreload" );
+	pKeyValues->SetString( "tag", "noreload" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+	
+		// of_allow_special_teams 
+	pKeyValues = new KeyValues( "of_allow_special_teams" );
+	pKeyValues->SetString( "convar", "of_allow_special_teams" );
+	pKeyValues->SetString( "tag", "specialteams" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+	
+		// ofd_forceclass 
+	pKeyValues = new KeyValues( "ofd_forceclass" );
+	pKeyValues->SetString( "convar", "ofd_forceclass" );
+	pKeyValues->SetString( "tag", "forceclass" );
+
+	pCvarTagList->AddSubKey( pKeyValues );	
+	
+		// mp_disable_respawn_times  
+	pKeyValues = new KeyValues( "mp_disable_respawn_times" );
+	pKeyValues->SetString( "convar", "mp_disable_respawn_times " );
+	pKeyValues->SetString( "tag", "norespawntimes" );
+
+	pCvarTagList->AddSubKey( pKeyValues );	
+	
+		// tf_weapon_criticals   
+	pKeyValues = new KeyValues( "tf_weapon_criticals" );
+	pKeyValues->SetString( "convar", "tf_weapon_criticals  " );
+	pKeyValues->SetString( "tag", "critsenabled" );
+
+	pCvarTagList->AddSubKey( pKeyValues );		
+	
+		// tf_damage_disablespread   
+	pKeyValues = new KeyValues( "tf_damage_disablespread" );
+	pKeyValues->SetString( "convar", "tf_damage_disablespread" );
+	pKeyValues->SetString( "tag", "nodamagespread" );
+
+	pCvarTagList->AddSubKey( pKeyValues );	
+	
+		// tf_use_fixed_weaponspreads   
+	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
+	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
+	pKeyValues->SetString( "tag", "fixedshotpatern" );
+
+	pCvarTagList->AddSubKey( pKeyValues );		
+
+		// tf_birthday    
+	pKeyValues = new KeyValues( "tf_birthday" );
+	pKeyValues->SetString( "convar", "tf_birthday" );
+	pKeyValues->SetString( "tag", "birthday" );
+
+	pCvarTagList->AddSubKey( pKeyValues );	
+	
 }
 
 //-----------------------------------------------------------------------------

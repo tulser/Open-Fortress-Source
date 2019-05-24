@@ -77,7 +77,7 @@ DECLARE_HUDELEMENT( CHudAccountPanel );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CHudAccountPanel::CHudAccountPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudAccount" )
+CHudAccountPanel::CHudAccountPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, pElementName )
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
@@ -133,6 +133,11 @@ void CHudAccountPanel::LevelInit( void )
 {
 	iAccountDeltaHead = 0;
 
+	for ( int i = 0; i < NUM_ACCOUNT_DELTA_ITEMS; i++ )
+	{
+		m_AccountDeltaItems[i].m_flDieTime = 0.0f;
+	}
+
 	CHudElement::LevelInit();
 }
 
@@ -143,7 +148,7 @@ bool CHudAccountPanel::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer /* || !pPlayer->IsAlive() || !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) */)
+	if ( !pPlayer || !pPlayer->IsAlive() || !pPlayer->IsPlayerClass( TF_CLASS_ENGINEER ) )
 	{
 		return false;
 	}

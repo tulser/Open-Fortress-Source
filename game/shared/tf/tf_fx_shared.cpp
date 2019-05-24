@@ -7,6 +7,7 @@
 #include "tf_fx_shared.h"
 #include "tf_weaponbase.h"
 #include "takedamageinfo.h"
+#include "tf_shareddefs.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -18,7 +19,7 @@
 #endif
 
 extern ConVar ofd_instagib;
-
+ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "0", FCVAR_NOTIFY|FCVAR_REPLICATED, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
 // Client specific.
 #ifdef CLIENT_DLL
 
@@ -235,15 +236,39 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	ClearMultiDamage();
 
 	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
+	
+	bool bNoSpread = false;
+
+	if ( nBulletsPerShot > 1 )
+	{
+		bNoSpread = tf_use_fixed_weaponspreads.GetBool();
+	}	
+	
 	for ( int iBullet = 0; iBullet < nBulletsPerShot; ++iBullet )
 	{
 		// Initialize random system with this seed.
-		RandomSeed( iSeed );	
+		RandomSeed( iSeed );
 
-		// Get circular gaussian spread.
-		float x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
-		float y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
+		float x = 0.0f;
+		float y = 0.0f;		
+		
+		if ( bNoSpread )
+		{
+			int iIndex = iBullet;
+			while ( iIndex > 9 )
+			{
+				iIndex -= 10;
+			}
 
+			x = 0.5f * g_vecFixedPattern[iIndex].x;
+			y = 0.5f * g_vecFixedPattern[iIndex].y;
+		}
+		else
+		{
+			// Get circular gaussian spread.
+			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
+			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );			
+		}
 		// Initialize the varialbe firing information.
 		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
 		fireInfo.m_vecDirShooting.NormalizeInPlace();

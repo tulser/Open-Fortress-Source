@@ -407,7 +407,7 @@ void CDamageAccountPanel::Paint( void )
 			// color is determined by the delta - green for positive, red for negative
 
 			Color c = m_AccountDeltaItems[i].m_iAmount > 0 ? m_DeltaPositiveColor : m_DeltaNegativeColor;
-
+			DevMsg( "%d",m_AccountDeltaItems[i].m_iAmount);
 			float flLifetimePercent = ( m_AccountDeltaItems[i].m_flDieTime - gpGlobals->curtime ) / m_flDeltaLifetime;
 
 			// fade out after half our lifetime

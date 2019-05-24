@@ -291,6 +291,7 @@ public:
 	virtual const char *GetChatFormat( bool bTeamOnly, CBasePlayer *pPlayer );
 	void ClientSettingsChanged( CBasePlayer *pPlayer );
 	void ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues );
+	void GetTaggedConVarList( KeyValues *pCvarTagList );
 	void ChangePlayerName( CTFPlayer *pPlayer, const char *pszNewName );
 
 	virtual VoiceCommandMenuItem_t *VoiceCommand( CBaseMultiplayerPlayer *pPlayer, int iMenu, int iItem ); 

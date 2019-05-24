@@ -353,8 +353,23 @@ enum
 	TF_WEAPON_BERSERK,
 	TF_WEAPON_PHYSCANNON,
 	TF_WEAPON_SUPER_ROCKETLAUNCHER,
+	TF_WEAPON_CHAINSAW,
 
 	TF_WEAPON_COUNT
+};
+
+const Vector g_vecFixedPattern[] =
+{
+	Vector( 0, 0, 0 ),
+	Vector( 1, 0, 0 ),
+	Vector( -1, 0, 0 ),
+	Vector( 0, -1, 0 ),
+	Vector( 0, 1, 0 ),
+	Vector( 0.85, -0.85, 0 ),
+	Vector( 0.85, 0.85, 0 ),
+	Vector( -0.85, -0.85, 0 ),
+	Vector( -0.85, 0.85, 0 ),
+	Vector( 0, 0, 0 ),
 };
 
 extern const char *g_aWeaponNames[];
