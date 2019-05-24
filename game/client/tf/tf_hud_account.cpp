@@ -39,12 +39,12 @@ typedef struct
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-class CAccountPanel : public CHudElement, public EditablePanel
+class CHudAccountPanel : public CHudElement, public EditablePanel
 {
-	DECLARE_CLASS_SIMPLE( CAccountPanel, EditablePanel );
+	DECLARE_CLASS_SIMPLE( CHudAccountPanel, EditablePanel );
 
 public:
-	CAccountPanel( const char *pElementName );
+	CHudAccountPanel( const char *pElementName );
 
 	virtual void	ApplySchemeSettings( IScheme *scheme );
 	virtual void	LevelInit( void );
@@ -72,12 +72,12 @@ private:
 	CPanelAnimationVar( vgui::HFont, m_hDeltaItemFont, "delta_item_font", "Default" );
 };
 
-DECLARE_HUDELEMENT( CAccountPanel );
+DECLARE_HUDELEMENT( CHudAccountPanel );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CAccountPanel::CAccountPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudAccount" )
+CHudAccountPanel::CHudAccountPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudAccount" )
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
@@ -99,7 +99,7 @@ CAccountPanel::CAccountPanel( const char *pElementName ) : CHudElement( pElement
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CAccountPanel::FireGameEvent( IGameEvent *event )
+void CHudAccountPanel::FireGameEvent( IGameEvent *event )
 {
 	const char * type = event->GetName();
 
@@ -118,7 +118,7 @@ void CAccountPanel::FireGameEvent( IGameEvent *event )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CAccountPanel::ApplySchemeSettings( IScheme *pScheme )
+void CHudAccountPanel::ApplySchemeSettings( IScheme *pScheme )
 {
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudAccountPanel.res" );
@@ -129,7 +129,7 @@ void CAccountPanel::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 // Purpose: called whenever a new level's starting
 //-----------------------------------------------------------------------------
-void CAccountPanel::LevelInit( void )
+void CHudAccountPanel::LevelInit( void )
 {
 	iAccountDeltaHead = 0;
 
@@ -139,7 +139,7 @@ void CAccountPanel::LevelInit( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CAccountPanel::ShouldDraw( void )
+bool CHudAccountPanel::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
@@ -154,7 +154,7 @@ bool CAccountPanel::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewValue )
+void CHudAccountPanel::OnAccountValueChanged( int iOldValue, int iNewValue )
 {
 	// update the account value
 	SetDialogVariable( "metal", iNewValue ); 
@@ -178,7 +178,7 @@ void CAccountPanel::OnAccountValueChanged( int iOldValue, int iNewValue )
 //-----------------------------------------------------------------------------
 // Purpose: Paint the deltas
 //-----------------------------------------------------------------------------
-void CAccountPanel::Paint( void )
+void CHudAccountPanel::Paint( void )
 {
 	BaseClass::Paint();
 
