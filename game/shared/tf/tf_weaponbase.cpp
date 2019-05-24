@@ -449,6 +449,18 @@ void CTFWeaponBase::Drop( const Vector &vecVelocity )
 	BaseClass::Drop( vecVelocity );
 }
 
+void CTFWeaponBase::PlayWeaponShootSound(void)
+{
+	if (IsCurrentAttackACrit())
+	{
+		WeaponSound(BURST);
+	}
+	else
+	{
+		WeaponSound(SINGLE);
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -509,7 +521,7 @@ bool CTFWeaponBase::Deploy( void )
 void CTFWeaponBase::BurstFire( void )
 {
 	PrimaryAttack();
-	WeaponSound( SINGLE );
+	PlayWeaponShootSound();
 	m_iShotsDue--;
 	m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
 }

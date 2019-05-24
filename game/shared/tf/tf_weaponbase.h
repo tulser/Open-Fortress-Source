@@ -134,6 +134,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int				GetPosition( void ) const;
 	virtual int				GetDamage( void ) const;
 	
+	virtual void PlayWeaponShootSound( void );
+	
 	// Attacks.
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();

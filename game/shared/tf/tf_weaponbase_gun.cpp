@@ -49,16 +49,26 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGun, DT_TFWeaponBaseGun )
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
+#ifdef CLIENT_DLL
+	DEFINE_PRED_FIELD( m_bSwapFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+#endif
+#if defined( CLIENT_DLL )
+	DEFINE_FIELD(m_bSwapFire, FIELD_INTEGER ),
+#endif
 END_PREDICTION_DATA()
 
 // Server specific.
-#if !defined( CLIENT_DLL ) 
+
 BEGIN_DATADESC( CTFWeaponBaseGun )
+#if !defined( CLIENT_DLL ) 
 DEFINE_THINKFUNC( ZoomOutIn ),
 DEFINE_THINKFUNC( ZoomOut ),
 DEFINE_THINKFUNC( ZoomIn ),
-END_DATADESC()
+#else
+DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 #endif
+END_DATADESC()
+
 
 ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
 extern ConVar of_infiniteammo;
