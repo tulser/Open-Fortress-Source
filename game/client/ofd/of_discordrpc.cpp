@@ -107,7 +107,9 @@ const char *g_aMapList[] =
 	"dm_wiseau",
 	"dm_wiseau_classic",
 	"esc_tfc_hunted_test",
-	"ctf_johnny"
+	"mctf_johnny",
+	"mctf_longestyard",
+	"mctf_redplanet"
 };
 
 CTFDiscordRPC g_discordrpc;
