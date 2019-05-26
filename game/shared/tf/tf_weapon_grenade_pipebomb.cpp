@@ -317,10 +317,8 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 	{
 		// Set the pipebomb mode before calling spawn, so the model & associated vphysics get setup properly
 		CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
-		DevMsg("Test");
 		if ( pTFWeapon )
 		{
-			DevMsg(" Please for the love of god ");
 			if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
 			{
 				s_PipebombModel =  pTFWeapon->GetTFWpnData().m_nProjectileModel;	

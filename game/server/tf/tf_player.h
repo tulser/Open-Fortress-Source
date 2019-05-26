@@ -100,7 +100,7 @@ public:
 	static CTFPlayer	*CreatePlayer( const char *className, edict_t *ed );
 	static CTFPlayer	*Instance( int iEnt );
 
-	virtual void		Spawn();
+	virtual void		Spawn( bool bRespawn = false );
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -122,6 +122,7 @@ public:
 	virtual void		TraceAttack(const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator);
 	virtual int			TakeHealth( float flHealth, int bitsDamageType );
 	virtual	void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+	virtual	void		GotKilled(){ m_bGotKilled = true; };
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual void		PlayerDeathThink( void );
 
@@ -383,6 +384,7 @@ public:
 	int		no_dispenser_message;
 	
 	CNetworkVar( bool, m_bSaveMeParity );
+	CNetworkVar( bool, m_bGotKilled );
 
 	// teleporter variables
 	int		no_entry_teleporter_message;

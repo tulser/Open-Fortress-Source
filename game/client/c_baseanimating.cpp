@@ -3777,10 +3777,10 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
 	{
-		DevMsg("GUN \n");
+		
 		if (pOwner && pGun)
 		{
-			DevMsg("GUN \n");
+			
 			model_t *pModel = (model_t*)engine->LoadModel(pTFInfo->m_szMagModel);
 			if (pGun->GetTFWpnData().m_bDropsMag)
 			{

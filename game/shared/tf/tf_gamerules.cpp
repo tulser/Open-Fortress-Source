@@ -2404,14 +2404,14 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 	
 		// mp_disable_respawn_times  
 	pKeyValues = new KeyValues( "mp_disable_respawn_times" );
-	pKeyValues->SetString( "convar", "mp_disable_respawn_times " );
+	pKeyValues->SetString( "convar", "mp_disable_respawn_times" );
 	pKeyValues->SetString( "tag", "norespawntimes" );
 
 	pCvarTagList->AddSubKey( pKeyValues );	
 	
 		// tf_weapon_criticals   
 	pKeyValues = new KeyValues( "tf_weapon_criticals" );
-	pKeyValues->SetString( "convar", "tf_weapon_criticals  " );
+	pKeyValues->SetString( "convar", "tf_weapon_criticals" );
 	pKeyValues->SetString( "tag", "critsenabled" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		

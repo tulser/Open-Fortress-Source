@@ -99,6 +99,8 @@ public:
 	bool	m_bHasTeamSkins_Worldmodel;
 	bool	m_bUsesCritAnimation;
 	bool	m_bNeverStrip;
+	bool	m_bGibOnOverkill;
+	bool	m_bGibOnHeadshot;
 	
 	// Mag
 	char    m_szMagModel[128];

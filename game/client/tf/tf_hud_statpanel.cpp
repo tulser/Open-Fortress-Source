@@ -137,7 +137,7 @@ CTFStatPanel::CTFStatPanel( const char *pElementName )
 	m_bNeedToCalcMaxs = false;
 
 	m_pClassImage = new CTFClassImage( this, "StatPanelClassImage" );
-	m_pClassImageColorless= new CTFClassImage ( this, "ClassImageColorless" );
+	m_pClassImageColorless= new CTFClassImage ( this, "StatPanelClassImageColorless" );
 	m_iClassCurrentLife = TF_CLASS_UNDEFINED;
 	m_iTeamCurrentLife = TEAM_UNASSIGNED;
 
@@ -597,7 +597,7 @@ void CTFStatPanel::ShowStatPanel( int iClass, int iTeam, int iCurStatValue, TFSt
 	if ( m_pClassImage )
 	{
 		m_pClassImage->SetClass( iTeam, iClass, 0 );
-		m_pClassImageColorless->SetClass( iTeam, iClass, 0 );
+		m_pClassImageColorless->SetClassColorless( iTeam, iClass, 0 );
 	}
 
 	Show();

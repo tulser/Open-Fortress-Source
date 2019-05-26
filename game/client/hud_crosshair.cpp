@@ -32,6 +32,14 @@
 ConVar crosshair( "crosshair", "1", FCVAR_ARCHIVE );
 ConVar cl_observercrosshair( "cl_observercrosshair", "1", FCVAR_ARCHIVE );
 
+ConVar cl_crosshair_file( "cl_crosshair_file", "", FCVAR_ARCHIVE );
+
+ConVar cl_crosshair_red( "cl_crosshair_red", "255", FCVAR_ARCHIVE );
+ConVar cl_crosshair_green( "cl_crosshair_green", "255", FCVAR_ARCHIVE );
+ConVar cl_crosshair_blue( "cl_crosshair_blue", "255", FCVAR_ARCHIVE );
+ConVar cl_crosshair_alpha( "cl_crosshair_alpha", "255", FCVAR_ARCHIVE );
+ConVar cl_crosshair_scale( "cl_crosshair_scale", "32", FCVAR_ARCHIVE );
+
 using namespace vgui;
 
 int ScreenTransform( const Vector& point, Vector& screen );
@@ -250,7 +258,7 @@ void CHudCrosshair::Paint( void )
 		return;
 
 	float flWeaponScale = 1.f;
-	int iTextureW = m_pCrosshair->Width();
+	int iTextureW = m_pCrosshair->Width() ;
 	int iTextureH = m_pCrosshair->Height();
 	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
 	if ( pWeapon )
@@ -261,10 +269,10 @@ void CHudCrosshair::Paint( void )
 	float flPlayerScale = 1.0f;
 #ifdef TF_CLIENT_DLL
 	Color clr( cl_crosshair_red.GetInt(), cl_crosshair_green.GetInt(), cl_crosshair_blue.GetInt(), 255 );
-	flPlayerScale = cl_crosshair_scale.GetFloat() / 32.0f;  // the player can change the scale in the options/multiplayer tab
 #else
 	Color clr = m_clrCrosshair;
 #endif
+	flPlayerScale = cl_crosshair_scale.GetFloat() / 32.0f;  // the player can change the scale in the options/multiplayer tab
 	float flWidth = flWeaponScale * flPlayerScale * (float)iTextureW;
 	float flHeight = flWeaponScale * flPlayerScale * (float)iTextureH;
 	int iWidth = (int)( flWidth + 0.5f );
@@ -288,13 +296,45 @@ void CHudCrosshair::SetCrosshairAngle( const QAngle& angle )
 	VectorCopy( angle, m_vecCrossHairOffsetAngle );
 }
 
+static CHudTexture *FindHudTextureInDict( CUtlDict< CHudTexture *, int >& list, const char *psz )
+{
+	int idx = list.Find( psz );
+	if ( idx == list.InvalidIndex() )
+		return NULL;
+
+	return list[ idx ];
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CHudCrosshair::SetCrosshair( CHudTexture *texture, const Color& clr )
 {
+	const char *crosshairfile = cl_crosshair_file.GetString();
+	
 	m_pCrosshair = texture;
 	m_clrCrosshair = clr;
+	if ( crosshairfile[0] != '\0' )
+	{
+		char buf[256];
+		Q_snprintf( buf, sizeof( buf ), "vgui/crosshairs/%s", crosshairfile );
+		
+		char sz[128];
+		Q_snprintf(sz, sizeof( sz ), "scripts/tf_crosshairs");
+
+		CUtlDict< CHudTexture *, int > tempList;
+		
+		LoadHudTextures( tempList, sz, g_pGameRules->GetEncryptionKey() );		
+		if ( !tempList.Count() )
+		{
+			// use default
+			return;
+		}		
+		CHudTexture *p;
+		p = FindHudTextureInDict ( tempList, crosshairfile );
+		m_pCrosshair = gHUD.AddUnsearchableHudIconToList( *p );
+		m_clrCrosshair = Color(cl_crosshair_red.GetFloat(), cl_crosshair_green.GetFloat(), cl_crosshair_blue.GetFloat(), cl_crosshair_alpha.GetFloat() );
+	}
 }
 
 //-----------------------------------------------------------------------------

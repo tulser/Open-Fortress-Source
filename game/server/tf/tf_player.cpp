@@ -104,6 +104,7 @@ ConVar tf_damage_range( "tf_damage_range", "0.5", FCVAR_CHEAT );
 ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLICATED , "Max time after a voice command until player can do another one" );
 ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes ever non projectile weapon headshot." );
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
+ConVar of_instantrespawn( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawns." );
 
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
@@ -813,7 +814,7 @@ bool CTFPlayer::IsReadyToSpawn( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::ShouldGainInstantSpawn( void )
 {
-		return ( GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED || IsClassMenuOpen() );
+		return ( GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED || IsClassMenuOpen() || of_instantrespawn.GetBool() );
 }
 
 //-----------------------------------------------------------------------------
@@ -845,7 +846,7 @@ void CTFPlayer::InitialSpawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::Spawn()
+void CTFPlayer::Spawn( bool bRespawn )
 {
 	MDLCACHE_CRITICAL_SECTION();
 
@@ -999,9 +1000,19 @@ void CTFPlayer::Spawn()
 		}
 
 		DevMsg("playing round active music\n");
-	}	
-	
+	}
+	if( bRespawn )
+	{
+		if(m_bGotKilled)
+		{
+			CFmtStrN<128> modifiers( "gotkilled:true" );
+			SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_RESPAWN, modifiers );
+		}
+		else
+			SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_RESPAWN );
+	}
 	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
+	m_bGotKilled = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1169,6 +1180,9 @@ void CTFPlayer::GiveDefaultItems()
 		GiveAmmo( pData->m_aAmmoMax[iAmmo], iAmmo );
 	}
 	
+	// Give a builder weapon for each object the player class is allowed to build
+	ManageBuilderWeapons( pData );	
+	
 	// Give weapons.
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		ManageGunGameWeapons( pData );
@@ -1176,8 +1190,6 @@ void CTFPlayer::GiveDefaultItems()
 		ManageInstagibWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
-	// Give a builder weapon for each object the player class is allowed to build
-	ManageBuilderWeapons( pData );
 }
 
 void CTFPlayer::StripWeapons( void )
@@ -3679,9 +3691,16 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 	if ( tf_playergib.GetInt()== 2 || ofd_instagib.GetInt() == 1 )
 		return true;
 
-	if ( ( ( info.GetDamageType() & DMG_BLAST ) != 0 ) || ( ( info.GetDamageType() & DMG_HALF_FALLOFF ) != 0 )  || ( ( info.GetDamageType() & DMG_ALWAYSGIB ) != 0 ) )
+	if ( ( ( info.GetDamageType() & DMG_BLAST ) != 0 ) 
+		|| ( ( info.GetDamageType() & DMG_HALF_FALLOFF ) != 0 )  
+		|| ( ( info.GetDamageType() & DMG_ALWAYSGIB ) != 0 ) )
 		return true;
-
+	CTFWeaponBase *pWeapon =(CTFWeaponBase *)( info.GetWeapon() );
+	CTFPlayer *pPlayer = ToTFPlayer( info.GetInflictor() );
+	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnOverkill && info.GetDamage() > pPlayer->GetMaxHealth() )
+		return true;
+	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnHeadshot && info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
+		return true;
 	return false;
 }
 
@@ -3712,7 +3731,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				}
 			}
 		}		
-		
+		pTFVictim->GotKilled();
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
 		const char *pszDamageType = "damagetype:none";
@@ -5039,7 +5058,8 @@ void CTFPlayer::ForceRespawn( void )
 	m_nButtons = 0;
 
 	StateTransition( TF_STATE_ACTIVE );
-	Spawn();
+	
+	Spawn( true );
 }
 
 //-----------------------------------------------------------------------------

@@ -86,7 +86,7 @@ public:
 	void	FireCPOutput(void) {m_OutputIsCP.FireOutput(NULL,this);}
 	void	FireDMOutput(void) {m_OutputIsDM.FireOutput(NULL,this);}
 	void	FireTeamplayOutput(void) {m_OutputIsTeamplay.FireOutput(NULL,this);}
-	void	FireGunGameOutput(void) {m_OutputIsGunGame.FireOutput(NULL,this); DevMsg("Fricking fricks");}
+	void	FireGunGameOutput(void) {m_OutputIsGunGame.FireOutput(NULL,this);}
 #endif
 };
 
