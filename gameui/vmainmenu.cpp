@@ -224,7 +224,10 @@ void MainMenu::OnCommand( const char *command )
 	{
 			engine->ClientCmd( "exec chapter1.cfg" );
 	}*/
-
+	else if (!Q_strcmp(command, "CreateServer"))
+	{
+			CBaseModPanel::GetSingleton().OpenCreateMultiplayerGameDialog( this );
+	}
 	/*
 	else if ( !Q_strcmp( command, "StatsAndAchievements" ) )
 	{

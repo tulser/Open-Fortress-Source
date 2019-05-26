@@ -18,11 +18,13 @@
 #include "OptionsSubKeyboard.h"
 #include "OptionsSubMouse.h"
 #include "optionsmousedialog.h"
+#include "CreateMultiplayerGameDialog.h"
 
 //#include "avi/ibik.h"
 #include "ixboxsystem.h"
 
 class COptionsDialog;
+class CCreateMultiplayerGameDialog;
 class COptionsMouseDialog;
 class IMaterial;
 class CMatchmakingBasePanel;
@@ -205,6 +207,7 @@ namespace BaseModUI
 		void OpenOptionsDialog( Panel *parent );
 		void OpenOptionsMouseDialog( Panel *parent );
 		void OpenKeyBindingsDialog( Panel *parent );
+		void OpenCreateMultiplayerGameDialog( Panel *parent );
 
 		MESSAGE_FUNC_CHARPTR( OnNavigateTo, "OnNavigateTo", panelName );
 
@@ -248,6 +251,7 @@ namespace BaseModUI
 		vgui::HScheme m_UIScheme;
 		vgui::DHANDLE<COptionsDialog> m_hOptionsDialog;	// standalone options dialog - PC only
 		vgui::DHANDLE<COptionsMouseDialog> m_hOptionsMouseDialog;	// standalone options dialog - PC only
+		vgui::DHANDLE<CCreateMultiplayerGameDialog> m_hCreateMultiplayerGameDialog;	// standalone options dialog - PC only	
 		int m_lastActiveUserId;
 
 		vgui::HFont m_hDefaultFont;
@@ -308,7 +312,6 @@ namespace BaseModUI
 		vgui::DHANDLE<vgui::Frame> m_hSaveGameDialog_Xbox;
 		//vgui::DHANDLE<vgui::PropertyDialog> m_hOptionsDialog;
 		vgui::DHANDLE<vgui::Frame> m_hOptionsDialog_Xbox;
-		vgui::DHANDLE<vgui::Frame> m_hCreateMultiplayerGameDialog;
 		//vgui::DHANDLE<vgui::Frame> m_hDemoPlayerDialog;
 		vgui::DHANDLE<vgui::Frame> m_hChangeGameDialog;
 		vgui::DHANDLE<vgui::Frame> m_hPlayerListDialog;

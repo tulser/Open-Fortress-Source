@@ -110,21 +110,15 @@ void CASW_Background_Movie::Update()
 
 		const char *pFilename = NULL;
 
-		#ifdef false //GAMEIU_MULTI_MOVIES
 		int nChosenMovie = RandomInt(0, 3);
 		switch(nChosenMovie) {
 			case 0: pFilename = "media/background01.bik"; break;
-			case 1: pFilename = "media/background01.bik"; break;
+			case 1: pFilename = "media/background02.bik"; break;
 			default:
-			case 2: pFilename = "media/background01.bik"; break;
-			case 3: pFilename = "media/background01.bik"; break;
+			case 2: pFilename = "media/background03.bik"; break;
+			case 3: pFilename = "media/background04.bik"; break;
 		}
-		#else
-		pFilename = "media/background01";
-		#endif
 
-		//TEMPTEMP: Keep game from crashing
-		pFilename = "media/l4d2_background01.bik";
 
 		if(pFilename) {
 			SetCurrentMovie(pFilename);

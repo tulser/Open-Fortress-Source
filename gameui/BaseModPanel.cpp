@@ -1731,6 +1731,20 @@ static void BaseUI_PositionDialog(vgui::PHandle dlg)
 	dlg->SetPos(x + ((ww - wide) / 2), y + ((wt - tall) / 2));
 }
 
+//=============================================================================
+void CBaseModPanel::OpenCreateMultiplayerGameDialog( Panel *parent )
+{
+	if ( IsPC() )
+	{			
+		if ( !m_hOptionsDialog.Get() )
+		{
+			m_hCreateMultiplayerGameDialog = new CCreateMultiplayerGameDialog( parent );
+			BaseUI_PositionDialog( m_hCreateMultiplayerGameDialog );
+		}
+
+		m_hCreateMultiplayerGameDialog->Activate();
+	}
+}
 
 //=============================================================================
 void CBaseModPanel::OpenOptionsDialog( Panel *parent )
