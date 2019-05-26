@@ -133,6 +133,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int				GetSlot( void ) const;
 	virtual int				GetPosition( void ) const;
 	virtual int				GetDamage( void ) const;
+	virtual bool			DontAutoEquip( void ) const;
 	
 	virtual void PlayWeaponShootSound( void );
 	

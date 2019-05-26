@@ -48,11 +48,10 @@ ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
-ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Used for syncing up reloads" );
 extern ConVar tf_useparticletracers;
 extern ConVar ofd_instagib;
-
+extern ConVar ofd_multiweapons;
 //=============================================================================
 //
 // Global functions.
@@ -246,12 +245,31 @@ void CTFWeaponBase::Spawn()
 	m_szTracerName[0] = '\0';
 }
 
+int unequipable[10] =
+{
+	TF_WEAPON_BUILDER,
+	TF_WEAPON_INVIS
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::DontAutoEquip( void ) const
+{
+	for ( int i = 0; i < ARRAYSIZE(unequipable); i++ )
+	{
+		if( GetWeaponID() == unequipable[i] )
+			return true;
+	}
+	return false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode()  )
+	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 
 	return GetWpnData().iSlot;
@@ -262,7 +280,7 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetPosition( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
 }

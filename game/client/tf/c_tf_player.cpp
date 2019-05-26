@@ -540,11 +540,16 @@ void C_TFRagdoll::CreateTFGibs( void )
 		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length() );
 	}
 
-	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
+	if ( pPlayer )
 	{
-		DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector(0,0,32), vec3_angle );
+		if ( TFGameRules() && TFGameRules()->IsBirthday() )
+		{
+			DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector(0,0,32), vec3_angle );
 
-		C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+		}
+		else
+			pPlayer->EmitSound( "Player.Gib" );
 	}
 
 	EndFadeOut();

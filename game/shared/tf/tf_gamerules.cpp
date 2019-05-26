@@ -124,6 +124,7 @@ ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
+ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -3756,6 +3757,11 @@ int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 	}
 
 	return BaseClass::GetCaptureValueForPlayer( pPlayer );
+}
+
+bool CTFGameRules::UsesDMBuckets()
+{
+	return ( ofd_multiweapons.GetBool() && IsDMGamemode() );
 }
 
 //-----------------------------------------------------------------------------

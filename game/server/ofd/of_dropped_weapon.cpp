@@ -119,7 +119,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		{
 			bSuccess=false;
 		}
-		if ( !ofd_multiweapons.GetBool() )
+		if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() )
 		{
 			bSuccess=false;
 			if ( pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )

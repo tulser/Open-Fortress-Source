@@ -100,7 +100,7 @@ public:
 	static CTFPlayer	*CreatePlayer( const char *className, edict_t *ed );
 	static CTFPlayer	*Instance( int iEnt );
 
-	virtual void		Spawn( bool bRespawn = false );
+	virtual void		Spawn();
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -384,6 +384,7 @@ public:
 	int		no_dispenser_message;
 	
 	CNetworkVar( bool, m_bSaveMeParity );
+	CNetworkVar( bool, m_bDied );
 	CNetworkVar( bool, m_bGotKilled );
 
 	// teleporter variables

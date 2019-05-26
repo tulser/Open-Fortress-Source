@@ -387,6 +387,7 @@ public:
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
+	virtual bool	UsesDMBuckets( void );
 	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
 	

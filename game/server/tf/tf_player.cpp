@@ -431,6 +431,9 @@ CTFPlayer::CTFPlayer()
 	
     ConVarRef scissor( "r_flashlightscissor" );
     scissor.SetValue( "0" );
+	
+	m_bDied = false;
+	m_bGotKilled = false;
 }
 
 
@@ -846,7 +849,7 @@ void CTFPlayer::InitialSpawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::Spawn( bool bRespawn )
+void CTFPlayer::Spawn()
 {
 	MDLCACHE_CRITICAL_SECTION();
 
@@ -1001,7 +1004,7 @@ void CTFPlayer::Spawn( bool bRespawn )
 
 		DevMsg("playing round active music\n");
 	}
-	if( bRespawn )
+	if( m_bDied )
 	{
 		if(m_bGotKilled)
 		{
@@ -1013,6 +1016,7 @@ void CTFPlayer::Spawn( bool bRespawn )
 	}
 	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
 	m_bGotKilled = false;
+	m_bDied = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1180,8 +1184,7 @@ void CTFPlayer::GiveDefaultItems()
 		GiveAmmo( pData->m_aAmmoMax[iAmmo], iAmmo );
 	}
 	
-	// Give a builder weapon for each object the player class is allowed to build
-	ManageBuilderWeapons( pData );	
+
 	
 	// Give weapons.
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
@@ -1190,6 +1193,8 @@ void CTFPlayer::GiveDefaultItems()
 		ManageInstagibWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
+	// Give a builder weapon for each object the player class is allowed to build
+	ManageBuilderWeapons( pData );	
 }
 
 void CTFPlayer::StripWeapons( void )
@@ -1302,6 +1307,8 @@ int CTFPlayer::RestockCloak( float PowerupSize )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 {
+	int active = m_hActiveWeapon.Get()->GetSlot();
+	int last = GetLastWeapon()->GetSlot();
 	if ( pData->m_aBuildable[0] != OBJ_LAST )
 	{
 		CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
@@ -1332,7 +1339,9 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 			if ( pBuilder )
 			{
 				pBuilder->SetSubType( pData->m_aBuildable[0] );
-				pBuilder->DefaultTouch( this );				
+				pBuilder->DefaultTouch( this );
+				if ( pData->m_aBuildable[0] == OBJ_ATTACHMENT_SAPPER)
+					last = 1;
 			}
 		}
 
@@ -1352,6 +1361,8 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 		Weapon_Detach( pWpn );
 		UTIL_Remove( pWpn );
 	}
+	Weapon_Switch( Weapon_GetSlot( active ) );
+	Weapon_SetLast( Weapon_GetSlot( last ) );
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1392,130 +1403,67 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
 	StripWeapons();
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	if( ofd_instagib.GetInt() == 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() )
+	int pWeaponSlot[2];
+	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5 ; iWeapon++ )
 	{
-		for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; iWeapon++ )
+		if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
 		{
-			if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
+			int iWeaponID = pData->m_aWeapons[iWeapon];
+			const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
+		
+			pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+			//If we already have a weapon in this slot but is not the same type then nuke it (changed classes)
+			if ( pWeapon && pWeapon->GetWeaponID() != iWeaponID )
 			{
-				int iWeaponID = pData->m_aWeapons[iWeapon];
-				const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
-			
-				pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );
+			}
 
-				//If we already have a weapon in this slot but is not the same type then nuke it (changed classes)
-				if ( pWeapon && pWeapon->GetWeaponID() != iWeaponID )
+			pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
+		
+			if ( pWeapon )
+			{
+				pWeapon->ChangeTeam( GetTeamNumber() );
+				pWeapon->GiveDefaultAmmo();
+
+				if ( m_bRegenerating == false )
 				{
-					Weapon_Detach( pWeapon );
-					UTIL_Remove( pWeapon );
+					pWeapon->WeaponReset();
 				}
-
-				pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
-			
+			}
+			else
+			{
+				pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
 				if ( pWeapon )
 				{
-					pWeapon->ChangeTeam( GetTeamNumber() );
-					pWeapon->GiveDefaultAmmo();
-	
-					if ( m_bRegenerating == false )
-					{
-						pWeapon->WeaponReset();
-					}
-				}
-				else
-				{
-					pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
-					if ( pWeapon )
-					{
-						pWeapon->DefaultTouch( this );
-					}
-				}
-			}
-			else
-			{
-				//I shouldn't have any weapons in this slot, so get rid of it
-				CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-
-				//Don't nuke builders since they will be nuked if we don't need them later.
-				if ( pCarriedWeapon && pCarriedWeapon->GetWeaponID() != TF_WEAPON_BUILDER )
-				{
-					Weapon_Detach( pCarriedWeapon );
-					UTIL_Remove( pCarriedWeapon );
-				}
-			}
-		}
-	}
-	if ( ofd_instagib.GetInt() > 0)
-	{
-		for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
-		{
-			
-				pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-					
-					if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_RAILGUN )
-					{
-						if ( ofd_instagib.GetInt() == 1 )
-						{
-							if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROWBAR )
-							{
-								Weapon_Detach( pWeapon );
-								UTIL_Remove( pWeapon );
-							}
-						}
-						else
-						{
-							Weapon_Detach( pWeapon );
-							UTIL_Remove( pWeapon );
-						}
-					}
-					else 
-					{
-						pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_railgun" );
-						if ( pWeapon )
-						{
-							pWeapon->DefaultTouch( this );
-						}
-						if ( ofd_instagib.GetInt() == 1 )
-						{
-							pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
-							if ( pWeapon )
-							{
-								pWeapon->DefaultTouch( this );
-							}
-						}
-					}
-		}	
-	}
-	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
-	{
-			pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
-			CTFWeaponBase *pNewWeapon = (CTFWeaponBase *)GiveNamedItem( STRING(TFGameRules()->m_iszWeaponName[GGLevel()]) );
-			if ( pWeapon && pWeapon->GetSlot() != pNewWeapon->GetSlot() )
-			{
-					pWeapon->SetGGLevel(999);
 					pWeapon->DefaultTouch( this );
+					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID()  != TF_WEAPON_INVIS )
+					{
+						pWeaponSlot[1] = pWeaponSlot[0];
+						pWeaponSlot[0] = pWeapon->GetSlot();
+					}
+				}
 			}
-			else
-			{
-				UTIL_Remove(pWeapon);
-			}
-			if ( pNewWeapon )
-			{
-					pNewWeapon->SetGGLevel(GGLevel());
-					pNewWeapon->DefaultTouch( this );
-			}
-	
-	}
-	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5; ++iWeapon )
-	{
-		if( GetActiveWeapon() != NULL ) break;
-		if ( m_bRegenerating == false )
+		}
+		else
 		{
-			SetActiveWeapon( NULL );
-			Weapon_Switch( Weapon_GetSlot( iWeapon ) );
-			Weapon_SetLast( Weapon_GetSlot( iWeapon++) );
+			//I shouldn't have any weapons in this slot, so get rid of it
+			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+			//Don't nuke builders since they will be nuked if we don't need them later.
+			if ( pCarriedWeapon && pCarriedWeapon->GetWeaponID() != TF_WEAPON_BUILDER )
+			{
+				Weapon_Detach( pCarriedWeapon );
+				UTIL_Remove( pCarriedWeapon );
+			}
 		}
 	}
+	if ( m_bRegenerating == false )
+	{
+		SetActiveWeapon( NULL );
+		Weapon_Switch( Weapon_GetSlot( pWeaponSlot[0] ) );
+		Weapon_SetLast( Weapon_GetSlot( pWeaponSlot[1] ) );
+	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -3696,8 +3644,7 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 		|| ( ( info.GetDamageType() & DMG_ALWAYSGIB ) != 0 ) )
 		return true;
 	CTFWeaponBase *pWeapon =(CTFWeaponBase *)( info.GetWeapon() );
-	CTFPlayer *pPlayer = ToTFPlayer( info.GetInflictor() );
-	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnOverkill && info.GetDamage() > pPlayer->GetMaxHealth() )
+	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnOverkill && info.GetDamage() > GetMaxHealth() )
 		return true;
 	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnHeadshot && info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
 		return true;
@@ -3730,8 +3677,9 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 					UpdateGunGameLevel();
 				}
 			}
-		}		
-		pTFVictim->GotKilled();
+		}
+		if ( pTFVictim != pTFAttacker )
+			pTFVictim->GotKilled();
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
 		const char *pszDamageType = "damagetype:none";
@@ -3793,7 +3741,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	SpeakConceptIfAllowed( MP_CONCEPT_DIED );
 
 	StateTransition( TF_STATE_DYING );	// Transition into the dying state.
-
+	
 	CTFPlayer *pPlayerAttacker = NULL;
 	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
 	{
@@ -3987,6 +3935,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 
 	DestroyViewModels();
+	m_bDied = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -5005,7 +4954,7 @@ int CTFPlayer::GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound )
 //-----------------------------------------------------------------------------
 // Purpose: Reset player's information and force him to spawn
 //-----------------------------------------------------------------------------
-void CTFPlayer::ForceRespawn( void )
+void CTFPlayer::ForceRespawn()
 {
 	CTF_GameStats.Event_PlayerForceRespawn( this );
 
@@ -5059,7 +5008,7 @@ void CTFPlayer::ForceRespawn( void )
 
 	StateTransition( TF_STATE_ACTIVE );
 	
-	Spawn( true );
+	Spawn();
 }
 
 //-----------------------------------------------------------------------------

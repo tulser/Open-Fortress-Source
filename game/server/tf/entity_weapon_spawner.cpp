@@ -134,7 +134,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
 		{		
 			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pTFPlayer->GetWeapon( iWeapon );
-			if ( !ofd_multiweapons.GetBool() && pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )
+			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() && pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )
 			{
 					pTFPlayer->DropWeapon( pCarriedWeapon );
 					if ( pCarriedWeapon )
@@ -223,7 +223,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		// did we give them anything?
 		if ( bSuccess )
 		{
-			if ( !ofd_multiweapons.GetBool() )
+			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() )
 			{
 				if ( pTFPlayer->m_nButtons & IN_USE )
 				{}
