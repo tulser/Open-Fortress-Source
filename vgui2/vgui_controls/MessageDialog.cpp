@@ -7,6 +7,7 @@
 #include "vgui_controls/MessageDialog.h"
 #include "vgui/ILocalize.h"
 #include "vgui/ISurface.h"
+#include "../game/shared/hl2ce/steamworks_stuff.h"
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
@@ -144,6 +145,13 @@ void CMessageDialog::CreateButtonLabel( ButtonLabel_s *pButton, const char *pIco
 void CMessageDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
+	
+	char* szOk;
+
+	if (g_bSteamworksError)
+		szOk = "#GameUI_QuitConfirmationTitle";
+	else
+		szOk = "#L4D360UI_Ok";
 
 	LoadControlSettings( "resource/UI/MessageDialog.res", "GAME", m_pControlSettings );
 
@@ -152,7 +160,7 @@ void CMessageDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	if ( m_nType & MD_OK )
 	{
-		CreateButtonLabel( &m_Buttons[BTN_A], "#GameUI_Icons_A_BUTTON", "#GameUI_OK" );
+		CreateButtonLabel( &m_Buttons[BTN_A], "#GameUI_Icons_A_BUTTON", szOk );
 	}
 	else if ( m_nType & MD_CANCEL )
 	{
@@ -160,7 +168,7 @@ void CMessageDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	}
 	else if ( m_nType & MD_OKCANCEL )
 	{
-		CreateButtonLabel( &m_Buttons[BTN_A], "#GameUI_Icons_A_BUTTON", "#GameUI_OK" );
+		CreateButtonLabel( &m_Buttons[BTN_A], "#GameUI_Icons_A_BUTTON", szOk );
 		CreateButtonLabel( &m_Buttons[BTN_B], "#GameUI_Icons_B_BUTTON", "#GameUI_Cancel" );
 	}
 	else if ( m_nType & MD_YESNO )
