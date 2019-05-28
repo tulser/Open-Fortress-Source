@@ -131,7 +131,7 @@ void C_DynamicLight::ClientThink(void)
 	Vector forward;
 	AngleVectors( GetAbsAngles(), &forward );
 
-	if ( (m_Flags & DLIGHT_NO_MODEL_ILLUMINATION) == 0 )
+	if ( (m_Flags & DLIGHT_NO_MODEL_ILLUMINATION) == 1 )
 	{
 		// Deal with the model light
  		if ( !m_pDynamicLight || (m_pDynamicLight->key != index) )

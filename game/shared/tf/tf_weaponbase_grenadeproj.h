@@ -42,15 +42,15 @@ public:
 	// This gets sent to the client and placed in the client's interpolation history
 	// so the projectile starts out moving right off the bat.
 	CNetworkVector( m_vInitialVelocity );
+	
+	int WeaponID;
 
 	virtual float		GetShakeAmplitude( void ) { return 10.0; }
 	virtual float		GetShakeRadius( void ) { return 300.0; }
-
 	void				SetCritical( bool bCritical ) { m_bCritical = bCritical; }
+	
 	virtual int			GetDamageType();
 	
-	
-
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );

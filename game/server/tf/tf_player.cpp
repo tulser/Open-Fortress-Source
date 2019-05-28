@@ -105,6 +105,7 @@ ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLIC
 ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes ever non projectile weapon headshot." );
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 ConVar of_instantrespawn( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawns." );
+ConVar of_dropweapons( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow Manual weapon dropping." );
 
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
@@ -1209,6 +1210,21 @@ void CTFPlayer::StripWeapons( void )
 			UTIL_Remove( pWeapon );
 		}
 	}
+}
+
+bool CTFPlayer::OwnsWeaponID( int ID )
+{
+	CTFWeaponBase *pTestWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( ID );
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
+	{
+		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		if ( pWeapon == pTestWeapon )
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 int CTFPlayer::GetCarriedWeapons( void )
@@ -3061,13 +3077,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	}
 
 	// if this is our own rocket, scale down the damage
-	if ( IsPlayerClass( TF_CLASS_SOLDIER ) && info.GetAttacker() == this ) 
-	{
-		float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
-		info.SetDamage( flDamage );
-	}
-	
-	if ( IsPlayerClass( TF_CLASS_MERCENARY ) && info.GetAttacker() == this ) 
+	if (  info.GetAttacker() == this ) 
 	{
 		float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
 		info.SetDamage( flDamage );
@@ -3496,14 +3506,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			vecForce.Init();
 			if ( info.GetAttacker() == this )
 			{
-				if ( IsPlayerClass( TF_CLASS_SOLDIER ) ) 
-				{
-					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_self_soldier.GetFloat() );
-				}
-				else
-				{
-					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), DAMAGE_FORCE_SCALE_SELF );
-				}
+				vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_self_soldier.GetFloat() );
 			}
 			else
 			{
@@ -3767,6 +3770,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
+	
 	if (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -4185,6 +4189,39 @@ void CTFPlayer::DropAmmoPack( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: drops the flag
+//-----------------------------------------------------------------------------
+void CC_DropWeapon( void )
+{
+	if ( !of_dropweapons.GetBool() )
+		return;
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	if ( pPlayer )
+	{
+		if ( pPlayer->m_Shared.GetActiveTFWeapon() && pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+		{
+			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
+			pPlayer->DropWeapon( pTFPistol );
+			pPlayer->DropWeapon( pTFPistol );
+			pTFPistol = NULL;
+		}
+		else
+			pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon()  );
+		
+		if ( pPlayer->m_Shared.GetActiveTFWeapon() )
+		{
+			pPlayer->Weapon_Detach( pPlayer->m_Shared.GetActiveTFWeapon() );
+			UTIL_Remove( pPlayer->m_Shared.GetActiveTFWeapon() );
+			if ( pPlayer->GetLastWeapon() )
+				pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
+			else
+				pPlayer->SwitchToNextBestWeapon( NULL );
+		}
+	}
+}
+static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon )
@@ -4432,11 +4469,7 @@ void CTFPlayer::TeamFortress_RemoveRockets( void )
 // Removes all pipebombs from the world
 void CTFPlayer::TeamFortress_RemovePipebombs( void )
 {
-	CTFPlayerClass *pClass = GetPlayerClass();
-	if ( pClass && pClass->GetClassIndex() == TF_CLASS_DEMOMAN )
-	{
-		RemoveOwnedEnt( "tf_projectile_pipe", true );
-	}
+	RemoveOwnedEnt( "tf_projectile_pipe", true );
 }
 
 

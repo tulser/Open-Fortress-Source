@@ -103,7 +103,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iAmmoPerShot			= pKeyValuesData->GetInt( "AmmoPerShot", 1 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bUseRapidFireCrits	= ( pKeyValuesData->GetInt( "UseRapidFireCrits", 0 ) != 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bCenterfireProjectile= (pKeyValuesData->GetInt( "CenterfireProjectile", 0 ) != 0 );
-
+	
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay	= pKeyValuesData->GetFloat( "BurstFireDelay", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize	= pKeyValuesData->GetInt( "BurstSize", 0 );
 	
@@ -205,6 +205,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bNeverStrip	= ( pKeyValuesData->GetInt( "NeverStrip", 0 ) != 0 );
 	m_bGibOnOverkill	= ( pKeyValuesData->GetInt( "GibOnOverkill", 0 ) != 0 );
 	m_bGibOnHeadshot	= ( pKeyValuesData->GetInt( "GibOnHeadshot", 0 ) != 0 );
+	m_bExplodeOnImpact	= ( pKeyValuesData->GetInt( "ExplodeOnImpact", 0 ) != 0 );
+	m_bDisableSecondaryAttack	= ( pKeyValuesData->GetInt( "DisableSecondaryAttack", 0 ) != 0 );
 
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szSoldierViewModel, pKeyValuesData->GetString( "soldier_viewmodel" ), MAX_WEAPON_STRING );

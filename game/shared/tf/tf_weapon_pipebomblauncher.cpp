@@ -69,6 +69,17 @@ BEGIN_DATADESC( CTFPipebombLauncher )
 END_DATADESC()
 #endif
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFDynamite, DT_WeaponDynamite )
+
+BEGIN_NETWORK_TABLE( CTFDynamite, DT_WeaponDynamite )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFDynamite )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_dynamite_bundle, CTFDynamite );
+PRECACHE_WEAPON_REGISTER( tf_weapon_dynamite_bundle );
+
 //=============================================================================
 //
 // Weapon Pipebomb Launcher functions.
@@ -141,7 +152,7 @@ void CTFPipebombLauncher::WeaponReset( void )
 void CTFPipebombLauncher::PrimaryAttack( void )
 {
 	// Check for ammunition.
-	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
+	if ( m_iClip1 <= 0 && m_iClip1 != -1 && GetMaxClip1() > 0 )
 		return;
 
 	// Are we capable of firing again?
@@ -180,9 +191,9 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFPipebombLauncher::WeaponIdle( void )
 {
-	if ( m_flChargeBeginTime > 0 && m_iClip1 > 0 )
+	if ( m_flChargeBeginTime > 0 && ( m_iClip1 > 0 || GetMaxClip1() <= 0 ) )
 	{
-		if ( m_iClip1 > 0 )
+		if ( m_iClip1 > 0 || GetMaxClip1() <= 0 )
 		{
 			LaunchGrenade();
 		}
@@ -228,7 +239,7 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 
 	// Check the reload mode and behave appropriately.
-	if ( m_bReloadsSingly )
+	if ( m_bReloadsSingly && GetMaxClip1() > 0 )
 	{
 		m_iReloadMode.Set( TF_RELOAD_START );
 	}
@@ -312,7 +323,7 @@ void CTFPipebombLauncher::ItemBusyFrame( void )
 //-----------------------------------------------------------------------------
 void CTFPipebombLauncher::SecondaryAttack( void )
 {
-	if ( !CanAttack() )
+	if ( !CanAttack() || !CanSecondaryAttack() )
 		return;
 
 	if ( m_iPipebombCount )
@@ -410,7 +421,7 @@ bool CTFPipebombLauncher::DetonateRemotePipebombs( bool bFizzle )
 				}
 			}
 #ifdef GAME_DLL
-			pTemp->Detonate();
+			pTemp->SetTimer( gpGlobals->curtime - 10 );
 #endif
 		}
 	}
@@ -427,7 +438,7 @@ float CTFPipebombLauncher::GetChargeMaxTime( void )
 
 bool CTFPipebombLauncher::Reload( void )
 {
-	if ( m_flChargeBeginTime > 0 )
+	if ( m_flChargeBeginTime > 0 || GetMaxClip1() <= 0 )
 		return false;
 
 	return BaseClass::Reload();

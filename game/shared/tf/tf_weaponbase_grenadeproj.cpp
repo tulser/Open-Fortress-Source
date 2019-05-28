@@ -62,7 +62,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
-
+	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
@@ -75,6 +75,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 	SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
+	
+
 #endif
 END_NETWORK_TABLE()
 
@@ -274,7 +276,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 
 	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ );
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
-	SetElasticity( 0.4f/*BaseClass::GetGrenadeElasticity()*/ );
+	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
 
 	if ( ofd_instagib.GetInt() == 0)  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	else SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nInstagibDamage );
@@ -282,14 +284,18 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
-/*
+
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
+/*
 	if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
 	{
 		PrecacheModel(pTFWeapon->GetTFWpnData().m_nProjectileModel);
 		SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
 	}
 */
+	if ( pTFWeapon )
+		WeaponID = pTFWeapon->GetWeaponID();
+
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{
@@ -318,15 +324,15 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		m_bCollideWithTeammates = true;
-	}
-	else
-	{
+//	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
+//	{
+//		m_bCollideWithTeammates = true;
+//	}
+//	else
+//	{
 		m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
 		m_bCollideWithTeammates = false;
-	}
+//	}
 	VPhysicsInitNormal( SOLID_BBOX, 0, false );
 
 	m_takedamage = DAMAGE_EVENTS_ONLY;
@@ -361,7 +367,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	CSoundEnt::InsertSound ( SOUND_COMBAT, GetAbsOrigin(), BASEGRENADE_EXPLOSION_VOLUME, 3.0 );
-
+	
 	// Explosion effect on client
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
@@ -369,22 +375,22 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), WeaponID, pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), WeaponID, -1 );
 		}
 	}
 	else
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, WeaponID, pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, WeaponID, -1 );
 		}
 	}
 

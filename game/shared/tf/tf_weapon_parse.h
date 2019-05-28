@@ -101,6 +101,8 @@ public:
 	bool	m_bNeverStrip;
 	bool	m_bGibOnOverkill;
 	bool	m_bGibOnHeadshot;
+	bool 	m_bExplodeOnImpact;
+	bool 	m_bDisableSecondaryAttack;
 	
 	// Mag
 	char    m_szMagModel[128];

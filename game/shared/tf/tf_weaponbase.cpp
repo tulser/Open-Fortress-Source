@@ -133,13 +133,13 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
-#endif
-#if defined( CLIENT_DLL )
-	RecvPropInt( RECVINFO( m_iShotsDue ) ),
-	RecvPropFloat( RECVINFO(m_flNextShotTime ) ),
+#endif 
+#if !defined( CLIENT_DLL )
+	SendPropTime( SENDINFO( m_flNextShotTime ) ),
+	SendPropInt( SENDINFO( m_iShotsDue ), 9 ),
 #else
-	SendPropInt( SENDINFO( m_iShotsDue ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropFloat( SENDINFO( m_flNextShotTime ), 0, SPROP_CHANGES_OFTEN ),
+	RecvPropTime( RECVINFO( m_flNextShotTime ) ),
+	RecvPropInt( RECVINFO( m_iShotsDue )),
 #endif
 END_NETWORK_TABLE()
 
@@ -151,6 +151,8 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 #if defined( CLIENT_DLL )
+	DEFINE_PRED_FIELD( m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_flNextShotTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
 #endif
@@ -162,6 +164,8 @@ LINK_ENTITY_TO_CLASS( tf_weapon_base, CTFWeaponBase );
 #if !defined( CLIENT_DLL )
 
 BEGIN_DATADESC( CTFWeaponBase )
+DEFINE_FIELD( m_flNextShotTime, FIELD_TIME ),
+DEFINE_FIELD( m_iShotsDue, FIELD_INTEGER ),
 DEFINE_FUNCTION( FallThink )
 END_DATADESC()
 
@@ -292,6 +296,15 @@ int CTFWeaponBase::GetDamage( void ) const
 {
 		if ( ofd_instagib.GetInt() == 0 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanSecondaryAttack( void ) const
+{
+
+		return !GetTFWpnData().m_bDisableSecondaryAttack;
 }
 
 // -----------------------------------------------------------------------------
@@ -583,6 +596,8 @@ void CTFWeaponBase::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::SecondaryAttack( void )
 {
+	if ( !CanSecondaryAttack() )
+		return;
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 

@@ -44,16 +44,9 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 {
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
-	switch (iWeaponID)
-	{
-	case TF_WEAPON_GRENADE_PIPEBOMB:
-	case TF_WEAPON_GRENADE_DEMOMAN:
-		pWeaponInfo = GetTFWeaponInfo(TF_WEAPON_PIPEBOMBLAUNCHER);
-		break;
-	default:
-		pWeaponInfo = GetTFWeaponInfo(iWeaponID);
-		break;
-	}
+
+	pWeaponInfo = GetTFWeaponInfo(iWeaponID);
+
 
 	bool bIsPlayer = false;
 	if (hEntity.Get())

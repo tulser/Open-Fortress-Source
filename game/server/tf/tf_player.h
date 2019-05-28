@@ -438,6 +438,7 @@ public:
 	int				RestockAmmo( float PowerupSize );
 	int				RestockMetal( float PowerupSize );
 	int				RestockCloak( float PowerupSize );
+	bool				OwnsWeaponID( int ID );
 private:
 
 	int					GetAutoTeam( void );

@@ -108,7 +108,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	Assert( pPlayer );
 
 	bool bSuccess = true;
-	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY )
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) )
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
 	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );

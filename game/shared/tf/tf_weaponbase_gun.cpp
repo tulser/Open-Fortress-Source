@@ -136,9 +136,13 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	{
 		// Are we capable of firing again?
-		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime  )
 			return;
-	}	
+	}
+	else if ( m_iShotsDue == 0 )
+		return;
+	
+	
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
