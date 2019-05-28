@@ -505,7 +505,6 @@ void CTFWeaponBaseGrenadeProj::ResolveFlyCollisionCustom( trace_t &trace, Vector
 		flSurfaceElasticity = 0.3;
 	}
 
-#if 0
 	// if its breakable glass and we kill it, don't bounce.
 	// give some damage to the glass, and if it breaks, pass 
 	// through it.
@@ -539,7 +538,6 @@ void CTFWeaponBaseGrenadeProj::ResolveFlyCollisionCustom( trace_t &trace, Vector
 			return;
 		}
 	}
-#endif
 
 	float flTotalElasticity = GetElasticity() * flSurfaceElasticity;
 	flTotalElasticity = clamp( flTotalElasticity, 0.0f, 0.9f );
