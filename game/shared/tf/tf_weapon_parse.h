@@ -40,7 +40,6 @@ struct WeaponData_t
 	float 	m_flMeleeRange;
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
-
 	
 	float	m_flBurstFireDelay;				// Time to delay between firing
 	int		m_nBurstSize;
@@ -93,7 +92,10 @@ public:
 	float	m_flPrimerTime;
 	bool	m_bLowerWeapon;
 	bool	m_bSuppressGrenTimer;
-
+	int 	m_iBombletAmount;
+	float	m_flBombletTimer;
+	float	m_flBombletMultiplier;
+	
 	// Skins
 	bool	m_bHasTeamSkins_Viewmodel;
 	bool	m_bHasTeamSkins_Worldmodel;
@@ -103,6 +105,8 @@ public:
 	bool	m_bGibOnHeadshot;
 	bool 	m_bExplodeOnImpact;
 	bool 	m_bDisableSecondaryAttack;
+	bool 	m_bAllowDrop;
+	bool 	m_bDropBomblets;
 	
 	// Mag
 	char    m_szMagModel[128];

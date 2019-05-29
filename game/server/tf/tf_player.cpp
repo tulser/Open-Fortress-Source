@@ -1214,12 +1214,11 @@ void CTFPlayer::StripWeapons( void )
 
 bool CTFPlayer::OwnsWeaponID( int ID )
 {
-	CTFWeaponBase *pTestWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( ID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-		if ( pWeapon == pTestWeapon )
+		if ( pWeapon && pWeapon->GetWeaponID() == ID )
 		{
 			return true;
 		}
@@ -4195,28 +4194,29 @@ void CC_DropWeapon( void )
 {
 	if ( !of_dropweapons.GetBool() )
 		return;
-	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+	if ( !pPlayer->m_Shared.GetActiveTFWeapon()->CanDropManualy() )
+		return;
 	if ( pPlayer )
 	{
 		if ( pPlayer->m_Shared.GetActiveTFWeapon() && pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 		{
 			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-			pPlayer->DropWeapon( pTFPistol );
-			pPlayer->DropWeapon( pTFPistol );
+			pPlayer->DropWeapon( pTFPistol, true );
+			pPlayer->DropWeapon( pTFPistol, true );
 			pTFPistol = NULL;
+			UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 		}
 		else
-			pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon()  );
-		
-		if ( pPlayer->m_Shared.GetActiveTFWeapon() )
 		{
-			pPlayer->Weapon_Detach( pPlayer->m_Shared.GetActiveTFWeapon() );
-			UTIL_Remove( pPlayer->m_Shared.GetActiveTFWeapon() );
-			if ( pPlayer->GetLastWeapon() )
-				pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
-			else
-				pPlayer->SwitchToNextBestWeapon( NULL );
+			pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true  );
+			UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 		}
+		
+		if ( pPlayer->GetLastWeapon() )
+			pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
+		else
+			pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
 	}
 }
 static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
@@ -4224,7 +4224,7 @@ static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon )
+void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown )
 {
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
@@ -4286,31 +4286,75 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon )
 
 		// Fill up the ammo pack.
 		pAmmoPack->WeaponID = m_iWeaponID;
+		
+///////
+/*	
+			// It has been discovered that it's possible to throw the physcannon out of the world this way.
+			// So try to find a direction to throw the physcannon that's legal.
+			QAngle gunAngles;
+			VectorAngles( BodyDirection2D(), gunAngles );
 
+			Vector vecForward;
+			AngleVectors( gunAngles, &vecForward, NULL, NULL );
+			Vector pVecThrowDir;
+			Vector vecForward;
+			Vector vecOrigin = EyePosition();
+			Vector vecRightThrow;
+
+			CrossProduct( vecForward, Vector( 0, 0, 1), vecRightThrow );
+
+			Vector vecTest[ 4 ];
+			vecTest[0] = vecForward;
+			vecTest[1] = -vecForward;
+			vecTest[2] = vecRightThrow;
+			vecTest[3] = -vecRightThrow;
+
+			trace_t tr;
+			int i;
+			for( i = 0 ; i < 4 ; i++ )
+			{
+				UTIL_TraceLine( vecOrigin, vecOrigin + vecTest[ i ] * 48.0f, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+
+				if ( !tr.startsolid && tr.fraction == 1.0f )
+				{
+					pVecThrowDir = vecTest[ i ];
+				}
+			}
+
+*/
+///////		
 		Vector vecRight, vecUp;
 		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
 
 		// Calculate the initial impulse on the weapon.
 		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
+
 		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
 		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
 		VectorNormalize( vecImpulse );
-		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );
+		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );			
 		vecImpulse += GetAbsVelocity();
+		
 
 		// Cap the impulse.
 		float flSpeed = vecImpulse.Length();
 		if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
 		{
-			VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
+				VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
 		}
 
 		if ( pAmmoPack->VPhysicsGetObject() )
 		{
 			// We can probably remove this when the mass on the weapons is correct!
 			pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
+
 			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
-			pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+			AngularImpulse	angImp( 200, 200, 200 );
+//			if ( thrown )
+//				pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &pVecThrowDir, &angImp );
+//			else
+				pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+
 		}
 
 		pAmmoPack->SetInitialVelocity( vecImpulse );

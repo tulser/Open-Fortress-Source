@@ -99,7 +99,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_akimbo );
 //-----------------------------------------------------------------------------
 CTFPistol::CTFPistol( void )
 {
-//	m_bReloadsAll = true;
 	m_flSoonestPrimaryAttack = gpGlobals->curtime;
 }
 

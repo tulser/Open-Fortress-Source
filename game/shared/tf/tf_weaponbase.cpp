@@ -303,8 +303,18 @@ int CTFWeaponBase::GetDamage( void ) const
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::CanSecondaryAttack( void ) const
 {
-
 		return !GetTFWpnData().m_bDisableSecondaryAttack;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanDropManualy( void ) const
+{
+	if ( !GetTFWpnData().m_bAllowDrop && GetMaxReserveAmmo() <= 0 )
+		return false;
+	
+	return true;
 }
 
 // -----------------------------------------------------------------------------

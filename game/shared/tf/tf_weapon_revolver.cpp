@@ -50,7 +50,6 @@ END_DATADESC()
 
 CTFRevolver::CTFRevolver()
 {
-//	m_bReloadsAll = true;
 }
 
 //=============================================================================
@@ -60,7 +59,6 @@ CTFRevolver::CTFRevolver()
 /*
 bool CTFRevolver::DefaultReload( int iClipSize1, int iClipSize2, int iActivity )
 {
-	m_bReloadsAll = true;
 	// The the owning local player.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )

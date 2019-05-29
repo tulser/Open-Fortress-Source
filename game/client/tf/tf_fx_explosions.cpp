@@ -44,9 +44,9 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 {
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
-
 	pWeaponInfo = GetTFWeaponInfo(iWeaponID);
-
+	if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB )
+		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER_MERCENARY );
 
 	bool bIsPlayer = false;
 	if (hEntity.Get())

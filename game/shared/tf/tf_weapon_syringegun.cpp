@@ -44,7 +44,6 @@ END_DATADESC()
 
 CTFSyringeGun::CTFSyringeGun()
 {
-//	m_bReloadsAll = true;
 }
 
 void CTFSyringeGun::Precache()

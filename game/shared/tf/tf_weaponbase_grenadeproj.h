@@ -126,4 +126,58 @@ private:
 #endif
 };
 
+
+//=============================================================================
+//
+// TF Mirv Grenade Projectile and Bombs (Server specific.)
+//
+#ifdef GAME_DLL
+
+class CTFGrenadeMirvProjectile : public CTFWeaponBaseGrenadeProj
+{
+public:
+
+	DECLARE_CLASS( CTFGrenadeMirvProjectile, CTFWeaponBaseGrenadeProj );
+
+	// Unique identifier.
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRV; }
+
+	// Creation.
+	static CTFGrenadeMirvProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
+		                                     const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, float timer, int iFlags = 0 );
+
+	// Overrides.
+	virtual void	Spawn();
+	virtual void	Precache();
+	virtual void	BounceSound( void );
+	virtual void	Detonate();
+	virtual void	Explode( trace_t *pTrace, int bitsDamageType );
+	void			DetonateThink( void );
+
+	DECLARE_DATADESC();
+
+private:
+
+	bool			m_bPlayedLeadIn;
+};
+
+class CTFGrenadeMirvBomb : public CTFWeaponBaseGrenadeProj
+{
+public:
+
+	DECLARE_CLASS( CTFGrenadeMirvBomb, CTFWeaponBaseGrenadeProj );
+
+	// Creation.
+	static CTFGrenadeMirvBomb *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
+		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, float timer );
+
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRVBOMB; }
+
+	virtual void	Spawn();
+	virtual void	Precache();
+	virtual void	BounceSound( void );
+};
+
+#endif
+
 #endif // TF_WEAPONBASE_GRENADEPROJ_H
