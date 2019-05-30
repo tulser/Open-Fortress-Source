@@ -1323,7 +1323,9 @@ int CTFPlayer::RestockCloak( float PowerupSize )
 void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 {
 	int active = m_hActiveWeapon.Get()->GetSlot();
-	int last = GetLastWeapon()->GetSlot();
+	int last = m_hActiveWeapon.Get()->GetSlot();
+	if (GetLastWeapon())
+		last = GetLastWeapon()->GetSlot();
 	if ( pData->m_aBuildable[0] != OBJ_LAST )
 	{
 		CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
@@ -2691,6 +2693,36 @@ bool CTFPlayer::CanDisguise( void )
 	}
 
 	return true;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayer::CanAutoswitch( void )
+{
+	int bShouldSwitch = V_atoi(engine->GetClientConVarValue(entindex(), "of_autoswitchweapons"));
+	
+	if ( bShouldSwitch > 1 )
+		return true;
+	
+	if ( GetNextAttack() > gpGlobals->curtime || m_nButtons & IN_ATTACK || bShouldSwitch < 1 )
+		return false;
+	
+	return true;
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Override to add weapon to the hud
+//-----------------------------------------------------------------------------
+void CTFPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
+{
+	BaseClass::Weapon_Equip( pWeapon );
+	
+	// should we switch to this item?
+	if ( CanAutoswitch() )
+	{
+		Weapon_Switch( pWeapon );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -7820,22 +7852,6 @@ void CTFPlayer::StopLoopingSounds( void )
 	}
 
 	BaseClass::StopLoopingSounds();
-}
-
-//-----------------------------------------------------------------------------
-// Shuts down sounds
-//-----------------------------------------------------------------------------
-void CTFPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
-{
-	BaseClass::Weapon_Equip( pWeapon );
-
-	bool bShouldSwitch = ShouldAutoSwitchWeapons();
-
-	// should we switch to this item?
-	if ( bShouldSwitch )
-	{
-//		Weapon_Switch( pWeapon );
-	}
 }
 
 ConVar	sk_battery("sk_battery", "0");

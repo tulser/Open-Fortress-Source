@@ -305,6 +305,10 @@ public:
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
 	void RemoveInvisibility( void );
+	
+	bool CanAutoswitch( void );
+	
+	virtual void	Weapon_Equip( CBaseCombatWeapon *pWeapon );
 
 	void RemoveDisguise( void );
 	void PrintTargetWeaponInfo( void );
@@ -611,8 +615,6 @@ public:
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
 	
-	virtual void			Weapon_Equip( CBaseCombatWeapon *pWeapon );
-
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 
 	// Commander Mode for controller NPCs

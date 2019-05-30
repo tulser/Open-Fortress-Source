@@ -784,7 +784,49 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	if ( InCond( TF_COND_CRITBOOSTED )  )
 	{
 
+	}
+	
+	if ( InCond( TF_COND_SHIELD_CHARGE ) )
+	{
+		if ( !m_pOuter->IsSolid() || (m_pOuter->GetMoveType() == MOVETYPE_PUSH || m_pOuter->GetMoveType() == MOVETYPE_NONE ) )
+				return;
 
+		// FIXME: If something is hierarchically attached, should we try to push the parent?
+		if (m_pOuter->GetMoveParent())
+			return;
+		
+		float m_flPushSpeed = 720;
+		Vector m_vecPushDir( 180, 90 , 60 );
+		Vector vecAbsoluteDir;
+		QAngle angPushDir = QAngle(m_vecPushDir.x, m_vecPushDir.y, m_vecPushDir.z);
+		AngleVectors(angPushDir, &vecAbsoluteDir);
+
+		Vector vecAbsDir;
+		// Transform the vector into entity space
+		VectorIRotate( vecAbsDir, m_pOuter->EntityToWorldTransform(), m_vecPushDir );		
+		
+		// Transform the push dir into global space
+
+		VectorRotate( m_vecPushDir, m_pOuter->EntityToWorldTransform(), vecAbsDir );
+
+
+
+		DevMsg("Player \n");
+		Vector vecPush = (m_flPushSpeed * vecAbsDir);
+		if ( ( m_pOuter->GetFlags() & FL_BASEVELOCITY ) )
+		{
+			vecPush = vecPush + m_pOuter->GetBaseVelocity();
+		}
+		if ( vecPush.z > 0 && (m_pOuter->GetFlags() & FL_ONGROUND) )
+		{
+			m_pOuter->SetGroundEntity( NULL );
+			Vector origin = m_pOuter->GetAbsOrigin();
+			origin.z += 1.0f;
+			m_pOuter->SetAbsOrigin( origin );
+		}
+		
+		m_pOuter->SetBaseVelocity( vecPush );
+		m_pOuter->AddFlag( FL_BASEVELOCITY );
 
 	}
 #endif

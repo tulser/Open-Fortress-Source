@@ -735,7 +735,7 @@ bool CTFWeaponBase::Reload( void )
 void CTFWeaponBase::AbortReload( void )
 {
 	BaseClass::AbortReload();
-
+	
 	m_iReloadMode.Set( TF_RELOAD_START );
 }
 
@@ -910,6 +910,7 @@ bool CTFWeaponBase::ReloadSingly( void )
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_END );
 
 			m_iReloadMode.Set( TF_RELOAD_START );
+			
 			return true;
 		}
 	}

@@ -7344,7 +7344,7 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 {
 	BaseClass::Weapon_Equip( pWeapon );
 
-	int bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
+//	int bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
 
 #ifdef HL2_DLL
 	if ( bShouldSwitch == false && PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
@@ -7353,12 +7353,8 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 		bShouldSwitch = true;
 	}
 #endif//HL2_DLL
-	bShouldSwitch = V_atoi(engine->GetClientConVarValue(entindex(), "of_autoswitchweapons"));
-	// should we switch to this item?
-	if ( bShouldSwitch > 0 )
-	{
-		Weapon_Switch( pWeapon );
-	}
+//	if ( bShouldSwitch )
+//		Weapon_Switch( pWeapon );
 }
 
 

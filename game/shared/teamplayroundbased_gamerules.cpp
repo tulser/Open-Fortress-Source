@@ -147,6 +147,8 @@ ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICAT
 
 ConVar mp_disable_respawn_times( "mp_disable_respawn_times", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
+ConVar mp_disable_waitingforplayers( "mp_disable_waitingforplayers", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+
 #ifdef GAME_DLL
 ConVar mp_showroundtransitions( "mp_showroundtransitions", "0", FCVAR_CHEAT, "Show gamestate round transitions." );
 ConVar mp_enableroundwaittime( "mp_enableroundwaittime", "1", FCVAR_REPLICATED, "Enable timers to wait between rounds." );
@@ -581,6 +583,8 @@ void CTeamplayRoundBasedRules::GoToIntermission( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::SetInWaitingForPlayers( bool bWaitingForPlayers  )
 {
+	if ( mp_disable_waitingforplayers.GetBool() )
+		bWaitingForPlayers = false;
 	// never waiting for players when loading a bug report
 	if ( IsLoadingBugBaitReport() || gpGlobals->eLoadType == MapLoad_Background )
 	{
