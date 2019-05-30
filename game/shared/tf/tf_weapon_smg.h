@@ -57,6 +57,9 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SMG_MERCENARY; }
+
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableSMG_Mercenary[];
 };
 
 // TommyGun version
