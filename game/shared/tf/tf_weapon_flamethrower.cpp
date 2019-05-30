@@ -1031,3 +1031,36 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 }
 
 #endif // GAME_DLL
+
+acttable_t CTFFlameThrower::m_acttableFlameThrower[] =
+{
+	{ ACT_MP_STAND_IDLE, ACT_MERC_STAND_FLAMETHROWER, false },
+	{ ACT_MP_CROUCH_IDLE, ACT_MERC_CROUCH_FLAMETHROWER, false },
+	{ ACT_MP_RUN, ACT_MERC_RUN_FLAMETHROWER, false },
+	{ ACT_MP_WALK, ACT_MERC_WALK_FLAMETHROWER, false },
+	{ ACT_MP_AIRWALK, ACT_MERC_AIRWALK_FLAMETHROWER, false },
+	{ ACT_MP_CROUCHWALK, ACT_MERC_CROUCHWALK_FLAMETHROWER, false },
+	{ ACT_MP_JUMP, ACT_MERC_JUMP_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_START, ACT_MERC_JUMP_START_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_FLOAT, ACT_MERC_JUMP_FLOAT_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_LAND, ACT_MERC_JUMP_LAND_FLAMETHROWER, false },
+	{ ACT_MP_SWIM, ACT_MERC_SWIM_FLAMETHROWER, false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_MERC_ATTACK_STAND_FLAMETHROWER, false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_MERC_ATTACK_CROUCH_FLAMETHROWER, false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE, ACT_MERC_ATTACK_SWIM_FLAMETHROWER, false },
+};
+
+//Act table remapping for Merc
+acttable_t *CTFFlameThrower::ActivityList(int &iActivityCount)
+{
+	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
+	{
+		iActivityCount = ARRAYSIZE(m_acttableFlameThrower);
+		return m_acttableFlameThrower;
+	}
+	else
+	{
+		return BaseClass::ActivityList(iActivityCount);
+	}
+}
