@@ -55,13 +55,13 @@ private:
 //-----------------------------------------------------------------------------
 // Purpose:  Displays player health data
 //-----------------------------------------------------------------------------
-class CTFHudTDM : public vgui::EditablePanel
+class CTFHudTDM : public CHudElement, public vgui::EditablePanel
 {
-	DECLARE_CLASS_SIMPLE( CTFHudTDM, EditablePanel );
+	DECLARE_CLASS_SIMPLE( CTFHudTDM, vgui::EditablePanel );
 
 public:
 
-	CTFHudTDM( Panel *parent, const char *name );
+	CTFHudTDM( const char *pElementName );
 
 	virtual const char *GetResFilename( void ) { return "resource/UI/HudTDM.res"; }
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
@@ -102,20 +102,21 @@ CTFKillsProgress::CTFKillsProgress( Panel *parent, const char *name ) : CTFImage
 {
 	m_flHealth = 1.0f;
 
-	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/health_color" );
+	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_flagpanel_bg_right" );
 	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
 	{
 		m_iMaterialIndex = surface()->CreateNewTextureID();	
 	}
 
-	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/health_color", true, false );
+	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_flagpanel_bg_right", true, false );
 
-	m_iDeadMaterialIndex = surface()->DrawGetTextureId( "hud/health_dead" );
+	m_iDeadMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_flagpanel_bg_right" );
 	if ( m_iDeadMaterialIndex == -1 ) // we didn't find it, so create a new one
 	{
 		m_iDeadMaterialIndex = surface()->CreateNewTextureID();	
 	}
-	surface()->DrawSetTextureFile( m_iDeadMaterialIndex, "hud/health_dead", true, false );
+	surface()->DrawSetTextureFile( m_iDeadMaterialIndex, "hud/objectives_flagpanel_bg_right", true, false );
+
 }
 
 //-----------------------------------------------------------------------------
@@ -171,12 +172,15 @@ void CTFKillsProgress::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFHudTDM::CTFHudTDM( Panel *parent, const char *name ) : EditablePanel( parent, name )
+CTFHudTDM::CTFHudTDM( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudTDM" )
 {
 	m_pHealthImage = new CTFKillsProgress( this, "PlayerStatusHealthImage" );	
 	m_pHealthImageBG = new ImagePanel( this, "PlayerStatusHealthImageBG" );
 
 	m_flNextThink = 0.0f;
+	
+	Panel *pParent = g_pClientMode->GetViewport();
+	SetParent( pParent );
 }
 
 //-----------------------------------------------------------------------------

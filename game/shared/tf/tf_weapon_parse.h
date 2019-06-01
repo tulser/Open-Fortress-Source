@@ -95,6 +95,7 @@ public:
 	int 	m_iBombletAmount;
 	float	m_flBombletTimer;
 	float	m_flBombletMultiplier;
+	int 	m_iBombletLevel;
 	
 	// Skins
 	bool	m_bHasTeamSkins_Viewmodel;

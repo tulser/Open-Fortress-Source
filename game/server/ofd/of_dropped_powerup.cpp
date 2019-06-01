@@ -75,7 +75,6 @@ CTFDroppedPowerup *CTFDroppedPowerup::Create( const Vector &vecOrigin, const QAn
 	pDroppedPowerup->PowerupDuration=PowerupDuration;
 	if ( OriginalPowerupDuration == 0 )
 	{
-		DevMsg("Bruh \n");
 		pDroppedPowerup->OriginalPowerupDuration=PowerupDuration;
 	}
 	else

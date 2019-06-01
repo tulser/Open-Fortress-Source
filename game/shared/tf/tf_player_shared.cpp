@@ -936,7 +936,38 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 void CTFPlayerShared::OnAddCritBoosted( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->OnAddCritBoosted();
+	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon )
+	{
+		char *pEffect = NULL;
+		switch( pPlayer->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffect = "critgun_weaponmodel_blu";
+			break;
+		case TF_TEAM_RED:
+			pEffect = "critgun_weaponmodel_red";
+			break;
+		case TF_TEAM_MERCENARY:
+			pEffect = "critgun_weaponmodel_dm";
+			break;
+		default:
+			break;
+		}
+		
+		if ( pEffect && pWeapon  )
+		{
+			if ( pPlayer != C_TFPlayer::GetLocalTFPlayer() )
+				UpdateParticleColor( pWeapon->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+			if ( pPlayer == C_TFPlayer::GetLocalTFPlayer() )
+			{
+				C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
+				UpdateParticleColor( vm->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+			}
+		}
+	}
+	
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
@@ -947,7 +978,34 @@ void CTFPlayerShared::OnAddCritBoosted( void )
 void CTFPlayerShared::OnRemoveCritBoosted( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->OnRemoveCritBoosted();
+	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+	
+	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon )
+	{
+		char *pEffect = NULL;
+		switch( pPlayer->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffect = "critgun_weaponmodel_blu";
+			break;
+		case TF_TEAM_RED:
+			pEffect = "critgun_weaponmodel_red";
+			break;
+		case TF_TEAM_MERCENARY:
+			pEffect = "critgun_weaponmodel_dm";
+			break;
+		default:
+			break;
+		}
+		pWeapon->ParticleProp()->StopParticlesNamed( pEffect );
+		if ( pPlayer )
+		{
+			C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
+			if ( vm ) 
+			vm->ParticleProp()->StopParticlesNamed( pEffect );
+		}
+	}
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer && pTFPlayer->IsAlive() )
@@ -1686,7 +1744,10 @@ CTFWeaponInfo *CTFPlayerShared::GetDisguiseWeaponInfo( void )
 
 bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 {
-	pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
+	if ( pParticle )
+		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
+	else
+		return false;
 	return true;
 }
 

@@ -373,8 +373,6 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	CPVSFilter filter( vecOrigin );
 	
 	int UseWeaponID = WeaponID;
-	if ( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB )
-		UseWeaponID = TF_WEAPON_GRENADE_MIRVBOMB;
 	
 	if ( UseImpactNormal() )
 	{
@@ -434,7 +432,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	
 #ifdef GAME_DLL
 	// Create the bomblets.
-	if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets )
+	if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
 	{
 		for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
 		{
@@ -450,7 +448,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 				pBomb->SetDamage( GetDamage() * pWeaponInfo->m_flBombletMultiplier );
 				pBomb->SetDamageRadius( GetDamageRadius() );
 				pBomb->SetCritical( m_bCritical );
-				pBomb->WeaponID = TF_WEAPON_GRENADE_MIRVBOMB;
+				pBomb->WeaponID = WeaponID;
 		}		
 	}
 #endif

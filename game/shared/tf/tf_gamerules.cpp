@@ -14,6 +14,7 @@
 #include <vgui/IScheme.h>
 #include <vgui/ILocalize.h>
 #include "tier3/tier3.h"
+#include "tf_weapon_grenade_pipebomb.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -858,7 +859,6 @@ CTFGameRules::CTFGameRules()
 	m_flLastHealthDropTime = 0.0f;
 	m_flLastGrenadeDropTime = 0.0f;	
 	
-	//Stickynote
 	for( int i = 0; i<50 ; i++ )
 	{
 		m_iszWeaponName[i] = m_iszDefaultWeaponName[i];
@@ -2640,6 +2640,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		// special-case burning damage, since persistent burning damage may happen after attacker has switched weapons
 		killer_weapon_name = "tf_weapon_flamethrower";
+		DevMsg("%s \n ", killer_weapon_name);
 	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{
@@ -2653,7 +2654,17 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = STRING( pInflictor->m_iClassname );
 	}
-
+	int proj = Q_strlen( "tf_projectile_" );
+	if ( strncmp( killer_weapon_name, "tf_projectile_", proj ) == 0 )
+	{
+		CTFGrenadePipebombProjectile *pGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>(pInflictor);
+		if ( pGrenade ) 
+		{
+			
+			killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
+			DevMsg("%s", killer_weapon_name);
+		}
+	}	
 	// strip certain prefixes from inflictor's classname
 	const char *prefix[] = { "tf_weapon_grenade_", "tf_weapon_", "NPC_", "func_" };
 	for ( int i = 0; i< ARRAYSIZE( prefix ); i++ )
@@ -2672,7 +2683,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = "obj_sentrygun";
 	}
-
+	DevMsg("%s \n", killer_weapon_name);
 	return killer_weapon_name;
 }
 

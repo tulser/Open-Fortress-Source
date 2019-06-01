@@ -24,6 +24,7 @@
 	#include "eventqueue.h"
 	#include "team_control_point_master.h"
 	#include "entity_roundwin.h"
+	#include "tf_player.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1584,6 +1585,17 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 				continue;
 
 			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_STALEMATE );
+		}
+	}
+	else
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( !pPlayer )
+				continue;
+			if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
+				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
 		}
 	}
 }

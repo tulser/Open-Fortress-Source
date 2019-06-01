@@ -200,6 +200,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_iBombletAmount		= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
 	m_flBombletTimer		= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
 	m_flBombletMultiplier		= pKeyValuesData->GetFloat( "BombletDamageMultiplier", 0.0f );
+	m_iBombletLevel		= pKeyValuesData->GetInt( "BombletLevel", 1 );
 	
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );

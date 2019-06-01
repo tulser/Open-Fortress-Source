@@ -987,6 +987,74 @@ public:
 
 EXPOSE_INTERFACE( CProxyBurnLevel, IMaterialProxy, "BurnLevel" IMATERIAL_PROXY_INTERFACE_VERSION );
 
+class CProxyModelGlowColor : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		if ( !pC_BaseEntity )
+		{
+			m_pResult->SetVecValue( 1, 1, 1 );
+			return;
+		}
+
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+
+		Vector vecColor = Vector( 1, 1, 1 );
+
+		C_TFPlayer *pPlayer = ToTFPlayer( pEntity );;
+
+		if ( !pPlayer )
+		{
+			C_BaseCombatWeapon *pWeapon = pEntity->MyCombatWeaponPointer();
+			if ( pWeapon )
+			{
+				pPlayer = ToTFPlayer( pWeapon->GetOwner() );
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast<C_BaseViewModel *>( pEntity );
+				if ( pVM )
+				{
+					pPlayer = ToTFPlayer( pVM->GetOwner() );
+				}
+			}
+		}	
+		
+		if ( pPlayer  && pPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED )  )
+		{
+			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) || pPlayer->GetTeamNumber() == pPlayer->m_Shared.GetDisguiseTeam() || !pPlayer->IsEnemyPlayer() )
+			{
+				switch ( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_RED:
+					vecColor = Vector( 94, 8, 5 );
+					break;
+				case TF_TEAM_BLUE:
+					vecColor = Vector( 6, 21, 80 );
+					break;
+				case TF_TEAM_MERCENARY:
+				{
+					Vector critColor = pPlayer->m_vecPlayerColor;
+					critColor *= 255;
+					critColor *= 0.30;
+					vecColor = critColor;
+				}
+					break;
+
+				}
+			}
+		}
+		m_pResult->SetVecValue( vecColor.Base(), 3 );
+	}
+};
+
+EXPOSE_INTERFACE( CProxyModelGlowColor, IMaterialProxy, "ModelGlowColor" IMATERIAL_PROXY_INTERFACE_VERSION );
+
 class CProxyItemTintColor : public CResultProxy
 {
 public:
@@ -1664,32 +1732,7 @@ void C_TFPlayer::OnRemoveTeleported( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnAddCritBoosted( void )
 {
-//	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
 
-	if ( !m_pCritEffect )
-	{
-		char *pEffect = NULL;
-
-		switch( GetTeamNumber() )
-		{
-		case TF_TEAM_BLUE:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_RED:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_MERCENARY:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		default:
-			break;
-		}
-
-		if ( pEffect /*&& pPlayer*/ )
-		{
-			/*pPlayer->m_Shared.UpdateParticleColor(*/m_pCritEffect = ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW )/*)*/;
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1697,11 +1740,7 @@ void C_TFPlayer::OnAddCritBoosted( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnRemoveCritBoosted( void )
 {
-	if ( m_pCritEffect )
-	{
-		ParticleProp()->StopEmission( m_pCritEffect );
-		m_pCritEffect = NULL;
-	}
+
 }
 
 
@@ -1898,7 +1937,7 @@ void C_TFPlayer::ShowNemesisIcon( bool bShow )
 		default:
 			return;	// shouldn't get called if we're not on a team; bail out if it does
 		}
-		ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" );
+		m_Shared.UpdateParticleColor( ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" ) );
 	}
 	else
 	{

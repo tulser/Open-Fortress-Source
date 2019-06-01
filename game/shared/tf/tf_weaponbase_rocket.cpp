@@ -33,6 +33,7 @@ RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
+RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 // Server specific.
 #else
 SendPropVector( SENDINFO( m_vInitialVelocity ), 12 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
@@ -43,9 +44,9 @@ SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
 SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 
+SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
-
 // Server specific.
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFBaseRocket )
@@ -209,12 +210,14 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::CreateNoSpawn( pszClassname, vecOrigin, vecAngles, pOwner ) );
 	if ( !pRocket )
 		return NULL;
-
+	
 	// Initialize the owner.
 	pRocket->SetOwnerEntity( pOwner );
 	if (pWeapon)
-	pRocket->m_hWeaponID = pWeapon->GetWeaponID();
-	
+	{
+		pRocket->m_hWeaponID = pWeapon->GetWeaponID();
+		pRocket->SetLauncher(pWeapon);
+	}
 	// Spawn.
 	pRocket->Spawn();
 

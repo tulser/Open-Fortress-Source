@@ -67,6 +67,7 @@ public:
 
 	virtual const char	*GetTargetDescription( void ) const;
 	virtual const char	*GetIDString( void );
+	
 	virtual bool	IsValidIDTarget( void );
 
 	virtual void	GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes );
@@ -96,6 +97,7 @@ public:
 
 	int GetType() const { return m_iObjectType; }
 	bool IsOwnedByLocalPlayer() const;
+	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return (C_BaseEntity *)GetOwner(); }
 	C_TFPlayer *GetOwner();
 
 	virtual void	Simulate();

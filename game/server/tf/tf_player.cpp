@@ -3216,7 +3216,21 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				{
 					float flDistance = max( 1.0, (WorldSpaceCenter() - info.GetAttacker()->WorldSpaceCenter()).Length() );
 					float flOptimalDistance = 512.0;
-
+					// Rocket launcher & Scattergun have different short range bonuses
+					if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
+					{
+						CTFWeaponBase *pWeapon = ToTFPlayer( info.GetAttacker() )->GetActiveTFWeapon();
+						if ( pWeapon )
+						{
+							if ( pWeapon->GetWeaponID() == TF_WEAPON_ASSAULTRIFLE )
+							{
+								if ( flDistance > 512 )
+								{
+									flDistance = 512;
+								}
+							}
+						}
+					}
 					flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.0 );
 					if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
 					{
@@ -3228,7 +3242,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 					}
 					flMin = max( 0.0, flCenter - 0.25 );
 					flMax = min( 1.0, flCenter + 0.25 );
-
 					if ( bDebug )
 					{
 						Warning("    RANDOM: Dist %.2f, Ctr: %.2f, Min: %.2f, Max: %.2f\n", flDistance, flCenter, flMin, flMax );
@@ -3260,7 +3273,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							{
 								// Scattergun gets 50% bonus of other weapons at short range
 								flRandomDamage *= 2;
-							}							
+							}					
 						}
 					}
 				}

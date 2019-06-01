@@ -21,6 +21,7 @@
 
 #if defined( CLIENT_DLL )
 #define CBaseCombatWeapon C_BaseCombatWeapon
+#include "baseparticleentity.h"
 #endif
 
 // Hacky
