@@ -30,6 +30,9 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableRevolver[];
+
 // Server specific.
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
@@ -55,6 +58,9 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_MERCENARY; }
+
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableRevolver_Mercenary[];
 };
 
 #endif // TF_WEAPON_REVOLVER_H
