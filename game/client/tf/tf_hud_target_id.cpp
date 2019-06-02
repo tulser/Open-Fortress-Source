@@ -343,20 +343,30 @@ void CTargetID::UpdateID( void )
 				wszChargeLevel[ ARRAYSIZE(wszChargeLevel)-1 ] = '\0';
 				g_pVGuiLocalize->ConstructString( sDataString, sizeof(sDataString), g_pVGuiLocalize->Find( "#TF_playerid_mediccharge" ), 1, wszChargeLevel );
 			}
+
+			if ( pLocalTFPlayer->GetTeamNumber() == TF_TEAM_MERCENARY && !TFGameRules()->IsTeamplay() )
+			{
+				// Displaying "Enemy: " with each Target ID in Deathmatch isn't logically required.
+				printFormatString = "#TF_playerid_sameteam";
+
+				if (bDisguisedEnemy) bShowHealth = true;
+				else bShowHealth = false;
+			}
 			
-			if ( pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || ( pPlayer->InSameTeam( pLocalTFPlayer ) ) || bDisguisedEnemy )
+			// The remaining of the checks *should* include team-based modes, since the previous one should be FFA only (and it does!)
+			else if ( pLocalTFPlayer->GetTeamNumber() == TEAM_SPECTATOR || ( pPlayer->InSameTeam( pLocalTFPlayer ) ) || bDisguisedEnemy )
 			{
 				printFormatString = "#TF_playerid_sameteam";
 				bShowHealth = true;
 			}
+
 			else if ( pLocalTFPlayer->m_Shared.GetState() == TF_STATE_DYING )
 			{
 				// We're looking at an enemy who killed us.
 				printFormatString = "#TF_playerid_diffteam";
 				bShowHealth = true;
 			}
-			if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
-				bShowHealth = false;
+
 			if ( bShowHealth )
 			{
 				C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
