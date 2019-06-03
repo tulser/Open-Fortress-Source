@@ -775,6 +775,7 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 
 	if ( !pEnt )
 		return;
+
 //################################
 
 
@@ -798,6 +799,31 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 			RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
 		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+		float r, g, b;
+
+		switch( pPlayer->GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				r = 1.0; g = 0.5; b = 0.4;
+				break;
+
+			case TF_TEAM_BLUE:
+				r = 0.4; g = 0.5; b = 1.0;
+				break;
+			case TF_TEAM_MERCENARY:
+				{
+					Vector Color = pPlayer->m_vecPlayerColor;
+					r = Color.x; 
+					g = Color.y; 
+					b = Color.z; 
+				}
+				break;
+			default:
+				r = 0.4; g = 0.5; b = 1.0;
+				break;
+		}
+
+		m_pCloakColorTint->SetVecValue( r, g, b );
 		return;
 	}
 //################################	
@@ -821,24 +847,33 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 	if ( !pPlayer )
 		return;	
 	
-	float r, g, b;
-
+	float r, g, b;	
+	
 	switch( pPlayer->GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		r = 1.0; g = 0.5; b = 0.4;
-		break;
+		case TF_TEAM_RED:
+			r = 1.0; g = 0.5; b = 0.4;
+			break;
 
-	case TF_TEAM_BLUE:
-	case TF_TEAM_MERCENARY:
-		r = 0.5; g = 0; b = 0.5;
-		break;
-	default:
-		r = 0.4; g = 0.5; b = 1.0;
-		break;
+		case TF_TEAM_BLUE:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+		case TF_TEAM_MERCENARY:
+				{
+					Vector Color = pPlayer->m_vecPlayerColor;				
+					r = Color.x; 
+					g = Color.y; 
+					b = Color.z; 
+				}
+			break;
+		default:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
 	}
 
-	m_pCloakColorTint->SetVecValue( r, g, b );
+		m_pCloakColorTint->SetVecValue( r, g, b );
+		return;
+
 }
 
 IMaterial *CSpyInvisProxy::GetMaterial()

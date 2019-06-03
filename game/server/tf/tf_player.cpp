@@ -1271,7 +1271,7 @@ int CTFPlayer::RestockClips( float PowerupSize )
 
 int CTFPlayer::RestockAmmo( float PowerupSize )
 {
-	int bSuccess = false;
+	int bSuccess = 0;
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
@@ -1281,8 +1281,8 @@ int CTFPlayer::RestockAmmo( float PowerupSize )
 		{
 			if ( pWeapon->m_iReserveAmmo < pWeapon->GetMaxReserveAmmo() )
 			{
-				pWeapon->m_iReserveAmmo += pWeapon->GetMaxReserveAmmo() * PowerupSize;
-				bSuccess = pWeapon->GetMaxReserveAmmo() * PowerupSize;
+				pWeapon->m_iReserveAmmo += pWeapon->GetMaxReserveAmmo() * PowerupSize * pWeapon->GetTFWpnData().m_flPickupMultiplier;
+				bSuccess += pWeapon->GetMaxReserveAmmo() * PowerupSize * pWeapon->GetTFWpnData().m_flPickupMultiplier;
 				if ( pWeapon->m_iReserveAmmo > pWeapon->GetMaxReserveAmmo() )
 				{
 					bSuccess -= pWeapon->m_iReserveAmmo - pWeapon->GetMaxReserveAmmo();
@@ -4269,7 +4269,7 @@ static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown )
+void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve )
 {
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
@@ -4417,7 +4417,11 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown )
 		pAmmoPack->SetHealth( 900 );
 		
 		pAmmoPack->SetBodygroup( 1, 1 );
-	
+		if ( dissolve )
+		{
+			pAmmoPack->SetTouch( NULL );
+			pAmmoPack->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+		}
 		// Clean up old ammo packs if they exist in the world
 		AmmoPackCleanUp();	
 	}	

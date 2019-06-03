@@ -213,7 +213,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bDisableSecondaryAttack	= ( pKeyValuesData->GetInt( "DisableSecondaryAttack", 0 ) != 0 );
 	m_bAllowDrop	= ( pKeyValuesData->GetInt( "AllowDrop", 0 ) != 0 );
 	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
-	
+	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
 	
 	
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );

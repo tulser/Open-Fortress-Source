@@ -108,6 +108,7 @@ public:
 	bool 	m_bDisableSecondaryAttack;
 	bool 	m_bAllowDrop;
 	bool 	m_bDropBomblets;
+	float	m_flPickupMultiplier;
 	
 	// Mag
 	char    m_szMagModel[128];
