@@ -541,20 +541,20 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 		}
 	}
 
-	// If we're on spectator, find a default selection
+	// If we're on spectator, undefine any selection
 	if ( !bMadeSelection )
 	{
-		if ( m_pPlayerListBlue->GetItemCount() > 0 )
+		if ( m_pPlayerListBlue->GetItemCount() >= 0 )
 		{
-			m_pPlayerListBlue->SetSelectedItem( 0 );
+			m_pPlayerListBlue->SetSelectedItem( -1 );
 		}
-		else if ( m_pPlayerListRed->GetItemCount() > 0 )
+		else if ( m_pPlayerListRed->GetItemCount() >= 0 )
 		{
-			m_pPlayerListRed->SetSelectedItem( 0 );
+			m_pPlayerListRed->SetSelectedItem( -1 );
 		}
-		else if ( m_pPlayerListMercenary->GetItemCount() > 0 )
+		else if ( m_pPlayerListMercenary->GetItemCount() >= 0 )
 		{
-			m_pPlayerListMercenary->SetSelectedItem( 0 );
+			m_pPlayerListMercenary->SetSelectedItem( -1 );
 		}
 	}
 }
