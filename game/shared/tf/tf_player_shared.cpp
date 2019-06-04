@@ -1745,10 +1745,14 @@ CTFWeaponInfo *CTFPlayerShared::GetDisguiseWeaponInfo( void )
 bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 {
 	if ( pParticle && m_pOuter )
+	{
 		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
+		return true;
+	}
 	else
+	{
 		return false;
-	
+	}
 }
 
 #endif
