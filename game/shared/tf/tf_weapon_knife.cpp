@@ -61,9 +61,9 @@ void CTFKnife::PrimaryAttack( void )
 	if ( DoSwingTrace( trace ) == true )
 	{
 		// we will hit something with the attack
-		if( trace.m_pEnt && trace.m_pEnt->IsPlayer() )
+		if (trace.m_pEnt && (trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC())) // npcs too!
 		{
-			CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
+			CBaseCombatCharacter *pTarget = trace.m_pEnt->MyCombatCharacterPointer();
 
 			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
 			{
@@ -112,7 +112,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
 
-	if ( pTarget->IsPlayer() )
+	if (pTarget->IsPlayer() || pTarget->IsNPC()) // damage npcs too
 	{
 		// This counts as a backstab if:
 		// a ) we are behind the target player

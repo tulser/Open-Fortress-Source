@@ -3925,6 +3925,11 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		// reset fov to default
 		SetFOV( this, 0 );
 	}
+	// look at our npc
+	else if (info.GetAttacker() && info.GetAttacker()->IsNPC())
+	{
+		m_hObserverTarget.Set(info.GetAttacker());
+	}
 	else if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
 	{
 		// Catches the case where we're killed by entities spawned by the sentrygun (i.e. rockets)

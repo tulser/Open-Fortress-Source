@@ -358,9 +358,12 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 		if( center.z > EyePosition().z )
 			continue;
 
+		// this causes crashes, FIXME
+		/*
 		vcollide_t *pCollide = modelinfo->GetVCollide( pList[i]->GetModelIndex() );
 		
 		Vector objMins, objMaxs;
+		// this exact line crashes, I have no idea why
 		physcollision->CollideGetAABB( &objMins, &objMaxs, pCollide->solids[0], pList[i]->GetAbsOrigin(), pList[i]->GetAbsAngles() );
 
 		if ( objMaxs.z < vecZombieKnees.z )
@@ -368,6 +371,7 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 
 		if ( !FVisible( pList[i] ) )
 			continue;
+		*/
 
 		if ( hl2_episodic.GetBool() )
 		{
@@ -379,14 +383,6 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 			if( !GetEnemy()->FVisible( pList[i] ) )
 				continue;
 		}
-
-		// Make this the last check, since it makes a string.
-		// Don't swat server ragdolls!
-		if ( FClassnameIs( pList[ i ], "physics_prop_ragdoll" ) )
-			continue;
-			
-		if ( FClassnameIs( pList[ i ], "prop_ragdoll" ) )
-			continue;
 
 		// The object must also be closer to the zombie than it is to the enemy
 		pNearest = pList[ i ];

@@ -1161,7 +1161,12 @@ bool CTraceFilterMelee::ShouldHitEntity( IHandleEntity *pHandleEntity, int conte
 		// Only do these comparisons between NPCs
 		if ( pBCC && pVictimBCC )
 		{
-			// Can only damage other NPCs that we hate
+			// make players scream when death from npc
+			if (pBCC->IsNPC() && pVictimBCC->IsPlayer())
+			{
+				info.AddDamageType(DMG_CLUB);
+			}
+
 			if ( m_bDamageAnyNPC || pBCC->IRelationType( pEntity ) == D_HT )
 			{
 				if ( info.GetDamage() )
@@ -2441,6 +2446,7 @@ int CBaseCombatCharacter::OnTakeDamage( const CTakeDamageInfo &info )
 			{
 				Event_Dying( info );
 			}
+			
 		}
 		return retVal;
 		break;
