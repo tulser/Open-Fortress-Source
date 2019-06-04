@@ -95,6 +95,10 @@ BEGIN_DATADESC( CCaptureFlag )
 	DEFINE_KEYFIELD( m_nGameType, FIELD_INTEGER, "GameType" ),
 	DEFINE_KEYFIELD( m_flReturnTime, FIELD_FLOAT, "ReturnTime"),
 	DEFINE_KEYFIELD( m_flSetNeutralTime, FIELD_FLOAT, "NeutralTime"),
+	DEFINE_KEYFIELD( m_Model, FIELD_STRING, "model"),
+	DEFINE_KEYFIELD( m_ParticleBlue, FIELD_STRING, "bluetrail"),
+	DEFINE_KEYFIELD( m_ParticleRed, FIELD_STRING, "redtrail"),
+	DEFINE_KEYFIELD( m_ParticlePaper, FIELD_STRING, "papertrail"),
 #ifdef GAME_DLL
 
 	// Inputs.
@@ -143,6 +147,10 @@ unsigned int CCaptureFlag::GetItemID( void )
 void CCaptureFlag::Precache( void )
 {
 	PrecacheModel( TF_FLAG_MODEL );
+#ifdef GAME_DLL
+	if ( m_Model != MAKE_STRING ( "" ) )
+#endif
+		PrecacheModel( STRING( m_Model ) );
 
 	PrecacheScriptSound( TF_CTF_FLAGSPAWN );
 	PrecacheScriptSound( TF_CTF_ENEMY_STOLEN );
@@ -174,7 +182,13 @@ void CCaptureFlag::Precache( void )
 
 	PrecacheParticleSystem( "player_intel_trail_blue" );
 	PrecacheParticleSystem( "player_intel_trail_red" );
+	PrecacheParticleSystem( "player_intel_trail_mercenary" );
 	PrecacheParticleSystem( "player_intel_papertrail" );
+	
+	PrecacheParticleSystem( STRING( m_ParticleBlue ) );
+	PrecacheParticleSystem( STRING( m_ParticleRed ) );
+	PrecacheParticleSystem( STRING( m_ParticleMercenary ) );
+	PrecacheParticleSystem( STRING( m_ParticlePaper ) );
 }
 
 #ifndef GAME_DLL
@@ -209,7 +223,12 @@ void CCaptureFlag::Spawn( void )
 {
 	// Precache the model and sounds.  Set the flag model.
 	Precache();
-	SetModel( TF_FLAG_MODEL );
+#ifdef GAME_DLL
+	if ( m_Model == MAKE_STRING ( "" ) )
+		SetModel( TF_FLAG_MODEL );
+	else
+#endif
+		SetModel( STRING( m_Model ) );
 
 	// Set the flag solid and the size for touching.
 	SetSolid( SOLID_BBOX );
@@ -1125,17 +1144,37 @@ void CCaptureFlag::ManageTrailEffects( void )
 				switch( GetPrevOwner()->GetTeamNumber() )
 				{
 				case TF_TEAM_BLUE:
-					pEffectName = "player_intel_trail_blue";
-					break;
+					{
+						if ( (char *)m_ParticleBlue != NULL )
+							pEffectName = (char *)m_ParticleBlue;
+						else
+							pEffectName = "player_intel_trail_blue";
+					}				
+				break;
 				case TF_TEAM_RED:
-					pEffectName = "player_intel_trail_red";
-					break;
+					{
+						if ( (char *)m_ParticleRed != NULL )
+							pEffectName = (char *)m_ParticleRed;
+						else
+							pEffectName = "player_intel_trail_red";
+					}				
+				break;
 				case TF_TEAM_MERCENARY:
-					pEffectName = "player_intel_trail_mercenary";
-					break;
+					{
+						if ((char *)m_ParticleMercenary != NULL)
+							pEffectName = (char *)m_ParticleMercenary;
+						else
+						pEffectName = "player_intel_trail_mercenary";
+					}				
+				break;
 				default:
-					pEffectName = "player_intel_trail_blue";
-					break;
+					{
+						if ((char *)m_ParticleBlue != NULL)
+							pEffectName = (char *)m_ParticleBlue;
+						else
+							pEffectName = "player_intel_trail_blue";
+					}				
+				break;
 				}
 
 
@@ -1154,7 +1193,10 @@ void CCaptureFlag::ManageTrailEffects( void )
 				{
 					if ( m_pPaperTrailEffect == NULL )
 					{
-						m_pPaperTrailEffect = ParticleProp()->Create( "player_intel_papertrail", PATTACH_ABSORIGIN_FOLLOW );
+						char *pEffectName = "player_intel_papertrail";
+						if ( (char *)m_ParticlePaper != NULL )
+							pEffectName = (char *)m_ParticlePaper;
+						m_pPaperTrailEffect = ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN_FOLLOW );
 					}
 				}
 				else

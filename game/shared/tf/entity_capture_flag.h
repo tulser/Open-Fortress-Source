@@ -204,7 +204,11 @@ public:
 
 	CNetworkVar( float,	m_flReturnTime );		// Set Time until the flag is placed back at spawn.
 	CNetworkVar( float, m_flSetNeutralTime );	// Set Time until the flag becomes neutral (used for the invade gametype)
-
+	string_t m_Model;
+	string_t m_ParticleBlue;
+	string_t m_ParticleRed;
+	string_t m_ParticleMercenary;
+	string_t m_ParticlePaper;
 private:
 
 	void			Reset( void );

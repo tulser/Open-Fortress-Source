@@ -220,3 +220,115 @@ void CFilterTFMoney::InputRoundActivate( inputdata_t &input )
 {
 
 }
+
+//=============================================================================
+//
+// Team Fortress Active Weapon Filter
+//
+class CFilterTFActiveWeapon : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterTFActiveWeapon, CBaseFilter );
+
+public:
+
+	void InputRoundSpawn( inputdata_t &inputdata );
+	void InputRoundActivate( inputdata_t &inputdata );
+
+	inline bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity );
+
+private:
+
+	string_t m_iszTFWeaponName;
+
+	DECLARE_DATADESC();
+};
+
+BEGIN_DATADESC( CFilterTFActiveWeapon )
+
+DEFINE_KEYFIELD( m_iszTFWeaponName, FIELD_STRING, "weaponname" ),
+
+// Inputs.
+DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
+
+END_DATADESC()
+
+
+LINK_ENTITY_TO_CLASS( filter_tf_active_weapon, CFilterTFActiveWeapon );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CFilterTFActiveWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
+{
+	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >(pEntity);
+	if (!pPlayer)
+		return false;
+	if ( !pPlayer->GetActiveWeapon() )
+		return false;
+	DevMsg("Active weapon is %s \n Filtered weapon is %s", pPlayer->GetActiveWeapon()->GetClassname(), STRING(m_iszTFWeaponName) );
+	return ( pPlayer->GetActiveWeapon()->GetClassname() == STRING(m_iszTFWeaponName) );
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CFilterTFActiveWeapon::InputRoundActivate( inputdata_t &input )
+{
+
+}
+
+
+//=============================================================================
+//
+// Team Fortress Owning Weapon Filter
+//
+class CFilterTFOwnsWeapon : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterTFOwnsWeapon, CBaseFilter );
+
+public:
+
+	void InputRoundSpawn( inputdata_t &inputdata );
+	void InputRoundActivate( inputdata_t &inputdata );
+
+	inline bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity );
+
+private:
+
+	string_t m_iszTFWeaponName;
+
+	DECLARE_DATADESC();
+};
+
+BEGIN_DATADESC( CFilterTFOwnsWeapon )
+
+DEFINE_KEYFIELD( m_iszTFWeaponName, FIELD_STRING, "weaponname" ),
+
+// Inputs.
+DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
+
+END_DATADESC()
+
+
+LINK_ENTITY_TO_CLASS( filter_tf_owns_weapon, CFilterTFOwnsWeapon );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CFilterTFOwnsWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
+{
+	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >(pEntity);
+	if (!pPlayer)
+		return false;
+	
+	DevMsg("WeaponID is %d \n", AliasToWeaponID( STRING(m_iszTFWeaponName) ) );
+	bool bSuccess = pPlayer->OwnsWeaponID(AliasToWeaponID(STRING(m_iszTFWeaponName)) );
+	DevMsg("Success is %d\n", bSuccess);
+	return bSuccess;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CFilterTFOwnsWeapon::InputRoundActivate( inputdata_t &input )
+{
+
+}
