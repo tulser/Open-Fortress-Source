@@ -29,6 +29,8 @@
 	#include "tf_team.h"
 	#include "tf_obj.h"
 
+	#include "ai_basenpc.h"
+
 	ConVar	tf_debug_flamethrower("tf_debug_flamethrower", "0", FCVAR_CHEAT, "Visualize the flamethrower damage." );
 	ConVar  tf_flamethrower_velocity( "tf_flamethrower_velocity", "2300.0", FCVAR_CHEAT, "Initial velocity of flame damage entities." );
 	ConVar	tf_flamethrower_drag("tf_flamethrower_drag", "0.89", FCVAR_CHEAT, "Air drag of flame damage entities." );
@@ -221,7 +223,8 @@ public:
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
-		if ( pEntity && pEntity->IsBaseObject() )
+		// check if the entity is a building or NPC
+		if (pEntity && (pEntity->IsBaseObject() || pEntity->IsNPC()))
 			return false;
 
 		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
@@ -895,6 +898,19 @@ void CTFFlameEntity::FlameThink( void )
 					return;
 			}
 		}
+		// check collision against npcs
+		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+		for (int iNPC = 0; iNPC < g_AI_Manager.NumAIs(); iNPC++)
+		{
+			CAI_BaseNPC *pNPC = ppAIs[iNPC];
+			// Is this npc alive?
+			if (pNPC && pNPC->IsAlive())
+			{
+				CheckCollision(pNPC, &bHitWorld);
+				if (bHitWorld)
+					return;
+			}
+		}
 	}
 
 	// Calculate how long the flame has been alive for
@@ -1028,6 +1044,14 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 
 	pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
 	ApplyMultiDamage();
+
+	// please please work
+	CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
+	if (pNPC)
+	{
+		// todo figure out how to find attacker with this
+		pNPC->Ignite(TF_BURNING_FLAME_LIFE);
+	}
 }
 
 #endif // GAME_DLL
