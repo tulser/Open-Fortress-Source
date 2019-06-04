@@ -391,7 +391,7 @@ void CCaptureFlag::ResetMessage( void )
 	}
 
 	// Output.
-	m_outputOnReturn.FireOutput( this, this );
+	m_outputOnReturn.FireOutput(this, this);
 
 	if ( m_hReturnIcon.Get() )
 	{
@@ -615,7 +615,7 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 	pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_FLAGPICKUP );
 
 	// Output.
-	m_outputOnPickUp.FireOutput( this, this );
+	m_outputOnPickUp.FireOutput(pPlayer, this, 0);
 
 	if ( m_hReturnIcon.Get() )
 	{
@@ -771,7 +771,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 	pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_FLAGCAPTURED );
 	
 	// Output.
-	m_outputOnCapture.FireOutput( this, this );
+	m_outputOnCapture.FireOutput(pPlayer, this, 0);
 
 	m_bCaptured = true;
 	SetNextThink( gpGlobals->curtime + TF_FLAG_THINK_TIME );
@@ -917,7 +917,7 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 	SetFlagStatus( TF_FLAGINFO_DROPPED );
 
 	// Output.
-	m_outputOnDrop.FireOutput( this, this );
+	m_outputOnDrop.FireOutput(pPlayer, this, 0);
 
 	m_hReturnIcon = CBaseEntity::Create( "item_teamflag_return_icon", GetAbsOrigin() + Vector(0,0,cl_flag_return_height.GetFloat()), vec3_angle, this );
 #endif
