@@ -173,6 +173,12 @@ void CTFPipebombLauncher::PrimaryAttack( void )
 		// save that we had the attack button down
 		m_flChargeBeginTime = gpGlobals->curtime;
 
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+		if ( pPlayer )		
+		{
+			pPlayer->SetAnimation( PLAYER_PULLBACK );
+			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_PULLBACK );		
+		}
 		SendWeaponAnim( ACT_VM_PULLBACK );
 	}
 	else

@@ -452,6 +452,17 @@ enum
 	TF_COND_LAST
 };
 
+enum
+{
+	TF_WEARABLE_NONE = 0,
+	TF_WEARABLE_CAP,
+	TF_WEARABLE_HELMET,
+	TF_WEARABLE_COWBOY,
+	TF_WEARABLE_YARR,
+	
+	TF_WEARABLE_LAST
+};
+
 //-----------------------------------------------------------------------------
 // TF Player State.
 //-----------------------------------------------------------------------------

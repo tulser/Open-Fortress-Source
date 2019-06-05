@@ -127,6 +127,7 @@ END_RECV_TABLE()
 
 BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCond ) ),
+	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
@@ -146,6 +147,7 @@ END_RECV_TABLE()
 BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCond, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nPlayerCosmetics, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -167,6 +169,7 @@ END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCosmetics ), TF_WEARABLE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -253,6 +256,36 @@ bool CTFPlayerShared::InCond( int nCond )
 	Assert( nCond >= 0 && nCond < TF_COND_LAST );
 
 	return ( ( m_nPlayerCond & (1<<nCond) ) != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::WearsHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+
+	return ( ( m_nPlayerCosmetics & (1<<nHat) ) != 0 );
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add a hat 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::WearHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+	m_nPlayerCosmetics |= (1<<nHat);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Forcibly remove a hat
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+
+	m_nPlayerCosmetics &= ~(1<<nHat);
 }
 
 //-----------------------------------------------------------------------------

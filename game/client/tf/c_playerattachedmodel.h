@@ -31,6 +31,7 @@ public:
 	void	SetLifetime( float flLifetime );
 	void	ClientThink( void );
 	void	ApplyBoneMatrixTransform( matrix3x4_t& transform );
+	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return (C_BaseEntity *)GetMoveParent(); }
 
 private:
 	float	m_flExpiresAt;

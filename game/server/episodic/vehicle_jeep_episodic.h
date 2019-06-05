@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "vehicle_jeep_shared.h"
+#include "vehicle_jeep.h"
 #include "ai_basenpc.h"
 #include "hl2_vehicle_radar.h"
 

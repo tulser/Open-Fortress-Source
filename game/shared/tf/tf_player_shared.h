@@ -93,9 +93,15 @@ public:
 	// Condition (TF_COND_*).
 	int		GetCond() const						{ return m_nPlayerCond; }
 	void	SetCond( int nCond )				{ m_nPlayerCond = nCond; }
+	
 	void	AddCond( int nCond, float flDuration = PERMANENT_CONDITION );
 	void	RemoveCond( int nCond );
+	
+	void	WearHat( int nHat );
+	void	RemoveHat( int nHat );	
+	
 	bool	InCond( int nCond );
+	bool	WearsHat( int nHat );
 	void	RemoveAllCond( CTFPlayer *pPlayer );
 	void	OnConditionAdded( int nCond );
 	void	OnConditionRemoved( int nCond );
@@ -244,6 +250,7 @@ private:
 	// Vars that are networked.
 	CNetworkVar( int, m_nPlayerState );			// Player state.
 	CNetworkVar( int, m_nPlayerCond );			// Player condition flags.
+	CNetworkVar( int, m_nPlayerCosmetics );			// Player condition flags.
 	float m_flCondExpireTimeLeft[TF_COND_LAST];		// Time until each condition expires
 
 //TFTODO: What if the player we're disguised as leaves the server?

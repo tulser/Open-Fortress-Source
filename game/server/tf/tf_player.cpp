@@ -125,6 +125,15 @@ extern ConVar ofe_huntedcount;
 ConVar ofd_teamplay_collision("ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable collission with teammates in tdm modes");
 ConVar ofd_dynamic_color_update("ofd_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Update player color imidiatley.");
 
+const char *TF_WEARABLE_MODEL[] =
+{
+	"models/empty.mdl",
+	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
+	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
+	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
+	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl"
+};
+
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -777,6 +786,10 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 	}
 	PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
+	for( int i = 0; i < TF_WEARABLE_LAST; i++ )
+	{	
+		PrecacheModel( TF_WEARABLE_MODEL[i] );
+	}
 //	const char *pszArmModel = GetPlayerClassData(i)->m_szArmModelName;
 //	if ( pszArmModel && pszArmModel[0] )
 //	{
@@ -1002,6 +1015,13 @@ void CTFPlayer::Spawn()
 	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		UpdatePlayerColor();
+	}
+	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+	{
+		for( int i = 0; i < TF_WEARABLE_LAST; i++)
+			m_Shared.RemoveHat(i);
+		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
+		m_Shared.WearHat(iCosmetic);
 	}
 	
 	// This makes the surrounding box always the same size as the standing collision box

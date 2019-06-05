@@ -281,7 +281,12 @@ void CMultiPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData
 			ClearAnimationState();
 			break;
 		}
-
+	case PLAYERANIMEVENT_PULLBACK:
+		{
+			// Weapon primary fire.
+			RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_MP_PULLBACK );
+			break;
+		}
 	case PLAYERANIMEVENT_SNAP_YAW:
 		m_PoseParameterData.m_flLastAimTurnTime = 0.0f;
 		break;

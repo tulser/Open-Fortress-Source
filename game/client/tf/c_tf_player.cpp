@@ -92,10 +92,19 @@ ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets 
 
 ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
-
+ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you cant have tf2 without hats\n");
+ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have tf2 without hats\n");
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
+const char *TF_WEARABLE_MODEL[] =
+{
+	"models/empty.mdl",
+	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
+	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
+	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
+	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl"
+};
 IMaterial	*g_pHeadLabelMaterial[3] = { NULL, NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
 
@@ -1883,23 +1892,42 @@ void C_TFPlayer::UpdatePartyHat( void )
 	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
 	{
 		if ( m_hShieldEffect )
-		{
 			m_hShieldEffect->Release();
-		}
-		if ( !m_Shared.InCond( TF_COND_SHIELD ) )
-			return;
-		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
-			return;
-		m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
-		if ( m_hShieldEffect )
+		for( int i = 1; i < TF_WEARABLE_LAST; i++ )
 		{
-			int iVisibleTeam = GetTeamNumber();
-			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			if ( m_hCosmetic[i] )
+				m_hCosmetic[i]->Release();
+			if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
 			{
-				iVisibleTeam = m_Shared.GetDisguiseTeam();
+				m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
 			}
-			m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
+			if ( m_hCosmetic[i] )
+			{
+				int iVisibleTeam = GetTeamNumber();
+				if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				m_hCosmetic[i]->m_nSkin = iVisibleTeam - 2;
+			}
 		}
+		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
+		{
+			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+			if ( m_hShieldEffect )
+			{
+				int iVisibleTeam = GetTeamNumber();
+				if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
+			}
+		}
+		
+		
+		
+		
 	}
 	if ( TFGameRules() && TFGameRules()->IsBirthday() && IsAlive() && 
 		GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
