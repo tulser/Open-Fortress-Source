@@ -802,6 +802,8 @@ void CFuncTank::Spawn( void )
 			if ( pProp )
 			{
 				pProp->m_bUseHitboxesForRenderBox = true;
+				//SecobMod FIX
+				pProp->SetClientSideAnimation( false );			
 			}
 		}
 	}

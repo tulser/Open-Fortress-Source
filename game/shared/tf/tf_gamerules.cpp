@@ -53,6 +53,9 @@
 	#include "hltvdirector.h"
 	#include "globalstate.h"
     #include "igameevents.h"
+	
+	#include "ai_basenpc.h"
+	#include "ai_dynamiclink.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -839,8 +842,7 @@ CTFGameRules::CTFGameRules()
 	InitPlayerClasses();
 
 	// Set turbo physics on.  Do it here for now.
-	// changed to 1 as its better
-	sv_turbophysics.SetValue( 1 );
+	sv_turbophysics.SetValue( 0 );
 
 	// Initialize the team manager here, etc...
 
@@ -954,12 +956,10 @@ static const char *s_PreserveEnts[] =
 	"tf_player_manager",
 	"tf_team",
 	"tf_objective_resource",
-	"keyframe_rope",
-	"move_rope",
 	"tf_viewmodel",
-	"tf_handmodel",
 	"", // END Marker
 };
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1217,6 +1217,9 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
+	// fixes a dumb crash, see ai_pathfinder.cpp line 607
+	CAI_DynamicLink::gm_bInitialized = false;
+	CAI_DynamicLink::InitDynamicLinks();
 
 	FireGamemodeOutputs();
 
@@ -2031,10 +2034,11 @@ void TestSpawnPointType( const char *pEntClassName )
 			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
 
 			// drop down to ground
-			Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+			// removed this causes issues with info player start on some maps
+			//Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 			// the location the player will spawn at
-			NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
+			//NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
 
 			// draw the spawn angles
 			QAngle spotAngles = pSpot->GetLocalAngles();
@@ -2110,7 +2114,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 	// Move the player to the place it said.
-	pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
+	pPlayer->SetLocalOrigin( pSpawnSpot->GetAbsOrigin() + Vector(0,0,1) );
 	pPlayer->SetAbsVelocity( vec3_origin );
 	pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 	pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
@@ -2448,7 +2452,7 @@ bool CTFGameRules::CanHaveAmmo( CBaseCombatCharacter *pPlayer, int iAmmoIndex )
 {
 	if ( iAmmoIndex > -1 )
 	{
-		CTFPlayer *pTFPlayer = (CTFPlayer*)pPlayer;
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
 		if ( pTFPlayer )
 		{
@@ -2465,6 +2469,11 @@ bool CTFGameRules::CanHaveAmmo( CBaseCombatCharacter *pPlayer, int iAmmoIndex )
 					return true;
 				}
 			}
+		}
+		// fixme experimental: this should fix npc ammo but im not sure
+		else
+		{
+			return BaseClass::CanHaveAmmo( pPlayer, iAmmoIndex );
 		}
 	}
 

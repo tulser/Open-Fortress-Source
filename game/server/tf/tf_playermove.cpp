@@ -12,6 +12,9 @@
 #include "ipredictionsystem.h"
 #include "tf_player.h"
 
+#include "iservervehicle.h"
+#include "vehicle_base.h"
+#include "gamestats.h"
 
 static CMoveData g_MoveData;
 CMoveData *g_pMoveData = &g_MoveData;
@@ -27,9 +30,26 @@ class CTFPlayerMove : public CPlayerMove
 DECLARE_CLASS( CTFPlayerMove, CPlayerMove );
 
 public:
+	CTFPlayerMove() :
+		m_bWasInVehicle(false),
+		m_bVehicleFlipped(false),
+		m_bInGodMode(false),
+		m_bInNoClip(false)
+	{
+		m_vecSaveOrigin.Init();
+	}
+
 	virtual void	StartCommand( CBasePlayer *player, CUserCmd *cmd );
 	virtual void	SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *pHelper, CMoveData *move );
 	virtual void	FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *move );
+
+
+private:
+	Vector m_vecSaveOrigin;
+	bool m_bWasInVehicle;
+	bool m_bVehicleFlipped;
+	bool m_bInGodMode;
+	bool m_bInNoClip;
 };
 
 // PlayerMove Interface
@@ -74,6 +94,13 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	}
 
 	BaseClass::SetupMove( player, ucmd, pHelper, move );
+
+	// secobmod
+	IServerVehicle *pVehicle = player->GetVehicle();
+	if ( pVehicle && gpGlobals->frametime != 0 )
+	{
+		pVehicle->SetupMove( player, ucmd, pHelper, move );
+}
 }
 
 
@@ -87,4 +114,11 @@ void CTFPlayerMove::FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *
 {
 	// Call the default FinishMove code.
 	BaseClass::FinishMove( player, ucmd, move );
+	
+	// secobmod
+	IServerVehicle *pVehicle = player->GetVehicle();
+	if ( pVehicle && gpGlobals->frametime != 0 )
+	{
+		pVehicle->FinishMove( player, ucmd, move );
+}
 }

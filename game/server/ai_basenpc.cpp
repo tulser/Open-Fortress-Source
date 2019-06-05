@@ -893,7 +893,14 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	//  Insert a combat sound so that nearby NPCs know I've been hit
 	// ---------------------------------------------------------------
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), 1024, 0.5, this, SOUNDENT_CHANNEL_INJURY );
-
+	
+	// copied from tf2player code
+	CBaseEntity *pAttacker = info.GetAttacker();
+	if ( pAttacker && pAttacker->IsPlayer() )
+	{
+		ToTFPlayer( pAttacker )->RecordDamageEvent( info, (m_iHealth <= 0) );
+	}
+	
 	return 1;
 }
 

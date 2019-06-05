@@ -64,6 +64,7 @@
 #include "npc_alyx_episodic.h"
 #include "player_pickup.h"
 #include "eventqueue.h"
+#include "ammodef.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -430,6 +431,8 @@ CTFPlayer::CTFPlayer()
 
 	m_pPlayerAISquad = 0;
 	
+  	m_bTransition = false;
+	
     ConVarRef scissor( "r_flashlightscissor" );
     scissor.SetValue( "0" );
 	
@@ -528,6 +531,16 @@ void CTFPlayer::PreThink()
 
 	// Pass through to the base class think.
 	BaseClass::PreThink();
+	
+	// copied from hl2player
+	if ( IsInAVehicle() )	
+	{
+		UpdateClientData();		
+		CheckTimeBasedDamage();
+		
+		WaterMove();	
+		return;
+}
 
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.
 	m_vecTotalBulletForce = vec3_origin;
@@ -853,6 +866,17 @@ void CTFPlayer::InitialSpawn( void )
 void CTFPlayer::Spawn()
 {
 	MDLCACHE_CRITICAL_SECTION();
+	
+	if (m_bTransition)
+	{
+		if (m_bTransitionTeleported)
+			g_pGameRules->GetPlayerSpawnSpot(this);
+
+		m_bTransition = false;
+		m_bTransitionTeleported = false;
+
+		return;
+	}
 
 	m_flSpawnTime = gpGlobals->curtime;
 	UpdateModel();
@@ -1579,6 +1603,10 @@ void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
 //-----------------------------------------------------------------------------
 // Purpose: Find a spawn point for the player.
 //-----------------------------------------------------------------------------
+
+// enable info player start and info player deathmatch for checking
+CBaseEntity *FindPlayerStart(const char *pszClassName);
+
 CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 {
 	CBaseEntity *pSpot = g_pLastSpawnPoints[ GetTeamNumber() ];
@@ -1622,8 +1650,14 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 	if ( !pSpot )
 	{
-		Warning( "PutClientInServer: no %s on level\n", pSpawnPointName );
-		return CBaseEntity::Instance( INDEXENT(0) );
+		// i added this so that hl2 maps are playable
+		pSpot = FindPlayerStart( "info_player_start" );
+		if ( pSpot )
+			return pSpot;
+			return CBaseEntity::Instance(INDEXENT(0));
+		if (!pSpot)
+			pSpot = FindPlayerStart("info_player_deathmatch");
+			return CBaseEntity::Instance(INDEXENT(0));
 	}
 
 	return pSpot;
@@ -3477,6 +3511,12 @@ bool CTFPlayer::IsPlayerClass( int iClass ) const
 	return ( pClass->IsClass( iClass ) );
 }
 
+// copied from hl2player
+void CTFPlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles )
+{
+	BaseClass::LeaveVehicle( vecExitPoint, vecExitAngles );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3777,6 +3817,36 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			CBaseObject *pObject = dynamic_cast<CBaseObject *>( pVictim );
 			SpeakConceptIfAllowed( MP_CONCEPT_KILLED_OBJECT, pObject->GetResponseRulesModifier() );
 		}
+		// check npcs too!
+		else if ( pVictim->IsNPC() )
+		{
+		// Custom death handlers
+		const char *pszCustomDeath = "customdeath:none";
+		if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
+		{
+			pszCustomDeath = "customdeath:sentrygun";
+		}
+		else if ( info.GetInflictor() && info.GetInflictor()->IsBaseObject() )
+		{
+			pszCustomDeath = "customdeath:sentrygun";
+		}
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
+		{				
+			pszCustomDeath = "customdeath:headshot";
+		}
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB )
+		{
+			pszCustomDeath = "customdeath:backstab";
+		}
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_BURNING )
+		{
+			pszCustomDeath = "customdeath:burning";
+		}
+		const char *pszDomination = "domination:none";
+
+		CFmtStrN<128> modifiers("%s,%s,victimclass:%s", pszCustomDeath, pszDomination, g_aPlayerClassNames_NonLocalized[TF_CLASS_UNDEFINED]);
+		SpeakConceptIfAllowed( MP_CONCEPT_KILLED_PLAYER, modifiers );
+		}	
 	}
 }
 
@@ -7750,6 +7820,154 @@ void CTFPlayer::CommanderMode()
 		m_QueuedCommand = (player_squad_transient_commands.GetBool()) ? CC_SEND : CC_TOGGLE;
 	}
 }
+
+void CTFPlayer::SaveTransitionFile(void)
+{
+	FileHandle_t hFile = g_pFullFileSystem->Open("cfg/transition.cfg", "w");
+
+	if (hFile == FILESYSTEM_INVALID_HANDLE)
+	{
+		Warning("Invalid filesystem handle \n");
+		CUtlBuffer buf(0, 0, CUtlBuffer::TEXT_BUFFER);
+		g_pFullFileSystem->WriteFile("cfg/transition.cfg", "MOD", buf);
+		return;
+	}
+	else
+	{
+		// Iterate all active players
+		for (int i = 1; i <= gpGlobals->maxClients; i++)
+		{
+			CTFPlayer *pPlayerMP = ToTFPlayer(UTIL_PlayerByIndex(i));
+			if (pPlayerMP == NULL)
+			{
+				//If we're a listen server then the host is both a server and a client. As a server they return NULL so we return 
+				g_pFullFileSystem->Close(hFile);
+				return;
+			}
+			int HealthValue = pPlayerMP->m_iHealth;
+			int WeaponSlot = 0;
+
+
+			//Set the weapon slot back to 0 for cleanliness and ease of use in hl2mp_client.cpps restore code.
+			WeaponSlot = 0;
+			Msg("Saving cfg file...\n");
+			//Get this persons steam ID.
+			//Also write on a new line a { and use the SteamID as our heading!.
+			char tmpSteamid[32];
+			Q_snprintf(tmpSteamid, sizeof(tmpSteamid), "\"%s\"\n""{\n", engine->GetPlayerNetworkIDString(pPlayerMP->edict()));
+
+			//Write this persons steam ID to our file.
+			g_pFullFileSystem->Write(&tmpSteamid, strlen(tmpSteamid), hFile);
+
+			//Get their Health
+			char data3[32];
+			Q_snprintf(data3, sizeof(data3), "\"Health" "\" ");
+			char data4[32];
+			Q_snprintf(data4, sizeof(data4), "\"%i\"\n", HealthValue);
+			//Write this persons Health to the file.
+			g_pFullFileSystem->Write(&data3, strlen(data3), hFile);
+			g_pFullFileSystem->Write(&data4, strlen(data4), hFile);
+
+			//Get their Armour
+			char data5[32];
+			Q_snprintf(data5, sizeof(data5), "\"Armour" "\" ");
+			//Write this persons Armour to the file.
+			g_pFullFileSystem->Write(&data5, strlen(data5), hFile);
+
+
+			//Go through the players inventory to find out their weapons and ammo.
+			CBaseCombatWeapon *pCheck;
+
+			//This is our player. This is set because currently this section is in TakeDamage of hl2mp_player.cpp
+			CBasePlayer *pPlayer = ToBasePlayer(pPlayerMP);
+			const char *weaponName = "";
+			weaponName = pPlayer->GetActiveWeapon()->GetClassname();
+
+			//Get their current weapon so we can attempt to switch to it on spawning.
+			char ActiveWepPre[32];
+			Q_snprintf(ActiveWepPre, sizeof(ActiveWepPre), "\n""\"ActiveWeapon\" ");
+			//Write our weapon.
+			g_pFullFileSystem->Write(&ActiveWepPre, strlen(ActiveWepPre), hFile);
+			char ActiveWep[32];
+			Q_snprintf(ActiveWep, sizeof(ActiveWep), "\"%s\"\n", weaponName);
+			//Write our weapon.
+			g_pFullFileSystem->Write(&ActiveWep, strlen(ActiveWep), hFile);
+
+
+			for (int i = 0; i < WeaponCount(); ++i)
+			{
+				pCheck = GetWeapon(i);
+				if (!pCheck)
+					continue;
+
+				//Create a temporary int for both primary and secondary clip ammo counts.
+				int TempPrimaryClip = pPlayer->GetAmmoCount(pCheck->GetPrimaryAmmoType());
+				int TempSecondaryClip = pPlayer->GetAmmoCount(pCheck->GetSecondaryAmmoType());
+
+				//Creaye a temporary int for both primary and seconday clip ammo TYPES.
+				int ammoIndex_Pri = pCheck->GetPrimaryAmmoType();
+				int ammoIndex_Sec = pCheck->GetSecondaryAmmoType();
+
+				//Get out weapons classname and get our text set up.
+				char pCheckWep[32];
+				Q_snprintf(pCheckWep, sizeof(pCheckWep), "\"Weapon_%i\" \"%s\"\n", WeaponSlot, pCheck->GetClassname());
+				//Write our weapon.
+				g_pFullFileSystem->Write(&pCheckWep, strlen(pCheckWep), hFile);
+
+				if (TempPrimaryClip >= 1)
+				{
+					//Get out weapons primary clip and get our text set up.
+					char PrimaryClip[32];
+					Q_snprintf(PrimaryClip, sizeof(PrimaryClip), "\"Weapon_%i_PriClip\" \"%i\"\n", WeaponSlot, TempPrimaryClip);
+					//Now write our weapons primary clip count.
+					g_pFullFileSystem->Write(&PrimaryClip, strlen(PrimaryClip), hFile);
+					//Get out weapons primary clip ammo type.
+					if (ammoIndex_Pri != -1)
+					{
+						char PrimaryWeaponClipAmmoType[32];
+						Q_snprintf(PrimaryWeaponClipAmmoType, sizeof(PrimaryWeaponClipAmmoType), "\"Weapon_%i_PriClipAmmo\" ", WeaponSlot);
+						char PrimaryClipAmmoType[32];
+						Q_snprintf(PrimaryClipAmmoType, sizeof(PrimaryClipAmmoType), "\"%s\"\n", GetAmmoDef()->GetAmmoOfIndex(ammoIndex_Pri)->pName);
+						//Now write our weapons primary clip count.
+						g_pFullFileSystem->Write(&PrimaryWeaponClipAmmoType, strlen(PrimaryWeaponClipAmmoType), hFile);
+						g_pFullFileSystem->Write(&PrimaryClipAmmoType, strlen(PrimaryClipAmmoType), hFile);
+					}
+				}
+
+				if (TempSecondaryClip >= 1)
+				{
+					//Get out weapons secondary clip and get our text set up.
+					char SecondaryClip[32];
+					Q_snprintf(SecondaryClip, sizeof(SecondaryClip), "\"Weapon_%i_SecClip\" \"%i\"\n", WeaponSlot, TempSecondaryClip);
+					//Now write our weapons secondary clip count.
+					g_pFullFileSystem->Write(&SecondaryClip, strlen(SecondaryClip), hFile);
+					//Get out weapons secondary clip ammo type.
+					if (ammoIndex_Sec != -1)
+					{
+						char SecondaryWeaponClipAmmoType[32];
+						Q_snprintf(SecondaryWeaponClipAmmoType, sizeof(SecondaryWeaponClipAmmoType), "\"Weapon_%i_SecClipAmmo\" ", WeaponSlot);
+						char SecondaryClipAmmoType[32];
+						Q_snprintf(SecondaryClipAmmoType, sizeof(SecondaryClipAmmoType), "\"%s\"\n", GetAmmoDef()->GetAmmoOfIndex(ammoIndex_Pri)->pName);
+						//Now write our weapons primary clip count.
+						g_pFullFileSystem->Write(&SecondaryWeaponClipAmmoType, strlen(SecondaryWeaponClipAmmoType), hFile);
+						g_pFullFileSystem->Write(&SecondaryClipAmmoType, strlen(SecondaryClipAmmoType), hFile);
+					}
+				}
+
+				//Now increase our weapon slot number for the next weapon (if needed).
+				WeaponSlot++;
+			}
+
+			//Also write on a new line a } to close off this Players section. Now that we're done with all weapons.
+			char SecClose[32];
+			Q_snprintf(SecClose, sizeof(SecClose), "}\n\n", NULL);
+			g_pFullFileSystem->Write(&SecClose, strlen(SecClose), hFile);
+		}
+
+		//Close the file. Important or changes don't get saved till the exe closes which we don't want.
+		g_pFullFileSystem->Close(hFile);
+	}
+} 
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -253,6 +253,9 @@ public:
 	// IPlayerInfo passthrough (because we can't do multiple inheritance)
 	IPlayerInfo *GetPlayerInfo() { return &m_PlayerInfo; }
 	IBotController *GetBotController() { return &m_PlayerInfo; }
+	
+	bool m_bTransition;			
+	bool m_bTransitionTeleported;	// This is important as it allows the game to save each players progress over a map change. Create the booleans required for transitions to work.
 
 	virtual void			SetModel( const char *szModelName );
 	void					SetBodyPitch( float flPitch );

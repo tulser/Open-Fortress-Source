@@ -35,9 +35,13 @@
 #include "gameinterface.h"
 #include "ilagcompensationmanager.h"
 
-#ifdef HL2_DLL
-#include "hl2_player.h"
-#endif
+//#ifdef HL2_DLL
+//#include "hl2_player.h"
+//#endif
+
+#include "tf_player.h"
+#include "tf_gamerules.h"
+#include "team.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -51,6 +55,7 @@ CUtlVector< CHandle<CTriggerMultiple> >	g_hWeaponFireTriggers;
 
 extern CServerGameDLL	g_ServerGameDLL;
 extern bool				g_fGameOver;
+extern bool				Transitioned;
 ConVar showtriggers( "showtriggers", "0", FCVAR_CHEAT, "Shows trigger brushes" );
 
 bool IsTriggerClass( CBaseEntity *pEntity );
@@ -1587,24 +1592,62 @@ void CChangeLevel::WarnAboutActiveLead( void )
 	}
 }
 
+extern ConVar mp_transition_players_percent;
+extern ConVar sv_transitions;
+
 void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 {
+
+
 	CBaseEntity	*pLandmark;
-	levellist_t	levels[16];
+	levellist_t	levels[16];	
 
 	Assert(!FStrEq(m_szMapName, ""));
 
-	// Don't work in deathmatch
-	if ( g_pGameRules->IsDeathmatch() )
+	CBasePlayer *pPlayer = (pActivator && pActivator->IsPlayer()) ? ToBasePlayer(pActivator) : UTIL_GetLocalPlayer(); // Get all the players who activate our multiplayer transition.
+	if (!pPlayer)
 		return;
+	
+	pPlayer->m_bTransition = true;
+
+	if (mp_transition_players_percent.GetInt() > 0)
+	{
+		int totalPlayers = 0;
+		int transitionPlayers = 0;
+		for (int i = 1; i <= gpGlobals->maxClients; i++)
+		{
+			CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
+			if (pPlayer && pPlayer->IsAlive())
+			{
+				totalPlayers++;
+				if (pPlayer->m_bTransition)
+					transitionPlayers++;
+			}
+		}
+
+		if (((int)(transitionPlayers / totalPlayers * 100)) < mp_transition_players_percent.GetInt())
+		{
+			Msg("Transitions: Not enough players to trigger level change\n");
+			return;
+		}
+	}
+	CTFPlayer *p2Player = (CTFPlayer *)UTIL_GetLocalPlayer();
+	p2Player->SaveTransitionFile();
+	Transitioned = true;
+
+	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
+	Q_strncpy(st_szNextMap, m_szMapName, sizeof(st_szNextMap));
+
+	// Change to the next map.
+	engine->ChangeLevel(st_szNextMap, NULL);
+	// As far as we're concerned this is where we stop the code because we just transitioned.
+	return;
 
 	// Some people are firing these multiple times in a frame, disable
 	if ( m_bTouched )
 		return;
 
 	m_bTouched = true;
-
-	CBaseEntity *pPlayer = (pActivator && pActivator->IsPlayer()) ? pActivator : UTIL_GetLocalPlayer();
 
 	int transitionState = InTransitionVolume(pPlayer, m_szLandmarkName);
 	if ( transitionState == TRANSITION_VOLUME_SCREENED_OUT )
@@ -1619,6 +1662,7 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 	if ( !pLandmark )
 		return;
 
+	/*
 	// no transition volumes, check PVS of landmark
 	if ( transitionState == TRANSITION_VOLUME_NOT_FOUND )
 	{
@@ -1642,6 +1686,7 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 			}
 		}
 	}
+	*/
 
 	WarnAboutActiveLead();
 

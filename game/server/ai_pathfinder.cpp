@@ -603,6 +603,9 @@ bool CAI_Pathfinder::IsLinkUsable(CAI_Link *pLink, int startID)
 
 		if ( !pDynamicLink || pDynamicLink->m_strAllowUse == NULL_STRING )
 			return false;
+		
+		// added since not sure why a crash is pointing here but whatever
+		return false;
 
 		const char *pszAllowUse = STRING( pDynamicLink->m_strAllowUse );
 		if ( pDynamicLink->m_bInvertAllow )

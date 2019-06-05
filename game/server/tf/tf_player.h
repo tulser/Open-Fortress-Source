@@ -101,6 +101,7 @@ public:
 	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
+	virtual void		SaveTransitionFile(void);
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -115,6 +116,8 @@ public:
 	void				SendOffHandViewModelActivity( Activity activity );
 
 	virtual void		CheatImpulseCommands( int iImpulse );
+	
+	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
 	virtual void		CommitSuicide( bool bExplode = false, bool bForce = false );
 
@@ -600,7 +603,6 @@ public:
 	void				GiveAllItems();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 
-
 	///==HL2 PORT START==///
 	bool				IsSprinting( void ) { return false; }
 	bool				IsWeaponLowered( void ) { return false; }
@@ -614,6 +616,8 @@ public:
 	void				MissedAR2AltFire() {;}
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
+	
+	bool	m_bTransition;
 	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 
