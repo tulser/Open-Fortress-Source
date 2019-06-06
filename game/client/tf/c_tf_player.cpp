@@ -919,9 +919,14 @@ public:
 		{
 			// See if it's a weapon
 			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
 			if ( pWeapon )
 			{
 				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
 			}
 			else
 			{

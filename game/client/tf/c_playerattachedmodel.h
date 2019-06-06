@@ -32,7 +32,8 @@ public:
 	void	ClientThink( void );
 	void	ApplyBoneMatrixTransform( matrix3x4_t& transform );
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return (C_BaseEntity *)GetMoveParent(); }
-
+	virtual int DrawModel( int flags );
+	int						DrawOverriddenViewmodel( int flags );
 private:
 	float	m_flExpiresAt;
 	int		m_iFlags;
