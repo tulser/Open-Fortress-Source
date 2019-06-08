@@ -87,10 +87,11 @@ private:
 	CNetworkVar( int, m_iQuakeWorldIndex);
 };
 
-class CTFSuperRocketLauncher : public CTFOriginal
+//Quad RPG
+class CTFSuperRocketLauncher : public CTFRocketLauncher
 {
 public:
-	DECLARE_CLASS( CTFSuperRocketLauncher, CTFOriginal );
+	DECLARE_CLASS( CTFSuperRocketLauncher, CTFRocketLauncher );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 

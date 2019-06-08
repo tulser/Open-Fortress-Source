@@ -7265,28 +7265,6 @@ void CTFPlayer::InputStripWeapons(inputdata_t &inputdata)
 
 void CTFPlayer::GiveAllItems()
 {
-	GiveAmmo(1000, TF_AMMO_PRIMARY);
-	GiveAmmo(1000, TF_AMMO_SECONDARY);
-	GiveAmmo(1000, TF_AMMO_METAL);
-	GiveAmmo(1000, TF_AMMO_GRENADES1);
-	GiveAmmo(1000, TF_AMMO_GRENADES2);
-	GiveAmmo(1000, TF_AMMO_GRENADELAUNCHER);
-	GiveAmmo(1000, TF_AMMO_PIPEBOMBLAUNCHER);
-	GiveAmmo(1000, TF_AMMO_REVOLVER);
-	GiveAmmo(1000, TF_AMMO_ROCKETLAUNCHER);
-	GiveAmmo(1000, TF_AMMO_SNIPERRIFLE);
-	GiveAmmo(1000, TF_AMMO_SMG);
-	GiveAmmo(1000, TF_AMMO_SCATTERGUN);
-	GiveAmmo(1000, TF_AMMO_PISTOL);
-	GiveAmmo(1000, TF_AMMO_FLAMETHROWER);
-	GiveAmmo(1000, TF_AMMO_SYNRINGES);
-	GiveAmmo(1000, TF_AMMO_MINIGUN);
-	GiveAmmo(1000, TF_AMMO_SHOTGUN);
-	GiveAmmo(1000, TF_AMMO_NAILS);
-	GiveAmmo(1000, TF_AMMO_SUPERSHOTGUN);
-	GiveAmmo(1000, TF_AMMO_RAILGUN);
-	GiveAmmo(1000, TF_AMMO_ASSAULTRIFLE);
-
 	TakeHealth(999, DMG_GENERIC);
 	
 	AddAccount( 16000 );
@@ -7386,10 +7364,6 @@ void CTFPlayer::GiveAllItems()
 		pWeapon->DefaultTouch(this);
 
 	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pda_spy");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_physgauntlet");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
 
@@ -7505,7 +7479,15 @@ void CTFPlayer::GiveAllItems()
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
 
-		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_umbrella");
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_umbrella");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_chainsaw");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_physcannon");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
 }

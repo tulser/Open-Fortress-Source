@@ -2404,7 +2404,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// ofd_forceclass 
 	pKeyValues = new KeyValues( "ofd_forceclass" );
 	pKeyValues->SetString( "convar", "ofd_forceclass" );
-	pKeyValues->SetString( "tag", "forceclass" );
+	pKeyValues->SetString( "tag", "allclassesallowed" );
 
 	pCvarTagList->AddSubKey( pKeyValues );	
 	
@@ -2432,7 +2432,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// tf_use_fixed_weaponspreads   
 	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
-	pKeyValues->SetString( "tag", "fixedshotpatern" );
+	pKeyValues->SetString( "tag", "norandomspread" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		
 

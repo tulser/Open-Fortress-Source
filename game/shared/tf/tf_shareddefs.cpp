@@ -11,7 +11,7 @@
 #include "tf_gamerules.h"
 
 extern ConVar of_infiniteammo;
-ConVar sv_unlockedchapters( "sv_unlockedchapters", "99", FCVAR_ARCHIVE | FCVAR_USERINFO );
+ConVar sv_unlockedchapters( "sv_unlockedchapters", "99" );
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------
@@ -48,7 +48,8 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Pyro",
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
-	"#TF_Class_Name_Mercenary"
+	"#TF_Class_Name_Mercenary",
+	"#TF_Class_Name_Civilian"
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -94,23 +95,8 @@ const char *g_aAmmoNames[] =
 	"TF_AMMO_METAL",
 	"TF_AMMO_GRENADES1",
 	"TF_AMMO_GRENADES2",
-	//
-	"TF_AMMO_SHOTGUN",
-	"TF_AMMO_SCATTERGUN",
-	"TF_AMMO_SUPERSHOTGUN",
-	"TF_AMMO_NAILS",
-	"TF_AMMO_PISTOL",
-	"TF_AMMO_SMG",
-	"TF_AMMO_SNIPERRIFLE",
-	"TF_AMMO_MINIGUN",
-	"TF_AMMO_FLAMETHROWER",
-	"TF_AMMO_REVOLVER",
-	"TF_AMMO_GRENADELAUNCHER",
-	"TF_AMMO_PIPEBOMBLAUNCHER",
-	"TF_AMMO_SYNRINGES",
-	"TF_AMMO_ROCKETLAUNCHER",
-	"TF_AMMO_RAILGUN",
-	"TF_AMMO_ASSAULTRIFLE",
+
+	"WEAPON_AMMO"
 };
 
 //-----------------------------------------------------------------------------
@@ -193,6 +179,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_SUPER_ROCKETLAUNCHER",
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_DYNAMITE_BUNDLE",
+	"TF_WEAPON_TRIPMINE",
 
 	"TF_WEAPON_COUNT",	// end marker, do not add below here 
 };
@@ -286,6 +273,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
+	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -303,7 +291,7 @@ const char *g_szProjectileNames[] =
 	"projectile_nail",
 };
 
-// these map to the projectiles named in g_szProjectileNames
+//NOTENOTE: This has been reworked, above char list not related anymore
 int g_iProjectileWeapons[] = 
 {
 	TF_WEAPON_NONE,
@@ -315,7 +303,8 @@ int g_iProjectileWeapons[] =
 	TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	TF_WEAPON_ROCKETLAUNCHER_DM,
 	TF_WEAPON_SUPER_ROCKETLAUNCHER,
-	TF_WEAPON_DYNAMITE_BUNDLE
+	TF_WEAPON_DYNAMITE_BUNDLE,
+	TF_WEAPON_TRIPMINE
 };
 
 const char *g_pszHintMessages[] =
