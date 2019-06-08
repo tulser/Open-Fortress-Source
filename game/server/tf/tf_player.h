@@ -305,6 +305,8 @@ public:
 	void DropAmmoPack( void );
 	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolbe = false );
 
+	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );
+	
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
 	void RemoveInvisibility( void );

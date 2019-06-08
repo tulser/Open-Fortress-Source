@@ -124,16 +124,6 @@ extern ConVar ofe_huntedcount;
 
 ConVar ofd_teamplay_collision("ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable collission with teammates in tdm modes");
 ConVar ofd_dynamic_color_update("ofd_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Update player color imidiatley.");
-
-const char *TF_WEARABLE_MODEL[] =
-{
-	"models/empty.mdl",
-	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
-	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
-	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
-	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl"
-};
-
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
 // -------------------------------------------------------------------------------- //
@@ -4362,6 +4352,15 @@ void CC_DropWeapon( void )
 static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
 
 //-----------------------------------------------------------------------------
+// Purpose: Check to see if we can pickup the weapon, Used in the 3 slot weapon system in DM
+//-----------------------------------------------------------------------------
+bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon )
+{
+	return ( pCarriedWeapon->GetSlot() == pWeapon->GetSlot()  	//The Weapons Occupy the same slot
+	&& pCarriedWeapon != pWeapon && 							//and they're not the same
+	m_nButtons & IN_USE );										//and we just pressed the Use button
+}
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve )
@@ -4418,14 +4417,14 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 	int m_iWeaponID = pWeapon->GetWeaponID();
 
 	// Create the ammo pack.
-	CTFDroppedWeapon *pAmmoPack = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
-	Assert( pAmmoPack );
-	if ( pAmmoPack )
+	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
+	Assert( pDroppedWeapon );
+	if ( pDroppedWeapon )
 	{
 		// Remove all of the players ammo.
 
 		// Fill up the ammo pack.
-		pAmmoPack->WeaponID = m_iWeaponID;
+		pDroppedWeapon->WeaponID = m_iWeaponID;
 		
 ///////
 /*	
@@ -4483,39 +4482,39 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 				VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
 		}
 
-		if ( pAmmoPack->VPhysicsGetObject() )
+		if ( pDroppedWeapon->VPhysicsGetObject() )
 		{
 			// We can probably remove this when the mass on the weapons is correct!
-			pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
+			pDroppedWeapon->VPhysicsGetObject()->SetMass( 25.0f );
 
 			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
 			AngularImpulse	angImp( 200, 200, 200 );
 //			if ( thrown )
-//				pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &pVecThrowDir, &angImp );
+//				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &pVecThrowDir, &angImp );
 //			else
-				pAmmoPack->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
 
 		}
 
-		pAmmoPack->SetInitialVelocity( vecImpulse );
+		pDroppedWeapon->SetInitialVelocity( vecImpulse );
 
 		if ( GetTeamNumber() == TF_TEAM_RED )
-			pAmmoPack->m_nSkin = 0;
+			pDroppedWeapon->m_nSkin = 0;
 		else if ( GetTeamNumber() == TF_TEAM_BLUE)
-			pAmmoPack->m_nSkin = 1;
+			pDroppedWeapon->m_nSkin = 1;
 		else
-			pAmmoPack->m_nSkin = 2;
+			pDroppedWeapon->m_nSkin = 2;
 		
 		// Give the ammo pack some health, so that trains can destroy it.
-		pAmmoPack->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
-		pAmmoPack->m_takedamage = DAMAGE_YES;		
-		pAmmoPack->SetHealth( 900 );
+		pDroppedWeapon->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+		pDroppedWeapon->m_takedamage = DAMAGE_YES;		
+		pDroppedWeapon->SetHealth( 900 );
 		
-		pAmmoPack->SetBodygroup( 1, 1 );
+		pDroppedWeapon->SetBodygroup( 1, 1 );
 		if ( dissolve )
 		{
-			pAmmoPack->SetTouch( NULL );
-			pAmmoPack->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
+			pDroppedWeapon->SetTouch( NULL );
+			pDroppedWeapon->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
 		}
 		// Clean up old ammo packs if they exist in the world
 		AmmoPackCleanUp();	

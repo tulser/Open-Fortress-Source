@@ -750,7 +750,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	// If we don't have any ammo, switch to the next best weapon
 	if ( !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
 	{
-		if ( GetTFWpnData().m_flPickupMultiplier <= 0 )
+		if ( GetTFWpnData().m_bDropOnNoAmmo )
 		{
 #ifdef GAME_DLL 
 			pPlayer->DropWeapon( this, false, true );

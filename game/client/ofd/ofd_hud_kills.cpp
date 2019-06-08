@@ -29,7 +29,7 @@
 #include "c_team.h"
 #include "c_tf_player.h"
 #include "ihudlcd.h"
-#include "tf_hud_kills.h"
+#include "ofd_hud_kills.h"
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #include "multiplay_gamerules.h"

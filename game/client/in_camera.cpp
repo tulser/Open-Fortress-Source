@@ -691,7 +691,7 @@ void CInput::CAM_ToThirdPerson(void)
 	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pLocalTFPlayer )
 	{
-		pLocalTFPlayer->UpdatePartyHat();
+		pLocalTFPlayer->UpdatePlayerAttachedModels();
 	}
 }
 
@@ -713,7 +713,7 @@ void CInput::CAM_ToFirstPerson(void)
 	if ( pLocalTFPlayer )
 	{
 		pLocalTFPlayer->ThirdPersonSwitch( false );
-		pLocalTFPlayer->UpdatePartyHat();
+		pLocalTFPlayer->UpdatePlayerAttachedModels();
 	}
 }
 

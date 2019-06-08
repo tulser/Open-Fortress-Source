@@ -1186,7 +1186,7 @@ void CTFPlayerShared::OnAddShield( void )
 			view->SetScreenOverlayMaterial( pMaterial );
 		}
 	}
-	m_pOuter->UpdatePartyHat();
+	m_pOuter->UpdatePlayerAttachedModels();
 #endif
 }
 
@@ -1196,7 +1196,7 @@ void CTFPlayerShared::OnAddShield( void )
 void CTFPlayerShared::OnRemoveShield( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->UpdatePartyHat();
+	m_pOuter->UpdatePlayerAttachedModels();
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );
@@ -1782,10 +1782,8 @@ bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
+	
 }
 
 #endif

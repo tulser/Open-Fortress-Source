@@ -214,7 +214,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bAllowDrop	= ( pKeyValuesData->GetInt( "AllowDrop", 0 ) != 0 );
 	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
 	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
-	
+	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
 	
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szSoldierViewModel, pKeyValuesData->GetString( "soldier_viewmodel" ), MAX_WEAPON_STRING );
