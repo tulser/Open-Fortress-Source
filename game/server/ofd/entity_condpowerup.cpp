@@ -47,7 +47,7 @@ void CCondPowerup::Spawn( void )
 	if (m_iszPowerupModel==MAKE_STRING( "" )) SetModel( STRING(m_iszPowerupModelOLD)  );
 	else SetModel( STRING(m_iszPowerupModel) );
 	
-	SetTransmitState( FL_EDICT_ALWAYS );
+	SetTransmitState( FL_EDICT_ALWAYS );	// Used for the glow effect to always show up
 
 	BaseClass::Spawn();
 }
@@ -79,7 +79,7 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		Vector vecPackOrigin;
 		QAngle vecPackAngles;
 		pTFPlayer->m_Shared.AddCond( m_bCondition , m_bCondDuration );
-		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );
+		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );  // The dropped powerup is spawned here, more explanation in its cpp file but basicaly we do this to preserve custom settings like its model on it
 		EmitSound( STRING( m_iszPickupSound ) );
 		m_nRenderFX = kRenderFxDistort;
 	}

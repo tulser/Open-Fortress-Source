@@ -23,6 +23,10 @@ public:
 	void	ClientThink( void );
 	void	Spawn( void );
 	int		DrawModel( int flags );
+	virtual C_BaseEntity *GetItemTintColorOwner( void )
+	{
+		return (C_BaseEntity *) C_BasePlayer::GetLocalPlayer();
+	}
 
 private:
 

@@ -33,6 +33,8 @@ enum
 #define TF_TEAM_AUTOASSIGN (TF_TEAM_COUNT + 1 )
 
 extern const char *g_aTeamNames[TF_TEAM_COUNT];
+extern const char *TF_WEARABLE_MODEL[];
+extern int TF_WEARABLE_COUNT;
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
@@ -445,6 +447,7 @@ enum
 	TF_WEARABLE_HELMET,
 	TF_WEARABLE_COWBOY,
 	TF_WEARABLE_YARR,
+	TF_WEARABLE_HEADSET,
 	
 	TF_WEARABLE_LAST
 };

@@ -263,9 +263,13 @@ private:
 public:
 
 	Vector				m_vecPlayerColor;	
-	void UpdatePartyHat( void );
-	bool WearsPartyHat( void );
 	
+	void UpdatePlayerAttachedModels( void );
+	void UpdatePartyHat( void );
+	void UpdateWearables( void );
+	void UpdateGameplayAttachments( void );
+	
+	bool WearsPartyHat( void );
 private:
 
 	C_TFPlayerClass		m_PlayerClass;
@@ -367,7 +371,7 @@ public:
 
 	int				m_iSpyMaskBodygroup;
 
-	bool			m_bUpdatePartyHat;
+	bool			m_bUpdatePlayerAttachments;
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
 	CHandle<C_PlayerAttachedModel>	m_hCosmetic[TF_WEARABLE_LAST];
@@ -382,6 +386,8 @@ public:
 	double BobTime;
 	float BobLastTime;
 	float IdleScale;
+	
+	Color TennisBall;
 private:
 
 	float m_flWaterImpactTime;

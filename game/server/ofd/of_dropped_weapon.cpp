@@ -103,61 +103,66 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	CBasePlayer *pPlayer = ToBasePlayer( pOther );
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !ofd_allow_allclass_pickups.GetBool() )
+	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !ofd_allow_allclass_pickups.GetBool() ) // Dont let non Mercenary classes pick up weapons unless thats turned on
 		return;
 	Assert( pPlayer );
 
 	bool bSuccess = true;
-	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) )
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
 	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
 	{		
-		CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pPlayer->GetWeapon( iWeapon );
-		if ( pCarriedWeapon == pWeapon ) 
+		CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pPlayer->GetWeapon( iWeapon );  //Get a weapon from the player's inventory
+		if ( pCarriedWeapon == pWeapon ) // If we already have the weapon, dont pick it up
 		{
 			bSuccess=false;
 		}
-		if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() )
+		if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() ) // Are we in the 3 slot system?
 		{
-			bSuccess=false;
-			if ( pCarriedWeapon && pWeapon && pCarriedWeapon->GetSlot() == pWeapon->GetSlot() && pCarriedWeapon != pWeapon && pTFPlayer->m_nButtons & IN_USE )
+			bSuccess = false;  // Dont auto pick up
+			
+			if ( pCarriedWeapon && pWeapon && pTFPlayer->CanPickupWeapon( pCarriedWeapon, pWeapon ) ) //If we can pick it up
 			{
-				pTFPlayer->DropWeapon( pCarriedWeapon );
-				if ( pCarriedWeapon )
+				if ( pCarriedWeapon )								
 				{
-					pTFPlayer->Weapon_Detach( pCarriedWeapon );
+					pTFPlayer->DropWeapon( pCarriedWeapon );		// Drop our current weapon
+					pTFPlayer->Weapon_Detach( pCarriedWeapon );		// And remove it from our inventory
 					UTIL_Remove( pCarriedWeapon );
 					pCarriedWeapon = NULL;				
 				}
-				CSingleUserRecipientFilter filter( pTFPlayer );
-				EmitSound( filter, entindex(), "AmmoPack.Touch" );
-				CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
-				pGivenWeapon->GiveTo( pPlayer );		
-				UTIL_Remove( this );
+				
+				CSingleUserRecipientFilter filter( pTFPlayer );		// Filter our sound to the player who picked this up
+				EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
+				CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
+				pGivenWeapon->GiveTo( pPlayer );														// and give it to the player
+				UTIL_Remove( this );																	// Then remove the dropped weapon entity
+				
 				if ( pWeapon )
 				{
-					pTFPlayer->Weapon_Detach( pWeapon );
+					pTFPlayer->Weapon_Detach( pWeapon );												// Remove the temp weapon
 					UTIL_Remove( pWeapon );
 					pWeapon = NULL;
 				}
+				
 				return;
 			}
 		}
-		
 	}
-	if ( bSuccess )
+	
+	if ( bSuccess )	// If we dont own the weapon and we're not in the 3 weapon system
 	{
-		CSingleUserRecipientFilter filter( pTFPlayer );
-		EmitSound( filter, entindex(), "AmmoPack.Touch" );
-		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
-		pGivenWeapon->GiveTo( pPlayer );		
-		UTIL_Remove( this );
+		CSingleUserRecipientFilter filter( pTFPlayer );		// Filter the sound to the player who picked this up
+		EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
+		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
+		pGivenWeapon->GiveTo( pPlayer );														// and give it to the player
+		UTIL_Remove( this );																	// Remove the dropped weapon entity
 	}
+	
 	if ( pWeapon )
 	{
-		pTFPlayer->Weapon_Detach( pWeapon );
+		pTFPlayer->Weapon_Detach( pWeapon );	// Remove the temp weapon
 		UTIL_Remove( pWeapon );
 		pWeapon = NULL;
 	}

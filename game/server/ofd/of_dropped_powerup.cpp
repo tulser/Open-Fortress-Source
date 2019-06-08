@@ -1,8 +1,11 @@
 //========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
-// Purpose:
+// Purpose: Dropped Cond Powerup
 //
 //=============================================================================//
+
+
+// You're in for a bumpy ride
 
 #include "cbase.h"
 #include "of_dropped_powerup.h"
@@ -70,44 +73,44 @@ CTFDroppedPowerup *CTFDroppedPowerup::Create( const Vector &vecOrigin, const QAn
 		pDroppedPowerup->SetModelName( AllocPooledString( pszModelName ) );
 		DispatchSpawn( pDroppedPowerup );
 	}
-	pDroppedPowerup->SetParent(pOwner);
-	pDroppedPowerup->FollowEntity( pOwner, false );
-	pDroppedPowerup->PowerupDuration=PowerupDuration;
-	if ( OriginalPowerupDuration == 0 )
-	{
-		pDroppedPowerup->OriginalPowerupDuration=PowerupDuration;
-	}
+	
+	pDroppedPowerup->SetParent(pOwner);					// Attach the dropped powerup
+	pDroppedPowerup->FollowEntity( pOwner, false );		// to the player that picked up the powerup
+	pDroppedPowerup->PowerupDuration = PowerupDuration; // Set its duration to the duration the caller ( either a Powerup spawner or another dropped powerup )
+	
+	if ( OriginalPowerupDuration == 0 )					// If the Original duration isn't set
+		pDroppedPowerup->OriginalPowerupDuration=PowerupDuration;	// Set it to the Powerup duration
 	else
-		pDroppedPowerup->OriginalPowerupDuration=OriginalPowerupDuration;
-	pDroppedPowerup->PowerupID=PowerupID;
-	pDroppedPowerup->AddEffects( EF_NODRAW );
-	pDroppedPowerup->m_flRespawnTick = gpGlobals->curtime + PowerupDuration;
-	pDroppedPowerup->SetNextThink( gpGlobals->curtime );
-	pDroppedPowerup->SetThink( &CTFDroppedPowerup::FlyThink );
-	pDroppedPowerup->SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + PowerupDuration , "DieContext" );
+		pDroppedPowerup->OriginalPowerupDuration=OriginalPowerupDuration; // Otherwise set it to the callers original duration         We do this so that the circle timer always shows how long the normal powerup lasts, even if it was dropped and used multiple times
+	pDroppedPowerup->PowerupID=PowerupID;		// Set the condition ID
+	pDroppedPowerup->AddEffects( EF_NODRAW );	// Make it invisible, since its initialy called when its still not dropped
+	pDroppedPowerup->m_flRespawnTick = gpGlobals->curtime + PowerupDuration; // This sets when its gonna despawn, used for the circular timer
+	pDroppedPowerup->SetNextThink( gpGlobals->curtime ); // Set the next think to happen imidiatley
+	pDroppedPowerup->SetThink( &CTFDroppedPowerup::FlyThink ); 
+	pDroppedPowerup->SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + PowerupDuration , "DieContext" ); // Set its death time to whenever the powerup would have ran out
 	return pDroppedPowerup;
 }
 
-void CTFDroppedPowerup::SetInitialVelocity( Vector &vecVelocity )
+void CTFDroppedPowerup::SetInitialVelocity( Vector &vecVelocity ) // Obsolete, because the entity doesn't have physics, left it in since we may use it later on
 { 
 	m_vecInitialVelocity = vecVelocity;
 }
 
 void CTFDroppedPowerup::FlyThink( void )
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer ( GetOwnerEntity() );
-	if (pTFPlayer && !pTFPlayer->IsAlive() )
+	CTFPlayer *pTFPlayer = ToTFPlayer ( GetOwnerEntity() ); // Get the player who currently posseses this Powerup
+	if ( pTFPlayer && !pTFPlayer->IsAlive() )	// If they're dead
 	{
-		SetParent(NULL);
-		FollowEntity( NULL );
-		SetAbsAngles( QAngle( 0, 0, 0 ) );
-		RemoveEffects( EF_NODRAW );
-		OnGround = true;
-		m_bAllowOwnerPickup = true;
+		SetParent(NULL);	// Unparent us
+		FollowEntity( NULL ); // And stop following them
+		SetAbsAngles( QAngle( 0, 0, 0 ) ); // Set this to stand upwards like a real man
+		RemoveEffects( EF_NODRAW ); // Make it visible
+		OnGround = true;	// Allow people to pick it up
+		m_bAllowOwnerPickup = true; // Allow the now dead owner to pick it up
 	}
 	else
 	{
-		SetNextThink( gpGlobals->curtime + 0.01f );
+		SetNextThink( gpGlobals->curtime + 0.01f ); // Otherwise restart this think
 		SetThink( &CTFDroppedPowerup::FlyThink );
 	}
 }
@@ -123,28 +126,27 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		return;	
 	if ( !OnGround )
 		return;
-	//Don't let the person who threw this ammo pick it up until it hits the ground.
-	//This way we can throw ammo to people, but not touch it as soon as we throw it ourselves
+	//Don't let the person who got this powerup pick it up until it hits the ground and its owner is dead
+	//This way the powerup wont get picked up by the person who already has it picked up and wont be able to be picked up by walking into its owner
 	if( GetOwnerEntity() == pOther && m_bAllowOwnerPickup == false )
 		return;
 
-	CBasePlayer *pPlayer = ToBasePlayer( pOther );
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	CBasePlayer *pPlayer = ToBasePlayer( pOther ); // Get both the base player
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );  // And the tf player,       Guess we could just use the tf player, no?
 	Assert( pPlayer );
 
 	bool bSuccess = true;
-	if ( pTFPlayer->m_Shared.InCond(PowerupID) )
+	if ( pTFPlayer->m_Shared.InCond(PowerupID) )  // If we already have this condition, dont pick it up
 		return;
-	if ( bSuccess )
+	if ( bSuccess )			// If we picked it up
 	{
-		DevMsg("Powerup time is %d \n", (PowerupDuration - gpGlobals->curtime - m_flCreationTime));
-		CSingleUserRecipientFilter filter( pTFPlayer );
-		EmitSound( filter, entindex(), "AmmoPack.Touch" );
-		pTFPlayer->m_Shared.AddCond( PowerupID , PowerupDuration - ( gpGlobals->curtime - GetCreationTime()) );
-		Vector vecPackOrigin;
-		QAngle vecPackAngles;
+		CSingleUserRecipientFilter filter( pTFPlayer );		// Filter the sound to the person who picked this up
+		EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the pickup sound
+		pTFPlayer->m_Shared.AddCond( PowerupID , PowerupDuration - ( gpGlobals->curtime - GetCreationTime()) ); // Give them the condition
+		Vector vecPackOrigin;	// These are only used so that the create function compiles,
+		QAngle vecPackAngles;	// if we are sure we wont use physics on this we can remove it from the function
 		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer, STRING( GetModelName() ), PowerupID, PowerupDuration - ( gpGlobals->curtime - GetCreationTime()), OriginalPowerupDuration );
-		UTIL_Remove( this );
+		UTIL_Remove( this ); // Remove the dropped powerup
 	}
 }
 

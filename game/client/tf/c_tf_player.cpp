@@ -97,14 +97,6 @@ ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_U
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
-const char *TF_WEARABLE_MODEL[] =
-{
-	"models/empty.mdl",
-	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
-	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
-	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
-	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl"
-};
 IMaterial	*g_pHeadLabelMaterial[3] = { NULL, NULL, NULL }; 
 void	SetupHeadLabelMaterials( void );
 
@@ -117,6 +109,8 @@ const char *pszHeadLabelNames[] =
 	"effects/speech_voice_blue",
 	"effects/speech_voice_mercenary"
 };
+
+Color TennisBall (0,255,0);
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
@@ -1111,21 +1105,21 @@ public:
 	{
 		Assert( m_pResult );
 
+		if ( ofd_tennisball.GetBool() )
+		{	
+			float r = floorf( TennisBall[0] ) / 255.0f;
+			float g = floorf( TennisBall[1] ) / 255.0f;
+			float b = floorf( TennisBall[2] ) / 255.0f;	
+			m_pResult->SetVecValue( r, g, b );
+			return;
+		}		
+		
 		if ( !pC_BaseEntity )
 		{
-			if ( ofd_color_r.GetFloat() < 0 || ofd_color_g.GetFloat() < 0 || ofd_color_b.GetFloat() < 0 )
-			{
-				float r = RandomFloat( 0.0f, 1.0f );
-				float g = RandomFloat( 0.0f, 1.0f );
-				float b = RandomFloat( 0.0f, 1.0f );
-				
-				m_pResult->SetVecValue( r, g, b );
-				return;
-			}
+
 			float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
 			float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
 			float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
-
 			m_pResult->SetVecValue( r, g, b );
 			return;
 		
@@ -1154,14 +1148,30 @@ public:
 
 EXPOSE_INTERFACE( CProxyItemTintColor, IMaterialProxy, "ItemTintColor" IMATERIAL_PROXY_INTERFACE_VERSION );
 
-void CC_OFDColorRandom( void )
+class CProxyLocalPlayerColor : public CResultProxy
 {
-		ofd_color_r.SetValue( -1 );
-		ofd_color_g.SetValue( -1 );
-		ofd_color_b.SetValue( -1 );
-}
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
 
-static ConCommand ofd_color_random("ofd_color_random", CC_OFDColorRandom, "Make player a random color each time they spawn", FCVAR_CLIENTDLL );
+		if ( ofd_tennisball.GetBool() )
+		{	
+			float r = floorf( TennisBall[0] ) / 255.0f;
+			float g = floorf( TennisBall[1] ) / 255.0f;
+			float b = floorf( TennisBall[2] ) / 255.0f;	
+			m_pResult->SetVecValue( r, g, b );
+			return;
+		}		
+		
+		float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
+		float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
+		float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
+		m_pResult->SetVecValue( r, g, b );
+	}
+};
+
+EXPOSE_INTERFACE( CProxyLocalPlayerColor, IMaterialProxy, "LocalPlayerColor" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes
@@ -1430,7 +1440,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 
 	if ( IsDormant() && !bDormant )
 	{
-		m_bUpdatePartyHat = true;
+		m_bUpdatePlayerAttachments = true;
 	}
 
 	// Deliberately skip base combat weapon
@@ -1483,7 +1493,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		if ( m_iOldTeam != GetTeamNumber() || m_iOldDisguiseTeam != m_Shared.GetDisguiseTeam() )
 		{
 			InitInvulnerableMaterial();
-			m_bUpdatePartyHat = true;
+			m_bUpdatePlayerAttachments = true;
 		}
 	}
 
@@ -1509,7 +1519,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		ClientPlayerRespawn();
 
 		bJustSpawned = true;
-		m_bUpdatePartyHat = true;
+		m_bUpdatePlayerAttachments = true;
 	}
 
 	if ( m_bSaveMeParity != m_bOldSaveMeParity )
@@ -1884,38 +1894,89 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 		m_iSpyMaskBodygroup = -1;
 	}
 
-	m_bUpdatePartyHat = true;
+	m_bUpdatePlayerAttachments = true;
 
 	return hdr;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Update clientside player attachments
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdatePlayerAttachedModels( void )
+{
+	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) ) //If we spawned in, continue
+	{
+		UpdatePartyHat();
+		UpdateWearables();
+		UpdateGameplayAttachments();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update the party hat players wear in birthday mode
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && m_Shared.WearsHat( 0 ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
+	{
+		if ( m_hPartyHat )
+		{
+			m_hPartyHat->Release(); //Remove the hat so if its not valid anymore we don't wear it
+		}
+		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() ) // If we're the local player and not in third person, bail
+			return;
+		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+												  // Model name, object it gets attached to, attachment name,
+		// C_PlayerAttachedModel::Create can return NULL!
+		if ( m_hPartyHat )
+		{
+			int iVisibleTeam = GetTeamNumber();
+			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			{
+				iVisibleTeam = m_Shared.GetDisguiseTeam();
+			}
+			m_hPartyHat->m_nSkin = iVisibleTeam - 2; //Set the proper skin for each team
+		}
+	}	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update the hats you're wearing
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateWearables( void )
+{
+
+	for( int i = 1; i < TF_WEARABLE_LAST; i++ )
+	{
+		if ( m_hCosmetic[i] )
+			m_hCosmetic[i]->Release();
+		
+		if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
+		{
+			m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+		}
+		
+		if ( m_hCosmetic[i] )
+		{
+			int iVisibleTeam = GetTeamNumber();
+			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			{
+				iVisibleTeam = m_Shared.GetDisguiseTeam();
+			}
+			m_hCosmetic[i]->m_nSkin = iVisibleTeam - 2;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Attachments used for gameplay IE Shield powerup go here
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateGameplayAttachments( void )
 {
 	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
 	{
 		if ( m_hShieldEffect )
 			m_hShieldEffect->Release();
-		for( int i = 1; i < TF_WEARABLE_LAST; i++ )
-		{
-			if ( m_hCosmetic[i] )
-				m_hCosmetic[i]->Release();
-			if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
-			{
-				m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
-			}
-			if ( m_hCosmetic[i] )
-			{
-				int iVisibleTeam = GetTeamNumber();
-				if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
-				{
-					iVisibleTeam = m_Shared.GetDisguiseTeam();
-				}
-				m_hCosmetic[i]->m_nSkin = iVisibleTeam - 2;
-			}
-		}
 		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
 		{
 			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
@@ -1929,35 +1990,8 @@ void C_TFPlayer::UpdatePartyHat( void )
 				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
 			}
 		}
-		
-		
-		
-		
 	}
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && IsAlive() && 
-		GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
-	{
-		if ( m_hPartyHat )
-		{
-			m_hPartyHat->Release();
-		}
-		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
-			return;
-		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
-
-		// C_PlayerAttachedModel::Create can return NULL!
-		if ( m_hPartyHat )
-		{
-			int iVisibleTeam = GetTeamNumber();
-			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
-			{
-				iVisibleTeam = m_Shared.GetDisguiseTeam();
-			}
-			m_hPartyHat->m_nSkin = iVisibleTeam - 2;
-		}
-	}	
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: Is this player an enemy to the local player
 //-----------------------------------------------------------------------------
@@ -2066,7 +2100,7 @@ void C_TFPlayer::TurnOnTauntCam( void )
 	{
 		m_hItem->UpdateVisibility();
 	}
-	UpdatePartyHat();
+	UpdatePlayerAttachedModels();
 }
 
 //-----------------------------------------------------------------------------
@@ -2192,10 +2226,10 @@ void C_TFPlayer::ClientThink()
 		m_bWaterExitEffectActive = false;
 	}
 
-	if ( m_bUpdatePartyHat )
+	if ( m_bUpdatePlayerAttachments )
 	{
-		UpdatePartyHat();
-		m_bUpdatePartyHat = false;
+		UpdatePlayerAttachedModels();
+		m_bUpdatePlayerAttachments = false;
 	}
 
 	if ( m_pSaveMeEffect )
