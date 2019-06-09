@@ -22,6 +22,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE(C_PlayerResource, DT_PlayerResource, CPlayerReso
 	RecvPropArray3( RECVINFO_ARRAY(m_iPing), RecvPropInt( RECVINFO(m_iPing[0]))),
 	RecvPropArray3( RECVINFO_ARRAY(m_iScore), RecvPropInt( RECVINFO(m_iScore[0]))),
 	RecvPropArray3( RECVINFO_ARRAY(m_iGGLevel), RecvPropInt( RECVINFO(m_iGGLevel[0]))),
+	RecvPropArray3( RECVINFO_ARRAY(m_iLives), RecvPropInt( RECVINFO(m_iLives[0]))),
 	RecvPropArray3( RECVINFO_ARRAY(m_iDeaths), RecvPropInt( RECVINFO(m_iDeaths[0]))),
 	RecvPropArray3( RECVINFO_ARRAY(m_bConnected), RecvPropInt( RECVINFO(m_bConnected[0]))),
 	RecvPropArray3( RECVINFO_ARRAY(m_iTeam), RecvPropInt( RECVINFO(m_iTeam[0]))),
@@ -35,6 +36,7 @@ BEGIN_PREDICTION_DATA( C_PlayerResource )
 	DEFINE_PRED_ARRAY( m_iPing, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
 	DEFINE_PRED_ARRAY( m_iScore, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
 	DEFINE_PRED_ARRAY( m_iGGLevel, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
+	DEFINE_PRED_ARRAY( m_iLives, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
 	DEFINE_PRED_ARRAY( m_iDeaths, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
 	DEFINE_PRED_ARRAY( m_bConnected, FIELD_BOOLEAN, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
 	DEFINE_PRED_ARRAY( m_iTeam, FIELD_INTEGER, MAX_PLAYERS+1, FTYPEDESC_PRIVATE ),
@@ -56,6 +58,7 @@ C_PlayerResource::C_PlayerResource()
 //	memset( m_iPacketloss, 0, sizeof( m_iPacketloss ) );
 	memset( m_iScore, 0, sizeof( m_iScore ) );
 	memset( m_iGGLevel, 0, sizeof( m_iGGLevel ) );
+	memset( m_iLives, 0, sizeof( m_iLives ) );
 	memset( m_iDeaths, 0, sizeof( m_iDeaths ) );
 	memset( m_bConnected, 0, sizeof( m_bConnected ) );
 	memset( m_iTeam, 0, sizeof( m_iTeam ) );
@@ -307,6 +310,16 @@ int	C_PlayerResource::GetDeaths( int iIndex )
 	return m_iDeaths[iIndex];
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	C_PlayerResource::GetLives( int iIndex )
+{
+	if ( !IsConnected( iIndex ) )
+		return 0;
+
+	return m_iLives[iIndex];
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

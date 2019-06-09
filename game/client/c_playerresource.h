@@ -50,6 +50,7 @@ public : // IGameResources intreface
 	virtual int		GetPlayerScore( int index );
 	virtual int		GetGGLevel( int index );
 	virtual int		GetDeaths( int index );
+	virtual int		GetLives( int index );
 	virtual int		GetTeam( int index );
 	virtual int		GetFrags( int index );
 	virtual int		GetHealth( int index );
@@ -66,6 +67,7 @@ protected:
 	int		m_iPing[MAX_PLAYERS+1];
 	int		m_iScore[MAX_PLAYERS+1];
 	int		m_iGGLevel[MAX_PLAYERS+1];
+	int		m_iLives[MAX_PLAYERS+1];
 	int		m_iDeaths[MAX_PLAYERS+1];
 	bool	m_bConnected[MAX_PLAYERS+1];
 	int		m_iTeam[MAX_PLAYERS+1];
