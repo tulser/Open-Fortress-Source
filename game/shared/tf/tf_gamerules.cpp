@@ -1909,9 +1909,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 					if ( iDeadTeam && iAliveTeam )
 					{
-						if ( iAliveTeam == TF_TEAM_MERCENARY )
-							GoToIntermission();
-						else						
+//						if ( iAliveTeam == TF_TEAM_MERCENARY )
+//							GoToIntermission();
+//						else						
 							SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
 					}
 				}

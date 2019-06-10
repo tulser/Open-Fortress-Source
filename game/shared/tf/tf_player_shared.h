@@ -119,6 +119,8 @@ public:
 	
 	bool InCondShield( void );
 	void RemoveCondShield( void );
+	void SetSpawnEffect( int iEffect ){ m_iRespawnEffect = iEffect; }
+	int GetSpawnEffects( void ){ return m_iRespawnEffect; };
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -271,7 +273,7 @@ private:
 	float m_flLastStealthExposeTime;
 
 	CNetworkVar( int, m_nNumHealers );
-
+	CNetworkVar( int, m_iRespawnEffect );
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 

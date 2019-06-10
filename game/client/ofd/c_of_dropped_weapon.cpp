@@ -9,9 +9,12 @@
 #include "c_tf_player.h"
 #include "engine/IEngineSound.h"
 #include "soundenvelope.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+ConVar ofd_droppedweapons_glow( "ofd_droppedweapons_glow", "1", FCVAR_ARCHIVE, "Enables/Disables outlines on dropped weapons." );
 
 class C_TFDroppedWeapon : public C_BaseAnimating, public ITargetIDProvidesHint
 {
@@ -23,6 +26,8 @@ public:
 
 	~C_TFDroppedWeapon();
 
+	void	ClientThink( void );
+	void	Spawn( void );	
 	virtual int		DrawModel( int flags );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual bool	Interpolate( float currentTime );
@@ -35,10 +40,17 @@ public:
 
 private:
 
+	CGlowObject		   *m_pGlowEffect;
+	bool	m_bShouldGlow;
+	void	UpdateGlowEffect( void );
+	void	DestroyGlowEffect(void);
+
 	Vector		m_vecInitialVelocity;
 
 	// Looping sound emitted by dropped flamethrowers
 	CSoundPatch *m_pPilotLightSound;
+	
+	int		iTeamNum;
 
 };
 
@@ -55,6 +67,68 @@ C_TFDroppedWeapon::~C_TFDroppedWeapon()
 	{
 		CSoundEnvelopeController::GetController().SoundDestroy( m_pPilotLightSound );
 		m_pPilotLightSound = NULL;
+	}
+	DestroyGlowEffect();
+}
+
+void C_TFDroppedWeapon::Spawn( void )
+{
+	BaseClass::Spawn();
+	iTeamNum = TEAM_INVALID;
+
+	UpdateGlowEffect();
+
+	ClientThink();
+}
+
+void C_TFDroppedWeapon::ClientThink( void )
+{	
+	bool bShouldGlow = false;
+
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	
+	if ( pPlayer ) 
+	{
+		trace_t tr;
+		UTIL_TraceLine( GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr );
+		if ( tr.fraction == 1.0f )
+		{
+			bShouldGlow = true;
+		}
+	}
+	
+	if ( m_bShouldGlow != bShouldGlow || ( pPlayer && iTeamNum != pPlayer->GetTeamNumber() ) )
+	{
+		m_bShouldGlow = bShouldGlow;
+		iTeamNum = pPlayer->GetTeamNumber();
+		UpdateGlowEffect();
+	}
+	
+
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
+}
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Update glow effect
+//-----------------------------------------------------------------------------
+void C_TFDroppedWeapon::UpdateGlowEffect( void )
+{
+	DestroyGlowEffect();
+	
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	
+	if ( m_bShouldGlow && ofd_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
+}
+
+void C_TFDroppedWeapon::DestroyGlowEffect(void)
+{
+	if ( m_pGlowEffect )
+	{
+		delete m_pGlowEffect;
+		m_pGlowEffect = NULL;
 	}
 }
 
