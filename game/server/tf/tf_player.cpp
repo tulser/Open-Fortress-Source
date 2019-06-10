@@ -1680,7 +1680,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 			return CBaseEntity::Instance( INDEXENT(0) );
 		}
-		return CBaseEntity::Instance( INDEXENT(0) );
 	}
 
 	return pSpot;
