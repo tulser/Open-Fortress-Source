@@ -53,7 +53,9 @@
 #include "tf_weaponbase.h"
 #include "tf_playerclass_shared.h"
 #include "ofd_weapon_physcannon.h"
+
 #include "ai_basenpc.h"
+
 #include "AI_Criteria.h"
 #include "npc_barnacle.h"
 #include "IVehicle.h"
@@ -528,18 +530,22 @@ void CTFPlayer::PreThink()
 	// Update timers.
 	UpdateTimers();
 
+	// copied from hl2player
+	if  (IsInAVehicle() )
+	{
+		UpdateClientData();
+		CheckTimeBasedDamage();
+		UpdateTimers();
+		WaterMove();
+
+		m_vecTotalBulletForce = vec3_origin;
+
+		CheckForIdle();
+		return;
+	}
+
 	// Pass through to the base class think.
 	BaseClass::PreThink();
-	
-	// copied from hl2player
-	if ( IsInAVehicle() )	
-	{
-		UpdateClientData();		
-		CheckTimeBasedDamage();
-		
-		WaterMove();	
-		return;
-}
 
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.
 	m_vecTotalBulletForce = vec3_origin;
@@ -680,7 +686,7 @@ const char *g_aPlayerFirstPersonArms[] =
 
 
 	"models/weapons/c_models/c_merc_arms.mdl", //merc
-	"models/weapons/c_models/c_soldier_arms.mdl", //vip
+	"models/weapons/c_models/c_civilian_arms.mdl", //vip
 };
 
 //-----------------------------------------------------------------------------
@@ -1614,6 +1620,7 @@ void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
 // Purpose: Find a spawn point for the player.
 //-----------------------------------------------------------------------------
 
+
 // enable info player start and info player deathmatch for checking
 CBaseEntity *FindPlayerStart(const char *pszClassName);
 
@@ -1626,9 +1633,10 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 	{
 	case TF_TEAM_RED:
 	case TF_TEAM_BLUE:
+	case TF_TEAM_MERCENARY:
 		{
 			pSpawnPointName = "info_player_teamspawn";
-			if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+			if ( SelectSpawnSpot(pSpawnPointName, pSpot ) )
 			{
 				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
 			}
@@ -1637,18 +1645,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
 			break;
 		}
-	case TF_TEAM_MERCENARY:
-		{
-			pSpawnPointName = "info_player_teamspawn";
-			if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
-			{
-				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
-			}
-
-			// need to save this for later so we can apply and modifiers to the armor and grenades...after the call to InitClass() //by tf2team
-			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
-			break;
-		} 
 	case TEAM_SPECTATOR:
 	case TEAM_UNASSIGNED:
 	default:
@@ -1660,14 +1656,25 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 	if ( !pSpot )
 	{
-		// i added this so that hl2 maps are playable
-		pSpot = FindPlayerStart( "info_player_start" );
+		Warning( "Player Spawn: no valid info_player_teamspawn on level\n" );
+
+		// if no teamspawn is found then try find deathmatch point for hl2dm
+		pSpot = FindPlayerStart( "info_player_deathmatch" );
 		if ( pSpot )
 			return pSpot;
-			return CBaseEntity::Instance(INDEXENT(0));
-		if (!pSpot)
-			pSpot = FindPlayerStart("info_player_deathmatch");
-			return CBaseEntity::Instance(INDEXENT(0));
+		if ( !pSpot )
+		{
+			Warning( "Player Spawn: no valid info_player_deathmatch on level\n" );
+
+			// if no deathmatch point is found then try find start point for normal hl2
+			pSpot = FindPlayerStart( "info_player_start" );
+			if ( pSpot )
+				return pSpot;
+
+			return CBaseEntity::Instance( INDEXENT(0) );
+		}
+
+		return CBaseEntity::Instance( INDEXENT(0) );
 	}
 
 	return pSpot;
@@ -2114,7 +2121,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	// comes up, fake that we've closed the menu.
 	SetClassMenuOpen( false );
 
-	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
+	if (TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode())
 	{
 		if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
 		{
@@ -2200,7 +2207,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	}
 
 	// We can respawn instantly if:
-	//	- We're dead, and we're past the required post-death time
+	//	- We're dead, and we're past the required post-death timebInStalemateClassChangeTime 
 	//	- We're inside a respawn room
 	//	- We're in the stalemate grace period
 	bool bInRespawnRoom = PointInRespawnRoom( this, WorldSpaceCenter() );
@@ -2218,13 +2225,12 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		bDeadInstantSpawn = (gpGlobals->curtime > flWaveTime);
 	}
 	bool bInStalemateClassChangeTime = false;
-	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
+	if (TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode())
 	{
 		// Stalemate overrides respawn rules. Only allow spawning if we're in the class change time.
 		bInStalemateClassChangeTime = TFGameRules()->CanChangeClassInStalemate();
 		bDeadInstantSpawn = false;
 		bInRespawnRoom = false;
-		
 	}
 	if ( bShouldNotRespawn == false && ( m_bAllowInstantSpawn || bDeadInstantSpawn || bInRespawnRoom || bInStalemateClassChangeTime ) )
 	{
@@ -6043,6 +6049,22 @@ int CTFPlayer::BuildObservableEntityList( void )
 		}
 	}
 
+	// Add all my npcs
+	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
+	{
+		CAI_BaseNPC *pNPC = ppAIs[i];
+		if (pNPC)
+		{
+			m_hObservableEntities.AddToTail(pNPC);
+
+			if (m_hObserverTarget.Get() == pNPC)
+			{
+				iCurrentIndex = (m_hObservableEntities.Count() - 1);
+			}
+		}
+	}
+
 	return iCurrentIndex;
 }
 
@@ -6354,7 +6376,8 @@ void CTFPlayer::ValidateCurrentObserverTarget( void )
 		}
 	}
 
-	if ( m_hObserverTarget && m_hObserverTarget->IsBaseObject() )
+	// check added for npcs too
+	if ( m_hObserverTarget &&  (m_hObserverTarget->IsBaseObject() || m_hObserverTarget->IsNPC()))
 	{
 		if ( m_iObserverMode == OBS_MODE_IN_EYE )
 		{
@@ -7270,11 +7293,11 @@ void CTFPlayer::GiveAllItems()
 	AddAccount( 16000 );
 
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-
 	//the -1 is to stop trying to give an invaild weapon at the end
+	
 	int nWeapons = TF_WEAPON_COUNT; 
 	int i;	
-
+	
 	for ( i = 0; i < nWeapons; ++i )
 	{
 		pWeapon = (CTFWeaponBase *)GiveNamedItem(g_aWeaponNames[i]);

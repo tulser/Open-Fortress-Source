@@ -27,6 +27,8 @@
 #include "iservervehicle.h"
 #include "func_break.h"
 
+#include "tf_player.h"
+
 #ifdef HL2MP
 	#include "hl2mp_gamerules.h"
 #endif
@@ -77,13 +79,15 @@ void W_Precache(void)
 	g_sModelIndexLaser = CBaseEntity::PrecacheModel( (char *)g_pModelNameLaser );
 
 	PrecacheParticleSystem( "blood_impact_red_01" );
-	PrecacheParticleSystem( "blood_impact_green_01" );
-	PrecacheParticleSystem( "blood_impact_yellow_01" );
 
 	CBaseEntity::PrecacheModel ("effects/bubble.vmt");//bubble trails
 
 	CBaseEntity::PrecacheModel("models/weapons/w_bullet.mdl");
 #endif
+
+	// doesnt conflict with tf2, moved out of ifdef
+	PrecacheParticleSystem("blood_impact_green_01");
+	PrecacheParticleSystem("blood_impact_yellow_01");
 
 	CBaseEntity::PrecacheScriptSound( "BaseCombatWeapon.WeaponDrop" );
 	CBaseEntity::PrecacheScriptSound( "BaseCombatWeapon.WeaponMaterialize" );
@@ -516,7 +520,8 @@ void CBaseCombatWeapon::FallInit( void )
 #endif //CLIENT_DLL
 	}	
 
-	SetPickupTouch();
+	// stop a crash
+	//SetPickupTouch();
 	
 	SetThink( &CBaseCombatWeapon::FallThink );
 
@@ -589,7 +594,8 @@ void CBaseCombatWeapon::Materialize( void )
 	AddSolidFlags( FSOLID_TRIGGER );
 #endif
 
-	SetPickupTouch();
+	// stop a crash
+	//SetPickupTouch();
 
 	SetThink (NULL);
 }
@@ -711,6 +717,7 @@ int	CBaseCombatWeapon::ObjectCaps( void )
 void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	CBasePlayer *pPlayer = ToBasePlayer( pActivator );
+	//CTFPlayer *pPlayer = ToTFPlayer(pActivator);
 	
 	if ( pPlayer )
 	{
@@ -721,6 +728,9 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 		// important in a few spots in the game where the player could potentially +use pickup
 		// and then THROW AWAY a vital weapon, rendering them unable to continue the game.
 		//
+
+		// hl2 weapons cause crashing when pickuped - DISABLED
+		/*
 		if ( pPlayer->BumpWeapon( this ) )
 		{
 			OnPickedUp( pPlayer );
@@ -729,6 +739,8 @@ void CBaseCombatWeapon::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 		{
 			pPlayer->PickupObject( this );
 		}
+		*/
+
 	}
 }
 

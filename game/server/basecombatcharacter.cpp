@@ -2752,7 +2752,13 @@ Relationship_t *CBaseCombatCharacter::FindEntityRelationship( CBaseEntity *pTarg
 Disposition_t CBaseCombatCharacter::IRelationType ( CBaseEntity *pTarget )
 {
 	if ( pTarget )
+		// if its a building, ANNIHALTE THEM
+		if  (pTarget->IsBaseObject() )
+		{
+			return D_HT;
+		}
 		return FindEntityRelationship( pTarget )->disposition;
+	// assume neutral otherwise
 	return D_NU;
 }
 

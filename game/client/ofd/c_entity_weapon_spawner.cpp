@@ -112,8 +112,8 @@ void C_WeaponSpawner::ClientThink( void )
 			bShouldGlow = true;
 		}
 	}
-	
-	if ( m_bShouldGlow != bShouldGlow || ( pPlayer && iTeamNum != pPlayer->GetTeamNumber() ) )
+
+	if (pPlayer && (m_bShouldGlow != bShouldGlow || (iTeamNum != pPlayer -> GetTeamNumber())))
 	{
 		m_bShouldGlow = bShouldGlow;
 		iTeamNum = pPlayer->GetTeamNumber();

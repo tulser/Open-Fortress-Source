@@ -301,6 +301,9 @@ class CViewRender : public IViewRender,
 public:
 	virtual void	Init( void );
 	virtual void	Shutdown( void );
+	
+	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+	virtual void    MP_PostSimulate();
 
 	const CViewSetup *GetPlayerViewSetup( ) const;
 

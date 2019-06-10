@@ -107,6 +107,14 @@ extern ConVar sk_healthkit;
 #include "utlbuffer.h"
 #include "gamestats.h"
 
+#include "tf_obj.h"
+
+
+#include "tf_player.h"
+#include "tf_shareddefs.h"
+#include "tf_weaponbase.h"
+
+	
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -710,7 +718,48 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	Forget( bits_MEMORY_INCOVER );
 
-	if ( !BaseClass::OnTakeDamage_Alive( info ) )
+	CTakeDamageInfo newInfo = info;
+
+	int bitsDamage = info.GetDamageType();
+
+	// crit damage, copied from tf_player.cpp
+	if (info.GetAttacker() != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)))
+	{
+		float flDamage = info.GetDamage();
+
+		if (bitsDamage & DMG_CRITICAL)
+		{
+			/*
+			if ( bDebug )
+			{
+				Warning("    CRITICAL!\n");
+			}
+			*/
+
+			flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
+
+			// Show the attacker, unless the target is a disguised spy
+			//if (info.GetAttacker() && info.GetAttacker()->IsPlayer() && !m_Shared.InCond(TF_COND_DISGUISED))
+			if (info.GetAttacker() && info.GetAttacker()->IsPlayer())
+			{
+				CEffectData	data;
+				data.m_nHitBox = GetParticleSystemIndex("crit_text");
+				data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
+				data.m_vAngles = vec3_angle;
+				data.m_nEntIndex = 0;
+
+				CSingleUserRecipientFilter filter( ( CBasePlayer*)info.GetAttacker() );
+				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
+
+				EmitSound_t params;
+				params.m_flSoundTime = 0;
+				params.m_pSoundName = "TFPlayer.CritHit";
+				EmitSound( filter, info.GetAttacker()->entindex(), params );
+			}
+		}
+		newInfo.SetDamage(flDamage);
+	}
+	if (!BaseClass::OnTakeDamage_Alive(newInfo))
 		return 0;
 
 	if ( GetSleepState() == AISS_WAITING_FOR_THREAT )
@@ -1157,8 +1206,44 @@ void CAI_BaseNPC::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 		if( bDebug ) DevMsg("Hit Location: Gear\n");
 		break;
 
+	// added tf2 critical headshots from sniper rifle
 	case HITGROUP_HEAD:
-		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+        // moved this line furhter down
+		//subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if (info.GetAttacker()->IsPlayer())
+		{
+			CTFPlayer *pAttacker = ToTFPlayer(info.GetAttacker());
+
+			// fixme: of_headshots isn't being respected here
+//			if ( (subInfo.GetDamageType() & DMG_USE_HITLOCATIONS || of_headshots.GetBool() == 1 ) )
+			if ( (subInfo.GetDamageType() & DMG_USE_HITLOCATIONS ) )
+			{
+				// copied from tf_player.cpp
+				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+				bool bCritical = true;
+
+				if (pWpn && !pWpn->CanFireCriticalShot(true))
+				{
+					bCritical = false;
+				}
+
+				if (bCritical)
+				{
+					subInfo.AddDamageType( DMG_CRITICAL );
+					subInfo.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
+
+					// play the critical shot sound to the shooter	
+					if ( pWpn )
+					{
+							pWpn->WeaponSound ( BURST );
+					}
+				}
+			}
+		}
+		else
+		{
+			subInfo.ScaleDamage(GetHitgroupDamageMultiplier(ptr->hitgroup, info));
+		}
 		if( bDebug ) DevMsg("Hit Location: Head\n");
 		break;
 
@@ -7668,6 +7753,20 @@ bool CAI_BaseNPC::IsValidEnemy( CBaseEntity *pEnemy )
 	// Test our enemy filter
 	if ( m_hEnemyFilter.Get()!= NULL && m_hEnemyFilter->PassesFilter( this, pEnemy ) == false )
 		return false;
+
+	CTFPlayer *pEnemyTFPlayer = ToTFPlayer(pEnemy);
+	// dont want sneaky frenchmen to be visible
+	if ( pEnemyTFPlayer && pEnemyTFPlayer->m_Shared.GetPercentInvisible() > 0.5 )
+		return false;
+
+	if (pEnemy->IsBaseObject())
+	{
+		CBaseObject *pEnemyObject = dynamic_cast<CBaseObject *>(pEnemy);
+
+		// Ignore sappers.
+		if ( pEnemyObject && pEnemyObject->MustBeBuiltOnAttachmentPoint() )
+			return false;
+	}
 
 	return true;
 }

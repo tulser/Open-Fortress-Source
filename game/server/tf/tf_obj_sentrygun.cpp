@@ -16,6 +16,9 @@
 #include "tf_gamerules.h"
 #include "ammodef.h"
 
+// for npcs
+#include "ai_basenpc.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -662,7 +665,7 @@ bool CObjectSentrygun::FindTarget()
 	CBaseEntity *pTargetOld = m_hEnemy.Get();
 	float flOldTargetDist2 = FLT_MAX;
 
-	// Sentries will try to target players first, then objects.  However, if the enemy held was an object it will continue
+	// Sentries will try to target players first, then objects, then NPCs.  However, if the enemy held was an object it will continue
 	// to try and attack it first.
 	int nTeamCount = pTeam->GetNumPlayers();
 	for ( int iPlayer = 0; iPlayer < nTeamCount; ++iPlayer )
@@ -742,6 +745,43 @@ bool CObjectSentrygun::FindTarget()
 		}
 	}
 
+	// now check NPCs
+	if ( pTargetCurrent == NULL )
+	{
+		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+		int nAIs = g_AI_Manager.NumAIs();
+
+		for (int i = 0; i < nAIs; i++)
+		{
+			CAI_BaseNPC *pNPC = ppAIs[i];
+
+            // our guy has to be alive too
+			if (!pNPC->IsAlive())
+				continue;
+
+			vecTargetCenter = pNPC->WorldSpaceCenter();
+			VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
+			float flDist2 = vecSegment.LengthSqr();
+
+			// Store the current target distance if we come across it
+			if (pNPC == pTargetOld)
+			{
+				flOldTargetDist2 = flDist2;
+			}
+
+			// Check to see if the target is closer than the already validated target.
+			if  (flDist2 > flMinDist2 )
+				continue;
+
+			// It is closer, check to see if the target is valid.
+			if (ValidTargetNPC(pNPC, vecSentryOrigin, vecTargetCenter))
+			{
+				flMinDist2 = flDist2;
+				pTargetCurrent = pNPC;
+			}
+		}
+	}
+
 	// We have a target.
 	if ( pTargetCurrent )
 	{
@@ -801,6 +841,17 @@ bool CObjectSentrygun::ValidTargetObject( CBaseObject *pObject, const Vector &ve
 
 	// Ray trace.
 	return FVisible( pObject, MASK_SHOT | CONTENTS_GRATE );
+}
+
+// and also check npcs
+bool CObjectSentrygun::ValidTargetNPC( CAI_BaseNPC *pNPC, const Vector &vecStart, const Vector &vecEnd )
+{
+	// Not across water boundary.
+	if ( ( GetWaterLevel() == 0 && pNPC->GetWaterLevel() >= 3) || ( GetWaterLevel() == 3 && pNPC->GetWaterLevel() <= 0) )
+		return false;
+
+	// Ray trace.
+	return FVisible( pNPC, MASK_SHOT | CONTENTS_GRATE );
 }
 
 //-----------------------------------------------------------------------------

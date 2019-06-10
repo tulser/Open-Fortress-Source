@@ -2223,6 +2223,13 @@ void OnRenderStart()
 	PhysicsSimulate();
 
 	C_BaseAnimating::ThreadedBoneSetup();
+	
+	
+	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+	 //Tony; in multiplayer do some extra stuff. like re-calc the view if in a vehicle!
+    if ( engine->GetMaxClients() > 1 )
+    view->MP_PostSimulate();
+	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
 
 	{
 		VPROF_("Client TempEnts", 0, VPROF_BUDGETGROUP_CLIENT_SIM, false, BUDGETFLAG_CLIENT);

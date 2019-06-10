@@ -94,6 +94,11 @@ ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO,
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
 ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you cant have tf2 without hats\n");
 ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have tf2 without hats\n");
+
+// SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
+static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Allow first person ragdolls");
+// end SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
+
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
@@ -2943,6 +2948,21 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	{
 		origin = pRagdoll->GetRagdollOrigin();
 		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
+
+		if (cl_fp_ragdoll.GetBool() && m_hRagdoll.Get())
+		{
+			// pointer to the ragdoll
+			C_TFRagdoll *pRagdoll = (C_TFRagdoll*)m_hRagdoll.Get();
+
+			// gets its origin and angles
+			pRagdoll->GetAttachment(pRagdoll->LookupAttachment("eyes"), eyeOrigin, eyeAngles);
+			Vector vForward;
+			AngleVectors(eyeAngles, &vForward);
+
+				return;
+		}
+		eyeOrigin = vec3_origin;
+		eyeAngles = vec3_angle;
 	}
 
 	if ( killer && (killer != this) ) 

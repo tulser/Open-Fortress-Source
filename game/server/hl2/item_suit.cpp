@@ -41,6 +41,7 @@ public:
 	}
 	bool MyTouch( CBasePlayer *pPlayer )
 	{
+		/*
 		if ( pPlayer->IsSuitEquipped() )
 			return FALSE;
 
@@ -50,8 +51,11 @@ public:
 			UTIL_EmitSoundSuit(pPlayer->edict(), "!HEV_AAx");	// long version of suit logon
 
 		pPlayer->EquipSuit();
-				
+        */
+		// instead of crashing the game, just nuke the suit
+		UTIL_Remove(this);
 		return true;
+
 	}
 };
 

@@ -1889,7 +1889,9 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 Class_T	CBaseObject::Classify( void )
 {
-	return CLASS_NONE;
+	// fixme: horrible horrible horrible method of making npcs shoot buildings
+	//return CLASS_NONE;
+	return CLASS_HEADCRAB;
 }
 
 //-----------------------------------------------------------------------------
