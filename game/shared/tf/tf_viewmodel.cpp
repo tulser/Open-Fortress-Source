@@ -211,7 +211,6 @@ int CTFViewModel::DrawModel( int flags )
 	
 	if ( pLocalPlayer && pLocalPlayer->m_Shared.InCondUber() )
 	{
-		DevMsg("Lul sos \n");
 		// Force the invulnerable material
 		modelrender->ForcedMaterialOverride( *pLocalPlayer->GetInvulnMaterialRef() );
 		ret = this->DrawOverriddenViewmodel( flags );

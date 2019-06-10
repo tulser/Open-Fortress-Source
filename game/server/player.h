@@ -194,6 +194,7 @@ public:
 	virtual void		ChangeTeam( int iTeamNum );
 	virtual int			GetFragCount();
 	virtual int			GetGGLevel();
+	virtual int			GetLives();
 	virtual int			GetDeathCount();
 	virtual bool		IsConnected();
 	virtual int			GetArmorValue();
@@ -664,6 +665,7 @@ public:
 	// Accessor methods
 	int		FragCount() const		{ return m_iFrags; }
 	int		GGLevel() const			{ return m_iGGLevel; }
+	int		Lives() const			{ return m_iLives; }
 	int		DeathCount() const		{ return m_iDeaths;}
 	bool	IsConnected() const		{ return m_iConnected != PlayerDisconnected; }
 	bool	IsDisconnecting() const	{ return m_iConnected == PlayerDisconnecting; }
@@ -686,10 +688,10 @@ public:
 	virtual bool	IsReadyToPlay( void ) { return true; }
 	virtual bool	IsReadyToSpawn( void ) { return true; }
 	virtual bool	ShouldGainInstantSpawn( void ) { return false; }
-	virtual void	ResetPerRoundStats( void ) { return; }
+	virtual void	ResetPerRoundStats( void ) { ResetGGLevel(); ResetLives(); }
 	void			AllowInstantSpawn( void ) { m_bAllowInstantSpawn = true; }
 
-	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel(); }
+	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel();ResetLives(); }
 	void	ResetFragCount();
 	void	IncrementFragCount( int nCount );
 	
@@ -698,7 +700,11 @@ public:
 
 	void	ResetDeathCount();
 	void	IncrementDeathCount( int nCount );
-
+	
+	void	ResetLives();
+	void	SetLives( int nCount );
+	void	IncrementLives( int nCount );
+	
 	void	SetArmorValue( int value );
 	void	IncrementArmorValue( int nCount, int nMaxValue = -1 );
 
@@ -1045,6 +1051,7 @@ private:
 	int						m_iFrags;
 	int						m_iDeaths;
 	int 					m_iGGLevel;
+	int 					m_iLives;
 
 	float					m_flNextDecalTime;// next time this player can spray a decal
 

@@ -772,7 +772,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		CBasePlayer *pScorer = GetDeathScorer( pKiller, pInflictor, pVictim );
 		
 		pVictim->IncrementDeathCount( 1 );
-
+		pVictim->IncrementLives( -1 );
 		// dvsents2: uncomment when removing all FireTargets
 		// variant_t value;
 		// g_EventQueue.AddEvent( "game_playerdie", "Use", value, 0, pVictim, pVictim );

@@ -342,6 +342,7 @@ BEGIN_DATADESC( CBasePlayer )
 	DEFINE_FIELD( m_iFrags, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iDeaths, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iGGLevel, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iLives, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bAllowInstantSpawn, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextDecalTime, FIELD_TIME ),
 	//DEFINE_AUTO_ARRAY( m_szTeamName, FIELD_STRING ), // mp
@@ -2909,6 +2910,7 @@ void CBasePlayer::ResetGGLevel()
 {
 	m_iGGLevel = 0;
 }
+
 void CBasePlayer::IncrementGGLevel( int nCount )
 {
 	m_iGGLevel += nCount;
@@ -2926,6 +2928,20 @@ void CBasePlayer::IncrementDeathCount( int nCount )
 	pl.deaths = m_iDeaths;
 }
 
+void CBasePlayer::ResetLives()
+{
+	m_iLives = 0;
+}
+
+void CBasePlayer::IncrementLives( int nCount )
+{
+	m_iLives += nCount;
+}
+
+void CBasePlayer::SetLives( int nCount )
+{
+	m_iLives = nCount;
+}
 void CBasePlayer::AddPoints( int score, bool bAllowNegativeScore )
 {
 	// Positive score always adds
@@ -9028,6 +9044,11 @@ int	CPlayerInfo::GetGGLevel()
 	return m_pParent->GGLevel(); 
 }
 
+int	CPlayerInfo::GetLives() 
+{ 
+	Assert( m_pParent );
+	return m_pParent->Lives(); 
+}
 int	CPlayerInfo::GetDeathCount() 
 { 
 	Assert( m_pParent );

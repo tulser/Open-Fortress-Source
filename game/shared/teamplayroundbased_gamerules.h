@@ -204,6 +204,7 @@ public:
 
 	bool CheckNextLevelCvar( void );
 
+	int GetRoundsPlayed(){ return m_nRoundsPlayed; }
 public:
 	void State_Transition( gamerules_roundstate_t newState );
 

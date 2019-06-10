@@ -2114,7 +2114,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	// comes up, fake that we've closed the menu.
 	SetClassMenuOpen( false );
 
-	if ( TFGameRules()->InStalemate() )
+	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
 	{
 		if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
 		{
@@ -2218,12 +2218,13 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		bDeadInstantSpawn = (gpGlobals->curtime > flWaveTime);
 	}
 	bool bInStalemateClassChangeTime = false;
-	if ( TFGameRules()->InStalemate() )
+	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
 	{
 		// Stalemate overrides respawn rules. Only allow spawning if we're in the class change time.
 		bInStalemateClassChangeTime = TFGameRules()->CanChangeClassInStalemate();
 		bDeadInstantSpawn = false;
 		bInRespawnRoom = false;
+		
 	}
 	if ( bShouldNotRespawn == false && ( m_bAllowInstantSpawn || bDeadInstantSpawn || bInRespawnRoom || bInStalemateClassChangeTime ) )
 	{

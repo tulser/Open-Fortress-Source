@@ -8,6 +8,7 @@
 #include "mp_shareddefs.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_shareddefs.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 	#include "iclientmode.h"
@@ -149,6 +150,8 @@ ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICAT
 ConVar mp_disable_respawn_times( "mp_disable_respawn_times", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 ConVar mp_disable_waitingforplayers( "mp_disable_waitingforplayers", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+
+ConVar of_arena_lives( "of_arena_lives", "1", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 #ifdef GAME_DLL
 ConVar mp_showroundtransitions( "mp_showroundtransitions", "0", FCVAR_CHEAT, "Show gamestate round transitions." );
@@ -379,7 +382,7 @@ void CTeamplayRoundBasedRules::AddTeamRespawnWaveTime( int iTeam, float flValue 
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetNextRespawnWave( int iTeam, CBasePlayer *pPlayer ) 
 { 
-	if ( State_Get() == GR_STATE_STALEMATE )
+	if ( State_Get() == GR_STATE_STALEMATE || ( TFGameRules() && TFGameRules()->IsArenaGamemode() ) )
 		return 0;
 
 	// If we are purely checking when the next respawn wave is for this team
@@ -505,7 +508,7 @@ void CTeamplayRoundBasedRules::Think( void )
 	if ( gpGlobals->curtime > m_flNextPeriodicThink )
 	{
 		// Don't end the game during win or stalemate states
-		if ( State_Get() != GR_STATE_TEAM_WIN && State_Get() != GR_STATE_STALEMATE ) 
+		if ( State_Get() != GR_STATE_TEAM_WIN && State_Get() != GR_STATE_STALEMATE && TFGameRules() && !TFGameRules()->IsArenaGamemode() ) 
 		{
 			if ( CheckWinLimit() )
 				return;
@@ -1150,8 +1153,30 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::State_Think_PREROUND( void )
 {
+	if( TFGameRules() && TFGameRules()->IsArenaGamemode() )	
+	{
+		int iPlayers = 0;
+		for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
+		{
+			CTeam *pTeam = GetGlobalTeam(i);
+			Assert( pTeam );
+	
+			iPlayers += pTeam->GetNumPlayers();
+		}
+		if( iPlayers < 2 )
+		{
+			CheckRespawnWaves();
+			return;
+		}
+	}
 	if( gpGlobals->curtime > m_flStateTransitionTime )
 	{
+		for (int i = 1; i <= gpGlobals->maxClients; i++)
+		{
+			CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
+			if ( pPlayer )
+				pPlayer->SetLives( of_arena_lives.GetInt() );
+		}
 		State_Transition( GR_STATE_RND_RUNNING );
 	}
 
@@ -1194,6 +1219,12 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 		return;
 	}
 
+	if( TFGameRules() && TFGameRules()->IsArenaGamemode() && CountActivePlayers() <= 1 )
+	{
+		State_Transition( GR_STATE_PREGAME );
+		return;
+	}	
+	
 	if ( m_flNextBalanceTeamsTime < gpGlobals->curtime )
 	{
 		BalanceTeams( true );
@@ -1651,8 +1682,11 @@ static ConCommand mp_forcerespawnplayers("mp_forcerespawnplayers", CC_CH_ForceRe
 //			bTeam - if true, only respawn the passed team
 //			iTeam  - team to respawn
 //-----------------------------------------------------------------------------
+
 void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /* = false */, int iTeam/* = TEAM_UNASSIGNED */ )
 {
+
+	
 	if ( bTeam )
 	{
 		Assert( iTeam > LAST_SHARED_TEAM && iTeam < GetNumberOfTeams() );
@@ -1660,10 +1694,10 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 
 	int iPlayersSpawned = 0;
 
-	CBasePlayer *pPlayer;
+	CTFPlayer *pPlayer;
 	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 	{
-		pPlayer = ToBasePlayer( UTIL_PlayerByIndex( i ) );
+		pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
 
 		if ( !pPlayer )
 			continue;
@@ -1672,6 +1706,8 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 		if ( bTeam && pPlayer->GetTeamNumber() != iTeam )
 			continue;
 
+		if ( TFGameRules() && TFGameRules()->IsArenaGamemode() && State_Get() == GR_STATE_RND_RUNNING && pPlayer->Lives() <= 0 )
+			return;		
 		// players that haven't chosen a team/class can never spawn
 		if ( !pPlayer->IsReadyToPlay() )
 		{

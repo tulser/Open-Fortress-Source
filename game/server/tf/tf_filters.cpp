@@ -265,7 +265,6 @@ bool CFilterTFActiveWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity 
 		return false;
 	if ( !pPlayer->GetActiveWeapon() )
 		return false;
-	DevMsg("Active weapon is %s \n Filtered weapon is %s", pPlayer->GetActiveWeapon()->GetClassname(), STRING(m_iszTFWeaponName) );
 	return ( pPlayer->GetActiveWeapon()->GetClassname() == STRING(m_iszTFWeaponName) );
 }
 //-----------------------------------------------------------------------------
@@ -319,10 +318,7 @@ bool CFilterTFOwnsWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *p
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >(pEntity);
 	if (!pPlayer)
 		return false;
-	
-	DevMsg("WeaponID is %d \n", AliasToWeaponID( STRING(m_iszTFWeaponName) ) );
 	bool bSuccess = pPlayer->OwnsWeaponID(AliasToWeaponID(STRING(m_iszTFWeaponName)) );
-	DevMsg("Success is %d\n", bSuccess);
 	return bSuccess;
 }
 //-----------------------------------------------------------------------------

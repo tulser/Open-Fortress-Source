@@ -23,11 +23,12 @@ public:
 	CTFForceRespawn();
 	void Reset( void );
 
-	void ForceRespawn( bool bSwitchTeams );
+	void ForceRespawn( bool bSwitchTeams, int team = 0 );
 
 	// Input.
 	void InputForceRespawn( inputdata_t &inputdata );
 	void InputForceRespawnSwitchTeams( inputdata_t &inputdata );
+	void InputForceTeamRespawn( inputdata_t &inputdata );
 
 private:
 

@@ -129,6 +129,7 @@ ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
 ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
+ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force Arena mode on." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -1031,7 +1032,7 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
 	}
-	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
 	}
@@ -1275,6 +1276,11 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 		SetRoundOverlayDetails();
 	}
+	
+	if ( IsArenaGamemode() )
+	{
+		m_flStalemateStartTime = gpGlobals->curtime;
+	}
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
@@ -1285,24 +1291,13 @@ void CTFGameRules::SetupOnRoundStart( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundRunning( void )
 {
+	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
+	if ( pArena )
+		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
 	if ( IsArenaGamemode() )
 	{
-		TeamplayGameRules()->SetStalemate( 0, false, false, true );
-		if ( TeamplayRoundBasedRules()->m_hPreviousActiveTimer.Get() )
-		{
-			CTeamRoundTimer *pTimer = dynamic_cast<CTeamRoundTimer*>( m_hPreviousActiveTimer.Get() );
-			if ( pTimer && !pTimer->StartPaused() )
-			{
-				pTimer->ResumeTimer();
-			}
-		}
-
-		TeamplayRoundBasedRules()->SetInWaitingForPlayers( false );
+		m_flStalemateStartTime = gpGlobals->curtime - tf_stalematechangeclasstime.GetFloat();
 	}
-	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
-	if (pArena)
-		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
-	
 	// Let out control point masters know that the round has started
 	for ( int i = 0; i < g_hControlPointMasters.Count(); i++ )
 	{
@@ -1855,8 +1850,72 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 								GoToIntermission();
 							}
 						}
-			}			
+			}
 			
+			if ( IsArenaGamemode() )
+			{
+				if( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING  )
+				{
+					int iDeadTeam = TEAM_UNASSIGNED;
+					int iAliveTeam = TEAM_UNASSIGNED;
+
+					// If a team is fully killed, the other team has won
+					for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
+					{
+						CTeam *pTeam = GetGlobalTeam(i);
+						Assert( pTeam );
+	
+						int iPlayers = pTeam->GetNumPlayers();
+						if ( iPlayers )
+						{
+							int bFoundLiveOne = 0;
+							for ( int player = 0; player < iPlayers; player++ )
+							{
+								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->Lives() > 0 )
+								{
+									bFoundLiveOne++;
+									if ( pTeam->GetTeamNumber() != TF_TEAM_MERCENARY )
+										break;
+								}
+							}
+							if ( pTeam->GetTeamNumber() == TF_TEAM_MERCENARY  )
+							{
+								if ( bFoundLiveOne <= 1 )
+								{
+									DevMsg("Degenerates \n");
+									iAliveTeam = i;
+									iDeadTeam = i;
+									break;
+								}
+								else
+								{
+									DevMsg("Ok Cool %d \n", bFoundLiveOne );
+									iAliveTeam = i;
+								}
+							}
+							else
+							{
+								if ( bFoundLiveOne > 0 )
+								{
+									iAliveTeam = i;
+								}
+								else
+								{
+									iDeadTeam = i;
+								}
+							}							
+						}
+					}
+
+					if ( iDeadTeam && iAliveTeam )
+					{
+						if ( iAliveTeam == TF_TEAM_MERCENARY )
+							GoToIntermission();
+						else						
+							SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
+					}
+				}
+			}
 		} // Game playerdie
 
 		BaseClass::Think();
