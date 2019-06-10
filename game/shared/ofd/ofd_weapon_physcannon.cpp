@@ -38,7 +38,7 @@
 #include "shake.h"
 #include "beam_shared.h"
 #include "Sprite.h"
-#include "ofd_physgauntlet.h"
+#include "ofd_weapon_physcannon.h"
 #include "physics_saverestore.h"
 #include "movevars_shared.h"
 #include "tf_weaponbase.h"

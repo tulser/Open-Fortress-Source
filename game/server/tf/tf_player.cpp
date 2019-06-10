@@ -52,7 +52,7 @@
 #include "cdll_int.h"
 #include "tf_weaponbase.h"
 #include "tf_playerclass_shared.h"
-#include "ofd_physgauntlet.h"
+#include "ofd_weapon_physcannon.h"
 #include "ai_basenpc.h"
 #include "AI_Criteria.h"
 #include "npc_barnacle.h"
@@ -7270,225 +7270,16 @@ void CTFPlayer::GiveAllItems()
 
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
 
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_assaultrifle");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
+	//the -1 is to stop trying to give an invaild weapon at the end
+	int nWeapons = TF_WEAPON_COUNT; 
+	int i;	
 
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_bat");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_bonesaw");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_bottle");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	//pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_builder");
-	//if (pWeapon)
-	//	pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_chainsaw");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_club");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_combatknife");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_fireaxe");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_fists");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_flamethrower");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_gatlinggun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grenadelauncher");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grenadelauncher_mercenary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_invis");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_knife");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_medigun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_minigun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_nailgun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_objectselection");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pda_engineer_build");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pda_engineer_destroy");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pda_spy");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pipebomblauncher");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_akimbo");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_scout");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_quadlauncher");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_railgun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_revolver");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_revolver_mercenary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_scattergun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_scrapcannon");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_hwg");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_mercenary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_primary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_pyro");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_soldier");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shovel");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_smg");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_smg_mercenary");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_sniperrifle");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_supershotgun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_syringegun_medic");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_tommygun");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_tripmine");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_umbrella");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_wrench");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_umbrella");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_chainsaw");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_physcannon");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
+	for ( i = 0; i < nWeapons; ++i )
+	{
+		pWeapon = (CTFWeaponBase *)GiveNamedItem(g_aWeaponNames[i]);
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+	}
 }
 
 CBaseEntity	*CTFPlayer::GetHeldObject(void)

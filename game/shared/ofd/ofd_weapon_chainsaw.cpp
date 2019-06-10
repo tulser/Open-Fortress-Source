@@ -4,7 +4,7 @@
 //
 //=============================================================================
 #include "cbase.h"
-#include "tf_weapon_chainsaw.h"
+#include "ofd_weapon_chainsaw.h"
 #include "decals.h"
 #include "in_buttons.h"
 #include "tf_fx_shared.h"

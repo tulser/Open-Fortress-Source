@@ -22,6 +22,7 @@
 	#include "tf_projectile_rocket.h"
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "te.h"
+	#include "ofd_projectile_tripmine.h"
 
 #else	// Client specific.
 
@@ -277,8 +278,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 
 	case TF_PROJECTILE_NAIL:
-		pProjectile = FireNail(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		pProjectile = FireNail( pPlayer, iProjectile );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:
@@ -288,6 +289,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	case TF_PROJECTILE_PIPEBOMB_REMOTE:
 		pProjectile = FirePipeBomb( pPlayer, true );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
+	case TF_PROJECTILE_TRIPMINE:
+		pProjectile = FireTripmine( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
@@ -560,6 +566,38 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 #endif
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: "Fires" a tripmine
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+	CBaseEntity *pProjectile = NULL;
+	
+#ifndef CLIENT_DLL
+
+	Vector vecAiming	= pPlayer->GetAutoaimVector( 0 );
+	Vector vecSrc		= pPlayer->Weapon_ShootPosition( );
+
+	trace_t tr;
+
+	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * 64, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
+
+	CBaseEntity *pEntity = tr.m_pEnt;
+	if ( pEntity && !( pEntity->GetFlags() & FL_CONVEYOR ) )
+	{
+		QAngle angles;
+		VectorAngles( tr.plane.normal, angles );
+
+		pProjectile = CBaseEntity::Create( "tf_projectile_tripmine", tr.endpos + tr.plane.normal * 2, angles, pPlayer );
+	}
+
+#endif
+	
+	return pProjectile;
 }
 
 //-----------------------------------------------------------------------------
