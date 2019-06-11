@@ -53,9 +53,8 @@
 #include "tf_weaponbase.h"
 #include "tf_playerclass_shared.h"
 #include "ofd_weapon_physcannon.h"
-
+#include "tf_powerup.h"
 #include "ai_basenpc.h"
-
 #include "AI_Criteria.h"
 #include "npc_barnacle.h"
 #include "IVehicle.h"
@@ -7243,8 +7242,6 @@ void CTFPlayer::UpdatePlayerColor ( void )
 	m_vecPlayerColor = vecNewColor;
 }
 
-ConVar rara_testcustmodel("rara_testcustmodel","0",FCVAR_CHEAT | FCVAR_HIDDEN);
-
 void CTFPlayer::SetCustomModel(inputdata_t &inputdata)
 {
 	MDLCACHE_CRITICAL_SECTION();
@@ -7288,22 +7285,27 @@ void CTFPlayer::InputStripWeapons(inputdata_t &inputdata)
 
 void CTFPlayer::GiveAllItems()
 {
-	TakeHealth(999, DMG_GENERIC);
+	EquipSuit();
 	
 	AddAccount( 16000 );
 
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	//the -1 is to stop trying to give an invaild weapon at the end
 	
 	int nWeapons = TF_WEAPON_COUNT; 
 	int i;	
 	
 	for ( i = 0; i < nWeapons; ++i )
 	{
-		pWeapon = (CTFWeaponBase *)GiveNamedItem(g_aWeaponNames[i]);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem( g_aWeaponNames[i] );
 		if (pWeapon)
+		{
 			pWeapon->DefaultTouch(this);
+		}
 	}
+
+	RestockAmmo(POWERUP_FULL);
+
+	TakeHealth(m_iMaxHealth, DMG_GENERIC);
 }
 
 CBaseEntity	*CTFPlayer::GetHeldObject(void)

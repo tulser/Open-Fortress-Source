@@ -69,7 +69,7 @@ void CWeaponTripMine::Precache( void )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Safe guard against placing tripmine too far away
+// Purpose: Safe guard against eating ammo but not placing a tripmine
 //-----------------------------------------------------------------------------
 CBaseEntity *CWeaponTripMine::FireProjectile( CTFPlayer *pPlayer )
 {
@@ -78,7 +78,7 @@ CBaseEntity *CWeaponTripMine::FireProjectile( CTFPlayer *pPlayer )
 
 	trace_t tr;
 
-	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * 64, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
 
 	if ( !(tr.fraction < 1.0 ) )
 		return NULL;

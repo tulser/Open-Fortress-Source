@@ -63,19 +63,8 @@ void CTripmineGrenade::Spawn( void )
 	SetSolid( SOLID_BBOX );
 	AddSolidFlags( FSOLID_NOT_SOLID );
 	SetModel( TRIPMINE_MODEL );
-
-	// Don't collide with the player (the beam will still be tripped by one, however)
-	SetCollisionGroup( COLLISION_GROUP_WEAPON );
-
-	SetCycle( 0 );
-	SetSequence( SelectWeightedSequence( ACT_TRIPMINE_WORLD ) );
-	ResetSequenceInfo();
-	m_flPlaybackRate = 0;
 	
 	UTIL_SetSize( this, Vector( -8, -8, -8), Vector(8, 8, 8) );
-
-	m_flDamage	= 150.0f;
-	m_DmgRadius	= m_flDamage * 2.5;
 
 	if ( m_spawnflags & 1 )
 	{
@@ -185,7 +174,7 @@ void CTripmineGrenade::PowerupThink( void  )
 
 		StopSound( "Weapon_Tripmine.Deploy" );
 		StopSound( "Weapon_Tripmine.Charge" );
-		CBaseEntity *pMine = Create( "tf_projectile_tripmine", GetAbsOrigin() + m_vecDir * 24, GetAbsAngles() );
+		CBaseEntity *pMine = CBaseEntity::Create( "tf_projectile_tripmine", GetAbsOrigin() + m_vecDir * 24, GetAbsAngles() );
 		pMine->AddSpawnFlags( SF_NORESPAWN );
 
 		SetThink( &CBaseEntity::SUB_Remove );
@@ -336,3 +325,14 @@ void CTripmineGrenade::DelayDeathThink( void )
 
 	Explode( &tr, DMG_BLAST );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTripmineGrenade *CTripmineGrenade::Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+{
+	CTripmineGrenade *pRocket = static_cast<CTripmineGrenade*>( CBaseEntity::Create( "tf_projectile_tripmine", vecOrigin, vecAngles, pOwner ) );
+
+	return pRocket;
+}
+

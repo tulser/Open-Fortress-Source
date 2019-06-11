@@ -1,6 +1,7 @@
 
 #include "basegrenade_shared.h"
 #include "beam_shared.h"
+#include "tf_weaponbase.h"
 
 class CTripmineGrenade : public CBaseGrenade
 {
@@ -19,6 +20,8 @@ public:
 	void		Event_Killed( const CTakeDamageInfo &info );
 
 	DECLARE_DATADESC();
+
+	static CTripmineGrenade *Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
 
 private:
 	void			MakeBeam( void );

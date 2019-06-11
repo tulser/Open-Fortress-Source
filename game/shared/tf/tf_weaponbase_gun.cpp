@@ -575,16 +575,16 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
-	CBaseEntity *pProjectile = NULL;
-	
 #ifndef CLIENT_DLL
+
+	CTripmineGrenade *pProjectile = NULL;
 
 	Vector vecAiming	= pPlayer->GetAutoaimVector( 0 );
 	Vector vecSrc		= pPlayer->Weapon_ShootPosition( );
 
 	trace_t tr;
 
-	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * 64, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
+	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
 
 	CBaseEntity *pEntity = tr.m_pEnt;
 	if ( pEntity && !( pEntity->GetFlags() & FL_CONVEYOR ) )
@@ -592,12 +592,26 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 		QAngle angles;
 		VectorAngles( tr.plane.normal, angles );
 
-		pProjectile = CBaseEntity::Create( "tf_projectile_tripmine", tr.endpos + tr.plane.normal * 2, angles, pPlayer );
+		pProjectile = CTripmineGrenade::Create( this, tr.endpos + tr.plane.normal * 2, angles, pPlayer );
+
+		if (pProjectile)
+		{
+			const CTFWeaponInfo *pInfo = &GetTFWpnData();
+
+			if (pInfo)
+			{
+				pProjectile->SetDamageRadius(pInfo->m_flDamageRadius);
+				pProjectile->SetDamage(pInfo->m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage);
+			}
+		}
 	}
 
+	return pProjectile;
+
+#else
+	return NULL;
 #endif
 	
-	return pProjectile;
 }
 
 //-----------------------------------------------------------------------------
