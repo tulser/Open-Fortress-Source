@@ -99,6 +99,8 @@ ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_U
 static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Allow first person ragdolls");
 // end SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
 
+ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
+
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
@@ -2948,7 +2950,7 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	{
 		origin = pRagdoll->GetRagdollOrigin();
 		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
-
+		
 		if (cl_fp_ragdoll.GetBool() && m_hRagdoll.Get())
 		{
 			// pointer to the ragdoll
@@ -3366,6 +3368,45 @@ void C_TFPlayer::AddDecal( const Vector& rayStart, const Vector& rayEnd,
 	BaseClass::AddDecal( rayStart, rayEnd, decalCenter, hitbox, decalIndex, doTrace, tr, maxLODToDecal );
 }
 
+const char *TF_RESPAWN_PARTICLES[] =
+{
+	"dm_respawn_01",
+	"dm_respawn_03",
+	"dm_respawn_04",
+	"dm_respawn_05",
+	"dm_respawn_06",
+	"dm_respawn_09",
+	"dm_respawn_10",
+	"dm_respawn_11",
+	"dm_respawn_12",
+	"dm_respawn_13",
+	"dm_respawn_14",
+	"dm_respawn_15",
+	"dm_respawn_16",
+	"dm_respawn_17",
+	"dm_respawn_18",
+	"dm_respawn_19",
+	"dm_respawn_20",
+	"dm_respawn_21",
+	"dm_respawn_22",
+	"dm_respawn_23",
+	"dm_respawn_26",
+	"dm_respawn_27",
+	"dm_respawn_28",
+	"dm_respawn_29",
+	"dm_respawn_30",
+	"dm_respawn_31",
+	"dm_respawn_32",
+	"dm_respawn_35",
+	"dm_respawn_36",
+	"dm_respawn_37",
+	"dm_respawn_38",
+	"dm_respawn_39",
+	"dm_respawn_40",
+	"dm_respawn_41",
+	"dm_respawn_42",
+};
+
 //-----------------------------------------------------------------------------
 // Called every time the player respawns
 //-----------------------------------------------------------------------------
@@ -3388,6 +3429,10 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		// Release the duck toggle key
 		KeyUp( &in_ducktoggle, NULL ); 
 	}
+	
+	const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
+	if ( pEffectName )
+		m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );	
 
 	UpdateVisibility();
 

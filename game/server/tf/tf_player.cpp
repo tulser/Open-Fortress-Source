@@ -529,22 +529,25 @@ void CTFPlayer::PreThink()
 	// Update timers.
 	UpdateTimers();
 
+	// Pass through to the base class think.
+	BaseClass::PreThink();
+	
 	// copied from hl2player
 	if  (IsInAVehicle() )
 	{
-		UpdateClientData();
+		UpdateClientData();	
 		CheckTimeBasedDamage();
 		UpdateTimers();
 		WaterMove();
 
 		m_vecTotalBulletForce = vec3_origin;
-
 		CheckForIdle();
 		return;
 	}
+	
+		// Pass through to the base class think.
+		BaseClass::PreThink();
 
-	// Pass through to the base class think.
-	BaseClass::PreThink();
 
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.
 	m_vecTotalBulletForce = vec3_origin;
@@ -860,11 +863,13 @@ void CTFPlayer::InitialSpawn( void )
 	BaseClass::InitialSpawn();
 
 	SetWeaponBuilder( NULL );
-
+	
+	
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
 
 	StateEnter( TF_STATE_WELCOME );
+	
 }
 
 
@@ -964,6 +969,8 @@ void CTFPlayer::Spawn()
 		{
 			m_Shared.AddCond( TF_COND_SPAWNPROTECT , ofd_spawnprotecttime.GetFloat() );
 		}
+		m_Shared.SetSpawnEffect( V_atoi(engine->GetClientConVarValue(entindex(), "ofd_respawn_particle")) );
+		
 		if ( !m_bSeenRoundInfo )
 		{
 			TFGameRules()->ShowRoundInfoPanel( this );
@@ -1018,6 +1025,8 @@ void CTFPlayer::Spawn()
 		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
 		m_Shared.WearHat(iCosmetic);
 	}
+	
+	
 	
 	// This makes the surrounding box always the same size as the standing collision box
 	// helps with parts of the hitboxes that extend out of the crouching hitbox, eg with the
@@ -1619,7 +1628,6 @@ void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
 // Purpose: Find a spawn point for the player.
 //-----------------------------------------------------------------------------
 
-
 // enable info player start and info player deathmatch for checking
 CBaseEntity *FindPlayerStart(const char *pszClassName);
 
@@ -1667,13 +1675,12 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 			// if no deathmatch point is found then try find start point for normal hl2
 			pSpot = FindPlayerStart( "info_player_start" );
+			return CBaseEntity::Instance( INDEXENT(0) );
 			if ( pSpot )
 				return pSpot;
 
 			return CBaseEntity::Instance( INDEXENT(0) );
 		}
-
-		return CBaseEntity::Instance( INDEXENT(0) );
 	}
 
 	return pSpot;
@@ -2120,7 +2127,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	// comes up, fake that we've closed the menu.
 	SetClassMenuOpen( false );
 
-	if (TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode())
+	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
 	{
 		if ( IsAlive() && !TFGameRules()->CanChangeClassInStalemate() )
 		{
@@ -2206,7 +2213,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 	}
 
 	// We can respawn instantly if:
-	//	- We're dead, and we're past the required post-death timebInStalemateClassChangeTime 
+	//	- We're dead, and we're past the required post-death time
 	//	- We're inside a respawn room
 	//	- We're in the stalemate grace period
 	bool bInRespawnRoom = PointInRespawnRoom( this, WorldSpaceCenter() );
@@ -2224,12 +2231,13 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		bDeadInstantSpawn = (gpGlobals->curtime > flWaveTime);
 	}
 	bool bInStalemateClassChangeTime = false;
-	if (TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode())
+	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
 	{
 		// Stalemate overrides respawn rules. Only allow spawning if we're in the class change time.
 		bInStalemateClassChangeTime = TFGameRules()->CanChangeClassInStalemate();
 		bDeadInstantSpawn = false;
 		bInRespawnRoom = false;
+		
 	}
 	if ( bShouldNotRespawn == false && ( m_bAllowInstantSpawn || bDeadInstantSpawn || bInRespawnRoom || bInStalemateClassChangeTime ) )
 	{
@@ -6062,8 +6070,8 @@ int CTFPlayer::BuildObservableEntityList( void )
 				iCurrentIndex = (m_hObservableEntities.Count() - 1);
 			}
 		}
-	}
-
+	}	
+	
 	return iCurrentIndex;
 }
 
@@ -6374,7 +6382,6 @@ void CTFPlayer::ValidateCurrentObserverTarget( void )
 			return;
 		}
 	}
-
 	// check added for npcs too
 	if ( m_hObserverTarget &&  (m_hObserverTarget->IsBaseObject() || m_hObserverTarget->IsNPC()))
 	{

@@ -444,7 +444,6 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		{
 			killer_name = "";
 		}
-
 		if ( !victim_name )
 		{
 			victim_name = "";
@@ -457,13 +456,9 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			bLocalPlayerInvolved = true;
 		}
 
-		if ( event->GetInt( "death_flags" ) /*& TF_DEATH_AUSTRALIUM*/ )
+		if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
 		{
-			m_DeathNotices[iMsg].bCrit= true;
-			m_DeathNotices[iMsg].iconCritDeath = GetIcon( "d_australium", bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
-		}
-		else if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
-		{
+			DevMsg("Attack was critical \n");
 			m_DeathNotices[iMsg].bCrit= true;
 			m_DeathNotices[iMsg].iconCritDeath = GetIcon( "d_crit", bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
 		}
