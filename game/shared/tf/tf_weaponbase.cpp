@@ -390,6 +390,51 @@ void CTFWeaponBase::Precache()
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );		
 	}
+
+	if ( pTFInfo->szScoutViewModel && pTFInfo->szScoutViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szScoutViewModel );
+	}
+	if ( pTFInfo->szSoldierViewModel && pTFInfo->szSoldierViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSoldierViewModel );
+	}
+	if ( pTFInfo->szPyroViewModel && pTFInfo->szPyroViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szPyroViewModel );
+	}
+	if ( pTFInfo->szDemomanViewModel && pTFInfo->szDemomanViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szDemomanViewModel );
+	}
+	if ( pTFInfo->szHeavyViewModel && pTFInfo->szHeavyViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szHeavyViewModel );
+	}
+	if ( pTFInfo->szEngineerViewModel && pTFInfo->szEngineerViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szEngineerViewModel );
+	}
+	if ( pTFInfo->szMedicViewModel && pTFInfo->szMedicViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szMedicViewModel );
+	}
+	if ( pTFInfo->szSniperViewModel && pTFInfo->szSniperViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSniperViewModel );
+	}
+	if ( pTFInfo->szSpyViewModel && pTFInfo->szSpyViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSpyViewModel );
+	}
+	if ( pTFInfo->szMercenaryViewModel && pTFInfo->szMercenaryViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szMercenaryViewModel );
+	}
+	if ( pTFInfo->szCivilianViewModel && pTFInfo->szCivilianViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szCivilianViewModel );
+	}
 }
 
 // -----------------------------------------------------------------------------
