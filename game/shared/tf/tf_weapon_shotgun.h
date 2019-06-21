@@ -115,6 +115,9 @@ public:
 	CTFSuperShotgun();
 
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_SUPERSHOTGUN; }
+
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableSuperShotgun[];
 };
 
 
