@@ -101,6 +101,8 @@ static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Allow first pe
 
 ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
 
+ConVar ofd_critglow_saturation("ofd_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is\n");
+
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
@@ -1091,7 +1093,7 @@ public:
 				{
 					Vector critColor = pPlayer->m_vecPlayerColor;
 					critColor *= 255;
-					critColor *= 0.30;
+					critColor *= ofd_critglow_saturation.GetFloat();
 					vecColor = critColor;
 				}
 					break;
@@ -1179,6 +1181,130 @@ public:
 };
 
 EXPOSE_INTERFACE( CProxyLocalPlayerColor, IMaterialProxy, "LocalPlayerColor" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for invulnerability material
+//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
+//-----------------------------------------------------------------------------
+class CProxyReserveAmmo : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+		
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer )
+		{
+			if ( pPlayer->GetActiveTFWeapon() )
+				m_pResult->SetFloatValue( (float)pPlayer->GetActiveTFWeapon()->m_iReserveAmmo / (float)pPlayer->GetActiveTFWeapon()->GetMaxReserveAmmo() );
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyReserveAmmo, IMaterialProxy, "ReserveAmmo" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for invulnerability material
+//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
+//-----------------------------------------------------------------------------
+class CProxyClipCount : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+		
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer )
+		{
+			if ( pPlayer->GetActiveTFWeapon() )
+				m_pResult->SetFloatValue( (float)pPlayer->GetActiveTFWeapon()->Clip1() / (float)pPlayer->GetActiveTFWeapon()->GetMaxClip1() );
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyClipCount, IMaterialProxy, "ClipCount" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes

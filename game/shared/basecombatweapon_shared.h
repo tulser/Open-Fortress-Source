@@ -391,7 +391,7 @@ public:
 	virtual int				GetSecondaryAmmoType( void )  const { return m_iSecondaryAmmoType; }
 	virtual int				Clip1() { return m_iClip1; }
 	virtual int				Clip2() { return m_iClip2; }
-	virtual int				ReserveAmmo() { return m_iReserveAmmo; }
+	virtual	int				ReserveAmmo() { return m_iReserveAmmo; }
 	virtual int				DefaultReserveAmmo() { return m_iDefaultReserveAmmo; }
 
 	// Ammo quantity queries for weapons that do not use clips. These are only

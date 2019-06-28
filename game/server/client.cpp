@@ -35,11 +35,9 @@
 #include "datacache/imdlcache.h"
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
-
-#ifdef TF_DLL
 #include "tf_player.h"
-#include "tf_gamerules.h"
-#endif
+#include "tf_weaponbase.h"
+
 
 #ifdef HL2_DLL
 #include "weapon_physcannon.h"
@@ -852,7 +850,53 @@ CON_COMMAND( say_team, "Display player message to team" )
 		}
 	}
 }
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	if ( pPlayer 
+		&& (gpGlobals->maxClients == 1 || sv_cheats->GetBool()) 
+		&& args.ArgC() >= 2 )
+	{
+		char item_to_give[ 256 ];
+		Q_strncpy( item_to_give, args[1], sizeof( item_to_give ) );
+		Q_strlower( item_to_give );
 
+		// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
+		if ( !Q_stricmp( item_to_give, "point_servercommand" ) )
+		{
+			if ( engine->IsDedicatedServer() )
+			{
+				// We allow people with disabled autokick to do it, because they already have rcon.
+				if ( pPlayer->IsAutoKickDisabled() == false )
+					return;
+			}
+			else if ( gpGlobals->maxClients > 1 )
+			{
+				// On listen servers with more than 1 player, only allow the host to create point_servercommand.
+				CBasePlayer *pHostPlayer = UTIL_GetListenServerHost();
+				if ( pPlayer != pHostPlayer )
+					return;
+			}
+		}
+
+		// Dirty hack to avoid suit playing it's pickup sound
+		if ( !Q_stricmp( item_to_give, "item_suit" ) )
+		{
+			pPlayer->EquipSuit( false );
+			return;
+		}
+
+		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
+		CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( STRING(iszItem) );  // Create the specified weapon
+		if( pGivenWeapon )
+			if( !pPlayer->OwnsWeaponID( pGivenWeapon->GetWeaponID() ) )
+				pGivenWeapon->GiveTo( pPlayer ); 
+			else
+				pGivenWeapon = NULL;
+	}
+}
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

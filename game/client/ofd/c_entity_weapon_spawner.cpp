@@ -57,6 +57,7 @@ extern ConVar cl_flag_return_size;
 extern ConVar ofd_color_r;
 extern ConVar ofd_color_g;
 extern ConVar ofd_color_b;
+extern ConVar building_cubemaps;
 
 // Inputs.
 LINK_ENTITY_TO_CLASS( dm_weapon_spawner, C_WeaponSpawner );
@@ -113,13 +114,16 @@ void C_WeaponSpawner::ClientThink( void )
 		}
 	}
 
-	if (pPlayer && (m_bShouldGlow != bShouldGlow || (iTeamNum != pPlayer -> GetTeamNumber())))
+	if ( pPlayer && (m_bShouldGlow != bShouldGlow || (iTeamNum != pPlayer -> GetTeamNumber())) )
 	{
 		m_bShouldGlow = bShouldGlow;
 		iTeamNum = pPlayer->GetTeamNumber();
 		UpdateGlowEffect();
 	}
-	
+	if ( building_cubemaps.GetBool() )
+	{
+		UpdateGlowEffect();
+	}
 
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
@@ -132,7 +136,7 @@ void C_WeaponSpawner::UpdateGlowEffect( void )
 {
 	DestroyGlowEffect();
 	
-	if ( !m_bDisableShowOutline && m_bShouldGlow )
+	if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
 		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
 /*
 	if ( !m_bShouldGlow && m_pGlowEffect )

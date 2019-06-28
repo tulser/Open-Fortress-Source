@@ -2842,7 +2842,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flNextSecondaryAttack ) ),
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 
 #if defined( TF_DLL ) || defined ( TF_MOD )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
@@ -2864,7 +2864,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
 	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
 
@@ -2897,7 +2897,7 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
 	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
 	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 	SendPropEHandle( SENDINFO(m_hOwner) ),
 #else
 	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),

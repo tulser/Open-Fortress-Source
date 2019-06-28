@@ -17,6 +17,7 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weapon_medigun.h"
+#include "ofd_weapon_lightning.h"
 #include <vgui_controls/AnimationController.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -43,6 +44,7 @@ private:
 
 	bool m_bCharged;
 	float m_flLastChargeValue;
+	int m_iLastWeaponID;
 };
 
 DECLARE_HUDELEMENT( CHudMedicChargeMeter );
@@ -63,6 +65,7 @@ CHudMedicChargeMeter::CHudMedicChargeMeter( const char *pElementName ) : CHudEle
 
 	m_bCharged = false;
 	m_flLastChargeValue = 0;
+	m_iLastWeaponID = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -71,7 +74,19 @@ CHudMedicChargeMeter::CHudMedicChargeMeter( const char *pElementName ) : CHudEle
 void CHudMedicChargeMeter::ApplySchemeSettings( IScheme *pScheme )
 {
 	// load control settings...
-	LoadControlSettings( "resource/UI/HudMedicCharge.res" );
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer )
+		return;
+	
+	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+
+	if ( !pWpn )
+		return;
+
+	if( pWpn->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN )
+		LoadControlSettings( "resource/UI/HudLightningCharge.res" );
+	else
+		LoadControlSettings( "resource/UI/HudMedicCharge.res" );
 
 	BaseClass::ApplySchemeSettings( pScheme );
 }
@@ -83,7 +98,7 @@ bool CHudMedicChargeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_MEDIC ) || !pPlayer->IsAlive() )
+	if ( !pPlayer || !pPlayer->IsAlive() )
 	{
 		return false;
 	}
@@ -95,10 +110,11 @@ bool CHudMedicChargeMeter::ShouldDraw( void )
 		return false;
 	}
 
-	if ( pWpn->GetWeaponID() != TF_WEAPON_MEDIGUN )
+	if ( pWpn->GetWeaponID() != TF_WEAPON_MEDIGUN && pWpn->GetWeaponID() != TF_WEAPON_LIGHTNING_GUN )
 	{
 		return false;
 	}
+
 
 	return CHudElement::ShouldDraw();
 }
@@ -115,23 +131,43 @@ void CHudMedicChargeMeter::OnTick( void )
 
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 
-	if ( !pWpn || ( pWpn->GetWeaponID() != TF_WEAPON_MEDIGUN ) )
+	if ( !pWpn || ( pWpn->GetWeaponID() != TF_WEAPON_MEDIGUN &&  pWpn->GetWeaponID() != TF_WEAPON_LIGHTNING_GUN ) )
 		return;
 
 	CWeaponMedigun *pMedigun = static_cast< CWeaponMedigun *>( pWpn );
-
-	if ( !pMedigun )
+	CTFLightningGun *pLightningGun = static_cast< CTFLightningGun *>( pWpn );
+	if ( !pMedigun && !pLightningGun )
 		return;
-
-	float flCharge = pMedigun->GetChargeLevel();
-
+	
+	if( m_iLastWeaponID != pWpn->GetWeaponID() )
+	{
+		m_iLastWeaponID = pWpn->GetWeaponID();
+		if( pWpn->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN )
+			LoadControlSettings( "resource/UI/HudLightningCharge.res" );
+		else
+			LoadControlSettings( "resource/UI/HudMedicCharge.res" );
+	}
+	bool bLightningGun = pWpn->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN;
+	
+	float flCharge;
+	if( bLightningGun )
+		flCharge =(float)pLightningGun->ReserveAmmo() / (float)pLightningGun->GetMaxReserveAmmo();
+	else
+		flCharge = pMedigun->GetChargeLevel();
+	
 	if ( flCharge != m_flLastChargeValue )
 	{
 		if ( m_pChargeMeter )
 		{
 			m_pChargeMeter->SetProgress( flCharge );
 		}
-
+		
+		if( bLightningGun )
+		{
+			m_flLastChargeValue = flCharge;
+			return;
+		}
+		
 		if ( !m_bCharged )
 		{
 			if ( flCharge >= 1.0 )

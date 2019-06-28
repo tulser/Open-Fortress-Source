@@ -14,6 +14,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+ConVar tf_particles_disable_weather( "tf_particles_disable_weather", "0", FCVAR_ARCHIVE, "When on, disables weather effects." );
+
 //-----------------------------------------------------------------------------
 // Purpose: An entity that spawns and controls a particle system
 //-----------------------------------------------------------------------------

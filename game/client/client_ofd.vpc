@@ -44,8 +44,11 @@ $Project "Client (OFD)"
 			$File	"ofd\c_entity_weapon_spawner.cpp"
 			$File	"ofd\c_entity_condpowerup.cpp"
 			$File	"ofd\ofd_hud_tdm.cpp"
+			$File	"ofd\ofd_hud_tdm.h"
 			$File	"ofd\ofd_hud_kills.cpp"
 			$File	"ofd\ofd_hud_kills.h"
+			$File	"$SRCDIR\game\shared\ofd\ofd_weapon_lightning.cpp"
+			$File	"$SRCDIR\game\shared\ofd\ofd_weapon_lightning.h"
 		}
 		
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"

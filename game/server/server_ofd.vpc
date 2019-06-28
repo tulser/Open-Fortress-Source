@@ -49,6 +49,10 @@ $Project "Server (OFD)"
 			$File	"ofd\of_dropped_weapon.h"
 			$File	"ofd\of_dropped_powerup.cpp"
 			$File	"ofd\of_dropped_powerup.h"
+
+			$File	"$SRCDIR\game\shared\ofd\ofd_weapon_lightning.cpp"
+			$File	"$SRCDIR\game\shared\ofd\ofd_weapon_lightning.h"
+
 			$File	"ofd\ofd_projectile_tripmine.cpp"
 			$File	"ofd\ofd_projectile_tripmine.h"
 		}

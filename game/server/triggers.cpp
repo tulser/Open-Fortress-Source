@@ -2390,6 +2390,8 @@ public:
 
 	virtual void Spawn( void ) OVERRIDE;
 	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+	
+	virtual bool PassesTriggerFilters(CBaseEntity *pOther);
 
 	string_t m_iLandmark;
 
@@ -2484,6 +2486,75 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 
 	tmp += vecLandmarkOffset;
 	pOther->Teleport( &tmp, pAngles, pVelocity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Returns true if this entity passes the filter criteria, false if not.
+// Input  : pOther - The entity to be filtered.
+//-----------------------------------------------------------------------------
+bool CTriggerTeleport::PassesTriggerFilters(CBaseEntity *pOther)
+{
+	// First test spawn flag filters
+	if ( HasSpawnFlags(SF_TRIGGER_ALLOW_ALL) ||
+		(HasSpawnFlags(SF_TRIGGER_ALLOW_CLIENTS) && (pOther->GetFlags() & FL_CLIENT)) ||
+		(HasSpawnFlags(SF_TRIGGER_ALLOW_NPCS) && (pOther->GetFlags() & FL_NPC)) ||
+		(HasSpawnFlags(SF_TRIGGER_ALLOW_PUSHABLES) && FClassnameIs(pOther, "func_pushable")) ||
+		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS) 
+#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined ( TF_MOD )		
+		||
+		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) && 
+			(pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS ||
+			pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS_TRIGGER || 
+			pOther->GetCollisionGroup() == COLLISION_GROUP_INTERACTIVE_DEBRIS)
+		)
+#endif
+		)
+	{
+		if ( pOther->GetFlags() & FL_NPC )
+		{
+			CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
+
+			if ( HasSpawnFlags( SF_TRIGGER_ONLY_PLAYER_ALLY_NPCS ) )
+			{
+				if ( !pNPC || !pNPC->IsPlayerAlly() )
+				{
+					return false;
+				}
+			}
+
+			if ( HasSpawnFlags( SF_TRIGGER_ONLY_NPCS_IN_VEHICLES ) )
+			{
+				if ( !pNPC || !pNPC->IsInAVehicle() )
+					return false;
+			}
+		}
+
+		bool bOtherIsPlayer = pOther->IsPlayer();
+
+		if ( bOtherIsPlayer )
+		{
+			CBasePlayer *pPlayer = (CBasePlayer*)pOther;
+			if ( !pPlayer->IsAlive() )
+				return false;
+
+
+			if ( HasSpawnFlags(SF_TRIGGER_ONLY_CLIENTS_OUT_OF_VEHICLES) )
+			{
+				if ( pPlayer->IsInAVehicle() )
+					return false;
+			}
+
+			if ( HasSpawnFlags( SF_TRIGGER_DISALLOW_BOTS ) )
+			{
+				if ( pPlayer->IsFakeClient() )
+					return false;
+			}
+		}
+
+		CBaseFilter *pFilter = m_hFilter.Get();
+		return (!pFilter) ? true : pFilter->PassesFilter( this, pOther );
+	}
+	return false;
 }
 
 

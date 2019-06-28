@@ -13,6 +13,8 @@
 #include "glow_outline_effect.h"
 #include "tf_gamerules.h"
 
+extern ConVar building_cubemaps;
+
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Powerup Spawner
 //-----------------------------------------------------------------------------
@@ -106,6 +108,11 @@ void C_CondPowerup::ClientThink( void )
 		UpdateGlowEffect();
 		DevMsg("Updated glow effect on powerup spawner \n");
 	}
+	
+	if ( building_cubemaps.GetBool() )
+	{
+		UpdateGlowEffect();
+	}	
 
 	SetNextClientThink(CLIENT_THINK_ALWAYS);
 }
@@ -118,7 +125,7 @@ void C_CondPowerup::UpdateGlowEffect( void )
 {
 	DestroyGlowEffect();
 	
-	if ( !m_bDisableShowOutline && m_bShouldGlow )
+	if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
 		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
 /*
 	if ( !m_bShouldGlow && m_pGlowEffect )

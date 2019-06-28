@@ -360,7 +360,8 @@ void CTFWeaponBaseGun::UpdatePunchAngles( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 {
-	PlayWeaponShootSound();
+	if ( GetWeaponID() != TF_WEAPON_LIGHTNING_GUN )
+		PlayWeaponShootSound();
 
 	FX_FireBullets(
 		pPlayer->entindex(),

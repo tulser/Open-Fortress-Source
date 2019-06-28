@@ -192,6 +192,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_DYNAMITE_BUNDLE",
 	"TF_WEAPON_TRIPMINE",
+	"TF_WEAPON_LIGHTNING_GUN",
 
 	"TF_WEAPON_COUNT",	// end marker, do not add below here 
 };
@@ -286,6 +287,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
+	DMG_DISSOLVE | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

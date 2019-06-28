@@ -488,7 +488,9 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_BERSERK:
 		OnAddBerserk();
 		break;		
-		
+	case TF_COND_SHIELD_CHARGE:
+		OnAddShieldCharge();
+		break;			
 	default:
 		break;
 	}
@@ -550,7 +552,9 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_BERSERK:
 		OnRemoveBerserk();
 		break;	
-		
+	case TF_COND_SHIELD_CHARGE:
+		OnRemoveShieldCharge();
+		break;			
 	default:
 		break;
 	}
@@ -1108,6 +1112,15 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	}
 	m_pOuter->TeamFortress_SetSpeed();
 #endif
+}
+
+void CTFPlayerShared::OnAddShieldCharge( void )
+{
+	m_pOuter->TeamFortress_SetSpeed();
+}
+void CTFPlayerShared::OnRemoveShieldCharge( void )
+{
+	m_pOuter->TeamFortress_SetSpeed();
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2463,6 +2476,9 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		if (maxfbspeed > tf_spy_max_cloaked_speed.GetFloat() )
 			maxfbspeed = tf_spy_max_cloaked_speed.GetFloat();
 	}
+	
+	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+			maxfbspeed = 750.0f;
 
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )

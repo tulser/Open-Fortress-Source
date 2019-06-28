@@ -36,10 +36,10 @@
 
 using namespace vgui;
 
-extern ConVar fraglimit;
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+extern ConVar fraglimit;
 
 ConVar ofd_disablekillcount( "ofd_disablekillcount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable killcount showing in your HUD" );
 
@@ -99,7 +99,7 @@ bool CTFHudKills::ShouldDraw( void )
 	{
 		return false;
 	}
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode() ) && !TFGameRules()->DontCountKills() )
+	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode() ) && !TFGameRules()->DontCountKills() && !TFGameRules()->IsTeamplay() )
 		return CHudElement::ShouldDraw();
 	else
 		return false;
