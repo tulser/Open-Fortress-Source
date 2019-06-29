@@ -284,7 +284,17 @@ void CBasePlayer::ItemPostFrame()
 	else
 	{
 		// not having this causes all weapons to never fire
-		GetActiveWeapon()->ItemPostFrame();
+
+		if ( GetActiveWeapon() )
+		{
+#if defined( CLIENT_DLL )
+			// Not predicting this weapon
+			if (GetActiveWeapon()->IsPredicted())
+#endif
+
+			{
+				GetActiveWeapon()->ItemPostFrame();
+			}
 		/*
 		if ( GetActiveWeapon() && (!IsInAVehicle() || UsingStandardWeaponsInVehicle()) )
 		{
@@ -295,9 +305,9 @@ void CBasePlayer::ItemPostFrame()
 
 			{		   
 				GetActiveWeapon()->ItemPostFrame( );
-			}
+			}*/
 		}
-		*/
+		
 	}
 
 #if !defined( CLIENT_DLL )
