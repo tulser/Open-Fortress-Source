@@ -183,6 +183,7 @@ void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
 		{
 			dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 			dl->origin = GetAbsOrigin();
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			switch ( GetTeamNumber() )
 			{
 				case TF_TEAM_RED:

@@ -351,6 +351,17 @@ int CPropJeep::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	return 0;
 }
 
+// register damageowners
+void CPropJeep::Event_Killed(const CTakeDamageInfo &info)
+{
+	if (GetDriver())
+		GetDriver()->Event_Killed(info);
+
+	BaseClass::Event_Killed(info);
+}
+
+
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

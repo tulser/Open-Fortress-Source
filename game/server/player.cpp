@@ -5409,6 +5409,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 	if ( pVehicle->GetPassenger( nRole ) )
 		return false;
 
+	/*
 	// Must be able to holster our current weapon (ie. grav gun!)
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5417,6 +5418,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 		if ( ( pWeapon != NULL ) && ( pWeapon->CanHolster() == false ) )
 			return false;
 	}
+	*/
 
 	// Must be alive
 	if ( IsAlive() == false )
@@ -5444,6 +5446,7 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 	CBaseEntity *pEnt = pVehicle->GetVehicleEnt();
 	Assert( pEnt );
 
+	/*
 	// Try to stow weapons
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5458,11 +5461,14 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 #endif
 		m_Local.m_iHideHUD |= HIDEHUD_INVEHICLE;
 	}
+	
 
 	if ( !pVehicle->IsPassengerVisible( nRole ) )
 	{
-		AddEffects( EF_NODRAW );
+		// No! visible thirdperson in vehicles :bastard:
+		//AddEffects( EF_NODRAW );
 	}
+	*/
 
 	// Put us in the vehicle
 	pVehicle->SetPassenger( nRole, this );
@@ -5576,6 +5582,7 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 	m_hVehicle = NULL;
 	pVehicle->SetPassenger(nRole, NULL);
 
+    /*
 	// Re-deploy our weapon
 	if ( IsAlive() )
 	{
@@ -5585,7 +5592,8 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 			ShowCrosshair( true );
 		}
 	}
-
+    */
+	
 	// Just cut all of the rumble effects. 
 	RumbleEffect( RUMBLE_STOP_ALL, 0, RUMBLE_FLAGS_NONE );
 }
@@ -6653,10 +6661,12 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		pWeapon->AddEffects( EF_NODRAW );
 
 		Weapon_Equip( pWeapon );
+		
 		if ( IsInAVehicle() )
 		{
-			pWeapon->Holster();
+			// pWeapon->Holster();
 		}
+		
 		else
 		{
 #ifdef HL2_DLL
@@ -7863,7 +7873,8 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 	}
 	else if ( !g_pGameRules->IsDeathmatch() )
 	{
-		pPlayer = UTIL_GetLocalPlayer();
+		//  SecobMod__Enable_Fixed_Multiplayer_AI
+		pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
 	}
 
 	if ( pPlayer )

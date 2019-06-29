@@ -573,7 +573,14 @@ void CTFGameStats::Event_PlayerDamage( CBasePlayer *pBasePlayer, const CTakeDama
 			return;
 
 		pAttacker = pSentry->GetOwner();
+
+		// this is for when building is spawned manually from hammer or ent_create
+		if ( !pAttacker )
+		{
+			return;
+		}
 	}
+
 	// don't count damage to yourself
 	if ( pTarget == pAttacker )
 		return;

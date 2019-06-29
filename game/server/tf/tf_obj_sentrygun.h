@@ -14,6 +14,9 @@
 #include "tf_obj.h"
 #include "tf_projectile_rocket.h"
 
+// specific spawnflag useable from hammer
+#define SF_SENTRY_INFINITE_AMMO		0x0008
+
 class CTFPlayer;
 
 enum

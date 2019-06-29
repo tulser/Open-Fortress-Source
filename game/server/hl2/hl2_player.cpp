@@ -2463,8 +2463,10 @@ void CHL2_Player::Event_Killed( const CTakeDamageInfo &info )
 {
 	BaseClass::Event_Killed( info );
 
-	FirePlayerProxyOutput( "PlayerDied", variant_t(), this, this );
-	NotifyScriptsOfDeath();
+
+    //SecobMod__Enable_Fixed_Multiplayer_AI
+	//FirePlayerProxyOutput( "PlayerDied", variant_t(), this, this );
+	//NotifyScriptsOfDeath();
 }
 
 //-----------------------------------------------------------------------------
@@ -3092,8 +3094,8 @@ bool CHL2_Player::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 #else
 	IClientVehicle *pVehicle = pPlayer->GetVehicle();
 #endif
-	if (pVehicle && !pPlayer->UsingStandardWeaponsInVehicle())
-		return false;
+	//if (pVehicle && !pPlayer->UsingStandardWeaponsInVehicle())
+	//	return false;
 
 	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) )
 		return false;

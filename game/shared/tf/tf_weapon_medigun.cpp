@@ -1149,6 +1149,7 @@ void CWeaponMedigun::UpdateEffects( void )
 		{
 			dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 			dl->origin = pFiringPlayer->Weapon_ShootPosition();;
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			switch (GetTFPlayerOwner()->GetTeamNumber())
 			{
 			case TF_TEAM_RED:

@@ -80,6 +80,8 @@ ConVar  object_deterioration_time( "object_deterioration_time", "30", 0, "Time i
 BEGIN_DATADESC( CBaseObject )
 	// keys 
 	DEFINE_KEYFIELD_NOT_SAVED( m_SolidToPlayers,		FIELD_INTEGER, "SolidToPlayer" ),
+	//DEFINE_KEYFIELD_NOT_SAVED( m_iDefaultUpgrade,		FIELD_INTEGER, "defaultupgrade" ),	
+	DEFINE_KEYFIELD( m_iDefaultUpgrade, FIELD_INTEGER, "defaultupgrade" ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
@@ -617,6 +619,15 @@ CTFPlayer *CBaseObject::GetOwner()
 void CBaseObject::Activate( void )
 {
 	BaseClass::Activate();
+
+	// call these if building is spawned manually, so its not stuck in spawning phase forever
+	StartPlacement( NULL );
+
+	StartBuilding( NULL );
+
+	SetHealth( GetMaxHealth () );
+
+	FinishedBuilding( );
 
 	Assert( 0 );
 }
@@ -1487,6 +1498,10 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 		return 0;
 
 	if ( IsPlacing() )
+		return 0;
+
+	// hammer spawnflag for building
+	if ( HasSpawnFlags( SF_OBJ_INVULNERABLE ) )
 		return 0;
 
 	// Check teams

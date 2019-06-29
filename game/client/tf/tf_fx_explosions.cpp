@@ -126,6 +126,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->color.b = 140;
 		dl->decay = 200;
 		dl->radius = 512.f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
 	else
@@ -137,6 +138,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->color.b = 128;
 		dl->decay = 200;
 		dl->radius = 340.f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
 

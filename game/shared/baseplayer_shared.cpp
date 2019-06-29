@@ -232,6 +232,9 @@ void CBasePlayer::ItemPostFrame()
 	// Put viewmodels into basically correct place based on new player origin
 	CalcViewModelView( EyePosition(), EyeAngles() );
 
+
+	// removing this entire chunk allows firing in weapons but no exiting!
+	
 	// Don't process items while in a vehicle.
 	if ( GetVehicle() )
 	{
@@ -240,9 +243,12 @@ void CBasePlayer::ItemPostFrame()
 #else
 		IServerVehicle *pVehicle = GetVehicle();
 #endif
+		pVehicle->ItemPostFrame(this);
 
+		/*
 		bool bUsingStandardWeapons = UsingStandardWeaponsInVehicle();
 
+		
 #if defined( CLIENT_DLL )
 		if ( pVehicle->IsPredicted() )
 #endif
@@ -252,8 +258,11 @@ void CBasePlayer::ItemPostFrame()
 
 		if (!bUsingStandardWeapons || !GetVehicle())
 			return;
+		*/
 	}
-
+	
+	
+	// removing this entire chunk allows firing in weapons but no exiting!
 
 	// check if the player is using something
 	if ( m_hUseEntity != NULL )
@@ -274,6 +283,9 @@ void CBasePlayer::ItemPostFrame()
 	}
 	else
 	{
+		// not having this causes all weapons to never fire
+		GetActiveWeapon()->ItemPostFrame();
+		/*
 		if ( GetActiveWeapon() && (!IsInAVehicle() || UsingStandardWeaponsInVehicle()) )
 		{
 #if defined( CLIENT_DLL )
@@ -281,10 +293,11 @@ void CBasePlayer::ItemPostFrame()
 			if ( GetActiveWeapon()->IsPredicted() )
 #endif
 
-			{
+			{		   
 				GetActiveWeapon()->ItemPostFrame( );
 			}
 		}
+		*/
 	}
 
 #if !defined( CLIENT_DLL )
@@ -1410,8 +1423,8 @@ void CBasePlayer::ViewPunch( const QAngle &angleOffset )
 		return;
 
 	// We don't allow view kicks in the vehicle
-	if ( IsInAVehicle() )
-		return;
+	//if ( IsInAVehicle() )
+	//	return;
 
 	m_Local.m_vecPunchAngleVel += angleOffset * 20;
 }

@@ -407,3 +407,35 @@ CTFTeam *GetGlobalTFTeam( int iIndex )
 
 	return ( dynamic_cast< CTFTeam* >( g_Teams[iIndex] ) );
 }
+
+void CTFTeam::GetOpposingTFTeam( CUtlVector<CTFTeam *> *pTeamTest )
+{
+	int iTeam = GetTeamNumber();
+	switch ( iTeam )
+	{
+		// kill blue and merc
+	case TF_TEAM_RED:
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_BLUE));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_MERCENARY));
+		break;
+
+		// kill red and merc
+	case TF_TEAM_BLUE:
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_RED));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_MERCENARY));
+		break;
+
+		// kill red and blue
+	case TF_TEAM_MERCENARY:
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_RED));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_BLUE));
+		break;
+
+		// kill everybody if no team
+	default:
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_RED));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_BLUE));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_MERCENARY));
+		break;
+	}
+}	

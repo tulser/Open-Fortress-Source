@@ -234,6 +234,9 @@ protected:
 	virtual bool HandleSwimming( Activity &idealActivity );
 	virtual bool HandleDying( Activity &idealActivity );
 
+//  SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
+	virtual bool HandleVehicle(Activity &idealActivity);
+
 	// Gesture Slots
 	CUtlVector<GestureSlot_t>		m_aGestureSlots;
 	bool	InitGestureSlots( void );

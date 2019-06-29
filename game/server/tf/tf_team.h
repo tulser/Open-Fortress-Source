@@ -33,6 +33,9 @@ public:
 	void			SetColor( color32 color );
 	color32			GetColor( void );
 
+	// used by sentry bois
+	void GetOpposingTFTeam( CUtlVector<CTFTeam *> *pTeamTest );
+
 	// Score.
 	void			ShowScore( CBasePlayer *pPlayer );
 

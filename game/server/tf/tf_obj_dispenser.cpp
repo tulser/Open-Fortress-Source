@@ -198,13 +198,6 @@ void CObjectDispenser::SetModel( const char *pModel )
 //-----------------------------------------------------------------------------
 void CObjectDispenser::OnGoActive( void )
 {
-	CTFPlayer *pBuilder = GetBuilder();
-
-	Assert( pBuilder );
-
-	if ( !pBuilder )
-		return;
-
 	SetModel( DISPENSER_MODEL );
 
 	// Put some ammo in the Dispenser

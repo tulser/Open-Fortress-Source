@@ -2972,6 +2972,7 @@ void C_BaseEntity::CreateLightEffects( void )
 		dl->color.r = dl->color.g = dl->color.b = 250;
 		dl->radius = random->RandomFloat(400,431);
 		dl->die = gpGlobals->curtime + 0.001;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 	}
 	if (IsEffectActive(EF_DIMLIGHT))
 	{			
@@ -2980,6 +2981,7 @@ void C_BaseEntity::CreateLightEffects( void )
 		dl->color.r = dl->color.g = dl->color.b = 100;
 		dl->radius = random->RandomFloat(200,231);
 		dl->die = gpGlobals->curtime + 0.001;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 	}
 }
 
@@ -4841,6 +4843,7 @@ CON_COMMAND_F( dlight_debug, "Creates a dlight in front of the player", FCVAR_CH
 	el->color.g = 192;
 	el->color.b = 64;
 	el->color.exponent = 5;
+	el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 
 }
 //-----------------------------------------------------------------------------

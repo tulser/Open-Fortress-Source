@@ -247,13 +247,6 @@ bool CObjectSentrygun::StartBuilding( CBaseEntity *pBuilder )
 //-----------------------------------------------------------------------------
 void CObjectSentrygun::OnGoActive( void )
 {
-	CTFPlayer *pBuilder = GetBuilder();
-
-	Assert( pBuilder );
-
-	if ( !pBuilder )
-		return;
-
 	SetModel( SENTRY_MODEL_LEVEL_1 );
 
 	m_iState.Set( SENTRY_STATE_SEARCHING );
@@ -290,6 +283,18 @@ void CObjectSentrygun::OnGoActive( void )
 	m_iAttachments[SENTRYGUN_ATTACHMENT_ROCKET_R] = 0;
 
 	BaseClass::OnGoActive();
+
+	// this is for the defaultupgrade keyvalue useable in hammer
+	// if the keyvalue has a number more than 0 it will change the building to this level
+    // you can use levels higher than 3 with this to cause havoc
+	if ( m_iDefaultUpgrade > 0 )
+	{
+		for ( int i = 0; i < m_iDefaultUpgrade; i++ )
+		{
+			StartUpgrading();
+			FinishUpgrading();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -650,12 +655,36 @@ bool CObjectSentrygun::FindTarget()
 	
 	// Find the opposing team list.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if ( !pPlayer )
-		return false;
 
-	CTFTeam *pTeam = pPlayer->GetOpposingTFTeam();
-	if ( !pTeam )
-		return false;
+	// this will be used to test which team we can shoot happily
+	CUtlVector<CTFTeam *> pTeamTest;
+
+	// CTFTeam *pTeam = pPlayer->GetOpposingTFTeam();
+	CTFTeam *pTeam = NULL;
+
+	// this isn't compatible with hammer-placed sentries
+	//CTFTeam *pTeam = pPlayer->GetOpposingTFTeam();
+
+	//if ( !pTeam )
+	//				return false;
+
+	if ( pPlayer )
+	{
+		// test the team of the engineer who built us first
+			pTeam = pPlayer->GetTFTeam();
+	}
+	else
+	{
+		// no builder means spawned manually so get team number of sentry itself instead
+			pTeam = GetTFTeam();
+	}
+
+	if ( pTeam )
+		        // test who we can shoot
+				// if the sentry has no team it can shoot everyone
+				pTeam->GetOpposingTFTeam( &pTeamTest );
+	else
+				return false;
 
 	// If we have an enemy get his minimum distance to check against.
 	Vector vecSegment;
@@ -666,68 +695,31 @@ bool CObjectSentrygun::FindTarget()
 	float flOldTargetDist2 = FLT_MAX;
 
 	// Sentries will try to target players first, then objects, then NPCs.  However, if the enemy held was an object it will continue
-	// to try and attack it first.
-	int nTeamCount = pTeam->GetNumPlayers();
-	for ( int iPlayer = 0; iPlayer < nTeamCount; ++iPlayer )
+	// to try and attack it first.	
+	// the teams are further tested from above
+	for ( int i = 0; i < pTeamTest.Size(); i++ )
 	{
-		CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeam->GetPlayer( iPlayer ) );
-		if ( pTargetPlayer == NULL )
-			continue;
-		
-		if ( pTargetPlayer == pPlayer )
-			continue;
-
-		// Make sure the player is alive.
-		if ( !pTargetPlayer->IsAlive() )
-			continue;
-
-		if ( pTargetPlayer->GetFlags() & FL_NOTARGET )
-			continue;
-
-		vecTargetCenter = pTargetPlayer->GetAbsOrigin();
-		vecTargetCenter += pTargetPlayer->GetViewOffset();
-		VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
-		float flDist2 = vecSegment.LengthSqr();
-
-		// Store the current target distance if we come across it
-		if ( pTargetPlayer == pTargetOld )
+		int nTeamCount = pTeamTest[i]->GetNumPlayers();
+		for ( int iPlayer = 0; iPlayer < nTeamCount; ++iPlayer )
 		{
-			flOldTargetDist2 = flDist2;
-		}
-
-		// Check to see if the target is closer than the already validated target.
-		if ( flDist2 > flMinDist2 )
-			continue;
-
-		// It is closer, check to see if the target is valid.
-		if ( ValidTargetPlayer( pTargetPlayer, vecSentryOrigin, vecTargetCenter ) )
-		{
-			flMinDist2 = flDist2;
-			pTargetCurrent = pTargetPlayer;
-		}
-	}
-
-	// If we already have a target, don't check objects.
-	if ( pTargetCurrent == NULL )
-	{
-		int nTeamObjectCount = pTeam->GetNumObjects();
-		for ( int iObject = 0; iObject < nTeamObjectCount; ++iObject )
-		{
-			CBaseObject *pTargetObject = pTeam->GetObject( iObject );
-			if ( !pTargetObject )
+			CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeamTest[i]->GetPlayer( iPlayer ) );
+			if ( pTargetPlayer == NULL )
 				continue;
-			
-			if ( pTargetObject == this )
+
+			// Make sure the player is alive.
+			if ( !pTargetPlayer->IsAlive() )
 				continue;
-			if ( pTargetObject->GetOwner() == pPlayer )
+
+			if ( pTargetPlayer->GetFlags() & FL_NOTARGET )
 				continue;
-			vecTargetCenter = pTargetObject->GetAbsOrigin();
-			vecTargetCenter += pTargetObject->GetViewOffset();
+
+			vecTargetCenter = pTargetPlayer->GetAbsOrigin();
+			vecTargetCenter += pTargetPlayer->GetViewOffset();
 			VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
 			float flDist2 = vecSegment.LengthSqr();
 
 			// Store the current target distance if we come across it
-			if ( pTargetObject == pTargetOld )
+			if ( pTargetPlayer == pTargetOld )
 			{
 				flOldTargetDist2 = flDist2;
 			}
@@ -737,65 +729,96 @@ bool CObjectSentrygun::FindTarget()
 				continue;
 
 			// It is closer, check to see if the target is valid.
-			if ( ValidTargetObject( pTargetObject, vecSentryOrigin, vecTargetCenter ) )
+			if ( ValidTargetPlayer( pTargetPlayer, vecSentryOrigin, vecTargetCenter ) )
 			{
 				flMinDist2 = flDist2;
-				pTargetCurrent = pTargetObject;
+				pTargetCurrent = pTargetPlayer;
 			}
 		}
-	}
 
-	// now check NPCs
-	if ( pTargetCurrent == NULL )
-	{
-		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
-		int nAIs = g_AI_Manager.NumAIs();
-
-		for (int i = 0; i < nAIs; i++)
+		// If we already have a target, don't check objects.
+		if ( pTargetCurrent == NULL )
 		{
-			CAI_BaseNPC *pNPC = ppAIs[i];
-
-            // our guy has to be alive too
-			if (!pNPC->IsAlive())
-				continue;
-
-			vecTargetCenter = pNPC->WorldSpaceCenter();
-			VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
-			float flDist2 = vecSegment.LengthSqr();
-
-			// Store the current target distance if we come across it
-			if (pNPC == pTargetOld)
+			int nTeamObjectCount = pTeamTest[i]->GetNumObjects();
+			for ( int iObject = 0; iObject < nTeamObjectCount; ++iObject )
 			{
-				flOldTargetDist2 = flDist2;
-			}
+				CBaseObject *pTargetObject = pTeamTest[i]->GetObject( iObject );
+				if ( !pTargetObject )
+					continue;
 
-			// Check to see if the target is closer than the already validated target.
-			if  (flDist2 > flMinDist2 )
-				continue;
+				vecTargetCenter = pTargetObject->GetAbsOrigin();
+				vecTargetCenter += pTargetObject->GetViewOffset();
+				VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
+				float flDist2 = vecSegment.LengthSqr();
 
-			// It is closer, check to see if the target is valid.
-			if (ValidTargetNPC(pNPC, vecSentryOrigin, vecTargetCenter))
-			{
-				flMinDist2 = flDist2;
-				pTargetCurrent = pNPC;
+				// Store the current target distance if we come across it
+				if ( pTargetObject == pTargetOld )
+				{
+					flOldTargetDist2 = flDist2;
+				}
+
+				// Check to see if the target is closer than the already validated target.
+				if ( flDist2 > flMinDist2 )
+					continue;
+
+				// It is closer, check to see if the target is valid.
+				if ( ValidTargetObject( pTargetObject, vecSentryOrigin, vecTargetCenter ) )
+				{
+					flMinDist2 = flDist2;
+					pTargetCurrent = pTargetObject;
+				}
 			}
 		}
-	}
-
-	// We have a target.
-	if ( pTargetCurrent )
-	{
-		if ( pTargetCurrent != pTargetOld )
+		if ( pTargetCurrent == NULL )
 		{
-			// flMinDist2 is the new target's distance
-			// flOldTargetDist2 is the old target's distance
-			// Don't switch unless the new target is closer by some percentage
-			if ( flMinDist2 < ( flOldTargetDist2 * 0.75f ) )
+			CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+			int nAIs = g_AI_Manager.NumAIs();
+
+			for ( int i = 0; i < nAIs; i++ )
 			{
-				FoundTarget( pTargetCurrent, vecSentryOrigin );
+				CAI_BaseNPC *pNPC = ppAIs[i];
+
+				// our guy has to be alive too
+				if ( !pNPC->IsAlive() )
+					continue;
+
+				vecTargetCenter = pNPC->WorldSpaceCenter();
+				VectorSubtract( vecTargetCenter, vecSentryOrigin, vecSegment );
+				float flDist2 = vecSegment.LengthSqr();
+
+				// Store the current target distance if we come across it
+				if ( pNPC == pTargetOld )
+				{
+					flOldTargetDist2 = flDist2;
+				}
+
+				// Check to see if the target is closer than the already validated target.
+				if ( flDist2 > flMinDist2 )
+					continue;
+
+				// It is closer, check to see if the target is valid.
+				if ( ValidTargetNPC( pNPC, vecSentryOrigin, vecTargetCenter ) )
+				{
+					flMinDist2 = flDist2;
+					pTargetCurrent = pNPC;
+				}
 			}
 		}
-		return true;
+		// We have a target.
+		if ( pTargetCurrent )
+		{
+			if ( pTargetCurrent != pTargetOld )
+			{
+				// flMinDist2 is the new target's distance
+				// flOldTargetDist2 is the old target's distance
+				// Don't switch unless the new target is closer by some percentage
+				if ( flMinDist2 < ( flOldTargetDist2 * 0.75f ) )
+				{
+					FoundTarget( pTargetCurrent, vecSentryOrigin );
+				}
+			}
+			return true;
+		}
 	}
 
 	return false;
@@ -1022,7 +1045,8 @@ bool CObjectSentrygun::Fire()
 		// Setup next rocket shot
 		m_flNextRocketAttack = gpGlobals->curtime + 3;
 
-		if ( !tf_sentrygun_ammocheat.GetBool() )
+		//if ( !tf_sentrygun_ammocheat.GetBool() )
+		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{
 			m_iAmmoRockets--;
 		}
@@ -1118,7 +1142,8 @@ bool CObjectSentrygun::Fire()
 			break;
 		}
 
-		if ( !tf_sentrygun_ammocheat.GetBool() )
+		//if ( !tf_sentrygun_ammocheat.GetBool() )
+		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{
 			m_iAmmoShells--;
 		}

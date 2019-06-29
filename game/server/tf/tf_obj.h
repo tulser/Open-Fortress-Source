@@ -31,6 +31,9 @@ struct animevent_t;
 #define OBJECT_CONSTRUCTION_INTERVAL			0.1
 #define OBJECT_CONSTRUCTION_STARTINGHEALTH		0.1
 
+// for hammer-placed buildings
+#define SF_OBJ_INVULNERABLE			0x0002
+
 
 extern ConVar object_verbose;
 extern ConVar obj_child_range_factor;
@@ -282,6 +285,9 @@ protected:
 	};
 
 	bool		IsSolidToPlayers( void ) const;
+	
+	// for spawnflag 2
+	int			m_iDefaultUpgrade;
 
 	// object flags....
 	CNetworkVar( int, m_fObjectFlags );

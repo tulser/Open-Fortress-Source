@@ -837,8 +837,8 @@ struct EmitSound_t
 //-----------------------------------------------------------------------------
 // Multiplayer specific defines
 //-----------------------------------------------------------------------------
-#define MAX_CONTROL_POINTS			8
-#define MAX_CONTROL_POINT_GROUPS	8
+#define MAX_CONTROL_POINTS			16
+#define MAX_CONTROL_POINT_GROUPS	16
 
 // Maximum number of points that a control point may need owned to be cappable
 #define MAX_PREVIOUS_POINTS			3

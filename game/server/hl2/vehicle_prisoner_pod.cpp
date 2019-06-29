@@ -595,8 +595,9 @@ void CPropVehiclePrisonerPod::InputEnterVehicle( inputdata_t &inputdata )
 	CBaseCombatCharacter *pPassenger = ToBaseCombatCharacter( inputdata.pActivator );
 	if ( pPassenger == NULL )
 	{
-		// Activator was not a player, just grab the singleplayer player.
-		pPassenger = UTIL_PlayerByIndex( 1 );
+		// SecobMod__Enable_Fixed_Multiplayer_AI
+		// Activator was not a player, just grab the nearest player. 
+		pPassenger = UTIL_GetNearestPlayer(GetAbsOrigin());
 		if ( pPassenger == NULL )
 			return;
 	}

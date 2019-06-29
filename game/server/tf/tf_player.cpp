@@ -528,9 +528,6 @@ void CTFPlayer::PreThink()
 {
 	// Update timers.
 	UpdateTimers();
-
-	// Pass through to the base class think.
-	BaseClass::PreThink();
 	
 	// copied from hl2player
 	if  (IsInAVehicle() )
@@ -545,8 +542,8 @@ void CTFPlayer::PreThink()
 		return;
 	}
 	
-		// Pass through to the base class think.
-		BaseClass::PreThink();
+	// Pass through to the base class think.
+	BaseClass::PreThink();
 
 
 	// Reset bullet force accumulator, only lasts one frame, for ragdoll forces from multiple shots.

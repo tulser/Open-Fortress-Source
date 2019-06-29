@@ -1241,6 +1241,7 @@ void FX_BuildTeslaHitbox(
 		el->color.g = 235;
 		el->color.b = 255;
 		el->color.exponent = 4;
+		el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 
 		el->radius	= random->RandomInt( 32, 128 );
 		el->decay	= el->radius / 0.1f;
