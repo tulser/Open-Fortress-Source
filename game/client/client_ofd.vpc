@@ -414,4 +414,9 @@ $Project "Client (OFD)"
 			$File	"episodic\c_npc_puppet.cpp"
 		}
 	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	"$LIBPUBLIC\libdiscord-rpc"
+	}
 }

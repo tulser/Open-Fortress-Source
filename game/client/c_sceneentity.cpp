@@ -862,7 +862,7 @@ CChoreoScene *C_SceneEntity::LoadScene(const char *filename)
 	char *pBuffer = 0;
 	CChoreoScene *pScene = NULL;
 
-	int fileSize = filesystem->ReadFileEx(loadfile, "MOD", &(void*)pBuffer, true);
+	int fileSize = filesystem->ReadFileEx(loadfile, "MOD", (void**)&pBuffer, true);
 	if (fileSize)
 	{
 		g_TokenProcessor.SetBuffer((char*)pBuffer);
