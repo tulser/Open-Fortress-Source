@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: Moddified Tripmine entity for Open Fortress
 //
@@ -14,7 +14,7 @@
 #include "engine/IEngineSound.h"
 #include "tf_player.h"
 #include "basecombatcharacter.h"
-#include "AI_BaseNPC.h"
+#include "ai_basenpc.h"
 #include "soundent.h"
 #include "game.h"
 

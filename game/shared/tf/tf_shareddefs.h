@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2006, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -363,7 +363,7 @@ const Vector g_vecFixedPattern[] =
 };
 
 extern const char *g_aWeaponNames[];
-extern int g_aWeaponDamageTypes[];
+extern unsigned int g_aWeaponDamageTypes[];
 
 int GetWeaponId( const char *pszWeaponName );
 #ifdef GAME_DLL

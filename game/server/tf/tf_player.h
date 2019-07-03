@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -412,7 +412,7 @@ public:
 	virtual bool Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 	virtual void Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget , const Vector *pVelocity );
 
-	void 				CTFPlayer::UpdateGunGameLevel( void );
+	void 				UpdateGunGameLevel( void );
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );

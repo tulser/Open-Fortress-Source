@@ -52,7 +52,7 @@ void CSkyboxSwapper::Precache( void )
 {
 	if ( Q_strlen( m_iszSkyboxName.ToCStr() ) == 0 )
 	{
-		Warning( "skybox_swapper (%s) has no skybox specified!\n", GetEntityName() );
+		Warning( "skybox_swapper (%s) has no skybox specified!\n", GetEntityName().ToCStr() );
 		return;
 	}
 
