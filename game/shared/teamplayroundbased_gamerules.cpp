@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -1505,8 +1505,8 @@ void CTeamplayRoundBasedRules::State_Think_STALEMATE( void )
 			SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
 		}
 	}
-	else if ( iDeadTeam && iAliveTeam == TEAM_UNASSIGNED || 
-			  ( m_hStalemateTimer && TimerMayExpire() && m_hStalemateTimer->GetTimeRemaining() <= 0 ) )
+	else if ( ( iDeadTeam && iAliveTeam == TEAM_UNASSIGNED )
+			  || ( m_hStalemateTimer && TimerMayExpire() && m_hStalemateTimer->GetTimeRemaining() <= 0 ) )
 	{
 		bool bFullReset = true;
 

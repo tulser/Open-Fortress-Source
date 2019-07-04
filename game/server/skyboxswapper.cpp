@@ -73,7 +73,7 @@ void CSkyboxSwapper::InputTrigger( inputdata_t &inputdata )
 	static ConVarRef skyname( "sv_skyname", false );
 	if ( !skyname.IsValid() )
 	{
-		Warning( "skybox_swapper (%s) trigger input failed - cannot find 'sv_skyname' convar!\n", GetEntityName() );
+		Warning( "skybox_swapper (%s) trigger input failed - cannot find 'sv_skyname' convar!\n", GetEntityName().ToCStr() );
 		return;
 	}
 	skyname.SetValue( m_iszSkyboxName.ToCStr() );

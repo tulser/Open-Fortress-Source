@@ -240,7 +240,7 @@ bool CTFRailgun::CanFireCriticalShot( bool bIsHeadshot )
 	if ( !bIsHeadshot )
 		return false;
 
-/*	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )
 	{
 		// no crits if they're not zoomed

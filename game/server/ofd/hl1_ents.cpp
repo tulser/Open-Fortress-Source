@@ -407,7 +407,7 @@ void CMultiManager::ManagerReport ( void )
 
 /**********************
 	    Pendulum
-/**********************/
+***********************/
 
 #define SF_PENDULUM_SWING 2
 

@@ -1465,7 +1465,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
 	StripWeapons();
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	int pWeaponSlot[2];
+	int pWeaponSlot[2] = {0, 0};
 	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5 ; iWeapon++ )
 	{
 		if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )

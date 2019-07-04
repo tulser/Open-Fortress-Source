@@ -38,7 +38,7 @@ enum AI_MoveLimitFlags_t
 	AIMLF_QUICK_REJECT = 0x08,
 };
 
-class CAI_MoveProbe : public CAI_Component
+class CAI_MoveProbe final : public CAI_Component
 {
 public:
 
