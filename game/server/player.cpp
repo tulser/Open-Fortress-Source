@@ -345,6 +345,7 @@ BEGIN_DATADESC( CBasePlayer )
 	DEFINE_FIELD( m_iLives, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bAllowInstantSpawn, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextDecalTime, FIELD_TIME ),
+	DEFINE_FIELD( m_flNextJingleTime, FIELD_TIME ),
 	//DEFINE_AUTO_ARRAY( m_szTeamName, FIELD_STRING ), // mp
 
 	//DEFINE_FIELD( m_iConnected, FIELD_INTEGER ),
@@ -4971,7 +4972,8 @@ void CBasePlayer::Spawn( void )
 
 	SetFOV( this, 0 );
 
-	m_flNextDecalTime	= 0;// let this player decal as soon as he spawns.
+	m_flNextDecalTime	= 0; // Let this player decal as soon as he spawns.
+	m_flNextJingleTime  = 0; // Ditto, but for jingles.
 
 	m_flgeigerDelay = gpGlobals->curtime + 2.0;	// wait a few seconds until user-defined message registrations
 												// are recieved by all clients
@@ -5992,7 +5994,7 @@ void CBasePlayer::ImpulseCommands( )
 		break;
 
 	case	202:// player jungle sound 
-		if ( gpGlobals->curtime < m_flNextDecalTime )
+		if ( gpGlobals->curtime < m_flNextJingleTime )
 		{
 			// too early!
 			break;
@@ -6003,7 +6005,7 @@ void CBasePlayer::ImpulseCommands( )
 			WRITE_BYTE( PLAY_PLAYER_JINGLE );
 		MessageEnd();
 
-		m_flNextDecalTime = gpGlobals->curtime + decalfrequency.GetFloat();
+		m_flNextJingleTime = gpGlobals->curtime + jinglefrequency.GetFloat();
 		break;
 
 	default:

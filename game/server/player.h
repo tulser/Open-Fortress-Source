@@ -1046,14 +1046,15 @@ private:
 
 	// Autoaim data
 	QAngle					m_vecAutoAim;
-	int						m_lastx, m_lasty;	// These are the previous update's crosshair angles, DON"T SAVE/RESTORE
+	int						m_lastx, m_lasty;	// These are the previous update's crosshair angles, DON'T SAVE/RESTORE
 
 	int						m_iFrags;
 	int						m_iDeaths;
 	int 					m_iGGLevel;
 	int 					m_iLives;
 
-	float					m_flNextDecalTime;// next time this player can spray a decal
+	float					m_flNextDecalTime;	// Next time this player can spray a decal.
+	float					m_flNextJingleTime;	// Ditto, but for jingles.
 
 	// Team Handling
 	// char					m_szTeamName[TEAM_NAME_LENGTH];
