@@ -85,6 +85,7 @@ extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
 extern ConVar	ofd_instagib;
+extern ConVar	ofd_clanarena;
 extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -1237,6 +1238,8 @@ void CTFPlayer::GiveDefaultItems()
 		ManageGunGameWeapons( pData );
 	else if ( ofd_instagib.GetInt() > 0 )
 		ManageInstagibWeapons( pData );
+	else if ( ofd_clanarena.GetInt() > 0 )
+		ManageClanArenaWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
 	// Give a builder weapon for each object the player class is allowed to build
@@ -1617,6 +1620,67 @@ void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
 			SetActiveWeapon( NULL );
 			Weapon_Switch( Weapon_GetSlot( iWeapon ) );
 			Weapon_SetLast( Weapon_GetSlot( iWeapon++) );
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+	/*
+	██╗  ██╗ █████╗  ██████╗██╗  ██╗
+	██║  ██║██╔══██╗██╔════╝██║ ██╔╝
+	███████║███████║██║     █████╔╝ 
+	██╔══██║██╔══██║██║     ██╔═██╗ 
+	██║  ██║██║  ██║╚██████╗██║  ██╗
+	╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
+	Seriously, please submit a pull request or something about this
+	*/
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_railgun");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_lightning_gun");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
+	if (pWeapon)	
+		pWeapon->DefaultTouch(this);
+
+	if (ofd_clanarena.GetInt() == 1)
+	{
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_supershotgun");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_nailgun");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grenadelauncher_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+	}
+
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
 		}
 	}
 }
