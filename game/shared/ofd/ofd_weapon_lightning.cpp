@@ -313,7 +313,7 @@ void CTFLightningGun::PrimaryAttack()
 	CTF_GameStats.Event_PlayerFiredWeapon( pOwner, m_bCritFire );
 
 	// Move other players back to history positions based on local player's lag
-	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
+	// lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
 #endif
 
 	// Find eligible entities in a cone in front of us.
@@ -355,7 +355,7 @@ void CTFLightningGun::PrimaryAttack()
 	m_flTimeWeaponIdle = gpGlobals->curtime + flFiringInterval;
 
 #if !defined (CLIENT_DLL)
-	lagcompensation->FinishLagCompensation( pOwner );
+	// lagcompensation->FinishLagCompensation( pOwner );
 #endif
 }
 
