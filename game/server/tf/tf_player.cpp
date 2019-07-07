@@ -3390,7 +3390,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							}
 							else if ( pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN )
 							{
-								// Scattergun gets 50% bonus of other weapons at short range
+								// SSG gets 100% bonus of other weapons at short range
 								flRandomDamage *= 2;
 							}					
 						}
