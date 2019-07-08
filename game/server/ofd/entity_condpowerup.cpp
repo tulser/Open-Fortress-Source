@@ -14,6 +14,7 @@
 #include "tier0/memdbgon.h"
 
 extern ConVar ofd_instagib;
+extern ConVar ofd_powerups;
 
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the powerupspawner
@@ -45,7 +46,8 @@ LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
 
 void CCondPowerup::Spawn( void )
 {
-	if ( ofd_instagib.GetInt() > 0 )
+	if ( ofd_instagib.GetInt() > 0 ||
+		 !ofd_powerups.GetBool() )
 		return;
 	Precache();
 	if (m_iszPowerupModel==MAKE_STRING( "" )) SetModel( STRING(m_iszPowerupModelOLD)  );

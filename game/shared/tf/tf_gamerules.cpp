@@ -131,6 +131,7 @@ ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle
 ConVar ofd_clanarena("ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena modes.", true, 0, true, 2);
 ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
 ConVar ofd_weaponspawners("ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners.");
+ConVar ofd_powerups("ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups.");
 ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
