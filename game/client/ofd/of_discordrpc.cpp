@@ -118,7 +118,8 @@ const char *g_aMapList[] =
 	"dm_sawdust",
 	"dm_legacy",
 	"dm_moonbase",
-	"dm_cargo"
+	"dm_cargo",
+	"dm_bailey"
 };
 
 CTFDiscordRPC g_discordrpc;
