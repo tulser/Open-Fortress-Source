@@ -11,7 +11,7 @@
 #include "tf_gamerules.h"
 
 extern ConVar of_infiniteammo;
-ConVar sv_unlockedchapters( "sv_unlockedchapters", "99", FCVAR_ARCHIVE | FCVAR_USERINFO );
+ConVar sv_unlockedchapters( "sv_unlockedchapters", "99" );
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------
@@ -23,6 +23,18 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Blue",
 	"Mercenary" //add team
 };
+
+const char *TF_WEARABLE_MODEL[] =
+{
+	"models/empty.mdl",
+	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
+	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
+	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
+	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl",
+	"models/workshop/player/items/soldier/headset/headset.mdl",
+};
+
+int TF_WEARABLE_COUNT = ARRAYSIZE( TF_WEARABLE_MODEL );
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
 {
@@ -48,7 +60,8 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Pyro",
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
-	"#TF_Class_Name_Mercenary"
+	"#TF_Class_Name_Mercenary",
+	"#TF_Class_Name_Civilian"
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -94,23 +107,8 @@ const char *g_aAmmoNames[] =
 	"TF_AMMO_METAL",
 	"TF_AMMO_GRENADES1",
 	"TF_AMMO_GRENADES2",
-	//
-	"TF_AMMO_SHOTGUN",
-	"TF_AMMO_SCATTERGUN",
-	"TF_AMMO_SUPERSHOTGUN",
-	"TF_AMMO_NAILS",
-	"TF_AMMO_PISTOL",
-	"TF_AMMO_SMG",
-	"TF_AMMO_SNIPERRIFLE",
-	"TF_AMMO_MINIGUN",
-	"TF_AMMO_FLAMETHROWER",
-	"TF_AMMO_REVOLVER",
-	"TF_AMMO_GRENADELAUNCHER",
-	"TF_AMMO_PIPEBOMBLAUNCHER",
-	"TF_AMMO_SYNRINGES",
-	"TF_AMMO_ROCKETLAUNCHER",
-	"TF_AMMO_RAILGUN",
-	"TF_AMMO_ASSAULTRIFLE",
+
+	"WEAPON_AMMO"
 };
 
 //-----------------------------------------------------------------------------
@@ -192,6 +190,9 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_PHYSCANNON",
 	"TF_WEAPON_SUPER_ROCKETLAUNCHER",
 	"TF_WEAPON_CHAINSAW",
+	"TF_WEAPON_DYNAMITE_BUNDLE",
+	"TF_WEAPON_TRIPMINE",
+	"TF_WEAPON_LIGHTNING_GUN",
 
 	"TF_WEAPON_COUNT",	// end marker, do not add below here 
 };
@@ -276,7 +277,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BULLET | DMG_USEDISTANCEMOD,	// TF_WEAPON_TOMMYGUN,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_ROCKETLAUNCHER_DM,
-	DMG_BULLET ,	// TF_WEAPON_ASSAULTRIFLE,
+	DMG_BULLET | DMG_USEDISTANCEMOD ,	// TF_WEAPON_ASSAULTRIFLE,
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD ,	// TF_WEAPON_SHOTGUN_MERCENARY,
 	DMG_SLASH, //TF_WEAPON_SWORD
 	DMG_CLUB, //TF_WEAPON_FLAG
@@ -284,6 +285,9 @@ int g_aWeaponDamageTypes[] =
 	DMG_DISSOLVE, //TF_WEAPON_PHYSCANNON
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
+	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
+	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
+	DMG_DISSOLVE | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list
@@ -299,9 +303,10 @@ const char *g_szProjectileNames[] =
 	"projectile_pipe_remote",
 	"projectile_syringe",
 	"projectile_nail",
+	"projectile_tripmine",
 };
 
-// these map to the projectiles named in g_szProjectileNames
+//NOTENOTE: This has been reworked, above char list not related anymore
 int g_iProjectileWeapons[] = 
 {
 	TF_WEAPON_NONE,
@@ -312,7 +317,9 @@ int g_iProjectileWeapons[] =
 	TF_WEAPON_SYRINGEGUN_MEDIC,
 	TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	TF_WEAPON_ROCKETLAUNCHER_DM,
-	TF_WEAPON_SUPER_ROCKETLAUNCHER
+	TF_WEAPON_SUPER_ROCKETLAUNCHER,
+	TF_WEAPON_DYNAMITE_BUNDLE,
+	TF_WEAPON_TRIPMINE
 };
 
 const char *g_pszHintMessages[] =

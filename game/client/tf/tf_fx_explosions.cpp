@@ -44,16 +44,9 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 {
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
-	switch (iWeaponID)
-	{
-	case TF_WEAPON_GRENADE_PIPEBOMB:
-	case TF_WEAPON_GRENADE_DEMOMAN:
-		pWeaponInfo = GetTFWeaponInfo(TF_WEAPON_PIPEBOMBLAUNCHER);
-		break;
-	default:
-		pWeaponInfo = GetTFWeaponInfo(iWeaponID);
-		break;
-	}
+	pWeaponInfo = GetTFWeaponInfo(iWeaponID);
+	if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB )
+		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER_MERCENARY );
 
 	bool bIsPlayer = false;
 	if (hEntity.Get())
@@ -133,6 +126,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->color.b = 140;
 		dl->decay = 200;
 		dl->radius = 512.f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
 	else
@@ -144,6 +138,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->color.b = 128;
 		dl->decay = 200;
 		dl->radius = 340.f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
 

@@ -44,6 +44,9 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableFlameThrower[];
+
 	CTFFlameThrower();
 	~CTFFlameThrower();
 

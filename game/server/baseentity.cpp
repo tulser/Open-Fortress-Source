@@ -2037,6 +2037,8 @@ void CBaseEntity::UpdateOnRemove( void )
 		}
 	}
 
+	// entities have a bruh moment after a round restart because of this, disabled
+	/*
 	if ( m_iGlobalname != NULL_STRING )
 	{
 		// NOTE: During level shutdown the global list will suppress this
@@ -2044,6 +2046,7 @@ void CBaseEntity::UpdateOnRemove( void )
 		// causing the whole list to be flushed
 		GlobalEntity_SetState( m_iGlobalname, GLOBAL_DEAD );
 	}
+	*/
 
 	VPhysicsDestroyObject();
 

@@ -69,6 +69,9 @@ enum PlayerAnimEvent_t
 	PLAYERANIMEVENT_PASSTIME_THROW_CANCEL,
 
 	PLAYERANIMEVENT_ATTACK_PRIMARY_SUPER,
+	
+	PLAYERANIMEVENT_PULLBACK,
+	
 
 	PLAYERANIMEVENT_COUNT
 };
@@ -230,6 +233,9 @@ protected:
 	virtual bool HandleMoving( Activity &idealActivity );
 	virtual bool HandleSwimming( Activity &idealActivity );
 	virtual bool HandleDying( Activity &idealActivity );
+
+//  SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
+	virtual bool HandleVehicle(Activity &idealActivity);
 
 	// Gesture Slots
 	CUtlVector<GestureSlot_t>		m_aGestureSlots;

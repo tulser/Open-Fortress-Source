@@ -29,6 +29,7 @@ extern ConVar	footsteps;
 extern ConVar	flashlight;
 extern ConVar	aimcrosshair;
 extern ConVar	decalfrequency;
+extern ConVar	jinglefrequency;
 extern ConVar	teamlist;
 extern ConVar	teamoverride;
 extern ConVar	defaultteam;

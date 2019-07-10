@@ -31,8 +31,6 @@ public:
 	int GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
 
 	void GetAmmoCount( int &iShells, int &iMaxShells, int &iRockets, int & iMaxRockets );
-
-	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwner(); }
 	void GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
 
 	virtual bool	IsUpgrading( void ) const;

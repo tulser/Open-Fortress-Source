@@ -20,6 +20,7 @@ BEGIN_DATADESC( CTFForceRespawn )
 
 // Inputs.
 DEFINE_INPUTFUNC( FIELD_VOID, "ForceRespawn", InputForceRespawn ),
+DEFINE_INPUTFUNC( FIELD_INTEGER, "ForceTeamRespawn", InputForceTeamRespawn ),
 DEFINE_INPUTFUNC( FIELD_VOID, "ForceRespawnSwitchTeams", InputForceRespawnSwitchTeams ),
 
 // Outputs.
@@ -41,7 +42,7 @@ CTFForceRespawn::CTFForceRespawn()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
+void CTFForceRespawn::ForceRespawn( bool bSwitchTeams, int team )
 {
 	int i = 0;
 
@@ -54,7 +55,7 @@ void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
 			pPlayer->TeamFortress_RemoveEverythingFromWorld();
 
 			// Ignore players who aren't on an active team
-			if ( pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+			if ( pPlayer->GetTeamNumber() != TF_TEAM_RED && pPlayer->GetTeamNumber() != TF_TEAM_BLUE && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY && team < 2 )
 			{
 				// Let the player spawn immediately when they do pick a class
 				pPlayer->AllowInstantSpawn();
@@ -78,15 +79,15 @@ void CTFForceRespawn::ForceRespawn( bool bSwitchTeams )
 			}
 
 			// Ignore players who haven't picked a class yet
-			if ( !pPlayer->GetPlayerClass() || pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
+			if ( ( !pPlayer->GetPlayerClass() || pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED ) && ( team < 2 || team == pPlayer->GetTeamNumber() ) )
 			{
 				// Allow them to spawn instantly when they do choose
 				pPlayer->AllowInstantSpawn();
 				continue;
 			}
 
-			
-			pPlayer->ForceRespawn();
+			if ( team < 2 || ( !pPlayer->IsAlive() && team == pPlayer->GetTeamNumber() ) )
+				pPlayer->ForceRespawn();
 		}
 	}
 
@@ -108,6 +109,15 @@ void CTFForceRespawn::InputForceRespawn( inputdata_t &inputdata )
 {
 	ForceRespawn( false );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFForceRespawn::InputForceTeamRespawn( inputdata_t &inputdata )
+{
+	ForceRespawn( false, inputdata.value.Int() );
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose:

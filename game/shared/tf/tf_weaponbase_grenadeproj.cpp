@@ -62,7 +62,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropBool( RECVINFO( m_bCritical ) ),
-
+	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
@@ -75,6 +75,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 	SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
+	
+
 #endif
 END_NETWORK_TABLE()
 
@@ -181,6 +183,7 @@ void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
 		{
 			dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 			dl->origin = GetAbsOrigin();
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			switch ( GetTeamNumber() )
 			{
 				case TF_TEAM_RED:
@@ -274,7 +277,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 
 	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ );
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
-	SetElasticity( 0.4f/*BaseClass::GetGrenadeElasticity()*/ );
+	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
 
 	if ( ofd_instagib.GetInt() == 0)  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	else SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nInstagibDamage );
@@ -282,14 +285,18 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
 	ChangeTeam( pOwner->GetTeamNumber() );
-/*
+
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
+/*
 	if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
 	{
 		PrecacheModel(pTFWeapon->GetTFWpnData().m_nProjectileModel);
 		SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
 	}
 */
+	if ( pTFWeapon )
+		WeaponID = pTFWeapon->GetWeaponID();
+
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{
@@ -318,15 +325,15 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		m_bCollideWithTeammates = true;
-	}
-	else
-	{
+//	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
+//	{
+//		m_bCollideWithTeammates = true;
+//	}
+//	else
+//	{
 		m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
 		m_bCollideWithTeammates = false;
-	}
+//	}
 	VPhysicsInitNormal( SOLID_BBOX, 0, false );
 
 	m_takedamage = DAMAGE_EVENTS_ONLY;
@@ -361,30 +368,33 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	}
 
 	CSoundEnt::InsertSound ( SOUND_COMBAT, GetAbsOrigin(), BASEGRENADE_EXPLOSION_VOLUME, 3.0 );
-
+	
 	// Explosion effect on client
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
+	
+	int UseWeaponID = WeaponID;
+	
 	if ( UseImpactNormal() )
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, -1 );
 		}
 	}
 	else
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, GetWeaponID(), -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1 );
 		}
 	}
 
@@ -408,7 +418,42 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	{
 		UTIL_DecalTrace( pTrace, "Scorch" );
 	}
+//#################
+// Get the Weapon info
+	CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( WeaponID ) );
+	if ( pWeapon )
+	{
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+	Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 
+//
+//#################
+	
+#ifdef GAME_DLL
+	// Create the bomblets.
+	if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+	{
+		for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
+		{
+				Vector vecSrc = pTrace->endpos + Vector( 0, 0, 1.0f ); 
+				Vector vecVelocity( random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
+								random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
+								random->RandomFloat( 30.0f, 70.0f ) * 5.0f );
+				Vector vecZero( 0,0,0 );
+				CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
+				float flTime = pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f );
+
+				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, flTime );
+				pBomb->SetDamage( GetDamage() * pWeaponInfo->m_flBombletMultiplier );
+				pBomb->SetDamageRadius( GetDamageRadius() );
+				pBomb->SetCritical( m_bCritical );
+				pBomb->WeaponID = WeaponID;
+		}		
+	}
+#endif
+	}
 	SetThink( &CBaseGrenade::SUB_Remove );
 	SetTouch( NULL );
 
@@ -505,7 +550,6 @@ void CTFWeaponBaseGrenadeProj::ResolveFlyCollisionCustom( trace_t &trace, Vector
 		flSurfaceElasticity = 0.3;
 	}
 
-#if 0
 	// if its breakable glass and we kill it, don't bounce.
 	// give some damage to the glass, and if it breaks, pass 
 	// through it.
@@ -539,7 +583,6 @@ void CTFWeaponBaseGrenadeProj::ResolveFlyCollisionCustom( trace_t &trace, Vector
 			return;
 		}
 	}
-#endif
 
 	float flTotalElasticity = GetElasticity() * flSurfaceElasticity;
 	flTotalElasticity = clamp( flTotalElasticity, 0.0f, 0.9f );
@@ -815,5 +858,82 @@ void CTFWeaponBaseGrenadeProj::DrawRadius( float flRadius )
 	}
 }
 
+
+//=============================================================================
+//
+// TF Mirv Bomb functions (Server specific).
+//
+
+#define GRENADE_MODEL_BOMBLET "models/weapons/w_models/w_grenade_bomblet.mdl"
+
+#define TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY		0.5f
+#define TF_WEAPON_GRENADE_MIRV_BOMB_FRICTION	0.8f
+#define TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY	0.45f
+
+LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_bomb, CTFGrenadeMirvBomb );
+PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_bomb );
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
+							                    const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, float timer )
+{
+	CTFGrenadeMirvBomb *pBomb = static_cast<CTFGrenadeMirvBomb*>( CBaseEntity::Create( "tf_weapon_grenade_mirv_bomb", position, angles, pOwner ) );
+	if ( pBomb )
+	{
+		pBomb->SetDetonateTimerLength( timer );
+		pBomb->SetupInitialTransmittedGrenadeVelocity( velocity );
+		pBomb->SetThrower( pOwner ); 
+		pBomb->SetOwnerEntity( NULL );
+
+		pBomb->SetGravity( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
+		pBomb->SetFriction( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
+		pBomb->SetElasticity( TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY );
+
+		pBomb->m_flDamage = 180.0f;
+		pBomb->m_DmgRadius = 198.0f;
+
+		pBomb->ChangeTeam( pOwner->GetTeamNumber() );
+
+		pBomb->SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
+
+		IPhysicsObject *pPhysicsObject = pBomb->VPhysicsGetObject();
+		if ( pPhysicsObject )
+		{
+			pPhysicsObject->AddVelocity( &velocity, &angVelocity );
+		}
+	}
+
+	return pBomb;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadeMirvBomb::Spawn()
+{
+	SetModel( GRENADE_MODEL_BOMBLET );
+
+	BaseClass::Spawn();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadeMirvBomb::Precache()
+{
+	PrecacheModel( GRENADE_MODEL_BOMBLET );
+
+	BaseClass::Precache();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGrenadeMirvBomb::BounceSound( void )
+{
+	EmitSound( "Weapon_Grenade_MirvBomb.Bounce" );
+}
 
 #endif

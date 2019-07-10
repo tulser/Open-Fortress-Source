@@ -35,8 +35,12 @@ public:
 	}
 	bool MyTouch( CBasePlayer *pPlayer )
 	{
+		// causes crashes, dont do anything for tf players
+		/*
 		CHL2_Player *pHL2Player = dynamic_cast<CHL2_Player *>( pPlayer );
 		return ( pHL2Player && pHL2Player->ApplyBattery() );
+		*/
+		return false;
 	}
 };
 

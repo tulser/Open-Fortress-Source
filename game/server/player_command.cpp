@@ -217,10 +217,10 @@ void CPlayerMove::FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *mo
 
 	// Convert final pitch to body pitch
 	float pitch = move->m_vecAngles[ PITCH ];
-	if ( pitch > 180.0f )
+	/*if ( pitch > 180.0f )
 	{
 		pitch -= 360.0f;
-	}
+	}*/
 	pitch = clamp( pitch, -90.f, 90.f );
 
 	move->m_vecAngles[ PITCH ] = pitch;
@@ -418,11 +418,6 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		player->pl.v_angle = ucmd->viewangles + player->pl.anglechange;
 	}
 
-	// Let server invoke any needed impact functions
-	VPROF_SCOPE_BEGIN( "moveHelper->ProcessImpacts" );
-	moveHelper->ProcessImpacts();
-	VPROF_SCOPE_END();
-
 	// Call standard client pre-think
 	RunPreThink( player );
 
@@ -444,8 +439,6 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 		VPROF( "pVehicle->ProcessMovement()" );
 		pVehicle->ProcessMovement( player, g_pMoveData );
 	}
-
-	RunPostThink( player );
 			
 	// Copy output
 	FinishMove( player, ucmd, g_pMoveData );
@@ -455,6 +448,13 @@ void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	{
 		player->pl.v_angle = player->GetLockViewanglesData();
 	}
+	
+	// Let server invoke any needed impact functions
+	VPROF_SCOPE_BEGIN( "moveHelper->ProcessImpacts" );
+	moveHelper->ProcessImpacts();
+	VPROF_SCOPE_END();
+
+	RunPostThink( player );
 
 	g_pGameMovement->FinishTrackPredictionErrors( player );
 

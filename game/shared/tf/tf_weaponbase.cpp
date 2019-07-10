@@ -48,11 +48,10 @@ ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
-ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Used for syncing up reloads" );
 extern ConVar tf_useparticletracers;
 extern ConVar ofd_instagib;
-
+extern ConVar ofd_multiweapons;
 //=============================================================================
 //
 // Global functions.
@@ -134,13 +133,13 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
-#endif
-#if defined( CLIENT_DLL )
-	RecvPropInt( RECVINFO( m_iShotsDue ) ),
-	RecvPropFloat( RECVINFO(m_flNextShotTime ) ),
+#endif 
+#if !defined( CLIENT_DLL )
+	SendPropTime( SENDINFO( m_flNextShotTime ) ),
+	SendPropInt( SENDINFO( m_iShotsDue ), 9 ),
 #else
-	SendPropInt( SENDINFO( m_iShotsDue ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropFloat( SENDINFO( m_flNextShotTime ), 0, SPROP_CHANGES_OFTEN ),
+	RecvPropTime( RECVINFO( m_flNextShotTime ) ),
+	RecvPropInt( RECVINFO( m_iShotsDue )),
 #endif
 END_NETWORK_TABLE()
 
@@ -152,6 +151,8 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 #if defined( CLIENT_DLL )
+	DEFINE_PRED_FIELD( m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_flNextShotTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
 #endif
@@ -163,6 +164,8 @@ LINK_ENTITY_TO_CLASS( tf_weapon_base, CTFWeaponBase );
 #if !defined( CLIENT_DLL )
 
 BEGIN_DATADESC( CTFWeaponBase )
+DEFINE_FIELD( m_flNextShotTime, FIELD_TIME ),
+DEFINE_FIELD( m_iShotsDue, FIELD_INTEGER ),
 DEFINE_FUNCTION( FallThink )
 END_DATADESC()
 
@@ -246,12 +249,31 @@ void CTFWeaponBase::Spawn()
 	m_szTracerName[0] = '\0';
 }
 
+int unequipable[10] =
+{
+	TF_WEAPON_BUILDER,
+	TF_WEAPON_INVIS
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::DontAutoEquip( void ) const
+{
+	for ( int i = 0; i < ARRAYSIZE(unequipable); i++ )
+	{
+		if( GetWeaponID() == unequipable[i] )
+			return true;
+	}
+	return false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode()  )
+	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 
 	return GetWpnData().iSlot;
@@ -262,7 +284,7 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetPosition( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ofd_multiweapons.GetBool() && !TFGameRules()->IsGGGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
 }
@@ -274,6 +296,25 @@ int CTFWeaponBase::GetDamage( void ) const
 {
 		if ( ofd_instagib.GetInt() == 0 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanSecondaryAttack( void ) const
+{
+		return !GetTFWpnData().m_bDisableSecondaryAttack;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFWeaponBase::CanDropManualy( void ) const
+{
+	if ( !GetTFWpnData().m_bAllowDrop && GetMaxReserveAmmo() <= 0 )
+		return false;
+	
+	return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -348,6 +389,51 @@ void CTFWeaponBase::Precache()
 		Q_snprintf( pTracerEffectCrit, sizeof(pTracerEffectCrit), "%s_dm_crit", pTFInfo->m_szTracerEffect );
 		PrecacheParticleSystem( pTracerEffect );
 		PrecacheParticleSystem( pTracerEffectCrit );		
+	}
+
+	if ( pTFInfo->szScoutViewModel && pTFInfo->szScoutViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szScoutViewModel );
+	}
+	if ( pTFInfo->szSoldierViewModel && pTFInfo->szSoldierViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSoldierViewModel );
+	}
+	if ( pTFInfo->szPyroViewModel && pTFInfo->szPyroViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szPyroViewModel );
+	}
+	if ( pTFInfo->szDemomanViewModel && pTFInfo->szDemomanViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szDemomanViewModel );
+	}
+	if ( pTFInfo->szHeavyViewModel && pTFInfo->szHeavyViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szHeavyViewModel );
+	}
+	if ( pTFInfo->szEngineerViewModel && pTFInfo->szEngineerViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szEngineerViewModel );
+	}
+	if ( pTFInfo->szMedicViewModel && pTFInfo->szMedicViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szMedicViewModel );
+	}
+	if ( pTFInfo->szSniperViewModel && pTFInfo->szSniperViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSniperViewModel );
+	}
+	if ( pTFInfo->szSpyViewModel && pTFInfo->szSpyViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szSpyViewModel );
+	}
+	if ( pTFInfo->szMercenaryViewModel && pTFInfo->szMercenaryViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szMercenaryViewModel );
+	}
+	if ( pTFInfo->szCivilianViewModel && pTFInfo->szCivilianViewModel[0] )
+	{
+		PrecacheModel( pTFInfo->szCivilianViewModel );
 	}
 }
 
@@ -565,6 +651,8 @@ void CTFWeaponBase::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::SecondaryAttack( void )
 {
+	if ( !CanSecondaryAttack() )
+		return;
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
@@ -692,7 +780,7 @@ bool CTFWeaponBase::Reload( void )
 void CTFWeaponBase::AbortReload( void )
 {
 	BaseClass::AbortReload();
-
+	
 	m_iReloadMode.Set( TF_RELOAD_START );
 }
 
@@ -707,6 +795,13 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	// If we don't have any ammo, switch to the next best weapon
 	if ( !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
 	{
+		if ( GetTFWpnData().m_bDropOnNoAmmo )
+		{
+#ifdef GAME_DLL 
+			pPlayer->DropWeapon( this, false, true );
+			UTIL_Remove ( this );
+#endif
+		}
 		// weapon isn't useable, switch.
 		if ( ( (GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false ) && ( g_pGameRules->SwitchToNextBestWeapon( pOwner, this ) ) )
 		{
@@ -867,6 +962,7 @@ bool CTFWeaponBase::ReloadSingly( void )
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_RELOAD_END );
 
 			m_iReloadMode.Set( TF_RELOAD_START );
+			
 			return true;
 		}
 	}

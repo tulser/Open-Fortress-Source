@@ -358,9 +358,12 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 		if( center.z > EyePosition().z )
 			continue;
 
+		// this causes crashes, FIXME
+		/*
 		vcollide_t *pCollide = modelinfo->GetVCollide( pList[i]->GetModelIndex() );
 		
 		Vector objMins, objMaxs;
+		// this exact line crashes, I have no idea why
 		physcollision->CollideGetAABB( &objMins, &objMaxs, pCollide->solids[0], pList[i]->GetAbsOrigin(), pList[i]->GetAbsAngles() );
 
 		if ( objMaxs.z < vecZombieKnees.z )
@@ -368,6 +371,7 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 
 		if ( !FVisible( pList[i] ) )
 			continue;
+		*/
 
 		if ( hl2_episodic.GetBool() )
 		{
@@ -379,14 +383,6 @@ bool CNPC_BaseZombie::FindNearestPhysicsObject( int iMaxMass )
 			if( !GetEnemy()->FVisible( pList[i] ) )
 				continue;
 		}
-
-		// Make this the last check, since it makes a string.
-		// Don't swat server ragdolls!
-		if ( FClassnameIs( pList[ i ], "physics_prop_ragdoll" ) )
-			continue;
-			
-		if ( FClassnameIs( pList[ i ], "prop_ragdoll" ) )
-			continue;
 
 		// The object must also be closer to the zombie than it is to the enemy
 		pNearest = pList[ i ];
@@ -1139,7 +1135,7 @@ void CNPC_BaseZombie::DieChopped( const CTakeDamageInfo &info )
 
 	}
 
-	if ( UTIL_ShouldShowBlood( BLOOD_COLOR_YELLOW ) )
+	if ( UTIL_ShouldShowBlood( BLOOD_COLOR_RED ) )
 	{
 		int i;
 		Vector vecSpot;
@@ -1153,7 +1149,7 @@ void CNPC_BaseZombie::DieChopped( const CTakeDamageInfo &info )
 			vecSpot.y += random->RandomFloat( -12, 12 ); 
 			vecSpot.z += random->RandomFloat( -4, 16 ); 
 
-			UTIL_BloodDrips( vecSpot, vec3_origin, BLOOD_COLOR_YELLOW, 50 );
+			UTIL_BloodDrips( vecSpot, vec3_origin, BLOOD_COLOR_RED, 50 );
 		}
 
 		for ( int i = 0 ; i < 4 ; i++ )
@@ -1722,7 +1718,7 @@ void CNPC_BaseZombie::Spawn( void )
 
 
 //-----------------------------------------------------------------------------
-// Purpose: Pecaches all resources this NPC needs.
+// Purpose: Precaches all resources this NPC needs.
 //-----------------------------------------------------------------------------
 void CNPC_BaseZombie::Precache( void )
 {
@@ -2291,7 +2287,7 @@ void CNPC_BaseZombie::Event_Killed( const CTakeDamageInfo &info )
 		VectorNormalize( vecDamageDir );
 
 		// Big blood splat
-		UTIL_BloodSpray( WorldSpaceCenter(), vecDamageDir, BLOOD_COLOR_YELLOW, 8, FX_BLOODSPRAY_CLOUD );
+		UTIL_BloodSpray( WorldSpaceCenter(), vecDamageDir, BLOOD_COLOR_RED, 8, FX_BLOODSPRAY_CLOUD );
 	}
 
    	BaseClass::Event_Killed( info );
@@ -2393,6 +2389,7 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 {
 	if ( m_bDisableHeadcrab )
 		return;
+
 	CAI_BaseNPC		*pCrab;
 	Vector vecSpot = vecOrigin;
 
@@ -2429,9 +2426,9 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 			CopyRenderColorTo( pGib );
 
 			
-			if( UTIL_ShouldShowBlood(BLOOD_COLOR_YELLOW) )
+			if( UTIL_ShouldShowBlood(BLOOD_COLOR_RED) )
 			{
-				UTIL_BloodImpact( pGib->WorldSpaceCenter(), Vector(0,0,1), BLOOD_COLOR_YELLOW, 1 );
+				UTIL_BloodImpact( pGib->WorldSpaceCenter(), Vector(0,0,1), BLOOD_COLOR_RED, 1 );
 
 				for ( int i = 0 ; i < 3 ; i++ )
 				{
@@ -2441,7 +2438,7 @@ void CNPC_BaseZombie::ReleaseHeadcrab( const Vector &vecOrigin, const Vector &ve
 					vecSpot.y += random->RandomFloat( -8, 8 ); 
 					vecSpot.z += random->RandomFloat( -8, 8 ); 
 
-					UTIL_BloodDrips( vecSpot, vec3_origin, BLOOD_COLOR_YELLOW, 50 );
+					UTIL_BloodDrips( vecSpot, vec3_origin, BLOOD_COLOR_RED, 50 );
 				}
 			}
 		}

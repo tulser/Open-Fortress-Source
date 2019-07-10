@@ -93,9 +93,15 @@ public:
 	// Condition (TF_COND_*).
 	int		GetCond() const						{ return m_nPlayerCond; }
 	void	SetCond( int nCond )				{ m_nPlayerCond = nCond; }
+	
 	void	AddCond( int nCond, float flDuration = PERMANENT_CONDITION );
 	void	RemoveCond( int nCond );
+	
+	void	WearHat( int nHat );
+	void	RemoveHat( int nHat );	
+	
 	bool	InCond( int nCond );
+	bool	WearsHat( int nHat );
 	void	RemoveAllCond( CTFPlayer *pPlayer );
 	void	OnConditionAdded( int nCond );
 	void	OnConditionRemoved( int nCond );
@@ -113,6 +119,8 @@ public:
 	
 	bool InCondShield( void );
 	void RemoveCondShield( void );
+	void SetSpawnEffect( int iEffect ){ m_iRespawnEffect = iEffect; }
+	int GetSpawnEffects( void ){ return m_iRespawnEffect; };
 
 #ifdef CLIENT_DLL
 	// This class only receives calls for these from C_TFPlayer, not
@@ -214,6 +222,7 @@ private:
 	void OnAddDisguised( void );
 	void OnAddBerserk( void );
 	void OnAddShield( void );
+	void OnAddShieldCharge( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -225,6 +234,7 @@ private:
 	void OnRemoveTeleported( void );
 	void OnRemoveBerserk( void );
 	void OnRemoveShield( void );
+	void OnRemoveShieldCharge( void );
 
 	float GetCritMult( void );
 
@@ -244,6 +254,7 @@ private:
 	// Vars that are networked.
 	CNetworkVar( int, m_nPlayerState );			// Player state.
 	CNetworkVar( int, m_nPlayerCond );			// Player condition flags.
+	CNetworkVar( int, m_nPlayerCosmetics );			// Player condition flags.
 	float m_flCondExpireTimeLeft[TF_COND_LAST];		// Time until each condition expires
 
 //TFTODO: What if the player we're disguised as leaves the server?
@@ -264,7 +275,7 @@ private:
 	float m_flLastStealthExposeTime;
 
 	CNetworkVar( int, m_nNumHealers );
-
+	CNetworkVar( int, m_iRespawnEffect );
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 

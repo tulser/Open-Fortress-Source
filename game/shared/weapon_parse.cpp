@@ -76,7 +76,7 @@ extern itemFlags_t g_ItemFlags[8];
 
 static CUtlDict< FileWeaponInfo_t*, unsigned short > m_WeaponInfoDatabase;
 
-#ifdef _DEBUG
+#if 1 //def _DEBUG
 // used to track whether or not two weapons have been mistakenly assigned the wrong slot
 bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { { false } };
 
@@ -418,21 +418,21 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	m_bAllowFlipping = ( pKeyValuesData->GetInt( "AllowFlipping", 1 ) != 0 ) ? true : false;
 	m_bMeleeWeapon = ( pKeyValuesData->GetInt( "MeleeWeapon", 0 ) != 0 ) ? true : false;
 
-#if defined(_DEBUG) && defined(HL2_CLIENT_DLL)
-	// make sure two weapons aren't in the same slot & position
-	if ( iSlot >= MAX_WEAPON_SLOTS ||
+#if 1 //defined(_DEBUG) && defined(HL2_CLIENT_DLL)
+	// make sure two weapons aren't in the same slot & position in DM
+	if ( iSlotDM >= MAX_WEAPON_SLOTS ||
 		iPosition >= MAX_WEAPON_POSITIONS )
 	{
 		Warning( "Invalid weapon slot or position [slot %d/%d max], pos[%d/%d max]\n",
-			iSlot, MAX_WEAPON_SLOTS - 1, iPosition, MAX_WEAPON_POSITIONS - 1 );
+			iSlotDM, MAX_WEAPON_SLOTS - 1, iPosition, MAX_WEAPON_POSITIONS - 1 );
 	}
 	else
 	{
-		if (g_bUsedWeaponSlots[iSlot][iPosition])
+		if (g_bUsedWeaponSlots[iSlotDM][iPosition])
 		{
-			Warning( "Duplicately assigned weapon slots in selection hud:  %s (%d, %d)\n", szPrintName, iSlot, iPosition );
+			Warning( "Duplicately assigned weapon slots in selection hud:  %s (%s, %d, %d)\n", szClassName, szPrintName, iSlotDM, iPosition );
 		}
-		g_bUsedWeaponSlots[iSlot][iPosition] = true;
+		g_bUsedWeaponSlots[iSlotDM][iPosition] = true;
 	}
 #endif
 

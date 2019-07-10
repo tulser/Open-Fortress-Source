@@ -40,7 +40,6 @@ struct WeaponData_t
 	float 	m_flMeleeRange;
 	bool	m_bUseRapidFireCrits;
 	bool	m_bCenterfireProjectile;
-
 	
 	float	m_flBurstFireDelay;				// Time to delay between firing
 	int		m_nBurstSize;
@@ -93,15 +92,29 @@ public:
 	float	m_flPrimerTime;
 	bool	m_bLowerWeapon;
 	bool	m_bSuppressGrenTimer;
-
+	bool 	m_bExplodeOnImpact;
+	char 	m_nProjectileModel[MAX_WEAPON_STRING];  // Will be adapted to work in rockets once we need that
+	
 	// Skins
 	bool	m_bHasTeamSkins_Viewmodel;
 	bool	m_bHasTeamSkins_Worldmodel;
+	// Eye candy
 	bool	m_bUsesCritAnimation;
-	bool	m_bNeverStrip;
 	bool	m_bGibOnOverkill;
-	bool	m_bGibOnHeadshot;
-	
+	bool	m_bGibOnHeadshot;	
+	// Used exclusivley for the Berserk powerup for now so that you don't loose it in gun game
+	bool	m_bNeverStrip;
+	// Bomblet functions for the dynamite pack, may be used in the BFG later
+	bool 	m_bDropBomblets;
+	int 	m_iBombletAmount;
+	float	m_flBombletTimer;
+	float	m_flBombletMultiplier;
+	int 	m_iBombletLevel;	
+	// Misc
+	bool 	m_bAllowDrop;
+	float	m_flPickupMultiplier;
+	bool	m_bDropOnNoAmmo;
+	bool 	m_bDisableSecondaryAttack;
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
@@ -121,7 +134,6 @@ public:
 	char					szMercenaryViewModel[MAX_WEAPON_STRING];	
 	char					szCivilianViewModel[MAX_WEAPON_STRING];	
 
-	char m_nProjectileModel[MAX_WEAPON_STRING];
 	
 	// Muzzle flash
 	char	m_szMuzzleFlashModel[128];

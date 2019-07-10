@@ -100,7 +100,8 @@ public:
 	static CTFPlayer	*CreatePlayer( const char *className, edict_t *ed );
 	static CTFPlayer	*Instance( int iEnt );
 
-	virtual void		Spawn( bool bRespawn = false );
+	virtual void		Spawn();
+	virtual void		SaveTransitionFile(void);
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -115,6 +116,8 @@ public:
 	void				SendOffHandViewModelActivity( Activity activity );
 
 	virtual void		CheatImpulseCommands( int iImpulse );
+	
+	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
 	virtual void		CommitSuicide( bool bExplode = false, bool bForce = false );
 
@@ -300,11 +303,17 @@ public:
 
 	// Dropping Ammo
 	void DropAmmoPack( void );
-	void DropWeapon( CTFWeaponBase *pActiveWeapon );
+	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolbe = false );
 
+	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );
+	
 	bool CanDisguise( void );
 	bool CanGoInvisible( void );
 	void RemoveInvisibility( void );
+	
+	bool CanAutoswitch( void );
+	
+	virtual void	Weapon_Equip( CBaseCombatWeapon *pWeapon );
 
 	void RemoveDisguise( void );
 	void PrintTargetWeaponInfo( void );
@@ -384,6 +393,7 @@ public:
 	int		no_dispenser_message;
 	
 	CNetworkVar( bool, m_bSaveMeParity );
+	CNetworkVar( bool, m_bDied );
 	CNetworkVar( bool, m_bGotKilled );
 
 	// teleporter variables
@@ -406,6 +416,7 @@ public:
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
+	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
@@ -437,6 +448,7 @@ public:
 	int				RestockAmmo( float PowerupSize );
 	int				RestockMetal( float PowerupSize );
 	int				RestockCloak( float PowerupSize );
+	bool				OwnsWeaponID( int ID );
 private:
 
 	int					GetAutoTeam( void );
@@ -594,7 +606,6 @@ public:
 	void				GiveAllItems();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 
-
 	///==HL2 PORT START==///
 	bool				IsSprinting( void ) { return false; }
 	bool				IsWeaponLowered( void ) { return false; }
@@ -609,8 +620,8 @@ public:
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
 	
-	virtual void			Weapon_Equip( CBaseCombatWeapon *pWeapon );
-
+	bool	m_bTransition;
+	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 
 	// Commander Mode for controller NPCs

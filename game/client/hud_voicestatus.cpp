@@ -362,7 +362,7 @@ void CHudVoiceStatus::Paint()
 #if defined(OPENFORTRESS_DLL)
 		Color c;
 
-		if (TFGameRules() && TFGameRules()->IsDMGamemode())
+		if (TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
 		{
 			C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
 			c = tf_PR->GetPlayerColor(playerId);

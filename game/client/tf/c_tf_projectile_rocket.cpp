@@ -101,6 +101,7 @@ void C_TFProjectile_Rocket::CreateLightEffects(void)
 			dl->color.r = 255;
 			dl->color.g = 100;
 			dl->color.b = 10;
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			switch (GetTeamNumber())
 			{
 			case TF_TEAM_RED:

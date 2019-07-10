@@ -326,8 +326,11 @@ void CItem_DynamicResupply::SpawnFullItem( CItem_DynamicResupply *pMaster, CBase
 	float flTotalProb = 0.0f;
 	for ( i = 0; i < NUM_AMMO_ITEMS; ++i )
 	{
+		/*
 		int iAmmoType = GetAmmoDef()->Index( g_DynamicResupplyAmmoItems[i].sAmmoDef );
 		bool bCanSpawn = pPlayer->Weapon_GetWpnForAmmo( iAmmoType ) != NULL;
+		*/
+		bool bCanSpawn = true;
 
 		if ( bCanSpawn && ( g_DynamicResupplyAmmoItems[i].flFullProbability != 0 ) && ( pMaster->m_flDesiredAmmo[i] != 0.0f ) )
 		{

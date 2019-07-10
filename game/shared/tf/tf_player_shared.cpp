@@ -127,12 +127,14 @@ END_RECV_TABLE()
 
 BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCond ) ),
+	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
+	RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
 	// Spy.
 	RecvPropTime( RECVINFO( m_flInvisChangeCompleteTime ) ),
 	RecvPropInt( RECVINFO( m_nDisguiseTeam ) ),
@@ -146,10 +148,12 @@ END_RECV_TABLE()
 BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCond, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nPlayerCosmetics, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
 // Server specific.
@@ -167,13 +171,14 @@ END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCosmetics ), TF_WEARABLE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
-	
+	SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
 	// Spy
 	SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
 	SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
@@ -253,6 +258,36 @@ bool CTFPlayerShared::InCond( int nCond )
 	Assert( nCond >= 0 && nCond < TF_COND_LAST );
 
 	return ( ( m_nPlayerCond & (1<<nCond) ) != 0 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::WearsHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+
+	return ( ( m_nPlayerCosmetics & (1<<nHat) ) != 0 );
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add a hat 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::WearHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+	m_nPlayerCosmetics |= (1<<nHat);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Forcibly remove a hat
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveHat( int nHat )
+{
+	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+
+	m_nPlayerCosmetics &= ~(1<<nHat);
 }
 
 //-----------------------------------------------------------------------------
@@ -453,7 +488,9 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_BERSERK:
 		OnAddBerserk();
 		break;		
-		
+	case TF_COND_SHIELD_CHARGE:
+		OnAddShieldCharge();
+		break;			
 	default:
 		break;
 	}
@@ -515,7 +552,9 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_BERSERK:
 		OnRemoveBerserk();
 		break;	
-		
+	case TF_COND_SHIELD_CHARGE:
+		OnRemoveShieldCharge();
+		break;			
 	default:
 		break;
 	}
@@ -784,7 +823,49 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	if ( InCond( TF_COND_CRITBOOSTED )  )
 	{
 
+	}
+	
+	if ( InCond( TF_COND_SHIELD_CHARGE ) )
+	{
+		if ( !m_pOuter->IsSolid() || (m_pOuter->GetMoveType() == MOVETYPE_PUSH || m_pOuter->GetMoveType() == MOVETYPE_NONE ) )
+				return;
 
+		// FIXME: If something is hierarchically attached, should we try to push the parent?
+		if (m_pOuter->GetMoveParent())
+			return;
+		
+		float m_flPushSpeed = 720;
+		Vector m_vecPushDir( 180, 90 , 60 );
+		Vector vecAbsoluteDir;
+		QAngle angPushDir = QAngle(m_vecPushDir.x, m_vecPushDir.y, m_vecPushDir.z);
+		AngleVectors(angPushDir, &vecAbsoluteDir);
+
+		Vector vecAbsDir;
+		// Transform the vector into entity space
+		VectorIRotate( vecAbsDir, m_pOuter->EntityToWorldTransform(), m_vecPushDir );		
+		
+		// Transform the push dir into global space
+
+		VectorRotate( m_vecPushDir, m_pOuter->EntityToWorldTransform(), vecAbsDir );
+
+
+
+		DevMsg("Player \n");
+		Vector vecPush = (m_flPushSpeed * vecAbsDir);
+		if ( ( m_pOuter->GetFlags() & FL_BASEVELOCITY ) )
+		{
+			vecPush = vecPush + m_pOuter->GetBaseVelocity();
+		}
+		if ( vecPush.z > 0 && (m_pOuter->GetFlags() & FL_ONGROUND) )
+		{
+			m_pOuter->SetGroundEntity( NULL );
+			Vector origin = m_pOuter->GetAbsOrigin();
+			origin.z += 1.0f;
+			m_pOuter->SetAbsOrigin( origin );
+		}
+		
+		m_pOuter->SetBaseVelocity( vecPush );
+		m_pOuter->AddFlag( FL_BASEVELOCITY );
 
 	}
 #endif
@@ -894,7 +975,38 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 void CTFPlayerShared::OnAddCritBoosted( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->OnAddCritBoosted();
+	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon )
+	{
+		char *pEffect = NULL;
+		switch( pPlayer->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffect = "critgun_weaponmodel_blu";
+			break;
+		case TF_TEAM_RED:
+			pEffect = "critgun_weaponmodel_red";
+			break;
+		case TF_TEAM_MERCENARY:
+			pEffect = "critgun_weaponmodel_dm";
+			break;
+		default:
+			break;
+		}
+		
+		if ( pEffect && pWeapon  )
+		{
+			if ( pPlayer != C_TFPlayer::GetLocalTFPlayer() )
+				UpdateParticleColor( pWeapon->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+			if ( pPlayer == C_TFPlayer::GetLocalTFPlayer() )
+			{
+				C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
+				UpdateParticleColor( vm->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+			}
+		}
+	}
+	
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
@@ -905,7 +1017,34 @@ void CTFPlayerShared::OnAddCritBoosted( void )
 void CTFPlayerShared::OnRemoveCritBoosted( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->OnRemoveCritBoosted();
+	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+	
+	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+	if ( pWeapon )
+	{
+		char *pEffect = NULL;
+		switch( pPlayer->GetTeamNumber() )
+		{
+		case TF_TEAM_BLUE:
+			pEffect = "critgun_weaponmodel_blu";
+			break;
+		case TF_TEAM_RED:
+			pEffect = "critgun_weaponmodel_red";
+			break;
+		case TF_TEAM_MERCENARY:
+			pEffect = "critgun_weaponmodel_dm";
+			break;
+		default:
+			break;
+		}
+		pWeapon->ParticleProp()->StopParticlesNamed( pEffect );
+		if ( pPlayer )
+		{
+			C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
+			if ( vm ) 
+			vm->ParticleProp()->StopParticlesNamed( pEffect );
+		}
+	}
 #else
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer && pTFPlayer->IsAlive() )
@@ -973,6 +1112,15 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	}
 	m_pOuter->TeamFortress_SetSpeed();
 #endif
+}
+
+void CTFPlayerShared::OnAddShieldCharge( void )
+{
+	m_pOuter->TeamFortress_SetSpeed();
+}
+void CTFPlayerShared::OnRemoveShieldCharge( void )
+{
+	m_pOuter->TeamFortress_SetSpeed();
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1053,7 +1201,7 @@ void CTFPlayerShared::OnAddShield( void )
 			view->SetScreenOverlayMaterial( pMaterial );
 		}
 	}
-	m_pOuter->UpdatePartyHat();
+	m_pOuter->UpdatePlayerAttachedModels();
 #endif
 }
 
@@ -1063,7 +1211,7 @@ void CTFPlayerShared::OnAddShield( void )
 void CTFPlayerShared::OnRemoveShield( void )
 {
 #ifdef CLIENT_DLL
-	m_pOuter->UpdatePartyHat();
+	m_pOuter->UpdatePlayerAttachedModels();
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );
@@ -1644,8 +1792,13 @@ CTFWeaponInfo *CTFPlayerShared::GetDisguiseWeaponInfo( void )
 
 bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 {
-	pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
-	return true;
+	if ( pParticle && m_pOuter )
+	{
+		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
+		return true;
+	}
+	return false;
+	
 }
 
 #endif
@@ -2323,6 +2476,9 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		if (maxfbspeed > tf_spy_max_cloaked_speed.GetFloat() )
 			maxfbspeed = tf_spy_max_cloaked_speed.GetFloat();
 	}
+	
+	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+			maxfbspeed = 750.0f;
 
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
@@ -2774,3 +2930,4 @@ void CTFPlayerShared::RemoveCondShield( void )
 {
 	RemoveCond( TF_COND_SHIELD );
 }
+

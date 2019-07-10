@@ -194,6 +194,7 @@ public:
 	virtual void		ChangeTeam( int iTeamNum );
 	virtual int			GetFragCount();
 	virtual int			GetGGLevel();
+	virtual int			GetLives();
 	virtual int			GetDeathCount();
 	virtual bool		IsConnected();
 	virtual int			GetArmorValue();
@@ -253,6 +254,9 @@ public:
 	// IPlayerInfo passthrough (because we can't do multiple inheritance)
 	IPlayerInfo *GetPlayerInfo() { return &m_PlayerInfo; }
 	IBotController *GetBotController() { return &m_PlayerInfo; }
+	
+	bool m_bTransition;			
+	bool m_bTransitionTeleported;	// This is important as it allows the game to save each players progress over a map change. Create the booleans required for transitions to work.
 
 	virtual void			SetModel( const char *szModelName );
 	void					SetBodyPitch( float flPitch );
@@ -661,6 +665,7 @@ public:
 	// Accessor methods
 	int		FragCount() const		{ return m_iFrags; }
 	int		GGLevel() const			{ return m_iGGLevel; }
+	int		Lives() const			{ return m_iLives; }
 	int		DeathCount() const		{ return m_iDeaths;}
 	bool	IsConnected() const		{ return m_iConnected != PlayerDisconnected; }
 	bool	IsDisconnecting() const	{ return m_iConnected == PlayerDisconnecting; }
@@ -683,10 +688,10 @@ public:
 	virtual bool	IsReadyToPlay( void ) { return true; }
 	virtual bool	IsReadyToSpawn( void ) { return true; }
 	virtual bool	ShouldGainInstantSpawn( void ) { return false; }
-	virtual void	ResetPerRoundStats( void ) { return; }
+	virtual void	ResetPerRoundStats( void ) { ResetGGLevel(); ResetLives(); }
 	void			AllowInstantSpawn( void ) { m_bAllowInstantSpawn = true; }
 
-	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel(); }
+	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel();ResetLives(); }
 	void	ResetFragCount();
 	void	IncrementFragCount( int nCount );
 	
@@ -695,7 +700,11 @@ public:
 
 	void	ResetDeathCount();
 	void	IncrementDeathCount( int nCount );
-
+	
+	void	ResetLives();
+	void	SetLives( int nCount );
+	void	IncrementLives( int nCount );
+	
 	void	SetArmorValue( int value );
 	void	IncrementArmorValue( int nCount, int nMaxValue = -1 );
 
@@ -1037,13 +1046,15 @@ private:
 
 	// Autoaim data
 	QAngle					m_vecAutoAim;
-	int						m_lastx, m_lasty;	// These are the previous update's crosshair angles, DON"T SAVE/RESTORE
+	int						m_lastx, m_lasty;	// These are the previous update's crosshair angles, DON'T SAVE/RESTORE
 
 	int						m_iFrags;
 	int						m_iDeaths;
 	int 					m_iGGLevel;
+	int 					m_iLives;
 
-	float					m_flNextDecalTime;// next time this player can spray a decal
+	float					m_flNextDecalTime;	// Next time this player can spray a decal.
+	float					m_flNextJingleTime;	// Ditto, but for jingles.
 
 	// Team Handling
 	// char					m_szTeamName[TEAM_NAME_LENGTH];

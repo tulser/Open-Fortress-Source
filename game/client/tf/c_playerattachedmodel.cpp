@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "c_playerattachedmodel.h"
+#include "c_tf_player.h"
 
 // Todo: Turn these all into parameters
 #define PAM_ANIMATE_TIME		0.075
@@ -134,4 +135,31 @@ void C_PlayerAttachedModel::ApplyBoneMatrixTransform( matrix3x4_t& transform )
 	VectorScale( transform[0], m_flScale, transform[0] );
 	VectorScale( transform[1], m_flScale, transform[1] );
 	VectorScale( transform[2], m_flScale, transform[2] );
+}	
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int C_PlayerAttachedModel::DrawModel( int flags )
+{
+
+	int ret = BaseClass::DrawModel( flags );
+	
+	C_TFPlayer *pLocalPlayer =(C_TFPlayer *) GetMoveParent();
+	
+	if ( pLocalPlayer->m_Shared.InCondUber() )
+	{
+		
+		// Force the invulnerable material
+		modelrender->ForcedMaterialOverride( *pLocalPlayer->GetInvulnMaterialRef() );
+		ret = this->DrawOverriddenViewmodel( flags );
+		
+		modelrender->ForcedMaterialOverride( NULL );
+	}
+	return ret;
+}
+
+int C_PlayerAttachedModel::DrawOverriddenViewmodel( int flags )
+{
+	return BaseClass::DrawModel( flags );
 }

@@ -50,6 +50,15 @@
 
 REGISTER_GAMERULES_CLASS( CMultiplayRules );
 
+// This sets what percentage of players are required in the changelevel trigger before map change takes effect. Currently it's set to 100% (all players required).
+	ConVar	mp_transition_players_percent( "mp_transition_players_percent",
+						  "25",
+						  FCVAR_NOTIFY|FCVAR_REPLICATED,
+						  "How many players in percent are needed for a level transition?" );
+		#ifndef CLIENT_DLL
+		ConVar sv_transitions( "sv_transitions", "1", FCVAR_NOTIFY|FCVAR_GAMEDLL, "Enable transitions" );
+		#endif
+
 ConVar mp_chattime(
 		"mp_chattime", 
 		"10", 
@@ -763,7 +772,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		CBasePlayer *pScorer = GetDeathScorer( pKiller, pInflictor, pVictim );
 		
 		pVictim->IncrementDeathCount( 1 );
-
+		pVictim->IncrementLives( -1 );
 		// dvsents2: uncomment when removing all FireTargets
 		// variant_t value;
 		// g_EventQueue.AddEvent( "game_playerdie", "Use", value, 0, pVictim, pVictim );

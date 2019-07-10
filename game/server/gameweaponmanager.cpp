@@ -241,7 +241,8 @@ void CGameWeaponManager::Think()
 
 		if ( gpGlobals->maxClients == 1 )
 		{
-			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+			// SecobMod__Enable_Fixed_Multiplayer_AI
+			CBasePlayer *pPlayer = UTIL_GetNearestVisiblePlayer(pCandidate);
 			// Nodraw serves as a flag that this weapon is already being removed since
 			// all we're really doing inside this loop is marking them for removal by
 			// the entity system. We don't want to count the same weapon as removed
@@ -259,10 +260,12 @@ void CGameWeaponManager::Think()
 				fRemovedOne = true;
 			}
 		}
-		else
-		{
-			fRemovedOne = true;
-		}
+
+		// SecobMod__Enable_Fixed_Multiplayer_AI 
+		//else
+		//{
+		//	fRemovedOne = true;
+		//}
 
 		if( fRemovedOne )
 		{

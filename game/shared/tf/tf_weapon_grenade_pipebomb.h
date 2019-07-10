@@ -72,7 +72,8 @@ public:
 	virtual void	Detonate();
 	virtual void	Fizzle();
 
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; };
+	virtual CBaseEntity *GetLauncher( void ) { return m_hLauncher; };
 
 	void			SetPipebombMode( bool bRemoteDetonate );
 	

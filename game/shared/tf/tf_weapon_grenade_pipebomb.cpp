@@ -327,6 +327,10 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			{
 				s_PipebombModel = NULL;
 			}
+			if ( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact != 0 )
+			{
+				pGrenade->SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
+			}
 		}
 		pGrenade->SetPipebombMode( bRemoteDetonate );
 		DispatchSpawn( pGrenade );
@@ -374,6 +378,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 		PrecacheModel( s_PipebombModel );
 		SetModel( s_PipebombModel );
 	}
+
 	BaseClass::Spawn();
 
 	m_bTouched = false;
@@ -433,7 +438,6 @@ void CTFGrenadePipebombProjectile::BounceSound( void )
 //-----------------------------------------------------------------------------
 void CTFGrenadePipebombProjectile::Detonate()
 {
-	SetTimer( gpGlobals->curtime );
 	if ( ShouldNotDetonate() )
 	{
 		RemoveGrenade();
@@ -487,7 +491,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		return;
 
 	// Blow up if we hit an enemy we can damage
-	if ( ( pOther->GetTeamNumber() && pOther->GetTeamNumber() != GetTeamNumber() && pOther->m_takedamage != DAMAGE_NO ) || ( pOther->GetTeamNumber() && pOther->GetTeamNumber() == TF_TEAM_MERCENARY && pOther->m_takedamage != DAMAGE_NO ) )
+	if ( pOther->GetTeamNumber() && ( pOther->GetTeamNumber() != GetTeamNumber() || pOther->GetTeamNumber() == TF_TEAM_MERCENARY )&& pOther->m_takedamage != DAMAGE_NO )
 	{
 		// Check to see if this is a respawn room.
 		if ( !pOther->IsPlayer() )
@@ -519,16 +523,26 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 {
 	BaseClass::VPhysicsCollision( index, pEvent );
 
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	
 	int otherIndex = !index;
 	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
 
 	if ( !pHitEntity )
 		return;
 
+	if ( pTFWeapon && pTFWeapon->GetTFWpnData().m_bExplodeOnImpact != 0 )
+	{
+		SetThink( &CTFGrenadePipebombProjectile::Detonate );
+		SetNextThink( gpGlobals->curtime );
+				
+		m_bTouched = true;
+		return;	
+	}
 	if ( m_iType == TF_GL_MODE_REGULAR )
 	{
 		// Blow up if we hit an enemy we can damage
-		if ( pHitEntity->GetTeamNumber() && pHitEntity->GetTeamNumber() != GetTeamNumber() && pHitEntity->m_takedamage != DAMAGE_NO )
+		if ( pHitEntity->GetTeamNumber() && ( pHitEntity->GetTeamNumber() != GetTeamNumber() || pHitEntity->GetTeamNumber() == TF_TEAM_MERCENARY ) && pHitEntity->m_takedamage != DAMAGE_NO )
 		{
 			SetThink( &CTFGrenadePipebombProjectile::Detonate );
 			SetNextThink( gpGlobals->curtime );
@@ -580,7 +594,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 		return 0;
 	}
 
-	bool bSameTeam = ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() );
+	bool bSameTeam = ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetThrower() ));
 
 
 	if ( m_bTouched && ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_BLAST) ) && bSameTeam == false )

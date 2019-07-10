@@ -284,7 +284,7 @@ void ClientModeTFNormal::OverrideView( CViewSetup *pSetup )
 			VectorMA( pSetup->origin, -cam_ofs_distance[0], camForward, pSetup->origin );
 			VectorMA( pSetup->origin, cam_ofs_distance[1], camRight, pSetup->origin );
 			VectorMA( pSetup->origin, cam_ofs_distance[2], camUp, pSetup->origin );
-			pPlayer->UpdatePartyHat();
+			pPlayer->UpdatePlayerAttachedModels();
 		}
 	}
 	else if ( ::input->CAM_IsOrthographic() )

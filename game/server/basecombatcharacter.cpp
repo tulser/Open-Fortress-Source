@@ -1161,7 +1161,12 @@ bool CTraceFilterMelee::ShouldHitEntity( IHandleEntity *pHandleEntity, int conte
 		// Only do these comparisons between NPCs
 		if ( pBCC && pVictimBCC )
 		{
-			// Can only damage other NPCs that we hate
+			// make players scream when death from npc
+			if (pBCC->IsNPC() && pVictimBCC->IsPlayer())
+			{
+				info.AddDamageType(DMG_CLUB);
+			}
+
 			if ( m_bDamageAnyNPC || pBCC->IRelationType( pEntity ) == D_HT )
 			{
 				if ( info.GetDamage() )
@@ -1794,7 +1799,7 @@ void CBaseCombatCharacter::DropWeaponForWeaponStrip( CBaseCombatWeapon *pWeapon,
 
 	trace_t	tr;
 	UTIL_TraceLine( vecOrigin, vecOffsetOrigin, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
-		
+	
 	if ( tr.startsolid || tr.allsolid || ( tr.fraction < 1.0f && tr.m_pEnt != pWeapon ) )
 	{
 		//FIXME: Throw towards a known safe spot?
@@ -1916,7 +1921,8 @@ void CBaseCombatCharacter::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector
 			{
 				// Drop enough ammo to kill 2 of me.
 				// Figure out how much damage one piece of this type of ammo does to this type of enemy.
-				float flAmmoDamage = g_pGameRules->GetAmmoDamage( UTIL_PlayerByIndex(1), this, pWeapon->GetPrimaryAmmoType() );
+				// SecobMod__Enable_Fixed_Multiplayer_AI 
+				float flAmmoDamage = g_pGameRules->GetAmmoDamage(UTIL_GetNearestPlayer(GetAbsOrigin()), this, pWeapon->GetPrimaryAmmoType());
 				pWeapon->m_iClip1 = (GetMaxHealth() / flAmmoDamage) * 2;
 			}
 		}
@@ -2441,6 +2447,7 @@ int CBaseCombatCharacter::OnTakeDamage( const CTakeDamageInfo &info )
 			{
 				Event_Dying( info );
 			}
+			
 		}
 		return retVal;
 		break;
@@ -2746,7 +2753,13 @@ Relationship_t *CBaseCombatCharacter::FindEntityRelationship( CBaseEntity *pTarg
 Disposition_t CBaseCombatCharacter::IRelationType ( CBaseEntity *pTarget )
 {
 	if ( pTarget )
+		// if its a building, ANNIHALTE THEM
+		if  (pTarget->IsBaseObject() )
+		{
+			return D_HT;
+		}
 		return FindEntityRelationship( pTarget )->disposition;
+	// assume neutral otherwise
 	return D_NU;
 }
 
@@ -3275,7 +3288,8 @@ CBaseEntity *CBaseCombatCharacter::FindMissTarget( void )
 	CBaseEntity *pMissCandidates[ MAX_MISS_CANDIDATES ];
 	int numMissCandidates = 0;
 
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+	// SecobMod__Enable_Fixed_Multiplayer_AI
+	CBasePlayer *pPlayer = UTIL_GetNearestVisiblePlayer(this);
 	CBaseEntity *pEnts[256];
 	Vector		radius( 100, 100, 100);
 	Vector		vecSource = GetAbsOrigin();

@@ -16,6 +16,7 @@
 // Client specific.
 #ifdef CLIENT_DLL
 #define CTFPipebombLauncher C_TFPipebombLauncher
+#define CTFDynamite C_TFDynamite
 #endif
 
 //=============================================================================
@@ -93,5 +94,17 @@ private:
 
 	CTFPipebombLauncher( const CTFPipebombLauncher & ) {}
 };
+
+// Dynamite Pack
+class CTFDynamite : public CTFPipebombLauncher
+{
+public:
+	DECLARE_CLASS( CTFPipebombLauncher, CTFPipebombLauncher );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_DYNAMITE_BUNDLE; }
+};
+
 
 #endif // TF_WEAPON_PIPEBOMBLAUNCHER_H

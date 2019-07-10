@@ -48,11 +48,18 @@ public:
 
 	void	Precache( void );
 	void	Spawn( void );
+	
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
+	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
 
 protected:
 
 	// Networked.
 	CNetworkVector( m_vInitialVelocity );
+	
+public:
+
+	CNetworkHandle( CBaseEntity, m_hLauncher );
 
 //=============================================================================
 //
@@ -96,9 +103,11 @@ public:
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER; }
 
+
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
+	
 	
 	int m_hWeaponID;
 

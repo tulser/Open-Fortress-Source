@@ -281,7 +281,12 @@ void CMultiPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData
 			ClearAnimationState();
 			break;
 		}
-
+	case PLAYERANIMEVENT_PULLBACK:
+		{
+			// Weapon primary fire.
+			RestartGesture( GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_MP_PULLBACK );
+			break;
+		}
 	case PLAYERANIMEVENT_SNAP_YAW:
 		m_PoseParameterData.m_flLastAimTurnTime = 0.0f;
 		break;
@@ -829,6 +834,25 @@ bool CMultiPlayerAnimState::HandleDucking( Activity &idealActivity )
 	return false;
 }
 
+// SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *idealActivity - 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CMultiPlayerAnimState::HandleVehicle(Activity &idealActivity)
+{
+	if (GetBasePlayer()->IsInAVehicle())
+	{
+		{
+			idealActivity = ACT_MP_CROUCH_IDLE; 
+		}
+
+		return true;
+	}
+	return false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &idealActivity - 
@@ -923,7 +947,11 @@ Activity CMultiPlayerAnimState::CalcMainActivity()
 	if ( HandleJumping( idealActivity ) || 
 		HandleDucking( idealActivity ) || 
 		HandleSwimming( idealActivity ) || 
-		HandleDying( idealActivity ) )
+
+		//SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
+		HandleVehicle(idealActivity) ||
+
+		HandleDying(idealActivity))
 	{
 		// intentionally blank
 	}

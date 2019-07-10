@@ -43,7 +43,7 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define TF_WEAPON_RAILGUN_NO_CRIT_AFTER_ZOOM_TIME	0.0f
 
-ConVar ofd_instagib( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enable instagib.", true, 0, true, 2  );
+ConVar ofd_instagib( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2  );
 
 //=============================================================================
 //

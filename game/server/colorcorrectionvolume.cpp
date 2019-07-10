@@ -162,7 +162,8 @@ void CColorCorrectionVolume::Spawn( void )
 
 bool CColorCorrectionVolume::PassesTriggerFilters( CBaseEntity *pEntity )
 {
-	if( pEntity == UTIL_GetLocalPlayer() )
+	// SecobMod__Enable_Fixed_Multiplayer_AI
+	if (pEntity->IsPlayer())
 		return true;
 
 	return false;

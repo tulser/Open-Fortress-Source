@@ -478,9 +478,9 @@ void CTFHudDeathNotice::Paint()
 		}
 
 		// Draw glow behind weapon icon to show it was a crit death
-		if (msg.bCrit && msg.iconCritDeath)
+		if ( msg.bCrit && msg.iconCritDeath )
 		{
-			msg.iconCritDeath->DrawSelf(x, yIcon, iconActualWide, iconTall, m_clrIcon);
+			msg.iconCritDeath->DrawSelf( x, yIcon, iconActualWide, iconTall, m_clrIcon );
 		}
 
 		// Draw death icon

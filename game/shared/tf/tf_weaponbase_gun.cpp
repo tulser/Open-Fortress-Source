@@ -22,6 +22,7 @@
 	#include "tf_projectile_rocket.h"
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "te.h"
+	#include "ofd_projectile_tripmine.h"
 
 #else	// Client specific.
 
@@ -136,9 +137,13 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	{
 		// Are we capable of firing again?
-		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime  )
 			return;
-	}	
+	}
+	else if ( m_iShotsDue == 0 )
+		return;
+	
+	
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
@@ -205,11 +210,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	// Check the reload mode and behave appropriately.
 	if ( m_bReloadsSingly )
 	{
-		m_iReloadMode.Set( TF_RELOAD_START );
-	}
-	else if ( m_bReloadsAll )
-	{
-		m_iReloadMode.Set( TF_RELOAD_START );
+//		m_iReloadMode.Set( TF_RELOAD_START );
 	}
 }	
 
@@ -277,8 +278,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 
 	case TF_PROJECTILE_NAIL:
-		pProjectile = FireNail(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		pProjectile = FireNail( pPlayer, iProjectile );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:
@@ -288,6 +289,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	case TF_PROJECTILE_PIPEBOMB_REMOTE:
 		pProjectile = FirePipeBomb( pPlayer, true );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
+	case TF_PROJECTILE_TRIPMINE:
+		pProjectile = FireTripmine( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
@@ -354,7 +360,8 @@ void CTFWeaponBaseGun::UpdatePunchAngles( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 {
-	PlayWeaponShootSound();
+	if ( GetWeaponID() != TF_WEAPON_LIGHTNING_GUN )
+		PlayWeaponShootSound();
 
 	FX_FireBullets(
 		pPlayer->entindex(),
@@ -560,6 +567,52 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 #endif
 
 	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: "Fires" a tripmine
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+#ifndef CLIENT_DLL
+
+	CTripmineGrenade *pProjectile = NULL;
+
+	Vector vecAiming	= pPlayer->GetAutoaimVector( 0 );
+	Vector vecSrc		= pPlayer->Weapon_ShootPosition( );
+
+	trace_t tr;
+
+	UTIL_TraceLine( vecSrc, vecSrc + vecAiming * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr );
+
+	CBaseEntity *pEntity = tr.m_pEnt;
+	if ( pEntity && !( pEntity->GetFlags() & FL_CONVEYOR ) )
+	{
+		QAngle angles;
+		VectorAngles( tr.plane.normal, angles );
+
+		pProjectile = CTripmineGrenade::Create( this, tr.endpos + tr.plane.normal * 2, angles, pPlayer );
+
+		if (pProjectile)
+		{
+			const CTFWeaponInfo *pInfo = &GetTFWpnData();
+
+			if (pInfo)
+			{
+				pProjectile->SetDamageRadius(pInfo->m_flDamageRadius);
+				pProjectile->SetDamage(pInfo->m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage);
+			}
+		}
+	}
+
+	return pProjectile;
+
+#else
+	return NULL;
+#endif
+	
 }
 
 //-----------------------------------------------------------------------------

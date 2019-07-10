@@ -14,6 +14,7 @@
 #include <vgui/IScheme.h>
 #include <vgui/ILocalize.h>
 #include "tier3/tier3.h"
+#include "tf_weapon_grenade_pipebomb.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -52,6 +53,9 @@
 	#include "hltvdirector.h"
 	#include "globalstate.h"
     #include "igameevents.h"
+	
+	#include "ai_basenpc.h"
+	#include "ai_dynamiclink.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -121,9 +125,14 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
+ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles TDM modes." );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
+ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
+ConVar ofd_clanarena("ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena modes.", true, 0, true, 2);
+ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
+ConVar ofd_weaponspawners("ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners.");
+ConVar ofd_powerups("ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups.");
+ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -857,7 +866,6 @@ CTFGameRules::CTFGameRules()
 	m_flLastHealthDropTime = 0.0f;
 	m_flLastGrenadeDropTime = 0.0f;	
 	
-	//Stickynote
 	for( int i = 0; i<50 ; i++ )
 	{
 		m_iszWeaponName[i] = m_iszDefaultWeaponName[i];
@@ -952,12 +960,10 @@ static const char *s_PreserveEnts[] =
 	"tf_player_manager",
 	"tf_team",
 	"tf_objective_resource",
-	"keyframe_rope",
-	"move_rope",
 	"tf_viewmodel",
-	"tf_handmodel",
 	"", // END Marker
 };
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1029,7 +1035,7 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
 	}
-	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) )
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
 	}
@@ -1215,6 +1221,9 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
+	// fixes a dumb crash, see ai_pathfinder.cpp line 607
+	CAI_DynamicLink::gm_bInitialized = false;
+	CAI_DynamicLink::InitDynamicLinks();
 
 	FireGamemodeOutputs();
 
@@ -1270,6 +1279,11 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 		SetRoundOverlayDetails();
 	}
+	
+	if ( IsArenaGamemode() )
+	{
+		m_flStalemateStartTime = gpGlobals->curtime;
+	}
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
@@ -1280,24 +1294,13 @@ void CTFGameRules::SetupOnRoundStart( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundRunning( void )
 {
+	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
+	if ( pArena )
+		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
 	if ( IsArenaGamemode() )
 	{
-		TeamplayGameRules()->SetStalemate( 0, false, false, true );
-		if ( TeamplayRoundBasedRules()->m_hPreviousActiveTimer.Get() )
-		{
-			CTeamRoundTimer *pTimer = dynamic_cast<CTeamRoundTimer*>( m_hPreviousActiveTimer.Get() );
-			if ( pTimer && !pTimer->StartPaused() )
-			{
-				pTimer->ResumeTimer();
-			}
-		}
-
-		TeamplayRoundBasedRules()->SetInWaitingForPlayers( false );
+		m_flStalemateStartTime = gpGlobals->curtime - tf_stalematechangeclasstime.GetFloat();
 	}
-	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
-	if (pArena)
-		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
-	
 	// Let out control point masters know that the round has started
 	for ( int i = 0; i < g_hControlPointMasters.Count(); i++ )
 	{
@@ -1850,8 +1853,72 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 								GoToIntermission();
 							}
 						}
-			}			
+			}
 			
+			if ( IsArenaGamemode() )
+			{
+				if( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING  )
+				{
+					int iDeadTeam = TEAM_UNASSIGNED;
+					int iAliveTeam = TEAM_UNASSIGNED;
+
+					// If a team is fully killed, the other team has won
+					for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
+					{
+						CTeam *pTeam = GetGlobalTeam(i);
+						Assert( pTeam );
+	
+						int iPlayers = pTeam->GetNumPlayers();
+						if ( iPlayers )
+						{
+							int bFoundLiveOne = 0;
+							for ( int player = 0; player < iPlayers; player++ )
+							{
+								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->Lives() > 0 )
+								{
+									bFoundLiveOne++;
+									if ( pTeam->GetTeamNumber() != TF_TEAM_MERCENARY )
+										break;
+								}
+							}
+							if ( pTeam->GetTeamNumber() == TF_TEAM_MERCENARY  )
+							{
+								if ( bFoundLiveOne <= 1 )
+								{
+									DevMsg("Degenerates \n");
+									iAliveTeam = i;
+									iDeadTeam = i;
+									break;
+								}
+								else
+								{
+									DevMsg("Ok Cool %d \n", bFoundLiveOne );
+									iAliveTeam = i;
+								}
+							}
+							else
+							{
+								if ( bFoundLiveOne > 0 )
+								{
+									iAliveTeam = i;
+								}
+								else
+								{
+									iDeadTeam = i;
+								}
+							}							
+						}
+					}
+
+					if ( iDeadTeam && iAliveTeam )
+					{
+//						if ( iAliveTeam == TF_TEAM_MERCENARY )
+//							GoToIntermission();
+//						else						
+							SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
+					}
+				}
+			}
 		} // Game playerdie
 
 		BaseClass::Think();
@@ -2029,10 +2096,11 @@ void TestSpawnPointType( const char *pEntClassName )
 			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
 
 			// drop down to ground
-			Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+			// removed this causes issues with info player start on some maps
+			//Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 			// the location the player will spawn at
-			NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
+			//NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
 
 			// draw the spawn angles
 			QAngle spotAngles = pSpot->GetLocalAngles();
@@ -2108,7 +2176,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 	// Move the player to the place it said.
-	pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
+	pPlayer->SetLocalOrigin( pSpawnSpot->GetAbsOrigin() + Vector(0,0,1) );
 	pPlayer->SetAbsVelocity( vec3_origin );
 	pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 	pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
@@ -2373,6 +2441,13 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 	pKeyValues->SetString( "tag", "gungame" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
+
+		// ofd_clanarena
+	pKeyValues = new KeyValues( "ofd_clanarena" );
+	pKeyValues->SetString( "convar", "ofd_clanarena" );
+	pKeyValues->SetString( "tag", "clanarena" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
 	
 		// of_infiniteammo
 	pKeyValues = new KeyValues( "of_infiniteammo" );
@@ -2398,7 +2473,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// ofd_forceclass 
 	pKeyValues = new KeyValues( "ofd_forceclass" );
 	pKeyValues->SetString( "convar", "ofd_forceclass" );
-	pKeyValues->SetString( "tag", "forceclass" );
+	pKeyValues->SetString( "tag", "allclassesallowed" );
 
 	pCvarTagList->AddSubKey( pKeyValues );	
 	
@@ -2426,7 +2501,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// tf_use_fixed_weaponspreads   
 	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
-	pKeyValues->SetString( "tag", "fixedshotpatern" );
+	pKeyValues->SetString( "tag", "norandomspread" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		
 
@@ -2446,7 +2521,7 @@ bool CTFGameRules::CanHaveAmmo( CBaseCombatCharacter *pPlayer, int iAmmoIndex )
 {
 	if ( iAmmoIndex > -1 )
 	{
-		CTFPlayer *pTFPlayer = (CTFPlayer*)pPlayer;
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
 		if ( pTFPlayer )
 		{
@@ -2463,6 +2538,11 @@ bool CTFGameRules::CanHaveAmmo( CBaseCombatCharacter *pPlayer, int iAmmoIndex )
 					return true;
 				}
 			}
+		}
+		// fixme experimental: this should fix npc ammo but im not sure
+		else
+		{
+			return BaseClass::CanHaveAmmo( pPlayer, iAmmoIndex );
 		}
 	}
 
@@ -2639,6 +2719,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		// special-case burning damage, since persistent burning damage may happen after attacker has switched weapons
 		killer_weapon_name = "tf_weapon_flamethrower";
+		DevMsg("%s \n ", killer_weapon_name);
 	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{
@@ -2652,7 +2733,17 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = STRING( pInflictor->m_iClassname );
 	}
-
+	int proj = Q_strlen( "tf_projectile_" );
+	if ( strncmp( killer_weapon_name, "tf_projectile_", proj ) == 0 )
+	{
+		CTFGrenadePipebombProjectile *pGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>(pInflictor);
+		if ( pGrenade ) 
+		{
+			
+			killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
+			DevMsg("%s", killer_weapon_name);
+		}
+	}	
 	// strip certain prefixes from inflictor's classname
 	const char *prefix[] = { "tf_weapon_grenade_", "tf_weapon_", "NPC_", "func_" };
 	for ( int i = 0; i< ARRAYSIZE( prefix ); i++ )
@@ -2671,7 +2762,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = "obj_sentrygun";
 	}
-
+	DevMsg("%s \n", killer_weapon_name);
 	return killer_weapon_name;
 }
 
@@ -3756,6 +3847,11 @@ int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 	}
 
 	return BaseClass::GetCaptureValueForPlayer( pPlayer );
+}
+
+bool CTFGameRules::UsesDMBuckets()
+{
+	return ( ofd_multiweapons.GetBool() && IsDMGamemode() );
 }
 
 //-----------------------------------------------------------------------------

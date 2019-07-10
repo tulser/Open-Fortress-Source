@@ -14,6 +14,9 @@
 #include "tf_obj.h"
 #include "tf_projectile_rocket.h"
 
+// specific spawnflag useable from hammer
+#define SF_SENTRY_INFINITE_AMMO		0x0008
+
 class CTFPlayer;
 
 enum
@@ -77,6 +80,8 @@ private:
 	bool FindTarget( void );
 	bool ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecStart, const Vector &vecEnd );
 	bool ValidTargetObject( CBaseObject *pObject, const Vector &vecStart, const Vector &vecEnd );
+	// npcs too
+	bool ValidTargetNPC(CAI_BaseNPC *pNPC, const Vector &vecStart, const Vector &vecEnd);
 	void FoundTarget( CBaseEntity *pTarget, const Vector &vecSoundCenter );
 	bool FInViewCone ( CBaseEntity *pEntity );
 	int Range( CBaseEntity *pTarget );

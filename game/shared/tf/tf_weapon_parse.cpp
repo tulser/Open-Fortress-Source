@@ -103,7 +103,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iAmmoPerShot			= pKeyValuesData->GetInt( "AmmoPerShot", 1 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bUseRapidFireCrits	= ( pKeyValuesData->GetInt( "UseRapidFireCrits", 0 ) != 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_bCenterfireProjectile= (pKeyValuesData->GetInt( "CenterfireProjectile", 0 ) != 0 );
-
+	
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay	= pKeyValuesData->GetFloat( "BurstFireDelay", 0.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize	= pKeyValuesData->GetInt( "BurstSize", 0 );
 	
@@ -197,7 +197,11 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flDamageRadius		= pKeyValuesData->GetFloat( "DamageRadius", 0.0f );
 	m_flPrimerTime			= pKeyValuesData->GetFloat( "PrimerTime", 0.0f );
 	m_bSuppressGrenTimer	= ( pKeyValuesData->GetInt( "PlayGrenTimer", 1 ) <= 0 );
-
+	m_iBombletAmount		= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
+	m_flBombletTimer		= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
+	m_flBombletMultiplier		= pKeyValuesData->GetFloat( "BombletDamageMultiplier", 0.0f );
+	m_iBombletLevel		= pKeyValuesData->GetInt( "BombletLevel", 1 );
+	
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
@@ -205,7 +209,13 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bNeverStrip	= ( pKeyValuesData->GetInt( "NeverStrip", 0 ) != 0 );
 	m_bGibOnOverkill	= ( pKeyValuesData->GetInt( "GibOnOverkill", 0 ) != 0 );
 	m_bGibOnHeadshot	= ( pKeyValuesData->GetInt( "GibOnHeadshot", 0 ) != 0 );
-
+	m_bExplodeOnImpact	= ( pKeyValuesData->GetInt( "ExplodeOnImpact", 0 ) != 0 );
+	m_bDisableSecondaryAttack	= ( pKeyValuesData->GetInt( "DisableSecondaryAttack", 0 ) != 0 );
+	m_bAllowDrop	= ( pKeyValuesData->GetInt( "AllowDrop", 0 ) != 0 );
+	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
+	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
+	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
+	
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szSoldierViewModel, pKeyValuesData->GetString( "soldier_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szPyroViewModel, pKeyValuesData->GetString( "pyro_viewmodel" ), MAX_WEAPON_STRING );

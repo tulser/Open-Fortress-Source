@@ -290,7 +290,7 @@ int C_TFDroppedPowerup::DrawModel( int flags )
 
 	pMesh->Draw();
 	float RespawnTime = OriginalPowerupDuration;
-	float flProgress = ( m_flRespawnTick - gpGlobals->curtime ) / RespawnTime;
+	float flProgress = 1 - ( ( m_flRespawnTick - gpGlobals->curtime ) / RespawnTime );
 	pRenderContext->Bind( m_pReturnProgressMaterial_Full );
 	pMesh = pRenderContext->GetDynamicMesh();
 

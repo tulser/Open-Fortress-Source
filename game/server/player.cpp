@@ -228,6 +228,8 @@ END_DATADESC()
 
 // Global Savedata for player
 BEGIN_DATADESC( CBasePlayer )
+	DEFINE_FIELD( m_bTransition, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bTransitionTeleported, FIELD_BOOLEAN ),
 
 	DEFINE_EMBEDDED( m_Local ),
 #if defined USES_ECON_ITEMS
@@ -340,8 +342,10 @@ BEGIN_DATADESC( CBasePlayer )
 	DEFINE_FIELD( m_iFrags, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iDeaths, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iGGLevel, FIELD_INTEGER ),
+	DEFINE_FIELD( m_iLives, FIELD_INTEGER ),
 	DEFINE_FIELD( m_bAllowInstantSpawn, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextDecalTime, FIELD_TIME ),
+	DEFINE_FIELD( m_flNextJingleTime, FIELD_TIME ),
 	//DEFINE_AUTO_ARRAY( m_szTeamName, FIELD_STRING ), // mp
 
 	//DEFINE_FIELD( m_iConnected, FIELD_INTEGER ),
@@ -527,6 +531,9 @@ CBasePlayer *CBasePlayer::CreatePlayer( const char *className, edict_t *ed )
 CBasePlayer::CBasePlayer( )
 {
 	AddEFlags( EFL_NO_AUTO_EDICT_ATTACH );
+	
+	m_bTransition = false;
+	m_bTransitionTeleported = false;
 
 #ifdef _DEBUG
 	m_vecAutoAim.Init();
@@ -2904,6 +2911,7 @@ void CBasePlayer::ResetGGLevel()
 {
 	m_iGGLevel = 0;
 }
+
 void CBasePlayer::IncrementGGLevel( int nCount )
 {
 	m_iGGLevel += nCount;
@@ -2921,6 +2929,20 @@ void CBasePlayer::IncrementDeathCount( int nCount )
 	pl.deaths = m_iDeaths;
 }
 
+void CBasePlayer::ResetLives()
+{
+	m_iLives = 0;
+}
+
+void CBasePlayer::IncrementLives( int nCount )
+{
+	m_iLives += nCount;
+}
+
+void CBasePlayer::SetLives( int nCount )
+{
+	m_iLives = nCount;
+}
 void CBasePlayer::AddPoints( int score, bool bAllowNegativeScore )
 {
 	// Positive score always adds
@@ -4950,7 +4972,8 @@ void CBasePlayer::Spawn( void )
 
 	SetFOV( this, 0 );
 
-	m_flNextDecalTime	= 0;// let this player decal as soon as he spawns.
+	m_flNextDecalTime	= 0; // Let this player decal as soon as he spawns.
+	m_flNextJingleTime  = 0; // Ditto, but for jingles.
 
 	m_flgeigerDelay = gpGlobals->curtime + 2.0;	// wait a few seconds until user-defined message registrations
 												// are recieved by all clients
@@ -5388,6 +5411,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 	if ( pVehicle->GetPassenger( nRole ) )
 		return false;
 
+	/*
 	// Must be able to holster our current weapon (ie. grav gun!)
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5396,6 +5420,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 		if ( ( pWeapon != NULL ) && ( pWeapon->CanHolster() == false ) )
 			return false;
 	}
+	*/
 
 	// Must be alive
 	if ( IsAlive() == false )
@@ -5423,6 +5448,7 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 	CBaseEntity *pEnt = pVehicle->GetVehicleEnt();
 	Assert( pEnt );
 
+	/*
 	// Try to stow weapons
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5437,11 +5463,14 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 #endif
 		m_Local.m_iHideHUD |= HIDEHUD_INVEHICLE;
 	}
+	
 
 	if ( !pVehicle->IsPassengerVisible( nRole ) )
 	{
-		AddEffects( EF_NODRAW );
+		// No! visible thirdperson in vehicles :bastard:
+		//AddEffects( EF_NODRAW );
 	}
+	*/
 
 	// Put us in the vehicle
 	pVehicle->SetPassenger( nRole, this );
@@ -5555,6 +5584,7 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 	m_hVehicle = NULL;
 	pVehicle->SetPassenger(nRole, NULL);
 
+    /*
 	// Re-deploy our weapon
 	if ( IsAlive() )
 	{
@@ -5564,7 +5594,8 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 			ShowCrosshair( true );
 		}
 	}
-
+    */
+	
 	// Just cut all of the rumble effects. 
 	RumbleEffect( RUMBLE_STOP_ALL, 0, RUMBLE_FLAGS_NONE );
 }
@@ -5963,7 +5994,7 @@ void CBasePlayer::ImpulseCommands( )
 		break;
 
 	case	202:// player jungle sound 
-		if ( gpGlobals->curtime < m_flNextDecalTime )
+		if ( gpGlobals->curtime < m_flNextJingleTime )
 		{
 			// too early!
 			break;
@@ -5974,7 +6005,7 @@ void CBasePlayer::ImpulseCommands( )
 			WRITE_BYTE( PLAY_PLAYER_JINGLE );
 		MessageEnd();
 
-		m_flNextDecalTime = gpGlobals->curtime + decalfrequency.GetFloat();
+		m_flNextJingleTime = gpGlobals->curtime + jinglefrequency.GetFloat();
 		break;
 
 	default:
@@ -6632,10 +6663,12 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 		pWeapon->AddEffects( EF_NODRAW );
 
 		Weapon_Equip( pWeapon );
+		
 		if ( IsInAVehicle() )
 		{
-			pWeapon->Holster();
+			// pWeapon->Holster();
 		}
+		
 		else
 		{
 #ifdef HL2_DLL
@@ -7344,7 +7377,7 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 {
 	BaseClass::Weapon_Equip( pWeapon );
 
-	int bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
+//	int bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
 
 #ifdef HL2_DLL
 	if ( bShouldSwitch == false && PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
@@ -7353,12 +7386,8 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 		bShouldSwitch = true;
 	}
 #endif//HL2_DLL
-	bShouldSwitch = V_atoi(engine->GetClientConVarValue(entindex(), "of_autoswitchweapons"));
-	// should we switch to this item?
-	if ( bShouldSwitch > 0 )
-	{
-		Weapon_Switch( pWeapon );
-	}
+//	if ( bShouldSwitch )
+//		Weapon_Switch( pWeapon );
 }
 
 
@@ -7846,7 +7875,8 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 	}
 	else if ( !g_pGameRules->IsDeathmatch() )
 	{
-		pPlayer = UTIL_GetLocalPlayer();
+		//  SecobMod__Enable_Fixed_Multiplayer_AI
+		pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
 	}
 
 	if ( pPlayer )
@@ -9027,6 +9057,11 @@ int	CPlayerInfo::GetGGLevel()
 	return m_pParent->GGLevel(); 
 }
 
+int	CPlayerInfo::GetLives() 
+{ 
+	Assert( m_pParent );
+	return m_pParent->Lives(); 
+}
 int	CPlayerInfo::GetDeathCount() 
 { 
 	Assert( m_pParent );

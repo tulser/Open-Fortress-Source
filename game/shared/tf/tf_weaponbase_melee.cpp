@@ -311,7 +311,8 @@ void CTFWeaponBaseMelee::Smack( void )
 	if ( DoSwingTrace( trace ) )
 	{
 		// Hit sound - immediate.
-		if( trace.m_pEnt->IsPlayer()  )
+		// added check for npc
+		if (trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC())
 		{
 			WeaponSound( MELEE_HIT );
 		}

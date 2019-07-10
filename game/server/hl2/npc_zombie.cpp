@@ -480,17 +480,28 @@ void CZombie::SetZombieModel( void )
 {
 	Hull_t lastHull = GetHullType();
 
-	if ( m_fIsTorso )
+	char *szModel = (char *)STRING(GetModelName());
+
+	if (!szModel || !*szModel)
 	{
-		PrecacheModel("models/zombie/classic_torso.mdl");
-		SetModel( "models/zombie/classic_torso.mdl" );
-		SetHullType( HULL_TINY );
+		if (m_fIsTorso)
+		{
+			PrecacheModel("models/zombie/classic_torso.mdl");
+			SetModel("models/zombie/classic_torso.mdl");
+			SetHullType(HULL_TINY);
+		}
+		else
+		{
+			PrecacheModel("models/zombie/classic.mdl");
+			SetModel("models/zombie/classic.mdl");
+			SetHullType(HULL_HUMAN);
+		}
 	}
 	else
 	{
-		PrecacheModel("models/zombie/classic.mdl");
-		SetModel( "models/zombie/classic.mdl" );
-		SetHullType( HULL_HUMAN );
+		Precache();
+		PrecacheModel(szModel);
+		SetModel(szModel);
 	}
 
 	SetBodygroup( ZOMBIE_BODYGROUP_HEADCRAB, !m_fIsHeadless );

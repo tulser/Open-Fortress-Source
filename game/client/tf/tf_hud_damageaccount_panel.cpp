@@ -393,7 +393,7 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 	{
 		if ( tf_dingalingaling_last_effect.GetInt() == 0 )
 			params.m_pSoundName = "Player.KillSoundDefaultDing";
-		else if (tf_dingalingaling_effect.GetInt() == 1)
+		else if (tf_dingalingaling_last_effect.GetInt() == 1)
 			params.m_pSoundName = "Player.KillSoundQuake3";
 		else if ( tf_dingalingaling_last_effect.GetInt() == 2 )
 			params.m_pSoundName = "Player.KillSoundElectro";

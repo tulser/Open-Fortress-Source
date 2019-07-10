@@ -29,6 +29,8 @@
 	#include "tf_team.h"
 	#include "tf_obj.h"
 
+	#include "ai_basenpc.h"
+
 	ConVar	tf_debug_flamethrower("tf_debug_flamethrower", "0", FCVAR_CHEAT, "Visualize the flamethrower damage." );
 	ConVar  tf_flamethrower_velocity( "tf_flamethrower_velocity", "2300.0", FCVAR_CHEAT, "Initial velocity of flame damage entities." );
 	ConVar	tf_flamethrower_drag("tf_flamethrower_drag", "0.89", FCVAR_CHEAT, "Air drag of flame damage entities." );
@@ -221,7 +223,8 @@ public:
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
-		if ( pEntity && pEntity->IsBaseObject() )
+		// check if the entity is a building or NPC
+		if (pEntity && (pEntity->IsBaseObject() || pEntity->IsNPC()))
 			return false;
 
 		return BaseClass::ShouldHitEntity( pServerEntity, contentsMask );
@@ -330,6 +333,7 @@ void CTFFlameThrower::PrimaryAttack()
 		dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 		dl->origin = vecMuzzlePos;
 		dl->die = gpGlobals->curtime + 0.01f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		if (m_bCritFire)
 		{
 			dl->color.r = 255;
@@ -895,6 +899,19 @@ void CTFFlameEntity::FlameThink( void )
 					return;
 			}
 		}
+		// check collision against npcs
+		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
+		for (int iNPC = 0; iNPC < g_AI_Manager.NumAIs(); iNPC++)
+		{
+			CAI_BaseNPC *pNPC = ppAIs[iNPC];
+			// Is this npc alive?
+			if (pNPC && pNPC->IsAlive())
+			{
+				CheckCollision(pNPC, &bHitWorld);
+				if (bHitWorld)
+					return;
+			}
+		}
 	}
 
 	// Calculate how long the flame has been alive for
@@ -1028,6 +1045,47 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 
 	pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
 	ApplyMultiDamage();
+
+	// please please work
+	CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
+	if (pNPC)
+	{
+		// todo figure out how to find attacker with this
+		pNPC->Ignite(TF_BURNING_FLAME_LIFE);
+	}
 }
 
 #endif // GAME_DLL
+
+acttable_t CTFFlameThrower::m_acttableFlameThrower[] =
+{
+	{ ACT_MP_STAND_IDLE, ACT_MERC_STAND_FLAMETHROWER, false },
+	{ ACT_MP_CROUCH_IDLE, ACT_MERC_CROUCH_FLAMETHROWER, false },
+	{ ACT_MP_RUN, ACT_MERC_RUN_FLAMETHROWER, false },
+	{ ACT_MP_WALK, ACT_MERC_WALK_FLAMETHROWER, false },
+	{ ACT_MP_AIRWALK, ACT_MERC_AIRWALK_FLAMETHROWER, false },
+	{ ACT_MP_CROUCHWALK, ACT_MERC_CROUCHWALK_FLAMETHROWER, false },
+	{ ACT_MP_JUMP, ACT_MERC_JUMP_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_START, ACT_MERC_JUMP_START_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_FLOAT, ACT_MERC_JUMP_FLOAT_FLAMETHROWER, false },
+	{ ACT_MP_JUMP_LAND, ACT_MERC_JUMP_LAND_FLAMETHROWER, false },
+	{ ACT_MP_SWIM, ACT_MERC_SWIM_FLAMETHROWER, false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_MERC_ATTACK_STAND_FLAMETHROWER, false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_MERC_ATTACK_CROUCH_FLAMETHROWER, false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE, ACT_MERC_ATTACK_SWIM_FLAMETHROWER, false },
+};
+
+//Act table remapping for Merc
+acttable_t *CTFFlameThrower::ActivityList(int &iActivityCount)
+{
+	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
+	{
+		iActivityCount = ARRAYSIZE(m_acttableFlameThrower);
+		return m_acttableFlameThrower;
+	}
+	else
+	{
+		return BaseClass::ActivityList(iActivityCount);
+	}
+}

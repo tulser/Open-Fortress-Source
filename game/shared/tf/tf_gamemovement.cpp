@@ -59,6 +59,7 @@ public:
 	CTFGameMovement(); 
 
 	virtual void PlayerMove();
+	virtual void ShieldChargeMove();
 	virtual unsigned int PlayerSolidMask( bool brushOnly = false );
 	virtual void ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMove );
 	virtual bool CanAccelerate();
@@ -68,6 +69,7 @@ public:
 	virtual void FullWalkMove();
 	virtual void WalkMove( void );
 	virtual void AirMove( void );
+	virtual float GetAirSpeedCap( void );
 	virtual void FullTossMove( void );
 	virtual void CategorizePosition( void );
 	virtual void CheckFalling( void );
@@ -161,6 +163,17 @@ void CTFGameMovement::PlayerMove()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGameMovement::ShieldChargeMove( void )
+{
+	mv->m_flForwardMove = 750.0f;
+	mv->m_flMaxSpeed = 750.0f;
+	mv->m_flSideMove = 0.0f;
+	mv->m_flUpMove = 0.0f;
+}
+
 Vector CTFGameMovement::GetPlayerViewOffset( bool ducked ) const
 {
 	return ducked ? VEC_DUCK_VIEW_SCALED (m_pTFPlayer) : ( m_pTFPlayer->GetClassEyeHeight() );
@@ -221,6 +234,10 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	mv->m_flMaxSpeed = TF_MAX_SPEED; /*tf_maxspeed.GetFloat();*/
 
 	// Run the command.
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	{
+		ShieldChargeMove();
+	}
 	PlayerMove();
 	FinishMove();
 }
@@ -904,6 +921,13 @@ void CTFGameMovement::AirMove( void )
 
 	// Now pull the base velocity back out.   Base velocity is set if you are on a moving object, like a conveyor (or maybe another monster?)
 	VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
+}
+
+float CTFGameMovement::GetAirSpeedCap( void )
+{
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+		return 750.0f;
+	return 30.0f;
 }
 
 extern void TracePlayerBBoxForGround( const Vector& start, const Vector& end, const Vector& minsSrc,

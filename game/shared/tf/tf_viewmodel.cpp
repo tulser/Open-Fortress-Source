@@ -204,9 +204,22 @@ int CTFViewModel::DrawModel( int flags )
 	{
 		 return 0;
 	}
-
-	return BaseClass::DrawModel( flags );
+	
+	int ret = BaseClass::DrawModel( flags );
+	
+	pLocalPlayer =(C_TFPlayer *)GetOwner();
+	
+	if ( pLocalPlayer && pLocalPlayer->m_Shared.InCondUber() )
+	{
+		// Force the invulnerable material
+		modelrender->ForcedMaterialOverride( *pLocalPlayer->GetInvulnMaterialRef() );
+		ret = this->DrawOverriddenViewmodel( flags );
+		
+		modelrender->ForcedMaterialOverride( NULL );
+	}
+	return ret;
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

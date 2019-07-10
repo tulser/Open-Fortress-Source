@@ -73,6 +73,9 @@ public:
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 	virtual float	PassengerDamageModifier( const CTakeDamageInfo &info );
 
+	// to properly register damageowners
+	virtual void	Event_Killed(const CTakeDamageInfo &info);
+
 	virtual void	EnterVehicle( CBaseCombatCharacter *pPassenger );
 	virtual void	ExitVehicle( int nRole );
 

@@ -184,13 +184,13 @@ void CWeaponMedigun::Precache()
 	PrecacheScriptSound( "WeaponMedigun.Charged" );
 	PrecacheParticleSystem( "medicgun_invulnstatus_fullcharge_blue" );
 	PrecacheParticleSystem( "medicgun_invulnstatus_fullcharge_red" );
-	PrecacheParticleSystem( "medicgun_invulnstatus_fullcharge_mercenary" );
+	PrecacheParticleSystem( "medicgun_invulnstatus_fullcharge_dm" );
 	PrecacheParticleSystem( "medicgun_beam_red_invun" );
 	PrecacheParticleSystem( "medicgun_beam_red" );
 	PrecacheParticleSystem( "medicgun_beam_blue_invun" );
 	PrecacheParticleSystem( "medicgun_beam_blue" );
-	PrecacheParticleSystem( "medicgun_beam_mercenary_invun" );
-	PrecacheParticleSystem( "medicgun_beam_mercenary" );
+	PrecacheParticleSystem( "medicgun_beam_dm_invun" );
+	PrecacheParticleSystem( "medicgun_beam_dm" );
 }
 
 //-----------------------------------------------------------------------------
@@ -959,7 +959,7 @@ void CWeaponMedigun::ManageChargeEffect( void )
 		if ( !pEffectOwner )
 			return;
 	}
-
+	
 	bool bOwnerTaunting = false;
 
 	if ( GetTFPlayerOwner() && GetTFPlayerOwner()->m_Shared.InCond( TF_COND_TAUNTING ) == true )
@@ -982,14 +982,14 @@ void CWeaponMedigun::ManageChargeEffect( void )
 				pszEffectName = "medicgun_invulnstatus_fullcharge_red";
 				break;
 			case TF_TEAM_MERCENARY:
-				pszEffectName = "medicgun_invulnstatus_fullcharge_mercenary";
+				pszEffectName = "medicgun_invulnstatus_fullcharge_dm";
 				break;
 			default:
 				pszEffectName = "";
 				break;
 			}
 
-			m_pChargeEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
+			pLocalPlayer->m_Shared.UpdateParticleColor( m_pChargeEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" ) );
 		}
 
 		if ( m_pChargedSound == NULL )
@@ -1149,6 +1149,7 @@ void CWeaponMedigun::UpdateEffects( void )
 		{
 			dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 			dl->origin = pFiringPlayer->Weapon_ShootPosition();;
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			switch (GetTFPlayerOwner()->GetTeamNumber())
 			{
 			case TF_TEAM_RED:
@@ -1205,16 +1206,16 @@ void CWeaponMedigun::UpdateEffects( void )
 		{
 			if ( m_bChargeRelease )
 			{
-				pszEffectName = "medicgun_beam_mercenary_invun";
+				pszEffectName = "medicgun_beam_dm_invun";
 			}
 			else
 			{
-				pszEffectName = "medicgun_beam_mercenary";
+				pszEffectName = "medicgun_beam_dm";
 			}
 		}
 		CNewParticleEffect *pEffect = pEffectOwner->ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "muzzle" );
 		pEffectOwner->ParticleProp()->AddControlPoint( pEffect, 1, m_hHealingTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
-
+		pLocalPlayer->m_Shared.UpdateParticleColor( pEffect );
 		m_hHealingTargetEffect.pTarget = m_hHealingTarget;
 		m_hHealingTargetEffect.pEffect = pEffect;
 	}

@@ -92,6 +92,16 @@ ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets 
 
 ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
+ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you cant have tf2 without hats\n");
+ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have tf2 without hats\n");
+
+// SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
+static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Allow first person ragdolls");
+// end SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
+
+ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
+
+ConVar ofd_critglow_saturation("ofd_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is\n");
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
@@ -108,6 +118,8 @@ const char *pszHeadLabelNames[] =
 	"effects/speech_voice_blue",
 	"effects/speech_voice_mercenary"
 };
+
+Color TennisBall (0,255,0);
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
@@ -540,11 +552,16 @@ void C_TFRagdoll::CreateTFGibs( void )
 		pPlayer->CreatePlayerGibs( m_vecRagdollOrigin, vecVelocity, m_vecForce.Length() );
 	}
 
-	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
+	if ( pPlayer )
 	{
-		DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector(0,0,32), vec3_angle );
+		if ( TFGameRules() && TFGameRules()->IsBirthday() )
+		{
+			DispatchParticleEffect( "bday_confetti", pPlayer->GetAbsOrigin() + Vector(0,0,32), vec3_angle );
 
-		C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+			C_BaseEntity::EmitSound( "Game.HappyBirthday" );
+		}
+		else
+			pPlayer->EmitSound( "Player.Gib" );
 	}
 
 	EndFadeOut();
@@ -770,6 +787,7 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 
 	if ( !pEnt )
 		return;
+
 //################################
 
 
@@ -793,6 +811,31 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 			RemapVal( flPercentInvisible, 0.0, 1.0, tf_vm_min_invis.GetFloat(), tf_vm_max_invis.GetFloat() );
 
 		m_pPercentInvisible->SetFloatValue( flWeaponInvis );
+		float r, g, b;
+
+		switch( pPlayer->GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				r = 1.0; g = 0.5; b = 0.4;
+				break;
+
+			case TF_TEAM_BLUE:
+				r = 0.4; g = 0.5; b = 1.0;
+				break;
+			case TF_TEAM_MERCENARY:
+				{
+					Vector Color = pPlayer->m_vecPlayerColor;
+					r = Color.x; 
+					g = Color.y; 
+					b = Color.z; 
+				}
+				break;
+			default:
+				r = 0.4; g = 0.5; b = 1.0;
+				break;
+		}
+
+		m_pCloakColorTint->SetVecValue( r, g, b );
 		return;
 	}
 //################################	
@@ -816,24 +859,33 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 	if ( !pPlayer )
 		return;	
 	
-	float r, g, b;
-
+	float r, g, b;	
+	
 	switch( pPlayer->GetTeamNumber() )
 	{
-	case TF_TEAM_RED:
-		r = 1.0; g = 0.5; b = 0.4;
-		break;
+		case TF_TEAM_RED:
+			r = 1.0; g = 0.5; b = 0.4;
+			break;
 
-	case TF_TEAM_BLUE:
-	case TF_TEAM_MERCENARY:
-		r = 0.5; g = 0; b = 0.5;
-		break;
-	default:
-		r = 0.4; g = 0.5; b = 1.0;
-		break;
+		case TF_TEAM_BLUE:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+		case TF_TEAM_MERCENARY:
+				{
+					Vector Color = pPlayer->m_vecPlayerColor;				
+					r = Color.x; 
+					g = Color.y; 
+					b = Color.z; 
+				}
+			break;
+		default:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
 	}
 
-	m_pCloakColorTint->SetVecValue( r, g, b );
+		m_pCloakColorTint->SetVecValue( r, g, b );
+		return;
+
 }
 
 IMaterial *CSpyInvisProxy::GetMaterial()
@@ -870,9 +922,14 @@ public:
 		{
 			// See if it's a weapon
 			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
 			if ( pWeapon )
 			{
 				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
 			}
 			else
 			{
@@ -982,7 +1039,7 @@ public:
 
 EXPOSE_INTERFACE( CProxyBurnLevel, IMaterialProxy, "BurnLevel" IMATERIAL_PROXY_INTERFACE_VERSION );
 
-class CProxyItemTintColor : public CResultProxy
+class CProxyModelGlowColor : public CResultProxy
 {
 public:
 	void OnBind( void *pC_BaseEntity )
@@ -991,19 +1048,87 @@ public:
 
 		if ( !pC_BaseEntity )
 		{
-			if ( ofd_color_r.GetFloat() < 0 || ofd_color_g.GetFloat() < 0 || ofd_color_b.GetFloat() < 0 )
+			m_pResult->SetVecValue( 1, 1, 1 );
+			return;
+		}
+
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+
+		Vector vecColor = Vector( 1, 1, 1 );
+
+		C_TFPlayer *pPlayer = ToTFPlayer( pEntity );;
+
+		if ( !pPlayer )
+		{
+			C_BaseCombatWeapon *pWeapon = pEntity->MyCombatWeaponPointer();
+			if ( pWeapon )
 			{
-				float r = RandomFloat( 0.0f, 1.0f );
-				float g = RandomFloat( 0.0f, 1.0f );
-				float b = RandomFloat( 0.0f, 1.0f );
-				
-				m_pResult->SetVecValue( r, g, b );
-				return;
+				pPlayer = ToTFPlayer( pWeapon->GetOwner() );
 			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast<C_BaseViewModel *>( pEntity );
+				if ( pVM )
+				{
+					pPlayer = ToTFPlayer( pVM->GetOwner() );
+				}
+			}
+		}	
+		
+		if ( pPlayer  && pPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED )  )
+		{
+			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) || pPlayer->GetTeamNumber() == pPlayer->m_Shared.GetDisguiseTeam() || !pPlayer->IsEnemyPlayer() )
+			{
+				switch ( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_RED:
+					vecColor = Vector( 94, 8, 5 );
+					break;
+				case TF_TEAM_BLUE:
+					vecColor = Vector( 6, 21, 80 );
+					break;
+				case TF_TEAM_MERCENARY:
+				{
+					Vector critColor = pPlayer->m_vecPlayerColor;
+					critColor *= 255;
+					critColor *= ofd_critglow_saturation.GetFloat();
+					vecColor = critColor;
+				}
+					break;
+
+				}
+			}
+		}
+		m_pResult->SetVecValue( vecColor.Base(), 3 );
+	}
+};
+
+EXPOSE_INTERFACE( CProxyModelGlowColor, IMaterialProxy, "ModelGlowColor" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+class CProxyItemTintColor : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		if ( ofd_tennisball.GetBool() )
+		{	
+			float r = floorf( TennisBall[0] ) / 255.0f;
+			float g = floorf( TennisBall[1] ) / 255.0f;
+			float b = floorf( TennisBall[2] ) / 255.0f;	
+			m_pResult->SetVecValue( r, g, b );
+			return;
+		}		
+		
+		if ( !pC_BaseEntity )
+		{
+
 			float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
 			float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
 			float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
-
 			m_pResult->SetVecValue( r, g, b );
 			return;
 		
@@ -1032,14 +1157,154 @@ public:
 
 EXPOSE_INTERFACE( CProxyItemTintColor, IMaterialProxy, "ItemTintColor" IMATERIAL_PROXY_INTERFACE_VERSION );
 
-void CC_OFDColorRandom( void )
+class CProxyLocalPlayerColor : public CResultProxy
 {
-		ofd_color_r.SetValue( -1 );
-		ofd_color_g.SetValue( -1 );
-		ofd_color_b.SetValue( -1 );
-}
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
 
-static ConCommand ofd_color_random("ofd_color_random", CC_OFDColorRandom, "Make player a random color each time they spawn", FCVAR_CLIENTDLL );
+		if ( ofd_tennisball.GetBool() )
+		{	
+			float r = floorf( TennisBall[0] ) / 255.0f;
+			float g = floorf( TennisBall[1] ) / 255.0f;
+			float b = floorf( TennisBall[2] ) / 255.0f;	
+			m_pResult->SetVecValue( r, g, b );
+			return;
+		}		
+		
+		float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
+		float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
+		float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
+		m_pResult->SetVecValue( r, g, b );
+	}
+};
+
+EXPOSE_INTERFACE( CProxyLocalPlayerColor, IMaterialProxy, "LocalPlayerColor" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for invulnerability material
+//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
+//-----------------------------------------------------------------------------
+class CProxyReserveAmmo : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+		
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer )
+		{
+			if ( pPlayer->GetActiveTFWeapon() )
+				m_pResult->SetFloatValue( (float)pPlayer->GetActiveTFWeapon()->m_iReserveAmmo / (float)pPlayer->GetActiveTFWeapon()->GetMaxReserveAmmo() );
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyReserveAmmo, IMaterialProxy, "ReserveAmmo" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for invulnerability material
+//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
+//-----------------------------------------------------------------------------
+class CProxyClipCount : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+		
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer )
+		{
+			if ( pPlayer->GetActiveTFWeapon() )
+				m_pResult->SetFloatValue( (float)pPlayer->GetActiveTFWeapon()->Clip1() / (float)pPlayer->GetActiveTFWeapon()->GetMaxClip1() );
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyClipCount, IMaterialProxy, "ClipCount" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes
@@ -1308,7 +1573,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 
 	if ( IsDormant() && !bDormant )
 	{
-		m_bUpdatePartyHat = true;
+		m_bUpdatePlayerAttachments = true;
 	}
 
 	// Deliberately skip base combat weapon
@@ -1361,7 +1626,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		if ( m_iOldTeam != GetTeamNumber() || m_iOldDisguiseTeam != m_Shared.GetDisguiseTeam() )
 		{
 			InitInvulnerableMaterial();
-			m_bUpdatePartyHat = true;
+			m_bUpdatePlayerAttachments = true;
 		}
 	}
 
@@ -1387,7 +1652,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		ClientPlayerRespawn();
 
 		bJustSpawned = true;
-		m_bUpdatePartyHat = true;
+		m_bUpdatePlayerAttachments = true;
 	}
 
 	if ( m_bSaveMeParity != m_bOldSaveMeParity )
@@ -1659,32 +1924,7 @@ void C_TFPlayer::OnRemoveTeleported( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnAddCritBoosted( void )
 {
-//	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
 
-	if ( !m_pCritEffect )
-	{
-		char *pEffect = NULL;
-
-		switch( GetTeamNumber() )
-		{
-		case TF_TEAM_BLUE:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_RED:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_MERCENARY:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		default:
-			break;
-		}
-
-		if ( pEffect /*&& pPlayer*/ )
-		{
-			/*pPlayer->m_Shared.UpdateParticleColor(*/m_pCritEffect = ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW )/*)*/;
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1692,11 +1932,7 @@ void C_TFPlayer::OnAddCritBoosted( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnRemoveCritBoosted( void )
 {
-	if ( m_pCritEffect )
-	{
-		ParticleProp()->StopEmission( m_pCritEffect );
-		m_pCritEffect = NULL;
-	}
+
 }
 
 
@@ -1791,48 +2027,39 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 		m_iSpyMaskBodygroup = -1;
 	}
 
-	m_bUpdatePartyHat = true;
+	m_bUpdatePlayerAttachments = true;
 
 	return hdr;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Update clientside player attachments
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdatePlayerAttachedModels( void )
+{
+	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) ) //If we spawned in, continue
+	{
+		UpdatePartyHat();
+		UpdateWearables();
+		UpdateGameplayAttachments();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Update the party hat players wear in birthday mode
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
-	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
-	{
-		if ( m_hShieldEffect )
-		{
-			m_hShieldEffect->Release();
-		}
-		if ( !m_Shared.InCond( TF_COND_SHIELD ) )
-			return;
-		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
-			return;
-		m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
-		if ( m_hShieldEffect )
-		{
-			int iVisibleTeam = GetTeamNumber();
-			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
-			{
-				iVisibleTeam = m_Shared.GetDisguiseTeam();
-			}
-			m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
-		}
-	}
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && IsAlive() && 
-		GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && m_Shared.WearsHat( 0 ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
 	{
 		if ( m_hPartyHat )
 		{
-			m_hPartyHat->Release();
+			m_hPartyHat->Release(); //Remove the hat so if its not valid anymore we don't wear it
 		}
-		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() )
+		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() ) // If we're the local player and not in third person, bail
 			return;
 		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
-
+												  // Model name, object it gets attached to, attachment name,
 		// C_PlayerAttachedModel::Create can return NULL!
 		if ( m_hPartyHat )
 		{
@@ -1841,11 +2068,63 @@ void C_TFPlayer::UpdatePartyHat( void )
 			{
 				iVisibleTeam = m_Shared.GetDisguiseTeam();
 			}
-			m_hPartyHat->m_nSkin = iVisibleTeam - 2;
+			m_hPartyHat->m_nSkin = iVisibleTeam - 2; //Set the proper skin for each team
 		}
 	}	
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Update the hats you're wearing
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateWearables( void )
+{
+
+	for( int i = 1; i < TF_WEARABLE_LAST; i++ )
+	{
+		if ( m_hCosmetic[i] )
+			m_hCosmetic[i]->Release();
+		
+		if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
+		{
+			m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+		}
+		
+		if ( m_hCosmetic[i] )
+		{
+			int iVisibleTeam = GetTeamNumber();
+			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			{
+				iVisibleTeam = m_Shared.GetDisguiseTeam();
+			}
+			m_hCosmetic[i]->m_nSkin = iVisibleTeam - 2;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Attachments used for gameplay IE Shield powerup go here
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateGameplayAttachments( void )
+{
+	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
+	{
+		if ( m_hShieldEffect )
+			m_hShieldEffect->Release();
+		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
+		{
+			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+			if ( m_hShieldEffect )
+			{
+				int iVisibleTeam = GetTeamNumber();
+				if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
+			}
+		}
+	}
+}
 //-----------------------------------------------------------------------------
 // Purpose: Is this player an enemy to the local player
 //-----------------------------------------------------------------------------
@@ -1893,7 +2172,7 @@ void C_TFPlayer::ShowNemesisIcon( bool bShow )
 		default:
 			return;	// shouldn't get called if we're not on a team; bail out if it does
 		}
-		ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" );
+		m_Shared.UpdateParticleColor( ParticleProp()->Create( pszEffect, PATTACH_POINT_FOLLOW, "head" ) );
 	}
 	else
 	{
@@ -1954,7 +2233,7 @@ void C_TFPlayer::TurnOnTauntCam( void )
 	{
 		m_hItem->UpdateVisibility();
 	}
-	UpdatePartyHat();
+	UpdatePlayerAttachedModels();
 }
 
 //-----------------------------------------------------------------------------
@@ -2080,10 +2359,10 @@ void C_TFPlayer::ClientThink()
 		m_bWaterExitEffectActive = false;
 	}
 
-	if ( m_bUpdatePartyHat )
+	if ( m_bUpdatePlayerAttachments )
 	{
-		UpdatePartyHat();
-		m_bUpdatePartyHat = false;
+		UpdatePlayerAttachedModels();
+		m_bUpdatePlayerAttachments = false;
 	}
 
 	if ( m_pSaveMeEffect )
@@ -2797,6 +3076,21 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 	{
 		origin = pRagdoll->GetRagdollOrigin();
 		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
+		
+		if (cl_fp_ragdoll.GetBool() && m_hRagdoll.Get())
+		{
+			// pointer to the ragdoll
+			C_TFRagdoll *pRagdoll = (C_TFRagdoll*)m_hRagdoll.Get();
+
+			// gets its origin and angles
+			pRagdoll->GetAttachment(pRagdoll->LookupAttachment("eyes"), eyeOrigin, eyeAngles);
+			Vector vForward;
+			AngleVectors(eyeAngles, &vForward);
+
+				return;
+		}
+		eyeOrigin = vec3_origin;
+		eyeAngles = vec3_angle;
 	}
 
 	if ( killer && (killer != this) ) 
@@ -3200,6 +3494,45 @@ void C_TFPlayer::AddDecal( const Vector& rayStart, const Vector& rayEnd,
 	BaseClass::AddDecal( rayStart, rayEnd, decalCenter, hitbox, decalIndex, doTrace, tr, maxLODToDecal );
 }
 
+const char *TF_RESPAWN_PARTICLES[] =
+{
+	"dm_respawn_01",
+	"dm_respawn_03",
+	"dm_respawn_04",
+	"dm_respawn_05",
+	"dm_respawn_06",
+	"dm_respawn_09",
+	"dm_respawn_10",
+	"dm_respawn_11",
+	"dm_respawn_12",
+	"dm_respawn_13",
+	"dm_respawn_14",
+	"dm_respawn_15",
+	"dm_respawn_16",
+	"dm_respawn_17",
+	"dm_respawn_18",
+	"dm_respawn_19",
+	"dm_respawn_20",
+	"dm_respawn_21",
+	"dm_respawn_22",
+	"dm_respawn_23",
+	"dm_respawn_26",
+	"dm_respawn_27",
+	"dm_respawn_28",
+	"dm_respawn_29",
+	"dm_respawn_30",
+	"dm_respawn_31",
+	"dm_respawn_32",
+	"dm_respawn_35",
+	"dm_respawn_36",
+	"dm_respawn_37",
+	"dm_respawn_38",
+	"dm_respawn_39",
+	"dm_respawn_40",
+	"dm_respawn_41",
+	"dm_respawn_42",
+};
+
 //-----------------------------------------------------------------------------
 // Called every time the player respawns
 //-----------------------------------------------------------------------------
@@ -3222,6 +3555,10 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		// Release the duck toggle key
 		KeyUp( &in_ducktoggle, NULL ); 
 	}
+	
+	const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
+	if ( pEffectName )
+		m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );	
 
 	UpdateVisibility();
 

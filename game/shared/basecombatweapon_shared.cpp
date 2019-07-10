@@ -77,7 +77,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_fMaxRange2		= 1024;
 
 	m_bReloadsSingly	= false;
-	m_bReloadsAll		= false;
+
 
 	// Defaults to zero
 	m_nViewModelIndex	= 0;
@@ -2081,28 +2081,6 @@ bool CBaseCombatWeapon::ReloadsSingly( void ) const
 	return m_bReloadsSingly;
 }
 
-bool CBaseCombatWeapon::ReloadsAll( void ) const
-{
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
-	float fHasReload = 1.0f;
-	CALL_ATTRIB_HOOK_FLOAT( fHasReload, mod_no_reload_display_only );
-	if ( fHasReload != 1.0f )
-	{
-		return false;
-	}
-/*
-	int iWeaponMod = 0;
-	CALL_ATTRIB_HOOK_INT( iWeaponMod, set_scattergun_no_reload_single );
-	if ( iWeaponMod == 1 )
-	{
-		return false;
-	}
-*/
-#endif // TF_DLL || TF_CLIENT_DLL
-
-	return m_bReloadsAll;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2667,7 +2645,6 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_FIELD( m_fMaxRange1, FIELD_FLOAT ),		
 	DEFINE_FIELD( m_fMaxRange2, FIELD_FLOAT ),		
 	DEFINE_FIELD( m_bReloadsSingly, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bReloadsAll, FIELD_BOOLEAN ),	
 	DEFINE_FIELD( m_bRemoveable, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_iPrimaryAmmoCount, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iSecondaryAmmoCount, FIELD_INTEGER ),
@@ -2729,7 +2706,6 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_FIELD( m_fFireDuration, FIELD_FLOAT ),
 
 	DEFINE_FIELD( m_bReloadsSingly, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bReloadsAll, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_iSubType, FIELD_INTEGER ),
  	DEFINE_FIELD( m_bRemoveable, FIELD_BOOLEAN ),
 
@@ -2866,7 +2842,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flNextSecondaryAttack ) ),
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 
 #if defined( TF_DLL ) || defined ( TF_MOD )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
@@ -2888,7 +2864,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
 	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
 
@@ -2921,7 +2897,7 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
 	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
 	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iReserveAmmo ), 9 ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
 	SendPropEHandle( SENDINFO(m_hOwner) ),
 #else
 	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
