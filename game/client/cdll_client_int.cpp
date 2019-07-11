@@ -150,8 +150,12 @@
 
 #include "of_discordrpc.h"
 #include <time.h>
+#include "gamemounter.h"
 
 extern vgui::IInputInternal *g_InputInternal;
+const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
+ConVar *mat_picmip = NULL;
+ConVar of_picmip("of_picmip","0",FCVAR_ARCHIVE,"Overrides mat_picmip value for your client (hacky)");
 
 //=============================================================================
 // HPE_BEGIN
@@ -978,6 +982,14 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		return false;
 	InitFbx();
 #endif
+	
+	if ((Q_stricmp(COM_GetModDirectory(), "open_fortress") != 0)
+		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress\\") != 0)
+		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress/") != 0))
+	{
+		Msg( "%s\n", COM_GetModDirectory() );
+		Error("Error! The game's directory must have the name \"open_fortress\" in order for the mod to work correctly. Please change it.");
+	}
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found
 	g_pSourceVR = (ISourceVirtualReality *)appSystemFactory(SOURCE_VIRTUAL_REALITY_INTERFACE_VERSION, NULL);
@@ -992,6 +1004,8 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	{
 		return false;
 	}
+	
+	AddRequiredSearchPaths();
 
 	MountAdditionalContent();
 
@@ -1020,7 +1034,14 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 	if (!ParticleMgr()->Init(MAX_TOTAL_PARTICLES, materials))
 		return false;
+	
 
+	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
+	if( mat_picmip  )
+	{
+		mat_picmip->SetDefault( "0" );
+		mat_picmip->SetValue( of_picmip.GetInt() );
+	}
 
 	if (!VGui_Startup(appSystemFactory))
 		return false;
