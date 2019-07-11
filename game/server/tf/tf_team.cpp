@@ -425,10 +425,11 @@ void CTFTeam::GetOpposingTFTeam( CUtlVector<CTFTeam *> *pTeamTest )
 		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_MERCENARY));
 		break;
 
-		// kill red and blue
+		// kill red, blue and mercenary team itself
 	case TF_TEAM_MERCENARY:
 		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_RED));
 		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_BLUE));
+		pTeamTest->AddToTail(TFTeamMgr()->GetTeam(TF_TEAM_MERCENARY));
 		break;
 
 		// kill everybody if no team

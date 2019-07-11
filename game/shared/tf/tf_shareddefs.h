@@ -93,6 +93,12 @@ enum
 #define TF_HEALTH_UNDEFINED		1
 
 //-----------------------------------------------------------------------------
+// Used to check if a player is chatting (for the particle effect)
+//-----------------------------------------------------------------------------
+
+#define IN_TYPING ( 1 << 31 )
+
+//-----------------------------------------------------------------------------
 // Used to mark a spy's disguise attribute (team or class) as "unused"
 //-----------------------------------------------------------------------------
 #define TF_SPY_UNDEFINED		TEAM_UNASSIGNED
@@ -699,6 +705,7 @@ enum
 	TF_DMG_WRENCH_FIX,
 	TF_DMG_CUSTOM_MINIGUN,
 	TF_DMG_CUSTOM_SUICIDE,
+	TF_DMG_TELEFRAG,
 };
 
 enum

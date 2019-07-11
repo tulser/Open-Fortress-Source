@@ -1039,6 +1039,30 @@ public:
 
 EXPOSE_INTERFACE( CProxyBurnLevel, IMaterialProxy, "BurnLevel" IMATERIAL_PROXY_INTERFACE_VERSION );
 
+//-----------------------------------------------------------------------------
+// Purpose: dummy to stop live tf2 materials from going black
+//-----------------------------------------------------------------------------
+class CProxyYellowLevel : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		if ( !pC_BaseEntity )
+			return;
+
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+
+		// stop stuff from going black
+		m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
+	}
+};
+
+EXPOSE_INTERFACE(CProxyYellowLevel, IMaterialProxy, "YellowLevel" IMATERIAL_PROXY_INTERFACE_VERSION);
+
 class CProxyModelGlowColor : public CResultProxy
 {
 public:
@@ -1354,7 +1378,10 @@ END_RECV_TABLE()
 
 IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 
+    // medic call
 	RecvPropBool(RECVINFO(m_bSaveMeParity)),
+	// stuff when writing a chat message
+	RecvPropBool(RECVINFO(m_bChatting)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	RecvPropInt( RECVINFO( m_nWaterLevel ) ),
@@ -1411,7 +1438,10 @@ C_TFPlayer::C_TFPlayer() :
 	m_flBurnEffectEndTime = 0;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
-	
+
+	m_pChattingEffect = NULL;
+	m_bChatting = false;
+
 	m_aGibs.Purge();
 
 	m_bCigaretteSmokeActive = false;
@@ -1654,6 +1684,9 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		bJustSpawned = true;
 		m_bUpdatePlayerAttachments = true;
 	}
+
+	// update the chat bubble on the player (when he is typing a chat message)
+	CreateChattingEffect();
 
 	if ( m_bSaveMeParity != m_bOldSaveMeParity )
 	{
@@ -2774,6 +2807,13 @@ bool C_TFPlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd )
 
 	AvoidPlayers( pCmd );
 
+	// should we create chat bubbles on the player or not?
+	//if ( GetChatHud()->GetMessageMode() != MM_NONE )
+	if ( GetChatHud() && GetChatHud()->GetMessageMode() != MM_NONE )
+	{
+		pCmd->buttons |= IN_TYPING;
+	}
+
 	return bNoTaunt;
 }
 
@@ -3605,6 +3645,32 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 		{
 			vecPos += Vector(0,0,18);	// Particle effect is 18 units above the attachment
 			CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
+		}
+	}
+}
+
+void C_TFPlayer::CreateChattingEffect(void)
+{
+	// Don't create them for the local player
+	if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+		return;
+
+	// If I'm disguised as the enemy, don't create
+	if ( !m_Shared.InCond(TF_COND_DISGUISED) && m_bChatting )
+	{
+		if ( !m_pChattingEffect )
+		{
+			// this uses the unused particle
+			m_pChattingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+		}
+	}
+	// kill the chat bubble if we aren't typing anymore
+	else
+	{
+		if ( m_pChattingEffect )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pChattingEffect );
+			m_pChattingEffect = NULL;
 		}
 	}
 }

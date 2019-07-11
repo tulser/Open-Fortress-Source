@@ -61,6 +61,8 @@ public:
 
 	virtual int		GetFilterForString( const char *pString );
 
+	// CHudChat *GetChatHud( void );
+
 	virtual const char *GetDisplayedSubtitlePlayerName( int clientIndex );
 	virtual bool IsVisible();
 
@@ -69,5 +71,7 @@ public:
 	virtual int		GetRenderGroupPriority( void ) { return 35; }	// less than statpanel
 #endif
 };
+
+CHudChat *GetChatHud( void );
 
 #endif	//CS_HUD_CHAT_H

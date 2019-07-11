@@ -2398,7 +2398,7 @@ public:
 	DECLARE_DATADESC();
 };
 
-LINK_ENTITY_TO_CLASS( trigger_teleport, CTriggerTeleport );
+LINK_ENTITY_TO_CLASS(trigger_teleport, CTriggerTeleport);
 
 BEGIN_DATADESC( CTriggerTeleport )
 
@@ -2486,6 +2486,20 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 
 	tmp += vecLandmarkOffset;
 	pOther->Teleport( &tmp, pAngles, pVelocity );
+
+	CBaseEntity *ent = NULL;
+
+	// telefragging
+	// copied from tf_player
+	for ( CEntitySphereQuery sphere( pentTarget->GetAbsOrigin(), 100 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+	{
+		// don't telefrag ourselves
+		if ( ent->IsPlayer() && ent != pOther )
+		{
+			CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_TELEFRAG );
+			ent->TakeDamage( info );
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

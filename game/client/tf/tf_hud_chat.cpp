@@ -66,8 +66,16 @@ void CHudChatInputLine::ApplySchemeSettings(vgui::IScheme *pScheme)
 //CHudChat
 //=====================
 
+// used for player chat particle bubble
+static CHudChat *g_pChatHud = NULL;
+CHudChat *GetChatHud( void )
+{
+	return g_pChatHud;
+}
+
 CHudChat::CHudChat( const char *pElementName ) : BaseClass( pElementName )
 {
+	g_pChatHud = this;
 #if defined ( _X360 )
 	RegisterForRenderGroup( "mid" );
 #endif
