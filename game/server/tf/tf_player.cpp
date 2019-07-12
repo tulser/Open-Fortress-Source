@@ -1845,6 +1845,8 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 		// DevMsg(1, "SPAWN: random spawn");
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 
+  
+
 	// First we try to find a spawn point that is fully clear. If that fails,
 	// we look for a spawnpoint that's clear except for another players. We
 	// don't collide with our team members, so we should be fine.
@@ -1938,11 +1940,18 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 
 	if ( pFurthest )
 	{
-		// DevMsg(1, "SPAWN: last furthest");
-		// telefragging
-		// copied from tf_player
-		CBaseEntity *ent = NULL;
+		pSpot = pFurthest;
 
+		// Found a valid spawn point.
+		return true;
+	}
+
+	// telefragging
+	// copied from tf_player
+	CBaseEntity *ent = NULL;
+
+	if ( pSpot )
+	{
 		for (CEntitySphereQuery sphere(pSpot->GetAbsOrigin(), 100); (ent = sphere.GetCurrentEntity()) != NULL; sphere.NextEntity())
 		{
 			// don't telefrag ourselves
@@ -1954,11 +1963,6 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 				ent->TakeDamage(info);
 			}
 		}
-
-		pSpot = pFurthest;
-
-		// Found a valid spawn point.
-		return true;
 	}
 
 	return false;
