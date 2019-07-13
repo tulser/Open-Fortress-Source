@@ -56,6 +56,7 @@ private:
 	static void AcceptSplitscreenDisableCallback();
 	static void AcceptVersusSoftLockCallback();
 	static void AcceptQuitGameCallback();
+	static void OpenServerBrowser();
 
 	bool CheckSaveFile();
 	void SetFooterState();

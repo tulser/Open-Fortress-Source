@@ -104,6 +104,7 @@ int CASW_Background_Movie::SetTextureMaterial()
 
 void CASW_Background_Movie::Update()
 {
+	/*
 	//	if ( engine->IsConnected() && ASWGameRules() )
 	int nGameState = 0;
 	if(nGameState != m_nLastGameState) {
@@ -121,7 +122,7 @@ void CASW_Background_Movie::Update()
 
 
 		if(pFilename) {
-			SetCurrentMovie(pFilename);
+//			SetCurrentMovie(pFilename);
 		}
 	}
 	m_nLastGameState = nGameState;
@@ -139,6 +140,7 @@ void CASW_Background_Movie::Update()
 
 	if(m_pVideoMaterial->Update() == false)
 		ClearCurrentMovie();
+	*/
 }
 
 // ======================================
@@ -159,10 +161,10 @@ CNB_Header_Footer::CNB_Header_Footer( vgui::Panel *parent, const char *name ) : 
 
 	m_bHeaderEnabled = true;
 	m_bFooterEnabled = true;
-	m_bMovieEnabled = true;
+	m_bMovieEnabled = false;
 	m_bGradientBarEnabled = 0;
 	m_nTitleStyle = NB_TITLE_MEDIUM;
-	m_nBackgroundStyle = NB_BACKGROUND_NONE;
+	m_nBackgroundStyle = NB_BACKGROUND_IMAGE;
 	m_nGradientBarY = 0;
 	m_nGradientBarHeight = 480;
 }
@@ -183,8 +185,9 @@ void CNB_Header_Footer::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	// TODO: Different image in widescreen to avoid stretching
 	// this image is no longer used
-	//m_pBackgroundImage->SetImage( "../console/background01_widescreen" );
-
+	m_pBackgroundImage->SetImage( "../console/background01_widescreen" );
+	SetBackgroundStyle( NB_BACKGROUND_IMAGE );
+	SetMovieEnabled( false );
 	switch( m_nTitleStyle )
 	{
 		case NB_TITLE_BRIGHT: m_pTitle->SetFgColor( Color( 255, 255, 255, 255 ) ); break;
@@ -319,7 +322,7 @@ void CNB_Header_Footer::SetMovieEnabled( bool bMovieEnabled )
 void CNB_Header_Footer::PaintBackground()
 {
 	BaseClass::PaintBackground();
-
+/*
 	if (ASWBackgroundMovie())
 	{
 		ASWBackgroundMovie()->Update();
@@ -395,6 +398,7 @@ void CNB_Header_Footer::PaintBackground()
 			pRenderContext->PopMatrix();
 		}
 	}
+	*/
 }
 
 // =================

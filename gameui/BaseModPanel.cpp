@@ -3627,7 +3627,6 @@ static char *g_rgValidCommands[] =
 	"OpenCustomMapsDialog",
 	"OpenOptionsDialog",
 	"OpenBenchmarkDialog",
-	"OpenServerBrowser",
 	"OpenFriendsDialog",
 	"OpenLoadDemoDialog",
 	"OpenCreateMultiplayerGameDialog",

@@ -52,15 +52,7 @@ using namespace BaseModUI;
 //=============================================================================
 static ConVar connect_lobby( "connect_lobby", "", FCVAR_HIDDEN, "Sets the lobby ID to connect to on start." );
 static ConVar ui_old_options_menu( "ui_old_options_menu", "1", FCVAR_HIDDEN, "Brings up the old tabbed options dialog from Keyboard/Mouse when set to 1." );
-static ConVar ui_play_online_browser( "ui_play_online_browser",
-#if defined( _DEMO ) && !defined( _X360 )
-									 "0",
-									 FCVAR_NONE,
-#else
-									 "1",
-									 FCVAR_NONE,
-#endif
-									 "Whether play online displays a browser or plain search dialog." );
+static ConVar ui_play_online_browser( "ui_play_online_browser",	 "1",FCVAR_NONE, "Whether play online displays a browser or plain search dialog." );
 
 void Demo_DisableButton( Button *pButton );
 //void OpenGammaDialog( VPANEL parent );
@@ -220,10 +212,14 @@ void MainMenu::OnCommand( const char *command )
 
 		}*/
 	}
-	/*else if (!Q_strcmp(command, "SoloPlay_NoConfirm"))
+	else if ( !Q_strcmp( command, "OpenServerBrowser" ) )
 	{
-			engine->ClientCmd( "exec chapter1.cfg" );
-	}*/
+		if ( CheckAndDisplayErrorIfNotLoggedIn() )
+			return;
+
+		// on PC, bring up the server browser and switch it to the LAN tab (tab #5)
+		engine->ClientCmd( "openserverbrowser" );
+	}
 	else if (!Q_strcmp(command, "CreateServer"))
 	{
 			CBaseModPanel::GetSingleton().OpenCreateMultiplayerGameDialog( this );
@@ -696,7 +692,7 @@ void MainMenu::ApplySchemeSettings( IScheme *pScheme )
 
 	//LoadControlSettings( "Resource/UI/BaseModUI/MainMenu.res" );
 
-	//SetPaintBackgroundEnabled( true );
+	SetPaintBackgroundEnabled( true );
 
 	//SetFooterState();
 
@@ -925,6 +921,7 @@ void MainMenu::AcceptSaveOverCallback()
 	if ( MainMenu *pMainMenu = static_cast< MainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_MAINMENU ) ) )
 	{
 		pMainMenu->OnCommand( "SaveGame" );
+		
 	}
 }
 
@@ -943,3 +940,38 @@ void MainMenu::AcceptVersusSoftLockCallback()
 		pMainMenu->OnCommand( "FlmVersusFlyout" );
 	}
 }
+
+void MainMenu::OpenServerBrowser()
+{
+	if ( MainMenu *pMainMenu = static_cast< MainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_MAINMENU ) ) )
+	{
+		pMainMenu->OnCommand( "OpenServerBrowser" );
+	}
+}
+
+
+#ifndef _X360
+CON_COMMAND_F( openserverbrowser, "Opens server browser", 0 )
+{
+	bool isSteam = IsPC() && steamapicontext->SteamFriends() && steamapicontext->SteamUtils();
+	if ( isSteam )
+	{
+		// show the server browser
+		g_VModuleLoader.ActivateModule("Servers");
+
+		// if an argument was passed, that's the tab index to show, send a message to server browser to switch to that tab
+		if ( args.ArgC() > 1 )
+		{
+			KeyValues *pKV = new KeyValues( "ShowServerBrowserPage" );
+			pKV->SetInt( "page", atoi( args[1] ) );
+			g_VModuleLoader.PostMessageToAllModules( pKV );
+		}
+
+#ifdef INFESTED_DLL
+		KeyValues *pSchemeKV = new KeyValues( "SetCustomScheme" );
+		pSchemeKV->SetString( "SchemeName", "SwarmServerBrowserScheme" );
+		g_VModuleLoader.PostMessageToAllModules( pSchemeKV );
+#endif
+	}
+}
+#endif
