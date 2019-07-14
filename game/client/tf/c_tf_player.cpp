@@ -3123,13 +3123,24 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 			C_TFRagdoll *pRagdoll = (C_TFRagdoll*)m_hRagdoll.Get();
 
 			// gets its origin and angles
-			pRagdoll->GetAttachment(pRagdoll->LookupAttachment("eyes"), eyeOrigin, eyeAngles);
+			int iAttachment = pRagdoll->LookupAttachment("eyes");
+
+			// if no eyes attachment is found, fallback to head attachment
+			if (iAttachment <= 0)
+			{
+				pRagdoll->GetAttachment(pRagdoll->LookupAttachment("head"), eyeOrigin, eyeAngles);
+			}
+			else
+			{
+				pRagdoll->GetAttachment(pRagdoll->LookupAttachment("eyes"), eyeOrigin, eyeAngles);
+			}
+
 			Vector vForward;
 			AngleVectors(eyeAngles, &vForward);
 
 				return;
 		}
-		eyeOrigin = vec3_origin;
+		eyeOrigin = vec3_origin + Vector(0, -10, 0);
 		eyeAngles = vec3_angle;
 	}
 
@@ -3612,7 +3623,8 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 void C_TFPlayer::CreateSaveMeEffect( void )
 {
 	// Don't create them for the local player
-	if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+	// if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+	if ( IsLocalPlayer() )
 		return;
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -3631,7 +3643,7 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 
 	if ( m_pSaveMeEffect )
 	{
-		ParticleProp()->StopEmission( m_pSaveMeEffect );
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pSaveMeEffect );
 		m_pSaveMeEffect = NULL;
 	}
 
@@ -3652,13 +3664,15 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 void C_TFPlayer::CreateChattingEffect(void)
 {
 	// Don't create them for the local player
-	if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+	// if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
+	if ( IsLocalPlayer() )
 		return;
 
 	// If I'm disguised as the enemy, don't create
-	if ( !m_Shared.InCond(TF_COND_DISGUISED) && m_bChatting )
+	// if ( !m_Shared.InCond( TF_COND_DISGUISED ) && m_bChatting )
+	if ( ( !m_Shared.InCond( TF_COND_STEALTHED ) ) && m_bChatting && IsAlive() )
 	{
-		if ( !m_pChattingEffect )
+		if ( !m_pChattingEffect ) 
 		{
 			// this uses the unused particle
 			m_pChattingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );

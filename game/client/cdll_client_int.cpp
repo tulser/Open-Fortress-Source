@@ -155,7 +155,7 @@
 extern vgui::IInputInternal *g_InputInternal;
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
 ConVar *mat_picmip = NULL;
-ConVar of_picmip("of_picmip","0",FCVAR_ARCHIVE,"Overrides mat_picmip value for your client (hacky)");
+ConVar of_picmip("of_picmip","-1",FCVAR_ARCHIVE,"Overrides mat_picmip value for your client (hacky)");
 
 //=============================================================================
 // HPE_BEGIN
@@ -1037,9 +1037,9 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	
 
 	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
-	if( mat_picmip  )
+	if( mat_picmip )
 	{
-		mat_picmip->SetDefault( "0" );
+		mat_picmip->SetDefault( "-1" );
 		mat_picmip->SetValue( of_picmip.GetInt() );
 	}
 

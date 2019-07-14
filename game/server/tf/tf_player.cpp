@@ -771,6 +771,8 @@ void CTFPlayer::PrecachePlayerModels( void )
 			PrecacheGibsForModel( iModel );
 		}
 
+		// disabl
+		/*
 		if ( !IsX360() )
 		{
 			// Precache the hardware facial morphed models as well.
@@ -780,6 +782,8 @@ void CTFPlayer::PrecachePlayerModels( void )
 				PrecacheModel( pszHWMModel );
 			}
 		}
+		*/
+
 		const char *pszArmModel = GetPlayerClassData( i )->m_szArmModelName;
 		if ( pszArmModel && pszArmModel[0] )
 		{
@@ -2566,12 +2570,23 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "build" ) )
 	{
-		if ( args.ArgC() == 2 )
-		{
-			// player wants to build something
-			int iBuilding = atoi( args[ 1 ] );
+		CTFPlayer *pTargetPlayer = this;
+		// if the player has no build PDA, abort the building
+		CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
 
-			StartBuildingObjectOfType( iBuilding );
+		if (pWeapon == NULL)
+		{
+			ClientPrint((CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+		}
+		else
+		{
+			if (args.ArgC() == 2)
+			{
+				// player wants to build something
+				int iBuilding = atoi(args[1]);
+
+				StartBuildingObjectOfType(iBuilding);
+			}
 		}
 		return true;
 	}
@@ -2749,7 +2764,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		CTFWeaponBase *pWpn = GetActiveTFWeapon();
 
-		CTFWeaponPDA *pPDA = dynamic_cast<CTFWeaponPDA *>( pWpn );
+		CTFWeaponPDA *pPDA = dynamic_cast<CTFWeaponPDA *>(pWpn);
 
 		if ( pPDA && !m_Shared.InCond( TF_COND_DISGUISED ) )
 		{

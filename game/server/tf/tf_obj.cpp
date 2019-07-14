@@ -1111,7 +1111,7 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 		if ( !iAmountPlayerPaidForMe )
 		{
 			// Player couldn't afford to pay for me, so abort
-			ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Not enough resources.\n" );
+			ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Not enough metal to build.\n" );
 			StopPlacement();
 			return false;
 		}
