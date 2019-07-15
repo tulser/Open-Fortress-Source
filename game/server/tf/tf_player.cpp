@@ -1481,7 +1481,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 {
 	StripWeapons();
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
-	int pWeaponSlot[2];
+	int pWeaponSlot[2] = {0, 0};
 	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5 ; iWeapon++ )
 	{
 		if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
@@ -2133,7 +2133,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		ChangeTeam( iTeam );
 		if (TFGameRules()->IsDMGamemode() )
 		{
-			if( ofd_forceclass.GetBool() == 0)
+			if( ofd_forceclass.GetBool() == 0) {
 				if ( iTeam == TF_TEAM_RED ) {
 					ShowViewPortPanel( PANEL_CLASS_RED );
 				}
@@ -2143,6 +2143,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 				else if ( iTeam == TF_TEAM_MERCENARY ) {
 					ShowViewPortPanel( PANEL_CLASS_MERCENARY );
 				}
+			}
 		}
 		else
 		{
@@ -8049,7 +8050,7 @@ void CTFPlayer::SaveTransitionFile(void)
 
 			//Also write on a new line a } to close off this Players section. Now that we're done with all weapons.
 			char SecClose[32];
-			Q_snprintf(SecClose, sizeof(SecClose), "}\n\n", NULL);
+			Q_snprintf(SecClose, sizeof(SecClose), "}\n\n");
 			g_pFullFileSystem->Write(&SecClose, strlen(SecClose), hFile);
 		}
 

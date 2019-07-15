@@ -567,7 +567,15 @@ public:
 // of our complicated templates properly.  Use some preprocessor trickery
 // to workaround this
 #ifdef __GNUC__
+	#if __GNUC__ > 4 || \
+    __GNUC__ == 4 && __GNUC_MINOR__ >= 3
+	// static_assert is supported in gcc since version 4.3,
+	// generates better errors, and doesn't trigger the `unused-local-typedefs` warning.
+	// https://gcc.gnu.org/projects/cxx-status.html
+	#define COMPILE_TIME_ASSERT( pred ) static_assert(pred, "Compile time assert constraint is not true: " #pred)
+	#else
 	#define COMPILE_TIME_ASSERT( pred ) typedef int UNIQUE_ID[ (pred) ? 1 : -1 ]
+	#endif
 #else
 	#if _MSC_VER >= 1600
 	// If available use static_assert instead of weird language tricks. This

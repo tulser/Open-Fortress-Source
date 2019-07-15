@@ -314,7 +314,7 @@ END_SEND_TABLE()
 class CBaseEntityModelLoadProxy
 {
 protected:
-	class Handler : public IModelLoadCallback
+	class Handler final : public IModelLoadCallback
 	{
 	public:
 		explicit Handler( CBaseEntity *pEntity ) : m_pEntity(pEntity) { }

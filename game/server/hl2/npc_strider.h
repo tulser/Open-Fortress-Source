@@ -570,7 +570,7 @@ struct StriderMinigunAnimController_t
 
 //---------------------------------------------------------
 
-class CStriderMinigun
+class CStriderMinigun final
 {
 public:
 	DECLARE_DATADESC();

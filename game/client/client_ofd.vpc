@@ -69,11 +69,11 @@ $Project "Client (OFD)"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.h"
 		$File	"TeamBitmapImage.cpp"
 		$File	"voice_menu.cpp"
-		$File	"glow_outline_effect.cpp"
+//		$File	"glow_outline_effect.cpp"
 		$File	"glow_outline_effect.h"
 		$File	"worldlight.cpp"
 		$File	"worldlight.h"
-		$File	"hud_base_account.cpp"
+//		$File	"hud_base_account.cpp"
 		$File	"hud_base_account.h"
 		$File	"sixense\in_sixense.cpp"
 		
@@ -415,5 +415,10 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
 		}
+	}
+
+	$Folder	"Link Libraries"
+	{
+		$Lib	"$LIBPUBLIC\libdiscord-rpc"
 	}
 }

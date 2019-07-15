@@ -187,9 +187,7 @@ void CTFDiscordRPC::OnReady( const DiscordUser* user )
 void CTFDiscordRPC::OnDiscordError(int errorCode, const char *szMessage)
 {
 	g_discordrpc.m_bErrored = true;
-	char buff[1024];
-	Q_snprintf(buff, 1024, "[Rich Presence] Init failed. code %d - error: %s\n", errorCode, szMessage);
-	Warning(buff);
+	Warning("[Rich Presence] Init failed. code %d - error: %s\n", errorCode, szMessage);
 }
 
 
