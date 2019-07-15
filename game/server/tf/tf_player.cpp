@@ -85,6 +85,7 @@ extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
 extern ConVar	ofd_instagib;
+extern ConVar	ofd_clanarena;
 extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -327,6 +328,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropExclude( "DT_BaseFlex", "m_viewtarget" ),
 
 	SendPropBool(SENDINFO(m_bSaveMeParity)),
+	SendPropBool(SENDINFO(m_bChatting)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	SendPropInt( SENDINFO( m_nWaterLevel ), 2, SPROP_UNSIGNED ),
@@ -658,6 +660,9 @@ void CTFPlayer::PostThink()
 {
 	BaseClass::PostThink();
 
+	// check if our guy is chatting for the particle
+	m_bChatting = (m_nButtons & IN_TYPING) != 0;
+
 	QAngle angles = GetLocalAngles();
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
@@ -718,6 +723,7 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "crit_text" );
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
+	PrecacheParticleSystem( "speech_typing" );
 	PrecacheParticleSystem( "player_recent_teleport_blue" );
 	PrecacheParticleSystem( "player_recent_teleport_red" );
 	PrecacheParticleSystem( "particle_nemesis_red" );
@@ -765,6 +771,8 @@ void CTFPlayer::PrecachePlayerModels( void )
 			PrecacheGibsForModel( iModel );
 		}
 
+		// disabl
+		/*
 		if ( !IsX360() )
 		{
 			// Precache the hardware facial morphed models as well.
@@ -774,6 +782,8 @@ void CTFPlayer::PrecachePlayerModels( void )
 				PrecacheModel( pszHWMModel );
 			}
 		}
+		*/
+
 		const char *pszArmModel = GetPlayerClassData( i )->m_szArmModelName;
 		if ( pszArmModel && pszArmModel[0] )
 		{
@@ -949,8 +959,12 @@ void CTFPlayer::Spawn()
 		}
 
 		// turn on separation so players don't get stuck in each other when spawned
-		m_Shared.SetSeparation( true );
-		m_Shared.SetSeparationVelocity( vec3_origin );
+		// don't attempt separation if we are in deathmatch
+		if ( TFGameRules() && !TFGameRules()->IsDMGamemode() )
+		{
+			m_Shared.SetSeparation(true);
+			m_Shared.SetSeparationVelocity(vec3_origin);
+		}
 
 		RemoveTeleportEffect();
 	
@@ -1237,6 +1251,8 @@ void CTFPlayer::GiveDefaultItems()
 		ManageGunGameWeapons( pData );
 	else if ( ofd_instagib.GetInt() > 0 )
 		ManageInstagibWeapons( pData );
+	else if ( ofd_clanarena.GetInt() > 0 )
+		ManageClanArenaWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
 	// Give a builder weapon for each object the player class is allowed to build
@@ -1620,6 +1636,67 @@ void CTFPlayer::ManageGunGameWeapons( TFPlayerClassData_t *pData )
 		}
 	}
 }
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+	/*
+	██╗  ██╗ █████╗  ██████╗██╗  ██╗
+	██║  ██║██╔══██╗██╔════╝██║ ██╔╝
+	███████║███████║██║     █████╔╝ 
+	██╔══██║██╔══██║██║     ██╔═██╗ 
+	██║  ██║██║  ██║╚██████╗██║  ██╗
+	╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
+	Seriously, please submit a pull request or something about this
+	*/
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_railgun");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_lightning_gun");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
+	if (pWeapon)	
+		pWeapon->DefaultTouch(this);
+
+	if (ofd_clanarena.GetInt() == 1)
+	{
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_supershotgun");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_nailgun");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grenadelauncher_mercenary");
+		if (pWeapon)
+			pWeapon->DefaultTouch(this);
+	}
+
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Find a spawn point for the player.
@@ -1640,7 +1717,21 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 	case TF_TEAM_MERCENARY:
 		{
 			pSpawnPointName = "info_player_teamspawn";
-			if ( SelectSpawnSpot(pSpawnPointName, pSpot ) )
+
+			bool bFind = false;
+
+			// in deathmatch players need to spawn further away from people for balance
+			// if the game isn't deathmatch we don't want to do this so go back to normal
+			if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+			{
+				bFind = SelectFurtherSpawnSpots( pSpawnPointName, pSpot );
+			}
+			else
+			{
+				bFind = SelectSpawnSpot( pSpawnPointName, pSpot );
+			}
+
+			if ( bFind )
 			{
 				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
 			}
@@ -1684,7 +1775,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 } 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Spawning for normal gameplay
 //-----------------------------------------------------------------------------
 bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot )
 {
@@ -1702,6 +1793,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 	bool bIgnorePlayers = false;
 
 	CBaseEntity *pFirstSpot = pSpot;
+
 	do 
 	{
 		if ( pSpot )
@@ -1718,6 +1810,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 
 				// Found a valid spawn point.
 				return true;
+
 			}
 		}
 
@@ -1736,6 +1829,149 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 
 	return false;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawning for deathmatch
+//-----------------------------------------------------------------------------
+bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity* &pSpot )
+{
+	// Get an initial spawn point.
+	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	if ( !pSpot )
+	{
+		// Sometimes the first spot can be NULL????
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+
+	// randomize the spawning position
+	//for ( int i = random->RandomInt( 0, 2 ); i > 0; i-- )
+	for (int i = random->RandomInt(0, 10); i > 0; i--)
+		// DevMsg(1, "SPAWN: random spawn");
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+
+  
+
+	// First we try to find a spawn point that is fully clear. If that fails,
+	// we look for a spawnpoint that's clear except for another players. We
+	// don't collide with our team members, so we should be fine.
+	bool bIgnorePlayers = false;
+
+	// grab the furthest spawn point from each player 
+	CBaseEntity *pFirstSpot = pSpot;
+
+	float flFurthest = 0.0f;
+	// DevMsg(1, "SPAWN: further");
+	CBaseEntity *pFurthest = NULL;
+
+	do
+	{
+		if ( !pSpot )
+		{
+			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+			continue;
+		}
+
+		// Check to see if this is a valid team spawn (player is on this team, etc.).
+        if( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+		{
+			// Check for a bad spawn entity.
+			if ( pSpot->GetAbsOrigin() == vec3_origin )
+			{
+				pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+				continue;
+			}
+
+			//
+			// check distance from other players
+			//
+
+			// are there players active in the game world?
+			bool bPlayersActive = false;
+			// DevMsg(1, "SPAWN: players active");
+
+			// float flClosestPlayerDistance = 999999;
+			float flClosestPlayerDistance = FLT_MAX;
+
+			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+			{
+				//CBasePlayer *pPlayer = UTIL_GetLocalPlayer( i );
+				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
+
+				// DevMsg(1, "SPAWN: grabbing player"se);
+
+				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() )
+				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() || ( InSameTeam( pPlayer ) ) )
+				if ( !pPlayer || pPlayer == this || !pPlayer->IsAlive() || ( InSameTeam( pPlayer ) ) )
+					continue;
+
+				bPlayersActive = true;
+
+				//float flDist = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).Length();
+				float flDistSqr = (pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin()).LengthSqr();
+
+				// DevMsg(1, "SPAWN: check length");
+
+				//if ( flDist > flClosestPlayerDistance )
+				//if ( flDist < flClosestPlayerDistance )
+				if ( flDistSqr < flClosestPlayerDistance )
+				{
+					//flClosestPlayerDististance = flDist;
+					flClosestPlayerDistance = flDistSqr;
+				}
+			}
+
+			// no players active? go to the first one
+			// DevMsg(1, "SPAWN: no active player");
+			if ( !bPlayersActive )
+			{
+				pFurthest = pSpot;
+				break;
+			}
+
+			if ( flClosestPlayerDistance > flFurthest )
+			{
+				// DevMsg(1, "SPAWN: cpd > f");
+				flFurthest = flClosestPlayerDistance;
+				pFurthest = pSpot;
+			}
+		}
+
+		// Get the next spawning point to check.
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+	// Continue until a valid spawn point is found or we hit the start.
+	while ( pSpot != pFirstSpot );
+
+	if ( pFurthest )
+	{
+		pSpot = pFurthest;
+
+		// Found a valid spawn point.
+		return true;
+	}
+
+	// telefragging
+	// copied from tf_player
+	CBaseEntity *ent = NULL;
+
+	if ( pSpot )
+	{
+		for (CEntitySphereQuery sphere(pSpot->GetAbsOrigin(), 100); (ent = sphere.GetCurrentEntity()) != NULL; sphere.NextEntity())
+		{
+			// don't telefrag ourselves
+			if (ent->IsPlayer() && ent != this)
+			{
+				// special damage type to bypass uber or spawn protection in DM
+				// DevMsg(1, "SPAWN: telefragging our homie");
+				CTakeDamageInfo info(this, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG);
+				ent->TakeDamage(info);
+			}
+		}
+	}
+
+	return false;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2335,12 +2571,23 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "build" ) )
 	{
-		if ( args.ArgC() == 2 )
-		{
-			// player wants to build something
-			int iBuilding = atoi( args[ 1 ] );
+		CTFPlayer *pTargetPlayer = this;
+		// if the player has no build PDA, abort the building
+		CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
 
-			StartBuildingObjectOfType( iBuilding );
+		if (pWeapon == NULL)
+		{
+			ClientPrint((CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+		}
+		else
+		{
+			if (args.ArgC() == 2)
+			{
+				// player wants to build something
+				int iBuilding = atoi(args[1]);
+
+				StartBuildingObjectOfType(iBuilding);
+			}
 		}
 		return true;
 	}
@@ -2518,7 +2765,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		CTFWeaponBase *pWpn = GetActiveTFWeapon();
 
-		CTFWeaponPDA *pPDA = dynamic_cast<CTFWeaponPDA *>( pWpn );
+		CTFWeaponPDA *pPDA = dynamic_cast<CTFWeaponPDA *>(pWpn);
 
 		if ( pPDA && !m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
@@ -3185,12 +3432,31 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		bool bAllowDamage = false;
 
+		// in deathmatch, ubers need to be destroyed on spawning players
+		if (info.GetDamageCustom() == TF_DMG_TELEFRAG)
+		{
+			bAllowDamage = true;
+		}
+
 		// check to see if our attacker is a trigger_hurt entity (and allow it to kill us even if we're invuln)
 		CBaseEntity *pAttacker = info.GetAttacker();
+
+		CBaseEntity *pInflictor = info.GetInflictor();
+
 		if ( pAttacker && pAttacker->IsSolidFlagSet( FSOLID_TRIGGER ) )
 		{
 			CTriggerHurt *pTrigger = dynamic_cast<CTriggerHurt *>( pAttacker );
 			if ( pTrigger )
+			{
+				bAllowDamage = true;
+			}
+		}
+
+		 // same check for teleporter
+		if ( pInflictor && pInflictor->IsBaseObject() )
+		{
+			CBaseObject *pObject = assert_cast<CBaseObject *>( pInflictor );
+			if ( pObject->ObjectType() == OBJ_TELEPORTER_EXIT )
 			{
 				bAllowDamage = true;
 			}
@@ -3327,7 +3593,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							}
 							else if ( pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN )
 							{
-								// Scattergun gets 50% bonus of other weapons at short range
+								// SSG gets 100% bonus of other weapons at short range
 								flRandomDamage *= 2;
 							}					
 						}
@@ -3701,11 +3967,10 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 void CTFPlayer::AddDamagerToHistory( EHANDLE hDamager )
 {
-	// sanity check: ignore damager if it is on our team.  (Catch-all for 
+	// sanity check: ignore damager if it is on our team and on ourself.  (Catch-all for 
 	// damaging self in rocket jumps, etc.)
 	CTFPlayer *pDamager = ToTFPlayer( hDamager );
-	CTFPlayer *pPlayer = this;
-	if (!pDamager || (pDamager->GetTeam() == GetTeam() && pDamager->GetTeamNumber() != TF_TEAM_MERCENARY) || pDamager == pPlayer )
+		if ( !pDamager || pDamager == this || ( InSameTeam( pDamager ) && !TFGameRules()->IsDMGamemode() ) )
 		return;
 	
 	// If this damager is different from the most recent damager, shift the
@@ -4036,7 +4301,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_SUICIDE )
 	{
 		// if this was suicide, recalculate attacker to see if we want to award the kill to a recent damager
-//		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
+		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
 	}
 	BaseClass::Event_Killed( info_modified );
 	bool bDissolve = false;
@@ -4064,8 +4329,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// Don't overflow the value for this.
 	m_iHealth = 0;
 
-	// If we died in sudden death and we're an engineer, explode our buildings
-	if ( IsPlayerClass( TF_CLASS_ENGINEER ) && TFGameRules()->InStalemate() )
+	// If we died in sudden death, explode our buildings
+	//if ( IsPlayerClass( TF_CLASS_ENGINEER ) && TFGameRules()->InStalemate() )
+	if (TFGameRules() && TFGameRules()->InStalemate())
 	{
 		for (int i = GetObjectCount()-1; i >= 0; i--)
 		{
@@ -6271,9 +6537,10 @@ CBaseEntity *CTFPlayer::FindNearestObservableTarget( Vector vecOrigin, float flM
 		}
 	}
 
-	if ( !bFoundClass && IsPlayerClass( TF_CLASS_ENGINEER ) )
+	//if ( !bFoundClass && IsPlayerClass( TF_CLASS_ENGINEER ) )
+    if ( !bFoundClass )
 	{
-		// let's spectate our sentry instead, we didn't find any other engineers to spec
+		// let's spectate our sentry instead, we didn't find any other players to spec
 		int iNumObjects = GetObjectCount();
 		for ( int i = 0; i < iNumObjects; i++ )
 		{

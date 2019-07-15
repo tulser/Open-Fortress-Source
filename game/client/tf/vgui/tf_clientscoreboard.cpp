@@ -228,7 +228,7 @@ void CTFClientScoreBoardDialog::InitPlayerList( SectionedListPanel *pPlayerList 
 	pPlayerList->AddColumnToSection( 0, "status", "", SectionedListPanel::COLUMN_IMAGE | SectionedListPanel::COLUMN_CENTER, m_iStatusWidth );
 	pPlayerList->AddColumnToSection( 0, "nemesis", "", SectionedListPanel::COLUMN_IMAGE, m_iNemesisWidth );
 	pPlayerList->AddColumnToSection( 0, "class", "", 0, m_iClassWidth );
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsGGGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsGGGamemode() && !TFGameRules()->InGametype(TF_GAMETYPE_TDM) )
 	{
 		if ( !TFGameRules()->DontCountKills() )
 			pPlayerList->AddColumnToSection( 0, "kills", "#TF_Scoreboard_Kills", SectionedListPanel::COLUMN_RIGHT, m_iKillsWidth );

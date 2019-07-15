@@ -416,6 +416,7 @@ public:
 	void				ManageRegularWeapons( TFPlayerClassData_t *pData );
 	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
+	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
@@ -457,7 +458,11 @@ private:
 	void				GiveDefaultItems();
 	int					GetCarriedWeapons();
 	void				StripWeapons();
+
 	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
+	// for deathmatch
+	bool				SelectFurtherSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
+
 	void				PrecachePlayerModels( void );
 	void				RemoveNemesisRelationships();
 
@@ -622,6 +627,9 @@ public:
 	bool	m_bTransition;
 	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
+
+	// for chat particle bubble
+	CNetworkVar(bool, m_bChatting);
 
 	// Commander Mode for controller NPCs
 	enum CommanderCommand_t

@@ -147,7 +147,8 @@ public:
 	void ClientPlayerRespawn( void );
 
 	void CreateSaveMeEffect( void );
-	
+	void CreateChattingEffect(void);
+
 	virtual bool	IsOverridingViewmodel( void );
 	virtual int		DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags );
 
@@ -310,6 +311,8 @@ private:
 
 	// Medic callout particle effect
 	CNewParticleEffect	*m_pSaveMeEffect;
+	// Player typing particle effect
+	CNewParticleEffect	*m_pChattingEffect;
 
 	bool m_bUpdateObjectHudState;
 
@@ -338,6 +341,7 @@ public:
 
 	bool			m_bSaveMeParity;
 	bool			m_bOldSaveMeParity;
+	bool			m_bChatting;
 
 	int				m_nOldWaterLevel;
 	float			m_flWaterEntryTime;

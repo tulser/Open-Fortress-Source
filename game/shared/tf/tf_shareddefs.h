@@ -93,6 +93,12 @@ enum
 #define TF_HEALTH_UNDEFINED		1
 
 //-----------------------------------------------------------------------------
+// Used to check if a player is chatting (for the particle effect)
+//-----------------------------------------------------------------------------
+
+#define IN_TYPING ( 1 << 31 )
+
+//-----------------------------------------------------------------------------
 // Used to mark a spy's disguise attribute (team or class) as "unused"
 //-----------------------------------------------------------------------------
 #define TF_SPY_UNDEFINED		TEAM_UNASSIGNED
@@ -265,7 +271,7 @@ extern const char *g_aAmmoNames[];
 
 #define TF_WEAPON_ZOOM_FOV								20
 
-enum
+enum TFWeaponIDs
 {
 	TF_WEAPON_NONE = 0,
 	TF_WEAPON_BAT,
@@ -292,18 +298,6 @@ enum
 	TF_WEAPON_GRENADELAUNCHER,
 	TF_WEAPON_PIPEBOMBLAUNCHER,
 	TF_WEAPON_FLAMETHROWER,
-	TF_WEAPON_GRENADE_NORMAL,
-	TF_WEAPON_GRENADE_CONCUSSION,
-	TF_WEAPON_GRENADE_NAIL,
-	TF_WEAPON_GRENADE_MIRV,
-	TF_WEAPON_GRENADE_MIRV_DEMOMAN,
-	TF_WEAPON_GRENADE_NAPALM,
-	TF_WEAPON_GRENADE_GAS,
-	TF_WEAPON_GRENADE_EMP,
-	TF_WEAPON_GRENADE_CALTROP,
-	TF_WEAPON_GRENADE_PIPEBOMB,
-	TF_WEAPON_GRENADE_SMOKE_BOMB,
-	TF_WEAPON_GRENADE_HEAL,
 	TF_WEAPON_PISTOL,
 	TF_WEAPON_PISTOL_SCOUT,
 	TF_WEAPON_REVOLVER,
@@ -328,7 +322,6 @@ enum
 	TF_WEAPON_GATLINGGUN,
 	TF_WEAPON_PISTOL_AKIMBO,
 	TF_WEAPON_UMBRELLA,
-	TF_WEAPON_DEAGLE,
 	TF_WEAPON_SMG_MERCENARY,
 	TF_WEAPON_TOMMYGUN,
 	TF_WEAPON_GRENADELAUNCHER_MERCENARY,
@@ -348,6 +341,21 @@ enum
 	TF_WEAPON_COUNT
 };
 
+enum TFGrenadeIDs
+{
+	TF_WEAPON_GRENADE_NORMAL = 1,
+	TF_WEAPON_GRENADE_CONCUSSION,
+	TF_WEAPON_GRENADE_NAIL,
+	TF_WEAPON_GRENADE_MIRV,
+	TF_WEAPON_GRENADE_NAPALM,
+	TF_WEAPON_GRENADE_GAS,
+	TF_WEAPON_GRENADE_EMP,
+	TF_WEAPON_GRENADE_CALTROP,
+	TF_WEAPON_GRENADE_PIPEBOMB,
+	TF_WEAPON_GRENADE_SMOKE_BOMB,
+	TF_WEAPON_GRENADE_HEAL,
+};
+
 const Vector g_vecFixedPattern[] =
 {
 	Vector( 0, 0, 0 ),
@@ -364,6 +372,8 @@ const Vector g_vecFixedPattern[] =
 
 extern const char *g_aWeaponNames[];
 extern unsigned int g_aWeaponDamageTypes[];
+extern const char *g_aGrenadeNames[];
+extern int g_aGrenadeDamageTypes[];
 
 int GetWeaponId( const char *pszWeaponName );
 #ifdef GAME_DLL
@@ -695,6 +705,7 @@ enum
 	TF_DMG_WRENCH_FIX,
 	TF_DMG_CUSTOM_MINIGUN,
 	TF_DMG_CUSTOM_SUICIDE,
+	TF_DMG_TELEFRAG,
 };
 
 enum

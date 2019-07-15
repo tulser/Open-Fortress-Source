@@ -535,9 +535,14 @@ bool CTFPlayerAnimState::HandleJumping( Activity &idealActivity )
 	Vector vecVelocity;
 	GetOuterAbsVelocity( vecVelocity );
 
-	// Don't allow a firing heavy to jump or air walk.
-	if ( m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_HEAVYWEAPONS ) && m_pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) && ( m_pTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN ) )
-		return false;
+	CTFWeaponBase *pWpn = m_pTFPlayer->GetActiveTFWeapon();
+
+	if (pWpn)
+	{
+		// Don't allow a Minigun to jump or air walk.
+		if (m_pTFPlayer->m_Shared.InCond(TF_COND_AIMING) && (m_pTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN))
+			return false;
+	}
 		
 	// Handle air walking before handling jumping - air walking supersedes jump
 	TFPlayerClassData_t *pData = m_pTFPlayer->GetPlayerClass()->GetData();

@@ -125,11 +125,14 @@ ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
 ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turns on tdm mode" );
+ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles TDM modes." );
 ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force GunGame on." );
-ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle the Quake-like Multi weapon system." );
-ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Force Arena mode on." );
+ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
+ConVar ofd_clanarena("ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena modes.", true, 0, true, 2);
+ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
+ConVar ofd_weaponspawners("ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners.");
+ConVar ofd_powerups("ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups.");
+ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -2436,6 +2439,13 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 	pKeyValues = new KeyValues( "ofd_gungame" );
 	pKeyValues->SetString( "convar", "ofd_gungame" );
 	pKeyValues->SetString( "tag", "gungame" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+
+		// ofd_clanarena
+	pKeyValues = new KeyValues( "ofd_clanarena" );
+	pKeyValues->SetString( "convar", "ofd_clanarena" );
+	pKeyValues->SetString( "tag", "clanarena" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 	

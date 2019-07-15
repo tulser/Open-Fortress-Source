@@ -21,7 +21,9 @@
 //#define TF_WEAPON_PICKUP_SOUND		"AmmoPack.Touch"
 
 extern ConVar ofd_instagib;
+extern ConVar ofd_clanarena;
 extern ConVar ofd_multiweapons;
+extern ConVar ofd_weaponspawners;
 
 ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Weapons dont dissapeer.");
 ConVar ofd_allow_allclass_pickups( "ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
@@ -57,7 +59,11 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
-	if ( ofd_instagib.GetInt() <= 0 && TFGameRules() && !TFGameRules()->IsGGGamemode() ) 
+	if (ofd_weaponspawners.GetInt() >= 1 &&
+		ofd_instagib.GetInt() <= 0 && 
+		ofd_clanarena.GetInt() <= 0 && 
+		TFGameRules() && 
+		!TFGameRules()->IsGGGamemode())
 	{
 		Precache();
 		SetWeaponModel();
