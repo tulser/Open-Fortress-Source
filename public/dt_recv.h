@@ -272,7 +272,6 @@ inline bool RecvTable::IsInMainList() const
 	template <> int ClientClassInit<tableName::ignored>(tableName::ignored *) \
 	{ \
 		typedef className currentRecvDTClass; \
-		sizeof(currentRecvDTClass);		/* Silences -Wunused-local-typedefs for gcc */ \
 		const char *pRecvTableName = #tableName; \
 		RecvTable &RecvTable = tableName::g_RecvTable; \
 		static RecvProp RecvProps[] = { \

@@ -1,4 +1,4 @@
-//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======//
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: CTF AmmoPack.
 //
@@ -110,7 +110,7 @@ void CWeaponSpawner::Precache( void )
 			Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 			if ( pWeapon && pWeaponInfo )
 			{
-				DevMsg("Guess the model is %s \n", (MAKE_STRING(pWeaponInfo->szWorldModel)).ToCStr() );
+				DevMsg("Guess te model is %s \n", (MAKE_STRING(pWeaponInfo->szWorldModel)) );
 				PrecacheModel( pWeaponInfo->szWorldModel );
 			}
 			return;

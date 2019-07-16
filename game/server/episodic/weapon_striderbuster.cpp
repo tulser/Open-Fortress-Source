@@ -970,9 +970,6 @@ void CWeaponStriderBuster::BusterFlyThink()
 
 		if (bestFit >= 0) // we found something and should attract towards it. (hysterisis later?)
 		{
-			// if we don't do this, toTarget will not be aiming at the best strider :P
-			VectorSubtract( pBestStrider->GetAdjustedOrigin(), GetAbsOrigin(), toTarget );
-
 			if ( striderbuster_debugseek.GetBool() )
 			{
 				NDebugOverlay::Circle( GetAbsOrigin() + toTarget, magradius, 255, 255, 255, 255, true, .1 );

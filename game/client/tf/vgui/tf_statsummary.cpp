@@ -1,4 +1,4 @@
-//========= Copyright ï¿½ 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -388,7 +388,7 @@ void CTFStatsSummaryPanel::UpdateClassDetails()
 	struct ClassDetails_t
 	{
 		TFStatType_t statType;			// type of stat
-		unsigned int iFlagsClass;		// bit mask of classes to show this stat for
+		int			 iFlagsClass;		// bit mask of classes to show this stat for
 		const char * szResourceName;	// name of label resource
 	};
 

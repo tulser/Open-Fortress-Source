@@ -170,14 +170,9 @@ void CGameUI::Deactivate( CBaseEntity *pActivator )
 	}
 	else
 	{
-		if (pActivator)
-		{
-			Warning("%s Deactivate(): I have no player when called by %s!\n", GetEntityName().ToCStr(), pActivator->GetEntityName().ToCStr());
-		}
-		else
-		{
-			Warning("%s Deactivate(): I have no player when called by an unknown activator!\n", GetEntityName().ToCStr());
-		}
+		// stop a crash
+		//Warning("%s Deactivate(): I have no player when called by %s!\n", GetEntityName().ToCStr(), pActivator->GetEntityName().ToCStr());
+		Warning("%s Deactivate(): I have no player when called by %s!\n", GetEntityName().ToCStr());
 	}
 	
 	// Stop thinking

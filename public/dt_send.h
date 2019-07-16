@@ -565,7 +565,6 @@ inline void SendTable::SetHasPropsEncodedAgainstTickcount( bool bState )
 	template <> int ServerClassInit<tableName::ignored>(tableName::ignored *) \
 	{ \
 		typedef className currentSendDTClass; \
-		sizeof(currentSendDTClass);		/* Silences -Wunused-local-typedefs for gcc */ \
 		static const char *g_pSendTableName = #tableName; \
 		SendTable &sendTable = tableName::g_SendTable; \
 		static SendProp g_SendProps[] = { \
@@ -591,15 +590,7 @@ inline void SendTable::SetHasPropsEncodedAgainstTickcount( bool bState )
 // right after each other, otherwise it might miss the Y or Z component in SP.
 //
 // Note: this macro specifies a negative offset so the engine can detect it and setup m_pNext
-#ifdef _MSVC_VER
-// This version (VALVe ver) uses an offset based of an `operator[]` function.
-// I have no idea how this is statically possible, as the body of `operator[]` is in a cpp file
-// hence, MSVC-specific magic.
 #define SENDINFO_VECTORELEM(varName, i)		#varName "[" #i "]", -(int)offsetof(currentSendDTClass::MakeANetworkVar_##varName, varName.m_Value[i]), sizeof(((currentSendDTClass*)0)->varName.m_Value[0])
-#else
-// This version takes the offset of the whole vector, then adds the offset into the vector to the desired index.
-#define SENDINFO_VECTORELEM(varName, i)		#varName "[" #i "]", -((int)offsetof(currentSendDTClass::MakeANetworkVar_##varName, varName.m_Value.x) + i * sizeof(vec_t)), sizeof(((currentSendDTClass*)0)->varName.m_Value[0])
-#endif
 
 #define SENDINFO_STRUCTELEM(varName)		#varName, offsetof(currentSendDTClass, varName), sizeof(((currentSendDTClass*)0)->varName.m_Value)
 #define SENDINFO_STRUCTARRAYELEM(varName, i)#varName "[" #i "]", offsetof(currentSendDTClass, varName.m_Value[i]), sizeof(((currentSendDTClass*)0)->varName.m_Value[0])
