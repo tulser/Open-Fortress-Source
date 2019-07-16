@@ -1071,14 +1071,14 @@ void CTeamRoundTimer::InputAddTeamTime( inputdata_t &input )
 
 	// get the team
 	p = nexttoken( token, p, ' ' );
-	if ( *token )
+	if ( token )
 	{
 		nTeam = Q_atoi( token );
 	}
 
 	// get the time
 	p = nexttoken( token, p, ' ' );
-	if ( *token )
+	if ( token )
 	{
 		nSeconds = Q_atoi( token );
 	}

@@ -1,4 +1,4 @@
-//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -212,7 +212,7 @@ int AliasToWeaponID( const char *alias )
 	return TF_WEAPON_NONE;
 }
 
-unsigned int g_aWeaponDamageTypes[] =
+int g_aWeaponDamageTypes[] =
 {
 	DMG_GENERIC,	// TF_WEAPON_NONE
 	DMG_CLUB,		// TF_WEAPON_BAT,

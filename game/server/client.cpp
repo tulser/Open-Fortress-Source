@@ -890,12 +890,11 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 
 		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
 		CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( STRING(iszItem) );  // Create the specified weapon
-		if( pGivenWeapon ){
+		if( pGivenWeapon )
 			if( !pPlayer->OwnsWeaponID( pGivenWeapon->GetWeaponID() ) )
 				pGivenWeapon->GiveTo( pPlayer ); 
 			else
 				pGivenWeapon = NULL;
-		}
 	}
 }
 

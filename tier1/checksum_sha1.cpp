@@ -191,10 +191,16 @@ bool CSHA1::HashFile(char *szFileName)
 	ulBlocks = ulFileSize / MAX_FILE_READ_BUFFER;
 
 	for(i = 0; i < ulBlocks; i++)
-		Update(uData, fread(uData, 1, MAX_FILE_READ_BUFFER, fIn));
+	{
+		fread(uData, 1, MAX_FILE_READ_BUFFER, fIn);
+		Update(uData, MAX_FILE_READ_BUFFER);
+	}
 
 	if(ulRest != 0)
-		Update(uData, fread(uData, 1, ulRest, fIn));
+	{
+		fread(uData, 1, ulRest, fIn);
+		Update(uData, ulRest);
+	}
 
 	fclose(fIn);
 	fIn = NULL;

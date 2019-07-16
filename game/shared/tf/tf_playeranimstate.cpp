@@ -1,4 +1,4 @@
-//====== Copyright ï¿½ 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -188,8 +188,8 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 				return;
 
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-			bool bIsMinigun = pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN );
-			bool bIsSniperRifle = pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn->GetWeaponID() == TF_WEAPON_RAILGUN );
+			bool bIsMinigun = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN ) );
+			bool bIsSniperRifle = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn && pWpn->GetWeaponID() == TF_WEAPON_RAILGUN );
 
 			// Heavy weapons primary fire.
 			if ( bIsMinigun )
@@ -431,7 +431,7 @@ bool CTFPlayerAnimState::HandleSwimming( Activity &idealActivity )
 				idealActivity = ACT_MP_SWIM_DEPLOYED;
 			}
 			// Check for sniper deployed underwater - should only be when standing on something
-			else if ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn->GetWeaponID() == TF_WEAPON_RAILGUN ) )
+			else if ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn && pWpn->GetWeaponID() == TF_WEAPON_RAILGUN )
 			{
 				if ( m_pTFPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 				{

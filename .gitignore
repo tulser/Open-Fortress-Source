@@ -84,11 +84,10 @@ mathlib/obj_mathlib_osx32/
 tier1/Debug/
 tier1/Release/
 tier1/obj_tier1_osx32
-game/client/obj_client_ofd_osx32/
-game/server/obj_server_ofd_osx32/
-game/client/obj_client_ofd_linux32/
-game/server/obj_server_ofd_linux32/
-raytrace/obj_raytrace_linux32/
+game/client/obj_client_open_fortress_osx32/
+game/server/obj_server_open_fortress_osx32/
+game/client/obj_client_open_fortress_linux32/
+game/server/obj_server_open_fortress_linux32/
 mathlib/obj_mathlib_linux32/
 tier1/obj_tier1_linux32/
 vgui2/vgui_controls/obj_vgui_controls_linux32/
@@ -112,6 +111,3 @@ vgui2/vgui_controls/generated_proto/htmlmessages.pb.cc
 /materialsystem/stdshaders/Release_dx9_open_fortress
 /store_symbols.ini
 lib/public/raytrace.lib
-
-# These makefiles are hand-made
-!devtools/*.mak

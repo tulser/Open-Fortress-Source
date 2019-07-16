@@ -1,4 +1,4 @@
-//====== Copyright ï¿½ 1996-2006, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -371,7 +371,7 @@ const Vector g_vecFixedPattern[] =
 };
 
 extern const char *g_aWeaponNames[];
-extern unsigned int g_aWeaponDamageTypes[];
+extern int g_aWeaponDamageTypes[];
 extern const char *g_aGrenadeNames[];
 extern int g_aGrenadeDamageTypes[];
 

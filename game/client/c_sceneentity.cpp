@@ -859,10 +859,10 @@ CChoreoScene *C_SceneEntity::LoadScene(const char *filename)
 	Q_SetExtension(loadfile, ".vcd", sizeof(loadfile));
 	Q_FixSlashes(loadfile);
 
-	char *pBuffer = 0;
+	void *pBuffer = 0;
 	CChoreoScene *pScene = NULL;
 
-	int fileSize = filesystem->ReadFileEx(loadfile, "MOD", (void**)&pBuffer, true);
+	int fileSize = filesystem->ReadFileEx(loadfile, "MOD", &pBuffer, true);
 	if (fileSize)
 	{
 		g_TokenProcessor.SetBuffer((char*)pBuffer);

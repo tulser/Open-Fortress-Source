@@ -128,7 +128,7 @@ DECLARE_FIELD_SIZE( FIELD_MATERIALINDEX,	sizeof(int) )
 #define ARRAYSIZE2D(p)		(sizeof(p)/sizeof(p[0][0]))
 #define SIZE_OF_ARRAY(p)	_ARRAYSIZE(p)
 
-#define _FIELD(name,fieldtype,count,flags,mapname,tolerance)		{ fieldtype, #name, { (int) offsetof(classNameTypedef, name), 0 }, count, flags, mapname, NULL, NULL, NULL, (int) sizeof( ((classNameTypedef *)0)->name ), NULL, 0, tolerance }
+#define _FIELD(name,fieldtype,count,flags,mapname,tolerance)		{ fieldtype, #name, { offsetof(classNameTypedef, name), 0 }, count, flags, mapname, NULL, NULL, NULL, sizeof( ((classNameTypedef *)0)->name ), NULL, 0, tolerance }
 #define DEFINE_FIELD_NULL	{ FIELD_VOID,0, {0,0},0,0,0,0,0,0}
 #define DEFINE_FIELD(name,fieldtype)			_FIELD(name, fieldtype, 1,  FTYPEDESC_SAVE, NULL, 0 )
 #define DEFINE_KEYFIELD(name,fieldtype, mapname) _FIELD(name, fieldtype, 1,  FTYPEDESC_KEY | FTYPEDESC_SAVE, mapname, 0 )
@@ -256,7 +256,7 @@ struct typedescription_t
 {
 	fieldtype_t			fieldType;
 	const char			*fieldName;
-	int				fieldOffset[ TD_OFFSET_COUNT ]; // 0 == normal, 1 == packed offset
+	int					fieldOffset[ TD_OFFSET_COUNT ]; // 0 == normal, 1 == packed offset
 	unsigned short		fieldSize;
 	short				flags;
 	// the name of the variable in the map/fgd data, or the name of the action
@@ -269,7 +269,7 @@ struct typedescription_t
 	datamap_t			*td;
 
 	// Stores the actual member variable size in bytes
-	int				fieldSizeInBytes;
+	int					fieldSizeInBytes;
 
 	// FTYPEDESC_OVERRIDE point to first baseclass instance if chains_validated has occurred
 	struct typedescription_t *override_field;
