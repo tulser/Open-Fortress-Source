@@ -1,4 +1,4 @@
-//====== Copyright ï¿½ 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -27,11 +27,12 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 const char *TF_WEARABLE_MODEL[] =
 {
 	"models/empty.mdl",
-	"models/workshop/player/items/soldier/camocapmerc/camocapmerc.mdl",
-	"models/workshop/player/items/soldier/helmerc/helmerc.mdl",
-	"models/workshop/player/items/soldier/western_hat/western_hat.mdl",
-	"models/workshop/player/items/soldier/boomer_bucket/boomer_bucket.mdl",
-	"models/workshop/player/items/soldier/headset/headset.mdl",
+	"models/player/items/mercenary/camocapmerc/camocapmerc.mdl",
+	"models/player/items/mercenary/helmerc/helmerc.mdl",
+	"models/player/items/mercenary/western_hat/western_hat.mdl",
+	"models/player/items/mercenary/boomer_bucket/boomer_bucket.mdl",
+	"models/player/items/mercenary/headset/headset.mdl",
+	"models/player/items/mercenary/merc_mask/merc_mask.mdl",
 };
 
 int TF_WEARABLE_COUNT = ARRAYSIZE( TF_WEARABLE_MODEL );
@@ -212,7 +213,7 @@ int AliasToWeaponID( const char *alias )
 	return TF_WEAPON_NONE;
 }
 
-unsigned int g_aWeaponDamageTypes[] =
+int g_aWeaponDamageTypes[] =
 {
 	DMG_GENERIC,	// TF_WEAPON_NONE
 	DMG_CLUB,		// TF_WEAPON_BAT,

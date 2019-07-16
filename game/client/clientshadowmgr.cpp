@@ -2512,9 +2512,9 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	Vector boxSize;
 	VectorSubtract( maxs, mins, boxSize );
 	
-	Vector yvec = boxSize[0] * ( vec[0] - ( vecShadowDir * DotProduct( vecShadowDir, vec[0] ) ) );
-	float fProjMax = yvec.LengthSqr();
-	for( int i = 1; i < 3; ++i )
+	Vector yvec;
+	float fProjMax = 0.0f;
+	for( int i = 0; i != 3; ++i )
 	{
 		Vector test = vec[i] - ( vecShadowDir * DotProduct( vecShadowDir, vec[i] ) );
 		test *= boxSize[i]; //doing after the projection to simplify projection math

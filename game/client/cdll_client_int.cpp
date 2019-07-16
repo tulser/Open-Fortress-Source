@@ -1042,6 +1042,10 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		mat_picmip->SetDefault( "-1" );
 		mat_picmip->SetValue( of_picmip.GetInt() );
 	}
+	else
+	{
+		Error("CL_DLL: FAILED TO INTIALIZE (MatSystem Grab Fail)\n");
+	}
 
 	if (!VGui_Startup(appSystemFactory))
 		return false;

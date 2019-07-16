@@ -49,11 +49,6 @@ BaseTooltip::BaseTooltip(Panel *parent, const char *text)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Deconstructor. Allows deleting pointer to base
-//-----------------------------------------------------------------------------
-BaseTooltip::~BaseTooltip() {}
-
-//-----------------------------------------------------------------------------
 // Purpose: Reset the tooltip delay timer
 //-----------------------------------------------------------------------------
 void BaseTooltip::ResetDelay()

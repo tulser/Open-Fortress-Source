@@ -1,14 +1,14 @@
-//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "ai_basenpc.h"
+#include "AI_BaseNPC.h"
 #include "trains.h"
 #include "ndebugoverlay.h"
-#include "entitylist.h"
+#include "EntityList.h"
 #include "engine/IEngineSound.h"
 #include "hl1_ents.h"
 #include "doors.h"
@@ -18,7 +18,7 @@
 #include "globalstate.h"
 #include "soundscape.h"
 #include "buttons.h"
-#include "Sprite.h"
+#include "sprite.h"
 #include "actanimating.h"
 #include "npcevent.h"
 #include "func_break.h"
@@ -407,7 +407,7 @@ void CMultiManager::ManagerReport ( void )
 
 /**********************
 	    Pendulum
-***********************/
+/**********************/
 
 #define SF_PENDULUM_SWING 2
 
