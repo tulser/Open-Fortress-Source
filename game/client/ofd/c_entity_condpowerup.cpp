@@ -1,6 +1,6 @@
 #include "cbase.h"
 #include "c_tf_player.h"
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: Powerup spawner
 //
@@ -163,7 +163,7 @@ typedef struct
 
 // This defines the properties of the 8 circle segments
 // in the circular progress bar.
-progress_powerup_segment_t Segments[8] = 
+static progress_powerup_segment_t Segments[8] = 
 {
 	{ 0.125, 0.5, 0.0, 1.0, 0.0, 1, 0 },
 	{ 0.25,	 1.0, 0.0, 1.0, 0.5, 0, 1 },
