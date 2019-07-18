@@ -22,7 +22,7 @@ First, install the 32bit SteamRT toolchain.
 ```sh
 # ensure your user has permissions to use docker (optional)
 $ sudo usermod -aG docker magnus
-$ docker install jimbly/steamrt-i386-gcc
+$ docker pull jimbly/steamrt-i386-gcc
 ```
 
 Place the following in `~/proj/ofd/build.sh`.
