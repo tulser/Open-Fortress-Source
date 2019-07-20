@@ -89,8 +89,20 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFRailgun )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_Railgun, CTFRailgun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_Railgun );
+LINK_ENTITY_TO_CLASS( tf_weapon_railgun, CTFRailgun );
+PRECACHE_WEAPON_REGISTER( tf_weapon_railgun );
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFCSniperRifle, DT_TFCSniperRifle)
+
+BEGIN_NETWORK_TABLE(CTFCSniperRifle, DT_TFCSniperRifle)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFCSniperRifle)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tfc_weapon_sniper_rifle, CTFCSniperRifle);
+PRECACHE_WEAPON_REGISTER(tfc_weapon_sniper_rifle);
 
 //=============================================================================
 //

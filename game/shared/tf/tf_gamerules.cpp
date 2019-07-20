@@ -140,6 +140,9 @@ ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players t
 ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to hear spectators using text chat." );
 #endif
 
+ConVar of_retromode("of_retromode","-1",FCVAR_REPLICATED | FCVAR_NOTIFY, \
+"Sets the retromode type, which turns on TFC classes and mechanics like Armor\n-1 = Default to map settings\n0 = Force off\n1 = Force on\n2 = Force on for Blue only\n3 = Force on for Red only\n");
+
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
 class CMyListener : public IGameEventListener2

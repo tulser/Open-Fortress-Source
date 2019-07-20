@@ -297,6 +297,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
+	case TF_PROJECTILE_INCENDROCKET:
+		pProjectile = FireIncendRocket( pPlayer );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -613,6 +618,51 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 	return NULL;
 #endif
 	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire a fire rocket
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+	int iQuakeCvar = 0;
+	iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "ofd_use_quake_rl"));
+	Vector vecSrc;
+	QAngle angForward;
+	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
+	if ( bCenter && iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		if ( bCenter && iQuakeCvar )
+			vecOffset.z = 0.0f;
+		else
+			vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
+
+	CTFCProjectile_IncendRocket *pProjectile = CTFCProjectile_IncendRocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------

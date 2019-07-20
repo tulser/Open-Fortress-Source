@@ -18,6 +18,7 @@
 #ifdef CLIENT_DLL
 #define CTFMinigun C_TFMinigun
 #define CTFGatlingGun C_TFGatlingGun
+#define CTFCAssaultCannon C_TFCAssaultCannon
 #endif
 
 enum MinigunState_t
@@ -62,6 +63,9 @@ public:
 	virtual bool	Lower( void );
 	virtual void	HandleFireOnEmpty( void );
 	virtual void	WeaponReset( void );
+	
+	
+	virtual bool	IsChainGun() const { return false; }
 
 #ifdef GAME_DLL
 	virtual int		UpdateTransmitState( void );
@@ -147,6 +151,18 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_GATLINGGUN; }
+	
+	virtual bool	IsChainGun() const { return true; }
+};
+
+class CTFCAssaultCannon : public CTFGatlingGun
+{
+public:
+	DECLARE_CLASS( CTFCAssaultCannon, CTFGatlingGun );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_ASSAULTCANNON; }
 };
 
 #endif // TF_WEAPON_MINIGUN_H

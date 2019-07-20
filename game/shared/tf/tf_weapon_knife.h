@@ -13,6 +13,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFKnife C_TFKnife
+#define CTFCKnife C_TFCKnife
 #endif
 
 //=============================================================================
@@ -43,6 +44,15 @@ private:
 	EHANDLE				m_hBackstabVictim;
 
 	CTFKnife( const CTFKnife & ) {}
+};
+
+class CTFCKnife : public CTFKnife
+{
+public:
+
+	DECLARE_CLASS( CTFCKnife, CTFKnife);
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
 };
 
 #endif // TF_WEAPON_KNIFE_H

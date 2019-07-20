@@ -20,6 +20,7 @@
 
 	#define CTFFlameThrower C_TFFlameThrower
 	#define CTFFlameRocket C_TFFlameRocket
+	#define CTFCFlameThrower C_TFCFlameThrower
 #else
 	#include "tf_projectile_rocket.h"
 	#include "baseentity.h"
@@ -159,5 +160,13 @@ private:
 };
 
 #endif // GAME_DLL
+
+class CTFCFlameThrower : public CTFFlameThrower
+{
+	DECLARE_CLASS( CTFCFlameThrower, CTFFlameThrower );
+public:
+	DECLARE_DATADESC();
+	DECLARE_NETWORKCLASS(); 
+};
 
 #endif // TF_WEAPON_FLAMETHROWER_H

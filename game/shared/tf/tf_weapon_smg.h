@@ -16,6 +16,7 @@
 #define CTFSMG_Mercenary C_TFSMG_Mercenary
 #define CTFTommyGun C_TFTommyGun
 #define CTFAssaultRifle C_TFAssaultRifle
+#define CTFCAssaultRifle C_TFCAssaultRifle
 #endif
 
 
@@ -83,6 +84,17 @@ public:
 
 	virtual int		GetWeaponID(void) const { return TF_WEAPON_ASSAULTRIFLE; }
 
+};
+
+
+class CTFCAssaultRifle : public CTFSMG
+{
+public:
+	DECLARE_CLASS(CTFCAssaultRifle, CTFSMG);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int		GetWeaponID(void) const { return TFC_WEAPON_ASSAULT_RIFLE; }
 };
 
 

@@ -88,3 +88,22 @@ int	CTFProjectile_Rocket::GetDamageType()
 
 	return iDmgType;
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFCProjectile_IncendRocket *CTFCProjectile_IncendRocket::Create ( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer )
+{
+	CTFCProjectile_IncendRocket *pRocket = static_cast<CTFCProjectile_IncendRocket*>( CTFBaseRocket::Create( pWeapon, "tfc_projectile_incendrocket", vecOrigin, vecAngles, pOwner ) );
+
+	if ( pRocket )
+	{
+		pRocket->SetScorer( pScorer );
+	}
+
+	return pRocket;
+}
+
+LINK_ENTITY_TO_CLASS( tfc_projectile_incendrocket, CTFCProjectile_IncendRocket );
+PRECACHE_REGISTER( tfc_projectile_incendrocket );

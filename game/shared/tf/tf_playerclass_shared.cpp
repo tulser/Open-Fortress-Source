@@ -12,6 +12,8 @@
 bool UseHWMorphModels();
 #endif
 
+extern ConVar of_retromode;
+
 #define TF_CLASS_UNDEFINED_FILE			""
 #define TF_CLASS_SCOUT_FILE				"scripts/playerclasses/scout"
 #define TF_CLASS_SNIPER_FILE			"scripts/playerclasses/sniper"
@@ -84,6 +86,18 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 		m_aBuildable[iBuildable] = OBJ_LAST;
 	}
 
+	m_flTFCMaxSpeed = 0.0f;
+	m_nTFCMaxHealth = 0;
+	m_nTFCMaxArmor = 0;
+	
+	m_szTFCModelName[0] = '\0';
+	m_szTFCArmModelName[0] = '\0';
+
+	for (int iTFCWeapon = 0; iTFCWeapon < TF_PLAYER_WEAPON_COUNT; ++iTFCWeapon)
+	{
+		m_aTFCWeapons[iTFCWeapon] = TF_WEAPON_NONE;
+	}
+
 	m_bParsed = false;
 }
 
@@ -132,17 +146,7 @@ const char *TFPlayerClassData_t::GetModelName() const
 	return m_szModelName;
 	
 #else
-
 	return m_szModelName;
-#endif
-}
-
-const char *TFPlayerClassData_t::GetArmModelName() const
-{
-#ifdef CLIENT_DLL
-	return m_szArmModelName;
-#else
-	return m_szArmModelName;
 #endif
 }
 
@@ -179,6 +183,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	// Grenades.
 	m_aGrenades[0] = GetWeaponId( pKeyValuesData->GetString( "grenade1" ) );
 	m_aGrenades[1] = GetWeaponId( pKeyValuesData->GetString( "grenade2" ) );
+	m_aGrenades[2] = GetWeaponId( pKeyValuesData->GetString( "grenade3" ) );
 
 	// Ammo Max.
 	KeyValues *pAmmoKeyValuesData = pKeyValuesData->FindKey( "AmmoMax" );
@@ -210,6 +215,21 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szExplosionDeathSound, pKeyValuesData->GetString( "sound_explosion_death", "Player.ExplosionDeath" ), MAX_PLAYERCLASS_SOUND_LENGTH );
 
 #endif
+	
+	int j;
+	char bup[32];
+	for ( j=0;j<TF_PLAYER_WEAPON_COUNT;j++ )
+	{
+		Q_snprintf( bup, sizeof(bup), "tfc_weapon%d", j+1 );
+		m_aTFCWeapons[j] = GetWeaponId( pKeyValuesData->GetString( bup ) );
+	}
+	
+	m_flTFCMaxSpeed = pKeyValuesData->GetFloat( "tfc_speed_max" );
+	m_nTFCMaxHealth = pKeyValuesData->GetInt( "tfc_health_max" );
+	m_nTFCMaxArmor = pKeyValuesData->GetInt( "tfc_armor_max" );
+	
+	Q_strncpy( m_szTFCArmModelName, pKeyValuesData->GetString( "tfc_arm_model" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szTFCModelName, pKeyValuesData->GetString( "tfc_model" ), TF_NAME_LENGTH );
 
 	// The file has been parsed.
 	m_bParsed = true;
@@ -227,6 +247,8 @@ void InitPlayerClasses( void )
 	Q_strncpy( pClassData->m_szModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
 	Q_strncpy( pClassData->m_szArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
 	Q_strncpy( pClassData->m_szLocalizableName, "undefined", TF_NAME_LENGTH );
+	Q_strncpy( pClassData->m_szTFCModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
+	Q_strncpy( pClassData->m_szTFCArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
 
 	// Initialize the classes.
 	for ( int iClass = 1; iClass < TF_CLASS_COUNT_ALL; ++iClass )
@@ -369,4 +391,17 @@ bool CTFPlayerClassShared::UsesCustomModel( void )
 	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return true;
 #endif	
 return false;
+}
+
+const char	*CTFPlayerClassShared::GetTFCModelName( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomModel[0] ) return m_iszSetCustomModel;
+#else
+	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomModel.Get() ) );
+#endif
+	static char modelFilename[ 256 ];
+	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetTFCModelName(), sizeof( modelFilename ) );
+	
+	return modelFilename;
 }

@@ -45,6 +45,40 @@ BEGIN_DATADESC( CTFRocketLauncher )
 END_DATADESC()
 #endif
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCRPG, DT_TFCRPG )
+
+BEGIN_NETWORK_TABLE( CTFCRPG, DT_TFCRPG )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCRPG)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_rpg, CTFCRPG );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_rpg );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFCRPG )
+END_DATADESC()
+#endif
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCIncendiaryCannon, DT_TFCIncendiaryCannon )
+
+BEGIN_NETWORK_TABLE( CTFCIncendiaryCannon, DT_TFCIncendiaryCannon )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCIncendiaryCannon)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_incendiarycannon, CTFCIncendiaryCannon );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_incendiarycannon );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFCIncendiaryCannon )
+END_DATADESC()
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
@@ -57,6 +91,16 @@ CTFRocketLauncher::CTFRocketLauncher()
 CTFSuperRocketLauncher::CTFSuperRocketLauncher()
 {
 	m_bReloadsSingly = false;
+}
+
+CTFCRPG::CTFCRPG()
+{
+	m_bReloadsSingly = true;
+}
+
+CTFCIncendiaryCannon::CTFCIncendiaryCannon()
+{
+	m_bReloadsSingly = true;
 }
 
 //-----------------------------------------------------------------------------

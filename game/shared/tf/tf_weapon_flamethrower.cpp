@@ -81,6 +81,18 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
 BEGIN_DATADESC( CTFFlameThrower )
 END_DATADESC()
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCFlameThrower, DT_TFCFlameThrower )
+
+BEGIN_NETWORK_TABLE( CTFCFlameThrower, DT_TFCFlameThrower )
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_flamethrower, CTFCFlameThrower );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_flamethrower );
+
+BEGIN_DATADESC( CTFCFlameThrower )
+END_DATADESC()
+
+
 extern ConVar ofd_instagib;
 
 #ifdef CLIENT_DLL

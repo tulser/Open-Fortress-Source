@@ -14,6 +14,7 @@
 
 #ifdef CLIENT_DLL
 #define CTFWrench C_TFWrench
+#define CTFCWrench C_TFCWrench
 #endif
 
 //=============================================================================
@@ -39,6 +40,15 @@ public:
 private:
 
 	CTFWrench( const CTFWrench & ) {}
+};
+
+class CTFCWrench : public CTFWrench
+{
+public:
+
+	DECLARE_CLASS( CTFCWrench, CTFWrench);
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
 };
 
 #endif // TF_WEAPON_WRENCH_H

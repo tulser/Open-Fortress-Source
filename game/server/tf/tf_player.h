@@ -418,6 +418,7 @@ public:
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
+	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
 	void				Taunt( void );
@@ -598,7 +599,6 @@ public:
 	bool				PlayerHasPowerplay( void );
 	void				PowerplayThink( void );
 	float				m_flPowerPlayTime;
-	void				SetHandsModel( const char* model );
 	void				SetCustomModel( inputdata_t &inputdata );
 	void				AddMoney( inputdata_t &inputdata );
 	void				SetMoney( inputdata_t &inputdata );
@@ -609,6 +609,12 @@ public:
 	bool				Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon ) { return false; }
 	void				GiveAllItems();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
+	bool				IsRetroModeOn();
+	
+	CNetworkVar( int, m_iAccount );	// How much cash this player has.
+
+	// for chat particle bubble
+	CNetworkVar(bool, m_bChatting);
 
 	///==HL2 PORT START==///
 	bool				IsSprinting( void ) { return false; }
@@ -625,11 +631,6 @@ public:
 	virtual void		StopLoopingSounds(void);
 	
 	bool	m_bTransition;
-	
-	CNetworkVar( int, m_iAccount );	// How much cash this player has.
-
-	// for chat particle bubble
-	CNetworkVar(bool, m_bChatting);
 
 	// Commander Mode for controller NPCs
 	enum CommanderCommand_t

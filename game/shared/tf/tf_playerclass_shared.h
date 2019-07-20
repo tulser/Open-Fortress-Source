@@ -46,6 +46,13 @@ struct TFPlayerClassData_t
 	int			m_aGrenades[TF_PLAYER_GRENADE_COUNT];
 	int			m_aAmmoMax[TF_AMMO_COUNT];
 	int			m_aBuildable[TF_PLAYER_BUILDABLE_COUNT];
+	
+	float		m_flTFCMaxSpeed;
+	int			m_nTFCMaxHealth;
+	int			m_nTFCMaxArmor;
+	char		m_szTFCModelName[TF_NAME_LENGTH];
+	char		m_szTFCArmModelName[TF_NAME_LENGTH];
+	int			m_aTFCWeapons[TF_PLAYER_WEAPON_COUNT];
 
 	bool		m_bDontDoAirwalk;
 	bool		m_bDontDoNewJump;
@@ -62,7 +69,9 @@ struct TFPlayerClassData_t
 
 	TFPlayerClassData_t();
 	const char *GetModelName() const;
-	const char *GetArmModelName() const;
+	const char *GetArmModelName() const { return m_szArmModelName; }
+	const char *GetTFCModelName() const { return m_szTFCModelName; }
+	const char *GetTFCArmModelName() const  { return m_szTFCArmModelName; }
 	void Parse( const char *pszClassName );
 
 private:
@@ -94,13 +103,20 @@ public:
 #ifndef CLIENT_DLL
 	void		SetCustomModel( const char *pszModelName );
 #endif	
-	const char	*GetModelName( void ) const					/*	{ return GetPlayerClassData( m_iClass )->GetModelName()*/;// }	
+	const char	*GetModelName( void ) const;
+	const char	*GetTFCModelName( void ) const;
 	const char 	*GetSetCustomModel ( void ) const;		
 	bool 		UsesCustomModel ( void );		
-	const char	*GetArmModelName( void ) const					{ return GetPlayerClassData( m_iClass )->GetArmModelName(); }		
-	float		GetMaxSpeed( void )								{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
-	int			GetMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
-	int			GetMaxArmor( void )								{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
+
+	const char	*GetArmModelName( void ) const			{ return GetPlayerClassData( m_iClass )->GetArmModelName(); }		
+	float		GetMaxSpeed( void )						{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
+	int			GetMaxHealth( void )					{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
+	int			GetMaxArmor( void )						{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
+	
+	const char	*GetTFCArmModelName( void ) const				{ return GetPlayerClassData( m_iClass )->GetTFCArmModelName(); }		
+	float		GetTFCMaxSpeed( void )							{ return GetPlayerClassData( m_iClass )->m_flTFCMaxSpeed; }
+	int			GetTFCMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxHealth; }
+	int			GetTFCMaxArmor( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxArmor; }
 
 	TFPlayerClassData_t  *GetData( void )						{ return GetPlayerClassData( m_iClass ); }
 
