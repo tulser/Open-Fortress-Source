@@ -41,7 +41,7 @@ using namespace vgui;
 
 extern ConVar fraglimit;
 
-ConVar ofd_disablekillcount( "ofd_disablekillcount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable killcount showing in your HUD" );
+ConVar ofd_disablekillcount( "ofd_disablekillcount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the HUD kill counter." );
 
 DECLARE_HUDELEMENT( CTFHudKills );
 
@@ -99,7 +99,11 @@ bool CTFHudKills::ShouldDraw( void )
 	{
 		return false;
 	}
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode() ) && !TFGameRules()->DontCountKills() && !TFGameRules()->IsTeamplay() )
+	if (TFGameRules() &&
+		!TFGameRules()->DontCountKills() &&
+		!TFGameRules()->IsTeamplay() &&
+		!TFGameRules()->IsArenaGamemode() &&
+		(TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode()))
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -155,8 +159,6 @@ void CTFHudKills::OnThink()
 			UpdateKillLabel( true );
 			SetDialogVariable( "Kills",m_nKills );
 			wchar_t string1[1024];
-			
-			
 			
 			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 			{

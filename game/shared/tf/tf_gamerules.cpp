@@ -127,9 +127,8 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
-ConVar ofd_gungame			( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
 
-ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Defines the gamemode mutators to be used.", true, 0, true, 5 );
+ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Defines the gamemode mutators to be used.", true, 0, true, 6 );
 /*	List of mutators:
 	0: Disabled
 	1: Instagib (Railgun + Crowbar)
@@ -137,11 +136,13 @@ ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "D
 	3: Clan Arena
 	4: Unholy Trinity
 	5: Rocket Arena
+	6: Gun Game
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
 	ConVar ofd_instagib			( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2 );
 	ConVar ofd_clanarena		( "ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena mutators.", true, 0, true, 2 );
+	ConVar ofd_gungame			( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
 */
 
 ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
@@ -1046,7 +1047,7 @@ void CTFGameRules::Activate()
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_gungame.GetBool() )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == 6 )
 	{
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
@@ -2470,13 +2471,6 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 
 	pCvarTagList->AddSubKey( pKeyValues );
 
-		// ofd_gungame
-	pKeyValues = new KeyValues( "ofd_gungame" );
-	pKeyValues->SetString( "convar", "ofd_gungame" );
-	pKeyValues->SetString( "tag", "gungame" );
-
-	pCvarTagList->AddSubKey( pKeyValues );
-
 	/*
 		// ofd_instagib
 	KeyValues *pKeyValues = new KeyValues( "ofd_instagib" );
@@ -2489,6 +2483,13 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 	pKeyValues = new KeyValues( "ofd_clanarena" );
 	pKeyValues->SetString( "convar", "ofd_clanarena" );
 	pKeyValues->SetString( "tag", "clanarena" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+
+		// ofd_gungame
+	pKeyValues = new KeyValues( "ofd_gungame" );
+	pKeyValues->SetString( "convar", "ofd_gungame" );
+	pKeyValues->SetString( "tag", "gungame" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 	*/
