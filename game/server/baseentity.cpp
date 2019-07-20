@@ -5097,8 +5097,15 @@ void CC_Ent_Remove( const CCommand& args )
 	// Found one?
 	if ( pEntity )
 	{
-		Msg( "Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName() );
-		UTIL_Remove( pEntity );
+		if ( pEntity->IsPlayer() )
+		{
+			Msg("Attempted to remove a player entity\n");
+		}
+		else
+		{
+			Msg("Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName());
+			UTIL_Remove(pEntity);
+		}
 	}
 }
 static ConCommand ent_remove("ent_remove", CC_Ent_Remove, "Removes the given entity(s)\n\tArguments:   	{entity_name} / {class_name} / no argument picks what player is looking at ", FCVAR_CHEAT);
@@ -5120,10 +5127,17 @@ void CC_Ent_RemoveAll( const CCommand& args )
 		{
 			if (  (ent->GetEntityName() != NULL_STRING	&& FStrEq(args[1], STRING(ent->GetEntityName())))	|| 
 				  (ent->m_iClassname != NULL_STRING	&& FStrEq(args[1], STRING(ent->m_iClassname))) ||
-				  (ent->GetClassname()!=NULL && FStrEq(args[1], ent->GetClassname())))
+				  (ent->GetClassname() != NULL && FStrEq(args[1], ent->GetClassname())))
 			{
-				UTIL_Remove( ent );
-				iCount++;
+				if ( ent->IsPlayer() )
+				{
+					Msg("Attempted to remove player entities\n");
+				}
+				else
+				{
+					UTIL_Remove(ent);
+					iCount++;
+				}
 			}
 		}
 
@@ -5379,12 +5393,16 @@ public:
 			//	  ent_create point_servercommand; ent_setname mine; ent_fire mine command "rcon_password mynewpassword"
 			// So, I'm removing the ability for anyone to execute ent_fires on dedicated servers (we can't check to see if
 			// this command is going to connect with a point_servercommand entity here, because they could delay the event and create it later).
+
+			// re-enabled ent_fire in multiplayer :bastard:
+			/*
 			if ( engine->IsDedicatedServer() )
 			{
 				// We allow people with disabled autokick to do it, because they already have rcon.
 				if ( pPlayer->IsAutoKickDisabled() == false )
 					return;
 			}
+			
 			else if ( gpGlobals->maxClients > 1 )
 			{
 				// On listen servers with more than 1 player, only allow the host to issue ent_fires.
@@ -5392,6 +5410,7 @@ public:
 				if ( pPlayer != pHostPlayer )
 					return;
 			}
+			*/
 
 			if ( command.ArgC() >= 3 )
 			{

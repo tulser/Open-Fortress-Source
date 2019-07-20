@@ -109,6 +109,7 @@ ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Mak
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 ConVar of_instantrespawn( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawns." );
 ConVar of_dropweapons( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow Manual weapon dropping." );
+ConVar of_healonkill("of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Amount of health gained after a kill");
 
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
@@ -2672,6 +2673,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "build" ) )
 	{
+		/*
 		CTFPlayer *pTargetPlayer = this;
 		// if the player has no build PDA, abort the building
 		CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
@@ -2682,6 +2684,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 		}
 		else
 		{
+		*/
 			if (args.ArgC() == 2)
 			{
 				// player wants to build something
@@ -2689,7 +2692,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 				StartBuildingObjectOfType(iBuilding);
 			}
-		}
+		//}
 		return true;
 	}
 	else if ( FStrEq( pcmd, "destroy" ) )
@@ -3178,6 +3181,16 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 	// early out if we can't build this type of object
 	if ( CanBuild( iType ) != CB_CAN_BUILD )
 		return;
+
+	CTFPlayer *pTargetPlayer = this;
+	// if the player has no build PDA, abort the building
+	CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
+
+	if ( pWeapon == NULL )
+	{
+		ClientPrint((CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+		return;
+	}
 
 	for ( int i = 0; i < WeaponCount(); i++) 
 	{
@@ -4448,6 +4461,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			}		
 		}
 	}
+
+	// Reward killer with health
+	if (pPlayerAttacker)
+		pPlayerAttacker->TakeHealth(of_healonkill.GetFloat(), DMG_GENERIC);
 
 	DestroyViewModels();
 	m_bDied = true;

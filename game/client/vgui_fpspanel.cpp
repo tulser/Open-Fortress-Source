@@ -25,6 +25,7 @@
 
 static ConVar cl_showfps( "cl_showfps", "0", 0, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
 static ConVar cl_showpos( "cl_showpos", "0", 0, "Draw current position at top of screen" );
+static ConVar cl_showpos_xy("cl_showpos_xy", "0", 0, "Draw horizontal player velocity only");
 static ConVar cl_showbattery( "cl_showbattery", "0", 0, "Draw current battery level at top of screen when on battery power" );
 
 extern bool g_bDisplayParticlePerformance;
@@ -341,7 +342,16 @@ void CFPSPanel::Paint()
 		C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
 		if ( player )
 		{
-			vel = player->GetLocalVelocity();
+			//added command cl_showpos_xy to allow players to see their horizontal velocity seperated from their vertical velocity
+			if (cl_showpos_xy.GetInt() <= 0)
+				vel = player->GetLocalVelocity();
+			else if (cl_showpos_xy.GetInt() == 1)
+				vel = player->GetLocalVelocity() * Vector(1, 1, 0);
+			//if showpos_xy = 2, do inverse of 1
+			else if (cl_showpos_xy.GetInt() == 2)
+				vel = player->GetLocalVelocity() * Vector(0, 0, 1);
+			else
+				vel = player->GetLocalVelocity();
 		}
 
 		g_pMatSystemSurface->DrawColoredText( m_hFont, x, 2 + i * ( vgui::surface()->GetFontTall( m_hFont ) + 2 ), 
