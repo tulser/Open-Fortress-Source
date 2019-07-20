@@ -417,6 +417,7 @@ public:
 	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
+	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.

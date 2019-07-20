@@ -31,7 +31,7 @@
 
 #endif
 
-extern ConVar ofd_instagib;
+extern ConVar ofd_mutators;
 
 //=============================================================================
 //
@@ -71,7 +71,7 @@ DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 END_DATADESC()
 
 
-ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
+ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon reloading." );
 extern ConVar of_infiniteammo;
 
 //=============================================================================
@@ -668,7 +668,7 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
-	if ( ofd_instagib.GetInt() == 0 ) return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
 	else return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

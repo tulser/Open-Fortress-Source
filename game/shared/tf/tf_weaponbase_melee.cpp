@@ -20,7 +20,7 @@
 #include "c_tf_player.h"
 #endif
 
-extern ConVar ofd_instagib;
+extern ConVar ofd_mutators;
 
 //=============================================================================
 //
@@ -370,7 +370,7 @@ void CTFWeaponBaseMelee::Smack( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
-	if ( ofd_instagib.GetInt() == 0 ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
 	else return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage );
 }
 
