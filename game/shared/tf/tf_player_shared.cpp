@@ -562,7 +562,15 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 
 int CTFPlayerShared::GetMaxBuffedHealth( void )
 {
-	float flBoostMax = m_pOuter->GetMaxHealth() * tf_max_health_boost.GetFloat();
+	float flBoostMax;
+
+	CTFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+
+	if ( pPlayer && pPlayer->IsRetroModeOn() )
+		flBoostMax = m_pOuter->GetPlayerClass()->GetTFCMaxHealth() * tf_max_health_boost.GetFloat();
+	else
+		flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * tf_max_health_boost.GetFloat();
+
 
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;

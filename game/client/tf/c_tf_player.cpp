@@ -1382,6 +1382,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropBool(RECVINFO(m_bSaveMeParity)),
 	// stuff when writing a chat message
 	RecvPropBool(RECVINFO(m_bChatting)),
+	RecvPropBool(RECVINFO(m_bRetroMode)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	RecvPropInt( RECVINFO( m_nWaterLevel ) ),

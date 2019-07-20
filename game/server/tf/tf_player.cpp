@@ -112,6 +112,7 @@ ConVar of_healonkill("of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Amo
 
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
+extern ConVar of_grenades;
 extern ConVar of_retromode;
 extern ConVar ofd_forceclass;
 extern ConVar ofd_allowteams;
@@ -330,6 +331,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 
 	SendPropBool(SENDINFO(m_bSaveMeParity)),
 	SendPropBool(SENDINFO(m_bChatting)),
+	SendPropBool(SENDINFO(m_bRetroMode)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	SendPropInt( SENDINFO( m_nWaterLevel ), 2, SPROP_UNSIGNED ),
@@ -1074,6 +1076,8 @@ void CTFPlayer::Spawn()
 	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
 	m_bGotKilled = false;
 	m_bDied = false;
+
+	UpdateModel();
 }
 
 //-----------------------------------------------------------------------------
@@ -5003,11 +5007,17 @@ void CTFPlayer::ClientHearVox( const char *pSentence )
 
 bool CTFPlayer::IsRetroModeOn( void )
 {
-	if  ( (of_retromode.GetInt() == RETROMODE_BLUE_ONLY && GetTeamNumber() == TF_TEAM_BLUE) ||
+#if 0
+	if ((of_retromode.GetInt() == RETROMODE_BLUE_ONLY && GetTeamNumber() == TF_TEAM_BLUE) ||
 		(of_retromode.GetInt() == RETROMODE_RED_ONLY && GetTeamNumber() == TF_TEAM_RED) ||
-		(of_retromode.GetInt() == RETROMODE_ON) )
+		(of_retromode.GetInt() == RETROMODE_ON))
+	{
+		m_bRetroMode = true;
 		return true;
-	
+	}
+#endif
+
+	m_bRetroMode = false;
 	return false;
 }
 

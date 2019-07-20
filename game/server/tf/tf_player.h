@@ -611,6 +611,7 @@ public:
 	void				GiveAllItems();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 	bool				IsRetroModeOn();
+	CNetworkVar( bool, m_bRetroMode );
 	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 

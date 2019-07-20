@@ -514,7 +514,11 @@ void CTFHudPlayerHealth::OnThink()
 	{
 		C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
 
-		if ( pPlayer )
+		if ( pPlayer && pPlayer->IsRetroModeOn() )
+		{
+			SetHealth( pPlayer->GetHealth(), pPlayer->GetPlayerClass()->GetTFCMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
+		}
+		else if ( pPlayer )
 		{
 			SetHealth( pPlayer->GetHealth(), pPlayer->GetPlayerClass()->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
 		}
