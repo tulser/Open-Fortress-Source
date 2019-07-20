@@ -2501,7 +2501,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// tf_use_fixed_weaponspreads   
 	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
-	pKeyValues->SetString( "tag", "norandomspread" );
+	//pKeyValues->SetString( "tag", "norandomspread" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		
 

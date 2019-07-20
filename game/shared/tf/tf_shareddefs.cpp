@@ -278,7 +278,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_SLASH,		// TF_WEAPON_CHAINSAW,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
-	DMG_DISSOLVE | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
+	DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
 	
 	// This is a special entry that must match with TF_WEAPON_COUNT
 	// to protect against updating the weapon list without updating this list

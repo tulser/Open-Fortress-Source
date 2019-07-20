@@ -4359,7 +4359,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Reward killer with health
 	if (pPlayerAttacker)
-		pPlayerAttacker->TakeHealth(of_siphon.GetFloat(), DMG_GENERIC);
+		pPlayerAttacker->TakeHealth(of_healonkill.GetFloat(), DMG_GENERIC);
 
 	DestroyViewModels();
 	m_bDied = true;
