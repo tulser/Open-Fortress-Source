@@ -1,6 +1,6 @@
 @echo off
 
-devtools\bin\vpc.exe /ofd +gamedlls /mksln openfortress.sln /2013
+devtools\bin\vpc.exe /ofd +game /2013
 
 for /D %%x in (*) do (
  cd %%x
