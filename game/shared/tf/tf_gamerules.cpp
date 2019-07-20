@@ -119,20 +119,36 @@ extern ConVar of_bunnyhop_max_speed_factor;
 extern ConVar tf_maxspeed;
 extern ConVar sv_airaccelerate;
 
-ConVar tf_caplinear( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
-ConVar tf_stalematechangeclasstime( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
-ConVar tf_birthday( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar tf_caplinear						( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
+ConVar tf_stalematechangeclasstime		( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
+ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
-ConVar of_gamemode_dm("of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar mp_teamplay( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles TDM modes." );
-ConVar of_usehl2hull( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-ConVar ofd_gungame( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
-ConVar ofd_clanarena("ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena modes.", true, 0, true, 2);
-ConVar ofd_multiweapons( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
-ConVar ofd_weaponspawners("ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners.");
-ConVar ofd_powerups("ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups.");
-ConVar of_arena( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
+ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
+ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar ofd_gungame			( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
+
+ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Defines the gamemode mutators to be used.", true, 0, true, 5 );
+/*	List of mutators:
+	0: Disabled
+	1: Instagib (Railgun + Crowbar)
+	2: Instagib (Railgun)
+	3: Clan Arena
+	4: Unholy Trinity
+	5: Rocket Arena
+*/
+
+/*	Individual gamemode mutators, deprecated by the convar above.
+	ConVar ofd_instagib			( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2 );
+	ConVar ofd_clanarena		( "ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena mutators.", true, 0, true, 2 );
+*/
+
+ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
+ConVar ofd_multiweapons		( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
+ConVar ofd_weaponspawners	( "ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners." );
+ConVar ofd_powerups			( "ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
+
 #ifdef GAME_DLL
 // TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
@@ -1485,12 +1501,16 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		float flDistanceToEntity;
 
+		bool bInstantKill = false;
 		// Rockets store the ent they hit as the enemy and have already
 		// dealt full damage to them by this time
 		if ( pInflictor && ( pEntity == pInflictor->GetEnemy() ) )
 		{
 			// Full damage, we hit this entity directly
 			flDistanceToEntity = 0;
+			
+			if ( ofd_mutators.GetInt() == 5 && !TFGameRules()->IsGGGamemode() )
+				bInstantKill = true;
 		}
 		else if ( pEntity->IsPlayer() )
 		{
@@ -1507,7 +1527,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		if ( tf_fixedup_damage_radius.GetBool() )
 		{
-			flAdjustedDamage = RemapValClamped( flDistanceToEntity, 0, flRadius, info.GetDamage(), info.GetDamage() * falloff );
+			flAdjustedDamage = RemapValClamped(flDistanceToEntity, 0, flRadius, info.GetDamage(), info.GetDamage() * falloff);
 		}
 		else
 		{
@@ -1534,7 +1554,10 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		
 		CTakeDamageInfo adjustedInfo = info;
 		//Msg("%s: Blocked damage: %f percent (in:%f  out:%f)\n", pEntity->GetClassname(), flBlockedDamagePercent * 100, flAdjustedDamage, flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
-		adjustedInfo.SetDamage( flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
+		if (bInstantKill)
+			adjustedInfo.SetDamage( pEntity->GetMaxHealth() * 6 );
+		else
+			adjustedInfo.SetDamage( flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
 
 		// Now make a consideration for skill level!
 		if( info.GetAttacker() && info.GetAttacker()->IsPlayer() && pEntity->IsNPC() )
@@ -1544,22 +1567,22 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 
 		Vector dir = vecSpot - vecSrc;
-		VectorNormalize( dir );
+		VectorNormalize(dir);
 
 		// If we don't have a damage force, manufacture one
-		if ( adjustedInfo.GetDamagePosition() == vec3_origin || adjustedInfo.GetDamageForce() == vec3_origin )
+		if (adjustedInfo.GetDamagePosition() == vec3_origin || adjustedInfo.GetDamageForce() == vec3_origin)
 		{
-			CalculateExplosiveDamageForce( &adjustedInfo, dir, vecSrc );
+			CalculateExplosiveDamageForce(&adjustedInfo, dir, vecSrc);
 		}
 		else
 		{
 			// Assume the force passed in is the maximum force. Decay it based on falloff.
 			float flForce = adjustedInfo.GetDamageForce().Length() * falloff;
-			adjustedInfo.SetDamageForce( dir * flForce );
-			adjustedInfo.SetDamagePosition( vecSrc );
+			adjustedInfo.SetDamageForce(dir * flForce);
+			adjustedInfo.SetDamagePosition(vecSrc);
 		}
-
-		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt )
+		
+		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt)
 		{
 			ClearMultiDamage( );
 			pEntity->DispatchTraceAttack( adjustedInfo, dir, &tr );
@@ -2431,17 +2454,25 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 {
 	BaseClass::GetTaggedConVarList( pCvarTagList );
 	
-		// ofd_instagib
-	KeyValues *pKeyValues = new KeyValues( "ofd_instagib" );
-	pKeyValues->SetString( "convar", "ofd_instagib" );
-	pKeyValues->SetString( "tag", "instagib" );
+		// ofd_mutators
+	KeyValues *pKeyValues = new KeyValues( "ofd_mutators" );
+	pKeyValues->SetString( "convar", "ofd_mutators" );
+	pKeyValues->SetString( "tag", "mutators" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
-	
+
 		// ofd_gungame
 	pKeyValues = new KeyValues( "ofd_gungame" );
 	pKeyValues->SetString( "convar", "ofd_gungame" );
 	pKeyValues->SetString( "tag", "gungame" );
+
+	pCvarTagList->AddSubKey( pKeyValues );
+
+	/*
+		// ofd_instagib
+	KeyValues *pKeyValues = new KeyValues( "ofd_instagib" );
+	pKeyValues->SetString( "convar", "ofd_instagib" );
+	pKeyValues->SetString( "tag", "instagib" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 
@@ -2451,6 +2482,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 	pKeyValues->SetString( "tag", "clanarena" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
+	*/
 	
 		// of_infiniteammo
 	pKeyValues = new KeyValues( "of_infiniteammo" );
@@ -2504,7 +2536,7 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 		// tf_use_fixed_weaponspreads   
 	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
-	//pKeyValues->SetString( "tag", "norandomspread" );
+	pKeyValues->SetString( "tag", "norandomspread" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		
 

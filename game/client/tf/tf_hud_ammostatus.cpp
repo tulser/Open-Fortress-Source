@@ -37,6 +37,7 @@ using namespace vgui;
 
 extern ConVar of_noreload;
 extern ConVar of_infiniteammo;
+extern ConVar ofd_mutators;
 
 DECLARE_HUDELEMENT( CTFHudWeaponAmmo );
 
@@ -222,7 +223,7 @@ void CTFHudWeaponAmmo::OnThink()
 					UpdateAmmoLabels( true, true, false );
 
 					SetDialogVariable( "Ammo", m_nAmmo );
-					if ( of_infiniteammo.GetBool() )
+					if ( of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2 )
 						SetDialogVariable( "AmmoInReserve", "Inf" );
 					else
 						SetDialogVariable( "AmmoInReserve", m_nAmmo2 );
@@ -231,12 +232,12 @@ void CTFHudWeaponAmmo::OnThink()
 				{
 					UpdateAmmoLabels( false, false, true );
 					if ( of_noreload.GetBool() )
-						if (of_infiniteammo.GetBool())
+						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2)
 							SetDialogVariable( "Ammo", "Inf" );
 						else
 							SetDialogVariable( "Ammo", m_nAmmo+m_nAmmo2 );
 					else
-						if (of_infiniteammo.GetBool())
+						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2)
 							SetDialogVariable( "Ammo", "Inf" );
 						else
 							SetDialogVariable( "Ammo", m_nAmmo );

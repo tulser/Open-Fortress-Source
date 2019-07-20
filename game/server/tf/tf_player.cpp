@@ -84,8 +84,7 @@ extern ConVar	tf_spy_invis_time;
 extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
-extern ConVar	ofd_instagib;
-extern ConVar	ofd_clanarena;
+extern ConVar	ofd_mutators;
 extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -1279,10 +1278,12 @@ void CTFPlayer::GiveDefaultItems()
 	// Give weapons.
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		ManageGunGameWeapons( pData );
-	else if ( ofd_instagib.GetInt() > 0 )
+	else if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
 		ManageInstagibWeapons( pData );
-	else if ( ofd_clanarena.GetInt() > 0 )
+	else if ( ofd_mutators.GetInt() == 3 || ofd_mutators.GetInt() == 4 )
 		ManageClanArenaWeapons( pData );
+	else if ( ofd_mutators.GetInt() == 5 )
+		ManageRocketArenaWeapons( pData );
 	else if ( IsRetroModeOn() )
 		ManageTFCWeapons( pData );
 	else
@@ -1662,7 +1663,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			
 		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_RAILGUN )
 		{
-			if ( ofd_instagib.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == 1 )
 			{
 				if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROWBAR )
 				{
@@ -1683,7 +1684,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			{
 				pWeapon->DefaultTouch( this );
 			}
-			if ( ofd_instagib.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == 1 )
 			{
 				pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
 				if ( pWeapon )
@@ -1770,7 +1771,7 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 	if (pWeapon)	
 		pWeapon->DefaultTouch(this);
 
-	if (ofd_clanarena.GetInt() == 1)
+	if ( ofd_mutators.GetInt() == 3 )
 	{
 		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
 		if (pWeapon)
@@ -1788,6 +1789,32 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 		if (pWeapon)
 			pWeapon->DefaultTouch(this);
 	}
+
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageRocketArenaWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
 
 	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
 	{
@@ -4127,7 +4154,7 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 	// Check to see if we should allow players to gib.
 	if ( !tf_playergib.GetBool() )
 		return false;
-	if ( tf_playergib.GetInt()== 2 || ofd_instagib.GetInt() == 1 )
+	if ( tf_playergib.GetInt()== 2 || ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
 		return true;
 
 	if ( ( ( info.GetDamageType() & DMG_BLAST ) != 0 ) 

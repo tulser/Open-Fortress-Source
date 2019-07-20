@@ -13,7 +13,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern ConVar ofd_instagib;
+extern ConVar ofd_mutators;
 extern ConVar ofd_powerups;
 
 //-----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
 
 void CCondPowerup::Spawn( void )
 {
-	if ( ofd_instagib.GetInt() > 0 ||
+	if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 ||
 		 !ofd_powerups.GetBool() )
 		return;
 	Precache();
