@@ -41,7 +41,7 @@
 using namespace vgui;
 
 extern ConVar fraglimit;
-
+extern ConVar of_arena;
 extern ConVar ofd_disablekillcount;
 
 DECLARE_HUDELEMENT( CTFHudTDM );
@@ -104,7 +104,10 @@ bool CTFHudTDM::ShouldDraw( void )
 		return false;
 	}
 	
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay() ) && !TFGameRules()->DontCountKills() )
+	if (TFGameRules() &&
+		!TFGameRules()->DontCountKills() &&
+		!of_arena.GetBool() &&
+		(TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay()))
 		return CHudElement::ShouldDraw();
 	else
 		return false;
