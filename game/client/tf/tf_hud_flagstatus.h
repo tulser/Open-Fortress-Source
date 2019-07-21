@@ -112,6 +112,7 @@ private:
 	CTFFlagStatus			*m_pRedFlag;
 	CTFFlagStatus			*m_pBlueFlag;
 	CTFFlagStatus			*m_pMercenaryFlag;
+	CTFFlagStatus			*m_pNeutralFlag;
 	CTFArrowPanel			*m_pCapturePoint;
 
 	bool					m_bFlagAnimationPlayed;

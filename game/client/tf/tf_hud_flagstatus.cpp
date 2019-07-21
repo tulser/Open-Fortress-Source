@@ -32,6 +32,7 @@
 #include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
 #include "tf_hud_freezepanel.h"
+#include "tf_shareddefs.h"
 
 using namespace vgui;
 
@@ -114,60 +115,69 @@ void CTFArrowPanel::Paint()
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	// figure out what material we need to use
-	if ( pEnt->GetTeamNumber() == TF_TEAM_RED )
-	{
-		pMaterial = m_RedMaterial;
+	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag *>(m_hEntity.Get());
 
-		if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+	if (pFlag && pFlag->GetGameType() == TF_FLAGTYPE_INVADE)
+	{
+		pMaterial = m_NeutralMaterial;
+	}
+	else
+	{
+		// figure out what material we need to use
+		if (pEnt->GetTeamNumber() == TF_TEAM_RED)
 		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if ( pTargetEnt && pTargetEnt->IsPlayer() )
+			pMaterial = m_RedMaterial;
+
+			if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
 			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
-				if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
+				// is our target a player?
+				C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
+				if (pTargetEnt && pTargetEnt->IsPlayer())
 				{
-					pMaterial = m_RedMaterialNoArrow;
+					// does our target have the flag and are they carrying the flag we're currently drawing?
+					C_TFPlayer *pTarget = static_cast<C_TFPlayer*>(pTargetEnt);
+					if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
+					{
+						pMaterial = m_RedMaterialNoArrow;
+					}
 				}
 			}
 		}
-	}
-	else if ( pEnt->GetTeamNumber() == TF_TEAM_BLUE )
-	{
-		pMaterial = m_BlueMaterial;
-
-		if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+		else if (pEnt->GetTeamNumber() == TF_TEAM_BLUE)
 		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if ( pTargetEnt && pTargetEnt->IsPlayer() )
+			pMaterial = m_BlueMaterial;
+
+			if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
 			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
-				if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
+				// is our target a player?
+				C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
+				if (pTargetEnt && pTargetEnt->IsPlayer())
 				{
-					pMaterial = m_BlueMaterialNoArrow;
+					// does our target have the flag and are they carrying the flag we're currently drawing?
+					C_TFPlayer *pTarget = static_cast<C_TFPlayer*>(pTargetEnt);
+					if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
+					{
+						pMaterial = m_BlueMaterialNoArrow;
+					}
 				}
 			}
 		}
-	}
-	else if ( pEnt->GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		pMaterial = m_MercenaryMaterial;
-
-		if ( pLocalPlayer && ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE ) )
+		else if (pEnt->GetTeamNumber() == TF_TEAM_MERCENARY)
 		{
-			// is our target a player?
-			C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
-			if ( pTargetEnt && pTargetEnt->IsPlayer() )
+			pMaterial = m_MercenaryMaterial;
+
+			if (pLocalPlayer && (pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE))
 			{
-				// does our target have the flag and are they carrying the flag we're currently drawing?
-				C_TFPlayer *pTarget = static_cast< C_TFPlayer* >( pTargetEnt );
-				if ( pTarget->HasTheFlag() && ( pTarget->GetItem() == pEnt ) )
+				// is our target a player?
+				C_BaseEntity *pTargetEnt = pLocalPlayer->GetObserverTarget();
+				if (pTargetEnt && pTargetEnt->IsPlayer())
 				{
-					pMaterial = m_MercenaryMaterialNoArrow;
+					// does our target have the flag and are they carrying the flag we're currently drawing?
+					C_TFPlayer *pTarget = static_cast<C_TFPlayer*>(pTargetEnt);
+					if (pTarget->HasTheFlag() && (pTarget->GetItem() == pEnt))
+					{
+						pMaterial = m_MercenaryMaterialNoArrow;
+					}
 				}
 			}
 		}
@@ -183,7 +193,7 @@ void CTFArrowPanel::Paint()
 	pRenderContext->PushMatrix(); 
 
 	VMatrix panelRotation;
-	panelRotation.Identity();
+	panelRotation	.Identity();
 	MatrixBuildRotationAboutAxis( panelRotation, Vector( 0, 0, 1 ), GetAngleRotation() );
 //	MatrixRotate( panelRotation, Vector( 1, 0, 0 ), 5 );
 	panelRotation.SetTranslation( Vector( x + nWidth/2, y + nHeight/2, 0 ) );
@@ -343,6 +353,9 @@ void CTFHudFlagObjectives::ApplySchemeSettings( IScheme *pScheme )
 	m_pBlueFlag = dynamic_cast<CTFFlagStatus *>( FindChildByName( "BlueFlag" ) );
 	m_pMercenaryFlag = dynamic_cast<CTFFlagStatus *>(FindChildByName("MercenaryFlag"));
 
+	// invade
+	m_pNeutralFlag = dynamic_cast<CTFFlagStatus *>(FindChildByName("NeutralFlag"));
+
 	m_pCapturePoint = dynamic_cast<CTFArrowPanel *>( FindChildByName( "CaptureFlag" ) );
 
 	m_pSpecCarriedImage = dynamic_cast<ImagePanel *>( FindChildByName( "SpecCarriedImage" ) );
@@ -381,6 +394,11 @@ void CTFHudFlagObjectives::Reset()
 		m_pMercenaryFlag->SetVisible(true);
 	}
 
+	if (m_pNeutralFlag && !m_pNeutralFlag->IsVisible())
+	{
+		m_pNeutralFlag->SetVisible(true);
+	}
+
 	if ( m_pSpecCarriedImage && m_pSpecCarriedImage->IsVisible() )
 	{
 		m_pSpecCarriedImage->SetVisible( false );
@@ -412,32 +430,67 @@ void CTFHudFlagObjectives::SetPlayingToLabelVisible( bool bVisible )
 void CTFHudFlagObjectives::OnTick()
 {
 	// iterate through the flags to set their position in our HUD
-	for ( int i = 0; i < g_Flags.Count(); i++ )
+	for (int i = 0; i < g_Flags.Count(); i++)
 	{
-		CCaptureFlag *pFlag = dynamic_cast< CCaptureFlag* >( ClientEntityList().GetEnt( g_Flags[i] ) );
+		CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*>(ClientEntityList().GetEnt(g_Flags[i]));
 
-		if ( pFlag )
+		if (pFlag)
 		{
-			if ( !pFlag->IsDisabled() )
+			if (pFlag->GetGameType() == TF_FLAGTYPE_INVADE)
 			{
-				if ( m_pRedFlag && pFlag->GetTeamNumber() == TF_TEAM_RED )
+				if (!pFlag->IsDisabled())
 				{
-					m_pRedFlag->SetEntity( pFlag );
+					m_pNeutralFlag->SetEntity(pFlag);
+					m_pNeutralFlag->SetVisible(true);
+					if (m_pRedFlag)
+					{
+						m_pRedFlag->SetVisible(false);
+					}
+					if (m_pBlueFlag)
+					{
+						m_pBlueFlag->SetVisible(false);
+					}
+					if (m_pMercenaryFlag)
+					{
+						m_pMercenaryFlag->SetVisible(false);
+					}
 				}
-				else if ( m_pBlueFlag && pFlag->GetTeamNumber() == TF_TEAM_BLUE )
+			}
+			else
+			{
+				if (!pFlag->IsDisabled())
 				{
-					m_pBlueFlag->SetEntity( pFlag );
-				}
-				else if ( m_pMercenaryFlag && pFlag->GetTeamNumber() == TF_TEAM_MERCENARY )
-				{
-					m_pMercenaryFlag->SetEntity( pFlag );
+					if (m_pRedFlag && pFlag->GetTeamNumber() == TF_TEAM_RED)
+					{
+						m_pRedFlag->SetEntity(pFlag);
+						if (m_pNeutralFlag)
+						{
+							m_pNeutralFlag->SetVisible(false);
+						}
+					}
+					else if (m_pBlueFlag && pFlag->GetTeamNumber() == TF_TEAM_BLUE)
+					{
+						m_pBlueFlag->SetEntity(pFlag);
+						if (m_pNeutralFlag)
+						{
+							m_pNeutralFlag->SetVisible(false);
+						}
+					}
+					else if (m_pMercenaryFlag && pFlag->GetTeamNumber() == TF_TEAM_MERCENARY)
+					{
+						m_pMercenaryFlag->SetEntity(pFlag);
+						if (m_pNeutralFlag)
+						{
+							m_pNeutralFlag->SetVisible(false);
+						}
+					}
 				}
 			}
 		}
 		else
 		{
 			// this isn't a valid index for a flag
-			g_Flags.Remove( i );
+			g_Flags.Remove(i);
 		}
 	}
 
@@ -574,6 +627,11 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 				m_pMercenaryFlag->SetVisible(false);
 			}
 
+			if (m_pNeutralFlag && m_pNeutralFlag->IsVisible())
+			{
+				m_pNeutralFlag->SetVisible(false);
+			}
+
 			if ( !m_pCarriedImage->IsVisible() )
 			{
 				m_pCarriedImage->SetVisible( true );
@@ -655,6 +713,15 @@ void CTFHudFlagObjectives::UpdateStatus( void )
 			}
 
 			m_pMercenaryFlag->UpdateStatus();
+		}
+		if (m_pNeutralFlag)
+		{
+			if (!m_pNeutralFlag->IsVisible())
+			{
+				m_pNeutralFlag->SetVisible(true);
+			}
+
+			m_pNeutralFlag->UpdateStatus();
 		}
 	}
 }

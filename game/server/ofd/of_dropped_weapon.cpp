@@ -108,8 +108,18 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	Assert( pPlayer );
 
 	bool bSuccess = true;
+	
+	// disabled for gameplay reasons
+	/*
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) && !pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_AKIMBO) )// If the weapon is a pistol and we already own a pistol, give us the akimbos and remove the singular pistol, but don't do that if we already have akimbos
+	{
+		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
+		pTFPlayer->TFWeaponRemove(TF_WEAPON_PISTOL_MERCENARY);
+	}
+	*/
 	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
+		
 	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )

@@ -65,6 +65,8 @@ extern ConVar replay_rendersetting_renderglow;
 #include "econ_item_description.h"
 #endif
 
+#include "tf_gamerules.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -1066,7 +1068,13 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 			if ( !IsInCommentaryMode() )
 			{
 				wchar_t wszLocalized[100];
-				if ( bAutoTeamed )
+
+				// show a different string in DM rather than <player> joined team Mercenary
+				if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+				{
+					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_dm_team" ), 2, wszPlayerName, wszTeam );
+				}
+				else if ( bAutoTeamed )
 				{
 					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_autoteam" ), 2, wszPlayerName, wszTeam );
 				}
