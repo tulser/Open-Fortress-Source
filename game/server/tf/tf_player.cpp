@@ -1292,8 +1292,13 @@ void CTFPlayer::GiveDefaultItems()
 		ManageTFCWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
-	// Give a builder weapon for each object the player class is allowed to build
-	ManageBuilderWeapons( pData );	
+
+	// only manage builder weapons for engi and spy
+	if ( GetPlayerClass()->IsClass( TF_CLASS_ENGINEER ) || ( GetPlayerClass()->IsClass( TF_CLASS_SPY ) ) )
+	{
+		// Give a builder weapon for each object the player class is allowed to build
+		ManageBuilderWeapons( pData );
+	}
 }
 
 void CTFPlayer::StripWeapons( void )

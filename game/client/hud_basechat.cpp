@@ -26,6 +26,7 @@
 #include "multiplay_gamerules.h"
 #include "voice_status.h"
 
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -971,6 +972,9 @@ void CBaseHudChat::MsgFunc_VoiceSubtitle( bf_read &msg )
 	if ( !cl_showtextmsg.GetInt() )
 		return;
 
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+		return;
+
 	char szString[2048];
 	char szPrefix[64];	//(Voice)
 	wchar_t szBuf[128];
@@ -1017,7 +1021,7 @@ void CBaseHudChat::MsgFunc_VoiceSubtitle( bf_read &msg )
 
 	const wchar_t *pVoicePrefix = g_pVGuiLocalize->Find( "#Voice" );
 	g_pVGuiLocalize->ConvertUnicodeToANSI( pVoicePrefix, szPrefix, sizeof(szPrefix) );
-	
+
 	ChatPrintf( client, CHAT_FILTER_NONE, "%c(%s) %s%c: %s", COLOR_PLAYERNAME, szPrefix, GetDisplayedSubtitlePlayerName( client ), COLOR_NORMAL, ConvertCRtoNL( szString ) );
 
 	SetVoiceSubtitleState( false );

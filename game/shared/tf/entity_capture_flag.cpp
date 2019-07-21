@@ -747,6 +747,12 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 		// Reward the team
 		TFTeamMgr()->AddTeamScore( pPlayer->GetTeamNumber(), TF_INVADE_CAPTURED_TEAM_FRAGS );
+
+		// add the scores (different from other flag types)
+		if ( tf_flag_caps_per_round.GetInt() > 0 )
+		{
+			TFTeamMgr()->IncrementFlagCaptures( pPlayer->GetTeamNumber() );
+		}
 	}
 
 	IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_flag_event" );
