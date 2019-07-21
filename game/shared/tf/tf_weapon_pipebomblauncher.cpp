@@ -80,6 +80,17 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_dynamite_bundle, CTFDynamite );
 PRECACHE_WEAPON_REGISTER( tf_weapon_dynamite_bundle );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCPipebombLauncher, DT_TFCPipebombLauncher )
+
+BEGIN_NETWORK_TABLE( CTFCPipebombLauncher, DT_TFCPipebombLauncher )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCPipebombLauncher)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_pipebomblauncher, CTFCPipebombLauncher );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_pipebomblauncher );
+
 //=============================================================================
 //
 // Weapon Pipebomb Launcher functions.

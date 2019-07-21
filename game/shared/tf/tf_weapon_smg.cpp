@@ -85,6 +85,23 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_assaultrifle, CTFAssaultRifle );
 PRECACHE_WEAPON_REGISTER( tf_weapon_assaultrifle );
 
+//=============================================================================
+//
+// TFC Sniper Assault Rifle
+//
+//=============================================================================
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCAssaultRifle, DT_TFCAssaultRifle)
+
+BEGIN_NETWORK_TABLE( CTFCAssaultRifle, DT_TFCAssaultRifle)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCAssaultRifle)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_assault_rifle, CTFCAssaultRifle);
+PRECACHE_WEAPON_REGISTER( tfc_weapon_assault_rifle );
+
 
 // Server specific.
 #ifndef CLIENT_DLL

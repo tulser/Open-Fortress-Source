@@ -61,6 +61,18 @@ LINK_ENTITY_TO_CLASS( tf_weapon_gatlinggun, CTFGatlingGun );
 PRECACHE_WEAPON_REGISTER( tf_weapon_gatlinggun );
 
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCAssaultCannon, DT_TFCAssaultCannon )
+
+BEGIN_NETWORK_TABLE( CTFCAssaultCannon, DT_TFCAssaultCannon )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCAssaultCannon)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_assaultcannon, CTFCAssaultCannon );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_assaultcannon );
+
+
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -169,11 +181,11 @@ void CTFMinigun::SharedAttack()
 	}
 
 
-	if ( pPlayer->m_nButtons & IN_ATTACK || ( pPlayer->m_nButtons & IN_ATTACK2 && GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
+	if ( pPlayer->m_nButtons & IN_ATTACK || ( pPlayer->m_nButtons & IN_ATTACK2 && IsChainGun() ) )
 	{
 		m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	}
-	else if ( pPlayer->m_nButtons & IN_ATTACK2 && GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+	else if ( pPlayer->m_nButtons & IN_ATTACK2 && !IsChainGun() )
 	{
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	}
@@ -184,7 +196,7 @@ void CTFMinigun::SharedAttack()
 		{
 			// Removed the need for cells to powerup the AC
 			WindUp();
-			if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+			if ( !IsChainGun() )
 			{
 				m_flNextPrimaryAttack = gpGlobals->curtime + 1.0;
 				m_flNextSecondaryAttack = gpGlobals->curtime + 1.0;
@@ -333,7 +345,7 @@ void CTFMinigun::WindUp( void )
 
 	// Set the appropriate firing state.
 	m_iWeaponState = AC_STATE_STARTFIRING;
-	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+	if ( !IsChainGun() )
 		pPlayer->m_Shared.AddCond( TF_COND_AIMING );
 
 #ifndef CLIENT_DLL
@@ -352,8 +364,7 @@ void CTFMinigun::WindUp( void )
 //-----------------------------------------------------------------------------
 bool CTFMinigun::CanHolster( void ) const
 {
-	
-	if ( GetWeaponID() == TF_WEAPON_GATLINGGUN )
+	if ( IsChainGun() )
 		return BaseClass::CanHolster();
 	
 	if ( m_iWeaponState > AC_STATE_IDLE )
@@ -408,7 +419,7 @@ void CTFMinigun::WindDown( void )
 
 	// Set the appropriate firing state.
 	m_iWeaponState = AC_STATE_IDLE;
-	if ( GetWeaponID()!= TF_WEAPON_GATLINGGUN )
+	if ( !IsChainGun() )
 		pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
 #ifdef CLIENT_DLL
 	WeaponSoundUpdate();
@@ -719,7 +730,7 @@ float CTFMinigun::GetBarrelRotation( void )
 void CTFMinigun::CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles )
 {
 	// Prevent jumping while firing
-	if ( m_iWeaponState != AC_STATE_IDLE && GetWeaponID() != TF_WEAPON_GATLINGGUN )
+	if ( m_iWeaponState != AC_STATE_IDLE && !IsChainGun() )
 	{
 		pCmd->buttons &= ~IN_JUMP;
 	}

@@ -16,6 +16,7 @@
 #define CTFSniperRifle C_TFSniperRifle
 #define CTFRailgun C_TFRailgun
 #define CSniperDot C_SniperDot
+#define CTFCSniperRifle C_TFCSniperRifle
 #endif
 
 //=============================================================================
@@ -152,6 +153,17 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_RAILGUN; }
+};
+
+class CTFCSniperRifle : public CTFSniperRifle
+{
+public:
+
+	DECLARE_CLASS(CTFCSniperRifle, CTFSniperRifle);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	virtual int	GetWeaponID(void) const { return TFC_WEAPON_SNIPER_RIFLE; }
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_H

@@ -84,8 +84,7 @@ extern ConVar	tf_spy_invis_time;
 extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
-extern ConVar	ofd_instagib;
-extern ConVar	ofd_clanarena;
+extern ConVar	ofd_mutators;
 extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -109,9 +108,12 @@ ConVar of_headshots( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Mak
 ConVar of_forcespawnprotect( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 ConVar of_instantrespawn( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawns." );
 ConVar of_dropweapons( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow Manual weapon dropping." );
+ConVar of_healonkill("of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Amount of health gained after a kill");
 
 ConVar ofd_resistance( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
+extern ConVar of_grenades;
+extern ConVar of_retromode;
 extern ConVar ofd_forceclass;
 extern ConVar ofd_allowteams;
 extern ConVar spec_freeze_time;
@@ -329,6 +331,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 
 	SendPropBool(SENDINFO(m_bSaveMeParity)),
 	SendPropBool(SENDINFO(m_bChatting)),
+	SendPropBool(SENDINFO(m_bRetroMode)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	SendPropInt( SENDINFO( m_nWaterLevel ), 2, SPROP_UNSIGNED ),
@@ -673,26 +676,6 @@ void CTFPlayer::PostThink()
     m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
 }
 
-
-const char *g_aPlayerFirstPersonArms[] =
-{
-	"models/error.mdl", //undefined
-
-	"models/weapons/c_models/c_scout_arms.mdl", //scout
-	"models/weapons/c_models/c_sniper_arms.mdl", //sniper
-	"models/weapons/c_models/c_soldier_arms.mdl", //soldier
-	"models/weapons/c_models/c_demo_arms.mdl", //demoman
-	"models/weapons/c_models/c_medic_arms.mdl", //medic
-	"models/weapons/c_models/c_heavy_arms.mdl", //heavy
-	"models/weapons/c_models/c_pyro_arms.mdl", //pyro
-	"models/weapons/c_models/c_spy_arms.mdl", //spy
-	"models/weapons/c_models/c_engineer_arms.mdl", //engie
-
-
-	"models/weapons/c_models/c_merc_arms.mdl", //merc
-	"models/weapons/c_models/c_civilian_arms.mdl", //vip
-};
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -738,13 +721,6 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "blood_impact_red_01" );
 	PrecacheParticleSystem( "water_playerdive" );
 	PrecacheParticleSystem( "water_playeremerge" );
-				
-	//Precache arm models
-	int nHeads = ARRAYSIZE( g_aPlayerFirstPersonArms );
-	int i;	
-
-	for ( i = 0; i < nHeads; ++i )
-	   	 PrecacheModel( g_aPlayerFirstPersonArms[i] );
 	
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
@@ -771,6 +747,14 @@ void CTFPlayer::PrecachePlayerModels( void )
 			PrecacheGibsForModel( iModel );
 		}
 
+	
+		const char *pszModelTFC = GetPlayerClassData( i )->m_szTFCModelName;
+		if ( pszModelTFC && pszModelTFC[0] )
+		{
+			int iModel = PrecacheModel( pszModelTFC );
+			PrecacheGibsForModel( iModel );
+		}
+
 		// disabl
 		/*
 		if ( !IsX360() )
@@ -784,10 +768,16 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 		*/
 
-		const char *pszArmModel = GetPlayerClassData( i )->m_szArmModelName;
-		if ( pszArmModel && pszArmModel[0] )
+		const char *pszModelArm = GetPlayerClassData( i )->m_szArmModelName;
+		if ( pszModelArm && pszModelArm[0] )
 		{
-			PrecacheModel( pszArmModel );
+			PrecacheModel( pszModelArm );
+		}
+
+		const char *pszModelTFCArm = GetPlayerClassData(i)->m_szTFCArmModelName;
+		if ( pszModelTFCArm && pszModelTFCArm[0] )
+		{
+			PrecacheModel( pszModelTFCArm );
 		}
 	}
 	PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
@@ -906,12 +896,21 @@ void CTFPlayer::Spawn()
 	
 //	DestroyViewModels();
 	
-	CreateViewModel( 1 );
+	CreateViewModel( TF_VIEWMODEL_WEAPON );
+	CreateViewModel( TF_VIEWMODEL_SPYWATCH );
+	CreateViewModel( TF_VIEWMODEL_ARMS );
+
 	// Make sure it has no model set, in case it had one before
-	GetViewModel(1)->SetModel( "" );
+
+	if ( GetViewModel( TF_VIEWMODEL_SPYWATCH ) )
+		GetViewModel( TF_VIEWMODEL_SPYWATCH )->SetModel( "" );
 	
-	GetViewModel(2)->SetModel( GetPlayerClass()->GetArmModelName() );
-	GetViewModel(2)->m_nSkin = GetTeamNumber()-2;
+	GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
+
+	if (IsRetroModeOn())
+		GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetTFCArmModelName() );
+
+	GetViewModel(TF_VIEWMODEL_ARMS)->m_nSkin = GetTeamNumber() - 2;
 	
 	CreateViewModel();
 	
@@ -1077,6 +1076,8 @@ void CTFPlayer::Spawn()
 	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
 	m_bGotKilled = false;
 	m_bDied = false;
+
+	UpdateModel();
 }
 
 //-----------------------------------------------------------------------------
@@ -1110,15 +1111,31 @@ void CTFPlayer::Regenerate( void )
 	int iCurrentHealth = GetHealth();
 	m_bRegenerating = true;
 	
-	// Set initial health and armor based on class.
-	SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+
+	if ( IsRetroModeOn() )
+	{
+		// Set initial health and armor based on class.
+		SetMaxHealth( GetPlayerClass()->GetTFCMaxHealth() );
+
+		SetArmorValue( GetPlayerClass()->GetTFCMaxArmor() );
+
+		// Init the anim movement vars
+		m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetTFCMaxSpeed() );
+		m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetTFCMaxSpeed() * 0.5 );
+	}
+	else
+	{
+		// Set initial health and armor based on class.
+		SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+
+		SetArmorValue( GetPlayerClass()->GetMaxArmor() );
+
+		// Init the anim movement vars
+		m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
+		m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
+	}
+
 	SetHealth( GetMaxHealth() );
-
-	SetArmorValue( GetPlayerClass()->GetMaxArmor() );
-
-	// Init the anim movement vars
-	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
-	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
 
 	// RestockAmmo
 	RestockAmmo( 1.0f );
@@ -1148,15 +1165,31 @@ void CTFPlayer::Regenerate( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::InitClass( void )
 {
-	// Set initial health and armor based on class.
-	SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+	if (IsRetroModeOn())
+	{
+		
+		// Set initial health and armor based on class.
+		SetMaxHealth( GetPlayerClass()->GetTFCMaxHealth() );
+
+		SetArmorValue( GetPlayerClass()->GetTFCMaxArmor() );
+
+		// Init the anim movement vars
+		m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetTFCMaxSpeed() );
+		m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetTFCMaxSpeed() * 0.5 );
+	}
+	else
+	{
+		// Set initial health and armor based on class.
+		SetMaxHealth( GetPlayerClass()->GetMaxHealth() );
+
+		SetArmorValue( GetPlayerClass()->GetMaxArmor() );
+
+		// Init the anim movement vars
+		m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
+		m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
+	}
+
 	SetHealth( GetMaxHealth() );
-
-	SetArmorValue( GetPlayerClass()->GetMaxArmor() );
-
-	// Init the anim movement vars
-	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
-	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
 
 	// Give default items for class.
 	GiveDefaultItems();
@@ -1249,10 +1282,14 @@ void CTFPlayer::GiveDefaultItems()
 	// Give weapons.
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		ManageGunGameWeapons( pData );
-	else if ( ofd_instagib.GetInt() > 0 )
+	else if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
 		ManageInstagibWeapons( pData );
-	else if ( ofd_clanarena.GetInt() > 0 )
+	else if ( ofd_mutators.GetInt() == 3 || ofd_mutators.GetInt() == 4 )
 		ManageClanArenaWeapons( pData );
+	else if ( ofd_mutators.GetInt() == 5 )
+		ManageRocketArenaWeapons( pData );
+	else if ( IsRetroModeOn() )
+		ManageTFCWeapons( pData );
 	else
 		ManageRegularWeapons( pData );
 	// Give a builder weapon for each object the player class is allowed to build
@@ -1544,6 +1581,77 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageTFCWeapons( TFPlayerClassData_t *pData )
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	int pWeaponSlot[2];
+	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5 ; iWeapon++ )
+	{
+		if ( pData->m_aTFCWeapons[iWeapon] != TF_WEAPON_NONE )
+		{
+			int iWeaponID = pData->m_aTFCWeapons[iWeapon];
+			const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
+		
+			pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+			//If we already have a weapon in this slot but is not the same type then nuke it (changed classes)
+			if ( pWeapon && pWeapon->GetWeaponID() != iWeaponID )
+			{
+				Weapon_Detach( pWeapon );
+				UTIL_Remove( pWeapon );
+			}
+
+			pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
+		
+			if ( pWeapon )
+			{
+				pWeapon->ChangeTeam( GetTeamNumber() );
+				pWeapon->GiveDefaultAmmo();
+
+				if ( m_bRegenerating == false )
+				{
+					pWeapon->WeaponReset();
+				}
+			}
+			else
+			{
+				pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
+				if ( pWeapon )
+				{
+					pWeapon->DefaultTouch( this );
+					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID()  != TF_WEAPON_INVIS )
+					{
+						pWeaponSlot[1] = pWeaponSlot[0];
+						pWeaponSlot[0] = pWeapon->GetSlot();
+					}
+				}
+			}
+		}
+		else
+		{
+			//I shouldn't have any weapons in this slot, so get rid of it
+			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+			//Don't nuke builders since they will be nuked if we don't need them later.
+			if ( pCarriedWeapon && pCarriedWeapon->GetWeaponID() != TF_WEAPON_BUILDER )
+			{
+				Weapon_Detach( pCarriedWeapon );
+				UTIL_Remove( pCarriedWeapon );
+			}
+		}
+	}
+	if ( m_bRegenerating == false )
+	{
+		SetActiveWeapon( NULL );
+		Weapon_Switch( Weapon_GetSlot( pWeaponSlot[0] ) );
+		Weapon_SetLast( Weapon_GetSlot( pWeaponSlot[1] ) );
+	}
+
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1559,7 +1667,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			
 		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_RAILGUN )
 		{
-			if ( ofd_instagib.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == 1 )
 			{
 				if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROWBAR )
 				{
@@ -1580,7 +1688,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			{
 				pWeapon->DefaultTouch( this );
 			}
-			if ( ofd_instagib.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == 1 )
 			{
 				pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
 				if ( pWeapon )
@@ -1667,7 +1775,7 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 	if (pWeapon)	
 		pWeapon->DefaultTouch(this);
 
-	if (ofd_clanarena.GetInt() == 1)
+	if ( ofd_mutators.GetInt() == 3 )
 	{
 		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
 		if (pWeapon)
@@ -1685,6 +1793,32 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 		if (pWeapon)
 			pWeapon->DefaultTouch(this);
 	}
+
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageRocketArenaWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
 
 	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
 	{
@@ -2570,6 +2704,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( pcmd, "build" ) )
 	{
+		/*
 		CTFPlayer *pTargetPlayer = this;
 		// if the player has no build PDA, abort the building
 		CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
@@ -2580,6 +2715,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 		}
 		else
 		{
+		*/
 			if (args.ArgC() == 2)
 			{
 				// player wants to build something
@@ -2587,7 +2723,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 				StartBuildingObjectOfType(iBuilding);
 			}
-		}
+		//}
 		return true;
 	}
 	else if ( FStrEq( pcmd, "destroy" ) )
@@ -3077,6 +3213,16 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 	if ( CanBuild( iType ) != CB_CAN_BUILD )
 		return;
 
+	CTFPlayer *pTargetPlayer = this;
+	// if the player has no build PDA, abort the building
+	CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
+
+	if ( pWeapon == NULL )
+	{
+		ClientPrint((CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+		return;
+	}
+
 	for ( int i = 0; i < WeaponCount(); i++) 
 	{
 		CTFWeaponBase *pWpn = ( CTFWeaponBase *)GetWeapon(i);
@@ -3210,6 +3356,9 @@ int CTFPlayer::TakeHealth( float flHealth, int bitsDamageType )
 	{
 		float flHealthToAdd = flHealth;
 		float flMaxHealth = GetPlayerClass()->GetMaxHealth();
+
+		if (IsRetroModeOn())
+			flMaxHealth = GetPlayerClass()->GetTFCMaxHealth();
 		
 		// don't want to add more than we're allowed to have
 		if ( flHealthToAdd > flMaxHealth - m_iHealth )
@@ -4009,7 +4158,7 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 	// Check to see if we should allow players to gib.
 	if ( !tf_playergib.GetBool() )
 		return false;
-	if ( tf_playergib.GetInt()== 2 || ofd_instagib.GetInt() == 1 )
+	if ( tf_playergib.GetInt()== 2 || ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
 		return true;
 
 	if ( ( ( info.GetDamageType() & DMG_BLAST ) != 0 ) 
@@ -4343,6 +4492,10 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			}		
 		}
 	}
+
+	// Reward killer with health
+	if (pPlayerAttacker)
+		pPlayerAttacker->TakeHealth(of_healonkill.GetFloat(), DMG_GENERIC);
 
 	DestroyViewModels();
 	m_bDied = true;
@@ -4852,12 +5005,31 @@ void CTFPlayer::ClientHearVox( const char *pSentence )
 	//TFTODO: implement this.
 }
 
+bool CTFPlayer::IsRetroModeOn( void )
+{
+#if 0
+	if ((of_retromode.GetInt() == RETROMODE_BLUE_ONLY && GetTeamNumber() == TF_TEAM_BLUE) ||
+		(of_retromode.GetInt() == RETROMODE_RED_ONLY && GetTeamNumber() == TF_TEAM_RED) ||
+		(of_retromode.GetInt() == RETROMODE_ON))
+	{
+		m_bRetroMode = true;
+		return true;
+	}
+#endif
+
+	m_bRetroMode = false;
+	return false;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::UpdateModel( void )
 {
-	SetModel( GetPlayerClass()->GetModelName() );
+	if ( IsRetroModeOn() )
+		SetModel( GetPlayerClass()->GetTFCModelName() );
+	else
+		SetModel( GetPlayerClass()->GetModelName() );
 }
 
 //-----------------------------------------------------------------------------

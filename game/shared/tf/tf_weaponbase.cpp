@@ -42,15 +42,15 @@ extern ConVar of_muzzlelight;
 #endif
 
 #if defined (CLIENT_DLL)
-ConVar of_autoreload( "of_autoreload", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automaticaly reload when not firing" );
-ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Enables/Disables autoswitching when picking up new weapons.");
+ConVar of_autoreload( "of_autoreload", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automatically reload when not firing." );
+ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Toggles autoswitching when picking up new weapons.");
 #endif
 
-ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not random crits are enabled." );
-ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
-ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Used for syncing up reloads" );
+ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles random crits." );
+ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles infinite ammo." );
+ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
-extern ConVar ofd_instagib;
+extern ConVar ofd_mutators;
 extern ConVar ofd_multiweapons;
 //=============================================================================
 //
@@ -294,7 +294,7 @@ int CTFWeaponBase::GetPosition( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDamage( void ) const
 {
-		if ( ofd_instagib.GetInt() == 0 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

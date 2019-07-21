@@ -44,4 +44,13 @@ private:
 	CNetworkVar( bool,	m_bCritical );
 };
 
+class CTFCProjectile_IncendRocket : public CTFProjectile_Rocket
+{
+public:
+
+	DECLARE_CLASS(CTFCProjectile_IncendRocket, CTFProjectile_Rocket);
+	
+	static CTFCProjectile_IncendRocket *Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
+};
+
 #endif	//TF_PROJECTILE_ROCKET_H

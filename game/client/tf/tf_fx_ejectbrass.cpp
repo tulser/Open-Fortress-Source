@@ -62,7 +62,8 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	model_t *pShotgunShell = (model_t *)engine->LoadModel( "models/weapons/shells/shell_shotgun.mdl" );
 	if ( pModel == pShotgunShell )
 	{
-		DevMsg("eh");
+		//STOP FUCKING DOING THIS SHIT JESUS CHRIST I WILL LITERALLY RIP YOUR SPINE OUT OF YOUR ASS IF I SEE SHIT LIKE THIS AGAIN
+		//DevMsg("eh");
 		pTemp->hitSound = BOUNCE_SHOTSHELL;
 	}
 	else

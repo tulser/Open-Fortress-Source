@@ -31,7 +31,7 @@
 
 #endif
 
-extern ConVar ofd_instagib;
+extern ConVar ofd_mutators;
 
 //=============================================================================
 //
@@ -71,7 +71,7 @@ DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 END_DATADESC()
 
 
-ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Whether or not reloading is disabled" );
+ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon reloading." );
 extern ConVar of_infiniteammo;
 
 //=============================================================================
@@ -294,6 +294,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	case TF_PROJECTILE_TRIPMINE:
 		pProjectile = FireTripmine( pPlayer );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
+	case TF_PROJECTILE_INCENDROCKET:
+		pProjectile = FireIncendRocket( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
@@ -616,6 +621,51 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Fire a fire rocket
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+	int iQuakeCvar = 0;
+	iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "ofd_use_quake_rl"));
+	Vector vecSrc;
+	QAngle angForward;
+	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
+	if ( bCenter && iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		if ( bCenter && iQuakeCvar )
+			vecOffset.z = 0.0f;
+		else
+			vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
+
+	CTFCProjectile_IncendRocket *pProjectile = CTFCProjectile_IncendRocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PlayWeaponShootSound( void )
@@ -668,7 +718,7 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
-	if ( ofd_instagib.GetInt() == 0 ) return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
 	else return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

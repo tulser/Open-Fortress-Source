@@ -405,6 +405,9 @@ private:
 public:
 	// Get how much $$$ this guy has.
 	int GetAccount() const;
+	
+	bool				IsRetroModeOn() { return m_bRetroMode; }
+	CNetworkVar( bool, m_bRetroMode );
 };
 
 inline C_TFPlayer* ToTFPlayer( C_BaseEntity *pEntity )

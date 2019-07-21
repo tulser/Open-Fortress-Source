@@ -26,6 +26,42 @@ BEGIN_DATADESC( CTFNailgun )
 END_DATADESC()
 #endif
 
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCNailgun, DT_TFCNailgun )
+
+BEGIN_NETWORK_TABLE( CTFCNailgun, DT_TFCNailgun )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCNailgun )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_nailgun, CTFCNailgun );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun);
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFCNailgun )
+END_DATADESC()
+#endif
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCNailgunSuper, DT_TFCNailgunSuper )
+
+BEGIN_NETWORK_TABLE( CTFCNailgunSuper, DT_TFCNailgunSuper )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCNailgunSuper )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_nailgun_super, CTFCNailgunSuper );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun_super );
+
+// Server specific.
+#ifndef CLIENT_DLL
+BEGIN_DATADESC( CTFCNailgunSuper )
+END_DATADESC()
+#endif
+
 //=============================================================================
 //
 // Weapon Nailgun functions.

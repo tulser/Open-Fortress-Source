@@ -15,6 +15,8 @@
 #ifdef CLIENT_DLL
 #define CTFCrowbar C_TFCrowbar
 #define CTFUmbrella C_TFUmbrella
+#define CTFCCrowbar C_TFCCrowbar
+#define CTFCUmbrella C_TFCUmbrella
 #endif
 
 //=============================================================================
@@ -51,6 +53,38 @@ public:
 private:
 
 	CTFUmbrella( const CTFUmbrella & ) {}
+};
+
+class CTFCCrowbar : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS(CTFCCrowbar, CTFWeaponBaseMelee );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	CTFCCrowbar();
+	virtual int			GetWeaponID( void ) const			{ return TFC_WEAPON_CROWBAR; }
+
+private:
+
+	CTFCCrowbar( const CTFCCrowbar & ) {}
+};
+
+class CTFCUmbrella : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS(CTFCUmbrella, CTFWeaponBaseMelee );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	CTFCUmbrella();
+	virtual int			GetWeaponID( void ) const			{ return TFC_WEAPON_UMBRELLA; }
+
+private:
+
+	CTFCUmbrella( const CTFCUmbrella & ) {}
 };
 
 #endif // TF_WEAPON_CROWBAR_H

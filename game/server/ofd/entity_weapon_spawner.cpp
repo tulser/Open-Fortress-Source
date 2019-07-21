@@ -20,8 +20,7 @@
 
 //#define TF_WEAPON_PICKUP_SOUND		"AmmoPack.Touch"
 
-extern ConVar ofd_instagib;
-extern ConVar ofd_clanarena;
+extern ConVar ofd_mutators;
 extern ConVar ofd_multiweapons;
 extern ConVar ofd_weaponspawners;
 
@@ -60,8 +59,7 @@ void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
 	if (ofd_weaponspawners.GetInt() >= 1 &&
-		ofd_instagib.GetInt() <= 0 && 
-		ofd_clanarena.GetInt() <= 0 && 
+		ofd_mutators.GetInt() == 0 && 
 		TFGameRules() && 
 		!TFGameRules()->IsGGGamemode())
 	{

@@ -34,6 +34,7 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
+
 // Railgun
 #define TF_WEAPON_RAILGUN_CHARGE_PER_SEC	100.0
 #define TF_WEAPON_RAILGUN_UNCHARGE_PER_SEC	75.0
@@ -43,7 +44,7 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 
 #define TF_WEAPON_RAILGUN_NO_CRIT_AFTER_ZOOM_TIME	0.0f
 
-ConVar ofd_instagib( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2  );
+extern ConVar ofd_mutators;
 
 //=============================================================================
 //
@@ -89,8 +90,20 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFRailgun )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_Railgun, CTFRailgun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_Railgun );
+LINK_ENTITY_TO_CLASS( tf_weapon_railgun, CTFRailgun );
+PRECACHE_WEAPON_REGISTER( tf_weapon_railgun );
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFCSniperRifle, DT_TFCSniperRifle)
+
+BEGIN_NETWORK_TABLE(CTFCSniperRifle, DT_TFCSniperRifle)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFCSniperRifle)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tfc_weapon_sniper_rifle, CTFCSniperRifle);
+PRECACHE_WEAPON_REGISTER(tfc_weapon_sniper_rifle);
 
 //=============================================================================
 //

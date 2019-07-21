@@ -17,6 +17,8 @@
 #define CTFRocketLauncher C_TFRocketLauncher
 #define CTFOriginal C_TFOriginal
 #define CTFSuperRocketLauncher C_TFSuperRocketLauncher
+#define CTFCRPG C_TFCRPG
+#define CTFCIncendiaryCannon C_TFCIncendiaryCannon
 #endif
 
 //=============================================================================
@@ -100,6 +102,41 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
 	
 };
+
+class CTFCRPG : public CTFRocketLauncher
+{
+public:
+	DECLARE_CLASS( CTFCRPG, CTFRocketLauncher );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+	
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	CTFCRPG();
+	
+	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_RPG; }
+	
+};
+
+class CTFCIncendiaryCannon : public CTFRocketLauncher
+{
+public:
+	DECLARE_CLASS( CTFCIncendiaryCannon, CTFRocketLauncher );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+	
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+#endif
+
+	CTFCIncendiaryCannon();
+	
+	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_INCENDIARYCANNON; }
+	
+};
+
 
 // Server specific
 #ifdef GAME_DLL

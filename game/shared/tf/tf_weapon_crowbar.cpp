@@ -42,6 +42,28 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_umbrella, CTFUmbrella );
 PRECACHE_WEAPON_REGISTER( tf_weapon_umbrella );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCCrowbar, DT_TFCWeaponCrowbar )
+
+BEGIN_NETWORK_TABLE( CTFCCrowbar, DT_TFCWeaponCrowbar )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCCrowbar )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_crowbar, CTFCCrowbar );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_crowbar );
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCUmbrella, DT_TFCWeaponUmbrella )
+
+BEGIN_NETWORK_TABLE( CTFCUmbrella, DT_TFCWeaponUmbrella )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFCUmbrella )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tfc_weapon_umbrella, CTFCUmbrella );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_umbrella );
+
 //=============================================================================
 //
 // Weapon Crowbar functions.
@@ -54,5 +76,11 @@ CTFCrowbar::CTFCrowbar()
 {
 }
 CTFUmbrella::CTFUmbrella()
+{
+}
+CTFCCrowbar::CTFCCrowbar()
+{
+}
+CTFCUmbrella::CTFCUmbrella()
 {
 }
