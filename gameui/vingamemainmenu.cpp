@@ -212,6 +212,12 @@ void InGameMainMenu::OnCommand( const char *command )
 		FlyoutMenu::CloseActiveMenu();
 		CBaseModPanel::GetSingleton().OpenKeyBindingsDialog( this );
 	}
+	else if (!Q_strcmp(command, "MultiplayerSettings"))
+	{
+		// standalone multiplayer settings dialog, PC only
+		m_ActiveControl->NavigateFrom( );
+		CBaseModPanel::GetSingleton().OpenWindow(WT_MULTIPLAYER, this, true );
+	}
 	else if( !Q_strcmp( command, "ExitToMainMenu" ) )
 	{
 		GenericConfirmation* confirmation = 

@@ -1018,6 +1018,7 @@ void CTFPlayer::Spawn()
 	}
 	for( int i = 0; i < TF_WEARABLE_LAST; i++)
 		m_Shared.RemoveHat(i);
+	
 	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
 		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));

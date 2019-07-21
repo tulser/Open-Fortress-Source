@@ -5,13 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifdef fopen
 #undef fopen
-#endif
-
-#pragma warning (disable: 4805)
-
-#include "cbase.h"
 
 #if !defined( _X360 )
 #include <windows.h> // SRC only!!

@@ -33,6 +33,7 @@ CASW_Background_Movie::CASW_Background_Movie()
 	m_nTextureID = -1;
 	m_szCurrentMovie[0] = 0;
 	m_nLastGameState = -1;
+	m_bEnabled = 1;
 }
 
 CASW_Background_Movie::~CASW_Background_Movie()
@@ -82,37 +83,41 @@ void CASW_Background_Movie::ClearCurrentMovie()
 	if(m_pVideoMaterial != NULL) {
 		// FIXME: Make sure the m_pMaterial is actually destroyed at this point!
 		m_pVideoMaterial->StopVideo();
-		g_pVideo->DestroyVideoMaterial(m_pVideoMaterial);
+		g_pVideo->DestroyVideoMaterial( m_pVideoMaterial );
 		m_pVideoMaterial = NULL;
-		g_pMatSystemSurface->DeleteTextureByID(m_nTextureID);
-		g_pMatSystemSurface->DestroyTextureID(m_nTextureID);
+		g_pMatSystemSurface->DeleteTextureByID( m_nTextureID );
+		g_pMatSystemSurface->DestroyTextureID( m_nTextureID );
 		m_nTextureID = -1;
 	}
 }
 
 int CASW_Background_Movie::SetTextureMaterial()
 {
-	if(m_pVideoMaterial == NULL)
+	if( m_pVideoMaterial == NULL )
 		return -1;
 
-	if(m_nTextureID == -1)
-		m_nTextureID = g_pMatSystemSurface->CreateNewTextureID(true);
+	if( m_nTextureID == -1 )
+		m_nTextureID = g_pMatSystemSurface->CreateNewTextureID( true );
 
-	g_pMatSystemSurface->DrawSetTextureMaterial(m_nTextureID, m_pVideoMaterial->GetMaterial());
+	g_pMatSystemSurface->DrawSetTextureMaterial( m_nTextureID, m_pVideoMaterial->GetMaterial() );
 	return m_nTextureID;
 }
 
 void CASW_Background_Movie::Update()
 {
-	/*
-	//	if ( engine->IsConnected() && ASWGameRules() )
+	if ( !m_bEnabled )
+	{
+		ClearCurrentMovie();
+		return;
+	}
+	
 	int nGameState = 0;
-	if(nGameState != m_nLastGameState) {
-
+	if( nGameState != m_nLastGameState ) 
+	{
 		const char *pFilename = NULL;
 
-		int nChosenMovie = RandomInt(0, 3);
-		switch(nChosenMovie) {
+		int nChosenMovie = RandomInt( 0, 3 );
+		switch( nChosenMovie ) {
 			case 0: pFilename = "media/background01.bik"; break;
 			case 1: pFilename = "media/background02.bik"; break;
 			default:
@@ -120,9 +125,8 @@ void CASW_Background_Movie::Update()
 			case 3: pFilename = "media/background04.bik"; break;
 		}
 
-
-		if(pFilename) {
-//			SetCurrentMovie(pFilename);
+		if( pFilename ) {
+			SetCurrentMovie( pFilename );
 		}
 	}
 	m_nLastGameState = nGameState;
@@ -133,14 +137,14 @@ void CASW_Background_Movie::Update()
 		return;
 	}
 
-	if(!m_pVideoMaterial->IsVideoPlaying()) {
-		if(!m_pVideoMaterial->StartVideo())
+	if( !m_pVideoMaterial->IsVideoPlaying() ) {
+		if( !m_pVideoMaterial->StartVideo() )
 			ClearCurrentMovie();
 	}
 
-	if(m_pVideoMaterial->Update() == false)
+	if( m_pVideoMaterial->Update() == false )
 		ClearCurrentMovie();
-	*/
+
 }
 
 // ======================================
@@ -164,7 +168,7 @@ CNB_Header_Footer::CNB_Header_Footer( vgui::Panel *parent, const char *name ) : 
 	m_bMovieEnabled = false;
 	m_bGradientBarEnabled = 0;
 	m_nTitleStyle = NB_TITLE_MEDIUM;
-	m_nBackgroundStyle = NB_BACKGROUND_IMAGE;
+	m_nBackgroundStyle = NB_BACKGROUND_BLUE;
 	m_nGradientBarY = 0;
 	m_nGradientBarHeight = 480;
 }
@@ -185,9 +189,10 @@ void CNB_Header_Footer::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	// TODO: Different image in widescreen to avoid stretching
 	// this image is no longer used
-	m_pBackgroundImage->SetImage( "../console/background01_widescreen" );
-	SetBackgroundStyle( NB_BACKGROUND_IMAGE );
+	m_pBackgroundImage->SetImage( "console/background01" );
+	
 	SetMovieEnabled( false );
+	
 	switch( m_nTitleStyle )
 	{
 		case NB_TITLE_BRIGHT: m_pTitle->SetFgColor( Color( 255, 255, 255, 255 ) ); break;
@@ -316,89 +321,31 @@ void CNB_Header_Footer::SetBackgroundStyle( NB_Background_Style nBackgroundStyle
 void CNB_Header_Footer::SetMovieEnabled( bool bMovieEnabled )
 {
 	m_bMovieEnabled = bMovieEnabled;
+	ASWBackgroundMovie()->SetEnabled( bMovieEnabled );
 	InvalidateLayout( false, true );
 }
 
 void CNB_Header_Footer::PaintBackground()
 {
 	BaseClass::PaintBackground();
-/*
-	if (ASWBackgroundMovie())
+
+	if ( m_bMovieEnabled && ASWBackgroundMovie() )
 	{
 		ASWBackgroundMovie()->Update();
-
-		if (ASWBackgroundMovie()->GetVideoMaterial())
+		if ( ASWBackgroundMovie()->SetTextureMaterial() != -1 )
 		{
-			// Draw the polys to draw this out
-			CMatRenderContextPtr pRenderContext(materials);
+			surface()->DrawSetColor( 255, 255, 255, 255 );
 
-			pRenderContext->MatrixMode(MATERIAL_VIEW);
-			pRenderContext->PushMatrix();
-			pRenderContext->LoadIdentity();
+			int x, y, w, t;
+			GetBounds( x, y, w, t );
 
-			pRenderContext->MatrixMode(MATERIAL_PROJECTION);
-			pRenderContext->PushMatrix();
-			pRenderContext->LoadIdentity();
-
-			pRenderContext->Bind(ASWBackgroundMovie()->GetVideoMaterial()->GetMaterial(), NULL);
-
-			CMeshBuilder meshBuilder;
-			IMesh* pMesh = pRenderContext->GetDynamicMesh(true);
-			meshBuilder.Begin(pMesh, MATERIAL_QUADS, 1);
-
-			int xpos = 0;
-			int ypos = 0;
-			vgui::ipanel()->GetAbsPos(GetVPanel(), xpos, ypos);
-
-			float flLeftX = xpos;
-			float flRightX = xpos + (ASWBackgroundMovie()->m_nPlaybackWidth - 1);
-
-			float flTopY = ypos;
-			float flBottomY = ypos + (ASWBackgroundMovie()->m_nPlaybackHeight - 1);
-
-			// Map our UVs to cut out just the portion of the video we're interested in
-			float flLeftU = 0.0f;
-			float flTopV = 0.0f;
-
-			// We need to subtract off a pixel to make sure we don't bleed
-			float flRightU = ASWBackgroundMovie()->m_flU - (1.0f / (float)ASWBackgroundMovie()->m_nPlaybackWidth);
-			float flBottomV = ASWBackgroundMovie()->m_flV - (1.0f / (float)ASWBackgroundMovie()->m_nPlaybackHeight);
-
-			// Get the current viewport size
-			int vx, vy, vw, vh;
-			pRenderContext->GetViewport(vx, vy, vw, vh);
-
-			// map from screen pixel coords to -1..1
-			flRightX = FLerp(-1, 1, 0, vw, flRightX);
-			flLeftX = FLerp(-1, 1, 0, vw, flLeftX);
-			flTopY = FLerp(1, -1, 0, vh, flTopY);
-			flBottomY = FLerp(1, -1, 0, vh, flBottomY);
-
-			float alpha = ((float)GetFgColor()[3] / 255.0f);
-
-			for (int corner = 0; corner<4; corner++)
-			{
-				bool bLeft = (corner == 0) || (corner == 3);
-				meshBuilder.Position3f((bLeft) ? flLeftX : flRightX, (corner & 2) ? flBottomY : flTopY, 0.0f);
-				meshBuilder.Normal3f(0.0f, 0.0f, 1.0f);
-				meshBuilder.TexCoord2f(0, (bLeft) ? flLeftU : flRightU, (corner & 2) ? flBottomV : flTopV);
-				meshBuilder.TangentS3f(0.0f, 1.0f, 0.0f);
-				meshBuilder.TangentT3f(1.0f, 0.0f, 0.0f);
-				meshBuilder.Color4f(1.0f, 1.0f, 1.0f, alpha);
-				meshBuilder.AdvanceVertex();
-			}
-
-			meshBuilder.End();
-			pMesh->Draw();
-
-			pRenderContext->MatrixMode(MATERIAL_VIEW);
-			pRenderContext->PopMatrix();
-
-			pRenderContext->MatrixMode(MATERIAL_PROJECTION);
-			pRenderContext->PopMatrix();
+			// center, 16:10 aspect ratio
+			int width_at_ratio = t * (16.0f / 9.0f);
+			x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
+			
+			surface()->DrawTexturedRect( x, y, x + width_at_ratio, y + t );
 		}
 	}
-	*/
 }
 
 // =================

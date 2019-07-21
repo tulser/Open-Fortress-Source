@@ -51,7 +51,7 @@
 //#include "VVoteOptions.h"
 #include "VLoadingProgress.h"
 #include "VMainMenu.h"
-//#include "VMultiplayer.h"
+#include "VMultiplayer.h"
 //#include "VOptions.h"
 //#include "VSignInDialog.h"
 #include "VFooterPanel.h"
@@ -544,7 +544,6 @@ CBaseModPanel::CBaseModPanel(): BaseClass(0, "CBaseModPanel"),
 	m_DelayActivation = 3;
 
 	m_UIScheme = vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/menuscheme.res", "SwarmScheme" );
-	//m_UIScheme = vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/sourcescheme.res", "SwarmScheme" );
 
 	SetScheme( m_UIScheme );
 
@@ -777,7 +776,10 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 		case WT_MAINMENU:
 			m_Frames[wt] = new MainMenu(this, "MainMenu");
 			break;
-
+			
+		case WT_MULTIPLAYER:
+			m_Frames[wt] = new Multiplayer(this, "Multiplayer");
+			break;
 		case WT_TRANSITIONSCREEN:
 			m_Frames[wt] = new CTransitionScreen( this, "TransitionScreen" );
 			break;
@@ -1741,8 +1743,8 @@ void CBaseModPanel::OpenCreateMultiplayerGameDialog( Panel *parent )
 			m_hCreateMultiplayerGameDialog = new CCreateMultiplayerGameDialog( parent );
 			BaseUI_PositionDialog( m_hCreateMultiplayerGameDialog );
 		}
-
-		m_hCreateMultiplayerGameDialog->Activate();
+		if ( m_hCreateMultiplayerGameDialog )
+			m_hCreateMultiplayerGameDialog->Activate();
 	}
 }
 
@@ -1980,14 +1982,43 @@ void CBaseModPanel::PaintBackground()
 		int wide, tall;
 		GetSize( wide, tall );
 
-		if ( false /*engine->IsTransitioningToLoad()*/ )
+		if ( true /*engine->IsTransitioningToLoad()*/ )
 		{
-			// ensure the background is clear
-			// the loading progress is about to take over in a few frames
-			// this keeps us from flashing a different graphic
-			surface()->DrawSetColor( 0, 0, 0, 255 );
-			surface()->DrawSetTexture( m_iBackgroundImageID );
-			surface()->DrawTexturedRect( 0, 0, wide, tall );
+			ActivateBackgroundEffects();
+
+			if ( ASWBackgroundMovie() )
+			{
+				ASWBackgroundMovie()->Update();
+				if ( ASWBackgroundMovie()->SetTextureMaterial() != -1 )
+				{
+					surface()->DrawSetColor( 255, 255, 255, 255 );
+					int x, y, w, h;
+					GetBounds( x, y, w, h );
+
+					// center, 16:9 aspect ratio
+					int width_at_ratio = h * (16.0f / 9.0f);
+					x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
+
+					surface()->DrawTexturedRect( x, y, x + width_at_ratio, y + h );
+
+					if ( !m_flMovieFadeInTime )
+					{
+						// do the fade a little bit after the movie starts (needs to be stable)
+						// the product overlay will fade out
+						m_flMovieFadeInTime	= 0;
+					}
+
+					float flFadeDelta = RemapValClamped( Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f );
+					if ( flFadeDelta > 0.0f )
+					{
+						if ( !m_pBackgroundMaterial )
+						{
+							PrepareStartupGraphic();
+						}
+						DrawStartupGraphic( flFadeDelta );
+					}
+				}
+			}
 		}
 		else
 		{

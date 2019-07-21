@@ -51,7 +51,7 @@ using namespace BaseModUI;
 
 //=============================================================================
 static ConVar connect_lobby( "connect_lobby", "", FCVAR_HIDDEN, "Sets the lobby ID to connect to on start." );
-static ConVar ui_old_options_menu( "ui_old_options_menu", "1", FCVAR_HIDDEN, "Brings up the old tabbed options dialog from Keyboard/Mouse when set to 1." );
+static ConVar ui_old_options_menu( "ui_old_options_menu", "0", FCVAR_HIDDEN, "Brings up the old tabbed options dialog from Keyboard/Mouse when set to 1." );
 static ConVar ui_play_online_browser( "ui_play_online_browser",	 "1",FCVAR_NONE, "Whether play online displays a browser or plain search dialog." );
 
 void Demo_DisableButton( Button *pButton );
@@ -224,17 +224,39 @@ void MainMenu::OnCommand( const char *command )
 	{
 			CBaseModPanel::GetSingleton().OpenCreateMultiplayerGameDialog( this );
 	}
-	/*
 	else if ( !Q_strcmp( command, "StatsAndAchievements" ) )
 	{
-	}
-	
-	*/
+		// If PC make sure that the Steam user is logged in
+		if ( CheckAndDisplayErrorIfNotLoggedIn() )
+			return;
+		if ( m_ActiveControl )
+		{
+			m_ActiveControl->NavigateFrom( );
+		}
 
+		CBaseModPanel::GetSingleton().OpenWindow( WT_ACHIEVEMENTS, this, true );
+	}
 	else if (!Q_strcmp(command, "Options"))
 	{
 		CBaseModPanel::GetSingleton().OpenOptionsDialog( this );
 	}
+	
+	else if (!Q_strcmp(command, "MultiplayerSettings"))
+	{
+		if ( ui_old_options_menu.GetBool() )
+		{
+			CBaseModPanel::GetSingleton().OpenOptionsDialog( this );
+		}
+		else
+		{
+			// standalone multiplayer settings dialog, PC only
+			if ( m_ActiveControl )
+			{
+				m_ActiveControl->NavigateFrom( );
+			}
+			CBaseModPanel::GetSingleton().OpenWindow(WT_MULTIPLAYER, this, true );
+		}
+	}	
 
 	else if (!Q_strcmp(command, "Audio"))
 	{
@@ -949,8 +971,6 @@ void MainMenu::OpenServerBrowser()
 	}
 }
 
-
-#ifndef _X360
 CON_COMMAND_F( openserverbrowser, "Opens server browser", 0 )
 {
 	bool isSteam = IsPC() && steamapicontext->SteamFriends() && steamapicontext->SteamUtils();
@@ -967,11 +987,10 @@ CON_COMMAND_F( openserverbrowser, "Opens server browser", 0 )
 			g_VModuleLoader.PostMessageToAllModules( pKV );
 		}
 
-#ifdef INFESTED_DLL
+
 		KeyValues *pSchemeKV = new KeyValues( "SetCustomScheme" );
 		pSchemeKV->SetString( "SchemeName", "SwarmServerBrowserScheme" );
 		g_VModuleLoader.PostMessageToAllModules( pSchemeKV );
-#endif
+
 	}
 }
-#endif

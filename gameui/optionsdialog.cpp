@@ -59,8 +59,6 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent, OptionsDialogTabStyle iTabSt
 		SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
 
 		SetTitle("#GameUI_Options", true);
-
-		AddPage(new COptionsSubDifficulty(this), "#GameUI_Difficulty");
 	
 		//AddPage(new COptionsSubPortal(this), "#GameUI_Portal");
 
@@ -76,7 +74,6 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent, OptionsDialogTabStyle iTabSt
 
 		AddPage(new COptionsSubMultiplayer(this), "#GameUI_Multiplayer");
 
-		AddPage(new COptionsSubHL2CE(this), "#HL2CEUI_Other");
 	}
 	else if ( iTabStyle == OPTIONS_DIALOG_ONLY_BINDING_TABS )
 	{

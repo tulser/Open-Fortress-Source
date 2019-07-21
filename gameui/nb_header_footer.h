@@ -14,33 +14,6 @@
 #include "avi/ibik.h"
 #include "avi/iavi.h"
 
-class CASW_Background_Movie
-{
-public:
-	CASW_Background_Movie();
-	~CASW_Background_Movie();
-
-	void Update();
-	void SetCurrentMovie( const char *szFilename );
-	int SetTextureMaterial();
-	IVideoMaterial* GetVideoMaterial()	{ return m_pVideoMaterial; }
-	void ClearCurrentMovie();
- 
-private:
-	IVideoMaterial *m_pVideoMaterial;
-	BIKMaterial_t m_nBIKMaterial;
-	float m_flStartTime;
-	int m_nTextureID;
-	char m_szCurrentMovie[ MAX_PATH ];
-	int m_nLastGameState;
-public:
-	float m_flU;
-	float m_flV;
-	int m_nPlaybackWidth;
-	int m_nPlaybackHeight;
-};
-
-CASW_Background_Movie* ASWBackgroundMovie();
 
 // == MANAGED_CLASS_DECLARATIONS_START: Do not edit by hand ==
 class vgui::Label;
@@ -63,6 +36,35 @@ enum NB_Background_Style
 	NB_BACKGROUND_IMAGE,
 	NB_BACKGROUND_NONE,
 };
+
+class CASW_Background_Movie
+{
+public:
+	CASW_Background_Movie();
+	~CASW_Background_Movie();
+
+	void Update();
+	void SetCurrentMovie( const char *szFilename );
+	int SetTextureMaterial();
+	IVideoMaterial* GetVideoMaterial()	{ return m_pVideoMaterial; }
+	void ClearCurrentMovie();
+	void SetEnabled( bool bEnabled ){ m_bEnabled = bEnabled; }
+private:
+	IVideoMaterial *m_pVideoMaterial;
+	BIKMaterial_t m_nBIKMaterial;
+	float m_flStartTime;
+	int m_nTextureID;
+	char m_szCurrentMovie[ MAX_PATH ];
+	int m_nLastGameState;
+	bool m_bEnabled;
+public:
+	float m_flU;
+	float m_flV;
+	int m_nPlaybackWidth;
+	int m_nPlaybackHeight;
+};
+
+CASW_Background_Movie* ASWBackgroundMovie();
 
 class CNB_Header_Footer : public vgui::EditablePanel
 {

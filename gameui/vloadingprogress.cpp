@@ -582,14 +582,14 @@ void LoadingProgress::SetupPoster( void )
 		int nChosenLoadingImage = RandomInt( 1, 4 );
 		switch( nChosenLoadingImage )
 		{
-			case 1: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "loading/BGFX01_wide" : "loading/BGFX01"; break;
-			case 2: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "loading/BGFX02_wide" : "loading/BGFX02"; break;
-			case 3: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "loading/BGFX03_wide" : "loading/BGFX03"; break;
-			case 4: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "loading/BGFX04_wide" : "loading/BGFX04"; break;
+			case 1: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01"; break;
+			case 2: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background02_widescreen" : "../console/background02"; break;
+			case 3: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background03_widescreen" : "../console/background03"; break;
+			case 4: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background04_widescreen" : "../console/background04"; break;
 		}
 
 #else
-		const char *pszPosterImage =  pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "loading/BGFX01_wide" : "loading/BGFX01";
+		const char *pszPosterImage =  pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01";
 #endif
 
 		// if the image was cached this will just hook it up, otherwise it will load it

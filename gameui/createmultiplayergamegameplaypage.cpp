@@ -48,6 +48,8 @@ public:
 //-----------------------------------------------------------------------------
 CCreateMultiplayerGameGameplayPage::CCreateMultiplayerGameGameplayPage(vgui::Panel *parent, const char *name) : PropertyPage(parent, name)
 {
+	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
+	
 	m_pOptionsList = new CPanelListPanel(this, "GameOptions");
 
 	m_pDescription = new CServerDescription(m_pOptionsList);
