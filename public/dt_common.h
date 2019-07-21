@@ -23,6 +23,12 @@
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #endif
 
+#ifdef __GNUC__
+#define UNUSED_MARKER __attribute__((unused))
+#else
+#define UNUSED_MARKER
+#endif
+
 // Max number of properties in a datatable and its children.
 #define MAX_DATATABLES		1024	// must be a power of 2.
 #define MAX_DATATABLE_PROPS	4096

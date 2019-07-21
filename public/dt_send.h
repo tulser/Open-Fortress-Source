@@ -564,7 +564,7 @@ inline void SendTable::SetHasPropsEncodedAgainstTickcount( bool bState )
 	} \
 	template <> int ServerClassInit<tableName::ignored>(tableName::ignored *) \
 	{ \
-		typedef className currentSendDTClass; \
+		typedef className currentSendDTClass UNUSED_MARKER; \
 		static const char *g_pSendTableName = #tableName; \
 		SendTable &sendTable = tableName::g_SendTable; \
 		static SendProp g_SendProps[] = { \
