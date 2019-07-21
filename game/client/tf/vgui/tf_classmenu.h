@@ -146,6 +146,7 @@ public:
 		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_blue", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_blue", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_blue", m_pClassInfoPanel );
+		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_blue", m_pClassInfoPanel );
 	}
 
 	virtual void ApplySchemeSettings( IScheme *pScheme )
@@ -218,6 +219,7 @@ public:
 		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_red", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_red", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_red", m_pClassInfoPanel );
+		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_red", m_pClassInfoPanel );
 	}
 
 	virtual void ApplySchemeSettings( IScheme *pScheme )
@@ -291,6 +293,7 @@ public:
 		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_mercenary", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_mercenary", m_pClassInfoPanel );
 		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_mercenary", m_pClassInfoPanel );
+		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_mercenary", m_pClassInfoPanel );
 	}
 
 	virtual void ApplySchemeSettings( IScheme *pScheme )
