@@ -5007,7 +5007,6 @@ void CTFPlayer::ClientHearVox( const char *pSentence )
 
 bool CTFPlayer::IsRetroModeOn( void )
 {
-#if 0
 	if ((of_retromode.GetInt() == RETROMODE_BLUE_ONLY && GetTeamNumber() == TF_TEAM_BLUE) ||
 		(of_retromode.GetInt() == RETROMODE_RED_ONLY && GetTeamNumber() == TF_TEAM_RED) ||
 		(of_retromode.GetInt() == RETROMODE_ON))
@@ -5015,7 +5014,6 @@ bool CTFPlayer::IsRetroModeOn( void )
 		m_bRetroMode = true;
 		return true;
 	}
-#endif
 
 	m_bRetroMode = false;
 	return false;

@@ -55,6 +55,8 @@ $Project "Server (OFD)"
 			$File	"ofd\ofd_projectile_tripmine.h"
 			$File	"$SRCDIR\game\shared\ofd\gamemounter.cpp"
 			$File	"$SRCDIR\game\shared\ofd\gamemounter.h"
+			$File	"ofd\of_tfcgrenadebase.cpp"
+			$File	"ofd\of_tfcgrenadebase.h"
 		}
 		
 		$File	"ai_relationship.cpp"
