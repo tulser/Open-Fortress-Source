@@ -59,11 +59,11 @@ CMultiplayerAdvancedDialog::CMultiplayerAdvancedDialog(vgui::Panel *parent) : Ba
 	m_pDescription->InitFromFile( OPTIONS_FILE );
 	m_pDescription->TransferCurrentValues( NULL );
 
-	LoadControlSettings("Resource\\MultiplayerAdvancedDialog.res");
+	LoadControlSettings("Resource/MultiplayerAdvancedDialog.res");
 	CreateControls();
 
 	MoveToCenterOfScreen();
-	SetSizeable( false );
+	SetSizeable( true );
 	SetDeleteSelfOnClose( true );
 }
 
