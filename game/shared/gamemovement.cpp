@@ -4380,19 +4380,7 @@ void CGameMovement::Duck( void )
 			// Have the duck button pressed, but the player currently isn't in the duck position.
 			if ( ( buttonsPressed & IN_DUCK ) && !bInDuck && !bDuckJump && !bDuckJumpTime )
 			{
-				if ( player->m_Local.m_bDucking ) {
-					// Invert time if release before fully unducked!!!
-					float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
-					float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
-					float remainingUnduckMilliseconds = player->m_Local.m_flDucktime - GAMEMOVEMENT_DUCK_TIME + unduckMilliseconds;
-					
-					float fracDucked = remainingUnduckMilliseconds / unduckMilliseconds;
-					float elapsedMilliseconds = fracDucked * duckMilliseconds;
-					
-					player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME - elapsedMilliseconds;
-				} else {
-					player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
-				}
+				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
 				player->m_Local.m_bDucking = true;
 			}
 			
@@ -4474,10 +4462,9 @@ void CGameMovement::Duck( void )
 				{
 					if ( bInDuck && !bDuckJump )
 					{
-						player->RemoveFlag( FL_DUCKING );
 						player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
 					}
-					else if ( player->m_Local.m_bDucking )
+					else if ( player->m_Local.m_bDucking && !player->m_Local.m_bDucked )
 					{
 						// Invert time if release before fully ducked!!!
 						float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
