@@ -88,6 +88,9 @@ public:
 
 	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_SNIPERRIFLE; }
 
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableSniperRifle[];
+
 	virtual void Spawn();
 	virtual void Precache();
 	void		 ResetTimers( void );
@@ -153,6 +156,9 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int	GetWeaponID( void ) const			{ return TF_WEAPON_RAILGUN; }
+
+	virtual acttable_t *ActivityList(int &iActivityCount);
+	static acttable_t m_acttableRailgun[];
 };
 
 class CTFCSniperRifle : public CTFSniperRifle
