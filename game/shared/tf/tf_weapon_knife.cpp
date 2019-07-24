@@ -15,6 +15,7 @@
 #else
 #include "tf_player.h"
 #include "tf_gamestats.h"
+#include "ilagcompensationmanager.h"
 #endif
 
 //=============================================================================
@@ -69,6 +70,11 @@ void CTFKnife::PrimaryAttack( void )
 	// Set the weapon usage mode - primary, secondary.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
+#if !defined (CLIENT_DLL)
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
+#endif
+
 	trace_t trace;
 	if ( DoSwingTrace( trace ) == true )
 	{
@@ -108,6 +114,10 @@ void CTFKnife::PrimaryAttack( void )
 	pPlayer->RemoveDisguise();
 #endif
 
+#if !defined (CLIENT_DLL)
+	lagcompensation->FinishLagCompensation( pPlayer );
+#endif
+
 	// Swing the weapon.
 	Swing( pPlayer );
 
@@ -129,8 +139,11 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 		// This counts as a backstab if:
 		// a ) we are behind the target player
 		// or b) we were behind this target player when we started the stab
-		if ( IsBehindTarget( pTarget ) ||
-			( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ) )
+
+		// removed this check as knife hits instantly anyway
+		//if ( IsBehindTarget( pTarget ) ||
+		//	( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ) )
+		if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget )
 		{
 			// this will be a backstab, do the strong anim.
 			// Do twice the target's health so that random modification will still kill him.
@@ -139,10 +152,12 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 			// Declare a backstab.
 			iCustomDamage = TF_DMG_CUSTOM_BACKSTAB;
 		}
+		/*
 		else
 		{
 			m_bCurrentAttackIsCrit = false;	// don't do a crit if we failed the above checks.
 		}
+		*/
 	}
 
 	return flBaseDamage;
@@ -158,7 +173,10 @@ bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 
 	// Get the forward view vector of the target, ignore Z
 	Vector vecVictimForward;
-	AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
+	// fuck
+	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
+	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, 0, 0 );
+	AngleVectors(pTarget->EyeAngles(), &vecVictimForward);
 	vecVictimForward.z = 0.0f;
 	vecVictimForward.NormalizeInPlace();
 
@@ -168,9 +186,32 @@ bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 	vecToTarget.z = 0.0f;
 	vecToTarget.NormalizeInPlace();
 
-	float flDot = DotProduct( vecVictimForward, vecToTarget );
+	//float flDot = DotProduct( vecVictimForward, vecToTarget );
 
-	return ( flDot > -0.1 );
+	// it seems that despite adding lag compensation you can still somehow facestab (???)
+	// checking if the attacker is facing the victim as a bandaid solution
+	Vector vecOwnerForward;
+
+	AngleVectors( GetOwner()->EyeAngles(), &vecOwnerForward );
+
+	//vecOwnerForward.z = 1.0f;
+	vecOwnerForward.z = 0.0f;
+
+	//vecOwnerForward.NormalizeInPlace()
+	vecOwnerForward.NormalizeInPlace();
+
+	float flDotVictim = DotProduct( vecVictimForward, vecToTarget );
+	float flDotOwner = DotProduct(vecOwnerForward, vecToTarget);
+
+	if (flDotOwner > 0.5)
+		// test
+		//return (flDotVictim > 0.1);
+		// devmsg(i am having a bruh moment);
+		return (flDotVictim > -0.1);
+		
+	return false;
+
+	//	return ( flDot > -0.1 );
 }
 
 //-----------------------------------------------------------------------------

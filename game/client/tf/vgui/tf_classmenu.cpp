@@ -47,9 +47,9 @@ static int iRemapIndexToClass[TF_CLASS_MENU_BUTTONS] =
 	TF_CLASS_SNIPER,
 	TF_CLASS_SPY,
 	0,
-	0,
 	TF_CLASS_MERCENARY,
-	TF_CLASS_RANDOM
+	TF_CLASS_RANDOM,
+	TF_CLASS_CIVILIAN,
 };
 
 int GetIndexForClass( int iClass )

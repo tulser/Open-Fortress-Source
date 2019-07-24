@@ -1070,7 +1070,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 				wchar_t wszLocalized[100];
 
 				// show a different string in DM rather than <player> joined team Mercenary
-				if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+				if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
 				{
 					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_dm_team" ), 2, wszPlayerName, wszTeam );
 				}

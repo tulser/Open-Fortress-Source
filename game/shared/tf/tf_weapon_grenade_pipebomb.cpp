@@ -506,6 +506,10 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 
 		// Restore damage. See comment in CTFGrenadePipebombProjectile::Create() above to understand this.
 		m_flDamage = m_flFullDamage;
+
+		// Save this entity as enemy, they will take 100% damage.
+		m_hEnemy = pOther;
+
 		Explode( &pTrace, GetDamageType() );
 	}
 
@@ -544,6 +548,9 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		// Blow up if we hit an enemy we can damage
 		if ( pHitEntity->GetTeamNumber() && ( pHitEntity->GetTeamNumber() != GetTeamNumber() || pHitEntity->GetTeamNumber() == TF_TEAM_MERCENARY ) && pHitEntity->m_takedamage != DAMAGE_NO )
 		{
+			// Save this entity as enemy, they will take 100% damage.
+			m_hEnemy = pHitEntity;
+
 			SetThink( &CTFGrenadePipebombProjectile::Detonate );
 			SetNextThink( gpGlobals->curtime );
 		}

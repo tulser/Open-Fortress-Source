@@ -80,6 +80,8 @@ public:
 	virtual void	PipebombTouch( CBaseEntity *pOther );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
 
+	virtual CBaseEntity		*GetEnemy(void)			{ return m_hEnemy; }
+
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 
 
@@ -87,6 +89,8 @@ private:
 
 	
 	bool		m_bFizzle;
+
+	CHandle<CBaseEntity>	m_hEnemy;
 
 	float		m_flMinSleepTime;
 #endif
