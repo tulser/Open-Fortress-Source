@@ -3141,8 +3141,11 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 
 				return;
 		}
-		eyeOrigin = vec3_origin + Vector(0, -10, 0);
-		eyeAngles = vec3_angle;
+		if ( cl_fp_ragdoll.GetBool() )
+		{
+			eyeOrigin = vec3_origin;
+			eyeAngles = vec3_angle;
+		}
 	}
 
 	if ( killer && (killer != this) ) 

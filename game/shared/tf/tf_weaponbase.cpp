@@ -1257,7 +1257,7 @@ void CTFWeaponBase::ReloadSinglyPostFrame( void )
 	if ( m_flTimeWeaponIdle > gpGlobals->curtime )
 		return;
 	// if the clip is empty and we have ammo remaining, 
-	if ( ( ( Clip1() < GetMaxClip1() ) && ( ReserveAmmo() > 0 ) ) ||
+	if ( ( ( Clip1() == 0 ) && ( GetOwner()->GetAmmoCount(m_iPrimaryAmmoType) > 0 ) ) ||
 		// or we are already in the process of reloading but not finished
 		( m_iReloadMode != TF_RELOAD_START ) )
 	{

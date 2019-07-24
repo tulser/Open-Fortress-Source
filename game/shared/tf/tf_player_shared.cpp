@@ -2745,11 +2745,22 @@ bool CTFPlayer::CanAttack( void )
 
 	Assert( pRules );
 
-	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCond( TF_COND_STEALTHED ) && TFGameRules()->IsDMGamemode() == false ) )
+	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCond( TF_COND_STEALTHED ) ) )
 	{
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+		{
+			if (IsPlayerClass(TF_CLASS_SPY))
+			{
 #ifdef CLIENT_DLL
-		HintMessage( HINT_CANNOT_ATTACK_WHILE_CLOAKED, true, true );
+				HintMessage( HINT_CANNOT_ATTACK_WHILE_CLOAKED, true, true );
 #endif
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
 		return false;
 	}
 
