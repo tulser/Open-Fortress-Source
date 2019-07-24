@@ -57,6 +57,8 @@ $Project "Server (OFD)"
 			$File	"$SRCDIR\game\shared\ofd\gamemounter.h"
 			$File	"ofd\of_tfcgrenadebase.cpp"
 			$File	"ofd\of_tfcgrenadebase.h"
+			$File	"ofd\of_tfcgrenade_frag.cpp"
+			$File	"ofd\of_tfcgrenade_frag.h"
 		}
 		
 		$File	"ai_relationship.cpp"

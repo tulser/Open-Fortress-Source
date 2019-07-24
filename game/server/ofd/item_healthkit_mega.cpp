@@ -39,7 +39,7 @@ class CHealthKitMega : public CTFPowerup
 {
 public:
 
-	virtual const char *GetPowerupModel(void) { return "models/items/medkit_mega.mdl"; }
+	virtual const char *GetPowerupModel(void) { return "models/pickups/megahealth.mdl"; }
 
 	DECLARE_CLASS(CHealthKitMega, CTFPowerup);
 	string_t m_iszModel=MAKE_STRING( "" );

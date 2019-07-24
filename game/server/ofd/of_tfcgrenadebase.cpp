@@ -18,7 +18,7 @@
 extern short	g_sModelIndexFireball;		// (in combatweapon.cpp) holds the index for the fireball 
 extern short	g_sModelIndexWExplosion;	// (in combatweapon.cpp) holds the index for the underwater explosion
 
-unsigned int COFClassicGrenadeBase::PhysicsSolidMaskForEntity( void ) const
+unsigned int CTFCGrenadeBase::PhysicsSolidMaskForEntity( void ) const
 {
 	return BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX;
 }
@@ -26,7 +26,7 @@ unsigned int COFClassicGrenadeBase::PhysicsSolidMaskForEntity( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void COFClassicGrenadeBase::Precache()
+void CTFCGrenadeBase::Precache()
 {
 	BaseClass::Precache();
 
@@ -34,7 +34,7 @@ void COFClassicGrenadeBase::Precache()
 }
 
 
-void COFClassicGrenadeBase::Explode( trace_t *pTrace, int bitsDamageType )
+void CTFCGrenadeBase::Explode( trace_t *pTrace, int bitsDamageType )
 {
 	float		flRndSound;// sound randomizer
 
