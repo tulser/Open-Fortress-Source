@@ -128,7 +128,12 @@ ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 
-ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Defines the gamemode mutators to be used.", true, 0, true, 6 );
+// Not implemented.
+// ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
+ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
+							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
+							true, 0, true, 6 );
+
 /*	List of mutators:
 	0: Disabled
 	1: Instagib (Railgun + Crowbar)
@@ -151,17 +156,17 @@ ConVar ofd_weaponspawners	( "ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPL
 ConVar ofd_powerups			( "ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
 
 #ifdef GAME_DLL
-// TF overrides the default value of this convar
-ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", (IsX360()?"15":"30"), FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
+// TF overrides the default value of the convars below.
+ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMEDLL, "Length in seconds to wait for players." );
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat." );
 ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to hear spectators using text chat." );
 #endif
 
-ConVar of_retromode("of_retromode","-1",FCVAR_REPLICATED | FCVAR_NOTIFY, \
-"Sets the retromode type, which turns on TFC classes and mechanics like Armor\n-1 = Default to map settings\n0 = Force off\n1 = Force on\n2 = Force on for Blue only\n3 = Force on for Red only\n");
+ConVar of_retromode ( "of_retromode", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
+					"Sets the Retro mode type, which turns on TFC classes and mechanics such as armor.\n-1 = Default to map settings\n 0 = Force off\n 1 = Force on\n 2 = Force on for Blu only\n 3 = Force on for Red only" );
 
-ConVar of_grenades( "of_grenades", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
-	"Enables grenades.\n-1 = Depends on other mutators like RetroMode\n0 = Forced off\n1 = Forced on (Frags only)\n2 = Forced on (Class based grenades)\n" );
+ConVar of_grenades	( "of_grenades", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
+					"Enables grenades.\n-1 = Depends on Retro mode\n 0 = Forced off\n 1 = Forced on (frags only)\n 2 = Forced on (class-based grenades)" );
 
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
@@ -495,7 +500,7 @@ void CTFLogicDM::Spawn(void)
 
 LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
 //-----------------------------------------------------------------------------
-// DM Logic 
+// GG Logic 
 //-----------------------------------------------------------------------------
 #ifdef GAME_DLL
 BEGIN_DATADESC( CTFLogicGG )

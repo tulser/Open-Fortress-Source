@@ -219,7 +219,7 @@ void CTFDiscordRPC::SetLogo( void )
 	const char *pszGameType = "";
 	const char *pszImageLarge = "ico";
 	const char *pMapIcon = "missing";
-	//string for seting the picture of the class
+	//string for setting the picture of the class
 	//you should name the small picture affter the class itself ex: Scout.jpg, Soldier.jpg, Pyro.jpg ...
 	//you get it
 	//-Nbc66
@@ -227,10 +227,10 @@ void CTFDiscordRPC::SetLogo( void )
 	const char *pszImageText = "";
 	C_TFPlayer *pTFPlayer = ToTFPlayer(C_BasePlayer::GetLocalPlayer());
 
-	//cheks if player is connected and sets the map name
-	//image should be named affter the map name
+	//checks if player is connected and sets the map name
+	//image should be named after the map name
 	//ex: dm_wiseau.jpg, dm_2fort.jpg..
-	//remmber kai its case sensitive
+	//case sensitive
 	//-Nbc66
 	if (engine->IsConnected())
 	{
