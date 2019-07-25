@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -20,6 +20,7 @@
 	#include "c_tf_player.h"
 	#include "c_tf_team.h"
 #endif
+#include <initializer_list>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -678,12 +679,25 @@ bool CBaseObject::IsPlacementPosValid( void )
 		return false;
 
 	// Make sure we can see the final position
-	UTIL_TraceLine( pPlayer->EyePosition(), m_vecBuildOrigin + Vector(0,0,m_vecBuildMaxs[2] * 0.5), MASK_PLAYERSOLID_BRUSHONLY, pPlayer, COLLISION_GROUP_NONE, &tr );
-	if ( tr.fraction < 1.0 )
-	{
-		return false;
-	}
+	Vector vecBuild = m_vecBuildOrigin + Vector(0,0,m_vecBuildMaxs[2] * 0.5);
 
+	// NOTE: cone tracing is expensive, so instead cast to 4 points:
+	for(Vector vecOffset: {
+		//1. The actual Blueprint origin (done above)
+		vec3_origin,
+		//2. Slightly above
+		Vector(0, 0, 1),
+		//3. Slightly to the north
+		Vector(0, 1, 0),
+		//4. Slightly east
+		Vector(1, 0, 0),
+	}){
+		UTIL_TraceLine( pPlayer->EyePosition(), vecBuild + vecOffset, MASK_PLAYERSOLID_BRUSHONLY, pPlayer, COLLISION_GROUP_NONE, &tr );
+		if ( tr.fraction < 1.0 )
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
