@@ -97,8 +97,8 @@ CLoadingDialog::CLoadingDialog( vgui::Panel *parent ) : Frame(parent, "LoadingDi
 		m_pInfoLabel->SetBounds(20, 32, 392, 24);
 		m_pProgress->SetBounds(20, 64, 300, 24); 
 		m_pCancelButton->SetBounds(330, 64, 72, 24);
-		m_pInfoLabel->SetTextColorState(Label::CS_DULL);
 		m_pProgress2->SetVisible(false);
+		m_pInfoLabel->SetTextColorState(Label::CS_DULL);
 	}
 
 	SetupControlSettings( false );
@@ -130,17 +130,12 @@ void CLoadingDialog::PaintBackground()
 	if ( m_pLoadingBackground )
 	{
 		vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
-		Color color = GetSchemeColor( "TanDarker", Color(255, 255, 255, 255), vgui::scheme()->GetIScheme(scheme) );
+		Color color = GetSchemeColor( "TanLight", Color(255, 255, 255, 255), vgui::scheme()->GetIScheme(scheme) );
 
 		m_pLoadingBackground->SetFgColor( color );
 		m_pLoadingBackground->SetBgColor( color );
 
 		m_pLoadingBackground->SetPaintBackgroundEnabled( true );
-	}
-	
-	if ( ModInfo().IsSinglePlayerOnly() )
-	{
-		DrawBox( x, y, barWide, barTall, Color( 0, 0, 0, 255 ), 1.0f );
 	}
 
 	DrawBox( x+2, y+2, barWide-4, barTall-4, Color( 100, 100, 100, 255 ), 1.0f );

@@ -698,24 +698,15 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 	{
 		switch ( wt )
 		{
-		case WT_ADDONS:
-#if defined( _X360 )
-			// not for xbox
-			Assert( 0 );
+		case WT_ACHIEVEMENTS:
+//			m_Frames[wt] = new Achievements(this, "Achievements");
 			break;
-#else
+		case WT_ADDONS:
 			m_Frames[wt] = new Addons( this, "Addons" );
-#endif
 			break;
 
 		case WT_ADDONASSOCIATION:
-#if defined( _X360 )
-			// not for xbox
-			Assert( 0 );
-			break;
-#else
 			m_Frames[wt] = new AddonAssociation( this, "AddonAssociation" );
-#endif
 			break;
 
 		case WT_ATTRACTSCREEN:
@@ -731,13 +722,7 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 			break;
 
 		case WT_CUSTOMCAMPAIGNS:
-#if defined( _X360 )
-			// not for xbox
-			Assert( 0 );
-			break;
-#else
 			m_Frames[ wt ] = new CustomCampaigns( this, "CustomCampaigns" );
-#endif
 			break;
 /*
 		case WT_GAMEOPTIONS:
@@ -765,14 +750,8 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 			break;
 
 		case WT_KEYBOARDMOUSE:
-#if defined( _X360 )
-			// not for xbox
-			Assert( 0 );
-			break;
-#else
 			m_Frames[wt] = new VKeyboard(this, "VKeyboard");
 			break;
-#endif
 		case WT_MAINMENU:
 			m_Frames[wt] = new MainMenu(this, "MainMenu");
 			break;
@@ -1426,21 +1405,6 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 {
 	Assert( !m_LevelLoading );
 
-#if defined( _X360 )
-	// stop the installer
-	g_pXboxInstaller->Stop();
-	g_pXboxInstaller->SpewStatus();
-
-	// If the installer has finished while we are in the menus, then this is the ONLY place we
-	// know that there is no open files and we can redirect the search paths
-	if ( g_pXboxInstaller->ForceCachePaths() )
-	{
-		// the search paths got changed
-		// notify other systems who may have hooked absolute paths
-		engine->SearchPathsChangedAfterInstall();
-	}
-#endif
-
 	CloseAllWindows();
 
 	if ( UI_IsDebug() )
@@ -1492,7 +1456,6 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 		// These names match the order of the enum Avatar_t in imatchmaking.h
 
 		const char *pPlayerNames[NUM_LOADING_CHARACTERS] = { NULL, NULL, NULL, NULL };
-		//const char *pAvatarNames[NUM_LOADING_CHARACTERS] = { "", "", "", "" };
 
 		unsigned char botFlags = 0xFF;
 
@@ -1508,7 +1471,7 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 		// Loading the menu the first time
 		type = LoadingProgress::LT_MAINMENU;
 	}
-
+	
 	pLoadingProgress->SetLoadingType( type );
 	pLoadingProgress->SetProgress( 0.0f );
 
@@ -1553,14 +1516,6 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 	{
 		Msg( "[GAMEUI] CBaseModPanel::OnLevelLoadingFinished( %s, %s )\n", bError ? "Had Error" : "No Error", failureReason );
 	}
-
-#if defined( _X360 )
-	if ( GameUI().IsInBackgroundLevel() )
-	{
-		// start the installer when running the background map has finished
-		g_pXboxInstaller->Start();
-	}
-#endif
 
 	LoadingProgress *pLoadingProgress = static_cast<LoadingProgress*>( GetWindow( WT_LOADINGPROGRESS ) );
 	if ( pLoadingProgress )

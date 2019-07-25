@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#include <stdio.h>
 #include <time.h>
 
 #include "MultiplayerAdvancedDialog.h"
@@ -20,6 +21,7 @@
 #include <vgui_controls/ComboBox.h>
 #include <vgui_controls/TextEntry.h>
 #include "PanelListPanel.h"
+#include "ScriptObject.h"
 #include <vgui/IInput.h>
 
 #include "FileSystem.h"
@@ -39,8 +41,9 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CMultiplayerAdvancedDialog::CMultiplayerAdvancedDialog(vgui::Panel *parent) : BaseClass(NULL, "MultiplayerAdvancedDialog")
 {
+	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
+	
 	SetBounds(0, 0, 372, 160);
-	SetSizeable( false );
 
 	SetTitle("#GameUI_MultiplayerAdvanced", true);
 
@@ -51,20 +54,23 @@ CMultiplayerAdvancedDialog::CMultiplayerAdvancedDialog(vgui::Panel *parent) : Ba
 	ok->SetCommand( "Ok" );
 
 	m_pListPanel = new CPanelListPanel( this, "PanelListPanel" );
-
-	m_pList = NULL;
-
+	
 	m_pDescription = new CInfoDescription( m_pListPanel );
 	m_pDescription->InitFromFile( DEFAULT_OPTIONS_FILE );
 	m_pDescription->InitFromFile( OPTIONS_FILE );
 	m_pDescription->TransferCurrentValues( NULL );
+	
+	m_pList = NULL;
 
 	LoadControlSettings("Resource/MultiplayerAdvancedDialog.res");
-	CreateControls();
+	
+//	LoadGameOptionsList();
 
 	MoveToCenterOfScreen();
 	SetSizeable( true );
 	SetDeleteSelfOnClose( true );
+	
+	CreateControls();
 }
 
 //-----------------------------------------------------------------------------
@@ -121,6 +127,124 @@ void CMultiplayerAdvancedDialog::OnKeyCodeTyped(KeyCode code)
 	else
 	{
 		BaseClass::OnKeyCodeTyped(code);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Creates all the controls in the game options list
+//-----------------------------------------------------------------------------
+void CMultiplayerAdvancedDialog::LoadGameOptionsList()
+{
+	// destroy any existing controls
+	mpcontrol_t *p, *n;
+
+	p = m_pList;
+	while ( p )
+	{
+		n = p->next;
+		//
+		delete p->pControl;
+		delete p->pPrompt;
+		delete p;
+		p = n;
+	}
+
+	m_pList = NULL;
+
+
+	// Go through desciption creating controls
+	CScriptObject *pObj;
+
+	pObj = m_pDescription->pObjList;
+
+	mpcontrol_t	*pCtrl;
+
+	CheckButton *pBox;
+	TextEntry *pEdit;
+	ComboBox *pCombo;
+	CScriptListItem *pListItem;
+
+	Panel *objParent = m_pListPanel;
+
+	while ( pObj )
+	{
+		if ( pObj->type == O_OBSOLETE )
+		{
+			pObj = pObj->pNext;
+			continue;
+		}
+
+		pCtrl = new mpcontrol_t( objParent, pObj->cvarname );
+		pCtrl->type = pObj->type;
+
+		switch ( pCtrl->type )
+		{
+		case O_BOOL:
+			pBox = new CheckButton( pCtrl, "DescCheckButton", pObj->prompt );
+			pBox->SetSelected( pObj->fdefValue != 0.0f ? true : false );
+			
+			pCtrl->pControl = (Panel *)pBox;
+			break;
+		case O_STRING:
+		case O_NUMBER:
+			pEdit = new TextEntry( pCtrl, "DescEdit");
+			pEdit->InsertString(pObj->defValue);
+			pCtrl->pControl = (Panel *)pEdit;
+			break;
+		case O_LIST:
+			pCombo = new ComboBox( pCtrl, "DescEdit", 5, false );
+
+			pListItem = pObj->pListItems;
+			while ( pListItem )
+			{
+				pCombo->AddItem(pListItem->szItemText, NULL);
+				pListItem = pListItem->pNext;
+			}
+
+			pCombo->ActivateItemByRow((int)pObj->fdefValue);
+
+			pCtrl->pControl = (Panel *)pCombo;
+			break;
+		default:
+			break;
+		}
+
+		if ( pCtrl->type != O_BOOL )
+		{
+			pCtrl->pPrompt = new vgui::Label( pCtrl, "DescLabel", "" );
+			pCtrl->pPrompt->SetContentAlignment( vgui::Label::a_west );
+			pCtrl->pPrompt->SetTextInset( 5, 0 );
+			pCtrl->pPrompt->SetText( pObj->prompt );
+		}
+
+		pCtrl->pScrObj = pObj;
+		pCtrl->SetSize( 100, 28 );
+		//pCtrl->SetBorder( scheme()->GetBorder(1, "DepressedButtonBorder") );
+		m_pListPanel->AddItem( pCtrl );
+
+		// Link it in
+		if ( !m_pList )
+		{
+			m_pList = pCtrl;
+			pCtrl->next = NULL;
+		}
+		else
+		{
+			mpcontrol_t *p;
+			p = m_pList;
+			while ( p )
+			{
+				if ( !p->next )
+				{
+					p->next = pCtrl;
+					pCtrl->next = NULL;
+					break;
+				}
+				p = p->next;
+			}
+		}
+
+		pObj = pObj->pNext;
 	}
 }
 
@@ -217,7 +341,21 @@ void CMultiplayerAdvancedDialog::GatherCurrentValues()
 //-----------------------------------------------------------------------------
 void CMultiplayerAdvancedDialog::CreateControls()
 {
-	DestroyControls();
+	// destroy any existing controls
+	mpcontrol_t *p, *n;
+
+	p = m_pList;
+	while ( p )
+	{
+		n = p->next;
+		//
+		delete p->pControl;
+		delete p->pPrompt;
+		delete p;
+		p = n;
+	}
+
+	m_pList = NULL;
 
 	// Go through desciption creating controls
 	CScriptObject *pObj;
@@ -241,7 +379,7 @@ void CMultiplayerAdvancedDialog::CreateControls()
 			continue;
 		}
 
-		pCtrl = new mpcontrol_t( objParent, "mpcontrol_t" );
+		pCtrl = new mpcontrol_t( objParent, pObj->cvarname );
 		pCtrl->type = pObj->type;
 
 		switch ( pCtrl->type )
@@ -254,12 +392,12 @@ void CMultiplayerAdvancedDialog::CreateControls()
 			break;
 		case O_STRING:
 		case O_NUMBER:
-			pEdit = new TextEntry( pCtrl, "DescTextEntry");
+			pEdit = new TextEntry( pCtrl, "DescEdit");
 			pEdit->InsertString(pObj->defValue);
 			pCtrl->pControl = (Panel *)pEdit;
 			break;
 		case O_LIST:
-			pCombo = new ComboBox( pCtrl, "DescComboBox", 5, false );
+			pCombo = new ComboBox( pCtrl, "DescEdit", 5, false );
 
 			pListItem = pObj->pListItems;
 			while ( pListItem )
@@ -352,8 +490,9 @@ void CMultiplayerAdvancedDialog::SaveValues()
 		// Add settings to config.cfg
 		m_pDescription->WriteToConfig();
 
-		g_pFullFileSystem->CreateDirHierarchy( OPTIONS_DIR );
-		fp = g_pFullFileSystem->Open( OPTIONS_FILE, "wb" );
+		
+		g_pFullFileSystem->CreateDirHierarchy( OPTIONS_DIR, "CLIENT" );
+		fp = g_pFullFileSystem->Open( OPTIONS_FILE, "wb", "CLIENT" );
 		if ( fp )
 		{
 			m_pDescription->WriteToScriptFile( fp );
@@ -413,6 +552,16 @@ void CInfoDescription::WriteScriptHeader( FileHandle_t fp )
 	time_t timeVal;
 	time(&timeVal);
 
+	struct tm tmStruct;
+	struct tm newtime = *(Plat_localtime((const time_t*)&timeVal, &tmStruct));
+
+    if( newtime.tm_hour > 12 )        /* Set up extension. */
+		Q_strncpy( am_pm, "PM", sizeof( am_pm ) );
+	if( newtime.tm_hour > 12 )        /* Convert from 24-hour */
+		newtime.tm_hour -= 12;    /*   to 12-hour clock.  */
+	if( newtime.tm_hour == 0 )        /*Set hour to 12 if midnight. */
+		newtime.tm_hour = 12;
+
 	g_pFullFileSystem->FPrintf( fp, (char *)getHint() );
 
 	char timeString[64];
@@ -432,9 +581,19 @@ void CInfoDescription::WriteScriptHeader( FileHandle_t fp )
 void CInfoDescription::WriteFileHeader( FileHandle_t fp )
 {
     char am_pm[] = "AM";
-
+   
 	time_t timeVal;
 	time(&timeVal);
+
+	struct tm tmStruct;
+	struct tm newtime = *(Plat_localtime((const time_t*)&timeVal, &tmStruct));
+
+    if( newtime.tm_hour > 12 )        /* Set up extension. */
+		Q_strncpy( am_pm, "PM", sizeof( am_pm ) );
+	if( newtime.tm_hour > 12 )        /* Convert from 24-hour */
+		newtime.tm_hour -= 12;    /*   to 12-hour clock.  */
+	if( newtime.tm_hour == 0 )        /*Set hour to 12 if midnight. */
+		newtime.tm_hour = 12;
 
 	char timeString[64];
 	Plat_ctime(&timeVal, timeString, sizeof(timeString));

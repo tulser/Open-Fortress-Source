@@ -32,6 +32,7 @@ private:
 
 	void CreateControls();
 	void DestroyControls();
+	void LoadGameOptionsList();
 	void GatherCurrentValues();
 	void SaveValues();
 

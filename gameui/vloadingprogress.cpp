@@ -16,6 +16,9 @@
 #include "KeyValues.h"
 #include "fmtstr.h"
 #include "FileSystem.h"
+#include "GameUI_Interface.h"
+
+#include <vgui/IInput.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

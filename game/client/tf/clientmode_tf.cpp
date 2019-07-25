@@ -195,11 +195,6 @@ void ClientModeTFNormal::Init()
 		}		
 	}
 
-#if defined( _X360 )
-	m_pScoreboard = (CTFClientScoreBoardDialog *)( gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD ) );
-	Assert( m_pScoreboard );
-#endif
-
 	BaseClass::Init();
 }
 

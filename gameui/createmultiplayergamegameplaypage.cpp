@@ -5,7 +5,6 @@
 // $NoKeywords: $
 //=============================================================================//
 
-
 #include <stdio.h>
 #include <time.h>
 
@@ -52,7 +51,7 @@ CCreateMultiplayerGameGameplayPage::CCreateMultiplayerGameGameplayPage(vgui::Pan
 	
 	m_pOptionsList = new CPanelListPanel(this, "GameOptions");
 
-	m_pDescription = new CServerDescription(m_pOptionsList);
+	m_pDescription = new CServerDescription( m_pOptionsList );
 	m_pDescription->InitFromFile( DEFAULT_OPTIONS_FILE );
 	m_pDescription->InitFromFile( OPTIONS_FILE );
 	m_pList = NULL;
@@ -177,7 +176,6 @@ void CCreateMultiplayerGameGameplayPage::LoadGameOptionsList()
 
 	m_pList = NULL;
 
-
 	// Go through desciption creating controls
 	CScriptObject *pObj;
 
@@ -223,7 +221,7 @@ void CCreateMultiplayerGameGameplayPage::LoadGameOptionsList()
 			pListItem = pObj->pListItems;
 			while ( pListItem )
 			{
-				pCombo->AddItem(pListItem->szItemText, NULL);
+				pCombo->AddItem( pListItem->szItemText, NULL );
 				pListItem = pListItem->pNext;
 			}
 

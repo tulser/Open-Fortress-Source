@@ -220,6 +220,10 @@ void MainMenu::OnCommand( const char *command )
 		// on PC, bring up the server browser and switch it to the LAN tab (tab #5)
 		engine->ClientCmd( "openserverbrowser" );
 	}
+	else if ( !Q_strcmp( command, "PlayerStats" ) )
+	{
+		engine->ClientCmd( "showstatsdlg" );
+	}	
 	else if (!Q_strcmp(command, "CreateServer"))
 	{
 			CBaseModPanel::GetSingleton().OpenCreateMultiplayerGameDialog( this );

@@ -33,7 +33,8 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 {
 	m_bBotsEnabled = false;
 	SetDeleteSelfOnClose(true);
-	SetSize(348, 460);
+	SetSize(625, 460);
+	SetSizeable( true );
 	
 	SetTitle("#GameUI_CreateServer", true);
 	SetOKButtonText("#GameUI_Start");
