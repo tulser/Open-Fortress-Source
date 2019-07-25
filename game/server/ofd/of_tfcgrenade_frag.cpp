@@ -6,7 +6,7 @@
 
 
 #include "cbase.h"
-#include "NPCEvent.h"
+#include "npcevent.h"
 #include "tf_player.h"
 #include "gamerules.h"
 #include "in_buttons.h"
