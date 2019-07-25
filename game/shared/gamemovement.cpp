@@ -4378,9 +4378,21 @@ void CGameMovement::Duck( void )
 			}
 #endif
 			// Have the duck button pressed, but the player currently isn't in the duck position.
-			if ( ( buttonsPressed & IN_DUCK ) && !bInDuck && !bDuckJump && !bDuckJumpTime )
+			if ( ( buttonsPressed & IN_DUCK ) && !bDuckJump && !bDuckJumpTime && CanUnduck() )
 			{
-				player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
+				if ( player->m_Local.m_bDucking ){
+					// Invert time if release before fully unducked!!!
+					float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
+					float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
+					float remainingUnduckMilliseconds = player->m_Local.m_flDucktime - GAMEMOVEMENT_DUCK_TIME + unduckMilliseconds;
+
+					float fracDucked = remainingUnduckMilliseconds / unduckMilliseconds;
+					float elapsedMilliseconds = fracDucked * duckMilliseconds;
+
+					player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME - elapsedMilliseconds;
+				}else{
+					player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
+				}
 				player->m_Local.m_bDucking = true;
 			}
 			
@@ -4390,8 +4402,8 @@ void CGameMovement::Duck( void )
 				float flDuckMilliseconds = MAX( 0.0f, GAMEMOVEMENT_DUCK_TIME - ( float )player->m_Local.m_flDucktime );
 				float flDuckSeconds = flDuckMilliseconds * 0.001f;
 				
-				// Finish in duck transition when transition time is over, in "duck", in air.
-				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInDuck || bInAir )
+				// Finish in duck transition when transition time is over, in air.
+				if ( ( flDuckSeconds > TIME_TO_DUCK ) || bInAir )
 				{
 					FinishDuck();
 				}
@@ -4457,15 +4469,12 @@ void CGameMovement::Duck( void )
 			// NOTE: When not onground, you can always unduck
 			if ( player->m_Local.m_bAllowAutoMovement || bInAir || player->m_Local.m_bDucking )
 			{
-				// We released the duck button, we aren't in "duck" and we are not in the air - start unduck transition.
+				// We released the duck button and we are not in the air - start unduck transition.
 				if ( ( buttonsReleased & IN_DUCK ) )
 				{
-					if ( bInDuck && !bDuckJump )
-					{
+					if ( bInDuck ) {
 						player->m_Local.m_flDucktime = GAMEMOVEMENT_DUCK_TIME;
-					}
-					else if ( player->m_Local.m_bDucking && !player->m_Local.m_bDucked )
-					{
+					}else{
 						// Invert time if release before fully ducked!!!
 						float unduckMilliseconds = 1000.0f * TIME_TO_UNDUCK;
 						float duckMilliseconds = 1000.0f * TIME_TO_DUCK;
