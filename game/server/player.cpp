@@ -70,6 +70,9 @@
 #include "vote_controller.h"
 #include "ai_speech.h"
 #include "tf_shareddefs.h"
+#include "info_camera_link.h"
+#include "script_intro.h"
+#include "point_camera.h"
 
 #if defined USES_ECON_ITEMS
 #include "econ_wearable.h"
@@ -657,6 +660,26 @@ void CBasePlayer::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 void CBasePlayer::SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs, int pvssize )
 {
+    int area = pViewEntity ? pViewEntity->NetworkProp()->AreaNum() : NetworkProp()->AreaNum();
+    PointCameraSetupVisibility( this, area, pvs, pvssize );
+
+    // If the intro script is playing, we want to get it's visibility points
+    if ( g_hIntroScript )
+    {
+        Vector vecOrigin;
+        CBaseEntity *pCamera;
+        if ( g_hIntroScript->GetIncludedPVSOrigin( &vecOrigin, &pCamera ) )
+        {
+            // If it's a point camera, turn it on
+            CPointCamera *pPointCamera = dynamic_cast< CPointCamera* >(pCamera); 
+            if ( pPointCamera )
+            {
+                pPointCamera->SetActive( true );
+            }
+            engine->AddOriginToPVS( vecOrigin );
+        }
+    }
+
 	// If we have a viewentity, we don't add the player's origin.
 	if ( pViewEntity )
 		return;

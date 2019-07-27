@@ -59,6 +59,7 @@
 #include "tf_player_shared.h"
 #include "c_tf_player.h"
 #include "tempent.h"
+#include "physpropclientside.h"
 
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
@@ -3405,6 +3406,7 @@ void C_BaseAnimating::ProcessMuzzleFlashEvent()
 			el->color.g = 192;
 			el->color.b = 64;
 			el->color.exponent = 5;
+			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		}
 	}
 }
@@ -3749,6 +3751,28 @@ void MaterialFootstepSound( C_BaseAnimating *pEnt, bool bLeftFoot, float flVolum
 //			numAttachments - 
 //			attachments[] - 
 //-----------------------------------------------------------------------------
+
+class C_FadingPhysPropClientside : public C_PhysPropClientside
+{
+public:
+	DECLARE_CLASS(C_FadingPhysPropClientside, C_PhysPropClientside);
+
+	// if we wake, extend fade time
+
+	virtual void ImpactTrace(trace_t *pTrace, int iDamageType, char *pCustomImpactName)
+	{
+		// If we haven't started fading
+		if (GetRenderColor().a >= 255)
+		{
+			// delay the fade
+			StartFadeOut(10.0);
+
+			// register the impact
+			BaseClass::ImpactTrace(pTrace, iDamageType, pCustomImpactName);
+		}
+	}
+};
+
 void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	Vector attachOrigin;
@@ -3770,51 +3794,119 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 		
 		if (pOwner && pGun)
 		{
-			pGun->SetBodygroup(pTFInfo->m_iMagBodygroup, 1);
+			// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
+			// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
+			//pGun->SetBodygroup( 0, 0 );
 		}
 		break;
 		
 		//mag eject
+		// eject2 is for akimbo
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
 	{
 		
-		if (pOwner && pGun)
+		if ( pOwner && pGun )
 		{
-			
-			model_t *pModel = (model_t*)engine->LoadModel(pTFInfo->m_szMagModel);
-			if (pGun->GetTFWpnData().m_bDropsMag)
+			if ( pGun->GetTFWpnData().m_bDropsMag )
 			{
-				pGun->SetBodygroup(pTFInfo->m_iMagBodygroup, 0);
-				if (event == AE_CL_MAG_EJECT)
+				if ( event == AE_CL_MAG_EJECT )
 				{
+					// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
+					// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
+					//pGun->SetBodygroup( 0, 1 );
+
+					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
+
+					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
+
+					if ( !pEntity )
+						return;
+
+					const model_t *model = modelinfo->GetModel( iModel );
+
+					if ( !model )
+					{
+						DevMsg( "CTempEnts::PhysicsProp: model index %i not found\n", iModel );
+						return;
+					}
+
 					int iAttachment = pGun->LookupAttachment("magazine");
+
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
-					int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
-					C_LocalTempEntity *pTemp = tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
-					if ( pTemp == NULL )
-						break;
-					pTemp->SetGravity( 0.4 );
-					pTemp->hitSound = BOUNCE_SHOTSHELL;
-					pTemp->flags = flags;
-					pTemp->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+						
+					pEntity->SetModelName( modelinfo->GetModelName( model ) );
+					pEntity->SetAbsOrigin( vecSrc );
+					pEntity->SetAbsAngles( vecAng );
+					pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
+
+					if ( !pEntity->Initialize() )
+					{
+						pEntity->Release();
+						return;
+					}
+
+					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
+
+					if ( !pPhysicsObject )
+					{
+						// failed to create a physics object
+						pEntity->Release();
+						return;
+					}
+
+					pEntity->StartFadeOut( 10.0 );
 				}
 				if (event == AE_CL_MAG_EJECT2)
 				{
+					// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
+					// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
+					//pGun->SetBodygroup( 0, 1 ); 
+
+					int iModel = modelinfo->GetModelIndex(pTFInfo->m_szMagModel);
+
+					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
+
+					if (!pEntity)
+						return;
+
+					const model_t *model = modelinfo->GetModel(iModel);
+
+					if (!model)
+					{
+						DevMsg("CTempEnts::PhysicsProp: model index %i not found\n", iModel);
+						return;
+					}
+
 					int iAttachment = pGun->LookupAttachment("magazine2");
+
 					Vector vecSrc;
 					QAngle vecAng;
 					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
-					int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
-					C_LocalTempEntity *pTemp = tempents->SpawnTempModel(pModel, vecSrc, vecAng, pOwner->GetAbsVelocity(), 60, FTENT_COLLIDEWORLD);
-					if ( pTemp == NULL )
-						break;
-					pTemp->SetGravity( 0.4 );
-					pTemp->hitSound = BOUNCE_SHOTSHELL;
-					pTemp->flags = flags;
-					pTemp->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
+
+					pEntity->SetModelName(modelinfo->GetModelName(model));
+					pEntity->SetAbsOrigin(vecSrc);
+					pEntity->SetAbsAngles(vecAng);
+					pEntity->SetPhysicsMode(PHYSICS_MULTIPLAYER_CLIENTSIDE);
+
+					if (!pEntity->Initialize())
+					{
+						pEntity->Release();
+						return;
+					}
+
+					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
+
+					if (!pPhysicsObject)
+					{
+						// failed to create a physics object
+						pEntity->Release();
+						return;
+					}
+
+					pEntity->StartFadeOut(10.0);
 				}
 			}
 		}

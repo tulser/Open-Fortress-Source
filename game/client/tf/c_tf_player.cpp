@@ -92,12 +92,10 @@ ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets 
 
 ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
-ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you cant have tf2 without hats\n");
-ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have tf2 without hats\n");
+ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
+ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats\n");
 
-// SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
-static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Allow first person ragdolls");
-// end SecobMod__FIRST_PERSON_RAGDOLL_CAMERA_ON_PLAYER_DEATH
+static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls.");
 
 ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
 
@@ -3611,9 +3609,13 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		KeyUp( &in_ducktoggle, NULL ); 
 	}
 	
-	const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
-	if ( pEffectName )
-		m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );	
+	// don't draw the respawn particle in first person
+	if ( !InFirstPersonView() || !IsLocalPlayer() )
+	{
+		const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
+		if ( pEffectName )
+			m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN) );
+	}
 
 	UpdateVisibility();
 

@@ -196,6 +196,9 @@ public:
 	virtual void	Drop( CTFPlayer *pPlayer, bool bVisible, bool bThrown = false, bool bMessage = true );
 
 	int				GetGameType( void ){ return m_nGameType; }
+	
+	void			Reset( void );
+	void			ResetMessage( void );
 
 	bool			IsDropped( void );
 	bool			IsHome( void );
@@ -209,10 +212,11 @@ public:
 	string_t m_ParticleRed;
 	string_t m_ParticleMercenary;
 	string_t m_ParticlePaper;
-private:
+//private:
 
-	void			Reset( void );
-	void			ResetMessage( void );
+	// can't have this here for func_respawnflag
+	//void			Reset( void );
+	//void			ResetMessage( void );
 
 private:
 

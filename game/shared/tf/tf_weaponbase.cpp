@@ -350,6 +350,11 @@ void CTFWeaponBase::Precache()
 		PrecacheModel( pTFInfo->m_szBrassModel );
 	}
 
+	if (pTFInfo->m_szMagModel[0])
+	{
+		PrecacheModel( pTFInfo->m_szMagModel );
+	}
+
 	if ( pTFInfo->m_szMuzzleFlashParticleEffect && pTFInfo->m_szMuzzleFlashParticleEffect[0] )
 	{
 		PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffect );
@@ -1851,6 +1856,7 @@ acttable_t CTFWeaponBase::m_acttablePrimary[] =
 	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_PRIMARY,				false },
 	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_PRIMARY,				false },
 	{ ACT_MP_DEPLOYED,			ACT_MP_DEPLOYED_PRIMARY,			false },
+	{ ACT_MP_CROUCH_DEPLOYED,   ACT_MP_CROUCHWALK_DEPLOYED,         false },
 	{ ACT_MP_RUN,				ACT_MP_RUN_PRIMARY,					false },
 	{ ACT_MP_WALK,				ACT_MP_WALK_PRIMARY,				false },
 	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_PRIMARY,				false },

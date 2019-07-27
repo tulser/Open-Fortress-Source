@@ -35,6 +35,8 @@ ConVar cl_flag_return_size( "cl_flag_return_size", "20", FCVAR_CHEAT );
 #include "func_respawnroom.h"
 #include "datacache/imdlcache.h"
 
+#include "func_respawnflag.h"
+
 extern ConVar tf_flag_caps_per_round;
 
 ConVar cl_flag_return_height( "cl_flag_return_height", "82", FCVAR_CHEAT );
@@ -921,6 +923,14 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 	SetTouch( &CCaptureFlag::FlagTouch );
 
 	SetFlagStatus( TF_FLAGINFO_DROPPED );
+
+	// reset us if we are in a func_respawnflag
+	if (InRespawnFlagZone( GetAbsOrigin() ) )
+	{
+		Reset();
+
+		ResetMessage();
+	}
 
 	// Output.
 	m_outputOnDrop.FireOutput(pPlayer, this, 0);

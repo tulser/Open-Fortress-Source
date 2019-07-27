@@ -279,6 +279,9 @@ void CTFHudDeathNotice::AddAdditionalMsg( int iKillerID, int iVictimID, const ch
 	msg2.Killer.iTeam = g_PR->GetTeam(iKillerID);
 	msg2.Victim.iTeam = g_PR->GetTeam(iVictimID);
 
+	msg2.Killer.iPlayerID = iKillerID;
+	msg2.Victim.iPlayerID = iVictimID;
+
 	const wchar_t *wzMsg =  g_pVGuiLocalize->Find( pMsgKey );
 	if ( wzMsg )
 	{
