@@ -4378,7 +4378,7 @@ void CGameMovement::Duck( void )
 			}
 #endif
 			// Have the duck button pressed, but the player currently isn't in the duck position.
-			if ( ( buttonsPressed & IN_DUCK ) && !bDuckJump && !bDuckJumpTime && CanUnduck() )
+			if ( ( buttonsPressed & IN_DUCK ) && !bDuckJump && !bDuckJumpTime && ( !bInDuck || CanUnduck()) )
 			{
 				if ( player->m_Local.m_bDucking ){
 					// Invert time if release before fully unducked!!!
