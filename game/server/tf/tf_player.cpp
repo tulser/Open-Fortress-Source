@@ -113,6 +113,11 @@ ConVar of_healonkill		( "of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "
 
 ConVar ofd_resistance		( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "Defines the resistance of the Shield powerup." );
 
+ConVar of_knockback_all("of_knockback_all", "1", FCVAR_ARCHIVE, "Multiplies damage impulse for all damage types");
+ConVar of_knockback_bullets("of_knockback_bullets", "1", FCVAR_ARCHIVE, "Multiplies damage impulse for bullets");
+ConVar of_knockback_explosives("of_knockback_explosives", "1", FCVAR_ARCHIVE, "Multiplies damage impulse for explosions");
+ConVar of_knockback_melee("of_knockback_melee", "1", FCVAR_ARCHIVE, "Multiplies damage impulse for melee");
+
 extern ConVar of_grenades;
 extern ConVar of_retromode;
 extern ConVar ofd_forceclass;
@@ -4048,7 +4053,14 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				}
 				else
 				{
-					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() );
+					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() * of_knockback_all.GetFloat() );
+
+					if (info.GetDamageType() & DMG_BLAST)
+						vecForce *= of_knockback_explosives.GetFloat();
+					if (info.GetDamageType() & DMG_BULLET)
+						vecForce *= of_knockback_bullets.GetFloat();
+					if (info.GetDamageType() & DMG_CLUB)
+						vecForce *= of_knockback_melee.GetFloat();
 
 					if ( IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
 					{
