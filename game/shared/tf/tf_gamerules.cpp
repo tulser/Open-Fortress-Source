@@ -56,6 +56,7 @@
 	
 	#include "ai_basenpc.h"
 	#include "ai_dynamiclink.h"
+	#include "nav_mesh.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -167,6 +168,8 @@ ConVar of_retromode ( "of_retromode", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 
 ConVar of_grenades	( "of_grenades", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Enables grenades.\n-1 = Depends on Retro mode\n 0 = Forced off\n 1 = Forced on (frags only)\n 2 = Forced on (class-based grenades)" );
+
+ConVar of_navmesh_spawns( "of_navmesh_spawns", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Select random spawns using the navigation mesh on Deathmatch mode" );
 
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
@@ -1042,7 +1045,7 @@ void CTFGameRules::Activate()
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
-		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 50 );
+		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 25 );
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
@@ -2204,6 +2207,67 @@ ConCommand mp_showrespawntimes( "mp_showrespawntimes", cc_ShowRespawnTimes, "Sho
 
 CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 {
+	if ( of_navmesh_spawns.GetBool() && IsDMGamemode() )
+	{
+		if ( TheNavMesh->IsLoaded() )
+		{
+			int iCount = TheNavAreas.Count();
+			int iArea = RandomInt( 0, iCount - 1 );
+			int iPatience;
+			for (iPatience = iCount; iPatience; iPatience--)
+			{
+				if ( TheNavAreas[iArea]->IsFlat() )
+				{
+					for ( int iAreaPatience = 4; iAreaPatience; iAreaPatience-- )
+					{
+						Vector vSpawn = TheNavAreas[iArea]->GetRandomPoint() + Vector( 0, 0, 32 );
+						trace_t tracehull;
+						UTIL_TraceHull( vSpawn, vSpawn, VEC_HULL_MIN, VEC_HULL_MAX, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &tracehull );
+						if ( !tracehull.DidHit() )
+						{
+							//Take the angles pointing to the furthest wall, forward, backwards, right or left
+							QAngle qEyeAngles(0, 0, 0);
+							float curdistance = 0;
+							for ( int iLine = 1; iLine <= 4; iLine++ )
+							{
+								trace_t traceline;
+								Vector vDir;
+								QAngle qDirAngles( 0, 90 * iLine, 0 );
+								AngleVectors( qDirAngles, &vDir );
+								UTIL_TraceLine( vSpawn, vSpawn + vDir * MAX_COORD_RANGE, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &traceline );
+								if ( traceline.DidHit() )
+								{
+									Vector vRelative = vSpawn - traceline.endpos;
+									float distance = VectorNormalize( vRelative );
+									if ( distance > curdistance )
+									{
+										curdistance = distance;
+										qEyeAngles = qDirAngles;
+									}
+								}
+							}
+							// SUCCESS
+							pPlayer->SetLocalOrigin( vSpawn );
+							pPlayer->SetAbsVelocity( vec3_origin );
+							pPlayer->SetLocalAngles( qEyeAngles );
+							pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
+							pPlayer->m_Local.m_vecPunchAngleVel = vec3_angle;
+							pPlayer->SnapEyeAngles( qEyeAngles );
+
+							return NULL;
+						}
+					}
+				}
+				if ( ++iArea >= iCount ) iArea -= iCount;
+			}
+			DevMsg( "No valid nav_area found in nav_mesh for of_navmesh_spawns, nav mesh has %d areas\n", iCount );
+		}
+		else
+		{
+			DevMsg( "No navigation mesh avalaible with of_navmesh_spawns enabled\n" );
+		}
+	}
+
 	// get valid spawn point
 	CBaseEntity *pSpawnSpot = pPlayer->EntSelectSpawnPoint();
 

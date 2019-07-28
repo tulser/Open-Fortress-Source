@@ -245,6 +245,7 @@ void CTFDiscordRPC::SetLogo( void )
 				}
 			}
 		}
+		steamapicontext->SteamFriends()->SetRichPresence("steam_display", m_szLatchedMapname);
 		pszImageLarge = pMapIcon;
 	}
 

@@ -284,6 +284,7 @@ void CTFLightningGun::PrimaryAttack()
 		dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
 		dl->origin = vecMuzzlePos;
 		dl->die = gpGlobals->curtime + 0.01f;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		if (m_bCritFire)
 		{
 			dl->color.r = 91;

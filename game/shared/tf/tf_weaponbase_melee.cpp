@@ -202,6 +202,11 @@ if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0
 void CTFWeaponBaseMelee::DoViewModelAnimation( void )
 {
 	Activity act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_SWINGHARD : ACT_VM_HITCENTER;
+	// play a crit animation if the melee is going to crit
+	if ( IsCurrentAttackACritical() )
+	{
+		act = ACT_VM_SWINGHARD;
+	}
 	SendWeaponAnim( act );
 }
 

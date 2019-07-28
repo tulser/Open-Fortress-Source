@@ -453,6 +453,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 		}		
 	}
 #endif
+	UTIL_Remove( pWeapon );
 	}
 	SetThink( &CBaseGrenade::SUB_Remove );
 	SetTouch( NULL );

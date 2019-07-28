@@ -350,6 +350,11 @@ void CTFWeaponBase::Precache()
 		PrecacheModel( pTFInfo->m_szBrassModel );
 	}
 
+	if (pTFInfo->m_szMagModel[0])
+	{
+		PrecacheModel( pTFInfo->m_szMagModel );
+	}
+
 	if ( pTFInfo->m_szMuzzleFlashParticleEffect && pTFInfo->m_szMuzzleFlashParticleEffect[0] )
 	{
 		PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffect );
@@ -1851,6 +1856,7 @@ acttable_t CTFWeaponBase::m_acttablePrimary[] =
 	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_PRIMARY,				false },
 	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_PRIMARY,				false },
 	{ ACT_MP_DEPLOYED,			ACT_MP_DEPLOYED_PRIMARY,			false },
+	{ ACT_MP_CROUCH_DEPLOYED,   ACT_MP_CROUCHWALK_DEPLOYED,         false },
 	{ ACT_MP_RUN,				ACT_MP_RUN_PRIMARY,					false },
 	{ ACT_MP_WALK,				ACT_MP_WALK_PRIMARY,				false },
 	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_PRIMARY,				false },
@@ -2136,22 +2142,23 @@ CTFPlayer *CTFWeaponBase::GetTFPlayerOwner() const
 // -----------------------------------------------------------------------------
 C_BaseEntity *CTFWeaponBase::GetWeaponForEffect()
 {
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pLocalPlayer )
-		return NULL;
+	//C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	C_TFPlayer *pOwner = GetTFPlayerOwner();
 
-#if 0
+	//if ( !pLocalPlayer )
+	//	return NULL;
+
 	// This causes many problems!
-	if ( pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
+	if ( pOwner && !pOwner->ShouldDrawThisPlayer() )
 	{
-		C_BasePlayer *pObserverTarget = ToBasePlayer( pLocalPlayer->GetObserverTarget() );
-		if ( pObserverTarget )
-			return pObserverTarget->GetViewModel();
-	}
-#endif
+		C_BaseViewModel *pViewModel = pOwner->GetViewModel();
 
-	if ( pLocalPlayer == GetTFPlayerOwner() )
-		return pLocalPlayer->GetViewModel();
+		if (pViewModel)
+			return pViewModel;
+	}
+
+	//if ( pLocalPlayer == GetTFPlayerOwner() )
+	//	return pLocalPlayer->GetViewModel();
 
 	return this;
 }
@@ -2450,6 +2457,10 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 					if ( pTFPlayer->GetViewModel() )
 					{
 						pTFPlayer->GetViewModel()->SetBodygroup( index, value );
+					}
+					else if ( pTFPlayer->GetActiveTFWeapon() )
+					{
+						pTFPlayer->GetActiveTFWeapon()->SetBodygroup( index, value );
 					}
 				}
 			}

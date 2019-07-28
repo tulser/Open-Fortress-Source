@@ -74,7 +74,7 @@ static botdata_t g_BotData[ MAX_PLAYERS ];
 // Purpose: Create a new Bot and put it in the game.
 // Output : Pointer to the new Bot, or NULL if there's no free clients.
 //-----------------------------------------------------------------------------
-CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass, const char *pszCustomName )
+CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass, const char *pszCustomName, const Vector &vecColor = vec3_origin )
 {
 	g_iNextBotTeam = iTeam;
 	g_iNextBotClass = iClass;
@@ -115,6 +115,9 @@ CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass, const char *ps
 	CTFPlayer *pPlayer = ((CTFPlayer *)CBaseEntity::Instance( pEdict ));
 	pPlayer->ClearFlags();
 	pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
+
+	// random color
+	pPlayer->m_vecPlayerColor = vecColor;
 
 	if ( bFrozen )
 		pPlayer->AddEFlags( EFL_BOT_FROZEN );
@@ -203,7 +206,33 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 
 		char const *pName = args.FindArg( "-name" );
 
-		BotPutInServer( bFrozen, iTeam, iClass, pName );
+		// pick a random color!
+		Vector m_vecPlayerColor = vec3_origin;
+
+		if ( TFGameRules() && TFGameRules()->IsDeathmatch() )
+		{
+			float flColors[3];
+
+			// allow a color to be picked manually
+			pVal = args.FindArg( "-color" );
+
+			if ( pVal )
+			{
+				UTIL_StringToVector( flColors, pVal );
+			}
+			else
+			{
+				for ( int i = 0; i < ARRAYSIZE( flColors ); i++ )
+					flColors[i] = RandomFloat( 1, 255 );
+			}
+
+			m_vecPlayerColor.Init( flColors[0], flColors[1], flColors[2] );
+
+			m_vecPlayerColor /= 255.0f;
+		}
+
+		// BotPutInServer( bFrozen, iTeam, iClass, pName );
+		BotPutInServer( bFrozen, iTeam, iClass, pName, m_vecPlayerColor );
 	}
 }
 

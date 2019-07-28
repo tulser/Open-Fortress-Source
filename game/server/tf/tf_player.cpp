@@ -1988,6 +1988,11 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 	}
 
+	if ( !pSpot )
+	{
+		return false;
+	}
+
 	// randomize the spawning position
 	//for ( int i = random->RandomInt( 0, 2 ); i > 0; i-- )
 	for (int i = random->RandomInt(0, 10); i > 0; i--)
@@ -2042,7 +2047,7 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 				//CBasePlayer *pPlayer = UTIL_GetLocalPlayer( i );
 				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
 
-				// DevMsg(1, "SPAWN: grabbing player"se);
+				// DevMsg(1, "SPAWN: grabbing player");
 
 				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() )
 				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() || ( InSameTeam( pPlayer ) ) )
@@ -4524,9 +4529,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo &info_modified )
 {
-	// No supporting this for the initial release.
-	return false;
-
 	if ( SelectWeightedSequence( ACT_DIESIMPLE ) == -1 )
 		return false;
 
@@ -4540,18 +4542,18 @@ bool CTFPlayer::PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo
 	// Check for a sniper headshot. (Currently only on Heavy.)
 	if ( pAttacker->GetPlayerClass()->IsClass( TF_CLASS_SNIPER ) && ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT ) )
 	{
-		if ( GetPlayerClass()->IsClass( TF_CLASS_HEAVYWEAPONS ) )
-		{
+		//if ( GetPlayerClass()->IsClass( TF_CLASS_HEAVYWEAPONS ) )
+		//{
 			bPlayDeathAnim = true;
-		}
+		//}
 	}
 	// Check for a spy backstab. (Currently only on Sniper.)
 	else if ( pAttacker->GetPlayerClass()->IsClass( TF_CLASS_SPY ) && ( info.GetDamageCustom() == TF_DMG_CUSTOM_BACKSTAB ) )
 	{
-		if ( GetPlayerClass()->IsClass( TF_CLASS_SNIPER ) )
-		{
+		//if ( GetPlayerClass()->IsClass( TF_CLASS_SNIPER ) )
+		//{
 			bPlayDeathAnim = true;
-		}
+		//}
 	}
 
 	// Play death animation?
@@ -7320,7 +7322,7 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 	bool bIsMedic = false;
 
 	//Do Lag comp on medics trying to heal team mates.
-	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true  && pPlayer->GetTeamNumber() != 77 )
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true )
 	{
 		bIsMedic = true;
 
@@ -7337,10 +7339,8 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 			}
 		}
 	}
-	if ( pPlayer->GetTeamNumber() == 77 || pPlayer->GetTeamNumber() == 4 || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY ) //lag compensate mercenary
-		return true;
-	
-	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false )
+
+	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && TFGameRules() && !TFGameRules()->IsDMGamemode() )
 		return false;
 	
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.
@@ -7694,6 +7694,10 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 
 void CTFPlayer::UpdatePlayerColor ( void )
 {
+	// bots have their own system so dont do this
+	if ( IsFakeClient() )
+		return;
+
 	Vector vecNewColor;
 	vecNewColor.x = V_atoi( engine->GetClientConVarValue( entindex(), "ofd_color_r" ) ) / 255.0f;
 	vecNewColor.y = V_atoi( engine->GetClientConVarValue( entindex(), "ofd_color_g" ) ) / 255.0f;
