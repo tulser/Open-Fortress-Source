@@ -1045,7 +1045,7 @@ void CTFGameRules::Activate()
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
-		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 20 );
+		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 25 );
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
