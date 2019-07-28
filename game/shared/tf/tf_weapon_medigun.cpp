@@ -1137,7 +1137,7 @@ void CWeaponMedigun::UpdateEffects( void )
 	m_hHealingTargetEffect.pEffect = NULL;
 
 	// Don't add targets if the medic is dead
-	if ( !pEffectOwner || pFiringPlayer->IsPlayerDead() || !pFiringPlayer->IsPlayerClass( TF_CLASS_MEDIC ) )
+	if ( !pEffectOwner || pFiringPlayer->IsPlayerDead() )
 		return;
 
 	// Add our targets

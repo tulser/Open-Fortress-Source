@@ -3850,6 +3850,8 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
 
+					// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
+					/*
 					Vector vecDir;
 					Vector vecForceOrigin;
 
@@ -3861,6 +3863,14 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
 					}
 					else
+					{
+						// failed to create a physics object
+						pEntity->Release();
+						return;
+					}
+					*/
+
+					if ( !pPhysicsObject )
 					{
 						// failed to create a physics object
 						pEntity->Release();
@@ -3910,6 +3920,8 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
 
+					// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
+					/*
 					Vector vecDir;
 					Vector vecForceOrigin;
 
@@ -3921,6 +3933,14 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
 					}
 					else
+					{
+						// failed to create a physics object
+						pEntity->Release();
+						return;
+					}
+					*/
+
+					if ( !pPhysicsObject )
 					{
 						// failed to create a physics object
 						pEntity->Release();
