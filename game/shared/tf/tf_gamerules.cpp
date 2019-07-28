@@ -2237,7 +2237,8 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 								UTIL_TraceLine( vSpawn, vSpawn + vDir * MAX_COORD_RANGE, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &traceline );
 								if ( traceline.DidHit() )
 								{
-									float distance = VectorNormalize( vSpawn - traceline.endpos );
+									Vector vRelative = vSpawn - traceline.endpos;
+									float distance = VectorNormalize( vRelative );
 									if ( distance > curdistance )
 									{
 										curdistance = distance;
