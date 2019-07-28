@@ -3800,7 +3800,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 		}
 		break;
 		
-		//mag eject
+		// mag eject system, similar to CSGO
 		// eject2 is for akimbo
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
@@ -3827,15 +3827,15 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 					if ( !model )
 					{
-						DevMsg( "CTempEnts::PhysicsProp: model index %i not found\n", iModel );
+						DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
 						return;
 					}
 
-					int iAttachment = pGun->LookupAttachment("magazine");
+					int iAttachment = pGun->LookupAttachment( "magazine" );
 
 					Vector vecSrc;
 					QAngle vecAng;
-					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
+					pGun->GetAttachment( iAttachment, vecSrc, vecAng );
 						
 					pEntity->SetModelName( modelinfo->GetModelName( model ) );
 					pEntity->SetAbsOrigin( vecSrc );
@@ -3850,48 +3850,59 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
 
-					if ( !pPhysicsObject )
+					Vector vecDir;
+					Vector vecForceOrigin;
+
+					if ( pPhysicsObject )
+					{
+						// apply force to the physics object, relative to the player
+						Vector vecForce = vecDir;
+						Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
+						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
+					}
+					else
 					{
 						// failed to create a physics object
 						pEntity->Release();
 						return;
 					}
 
+					// todo: add spam checks 
 					pEntity->StartFadeOut( 10.0 );
 				}
-				if (event == AE_CL_MAG_EJECT2)
+				if ( event == AE_CL_MAG_EJECT2 )
 				{
 					// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
 					// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
-					//pGun->SetBodygroup( 0, 1 ); 
+					//pGun->SetBodygroup( 0, 1 );
 
-					int iModel = modelinfo->GetModelIndex(pTFInfo->m_szMagModel);
+					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
 
 					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
 
-					if (!pEntity)
+					if ( !pEntity )
 						return;
 
-					const model_t *model = modelinfo->GetModel(iModel);
+					const model_t *model = modelinfo->GetModel( iModel );
 
-					if (!model)
+					if ( !model )
 					{
-						DevMsg("CTempEnts::PhysicsProp: model index %i not found\n", iModel);
+						DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
 						return;
 					}
 
-					int iAttachment = pGun->LookupAttachment("magazine2");
+					int iAttachment = pGun->LookupAttachment( "magazine2" );
 
 					Vector vecSrc;
 					QAngle vecAng;
-					pGun->GetAttachment(iAttachment, vecSrc, vecAng);
+					pGun->GetAttachment( iAttachment, vecSrc, vecAng );
+						
+					pEntity->SetModelName( modelinfo->GetModelName( model ) );
+					pEntity->SetAbsOrigin( vecSrc );
+					pEntity->SetAbsAngles( vecAng );
+					pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
 
-					pEntity->SetModelName(modelinfo->GetModelName(model));
-					pEntity->SetAbsOrigin(vecSrc);
-					pEntity->SetAbsAngles(vecAng);
-					pEntity->SetPhysicsMode(PHYSICS_MULTIPLAYER_CLIENTSIDE);
-
-					if (!pEntity->Initialize())
+					if ( !pEntity->Initialize() )
 					{
 						pEntity->Release();
 						return;
@@ -3899,14 +3910,25 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
 
-					if (!pPhysicsObject)
+					Vector vecDir;
+					Vector vecForceOrigin;
+
+					if ( pPhysicsObject )
+					{
+						// apply force to the physics object, relative to the player
+						Vector vecForce = vecDir;
+						Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
+						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
+					}
+					else
 					{
 						// failed to create a physics object
 						pEntity->Release();
 						return;
 					}
 
-					pEntity->StartFadeOut(10.0);
+					// todo: add spam checks 
+					pEntity->StartFadeOut( 10.0 );
 				}
 			}
 		}

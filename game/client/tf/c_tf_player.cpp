@@ -1974,6 +1974,15 @@ void C_TFPlayer::OnRemoveCritBoosted( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnPlayerClassChange( void )
 {
+	// execute class specific .cfgs if we have spawned
+	//if ( IsPlayer() )
+	if ( IsLocalPlayer() )
+	{
+		char szCmd[128];
+		Q_snprintf( szCmd, sizeof(szCmd), "exec %s.cfg \n", GetPlayerClass()->GetName() );
+		engine->ExecuteClientCmd( szCmd );
+	}
+
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
@@ -3871,7 +3880,8 @@ void C_TFPlayer::ValidateModelIndex( void )
 void C_TFPlayer::Simulate( void )
 {
 	//Frame updates
-	if ( this == C_BasePlayer::GetLocalPlayer() )
+	//if ( this == C_BasePlayer::GetLocalPlayer() )
+	if ( IsLocalPlayer() )
 	{
 		//Update the flashlight
 		Flashlight();
@@ -3907,6 +3917,15 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 		if ( GetActiveWeapon() )
 		{
 			GetActiveWeapon()->SetWeaponVisible( true );
+		}
+	}
+	else if ( event == AE_CL_BODYGROUP_SET_VALUE )
+	{
+		CTFWeaponBase *pTFWeapon = GetActiveTFWeapon();
+		
+		if ( pTFWeapon )
+		{
+			pTFWeapon->FireEvent(origin, angles, AE_CL_BODYGROUP_SET_VALUE, options);
 		}
 	}
 	else if ( event == TF_AE_CIGARETTE_THROW )
