@@ -16,6 +16,7 @@
 #include "tf_weapon_pipebomblauncher.h"
 #include "in_buttons.h"
 #include "fmtstr.h"
+#include "tf_viewmodel.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -2233,13 +2234,15 @@ void CTFPlayer::FireBullet( const FireBulletsInfo_t &info, bool bDoEffects, int 
 					iAttachment = pWeapon->LookupAttachment( "muzzle" );
 				}
 
-				C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+				//C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 				bool bInToolRecordingMode = clienttools->IsInRecordingMode();
 
 				// try to align tracers to actual weapon barrel if possible
-				if ( IsLocalPlayer() && !bInToolRecordingMode )
+				//if ( IsLocalPlayer() && !bInToolRecordingMode )
+				if ( !ShouldDrawThisPlayer() && !bInToolRecordingMode )
 				{
+					/*
 					C_BaseViewModel *pViewModel = GetViewModel(0);
 
 					if ( pViewModel )
@@ -2253,8 +2256,9 @@ void CTFPlayer::FireBullet( const FireBulletsInfo_t &info, bool bDoEffects, int 
 					pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE )
 				{	
 					// get our observer target's view model
+					*/
 
-					C_BaseViewModel *pViewModel = pLocalPlayer->GetViewModel(0);
+					C_TFViewModel *pViewModel = dynamic_cast<C_TFViewModel *>( GetViewModel() );
 
 					if ( pViewModel )
 					{

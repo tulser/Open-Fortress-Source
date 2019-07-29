@@ -1974,6 +1974,15 @@ void C_TFPlayer::OnRemoveCritBoosted( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::OnPlayerClassChange( void )
 {
+	// execute class specific .cfgs if we have spawned
+	//if ( IsPlayer() )
+	if ( IsLocalPlayer() )
+	{
+		char szCmd[128];
+		Q_snprintf( szCmd, sizeof(szCmd), "exec %s.cfg \n", GetPlayerClass()->GetName() );
+		engine->ExecuteClientCmd( szCmd );
+	}
+
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
@@ -3655,14 +3664,24 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 
 	m_pSaveMeEffect = ParticleProp()->Create( "speech_mediccall", PATTACH_POINT_FOLLOW, "head" );
 
-	// If the local player is a medic, add this player to our list of medic callers
-	if ( pLocalPlayer && pLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && pLocalPlayer->IsAlive() == true )
+	// If the local player has a medigun, add this player to our list of medic callers
+	if ( pLocalPlayer && pLocalPlayer->IsAlive() == true )
 	{
-		Vector vecPos;
-		if ( GetAttachmentLocal( LookupAttachment( "head" ), vecPos ) )
+		CTFWeaponBase *pWpn = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
+
+		if ( pWpn == NULL )
+			return;
+
+		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( pWpn );
+
+		if ( pWeapon )
 		{
-			vecPos += Vector(0,0,18);	// Particle effect is 18 units above the attachment
-			CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
+			Vector vecPos;
+			if ( GetAttachmentLocal( LookupAttachment( "head" ), vecPos ) )
+			{
+				vecPos += Vector(0,0,18);	// Particle effect is 18 units above the attachment
+				CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
+			}
 		}
 	}
 }
@@ -3763,8 +3782,6 @@ void C_TFPlayer::SetHealer( C_TFPlayer *pHealer, float flChargeLevel )
 //-----------------------------------------------------------------------------
 float C_TFPlayer::MedicGetChargeLevel( void )
 {
-	if ( IsPlayerClass(TF_CLASS_MEDIC) )
-	{
 		CTFWeaponBase *pWpn = ( CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
 
 		if ( pWpn == NULL )
@@ -3774,9 +3791,8 @@ float C_TFPlayer::MedicGetChargeLevel( void )
 
 		if ( pWeapon )
 			return pWeapon->GetChargeLevel();
-	}
-
-	return 0;
+		else
+			return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -3784,15 +3800,12 @@ float C_TFPlayer::MedicGetChargeLevel( void )
 //-----------------------------------------------------------------------------
 CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
 {
-	if ( IsPlayerClass(TF_CLASS_MEDIC) )
-	{
 		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( GetActiveWeapon() );
 
 		if ( pWeapon )
 			return pWeapon->GetHealTarget();
-	}
-
-	return NULL;
+		else
+			return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -3871,7 +3884,8 @@ void C_TFPlayer::ValidateModelIndex( void )
 void C_TFPlayer::Simulate( void )
 {
 	//Frame updates
-	if ( this == C_BasePlayer::GetLocalPlayer() )
+	//if ( this == C_BasePlayer::GetLocalPlayer() )
+	if ( IsLocalPlayer() )
 	{
 		//Update the flashlight
 		Flashlight();
@@ -3907,6 +3921,15 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 		if ( GetActiveWeapon() )
 		{
 			GetActiveWeapon()->SetWeaponVisible( true );
+		}
+	}
+	else if ( event == AE_CL_BODYGROUP_SET_VALUE )
+	{
+		CTFWeaponBase *pTFWeapon = GetActiveTFWeapon();
+		
+		if ( pTFWeapon )
+		{
+			pTFWeapon->FireEvent(origin, angles, AE_CL_BODYGROUP_SET_VALUE, options);
 		}
 	}
 	else if ( event == TF_AE_CIGARETTE_THROW )

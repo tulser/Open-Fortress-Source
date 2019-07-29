@@ -128,6 +128,7 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 
 // Not implemented.
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
@@ -1045,7 +1046,7 @@ void CTFGameRules::Activate()
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
-		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 50 );
+		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 25 );
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
@@ -1054,6 +1055,15 @@ void CTFGameRules::Activate()
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
 		engine->ServerCommand("exec config_gg.cfg \n");
+		engine->ServerExecute();
+		mp_disable_respawn_times.SetValue(1);
+	}	
+	
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_3wave") && !m_bListOnly ) || ofd_threewave.GetInt() == 1 )
+	{
+		AddGametype(TF_GAMETYPE_3WAVE);
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Threewave gamemode config file\n", NULL);
+		engine->ServerCommand("exec config_3wave.cfg \n");
 		engine->ServerExecute();
 		mp_disable_respawn_times.SetValue(1);
 	}

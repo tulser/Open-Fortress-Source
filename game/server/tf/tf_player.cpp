@@ -85,6 +85,7 @@ extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
 extern ConVar	ofd_mutators;
+extern ConVar	ofd_threewave;
 extern ConVar	of_infiniteammo;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -1294,6 +1295,8 @@ void CTFPlayer::GiveDefaultItems()
 		ManageClanArenaWeapons( pData );
 	else if ( ofd_mutators.GetInt() == 5 )
 		ManageRocketArenaWeapons( pData );
+	else if ( ofd_threewave.GetInt() == 1 )
+		Manage3WaveWeapons( pData );
 	else if ( IsRetroModeOn() )
 		ManageTFCWeapons( pData );
 	else
@@ -1831,6 +1834,36 @@ void CTFPlayer::ManageRocketArenaWeapons(TFPlayerClassData_t *pData)
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
 
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::Manage3WaveWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grapple");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	
 	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
 	{
 		if (GetActiveWeapon() != NULL) break;
@@ -4823,7 +4856,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
 
-	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop || pActiveWeapon->GetWeaponID() == TF_WEAPON_BUILDER || pActiveWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_DESTROY )
+	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop || pActiveWeapon->GetWeaponID() == TF_WEAPON_BUILDER || pActiveWeapon->GetWeaponID() == TF_WEAPON_GRAPPLE || pActiveWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_DESTROY )
 	{
 		// Don't drop this one, find another one to drop
 

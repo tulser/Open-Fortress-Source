@@ -382,6 +382,7 @@ public:
 	virtual bool	IsTeamplay(void) { return InGametype( TF_GAMETYPE_TDM ); }
 	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
 	virtual bool	IsGGGamemode(void) { return InGametype( TF_GAMETYPE_GG ); }
+	virtual bool	Is3WaveGamemode(void) { return InGametype( TF_GAMETYPE_3WAVE ); }
 	virtual bool	IsArenaGamemode(void) { return InGametype( TF_GAMETYPE_ARENA ); }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
