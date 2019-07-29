@@ -597,10 +597,10 @@ private:
 	bool				m_bAutoSwitchWeapons;
 	
 public:
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	float				m_flPowerPlayTime;
+//	bool				SetPowerplayEnabled( bool bOn );
+//  bool				PlayerHasPowerplay( void );
+//	void				PowerplayThink( void );
+//	float				m_flPowerPlayTime;
 	void				SetCustomModel( inputdata_t &inputdata );
 	void				AddMoney( inputdata_t &inputdata );
 	void				SetMoney( inputdata_t &inputdata );

@@ -1029,7 +1029,7 @@ void CTFPlayer::Spawn()
 	m_flNextSpeakWeaponFire = gpGlobals->curtime;
 
 	m_bIsIdle = false;
-	m_flPowerPlayTime = 0.0;
+	//m_flPowerPlayTime = 0.0;
 
 	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
@@ -2975,7 +2975,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		data->deleteThis();
 	}
-	else if ( FStrEq( pcmd, "condump_on" ) )
+	/*	else if ( FStrEq( pcmd, "condump_on" ) )
 	{
 		if ( !PlayerHasPowerplay() )
 		{
@@ -3030,7 +3030,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 					return true;
 			}
 		}
-	}
+	}*/
 
 	return BaseClass::ClientCommand( args );
 }
@@ -7610,16 +7610,16 @@ void TestRR( const CCommand &args )
 static ConCommand tf_testrr( "tf_testrr", TestRR, "Force the player under your crosshair to speak a response rule concept. Format is tf_testrr <concept>, or tf_testrr <player name> <concept>", FCVAR_CHEAT );
 
 
-CON_COMMAND_F( tf_crashclients, "Testing only, crashes about 50 percent of the connected clients.", FCVAR_CHEAT )
+CON_COMMAND_F(tf_crashclients, "Testing only, crashes about 50 percent of the connected clients.", FCVAR_CHEAT)
 {
-	for ( int i = 1; i < gpGlobals->maxClients; ++i )
+	for (int i = 1; i < gpGlobals->maxClients; ++i)
 	{
-		if ( RandomFloat( 0.0f, 1.0f ) < 0.5f )
+		if (RandomFloat(0.0f, 1.0f) < 0.5f)
 		{
-			CBasePlayer *pl = UTIL_PlayerByIndex( i + 1 );
-			if ( pl )
+			CBasePlayer* pl = UTIL_PlayerByIndex(i + 1);
+			if (pl)
 			{
-				engine->ClientCommand( pl->edict(), "crash\n" );
+				engine->ClientCommand(pl->edict(), "crash\n");
 			}
 		}
 	}
@@ -7628,7 +7628,7 @@ CON_COMMAND_F( tf_crashclients, "Testing only, crashes about 50 percent of the c
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::SetPowerplayEnabled( bool bOn )
+/*bool CTFPlayer::SetPowerplayEnabled( bool bOn )
 {
 	if ( bOn )
 	{
@@ -7705,7 +7705,7 @@ void CTFPlayer::PowerplayThink( void )
 
 		SetContextThink( &CTFPlayer::PowerplayThink, gpGlobals->curtime + flDuration + RandomFloat( 2, 5 ), "TFPlayerLThink" );
 	}
-}
+} */
 
 //-----------------------------------------------------------------------------
 // Purpose: 

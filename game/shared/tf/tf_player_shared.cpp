@@ -755,7 +755,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		}
 	}
 
-	if ( InCond( TF_COND_BURNING ) && ( m_pOuter->m_flPowerPlayTime < gpGlobals->curtime ) )
+	if ( InCond( TF_COND_BURNING ) /*&& ( m_pOuter->m_flPowerPlayTime gpGlobals->curtime )*/ )
 	{
 		// If we're underwater, put the fire out
 		if ( gpGlobals->curtime > m_flFlameRemoveTime || m_pOuter->GetWaterLevel() >= WL_Waist )
@@ -1881,10 +1881,10 @@ void CTFPlayerShared::RecalculateInvuln( bool bInstantRemove )
 {
 	bool bShouldBeInvuln = false;
 
-	if ( m_pOuter->m_flPowerPlayTime > gpGlobals->curtime )
+	/*if ( m_pOuter->m_flPowerPlayTime > gpGlobals->curtime )
 	{
 		bShouldBeInvuln = true;
-	}
+	}*/
 
 	// If we're not carrying the flag, and we're being healed by a medic 
 	// who's generating invuln, then we should get invuln.
