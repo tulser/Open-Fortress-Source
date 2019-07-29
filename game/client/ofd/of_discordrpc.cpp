@@ -38,7 +38,7 @@ ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Disc
 #define DISCORD_UPDATE_RATE 10.0f
 
 // placeholder code SUCKS i go to BED.
-#define MAP_COUNT 48
+#define MAP_COUNT 50
 
 // TODO give these better fitting names and move them to .h
 const char *g_aClassImage[] =
@@ -119,7 +119,9 @@ const char *g_aMapList[] =
 	"dm_legacy",
 	"dm_moonbase",
 	"dm_cargo",
-	"dm_bailey"
+	"dm_bailey",
+	"mctf_splashdown",
+	"dm_dev_itemtest"
 };
 
 CTFDiscordRPC g_discordrpc;
@@ -245,7 +247,9 @@ void CTFDiscordRPC::SetLogo( void )
 				}
 			}
 		}
+		//steam rpc setts the steam status display to show what map you are playing on
 		steamapicontext->SteamFriends()->SetRichPresence("steam_display", m_szLatchedMapname);
+		//pszImageLarge is used for discord rpc to set the name of the icon it should call in rpc
 		pszImageLarge = pMapIcon;
 	}
 
@@ -279,6 +283,7 @@ void CTFDiscordRPC::SetLogo( void )
 		}
 	}
 	
+	//strings that set the the discord rpc icons and text
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;
 	m_sDiscordRichPresence.smallImageKey = pszImageSmall;

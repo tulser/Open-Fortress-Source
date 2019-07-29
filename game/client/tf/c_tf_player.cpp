@@ -3664,14 +3664,24 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 
 	m_pSaveMeEffect = ParticleProp()->Create( "speech_mediccall", PATTACH_POINT_FOLLOW, "head" );
 
-	// If the local player is a medic, add this player to our list of medic callers
-	if ( pLocalPlayer && pLocalPlayer->IsPlayerClass( TF_CLASS_MEDIC ) && pLocalPlayer->IsAlive() == true )
+	// If the local player has a medigun, add this player to our list of medic callers
+	if ( pLocalPlayer && pLocalPlayer->IsAlive() == true )
 	{
-		Vector vecPos;
-		if ( GetAttachmentLocal( LookupAttachment( "head" ), vecPos ) )
+		CTFWeaponBase *pWpn = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
+
+		if ( pWpn == NULL )
+			return;
+
+		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( pWpn );
+
+		if ( pWeapon )
 		{
-			vecPos += Vector(0,0,18);	// Particle effect is 18 units above the attachment
-			CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
+			Vector vecPos;
+			if ( GetAttachmentLocal( LookupAttachment( "head" ), vecPos ) )
+			{
+				vecPos += Vector(0,0,18);	// Particle effect is 18 units above the attachment
+				CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
+			}
 		}
 	}
 }
@@ -3772,8 +3782,6 @@ void C_TFPlayer::SetHealer( C_TFPlayer *pHealer, float flChargeLevel )
 //-----------------------------------------------------------------------------
 float C_TFPlayer::MedicGetChargeLevel( void )
 {
-	if ( IsPlayerClass(TF_CLASS_MEDIC) )
-	{
 		CTFWeaponBase *pWpn = ( CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
 
 		if ( pWpn == NULL )
@@ -3783,9 +3791,8 @@ float C_TFPlayer::MedicGetChargeLevel( void )
 
 		if ( pWeapon )
 			return pWeapon->GetChargeLevel();
-	}
-
-	return 0;
+		else
+			return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -3793,15 +3800,12 @@ float C_TFPlayer::MedicGetChargeLevel( void )
 //-----------------------------------------------------------------------------
 CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
 {
-	if ( IsPlayerClass(TF_CLASS_MEDIC) )
-	{
 		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( GetActiveWeapon() );
 
 		if ( pWeapon )
 			return pWeapon->GetHealTarget();
-	}
-
-	return NULL;
+		else
+			return NULL;
 }
 
 //-----------------------------------------------------------------------------
