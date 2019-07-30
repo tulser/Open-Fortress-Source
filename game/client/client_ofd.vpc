@@ -409,8 +409,10 @@ $Project "Client (OFD)"
 			$File	"hl2\fx_hl2_impacts.cpp"
 			$File	"hl2\fx_hl2_tracers.cpp"
 			$File	"hl2\shieldproxy.cpp"
+			$File	"hl2\hud_credits.cpp"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
+			
 		}
 	}
 }

@@ -33,6 +33,12 @@ void RegisterUserMessages()
 	usermessages->Register( "VoiceMask", VOICE_MAX_PLAYERS_DW*4 * 2 + 1 );
 	usermessages->Register( "RequestState", 0 );
 
+	// hl2
+	usermessages->Register( "CreditsMsg", 1 );
+	usermessages->Register( "SquadMemberDied", 0 );
+	usermessages->Register( "UpdateJalopyRadar", -1 );
+	usermessages->Register( "LogoTimeMsg", 4 );
+
 	usermessages->Register( "Damage", -1 );		// for HUD damage indicators
 	usermessages->Register( "HintText", -1 );	// Displays hint text display
 	usermessages->Register( "KeyHintText", -1 );	// Displays hint text display
@@ -49,7 +55,7 @@ void RegisterUserMessages()
 	usermessages->Register( "HudNotifyCustom", -1 );
 
 	usermessages->Register( "PlayerStatsUpdate", -1 );
-
+		
 	RegisterHapticMessages();
 }
 

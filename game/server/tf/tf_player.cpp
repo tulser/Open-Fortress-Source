@@ -1900,9 +1900,9 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 			// in deathmatch players need to spawn further away from people for balance
 			// if the game isn't deathmatch we don't want to do this so go back to normal
-			if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+			if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
 			{
-				bFind = SelectFurtherSpawnSpots( pSpawnPointName, pSpot );
+				bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
 			}
 			else
 			{
@@ -1916,6 +1916,41 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 			// need to save this for later so we can apply and modifiers to the armor and grenades...after the call to InitClass() //by tf2team
 			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
+
+			if ( !pSpot )
+			{
+				Warning( "Player Spawn: no valid info_player_teamspawn found, fallbacking to info_player_deathmatch\n" );
+
+				pSpawnPointName = "info_player_deathmatch";
+
+				// this is likely to be a deathmatch map if it has info_player_deathmatch spawnpoints, therefore we use dm spawn logic
+				bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
+
+				if ( bFind )
+				{
+					g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
+				}
+
+				m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
+
+				if ( !pSpot )
+				{
+					Warning( "Player Spawn: no valid info_player_deathmatch found, fallbacking to info_player_start\n" );
+
+					pSpawnPointName = "info_player_start";
+
+					// this is likely to be a singleplayer HL2 map, therefore we use normal spawn logic
+					bFind = SelectSpawnSpot( pSpawnPointName, pSpot );
+
+					if ( bFind )
+					{
+						g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
+					}
+
+					m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
+				}
+			}
+
 			break;
 		}
 	case TEAM_SPECTATOR:
@@ -1929,24 +1964,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 	if ( !pSpot )
 	{
-		Warning( "Player Spawn: no valid info_player_teamspawn on level\n" );
-
-		// if no teamspawn is found then try find deathmatch point for hl2dm
-		pSpot = FindPlayerStart( "info_player_deathmatch" );
-		if ( pSpot )
-			return pSpot;
-		if ( !pSpot )
-		{
-			Warning( "Player Spawn: no valid info_player_deathmatch on level\n" );
-
-			// if no deathmatch point is found then try find start point for normal hl2
-			pSpot = FindPlayerStart( "info_player_start" );
-			return CBaseEntity::Instance( INDEXENT(0) );
-			if ( pSpot )
-				return pSpot;
-
-			return CBaseEntity::Instance( INDEXENT(0) );
-		}
+		Warning( "Player Spawn: no valid spawn point was found!\n" );
 	}
 
 	return pSpot;
@@ -1976,19 +1994,27 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 	{
 		if ( pSpot )
 		{
-			// Check to see if this is a valid team spawn (player is on this team, etc.).
-			if( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
+			if ( FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
 			{
-				// Check for a bad spawn entity.
-				if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
-				{
-					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-					continue;
-				}
-
 				// Found a valid spawn point.
 				return true;
+			}
+			else
+			{
+				// Check to see if this is a valid team spawn (player is on this team, etc.).
+				if( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+				{
+					// Check for a bad spawn entity.
+					if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
+					{
+						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+						continue;
+					}
 
+					// Found a valid spawn point.
+					return true;
+				}
 			}
 		}
 
@@ -2011,7 +2037,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 //-----------------------------------------------------------------------------
 // Purpose: Spawning for deathmatch
 //-----------------------------------------------------------------------------
-bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity* &pSpot )
+bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSpot )
 {
 	// Get an initial spawn point.
 	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
@@ -2021,6 +2047,7 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 	}
 
+	// if no spawnpoints are found then just spawn at the origin of the map instead of crashing...
 	if ( !pSpot )
 	{
 		return false;
@@ -2028,126 +2055,81 @@ bool CTFPlayer::SelectFurtherSpawnSpots( const char *pEntClassName, CBaseEntity*
 
 	// randomize the spawning position
 	//for ( int i = random->RandomInt( 0, 2 ); i > 0; i-- )
-	for (int i = random->RandomInt(0, 10); i > 0; i--)
+	for ( int i = random->RandomInt(0, 64); i > 0; i-- )
 		// DevMsg(1, "SPAWN: random spawn");
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 
-  
+  	// Get an initial spawn point.
+	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	if ( !pSpot )
+	{
+		// Sometimes the first spot can be NULL????
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
 
 	// First we try to find a spawn point that is fully clear. If that fails,
 	// we look for a spawnpoint that's clear except for another players. We
 	// don't collide with our team members, so we should be fine.
-	bool bIgnorePlayers = false;
+	bool bIgnorePlayers = true;
 
-	// grab the furthest spawn point from each player 
 	CBaseEntity *pFirstSpot = pSpot;
 
-	float flFurthest = 0.0f;
-	// DevMsg(1, "SPAWN: further");
-	CBaseEntity *pFurthest = NULL;
-
-	do
+	do 
 	{
-		if ( !pSpot )
+		if ( pSpot )
 		{
-			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-			continue;
-		}
-
-		// Check to see if this is a valid team spawn (player is on this team, etc.).
-        if( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
-		{
-			// Check for a bad spawn entity.
-			if ( pSpot->GetAbsOrigin() == vec3_origin )
+			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
+			if ( FStrEq( STRING ( pSpot->m_iClassname ), "info_player_start" ) )
 			{
-				pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-				continue;
+				// Found a valid spawn point.
+				return true;
 			}
-
-			//
-			// check distance from other players
-			//
-
-			// are there players active in the game world?
-			bool bPlayersActive = false;
-			// DevMsg(1, "SPAWN: players active");
-
-			// float flClosestPlayerDistance = 999999;
-			float flClosestPlayerDistance = FLT_MAX;
-
-			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+			else
 			{
-				//CBasePlayer *pPlayer = UTIL_GetLocalPlayer( i );
-				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-				// DevMsg(1, "SPAWN: grabbing player");
-
-				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() )
-				// if ( !pPlayer || pPlayer == this || pPlayer->IsAlive() || ( InSameTeam( pPlayer ) ) )
-				if ( !pPlayer || pPlayer == this || !pPlayer->IsAlive() || ( InSameTeam( pPlayer ) ) )
-					continue;
-
-				bPlayersActive = true;
-
-				//float flDist = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).Length();
-				float flDistSqr = (pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin()).LengthSqr();
-
-				// DevMsg(1, "SPAWN: check length");
-
-				//if ( flDist > flClosestPlayerDistance )
-				//if ( flDist < flClosestPlayerDistance )
-				if ( flDistSqr < flClosestPlayerDistance )
+				// Check to see if this is a valid team spawn (player is on this team, etc.).
+				if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
 				{
-					//flClosestPlayerDististance = flDist;
-					flClosestPlayerDistance = flDistSqr;
+					// Check for a bad spawn entity.
+					if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
+					{
+						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+						continue;
+					}
+
+					// Found a valid spawn point.
+					return true;
+
 				}
-			}
-
-			// no players active? go to the first one
-			// DevMsg(1, "SPAWN: no active player");
-			if ( !bPlayersActive )
-			{
-				pFurthest = pSpot;
-				break;
-			}
-
-			if ( flClosestPlayerDistance > flFurthest )
-			{
-				// DevMsg(1, "SPAWN: cpd > f");
-				flFurthest = flClosestPlayerDistance;
-				pFurthest = pSpot;
 			}
 		}
 
 		// Get the next spawning point to check.
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	}
+
+		if ( pSpot == pFirstSpot && !bIgnorePlayers )
+		{
+			// Loop through again, ignoring players
+			bIgnorePlayers = true;
+			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+		}
+	} 
+
 	// Continue until a valid spawn point is found or we hit the start.
-	while ( pSpot != pFirstSpot );
-
-	if ( pFurthest )
-	{
-		pSpot = pFurthest;
-
-		// Found a valid spawn point.
-		return true;
-	}
-
-	// telefragging
-	// copied from tf_player
-	CBaseEntity *ent = NULL;
+	while ( pSpot != pFirstSpot ); 
 
 	if ( pSpot )
 	{
-		for (CEntitySphereQuery sphere(pSpot->GetAbsOrigin(), 100); (ent = sphere.GetCurrentEntity()) != NULL; sphere.NextEntity())
+		// telefragging!
+		CBaseEntity *ent = NULL;
+
+		for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 95 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 		{
 			// don't telefrag ourselves
-			if (ent->IsPlayer() && ent != this)
+			if ( ent->IsPlayer() && ent != this )
 			{
 				// special damage type to bypass uber or spawn protection in DM
-				// DevMsg(1, "SPAWN: telefragging our homie");
-				CTakeDamageInfo info(this, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG);
-				ent->TakeDamage(info);
+				CTakeDamageInfo info( this, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+				ent->TakeDamage( info );
 			}
 		}
 	}

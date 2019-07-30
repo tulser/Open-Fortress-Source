@@ -464,7 +464,7 @@ private:
 
 	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
 	// for deathmatch
-	bool				SelectFurtherSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
+	bool				SelectDMSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
 
 	void				PrecachePlayerModels( void );
 	void				RemoveNemesisRelationships();

@@ -13,6 +13,8 @@
 #include "team_spawnpoint.h"
 #include "team.h"
 
+#include "tf_gamerules.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -45,8 +47,15 @@ void CTeamSpawnPoint::Activate( void )
 	}
 	else
 	{
-		Warning( "info_player_teamspawn with invalid team number: %d\n", GetTeamNumber() );
-		UTIL_Remove( this );
+		if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
+		{
+			GetGlobalTeam( 4 )->AddSpawnpoint( this );
+		}
+		else
+		{
+			Warning( "info_player_teamspawn with invalid team number: %d\n", GetTeamNumber() );
+			UTIL_Remove( this );
+		}
 	}
 }
 
