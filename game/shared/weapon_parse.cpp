@@ -435,7 +435,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	{
 		if (g_bUsedWeaponSlots[iSlotDM][iPosition])
 		{
-			Warning( "Duplicately assigned weapon slots in selection hud:  %s (%s, %d, %d)\n", szClassName, szPrintName, iSlotDM, iPosition );
+			DevMsg( "Duplicately assigned weapon slots in selection hud:  %s (%s, %d, %d)\n", szClassName, szPrintName, iSlotDM, iPosition );
 		}
 		g_bUsedWeaponSlots[iSlotDM][iPosition] = true;
 	}

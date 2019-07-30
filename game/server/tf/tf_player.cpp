@@ -1939,8 +1939,8 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 					pSpawnPointName = "info_player_start";
 
-					// this is likely to be a singleplayer HL2 map, therefore we use normal spawn logic
-					bFind = SelectSpawnSpot( pSpawnPointName, pSpot );
+					// this is likely to be a singleplayer HL2 map and it may have randomized info_player_starts, therefore we use dm spawn logic again
+					bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
 
 					if ( bFind )
 					{
@@ -2119,17 +2119,21 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 
 	if ( pSpot )
 	{
-		// telefragging!
-		CBaseEntity *ent = NULL;
-
-		for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 95 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+		// don't telefrag if the spawn point is a info_player_start
+		if ( !FStrEq( STRING ( pSpot->m_iClassname ), "info_player_start" ) )
 		{
-			// don't telefrag ourselves
-			if ( ent->IsPlayer() && ent != this )
+			// telefragging
+			CBaseEntity *ent = NULL;
+
+			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 95 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 			{
-				// special damage type to bypass uber or spawn protection in DM
-				CTakeDamageInfo info( this, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
-				ent->TakeDamage( info );
+				// don't telefrag ourselves
+				if ( ent->IsPlayer() && ent != this )
+				{
+					// special damage type to bypass uber or spawn protection in DM
+					CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+					ent->TakeDamage( info );
+				}
 			}
 		}
 	}

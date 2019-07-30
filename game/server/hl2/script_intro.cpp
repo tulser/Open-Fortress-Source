@@ -112,8 +112,6 @@ void CScriptIntro::Spawn( void )
 //-----------------------------------------------------------------------------
 void CScriptIntro::Activate( void )
 {
-	// disabled as the shaders do not work for this!
-	/*
 	// Restore our script pointer, this is necessary to trigger other internal logic to due with PVS checks
 	if ( m_bActive )
 	{
@@ -121,7 +119,6 @@ void CScriptIntro::Activate( void )
 	}
 
 	BaseClass::Activate();
-	*/
 }
 
 void CScriptIntro::Precache()
@@ -312,11 +309,8 @@ void CScriptIntro::BlendComplete( )
 //-----------------------------------------------------------------------------
 void CScriptIntro::InputActivate( inputdata_t &inputdata )
 {
-	// disabled as the shaders do not work for this!
-	/*
 	m_bActive = true;
 	g_hIntroScript = this;
-	*/
 }
 
 //-----------------------------------------------------------------------------
