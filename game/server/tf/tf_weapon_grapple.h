@@ -14,7 +14,7 @@
 #endif
 #include "tf_weaponbase_gun.h"
 //#include "basehlcombatweapon.h"
-#include "sprite.h"
+#include "Sprite.h"
 #include "props.h"
 #ifndef CLIENT_DLL
 #include "rope.h"
