@@ -2302,8 +2302,16 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
     // Check the team if not in deathmatch
-	if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() && !TFGameRules()->IsDMGamemode() )
-		return false;
+	if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
+	{
+		if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
+		{
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 	if ( !pSpot->IsTriggered( pPlayer ) )
 		return false;
