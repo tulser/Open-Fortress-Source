@@ -20,6 +20,7 @@
 #endif
 
 // BaseModUI High-level windows
+#include "playerlistdialog.h"
 #include "VTransitionScreen.h"
 //#include "VAchievements.h"
 #include "vaddonassociation.h"
@@ -543,7 +544,7 @@ CBaseModPanel::CBaseModPanel(): BaseClass(0, "CBaseModPanel"),
 	// needed to allow engine to exec startup commands (background map signal is 1 frame behind) 
 	m_DelayActivation = 3;
 
-	m_UIScheme = vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/menuscheme.res", "SwarmScheme" );
+	m_UIScheme = vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/GameUIScheme.res", "SwarmScheme" );
 
 	SetScheme( m_UIScheme );
 
@@ -1693,13 +1694,28 @@ void CBaseModPanel::OpenCreateMultiplayerGameDialog( Panel *parent )
 {
 	if ( IsPC() )
 	{			
-		if ( !m_hOptionsDialog.Get() )
+		if ( !m_hCreateMultiplayerGameDialog.Get() )
 		{
 			m_hCreateMultiplayerGameDialog = new CCreateMultiplayerGameDialog( parent );
 			BaseUI_PositionDialog( m_hCreateMultiplayerGameDialog );
 		}
 		if ( m_hCreateMultiplayerGameDialog )
 			m_hCreateMultiplayerGameDialog->Activate();
+	}
+}
+
+//=============================================================================
+void CBaseModPanel::OpenPlayerListDialog( Panel *parent )
+{
+	if ( IsPC() )
+	{			
+		if ( !m_hPlayerListDialog.Get() )
+		{
+			m_hPlayerListDialog = new CPlayerListDialog( parent );
+			BaseUI_PositionDialog( m_hPlayerListDialog );
+		}
+
+		m_hPlayerListDialog->Activate();
 	}
 }
 
@@ -2340,15 +2356,15 @@ const char *CBaseModPanel::GetUISoundName(  UISound_t UISound )
 	switch ( UISound )
 	{
 	case UISOUND_BACK:
-		return "UI/menu_back.wav";
+		return "UI/buttonclickrelease.wav";
 	case UISOUND_ACCEPT:
-		return "UI/menu_accept.wav";
+		return "UI/buttonclick.wav";
 	case UISOUND_INVALID:
 		return "UI/menu_invalid.wav";
 	case UISOUND_COUNTDOWN:
 		return "UI/menu_countdown.wav";
 	case UISOUND_FOCUS:
-		return "UI/menu_focus.wav";
+		return "UI/buttonrollover.wav";
 	case UISOUND_CLICK:
 		return "UI/buttonclick.wav";
 	case UISOUND_DENY:

@@ -42,6 +42,7 @@
 #include "tf_hud_menu_engy_destroy.h"
 #include "tf_hud_menu_spy_disguise.h"
 #include "tf_statsummary.h"
+#include "of_loadout.h"
 #include "tf_hud_freezepanel.h"
 #include "cam_thirdperson.h"
 #include "clienteffectprecachesystem.h"
@@ -191,6 +192,10 @@ void ClientModeTFNormal::Init()
 			pPanel->InvalidateLayout( false, true );
 			pPanel->SetVisible( false );
 			pPanel->MakePopup( false );
+			CTFLoadoutPanel *pLoadoutPanel = GLoadoutPanel();
+			pLoadoutPanel->InvalidateLayout( false, true );
+			pLoadoutPanel->SetVisible( false );
+			pLoadoutPanel->MakePopup( false );
 			m_pGameUI->SetLoadingBackgroundDialog( pPanel->GetVPanel() );
 		}		
 	}

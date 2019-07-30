@@ -39,9 +39,9 @@ extern const char *COM_GetModDirectory( void );
 extern IGameUIFuncs *gameuifuncs;
 
 // Define me some colors
-#define BACKGROUND_CLR 53, 86, 117, 255
-#define HIGHLIGHT_CLR 97, 210, 255, 255
-#define TEXT_CLR 200, 200, 200, 255
+#define BACKGROUND_CLR 64, 32, 64, 255
+#define HIGHLIGHT_CLR 184, 64, 184, 255
+#define TEXT_CLR 255, 255, 255, 255
 
 
 //=============================================================================

@@ -515,6 +515,7 @@ void MainMenu::OnCommand( const char *command )
 		}
 		else
 		{
+			engine->ClientCmd( command );
 			BaseClass::OnCommand( command );
 		}
 	}

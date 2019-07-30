@@ -254,10 +254,10 @@ void CGameUI::PostInit()
 		enginesound->PrecacheSound( "UI/buttonclickrelease.wav", true, true );
 		enginesound->PrecacheSound( "player/suit_denydevice.wav", true, true );
 
-		enginesound->PrecacheSound( "UI/menu_accept.wav", true, true );
-		enginesound->PrecacheSound( "UI/menu_focus.wav", true, true );
+		enginesound->PrecacheSound( "UI/buttonclick.wav", true, true );
+		enginesound->PrecacheSound( "UI/buttonrollover.wav", true, true );
 		enginesound->PrecacheSound( "UI/menu_invalid.wav", true, true );
-		enginesound->PrecacheSound( "UI/menu_back.wav", true, true );
+		enginesound->PrecacheSound( "UI/buttonclickrelease.wav", true, true );
 		enginesound->PrecacheSound( "UI/menu_countdown.wav", true, true );
 	}
 

@@ -41,7 +41,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CMultiplayerAdvancedDialog::CMultiplayerAdvancedDialog(vgui::Panel *parent) : BaseClass(NULL, "MultiplayerAdvancedDialog")
 {
-	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
+	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
 	
 	SetBounds(0, 0, 372, 160);
 
@@ -205,6 +205,11 @@ void CMultiplayerAdvancedDialog::LoadGameOptionsList()
 
 			pCtrl->pControl = (Panel *)pCombo;
 			break;
+		case O_SLIDER:
+			pEdit = new TextEntry( pCtrl, "DescEdit");
+			pEdit->InsertString(pObj->defValue);
+			pCtrl->pControl = (Panel *)pEdit;
+			break;
 		default:
 			break;
 		}
@@ -293,6 +298,11 @@ void CMultiplayerAdvancedDialog::GatherCurrentValues()
 			sprintf( szValue, "%s", strValue );
 			break;
 		case O_STRING:
+			pEdit = ( TextEntry * )pList->pControl;
+			pEdit->GetText( strValue, sizeof( strValue ) );
+			sprintf( szValue, "%s", strValue );
+			break;
+		case O_SLIDER:
 			pEdit = ( TextEntry * )pList->pControl;
 			pEdit->GetText( strValue, sizeof( strValue ) );
 			sprintf( szValue, "%s", strValue );
@@ -409,6 +419,11 @@ void CMultiplayerAdvancedDialog::CreateControls()
 			pCombo->ActivateItemByRow((int)pObj->fdefValue);
 
 			pCtrl->pControl = (Panel *)pCombo;
+			break;
+		case O_SLIDER:
+			pEdit = new TextEntry( pCtrl, "DescEdit");
+			pEdit->InsertString(pObj->defValue);
+			pCtrl->pControl = (Panel *)pEdit;
 			break;
 		default:
 			break;

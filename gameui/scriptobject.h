@@ -27,6 +27,7 @@ enum objtype_t
 	O_LIST,
 	O_STRING,
 	O_OBSOLETE,
+	O_SLIDER,
 };
 
 typedef struct

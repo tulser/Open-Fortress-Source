@@ -47,7 +47,7 @@ public:
 //-----------------------------------------------------------------------------
 CCreateMultiplayerGameGameplayPage::CCreateMultiplayerGameGameplayPage(vgui::Panel *parent, const char *name) : PropertyPage(parent, name)
 {
-	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
+	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
 	
 	m_pOptionsList = new CPanelListPanel(this, "GameOptions");
 
@@ -229,6 +229,11 @@ void CCreateMultiplayerGameGameplayPage::LoadGameOptionsList()
 
 			pCtrl->pControl = (Panel *)pCombo;
 			break;
+		case O_SLIDER:
+			pEdit = new TextEntry( pCtrl, "DescEdit");
+			pEdit->InsertString(pObj->defValue);
+			pCtrl->pControl = (Panel *)pEdit;
+			break;
 		default:
 			break;
 		}
@@ -367,6 +372,11 @@ void CCreateMultiplayerGameGameplayPage::GatherCurrentValues()
 			{
 				Q_snprintf( szValue, sizeof( szValue ), "%s", pObj->defValue );
 			}
+			break;
+		case O_SLIDER:
+			pEdit = ( TextEntry * )pList->pControl;
+			pEdit->GetText( strValue, sizeof( strValue ) );
+			Q_snprintf( szValue, sizeof( szValue ), "%s", strValue );
 			break;
 		}
 

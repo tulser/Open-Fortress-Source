@@ -102,16 +102,16 @@ void CNB_Button::DrawRoundedBox( int x, int y, int wide, int tall, Color color, 
 void CNB_Button::PaintBackground()
 {
 	// draw gray outline background
-	DrawRoundedBox( 0, 0, GetWide(), GetTall(), Color( 78, 94, 110, 255 ), 1.0f, false, Color( 0, 0, 0, 0 ) );
+	DrawRoundedBox( 0, 0, GetWide(), GetTall(), Color( 184, 64, 184, 255 ), 1.0f, false, Color( 0, 0, 0, 0 ) );
 
 	int nBorder = MAX( YRES( 1 ), 1 );
 	if ( IsArmed() || IsDepressed() )
 	{
-		DrawRoundedBox( nBorder, nBorder, GetWide() - nBorder * 2, GetTall() - nBorder * 2, Color( 20, 59, 96, 255 ), 1.0f, true, Color( 28, 80, 130, 255 ) );
+		DrawRoundedBox( nBorder, nBorder, GetWide() - nBorder * 2, GetTall() - nBorder * 2, Color( 100, 32, 100, 255 ), 1.0f, true, Color( 100, 32, 100, 255 ) );
 	}
 	else if ( IsEnabled() )
 	{
-		DrawRoundedBox( nBorder, nBorder, GetWide() - nBorder * 2, GetTall() - nBorder * 2, Color( 24, 43, 66, 255 ), 1.0f, false, Color( 0, 0, 0, 0 ) );
+		DrawRoundedBox( nBorder, nBorder, GetWide() - nBorder * 2, GetTall() - nBorder * 2, Color( 184, 64, 184, 255 ), 1.0f, false, Color( 0, 0, 0, 0 ) );
 	}
 	else
 	{
@@ -125,7 +125,7 @@ void CNB_Button::OnCursorEntered()
 	{
 		if ( IsEnabled() && !HasFocus() )
 		{
-			vgui::surface()->PlaySound( "UI/menu_focus.wav" );
+			vgui::surface()->PlaySound( "UI/buttonrollover.wav" );
 		}
 	}
 	BaseClass::OnCursorEntered();

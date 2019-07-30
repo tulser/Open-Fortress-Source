@@ -19,6 +19,7 @@
 #include "OptionsSubMouse.h"
 #include "optionsmousedialog.h"
 #include "CreateMultiplayerGameDialog.h"
+#include "PlayerListDialog.h"
 
 //#include "avi/ibik.h"
 #include "ixboxsystem.h"
@@ -208,7 +209,8 @@ namespace BaseModUI
 		void OpenOptionsMouseDialog( Panel *parent );
 		void OpenKeyBindingsDialog( Panel *parent );
 		void OpenCreateMultiplayerGameDialog( Panel *parent );
-
+		void OpenPlayerListDialog( Panel *parent );
+		
 		MESSAGE_FUNC_CHARPTR( OnNavigateTo, "OnNavigateTo", panelName );
 
 		bool IsMenuBackgroundMovieValid( void );
@@ -252,6 +254,7 @@ namespace BaseModUI
 		vgui::DHANDLE<COptionsDialog> m_hOptionsDialog;	// standalone options dialog - PC only
 		vgui::DHANDLE<COptionsMouseDialog> m_hOptionsMouseDialog;	// standalone options dialog - PC only
 		vgui::DHANDLE<CCreateMultiplayerGameDialog> m_hCreateMultiplayerGameDialog;	// standalone options dialog - PC only	
+		vgui::DHANDLE<CPlayerListDialog> m_hPlayerListDialog;	// standalone options dialog - PC only	
 		int m_lastActiveUserId;
 
 		vgui::HFont m_hDefaultFont;
@@ -314,7 +317,7 @@ namespace BaseModUI
 		vgui::DHANDLE<vgui::Frame> m_hOptionsDialog_Xbox;
 		//vgui::DHANDLE<vgui::Frame> m_hDemoPlayerDialog;
 		vgui::DHANDLE<vgui::Frame> m_hChangeGameDialog;
-		vgui::DHANDLE<vgui::Frame> m_hPlayerListDialog;
+//		vgui::DHANDLE<vgui::Frame> m_hPlayerListDialog;
 		vgui::DHANDLE<vgui::Frame> m_hBenchmarkDialog;
 		vgui::DHANDLE<vgui::Frame> m_hLoadCommentaryDialog;
 		vgui::DHANDLE<vgui::Frame> m_hAchievementsDialog;

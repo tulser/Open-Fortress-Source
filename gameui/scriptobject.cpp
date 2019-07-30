@@ -58,6 +58,7 @@ objtypedesc_t objtypes[] =
 	{ O_LIST  , "LIST" }, 
 	{ O_STRING, "STRING" },
 	{ O_OBSOLETE  , "OBSOLETE" }, 
+	{ O_SLIDER  , "SLIDER" }, 
 };
 
 mpcontrol_t::mpcontrol_t( Panel *parent, char const *panelName )
@@ -138,7 +139,7 @@ void CScriptObject::SetCurValue( char const *strValue )
 
 	fcurValue = (float)atof( curValue ); 
 
-	if ( type == O_NUMBER || type == O_BOOL )
+	if ( type == O_NUMBER || type == O_BOOL || O_SLIDER )
 	{
 		StripFloatTrailingZeros( curValue );
 	}
@@ -298,6 +299,12 @@ void CScriptObject::WriteToScriptFile( FileHandle_t fp )
 		g_pFullFileSystem->FPrintf( fp, "\t\t}\r\n");
 		g_pFullFileSystem->FPrintf( fp, "\t\t{ \"%s\" }\r\n", CleanFloat(fcurValue) );
 		break;
+	case O_SLIDER:
+		g_pFullFileSystem->FPrintf( fp, "\t\t\"%s\"\r\n", prompt );
+		g_pFullFileSystem->FPrintf( fp, "\t\t{ SLIDER }\r\n" );
+		FixupString( curValue, sizeof( curValue ) );
+		g_pFullFileSystem->FPrintf( fp, "\t\t{ \"%s\" }\r\n", curValue );
+		break;
 	}
 
 	if ( bSetInfo )
@@ -323,14 +330,7 @@ void CScriptObject::WriteToFile( FileHandle_t fp )
 	case O_BOOL:
 		g_pFullFileSystem->FPrintf( fp, "\"%s\"\r\n", fcurValue != 0.0 ? "1" : "0" );
 		break;
-	case O_NUMBER:
-		fVal = fcurValue;
-		if ( fMin != -1.0 )
-			fVal = __max( fVal, fMin );
-		if ( fMax != -1.0 )
-			fVal = __min( fVal, fMax );
-		g_pFullFileSystem->FPrintf( fp, "\"%f\"\r\n", fVal );
-		break;
+
 	case O_STRING:
 		FixupString( curValue, sizeof( curValue ) );
 		g_pFullFileSystem->FPrintf( fp, "\"%s\"\r\n", curValue );
@@ -354,6 +354,14 @@ void CScriptObject::WriteToFile( FileHandle_t fp )
 		{
 			g_pFullFileSystem->FPrintf( fp, "\"0.0\"\r\n" );
 		}
+		break;
+	case O_SLIDER:
+		fVal = fcurValue;
+		if ( fMin != -1.0 )
+			fVal = __max( fVal, fMin );
+		if ( fMax != -1.0 )
+			fVal = __min( fVal, fMax );
+		g_pFullFileSystem->FPrintf( fp, "\"%f\"\r\n", fVal );
 		break;
 	}
 }
@@ -408,6 +416,14 @@ void CScriptObject::WriteToConfig( void )
 		{
 			Q_strncpy( szValue, "0.0", sizeof( szValue ) );
 		}
+		break;
+	case O_SLIDER:
+		fVal = fcurValue;
+		if ( fMin != -1.0 )
+			fVal = __max( fVal, fMin );
+		if ( fMax != -1.0 )
+			fVal = __min( fVal, fMax );
+		Q_snprintf( szValue, sizeof( szValue ), "%f", fVal );
 		break;
 	}
 
@@ -519,38 +535,7 @@ bool CScriptObject::ReadFromBuffer( const char **pBuffer, bool isNewObject )
 			return false;
 		}
 		break;
-	case O_NUMBER:
-		// Parse the Min
-		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
-		if ( strlen( token ) <= 0 )
-			return false;
-	
-		if ( isNewObject )
-		{
-			fMin = (float)atof( token );
-		}
 
-		// Parse the Min
-		*pBuffer = engine->ParseFile( *pBuffer, token , sizeof( token ));
-		if ( strlen( token ) <= 0 )
-			return false;
-	
-		if ( isNewObject )
-		{
-			fMax = (float)atof( token );
-		}
-
-		// Parse the next {
-		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
-		if ( strlen( token ) <= 0 )
-			return false;
-
-		if ( strcmp( token, "}" ) )
-		{
-			Msg( "Expecting '{', got '%s'", token );
-			return false;
-		}
-		break;
 	case O_STRING:
 		// Parse the next {
 		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
@@ -598,6 +583,38 @@ bool CScriptObject::ReadFromBuffer( const char **pBuffer, bool isNewObject )
 
 				AddItem( pItem );
 			}
+		}
+		break;
+	case O_SLIDER:
+		// Parse the Min
+		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
+		if ( strlen( token ) <= 0 )
+			return false;
+	
+		if ( isNewObject )
+		{
+			fMin = (float)atof( token );
+		}
+
+		// Parse the Min
+		*pBuffer = engine->ParseFile( *pBuffer, token , sizeof( token ));
+		if ( strlen( token ) <= 0 )
+			return false;
+	
+		if ( isNewObject )
+		{
+			fMax = (float)atof( token );
+		}
+
+		// Parse the next {
+		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
+		if ( strlen( token ) <= 0 )
+			return false;
+
+		if ( strcmp( token, "}" ) )
+		{
+			Msg( "Expecting '{', got '%s'", token );
+			return false;
 		}
 		break;
 	}

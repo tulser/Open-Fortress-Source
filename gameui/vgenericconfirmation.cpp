@@ -200,7 +200,7 @@ void GenericConfirmation::LoadLayout()
 	int screenWidth, screenHeight;
 	CBaseModPanel::GetSingleton().GetSize( screenWidth, screenHeight );
 
-	int dialogWidth = ScreenWidth(); //vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 100 );
+	int dialogWidth = ScreenWidth() * 0.25; //vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 100 );
 	int dialogHeight = vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 66 );
 
 	// need a border gap to inset all controls

@@ -36,7 +36,7 @@ using namespace vgui;
 //-----------------------------------------------------------------------------
 CSaveGameDialog::CSaveGameDialog(vgui::Panel *parent) : BaseClass(parent, "SaveGameDialog")
 {
-	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/sourcescheme.res", "SwarmScheme"));
+	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
 
 	SetDeleteSelfOnClose(true);
 	SetBounds(0, 0, 512, 384);

@@ -244,6 +244,15 @@ void InGameMainMenu::OnCommand( const char *command )
 
 		confirmation->SetUsageData(data);
 	}
+	else if( !Q_strcmp( command, "OpenPlayerListDialog" ) )
+	{	
+		CBaseModPanel::GetSingleton().OpenPlayerListDialog( this );
+	}
+	else
+	{
+		engine->ClientCmd( command );
+		BaseClass::OnCommand( command );
+	}		
 		// does this command match a flyout menu?
 		BaseModUI::FlyoutMenu *flyout = dynamic_cast< FlyoutMenu* >( FindChildByName( pchCommand ) );
 		if ( flyout )
