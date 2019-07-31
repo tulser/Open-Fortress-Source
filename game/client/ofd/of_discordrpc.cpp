@@ -125,7 +125,8 @@ const char *g_aMapList[] =
 	"dm_deadlock_a1",
 	"dm_pandora",
 	"dm_knoxx",
-	"dm_lobstershore"
+	"dm_lobstershore",
+	"dm_watchtower"
 };
 
 CTFDiscordRPC g_discordrpc;
