@@ -2046,81 +2046,105 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 		// Sometimes the first spot can be NULL????
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 	}
-
-	// if no spawnpoints are found then just spawn at the origin of the map instead of crashing...
+	// I don't know why but this can somehow happen so stop the spawn
 	if ( !pSpot )
 	{
 		return false;
 	}
 
-	// randomize the spawning position
-	//for ( int i = random->RandomInt( 0, 2 ); i > 0; i-- )
-	for ( int i = random->RandomInt(0, 64); i > 0; i-- )
-		// DevMsg(1, "SPAWN: random spawn");
+	// Randomize the spawning point by minimum 32
+	for ( int i = random->RandomInt( 0, 32 ); i > 0; i-- )
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-
-  	// Get an initial spawn point.
-	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	if ( !pSpot )
-	{
-		// Sometimes the first spot can be NULL????
-		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	}
 
 	// First we try to find a spawn point that is fully clear. If that fails,
 	// we look for a spawnpoint that's clear except for another players. We
 	// don't collide with our team members, so we should be fine.
+
 	bool bIgnorePlayers = true;
 
+	// Find furthest spawn point
 	CBaseEntity *pFirstSpot = pSpot;
+	// The furthest point
+	float flFurthest = 0.0f;
+	// Distance to such point
+	CBaseEntity *pFurthest = NULL;
 
-	do 
+	do
 	{
-		if ( pSpot )
+		if ( !pSpot )
 		{
-			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
-			if ( FStrEq( STRING ( pSpot->m_iClassname ), "info_player_start" ) )
+			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+			continue;
+		}
+
+		// Check to see if this is a valid team spawn (player is on this team, etc.).
+		if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+		{
+			// Check for a bad spawn entity.
+			if ( pSpot->GetAbsOrigin() == vec3_origin )
 			{
-				// Found a valid spawn point.
-				return true;
+				pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+				continue;
 			}
-			else
+
+			// Check the distance from all other players
+
+			// Are players in the map?
+			bool bPlayers = false;
+
+			float flClosestPlayerDist = FLT_MAX;
+
+			// This is a mismash of code from npc_strider and hltvdirector and observe targets... its messy
+			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 			{
-				// Check to see if this is a valid team spawn (player is on this team, etc.).
-				if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
+
+				// Loop again if our guy is someone who isn't a player, who isn't alive, who is themselves or on same team
+				if ( !pPlayer || !pPlayer->IsAlive() || pPlayer == this )
+					continue;
+
+				bPlayers = true;
+
+				float flDistSqr = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).LengthSqr();
+
+				if ( flDistSqr < flClosestPlayerDist )
 				{
-					// Check for a bad spawn entity.
-					if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
-					{
-						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-						continue;
-					}
-
-					// Found a valid spawn point.
-					return true;
-
+					flClosestPlayerDist = flDistSqr;
 				}
+			}
+
+			// No players then just pick one
+			if ( !bPlayers )
+			{
+				pFurthest = pSpot;
+				break;
+			}
+
+			if ( flClosestPlayerDist > flFurthest )
+			{
+				flFurthest = flClosestPlayerDist;
+				pFurthest = pSpot;
 			}
 		}
 
 		// Get the next spawning point to check.
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-
-		if ( pSpot == pFirstSpot && !bIgnorePlayers )
-		{
-			// Loop through again, ignoring players
-			bIgnorePlayers = true;
-			pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-		}
-	} 
+	}
 
 	// Continue until a valid spawn point is found or we hit the start.
-	while ( pSpot != pFirstSpot ); 
+	while ( pSpot != pFirstSpot );
+
+	if ( pFurthest )
+	{
+		pSpot = pFurthest;
+
+		// Found a valid spawn point.
+		return true;
+	}
 
 	if ( pSpot )
 	{
-		// don't telefrag if the spawn point is a info_player_start
-		if ( !FStrEq( STRING ( pSpot->m_iClassname ), "info_player_start" ) )
+		if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
 		{
 			// telefragging
 			CBaseEntity *ent = NULL;
