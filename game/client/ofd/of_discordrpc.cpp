@@ -38,7 +38,7 @@ ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Disc
 #define DISCORD_UPDATE_RATE 10.0f
 
 // placeholder code SUCKS i go to BED.
-#define MAP_COUNT 50
+#define MAP_COUNT 54
 
 // TODO give these better fitting names and move them to .h
 const char *g_aClassImage[] =
@@ -121,7 +121,11 @@ const char *g_aMapList[] =
 	"dm_cargo",
 	"dm_bailey",
 	"mctf_splashdown",
-	"dm_dev_itemtest"
+	"dm_dev_itemtest",
+	"dm_deadlock_a1",
+	"dm_pandora",
+	"dm_knoxx",
+	"dm_lobstershore"
 };
 
 CTFDiscordRPC g_discordrpc;
