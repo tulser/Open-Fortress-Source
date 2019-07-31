@@ -3,7 +3,7 @@
 // Purpose: Tip display during level loads.
 //
 //===========================================================================//
-
+#include "cbase.h"
 #include "loadingtippanel.h"
 #include "filesystem.h"
 #include "keyvalues.h"
@@ -11,6 +11,7 @@
 #include "EngineInterface.h"
 #include "vstdlib/random.h"
 #include "fmtstr.h"
+#include "tf_tips.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -25,7 +26,6 @@ ConVar ui_loading_tip_f2( "ui_loading_tip_f2", "0.40", FCVAR_DEVELOPMENTONLY );
 CLoadingTipPanel::CLoadingTipPanel( Panel *pParent ) : EditablePanel( pParent, "loadingtippanel" )
 {
 	m_flLastTipTime = 0.f;
-	m_iCurrentTip = 0;
 	m_pTipIcon = NULL;
 
 	m_smearColor = Color( 0, 0, 0, 255 );
@@ -53,34 +53,18 @@ void CLoadingTipPanel::ReloadScheme( void )
 {
 	LoadControlSettings( "Resource/UI/loadingtippanel.res" );
 
-	m_pTipIcon = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "TipIcon" ) );
-
 	NextTip();
 }
 
 //--------------------------------------------------------------------------------------------------------
 void CLoadingTipPanel::SetupTips( void )
 {
-#ifdef _DEMO
+
 	KeyValues *pKV = new KeyValues( "Tips" );
 	KeyValues::AutoDelete autodelete( pKV );
-	if ( !pKV->LoadFromFile( g_pFullFileSystem, "scripts/tips.txt", "GAME" ) )
-	{
-		AssertMsg( false, "failed to load tips!" );
-		return;
-	}
-
-	for ( KeyValues *pKey = pKV->FindKey( "SurvivorTips" )->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-	{
-		sTipInfo info;
-		V_strncpy( info.szTipTitle, "", MAX_TIP_LENGTH );
-		V_strncpy( info.szTipString, pKey->GetName(), MAX_TIP_LENGTH );
-		V_strncpy( info.szTipImage, "achievements/ACH_SURVIVE_BRIDGE", MAX_TIP_LENGTH );
-		m_Tips.AddToTail( info );
-	}
-#else
 	
-#endif
+	NextTip();
+
 }
 
 //--------------------------------------------------------------------------------------------------------
@@ -89,9 +73,7 @@ void CLoadingTipPanel::NextTip( void )
 	if ( !IsEnabled() )
 		return;
 
-	if ( !m_Tips.Count() )
-		return;
-
+/*
 	if ( !m_flLastTipTime )
 	{
 		// Initialize timer on first render
@@ -103,20 +85,8 @@ void CLoadingTipPanel::NextTip( void )
 		return;
 
 	m_flLastTipTime = Plat_FloatTime();
-
-	m_iCurrentTip = RandomInt( 0, m_Tips.Count() - 1 );
-	if ( !m_Tips.IsValidIndex( m_iCurrentTip ) )
-		return;
-
-	sTipInfo info = m_Tips[m_iCurrentTip];
-
-	if ( m_pTipIcon )
-	{
-		m_pTipIcon->SetImage( info.szTipImage );
-	}
-	SetControlString( "TipTitle", info.szTipTitle );
-	SetControlString( "TipText", info.szTipString );
-
+*/
+	SetDialogVariable( "TipText", g_TFTips.GetRandomTip() );
 	// Set our control visible
 	SetVisible( true );
 }
@@ -171,9 +141,4 @@ void CLoadingTipPanel::PaintBackground( void )
 		GetWide(), 
 		GetTall() ); 
 
-}
-
-void PrecacheLoadingTipIcons()
-{
-	
 }

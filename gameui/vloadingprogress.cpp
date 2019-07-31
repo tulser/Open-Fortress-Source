@@ -17,6 +17,8 @@
 #include "fmtstr.h"
 #include "FileSystem.h"
 #include "GameUI_Interface.h"
+#include "loadingtippanel.h"
+#include "tf_tips.h"
 
 #include <vgui/IInput.h>
 
@@ -39,7 +41,6 @@ LoadingProgress::LoadingProgress(Panel *parent, const char *panelName, LoadingWi
 	m_pDefaultPosterDataKV( NULL ),
 	m_LoadingWindowType( eLoadingType )
 {
-	memset( m_szGameMode, 0, sizeof( m_szGameMode ) );
 
 	if ( IsPC() && eLoadingType == LWT_LOADINGPLAQUE )
 	{
@@ -64,12 +65,6 @@ LoadingProgress::LoadingProgress(Panel *parent, const char *panelName, LoadingWi
 	m_pMissionInfo = NULL;
 	m_pChapterInfo = NULL;
 	m_botFlags = 0xFF;
-	
-	memset( m_PlayerNames, 0, sizeof( m_PlayerNames ) );
-	// const char *pPlayerNames[NUM_LOADING_CHARACTERS] = { "#L4D360UI_NamVet", "#L4D360UI_TeenGirl", "#L4D360UI_Biker", "#L4D360UI_Manager" };
-	const char *pPlayerNames[NUM_LOADING_CHARACTERS] = { "", "", "", "" };
-	for ( int k = 0; k < NUM_LOADING_CHARACTERS; ++ k )
-		Q_strncpy( m_PlayerNames[k], pPlayerNames[k], MAX_PLAYER_NAME_LENGTH );
 
 	m_textureID_LoadingBar = -1;
 	m_textureID_LoadingBarBG = -1;
@@ -95,11 +90,8 @@ LoadingProgress::LoadingProgress(Panel *parent, const char *panelName, LoadingWi
 		m_pDefaultPosterDataKV = NULL;
 	}
 
-	m_pTipPanel = NULL;
-	if ( IsX360() )
-	{
-		m_pTipPanel = new CLoadingTipPanel( this );
-	}
+	m_pTipPanel = new CLoadingTipPanel( this );
+
 }
 
 //=============================================================================
@@ -114,6 +106,8 @@ LoadingProgress::~LoadingProgress()
 void LoadingProgress::OnThink()
 {
 	UpdateWorkingAnim();
+
+//	SetDialogVariable( "MapLabel", m_szMapName );
 }
 
 //=============================================================================
@@ -454,23 +448,19 @@ void LoadingProgress::SetupControlStates()
 		// we will custom draw
 		m_pProTotalProgress->SetVisible( false );
 	}
-
+/*
 	m_pWorkingAnim = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "WorkingAnim" ) );
 	if ( m_pWorkingAnim )
 	{
 		// we will custom draw
 		m_pWorkingAnim->SetVisible( false );
 	}
-
+*/
 	vgui::Label *pLoadingLabel = dynamic_cast< vgui::Label *>( FindChildByName( "LoadingText" ) );
 	if ( pLoadingLabel )
 	{
 		pLoadingLabel->SetVisible( m_bDrawProgress );
 	}
-
-	SetControlVisible( "PlayerNames", m_bDrawPoster );
-	SetControlVisible( "StarringLabel", m_bDrawPoster );
-	SetControlVisible( "GameModeLabel", false );
 
 	if ( m_LoadingType == LT_POSTER )
 	{
@@ -481,65 +471,11 @@ void LoadingProgress::SetupControlStates()
 	m_flLastEngineTime = Plat_FloatTime() + 0.2f;
 }
 
-void LoadingProgress::SetPosterData( KeyValues *pMissionInfo, KeyValues *pChapterInfo, const char **pPlayerNames, unsigned int botFlags, const char *pszGameMode )
+void LoadingProgress::SetPosterData( KeyValues *pMissionInfo, KeyValues *pChapterInfo, const char **pPlayerNames, unsigned int botFlags, const char *pszGameMode, const char *pszMapName )
 {
 	m_botFlags = botFlags;
 	m_pMissionInfo = pMissionInfo;
 	m_pChapterInfo = pChapterInfo;
-
-	RearrangeNames( pMissionInfo->GetString( "poster/character_order", NULL ), pPlayerNames );
-
-	Q_snprintf( m_szGameMode, sizeof( m_szGameMode ), "#L4D360UI_Loading_GameMode_%s", pszGameMode );
-}
-
-//rearrange names to match the poster character order... sigh..
-void LoadingProgress::RearrangeNames( const char *pszCharacterOrder, const char **pPlayerNames )
-{
-	int iNewOrder[NUM_LOADING_CHARACTERS]; 
-	char m_SortPlayerNames[NUM_LOADING_CHARACTERS][MAX_PLAYER_NAME_LENGTH];
-
-	for ( int k = 0; k < NUM_LOADING_CHARACTERS; ++ k )
-	{
-		iNewOrder[k] = k;
-		if ( pPlayerNames[k] )
-			Q_strncpy( m_PlayerNames[k], pPlayerNames[k], MAX_PLAYER_NAME_LENGTH );
-
-		Q_strncpy( m_SortPlayerNames[k], m_PlayerNames[k], MAX_PLAYER_NAME_LENGTH );
-	}
-
-	if ( pszCharacterOrder )
-	{
-		char szOrder[MAX_PATH];
-		Q_strncpy( szOrder, pszCharacterOrder, sizeof( szOrder ) );
-
-		char	*p = szOrder;
-		int i = 0;
-
-		p = strtok( p, ";" );
-
-		const char * const arrCharacterNamesInConfig[ NUM_LOADING_CHARACTERS ] = { "gambler", "producer", "coach", "mechanic" };
-
-		while ( p != NULL && *p )
-		{
-			for ( int k = 0; k < NUM_LOADING_CHARACTERS; ++ k )
-			{
-				if ( !Q_stricmp( p, arrCharacterNamesInConfig[k] ) )
-				{
-					iNewOrder[k] = i;
-					break;
-				}
-			}
-
-			i++;
-
-			p = strtok( NULL, ";" );
-		}
-	}
-
-	for ( int k = 0; k < NUM_LOADING_CHARACTERS; ++ k )
-	{
-		Q_strncpy( m_PlayerNames[k], m_SortPlayerNames[iNewOrder[k]], MAX_PLAYER_NAME_LENGTH );
-	}
 }
 
 //=============================================================================
@@ -563,10 +499,7 @@ bool LoadingProgress::ShouldShowPosterForLevel( KeyValues *pMissionInfo, KeyValu
 
 //=============================================================================
 void LoadingProgress::SetupPoster( void )
-{
-	int i;
-	
-	bool bNamesVisible = false;
+{	
 	vgui::ImagePanel *pPoster = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "Poster" ) );
 	if ( pPoster )
 	{ 
@@ -597,80 +530,16 @@ void LoadingProgress::SetupPoster( void )
 
 		// if the image was cached this will just hook it up, otherwise it will load it
 		pPoster->SetImage( pszPosterImage );
-		if ( pPoster->GetImage() )
-		{
-			bNamesVisible = true;
-		}
 	}
 
 	bool bIsLocalized = false;
-#ifdef _X360
-	bIsLocalized = XBX_IsLocalized();
-#else
+
 	char uilanguage[ 64 ];
 	engine->GetUILanguage( uilanguage, sizeof( uilanguage ) );
 	if ( Q_stricmp( uilanguage, "english" ) )
 	{
 		bIsLocalized = true;
 	}
-#endif
 
-	SetControlVisible( "LocalizedCampaignName", false );
-	SetControlVisible( "LocalizedCampaignTagline", false );
 
-	wchar_t szPlayerNames[MAX_PATH];
-	Q_memset( szPlayerNames, 0, sizeof( szPlayerNames ) );
-
-	int nNumNames = 0;
-	for ( i=0;i<NUM_LOADING_CHARACTERS;i++ )
-	{
-		if ( !m_PlayerNames[i] || !m_PlayerNames[i][0] )
-		{
-			continue;
-		}
-
-		if ( nNumNames != 0 )
-		{
-			wcsncat( szPlayerNames, L", ", sizeof( szPlayerNames ) );
-		}
-		wchar_t szName[64];
-
-		if ( m_PlayerNames[i] && m_PlayerNames[i][0] == '#' )
-		{
-			wchar_t *pName = g_pVGuiLocalize->Find( m_PlayerNames[i] );
-
-			if ( pName == NULL )
-			{
-				g_pVGuiLocalize->ConvertANSIToUnicode( m_PlayerNames[i], szName, sizeof( szPlayerNames ) );
-			}
-			else
-			{
-				Q_wcsncpy( szName, pName, sizeof( szName ) );
-			}
-			nNumNames++;
-		}
-		else
-		{
-			g_pVGuiLocalize->ConvertANSIToUnicode( m_PlayerNames[i], szName, sizeof( szPlayerNames ) );
-			nNumNames++;
-		}
-
-		wcsncat( szPlayerNames, szName, sizeof( szPlayerNames ) );
-	}
-
-	if ( nNumNames != 0 )
-	{
-		wcsncat( szPlayerNames, L".", sizeof( szPlayerNames ) );
-	}
-
-	SetControlString( "GameModeLabel", m_szGameMode );
-
-	SetControlVisible( "PlayerNames", ( nNumNames > 1 ) );
-
-	SetControlVisible( "StarringLabel", ( nNumNames > 1 ) );
-	SetControlVisible( "GameModeLabel", false );
-
-	SetControlString( "playernames", szPlayerNames );
-
-	SetControlEnabled( "LoadingTipPanel", false );
 }

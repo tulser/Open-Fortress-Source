@@ -37,6 +37,7 @@ $Configuration
 {
 	$Compiler [$HL2CE]
 	{
+		$AdditionalIncludeDirectories	".\client;"
 		$PreprocessorDefinitions		"$BASE;TF_MOD_CLIENT;OPEN_FORTRESS;GAMEUI_DLL"
 	}
 }
@@ -45,7 +46,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\game\client;$SRCDIR\game\client\game_controls"
+		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\game\client;$SRCDIR\game\client\game_controls;.\client;.\;$SRCDIR\public;"
 		$PreprocessorDefinitions		"$BASE;SUPPRESS_INVALID_PARAMETER_NO_INFO;_CRT_NO_VA_START_VALIDATION;NO_STRING_T;CLIENT_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;DISABLE_PROTECTED_THINGS;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" 
 		$PreprocessorDefinitions		"$BASE;GAMEUI_EXPORTS"
 		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
@@ -63,8 +64,17 @@ $Configuration
 
 $Project "GameUI"
 {
+	$Folder	"Client"
+	{
+		$File	"client\tf_tips.cpp"
+		$File	"client\tf_tips.h"	
+		$File	"client\igamesystem.cpp"
+		$File	"client\igamesystem.h"	
+		$File	"client\GameEventListener.h"
+	}
 	$Folder	"Source Files"
 	{
+		$File	"$SRCDIR\public\igameevents.h"
 		$File	"BonusMapsDatabase.cpp"
 		$File	"BonusMapsDatabase.h"
 		$File	"BonusMapsDialog.cpp"

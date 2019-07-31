@@ -600,8 +600,7 @@ void CGameUI::OnGameUIHidden()
 	m_bActivatedUI = false;
 
 	// unpause the game when leaving the UI
-	if ( of_pausegame.GetBool() )
-		engine->ClientCmd_Unrestricted( "unpause nomsg" );
+	engine->ClientCmd_Unrestricted( "unpause nomsg" );
 
 	GetUiBaseModPanelClass().OnGameUIHidden();
 }

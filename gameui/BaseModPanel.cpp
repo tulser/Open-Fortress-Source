@@ -105,6 +105,7 @@ using namespace BaseModUI;
 using namespace vgui;
 
 //setup in GameUI_Interface.cpp
+
 extern class IMatchSystem *matchsystem;
 extern const char *COM_GetModDirectory( void );
 extern class IGameConsole *IGameConsole();
@@ -1421,9 +1422,10 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 	char chGameMode[64] = {0};
 
 	//
-	// If we are just loading into some unknown map, then fake chapter information
-	// (static lifetime of fake keyvalues so that we didn't worry about ownership)
+	// If playing on listen server then "levelName" is set to the map being loaded,
+	// so it is authoritative - it might be a background map or a real level.
 	//
+	
 	if ( !pMissionInfo )
 	{
 		static KeyValues *s_pFakeMissionInfo = new KeyValues( "" );
@@ -1434,8 +1436,8 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 	{
 		static KeyValues *s_pFakeChapterInfo = new KeyValues( "1" );
 		pChapterInfo = s_pFakeChapterInfo;
-		pChapterInfo->SetString( "displayname", levelName ? levelName : "#L4D360UI_Lobby_Unknown_Campaign" );
-		pChapterInfo->SetString( "map", levelName ? levelName : "" );
+//		pChapterInfo->SetString( "displayname", levelName ? levelName : "#L4D360UI_Lobby_Unknown_Campaign" );
+//		pChapterInfo->SetString( "map", levelName ? levelName : "" );
 	}
 	
 	//
@@ -1458,7 +1460,7 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 
 		unsigned char botFlags = 0xFF;
 
-		pLoadingProgress->SetPosterData( pMissionInfo, pChapterInfo, pPlayerNames, botFlags, chGameMode );
+		pLoadingProgress->SetPosterData( pMissionInfo, pChapterInfo, pPlayerNames, botFlags, chGameMode, levelName );
 	}
 	else if ( GameUI().IsInLevel() && !GameUI().IsInBackgroundLevel() )
 	{
@@ -1791,9 +1793,6 @@ void CBaseModPanel::ApplySchemeSettings(IScheme *pScheme)
 
 	m_iProductImageID = surface()->CreateNewTextureID();
 	surface()->DrawSetTextureFile( m_iProductImageID, "console/startup_loading", true, false );
-
-	// need these to be anchored now, can't come into existence during load
-	PrecacheLoadingTipIcons();
 
 	int logoW = 384;
 	int logoH = 192;

@@ -50,10 +50,12 @@ public:
 	LoadingType			GetLoadingType();
 
 	bool				ShouldShowPosterForLevel( KeyValues *pMissionInfo, KeyValues *pChapterInfo );
-	void				SetPosterData( KeyValues *pMissionInfo, KeyValues *pChapterInfo, const char **pPlayerNames, unsigned int botFlags, const char *pszGameMode );
+	void				SetPosterData( KeyValues *pMissionInfo, KeyValues *pChapterInfo, const char **pPlayerNames, unsigned int botFlags, const char *pszGameMode, const char *pszMapName );
 
 	bool				IsDrawingProgressBar( void ) { return m_bDrawProgress; }
 
+	void 				FireGameEvent( IGameEvent *event );
+	
 protected:
 	virtual void		OnThink();
 	virtual void		OnCommand(const char *command);
@@ -64,7 +66,6 @@ private:
 	void				SetupControlStates( void );
 	void				SetupPoster( void );
 	void				UpdateWorkingAnim();
-	void				RearrangeNames( const char *pszCharacterOrder, const char **pPlayerNames );
 
 	vgui::ProgressBar	*m_pProTotalProgress;
 	vgui::ImagePanel	*m_pWorkingAnim;
@@ -78,7 +79,6 @@ private:
 	bool				m_bLoadedFully;
 
 	// Poster Data
-	char				m_PlayerNames[NUM_LOADING_CHARACTERS][MAX_PLAYER_NAME_LENGTH];
 	KeyValues			*m_pMissionInfo;
 	KeyValues			*m_pChapterInfo;
 	KeyValues			*m_pDefaultPosterDataKV;
@@ -97,8 +97,6 @@ private:
 	float				m_flPeakProgress;
 
 	float				m_flLastEngineTime;
-
-	char				m_szGameMode[MAX_PATH];
 
 	CLoadingTipPanel			*m_pTipPanel;
 };

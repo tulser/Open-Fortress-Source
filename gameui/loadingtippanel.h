@@ -43,7 +43,6 @@ public:
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void PaintBackground( void );
 	void ReloadScheme( void );
-
 	void NextTip( void );
 
 private:
@@ -59,8 +58,6 @@ private:
 	float m_flLastTipTime;
 	int m_iCurrentTip;
 };
-
-void PrecacheLoadingTipIcons();
 
 
 #endif // LOADING_TIP_PANEL_H
