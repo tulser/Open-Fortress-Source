@@ -172,9 +172,12 @@ public:
 	}
 	~CLeakTrack()
 	{
-		if ( keys.Count() != 0 )
+		AssertMsg(keys.Count() == 0, VarArgs("keys.Count() is %i", keys.Count()));
+ 		for (int x = 0; x < keys.Count(); x++)
 		{
 			Assert( 0 );
+			keys[x].kv->deleteThis();
+			keys.Remove(x);
 		}
 	}
 
@@ -216,6 +219,9 @@ static CLeakTrack track;
 
 #else
 
+#define TRACK_KV_ADD( ptr, name )
+#define TRACK_KV_REMOVE( ptr )		#define TRACK_KV_REMOVE( ptr )	
+	
 #define TRACK_KV_ADD( ptr, name ) 
 #define TRACK_KV_REMOVE( ptr )	
 
@@ -874,7 +880,7 @@ void KeyValues::SaveKeyToFile( KeyValues *dat, IBaseFileSystem *filesystem, File
 				{
 					WriteIndents(filesystem, f, pBuf, indentLevel + 1);
 					INTERNALWRITE("\"", 1);
-					WriteConvertedString(filesystem, f, pBuf, dat->GetName());	
+					WriteConvertedString(filesystem, f, pBuf, dat->GetName());
 					INTERNALWRITE("\"\t\t\"", 4);
 
 					WriteConvertedString(filesystem, f, pBuf, dat->m_sValue);	

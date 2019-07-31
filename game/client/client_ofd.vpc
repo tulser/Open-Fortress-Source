@@ -13,7 +13,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\ofd;$SRCDIR\game\shared\ofd;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
+				$AdditionalIncludeDirectories	".\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\ofd;.\of;.\of\vgui;$SRCDIR\game\shared\ofd;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
 		$PreprocessorDefinitions		"$BASE;TF_MOD_CLIENT;GLOWS_ENABLE;OPENFORTRESS_DLL"
 	}
 }
@@ -53,6 +53,8 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\ofd\ofd_weapon_lightning.h"
 			$File	"$SRCDIR\game\shared\ofd\gamemounter.cpp"
 			$File	"$SRCDIR\game\shared\ofd\gamemounter.h"
+			$File	"of\vgui\of_loadout.cpp"
+			$File	"of\vgui\of_loadout.h"	
 		}
 		
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"

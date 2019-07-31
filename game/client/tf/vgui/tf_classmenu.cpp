@@ -79,16 +79,12 @@ CTFClassMenu::CTFClassMenu( IViewPort *pViewPort ) : CClassMenu( pViewPort )
 	m_iClassMenuKey = BUTTON_CODE_INVALID;
 	m_iCurrentClassIndex = TF_CLASS_HEAVYWEAPONS;
 
-#ifdef _X360
-	m_pFooter = new CTFFooter( this, "Footer" );
-#endif
-
 	m_pClassInfoPanel = new CTFClassInfoPanel( this, "ClassInfoPanel" );
 	LoadControlSettings( "Resource/UI/ClassInfoPanel.res" );
 
 	Q_memset( m_pClassButtons, 0, sizeof( m_pClassButtons ) );
 
-#ifndef _X360
+
 	char tempName[MAX_PATH];
 	for ( int i = 0 ; i < CLASS_COUNT_IMAGES ; ++i )
 	{
@@ -97,7 +93,7 @@ CTFClassMenu::CTFClassMenu( IViewPort *pViewPort ) : CClassMenu( pViewPort )
 	}
 
 	m_pCountLabel = NULL;
-#endif
+
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 }
@@ -116,14 +112,14 @@ void CTFClassMenu::PerformLayout()
 {
 	BaseClass::PerformLayout();
 
-#ifndef _X360
+
 	m_pCountLabel = dynamic_cast< CTFLabel * >( FindChildByName( "CountLabel" ) );
 
 	if ( m_pCountLabel )
 	{
 		m_pCountLabel->SizeToContents();
 	}
-#endif
+
 }
 
 //-----------------------------------------------------------------------------

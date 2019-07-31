@@ -106,6 +106,13 @@ public:
 
 	virtual void GetContentSize( int& cw, int &ch );
 
+	virtual void SetImage(int i);
+	virtual bool HasImage();
+	virtual int GetImage();
+
+ 	virtual bool ShouldIgnoreFirstClick();
+	virtual void SetIgnoreFirstClick(bool bEnable);
+
 protected:
 	void OnKeyCodeReleased(KeyCode code);
 	void OnMenuClose();
@@ -129,6 +136,9 @@ private:
 
 	KeyValues *m_pUserData;
 
+	int m_iImage;
+	bool m_bIgnoreFirstClick;
+	bool m_bFirstClick;	
 };
 
 } // namespace vgui

@@ -49,7 +49,8 @@ public:
 		m_pFocus( 0 )
 	{
 	}
-
+	virtual ~CNonFocusableMenu() {}
+	
 	void SetFocusPanel( Panel *panel )
 	{
 		m_pFocus = panel;
@@ -79,7 +80,8 @@ public:
 		SetAllowNonAsciiCharacters( true );
 		SetDragEnabled( true );
 	}
-
+	virtual ~TabCatchingTextEntry() {}
+	
 	virtual void OnKeyCodeTyped(KeyCode code)
 	{
 		if (code == KEY_TAB)
