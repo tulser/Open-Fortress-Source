@@ -20,6 +20,7 @@
 #include "ienginevgui.h"
 #include <game/client/iviewport.h>
 #include "tf_tips.h"
+#include "basemodelpanel.h"
 
 #include "of_loadout.h"
 #include <convar.h>
@@ -175,6 +176,13 @@ void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 			pImagePanel->SetImage( bIsWidescreen ? "../console/background01_widescreen" : "../console/background01" );
 		}
 	}
+
+	CModelPanel *pModelPanel = dynamic_cast<CModelPanel *>(FindChildByName( "classModel" ) );
+	if ( pModelPanel )
+	{
+		pModelPanel->SetPanelDirty();
+	}	
+	
 	// fill the class names in the class combo box
 	KeyValues *pKeyValues = new KeyValues( "data" );
 	pKeyValues->SetInt( "class", TF_CLASS_UNDEFINED );

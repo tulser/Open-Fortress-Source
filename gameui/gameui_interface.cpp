@@ -68,6 +68,8 @@ typedef BaseModUI::CBaseModPanel UI_BASEMOD_PANEL_CLASS;
 inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() { return UI_BASEMOD_PANEL_CLASS::GetSingleton(); }
 inline UI_BASEMOD_PANEL_CLASS & ConstructUiBaseModPanelClass() { return * new UI_BASEMOD_PANEL_CLASS(); }
 
+ConVar of_pausegame( "of_pausegame", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED, "If set, pauses whenever you open the in game menu." );;
+
 #ifdef _X360
 #include "xbox/xbox_win32stubs.h"
 #endif // _X360
@@ -249,16 +251,11 @@ void CGameUI::PostInit()
 {
 	if ( IsX360() )
 	{
-		enginesound->PrecacheSound( "UI/buttonrollover.wav", true, true );
-		enginesound->PrecacheSound( "UI/buttonclick.wav", true, true );
-		enginesound->PrecacheSound( "UI/buttonclickrelease.wav", true, true );
 		enginesound->PrecacheSound( "player/suit_denydevice.wav", true, true );
 
 		enginesound->PrecacheSound( "UI/buttonclick.wav", true, true );
 		enginesound->PrecacheSound( "UI/buttonrollover.wav", true, true );
-		enginesound->PrecacheSound( "UI/menu_invalid.wav", true, true );
 		enginesound->PrecacheSound( "UI/buttonclickrelease.wav", true, true );
-		enginesound->PrecacheSound( "UI/menu_countdown.wav", true, true );
 	}
 
 	// to know once client dlls have been loaded
@@ -575,6 +572,7 @@ void CGameUI::OnGameUIActivated()
 	m_bActivatedUI = true;
 
 	// pause the server in case it is pausable
+	if ( of_pausegame.GetBool() )
 	engine->ClientCmd_Unrestricted( "setpause nomsg" );
 
 	SetSavedThisMenuSession( false );
@@ -602,7 +600,8 @@ void CGameUI::OnGameUIHidden()
 	m_bActivatedUI = false;
 
 	// unpause the game when leaving the UI
-	engine->ClientCmd_Unrestricted( "unpause nomsg" );
+	if ( of_pausegame.GetBool() )
+		engine->ClientCmd_Unrestricted( "unpause nomsg" );
 
 	GetUiBaseModPanelClass().OnGameUIHidden();
 }

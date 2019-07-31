@@ -101,7 +101,7 @@ namespace BaseModUI {
 		void DrawDialogBackground( const char *pMajor, const wchar_t *pMajorFormatted, const char *pMinor, const wchar_t *pMinorFormatted, DialogMetrics_t *pMetrics = NULL, bool bAllCapsTitle = false, int iTitleXOffset = INT_MAX );
 		void SetupAsDialogStyle();
 		int DrawSmearBackground( int x, int y, int wide, int tall, bool bIsFooter = false );
-			
+		int DrawBlackBackground( int x, int y, int wide, int tall, bool bIsFooter = false );	
 	protected:
 		virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 		virtual void ApplySettings(KeyValues *inResourceData);

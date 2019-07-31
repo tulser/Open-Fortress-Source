@@ -796,6 +796,13 @@ void BaseModHybridButton::ApplySettings( KeyValues * inResourceData )
 		m_hTextBlurFont = scheme->GetFont( "DefaultBoldBlur", true );
 	}
 	
+	const char *Font = inResourceData->GetString( "Font", NULL );
+	if ( Font )
+	{
+		m_hTextFont = scheme->GetFont( Font, true );
+		m_hTextBlurFont = m_hTextFont;
+	}
+	
 	m_nTextFontHeight = vgui::surface()->GetFontTall( m_hTextFont );
 	m_nHintTextFontHeight = vgui::surface()->GetFontTall( m_hHintTextFont );
 

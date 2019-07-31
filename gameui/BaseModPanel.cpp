@@ -528,10 +528,8 @@ CBaseModPanel::CBaseModPanel(): BaseClass(0, "CBaseModPanel"),
 
 	Assert(m_CFactoryBasePanel == 0);
 	m_CFactoryBasePanel = this;
-
-	g_pVGuiLocalize->AddFile( "Resource/l4d360ui_%language%.txt");
+	
 	g_pVGuiLocalize->AddFile( "Resource/ep2_%language%.txt");
-	g_pVGuiLocalize->AddFile( "Resource/hl2ce_%language%.txt");
 
 	m_LevelLoading = false;
 	
@@ -2359,16 +2357,12 @@ const char *CBaseModPanel::GetUISoundName(  UISound_t UISound )
 		return "UI/buttonclickrelease.wav";
 	case UISOUND_ACCEPT:
 		return "UI/buttonclick.wav";
-	case UISOUND_INVALID:
-		return "UI/menu_invalid.wav";
-	case UISOUND_COUNTDOWN:
-		return "UI/menu_countdown.wav";
 	case UISOUND_FOCUS:
 		return "UI/buttonrollover.wav";
 	case UISOUND_CLICK:
 		return "UI/buttonclick.wav";
-	case UISOUND_DENY:
-		return "UI/menu_invalid.wav";
+	default:
+		return "UI/buttonclick.wav";
 	}
 	return NULL;
 }

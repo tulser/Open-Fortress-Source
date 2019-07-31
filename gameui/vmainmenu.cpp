@@ -377,7 +377,7 @@ void MainMenu::OnCommand( const char *command )
 
 			GenericConfirmation::Data_t data;
 
-			data.pWindowTitle = "#L4D360UI_MainMenu_Quit_ConfirmMsg";
+			data.pWindowTitle = "#GameUI_Quit_Confirm";
 			data.pMessageText = GetRandomQuitString();
 
 			data.bOkButtonEnabled = true;
@@ -691,6 +691,13 @@ void MainMenu::Activate()
 //=============================================================================
 void MainMenu::PaintBackground() 
 {
+	vgui::Panel *pPanel = FindChildByName( "PnlBackground" );
+	if ( !pPanel )
+		return;
+
+	int x, y, wide, tall;
+	pPanel->GetBounds( x, y, wide, tall );
+	DrawBlackBackground( x, y, wide, tall, false );	
 }
 
 void MainMenu::SetFooterState()

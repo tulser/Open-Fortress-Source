@@ -411,7 +411,7 @@ void FlyoutMenu::LoadControlSettings( const char *dialogResourceName, const char
 
 				pChapter->SetInt( "ypos", pHook->GetInt( "ypos" ) + ( k - 1 ) * pHook->GetInt( "tall" ) );
 				
-				char const *arrFields[] = { "fieldName", "labelText", "command" };
+				char const *arrFields[] = { "fieldName", "labelText", "command", "font" };
 				for ( int j = 0; j < ARRAYSIZE( arrFields ); ++ j )
 					pChapter->SetString( arrFields[j], CFmtStr( "%s%d", pHook->GetString( arrFields[j] ), k ) );
 				

@@ -31,7 +31,7 @@ void CNB_Button::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	SetButtonBorderEnabled( false );
 
-	SetReleasedSound( "UI/menu_accept.wav" );
+	SetReleasedSound( "UI/buttonclick.wav" );
 }
 
 void CNB_Button::PerformLayout()

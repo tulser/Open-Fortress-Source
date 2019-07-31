@@ -330,7 +330,14 @@ void CScriptObject::WriteToFile( FileHandle_t fp )
 	case O_BOOL:
 		g_pFullFileSystem->FPrintf( fp, "\"%s\"\r\n", fcurValue != 0.0 ? "1" : "0" );
 		break;
-
+	case O_NUMBER:
+		fVal = fcurValue;
+		if ( fMin != -1.0 )
+			fVal = __max( fVal, fMin );
+		if ( fMax != -1.0 )
+			fVal = __min( fVal, fMax );
+		g_pFullFileSystem->FPrintf( fp, "\"%f\"\r\n", fVal );
+		break;
 	case O_STRING:
 		FixupString( curValue, sizeof( curValue ) );
 		g_pFullFileSystem->FPrintf( fp, "\"%s\"\r\n", curValue );
@@ -535,7 +542,38 @@ bool CScriptObject::ReadFromBuffer( const char **pBuffer, bool isNewObject )
 			return false;
 		}
 		break;
+	case O_NUMBER:
+		// Parse the Min
+		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
+		if ( strlen( token ) <= 0 )
+			return false;
+	
+		if ( isNewObject )
+		{
+			fMin = (float)atof( token );
+		}
 
+		// Parse the Min
+		*pBuffer = engine->ParseFile( *pBuffer, token , sizeof( token ));
+		if ( strlen( token ) <= 0 )
+			return false;
+	
+		if ( isNewObject )
+		{
+			fMax = (float)atof( token );
+		}
+
+		// Parse the next {
+		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );
+		if ( strlen( token ) <= 0 )
+			return false;
+
+		if ( strcmp( token, "}" ) )
+		{
+			Msg( "Expecting '{', got '%s'", token );
+			return false;
+		}
+		break;
 	case O_STRING:
 		// Parse the next {
 		*pBuffer = engine->ParseFile( *pBuffer, token, sizeof( token ) );

@@ -1146,3 +1146,43 @@ int CBaseModFrame::DrawSmearBackground( int x, int y, int wide, int tall, bool b
 
 	return topTall + middleTall + bottomTall;
 }
+
+
+int CBaseModFrame::DrawBlackBackground( int x, int y, int wide, int tall, bool bIsFooter )
+{
+
+	CMatRenderContextPtr pRenderContext(materials);
+
+	int realwide, realtall;
+	surface()->GetScreenSize(realwide, realtall);
+	
+	int topTall = scheme()->GetProportionalScaledValue( TOP_BORDER_HEIGHT );
+	int bottomTall = scheme()->GetProportionalScaledValue( BOTTOM_BORDER_HEIGHT );
+
+	int middleTall = tall - ( topTall + bottomTall );
+	if ( middleTall < 0 )
+	{
+		middleTall = 0;
+	}
+
+	surface()->DrawSetColor( m_smearColor );
+
+	// top
+	surface()->DrawSetTexture( m_nTopBorderImageId );
+	surface()->DrawTexturedSubRect( x, y, x + wide, y + topTall, 0, 0, 1, 1 );
+	y += topTall;
+
+	if ( middleTall )
+	{
+		// middle
+		surface()->DrawFilledRect( x, y, x + wide, y + middleTall );
+		y += middleTall;
+	}
+
+	// bottom
+	surface()->DrawSetTexture( m_nBottomBorderImageId );
+	surface()->DrawTexturedSubRect( x, y, x + wide, y + bottomTall, 0, 0, 1, 1 );
+	y += bottomTall;
+
+	return topTall + middleTall + bottomTall;
+}

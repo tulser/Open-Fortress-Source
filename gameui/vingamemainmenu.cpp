@@ -236,8 +236,8 @@ void InGameMainMenu::OnCommand( const char *command )
 
 		GenericConfirmation::Data_t data;
 
-		data.pWindowTitle = "#L4D360UI_LeaveMultiplayerConf";
-		data.pMessageText = "#L4D360UI_LeaveMultiplayerConfMsg";
+		data.pWindowTitle = "#GameUI_LeaveConfirm";
+		data.pMessageText = "#GameUI_LeaveConfirm_Msg";
 		data.bOkButtonEnabled = true;
 		data.pfnOkCallback = &LeaveGameOkCallback;
 		data.bCancelButtonEnabled = true;
