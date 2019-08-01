@@ -219,11 +219,6 @@ void LoadingProgress::SetProgress( float progress )
 		}
 		m_pProTotalProgress->SetProgress( m_flPeakProgress );
 	}
-	
-	if ( m_pTipPanel )
-	{
-		m_pTipPanel->NextTip();
-	}
 
 	UpdateWorkingAnim();
 }

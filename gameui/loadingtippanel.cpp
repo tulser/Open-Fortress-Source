@@ -51,7 +51,7 @@ void CLoadingTipPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
 //--------------------------------------------------------------------------------------------------------
 void CLoadingTipPanel::ReloadScheme( void )
 {
-	LoadControlSettings( "Resource/UI/loadingtippanel.res" );
+	LoadControlSettings( "resource/ui/loadingtippanel.res" );
 
 	NextTip();
 }
@@ -73,7 +73,7 @@ void CLoadingTipPanel::NextTip( void )
 	if ( !IsEnabled() )
 		return;
 
-/*
+	/*
 	if ( !m_flLastTipTime )
 	{
 		// Initialize timer on first render
@@ -85,7 +85,8 @@ void CLoadingTipPanel::NextTip( void )
 		return;
 
 	m_flLastTipTime = Plat_FloatTime();
-*/
+	*/
+
 	SetDialogVariable( "TipText", g_TFTips.GetRandomTip() );
 	// Set our control visible
 	SetVisible( true );

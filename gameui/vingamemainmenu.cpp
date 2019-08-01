@@ -335,11 +335,11 @@ void InGameMainMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
 
 	if ( demo_ui_enable.GetString()[0] )
 	{
-		LoadControlSettings( CFmtStr( "Resource/UI/BaseModUI/InGameMainMenu_%s.res", demo_ui_enable.GetString() ) );
+		LoadControlSettings( CFmtStr( "resource/ui/basemodui/ingamemainmenu_%s.res", demo_ui_enable.GetString() ) );
 	}
 	else
 	{
-		LoadControlSettings( "Resource/UI/BaseModUI/InGameMainMenu.res" );
+		LoadControlSettings( "resource/ui/basemodui/ingamemainmenu.res" );
 	}
 
 	SetPaintBackgroundEnabled( true );
