@@ -271,6 +271,13 @@ void InGameMainMenu::OnCommand( const char *command )
 			engine->ExecuteClientCmd( "demo_exit" );
 		}
 	}	
+	else if ( !Q_stricmp( command, "QuitGame_NoConfirm" ) )
+	{
+		if ( IsPC() )
+		{
+			engine->ClientCmd( "quit" );
+		}
+	}	
 	else if( !Q_strcmp( command, "OpenPlayerListDialog" ) )
 	{	
 		CBaseModPanel::GetSingleton().OpenPlayerListDialog( this );
