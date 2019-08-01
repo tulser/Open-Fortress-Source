@@ -6,13 +6,13 @@
 
 #include "cbase.h"
 #include <ctype.h>
-#include "basemodframe.h"
-#include "basemodpanel.h"
-#include "EngineInterface.h"
+#include "basemodFrame.h"
+#include "BaseModPanel.h"
+#include "engineinterface.h"
 
-#include "VFooterPanel.h"
-#include "VGenericConfirmation.h"
-//#include "VFlyoutMenu.h"
+#include "vfooterPanel.h"
+#include "vgenericconfirmation.h"
+//#include "vflyoutMenu.h"
 #include "IGameUIFuncs.h"
 
 // vgui controls
@@ -21,7 +21,7 @@
 #include "vgui/IInput.h"
 #include "vgui_controls/Tooltip.h"
 #include "vgui_controls/ImagePanel.h"
-#include "vgui/ilocalize.h"
+#include "vgui/ILocalize.h"
 
 #include "filesystem.h"
 #include "fmtstr.h"

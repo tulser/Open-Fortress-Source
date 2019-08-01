@@ -3,7 +3,7 @@
 #include "nb_horiz_list.h"
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/ScrollBar.h"
-#include "vgui_bitmapbutton.h"
+#include "vgui_bitmapButton.h"
 #include "input.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

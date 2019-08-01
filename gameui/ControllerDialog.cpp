@@ -5,7 +5,7 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "BasePanel.h"
+#include "basePanel.h"
 #include "ControllerDialog.h"
 
 using namespace vgui;

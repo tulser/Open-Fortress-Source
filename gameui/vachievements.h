@@ -8,8 +8,8 @@
 #define __VACHIEVEMENTS_H__
 
 #include "basemodui.h"
-#include "VGenericPanelList.h"
-#include "vgui_controls/ProgressBar.h"
+#include "vgenericpanellist.h"
+#include "vgui_controls/progressbar.h"
 
 class IAchievement;
 

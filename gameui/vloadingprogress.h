@@ -11,7 +11,7 @@
 #include "basemodui.h"
 #include "vgui/IScheme.h"
 #include "const.h"
-#include "loadingtippanel.h"
+#include "loadingtipPanel.h"
 
 namespace BaseModUI {
 

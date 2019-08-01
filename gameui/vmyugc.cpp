@@ -2,10 +2,10 @@
 #include "vmyugc.h"
 #include "vgui/ISurface.h"
 #include "filesystem.h"
-#include "VFooterPanel.h"
-#include "vhybridbutton.h"
+#include "vfooterPanel.h"
+#include "vhybridButton.h"
 #include "nb_header_footer.h"
-#include "nb_button.h"
+#include "nb_Button.h"
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.  For Spray Import.
 #define JPEGLIB_USE_STDIO

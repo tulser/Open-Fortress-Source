@@ -4,11 +4,11 @@
 //
 //===========================================================================//
 #include "cbase.h"
-#include "loadingtippanel.h"
+#include "loadingtipPanel.h"
 #include "filesystem.h"
-#include "keyvalues.h"
-#include "vgui/isurface.h"
-#include "EngineInterface.h"
+#include "KeyValues.h"
+#include "vgui/ISurface.h"
+#include "engineinterface.h"
 #include "vstdlib/random.h"
 #include "fmtstr.h"
 #include "tf_tips.h"

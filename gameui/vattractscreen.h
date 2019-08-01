@@ -8,7 +8,7 @@
 #define __VATTRACTSCREEN_H__
 
 #include "basemodui.h"
-#include "UIGameData.h"
+#include "UIgamedata.h"
 
 namespace BaseModUI {
 

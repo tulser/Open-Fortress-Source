@@ -9,7 +9,7 @@
 
 
 #include "basemodui.h"
-#include "VFlyoutMenu.h"
+#include "vflyoutMenu.h"
 
 class CNB_Header_Footer;
 

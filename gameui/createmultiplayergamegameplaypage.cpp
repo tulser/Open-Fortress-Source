@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "CreateMultiplayerGameGameplayPage.h"
+#include "createmultiplayergamegameplaypage.h"
 
 using namespace vgui;
 
@@ -19,9 +19,9 @@ using namespace vgui;
 #include <vgui_controls/Label.h>
 #include <vgui_controls/TextEntry.h>
 
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "PanelListPanel.h"
-#include "ScriptObject.h"
+#include "scriptobject.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>

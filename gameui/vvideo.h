@@ -8,8 +8,8 @@
 #define __VVIDEO_H__
 
 #include "basemodui.h"
-#include "VFlyoutMenu.h"
-#include "OptionsSubVideo.h"
+#include "vflyoutMenu.h"
+#include "optionssubvideo.h"
 
 
 #define MAX_DYNAMIC_AA_MODES 10

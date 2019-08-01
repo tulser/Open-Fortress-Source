@@ -17,9 +17,9 @@
 #include "vgui/IVGui.h"
 
 #include "vgui_controls/ImagePanel.h"
-#include "vgui_controls/KeyRepeat.h"
+#include "vgui_controls/keyrepeat.h"
 
-#include "BasePanel.h"
+#include "basePanel.h"
 
 class CSaveGameBrowserDialog;
 

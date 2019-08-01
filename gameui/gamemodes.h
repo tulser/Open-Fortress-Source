@@ -2,7 +2,7 @@
 #define __GAMEMODES_H__
 
 #include "basemodui.h"
-#include "vhybridbutton.h"
+#include "vhybridButton.h"
 
 struct GameModeInfo_t
 {

@@ -4,7 +4,7 @@
 //
 //=============================================================================//
 
-#include "MouseMessageForwardingPanel.h"
+#include "mousemessageforwardingPanel.h"
 #include "KeyValues.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

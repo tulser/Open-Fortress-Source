@@ -5,21 +5,21 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VGameSettings.h"
+#include "vgamesettings.h"
 #include "KeyValues.h"
 
 #include <ctype.h>
 #include <vstdlib/random.h>
 
-#include "VDropDownMenu.h"
-#include "VHybridButton.h"
-#include "VFooterPanel.h"
+#include "vdropdownMenu.h"
+#include "vhybridButton.h"
+#include "vfooterPanel.h"
 #include "vgui/ISurface.h"
-#include "EngineInterface.h"
-#include "VLoadingProgress.h"
-#include "VGenericConfirmation.h"
-#include "nb_select_mission_panel.h"
-#include "nb_select_campaign_panel.h"
+#include "engineinterface.h"
+#include "vloadingprogress.h"
+#include "vgenericconfirmation.h"
+#include "nb_select_mission_Panel.h"
+#include "nb_select_campaign_Panel.h"
 
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/Button.h"

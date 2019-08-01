@@ -10,12 +10,12 @@
 #include "windows.h"
 #endif
 
-#include "VAddons.h"
-#include "VGenericPanelList.h"
+#include "vaddons.h"
+#include "vgenericpanellist.h"
 #include "KeyValues.h"
-#include "VFooterPanel.h"
-#include "EngineInterface.h"
-#include "FileSystem.h"
+#include "vfooterPanel.h"
+#include "engineinterface.h"
+#include "filesystem.h"
 #include "fmtstr.h"
 #include "vgui/ISurface.h"
 #include "vgui/IBorder.h"
@@ -24,14 +24,14 @@
 #include "vgui_controls/Divider.h"
 #include "vgui_controls/CheckButton.h"
 #include "vgui_controls/ImagePanel.h"
-#include "vgui_controls/ProgressBar.h"
+#include "vgui_controls/progressbar.h"
 #include "vgui_controls/Label.h"
 #include "vgui_controls/TextImage.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "hllib\HLLib.h"
 #include "tier2/fileutils.h"
 #include "nb_header_footer.h"
-#include "nb_button.h"
+#include "nb_Button.h"
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.  For Spray Import.
 #define JPEGLIB_USE_STDIO

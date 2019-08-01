@@ -5,17 +5,17 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VInGameMainMenu.h"
-#include "VGenericConfirmation.h"
-#include "VFooterPanel.h"
-#include "VFlyoutMenu.h"
-#include "VHybridButton.h"
-#include "EngineInterface.h"
+#include "vingamemainMenu.h"
+#include "vgenericconfirmation.h"
+#include "vfooterPanel.h"
+#include "vflyoutMenu.h"
+#include "vhybridButton.h"
+#include "engineinterface.h"
 
 #include "fmtstr.h"
 
 #include "game/client/IGameClientExports.h"
-#include "GameUI_Interface.h"
+#include "gameui_interface.h"
 
 #include "vgui/ILocalize.h"
 #include "vgui_controls/Button.h"

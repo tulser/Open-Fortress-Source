@@ -5,11 +5,11 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#include "EngineInterface.h"
-#include "VGenericPanelList.h"
-#include "IAchievementMgr.h"
+#include "engineinterface.h"
+#include "vgenericpanellist.h"
+#include "iachievementmgr.h"
 #include "KeyValues.h"
-#include "VFooterPanel.h"
+#include "vfooterPanel.h"
 #include "fmtstr.h"
 
 #include "vgui/IBorder.h"
@@ -18,14 +18,14 @@
 #include "vgui_controls/Divider.h"
 #include "vgui_controls/CheckButton.h"
 #include "vgui_controls/ImagePanel.h"
-#include "vgui_controls/ProgressBar.h"
+#include "vgui_controls/progressbar.h"
 #include "vgui_controls/Label.h"
 #include "vgui_controls/TextImage.h"
 
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "cdll_util.h"
 #include "vgui/ISurface.h"
-#include "VAchievements.h"
+#include "vachievements.h"
 //#include "asw_achievements.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

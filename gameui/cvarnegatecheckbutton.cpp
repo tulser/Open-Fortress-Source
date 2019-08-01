@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //
 //=============================================================================//
-#include "CvarNegateCheckButton.h"
-#include "EngineInterface.h"
+#include "cvarnegateCheckButton.h"
+#include "engineinterface.h"
 #include <vgui/IVGui.h>
 #include "IGameUIFuncs.h"
 #include "tier1/KeyValues.h"

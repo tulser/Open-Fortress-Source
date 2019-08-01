@@ -5,9 +5,9 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "vcontrolslistpanel.h"
-#include "GameUI_Interface.h"
-#include "EngineInterface.h"
+#include "vcontrolsListPanel.h"
+#include "gameui_interface.h"
+#include "engineinterface.h"
 
 #include <vgui/IInput.h>
 #include <vgui/IScheme.h>

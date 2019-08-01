@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "LabeledCommandComboBox.h"
-#include "EngineInterface.h"
+#include "labeledcommandComboBox.h"
+#include "engineinterface.h"
 #include <KeyValues.h>
 #include <vgui/ILocalize.h>
 

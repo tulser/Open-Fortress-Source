@@ -6,25 +6,25 @@
 //=============================================================================//
 
 
-#include "LoadingDialog.h"
-#include "EngineInterface.h"
-#include "igameuifuncs.h"
+#include "loadingdialog.h"
+#include "engineinterface.h"
+#include "IGameUIFuncs.h"
 
 #include <vgui/IInput.h>
 #include <vgui/ISurface.h>
 #include <vgui/ILocalize.h>
 #include <vgui/IScheme.h>
 #include <vgui/ISystem.h>
-#include <vgui_controls/ProgressBar.h>
+#include <vgui_controls/progressbar.h>
 #include <vgui_controls/Label.h>
 #include <vgui_controls/Button.h>
 #include <vgui_controls/HTML.h>
 #include <vgui_controls/RichText.h>
 #include "tier0/icommandline.h"
 
-#include "GameUI_Interface.h"
-#include "ModInfo.h"
-#include "basepanel.h"
+#include "gameui_interface.h"
+#include "modinfo.h"
+#include "basePanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>

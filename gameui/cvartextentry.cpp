@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "CvarTextEntry.h"
-#include "EngineInterface.h"
+#include "cvarTextEntry.h"
+#include "engineinterface.h"
 #include <vgui/IVGui.h>
 #include "IGameUIFuncs.h"
 #include "tier1/KeyValues.h"

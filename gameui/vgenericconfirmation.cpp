@@ -5,11 +5,11 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VGenericConfirmation.h"
+#include "vgenericconfirmation.h"
 
 #include "vgui_controls/Label.h"
 #include "vgui/ISurface.h"
-#include "nb_button.h"
+#include "nb_Button.h"
 #include "cdll_util.h"
 #include "../game/shared/hl2ce/steamworks_stuff.h"
 

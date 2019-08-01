@@ -11,11 +11,11 @@
 #pragma once
 #endif
 
-#include "BaseSaveGameDialog.h"
+#include "baseSaveGameDialog.h"
 #include "SaveGameDialog.h"
 #include "SaveGameBrowserDialog.h"
-#include "BasePanel.h"
-#include "vgui_controls/KeyRepeat.h"
+#include "basePanel.h"
+#include "vgui_controls/keyrepeat.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Displays game loading options

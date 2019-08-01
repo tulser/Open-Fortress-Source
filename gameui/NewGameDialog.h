@@ -12,8 +12,8 @@
 #endif
 
 #include "vgui_controls/Frame.h"
-#include "vgui_controls/KeyRepeat.h"
-#include "UtlVector.h"
+#include "vgui_controls/keyrepeat.h"
+#include "utlvector.h"
 
 class CGameChapterPanel;
 class CSkillSelectionDialog;

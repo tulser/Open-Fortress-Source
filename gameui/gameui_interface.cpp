@@ -19,28 +19,28 @@
 #undef SendMessage
 #endif
 																
-#include "FileSystem.h"
-#include "GameUI_Interface.h"
-#include "Sys_Utils.h"
+#include "filesystem.h"
+#include "gameui_interface.h"
+#include "sys_utils.h"
 #include "string.h"
 #include "tier0/icommandline.h"
 
 // interface to engine
-#include "EngineInterface.h"
+#include "engineinterface.h"
 
-#include "VGuiSystemModuleLoader.h"
-#include "bitmap/TGALoader.h"
+#include "vguisystemmoduleloader.h"
+#include "bitmap/tgaloader.h"
 
-#include "GameConsole.h"
-#include "LoadingDialog.h"
-#include "CDKeyEntryDialog.h"
-#include "ModInfo.h"
+#include "gameconsole.h"
+#include "loadingdialog.h"
+#include "cdkeyentrydialog.h"
+#include "modinfo.h"
 #include "game/client/IGameClientExports.h"
 #include "materialsystem/imaterialsystem.h"
 #include "ixboxsystem.h"
 #include "iachievementmgr.h"
 #include "IGameUIFuncs.h"
-#include "IEngineVGUI.h"
+#include "iengineVGUI.h"
 #include "video/ivideoservices.h"
 
 // vgui2 interface
@@ -62,7 +62,7 @@
 #include "game/server/iplayerinfo.h"
 #include "avi/iavi.h"
 
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "basemodui.h"
 typedef BaseModUI::CBaseModPanel UI_BASEMOD_PANEL_CLASS;
 inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() { return UI_BASEMOD_PANEL_CLASS::GetSingleton(); }

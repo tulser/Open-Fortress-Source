@@ -1,7 +1,7 @@
 #include "cbase.h"
-#include "VDropDownMenu.h"
-#include "VHybridButton.h"
-#include "VFlyoutMenu.h"
+#include "vdropdownMenu.h"
+#include "vhybridButton.h"
+#include "vflyoutMenu.h"
 
 #include "vgui/ISurface.h"
 #include "tier1/KeyValues.h"

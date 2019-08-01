@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "KeyToggleCheckButton.h"
-#include "EngineInterface.h"
+#include "keytoggleCheckButton.h"
+#include "engineinterface.h"
 #include <vgui/IVGui.h>
 #include "IGameUIFuncs.h"
 

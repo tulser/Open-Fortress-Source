@@ -4,8 +4,8 @@
 //
 //=============================================================================//
 
-#include "OptionsSubGame.h"
-#include "BasePanel.h"
+#include "optionssubgame.h"
+#include "basePanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
