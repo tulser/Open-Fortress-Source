@@ -128,7 +128,14 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
-ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
+ConVar ofd_threewave		( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
+ConVar ofd_ttt				("ofd_ttt", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Trouble in Terrorist Town. DOESN'T WORK YET.");
+
+// TODO: Implement this
+// TTT Convars
+ConVar ofd_ttt_traitorcount("ofd_ttt_traitorcount", "0.1", FCVAR_NOTIFY | FCVAR_REPLICATED, "As an integer, this represents exact amount of traitors. As a decimal < 1.0, this represents the ratio of other players : traitors.");
+ConVar ofd_ttt_detectcount("ofd_ttt_detectcount", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "As an integer, this represents exact amount of detectives. As a decimal < 1.0, this represents the ratio of other players : detectives");
+ConVar ofd_ttt_minplayers("ofd_ttt_minplayers", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "This value is added to the absolute minimum player count to start.");
 
 // Not implemented.
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
