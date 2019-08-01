@@ -53,21 +53,14 @@ ipch
 # diff stuff
 *.bak
 
-# Ignore mathlib, tier1 & vgui controls, these are compiled in VPC projs
-lib/public/mathlib.lib
+# Ignore tier1 since its compiled in VPC projs
 lib/public/tier1.lib
-lib/public/vgui_controls.lib
-lib/public/vgui_controls_editor_2013.lib
 lib/public/raytrace.lib
-lib/osx32/mathlib.a
+lib/public/mathlib.lib
+lib/public/vgui_controls.lib
 lib/osx32/tier1.a
-lib/osx32/vgui_controls.a
-lib/osx32/vgui_controls_editor_2013.a
 lib/osx32/raytrace.a
-lib/public/linux32/mathlib.a
 lib/public/linux32/tier1.a
-lib/public/linux32/vgui_controls.a
-lib/public/linux32/vgui_controls_editor_2013.a
 lib/public/linux32/raytrace.a
 
 # Compiled stuff
@@ -78,6 +71,8 @@ game/client/Debug_open_fortress/
 game/client/Release_open_fortress/
 game/server/Debug_open_fortress/
 game/server/Release_open_fortress/
+gameui/Debug_open_fortress/
+gameui/Release_open_fortress/
 mathlib/Debug/
 mathlib/Release/
 mathlib/obj_mathlib_osx32/
@@ -111,7 +106,6 @@ vgui2/vgui_controls/generated_proto/htmlmessages.pb.cc
 /materialsystem/stdshaders/Debug_dx9_open_fortress
 /materialsystem/stdshaders/Release_dx9_open_fortress
 /store_symbols.ini
-lib/public/raytrace.lib
 
 # These makefiles are hand-made
 !devtools/*.mak

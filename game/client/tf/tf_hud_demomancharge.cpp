@@ -18,6 +18,8 @@
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weaponbase.h"
 
+#include "engine/IEngineSound.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -37,6 +39,8 @@ public:
 	virtual bool	ShouldDraw( void );
 	virtual void	OnTick( void );
 
+	bool mbCharging;
+
 private:
 	vgui::ContinuousProgressBar *m_pChargeMeter;
 };
@@ -48,6 +52,8 @@ DECLARE_HUDELEMENT( CHudDemomanChargeMeter );
 //-----------------------------------------------------------------------------
 CHudDemomanChargeMeter::CHudDemomanChargeMeter( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudDemomanCharge" )
 {
+	mbCharging = false;
+
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
@@ -112,7 +118,18 @@ void CHudDemomanChargeMeter::OnTick( void )
 	ITFChargeUpWeapon *pChargeupWeapon = dynamic_cast< ITFChargeUpWeapon *>( pWpn );
 
 	if ( !pWpn || !pChargeupWeapon )
+	{
+		if ( mbCharging )
+		{
+			// int index = player->entindex();
+
+			// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
+			C_BaseEntity::StopSound(pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp");
+
+			mbCharging = false;
+		}
 		return;
+	}
 
 	if ( m_pChargeMeter )
 	{
@@ -128,10 +145,30 @@ void CHudDemomanChargeMeter::OnTick( void )
 				float flPercentCharged = min( 1.0, flTimeCharged / flChargeMaxTime );
 
 				m_pChargeMeter->SetProgress( flPercentCharged );
+				if ( !mbCharging )
+				{
+					CLocalPlayerFilter filter;
+
+					// int index = player->entindex();
+
+					// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
+					C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
+
+					mbCharging = true;
+				}
 			}
 			else
 			{
 				m_pChargeMeter->SetProgress( 0.0f );
+				if ( mbCharging )
+				{
+					// int index = player->entindex();
+
+					// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
+					C_BaseEntity::StopSound( pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
+
+					mbCharging = false;
+				}
 			}
 		}
 	}

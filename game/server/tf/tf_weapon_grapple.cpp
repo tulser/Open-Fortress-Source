@@ -169,7 +169,6 @@ m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, true );
 //IPhysicsObject *pPhysObject = m_hPlayer->VPhysicsGetObject();
 IPhysicsObject *pRootPhysObject = VPhysicsGetObject();
 Assert( pRootPhysObject );
-Assert( pPhysObject );
 pRootPhysObject->EnableMotion( false );
 // Root has huge mass, tip has little
 pRootPhysObject->SetMass( VPHYSICS_MAX_MASS );

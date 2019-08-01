@@ -245,10 +245,27 @@ void CBaseGameStats::Event_Init( void )
 	SetSteamStatistic( filesystem->IsSteam() );
 	SetCyberCafeStatistic( gamestatsuploader->IsCyberCafeUser() );
 	ConVarRef pDXLevel( "mat_dxlevel" );
+
 	if( pDXLevel.IsValid() )
 	{
 		SetDXLevelStatistic( pDXLevel.GetInt() );
 	}
+
+	// Exit if the user is running on DirectX 6, 7 or 8 as these are completely unsupported.
+	if ( pDXLevel.GetInt() > 50 && pDXLevel.GetInt() < 90 )
+	{
+		Error("Open Fortress cannot be ran in DirectX 8 or lower. Put -dxlevel 95 into the launch parameters of your game, start the game once and then remove this launch parameter afterwards, so it's permanently saved.");
+	}
+
+	// Force HDR on as LDR is not supported
+	// Note: this isn't enough, this is also done in view.cpp to prevent changing at runtime
+	ConVarRef pHDRLevel( "mat_hdr_level" );
+	if ( pHDRLevel.GetInt() < 2 )
+	{
+		Warning( "HDR is forced on in Open Fortress. HDR was found disabled, re-enabling HDR...\n" );
+		pHDRLevel.SetValue( 2 );
+	}
+
 	++m_BasicStats.m_Summary.m_nCount;
 
 	StatsLog( "CBaseGameStats::Event_Init [%dth session]\n", m_BasicStats.m_Summary.m_nCount );

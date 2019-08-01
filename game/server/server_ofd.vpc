@@ -60,6 +60,8 @@ $Project "Server (OFD)"
 			$File	"ofd\of_tfcgrenadebase.h"
 			$File	"ofd\of_tfcgrenade_frag.cpp"
 			$File	"ofd\of_tfcgrenade_frag.h"
+			$File	"tf\tf_weapon_grapple.cpp"
+			$File	"tf\tf_weapon_grapple.h"			
 		}
 		
 		$File	"ai_relationship.cpp"

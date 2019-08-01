@@ -47,6 +47,7 @@
 #include "clienteffectprecachesystem.h"
 #include "glow_outline_effect.h"
 #include "of_discordrpc.h"
+#include "of_loadout.h"
 
 #if defined( _X360 )
 #include "tf_clientscoreboard.h"
@@ -192,13 +193,12 @@ void ClientModeTFNormal::Init()
 			pPanel->SetVisible( false );
 			pPanel->MakePopup( false );
 			m_pGameUI->SetLoadingBackgroundDialog( pPanel->GetVPanel() );
+			CTFLoadoutPanel *pLoadoutPanel = GLoadoutPanel();
+			pLoadoutPanel->InvalidateLayout( false, true );
+			pLoadoutPanel->SetVisible( false );
+			pLoadoutPanel->MakePopup( false );
 		}		
 	}
-
-#if defined( _X360 )
-	m_pScoreboard = (CTFClientScoreBoardDialog *)( gViewPortInterface->FindPanelByName( PANEL_SCOREBOARD ) );
-	Assert( m_pScoreboard );
-#endif
 
 	BaseClass::Init();
 }

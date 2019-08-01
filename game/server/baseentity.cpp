@@ -1009,7 +1009,7 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( m_iGlobalname != NULL_STRING )
 		{
-			Q_snprintf( tempstr, sizeof(tempstr), "GLOBALNAME: %s", STRING(m_iGlobalname) );
+			Q_snprintf( tempstr, sizeof(tempstr), "Globalname: %s", STRING(m_iGlobalname) );
 			EntityText(offset,tempstr, 0);
 			offset++;
 		}
@@ -1021,14 +1021,14 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( GetModelName() != NULL_STRING || GetBaseAnimating() )
 		{
-			Q_snprintf(tempstr, sizeof(tempstr), "Model:%s", STRING(GetModelName()) );
+			Q_snprintf(tempstr, sizeof(tempstr), "Model: %s", STRING(GetModelName()) );
 			EntityText(offset,tempstr,0);
 			offset++;
 		}
 
 		if( m_hDamageFilter.Get() != NULL )
 		{
-			Q_snprintf( tempstr, sizeof(tempstr), "DAMAGE FILTER:%s", m_hDamageFilter->GetDebugName() );
+			Q_snprintf( tempstr, sizeof(tempstr), "Damage Filter: %s", m_hDamageFilter->GetDebugName() );
 			EntityText( offset,tempstr,0 );
 			offset++;
 		}

@@ -37,7 +37,7 @@ float g_flCustomBloomScaleMinimum = 0.0f;
 bool g_bFlashlightIsOn = false;
 
 // hdr parameters
-ConVar mat_bloomscale( "mat_bloomscale", "1" );
+ConVar mat_bloomscale( "mat_bloomscale", "0.2" );
 ConVar mat_hdr_level( "mat_hdr_level", "2", FCVAR_ARCHIVE );
 
 ConVar mat_bloomamount_rate( "mat_bloomamount_rate", "0.05f", FCVAR_CHEAT );
@@ -48,8 +48,8 @@ static ConVar mat_dynamic_tonemapping( "mat_dynamic_tonemapping", "1", FCVAR_CHE
 static ConVar mat_show_ab_hdr( "mat_show_ab_hdr", "0" );
 static ConVar mat_tonemapping_occlusion_use_stencil( "mat_tonemapping_occlusion_use_stencil", "0" );
 ConVar mat_debug_autoexposure("mat_debug_autoexposure","0", FCVAR_CHEAT);
-static ConVar mat_autoexposure_max( "mat_autoexposure_max", "2" );
-static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.5" );
+static ConVar mat_autoexposure_max( "mat_autoexposure_max", "1.1" );
+static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.9" );
 static ConVar mat_show_histogram( "mat_show_histogram", "0" );
 ConVar mat_hdr_tonemapscale( "mat_hdr_tonemapscale", "1.0", FCVAR_CHEAT );
 ConVar mat_hdr_uncapexposure( "mat_hdr_uncapexposure", "0", FCVAR_CHEAT );
@@ -1441,6 +1441,15 @@ static float GetBloomAmount( void )
 	{
 		bBloomEnabled = false;
 	}
+
+	// Force HDR on as LDR is not supported
+	ConVarRef pHDRLevel( "mat_hdr_level" );
+	if ( pHDRLevel.GetInt() < 2 )
+	{
+		Warning( "HDR is forced on in Open Fortress. HDR was found disabled, re-enabling HDR...\n" );
+		pHDRLevel.SetValue( 2 );
+	}
+
 	if( !g_pMaterialSystemHardwareConfig->CanDoSRGBReadFromRTs() && g_pMaterialSystemHardwareConfig->FakeSRGBWrite() )
 	{
 		bBloomEnabled = false;		

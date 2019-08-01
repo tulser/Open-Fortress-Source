@@ -464,7 +464,7 @@ private:
 
 	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
 	// for deathmatch
-	bool				SelectFurtherSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
+	bool				SelectDMSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
 
 	void				PrecachePlayerModels( void );
 	void				RemoveNemesisRelationships();
@@ -597,10 +597,10 @@ private:
 	bool				m_bAutoSwitchWeapons;
 	
 public:
-	bool				SetPowerplayEnabled( bool bOn );
-	bool				PlayerHasPowerplay( void );
-	void				PowerplayThink( void );
-	float				m_flPowerPlayTime;
+//	bool				SetPowerplayEnabled( bool bOn );
+//  bool				PlayerHasPowerplay( void );
+//	void				PowerplayThink( void );
+//	float				m_flPowerPlayTime;
 	void				SetCustomModel( inputdata_t &inputdata );
 	void				AddMoney( inputdata_t &inputdata );
 	void				SetMoney( inputdata_t &inputdata );
