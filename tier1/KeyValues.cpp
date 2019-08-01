@@ -220,7 +220,7 @@ static CLeakTrack track;
 #else
 
 #define TRACK_KV_ADD( ptr, name )
-#define TRACK_KV_REMOVE( ptr )		#define TRACK_KV_REMOVE( ptr )	
+#define TRACK_KV_REMOVE( ptr )
 	
 #define TRACK_KV_ADD( ptr, name ) 
 #define TRACK_KV_REMOVE( ptr )	

@@ -1786,7 +1786,7 @@ void Panel::InternalCursorMoved(int x, int y)
 
 	if (IsBuildGroupEnabled())
 	{
-		if ( _buildGroupHandle->CursorMoved(x, y, this)
+		if ( _buildGroupHandle->CursorMoved(x, y, this))
 		{
 			return;
 		}
