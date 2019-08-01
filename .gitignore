@@ -53,21 +53,12 @@ ipch
 # diff stuff
 *.bak
 
-# Ignore mathlib, tier1 & vgui controls, these are compiled in VPC projs
-lib/public/mathlib.lib
+# Ignore tier1 since its compiled in VPC projs
 lib/public/tier1.lib
-lib/public/vgui_controls.lib
-lib/public/vgui_controls_editor_2013.lib
 lib/public/raytrace.lib
-lib/osx32/mathlib.a
 lib/osx32/tier1.a
-lib/osx32/vgui_controls.a
-lib/osx32/vgui_controls_editor_2013.a
 lib/osx32/raytrace.a
-lib/public/linux32/mathlib.a
 lib/public/linux32/tier1.a
-lib/public/linux32/vgui_controls.a
-lib/public/linux32/vgui_controls_editor_2013.a
 lib/public/linux32/raytrace.a
 
 # Compiled stuff
