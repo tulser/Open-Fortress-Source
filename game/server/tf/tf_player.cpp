@@ -732,6 +732,9 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
 
+	// needed so the stickybomb launcher charging plays...
+	PrecacheScriptSound( "Weapon_StickyBombLauncher.ChargeUp" );
+
 	PrecacheScriptSound( TFGameRules()->GetMusicName( false ) );
 	PrecacheScriptSound( TFGameRules()->GetMusicName( true ) );
 	
