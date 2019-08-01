@@ -69,6 +69,8 @@ game/client/Debug_open_fortress/
 game/client/Release_open_fortress/
 game/server/Debug_open_fortress/
 game/server/Release_open_fortress/
+gameui/Debug_open_fortress/
+gameui/Release_open_fortress/
 mathlib/Debug/
 mathlib/Release/
 mathlib/obj_mathlib_osx32/
