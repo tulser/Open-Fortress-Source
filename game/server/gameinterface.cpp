@@ -209,6 +209,9 @@ ConVar sv_massreport( "sv_massreport", "0" );
 ConVar sv_force_transmit_ents( "sv_force_transmit_ents", "0", FCVAR_CHEAT, "Will transmit all entities to client, regardless of PVS conditions (will still skip based on transmit flags, however)." );
 
 ConVar sv_autosave( "sv_autosave", "1", 0, "Set to 1 to autosave game on level transition. Does not affect autosave triggers." );
+// HACKHACK: This might be implemented in the main engine DLLS but it's hidden/missing in the Source SDK 2013??
+// Will not function 1-to-1 like other offical Source Engine titles. (Cannot connect etc.)
+ConVar hide_server("hide_server", "0", 0, "Whether the server should be hidden from the master server");
 ConVar *sv_maxreplay = NULL;
 static ConVar  *g_pcv_commentary = NULL;
 static ConVar *g_pcv_ThreadMode = NULL;
