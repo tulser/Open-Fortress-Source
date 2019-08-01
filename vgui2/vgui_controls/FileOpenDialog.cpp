@@ -213,6 +213,7 @@ public:
 	{
 	}
 	virtual ~FileCompletionMenu() {}
+
 	// override it so it doesn't request focus
 	virtual void SetVisible(bool state)
 	{

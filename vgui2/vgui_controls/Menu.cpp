@@ -2489,7 +2489,7 @@ void Menu::MoveAlongMenuItemList(int direction, int loopCount, bool bArmItem)
 		}
 	}
 
- 	if ( bArmItem )
+	if ( bArmItem )
 	{
 		if ( m_MenuItems.IsValidIndex( m_iCurrentlySelectedItemID ) )
 		{
@@ -2498,20 +2498,20 @@ void Menu::MoveAlongMenuItemList(int direction, int loopCount, bool bArmItem)
 	}
 }
 
- int Menu::GetVisibleItemIndex( int sortedIndex )
+int Menu::GetVisibleItemIndex( int sortedIndex )
 {
 	int numVisible = 0;
 	int findVisible = 0;
 
- 	while ( m_SortedItems.IsValidIndex( findVisible ) && findVisible < sortedIndex )
+	while ( m_SortedItems.IsValidIndex( findVisible ) && findVisible < sortedIndex )
 	{
 		if ( m_MenuItems.IsValidIndex( m_SortedItems[ findVisible ] ) && m_MenuItems[ m_SortedItems[ findVisible ] ]->IsVisible() )
 			numVisible++;
 
- 		findVisible++;
+		findVisible++;
 	}
 
- 	return numVisible;
+	return numVisible;
 }
 
 //-----------------------------------------------------------------------------

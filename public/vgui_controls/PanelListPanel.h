@@ -121,7 +121,7 @@ private:
 	int						m_iDefaultHeight;
 	int						m_iPanelBuffer;
 	bool					m_bInnerPanel;
-	
+
 	CPanelAnimationVar( bool, m_bAutoHideScrollbar, "autohide_scrollbar", "0" );
 };
 

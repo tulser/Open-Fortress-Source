@@ -145,14 +145,14 @@ void CMessageDialog::CreateButtonLabel( ButtonLabel_s *pButton, const char *pIco
 void CMessageDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
+	
+	char* szOk;
 
- 	char* szOk;
-
- 	if (g_bSteamworksError)
+	if (g_bSteamworksError)
 		szOk = "#GameUI_QuitConfirmationTitle";
 	else
 		szOk = "#L4D360UI_Ok";
-	
+
 	LoadControlSettings( "resource/UI/MessageDialog.res", "GAME", m_pControlSettings );
 
 	m_hButtonFont = pScheme->GetFont( "GameUIButtons" );

@@ -46,7 +46,7 @@ public:
 	{
 		SetBlockDragChaining( true );
 	}
-	
+
 	virtual ~ContextLabel() {}
 
 	virtual void OnMousePressed( MouseCode code )
@@ -132,23 +132,24 @@ private:
 	bool			m_bShouldShowCloseButton;
 	bool			m_bDragEnabled;
 
- 	Color	m_ColBgColor;
+	Color	m_ColBgColor;
 	bool	m_bDrawBg;
 
- 	bool	m_bClosing;
+	bool	m_bClosing;
 	bool	m_bOpening;
 	float	m_flCurSizeX;
 
- #define __ptab_button_inset 3
+#define __ptab_button_inset 3
 
- 	int m_iDesignatedWidth;
+	int m_iDesignatedWidth;
 	int m_iLastMouseX;
 
- 	//double flAnimTime;
+	//double flAnimTime;
 
- //#define __ptab_ANIMDUR 0.5f
- 
+//#define __ptab_ANIMDUR 0.5f
+
 public:
+
 	PageTab(PropertySheet *parent, const char *panelName, const char *text, char const *imageName, int maxTabWidth, Panel *page, bool showContextButton,
 		long hoverActivatePageTime = -1, bool bCloseButton = false ) : 
 		Button( (Panel *)parent, panelName, text),
@@ -169,15 +170,15 @@ public:
 		m_bDragEnabled = m_pParent->IsDraggableTab();
 		SetDragEnabled( m_bDragEnabled );
 
- 		m_bClosing = false;
+		m_bClosing = false;
 		m_bOpening = bCloseButton;
 		m_flCurSizeX = 0;
 		m_iDesignatedWidth = 0;
 		m_iLastMouseX = 0;
 
- 		//if ( m_bOpening )
+		//if ( m_bOpening )
 		//	flAnimTime = system()->GetCurrentTime() + __ptab_ANIMDUR;
-	
+
 		if ( imageName )
 		{
 			m_pImage = new ImagePanel( this, text );
@@ -187,21 +188,21 @@ public:
 
 		}
 
- 		m_pActiveBorder = NULL;
+		m_pActiveBorder = NULL;
 		m_pNormalBorder = NULL;
-		
+
 		SetMouseClickEnabled( MOUSE_RIGHT, true );
 		m_pContextLabel = m_bShowContextLabel ? new ContextLabel( this, "Context", "9" ) : NULL;
 
 		REGISTER_COLOR_AS_OVERRIDABLE( _textColor, "selectedcolor" );
 		REGISTER_COLOR_AS_OVERRIDABLE( _dimTextColor, "unselectedcolor" );
 
- 		m_bShouldShowCloseButton = true;
+		m_bShouldShowCloseButton = true;
 
- 		if ( bCloseButton )
+		if ( bCloseButton )
 			m_pButtonClose = new Button( this, "closebutton", "x", this, "close_tab" );
 		else
-			m_pButtonClose = NULL;		
+			m_pButtonClose = NULL;
 	}
 
 	~PageTab()
@@ -214,48 +215,48 @@ public:
 		int x, y;
 		GetSize(x,y);
 
- 		return ( m_iDesignatedWidth > 0 ) ? m_iDesignatedWidth : x;
+		return ( m_iDesignatedWidth > 0 ) ? m_iDesignatedWidth : x;
 	};
 
- 	bool IsAnimating()
+	bool IsAnimating()
 	{
 		return m_bClosing || m_bOpening;
 	}
 
- 	void CloseTab()
+	void CloseTab()
 	{
 		m_bClosing = true;
 		m_bOpening = false;
 
- 		if ( m_iDesignatedWidth > 0 )
+		if ( m_iDesignatedWidth > 0 )
 			m_flCurSizeX = m_iDesignatedWidth;
 		//flAnimTime = system()->GetCurrentTime() + __ptab_ANIMDUR;
 	}
 
- 	void SetText( const char *pszText )
+	void SetText( const char *pszText )
 	{
 		BaseClass::SetText( pszText );
 		//InvalidateLayout(true);
 		//m_flCurSizeX = m_iDesignatedWidth;
 	}
 
- 	bool IsClosing()
+	bool IsClosing()
 	{
 		return m_bClosing;
 	}
 
- 	void SetCloseButtonVisible( bool bVisible )
+	void SetCloseButtonVisible( bool bVisible )
 	{
 		m_bShouldShowCloseButton = bVisible;
 	}
 
- 	void SetCustomBgColor( Color c )
+	void SetCustomBgColor( Color c )
 	{
 		m_ColBgColor = c;
 		m_bDrawBg = true;
 		InvalidateLayout();
-	};	
-	
+	};
+
 	virtual void Paint()
 	{
 		if ( m_bDrawBg )
@@ -264,7 +265,7 @@ public:
 			int sx, sy;
 			GetSize(sx,sy);
 			surface()->DrawFilledRect( 0, 0, sx, sy );
-		}		
+		}
 		BaseClass::Paint();
 	}
 
@@ -291,20 +292,20 @@ public:
 			}
 		}
 		m_bAttemptingDrop = false;
-		
+
 		if ( m_bDragEnabled && input()->GetMouseCapture() == GetVPanel() )
 		{
 			if ( m_pParent->DoScroll() )
 				OnDoDrag();
-		}		
+		}
 
 		BaseClass::OnThink();
 	}
 
 	virtual bool IsDroppable( CUtlVector< KeyValues * >&msglist )
 	{
-		m_bAttemptingDrop = true;	
-		
+		m_bAttemptingDrop = true;
+
 		if ( !GetParent() )
 			return false;
 
@@ -423,14 +424,14 @@ public:
 		m_pNormalBorder = pScheme->GetBorder("TabBorder");
 	}
 
- 	void PerformLayout()
+	void PerformLayout()
 	{
 		BaseClass::PerformLayout();
 
- 		int tabHeight = m_pParent->GetTabHeight();
+		int tabHeight = m_pParent->GetTabHeight();
 		int maxWidth;
 		int maxHeight;
-		
+
 		if ( m_pImage )
 		{
 			ClearImages();
@@ -444,7 +445,7 @@ public:
 				m_pImage->SetPos( 10, 0 );
 			}
 
- 			maxWidth = w + 4;
+			maxWidth = w + 4;
 			maxHeight = h + 2;
 		}
 		else
@@ -456,24 +457,24 @@ public:
 
 			wide = max(m_bMaxTabWidth, contentWide + 10);  // 10 = 5 pixels margin on each side
 			wide += m_pContextLabel ? 10 : 0;
-if ( m_pButtonClose && m_bShouldShowCloseButton )
+			if ( m_pButtonClose && m_bShouldShowCloseButton )
 				wide += tabHeight - 7;
 
- 			maxWidth = wide;
+			maxWidth = wide;
 			maxHeight = tall;
 		}
 
- 		if ( IsAnimating() )
+		if ( IsAnimating() )
 		{
 			int goal = m_bClosing ? 0 : maxWidth;
 
- 			if ( abs( goal - m_flCurSizeX ) > 1 )
+			if ( abs( goal - m_flCurSizeX ) > 1 )
 				m_flCurSizeX = Approach( goal, m_flCurSizeX, m_pParent->m_dFrametime * 1000.0f * ((float)maxWidth/200.0f) );
 			else
 				m_flCurSizeX = goal;
 			//m_flCurSizeX = Lerp( clamp( 1.0f - (system()->GetCurrentTime() - flAnimTime)/__ptab_ANIMDUR, 0, 1 ), 
 
- 			if ( m_bClosing && m_flCurSizeX < 1 )
+			if ( m_bClosing && m_flCurSizeX < 1 )
 			{
 				m_bClosing = false;
 				RemovePageAndTab();
@@ -485,20 +486,20 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 				m_flCurSizeX = maxWidth;
 			}
 
- 			SetSize( m_flCurSizeX, maxHeight );
+			SetSize( m_flCurSizeX, maxHeight );
 		}
 		else
 			SetSize( maxWidth, maxHeight );
 
- 		m_iDesignatedWidth = maxWidth;
+		m_iDesignatedWidth = maxWidth;
 
- 		if ( m_pButtonClose )
+		if ( m_pButtonClose )
 		{
 			m_pButtonClose->SetSize( tabHeight - __ptab_button_inset * 2, tabHeight - __ptab_button_inset * 2 );
 			m_pButtonClose->SetVisible( m_bShouldShowCloseButton );
 			m_pButtonClose->SetTextInset( 7, 0 );
 
- 			if ( m_bDrawBg )
+			if ( m_bDrawBg )
 			{
 				Color cBG = Color( max( 0, m_ColBgColor.r() - 15 ),
 								max( 0, m_ColBgColor.g() - 15 ),
@@ -519,14 +520,14 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 		}
 	}
 
- 	virtual void OnSizeChanged(int newWide, int newTall)
+	virtual void OnSizeChanged(int newWide, int newTall)
 	{
 		BaseClass::OnSizeChanged(newWide,newTall);
 
- 		if ( m_pButtonClose && m_pParent )
+		if ( m_pButtonClose && m_pParent )
 		{
 			int tabHeight = m_pParent->GetTabHeight();
-			m_pButtonClose->SetPos( newWide - tabHeight + __ptab_button_inset, __ptab_button_inset );			
+			m_pButtonClose->SetPos( newWide - tabHeight + __ptab_button_inset, __ptab_button_inset );
 		}
 	}
 
@@ -559,48 +560,45 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 		{
 			TryPageClose();
 			return;
-		}		
-		else if ( !Q_stricmp( cmd, "close_tab" ) )
-		{
-			TryPageClose();
-			return;
-		}		
+		}
+
 		BaseClass::OnCommand( cmd );		
 	}
+
 	void TryPageClose()
 	{
 		if ( !m_pParent->AllowClosing() )
 			return;
 
- 		int ipagenum = m_pParent->FindPage( m_pPage );
+		int ipagenum = m_pParent->FindPage( m_pPage );
 		KeyValues *pKV = new KeyValues( "AskPageClose" );
 		pKV->SetPtr( "PageTab", this );
 		pKV->SetInt( "TabIndex", ipagenum );
 		m_pParent->PostActionSignal( pKV );
 	}
 
- 	MESSAGE_FUNC( OnCloseConfirmed, "OnCloseConfirmed" )
+	MESSAGE_FUNC( OnCloseConfirmed, "OnCloseConfirmed" )
 	{
 		m_pParent->ClosePage( m_pPage );
 	}
 
- 	void RemovePageAndTab()
+	void RemovePageAndTab()
 	{
 		if ( !m_bShouldShowCloseButton || !m_pButtonClose )
 			return;
 
- 		if ( m_pParent->GetNumPages() > 1 )
+		if ( m_pParent->GetNumPages() > 1 )
 		{
 			int ipagenum = m_pParent->FindPage( m_pPage );
 			bool bWasActive = m_pPage == m_pParent->GetActivePage();
 
- 			m_pParent->DeletePage( m_pPage );
+			m_pParent->DeletePage( m_pPage );
 			m_pParent->PostActionSignal(new KeyValues("PageClosed", "pagenum", ipagenum));
 
- 			if ( bWasActive )
+			if ( bWasActive )
 				m_pParent->ScrollToActivePage();
 		}
-	}	
+	}
 
 	IBorder *GetBorder(bool depressed, bool armed, bool selected, bool keyfocus)
 	{
@@ -638,18 +636,18 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 	}
 
 	virtual bool CanBeDefaultButton(void)
-    {		{
-        return false;			return false;
-    }		}
+	{
+		return false;
+	}
 
- 	virtual void OnCursorMoved( int x, int y )
+	virtual void OnCursorMoved( int x, int y )
 	{
 		if ( m_bDragEnabled && input()->IsMouseDown( MOUSE_LEFT ) )
 		{
 			if ( input()->GetMouseCapture() != GetVPanel() )
 				input()->SetMouseCapture(GetVPanel());
 
- 			if ( m_iLastMouseX < 0 || abs( m_iLastMouseX - x ) > 3 )
+			if ( m_iLastMouseX < 0 || abs( m_iLastMouseX - x ) > 3 )
 			{
 				m_iLastMouseX = -1;
 				OnDoDrag();
@@ -658,20 +656,20 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 		else
 			m_iLastMouseX = x;
 
- 		BaseClass::OnCursorMoved( x, y );
+		BaseClass::OnCursorMoved( x, y );
 	}
 
- 	virtual void OnDoDrag()
+	virtual void OnDoDrag()
 	{
 		int mx, my;
 		input()->GetCursorPosition( mx, my );
 
 
 
- 		//LocalToScreen( mx, my );
+		//LocalToScreen( mx, my );
 		m_pParent->ScreenToLocal( mx, my );
 
- 		int iBestTab = -1;
+		int iBestTab = -1;
 		int iBestDist = 99999;
 		for ( int i = 0; i < m_pParent->GetNumPages() - 1; i++ )
 		{
@@ -685,20 +683,20 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 			_x1 += _x0;
 			int xmax = _x1;
 
- 			if ( mx < xmin || mx > xmax )
+			if ( mx < xmin || mx > xmax )
 				continue;
 
- 			int mid = (xmax-xmin)*0.5f+xmin;
+			int mid = (xmax-xmin)*0.5f+xmin;
 			int dist = abs( mx - mid );
 
- 			if ( dist > iBestDist )
+			if ( dist > iBestDist )
 				continue;
 
- 			iBestDist = dist;
+			iBestDist = dist;
 			iBestTab = ( mx >= mid ) ? i + 1 : i;
 		}
 
- 		if ( iBestTab >= 0 )
+		if ( iBestTab >= 0 )
 			m_pParent->MoveTab( this, iBestTab );
 	}
 
@@ -708,16 +706,16 @@ if ( m_pButtonClose && m_bShouldShowCloseButton )
 		// check for context menu open
 		if (!IsEnabled())
 			return;
-		
- 		if ( code == MOUSE_MIDDLE )
+
+		if ( code == MOUSE_MIDDLE )
 		{
 			TryPageClose();
 			return;
-		}		
+		}
 		
 		if (!IsMouseClickEnabled(code))
 			return;
-		
+
 		if (IsUseCaptureMouseEnabled())
 		{
 			{
@@ -765,22 +763,22 @@ class CTabBar : public Panel
 	DECLARE_CLASS_SIMPLE( CTabBar, Panel );
 public:
 
- 	CTabBar( PropertySheet *parent ) : BaseClass( parent ) {
+	CTabBar( PropertySheet *parent ) : BaseClass( parent ) {
 		m_pParent = parent;
 	};
 
- 	void OnMouseDoublePressed( MouseCode code )
+	void OnMouseDoublePressed( MouseCode code )
 	{
 		GetParent()->OnCommand( "add_tab" );
 		BaseClass::OnMouseDoublePressed( code );
 	}
 
- 	void OnMouseWheeled( int d )
+	void OnMouseWheeled( int d )
 	{
 		m_pParent->DoScroll( d * -100 );
 	}
 
- 	PropertySheet *m_pParent;
+	PropertySheet *m_pParent;
 };
 
 }; // namespace vgui
@@ -817,7 +815,7 @@ PropertySheet::PropertySheet(
 
 	m_bKBNavigationEnabled = true;
 
- 	Init();	
+	Init();
 }
 
 //-----------------------------------------------------------------------------
@@ -842,7 +840,7 @@ PropertySheet::PropertySheet(Panel *parent, const char *panelName, ComboBox *com
 	m_iTabHeight = 0;
     m_iTabHeightSmall = 0;
 
- 	Init();	
+	Init();
 }
 
 //-----------------------------------------------------------------------------
@@ -856,36 +854,36 @@ void PropertySheet::Init()
 {
 	m_iTabHeight = 28;
 
- 	m_iTabXScroll_Target = 0;
+	m_iTabXScroll_Target = 0;
 	m_flTabXScroll_Accum = 0;
 	m_iTabXScroll_Cur = 0;
 	m_dLastTime = 0;
 	m_dFrametime = 0;
 
- 	m_flMouseScroll = 0;
+	m_flMouseScroll = 0;
 
- 	m_pBut_Left = new Button( this, "scroll_left", "<", this, "scroll_left" );
+	m_pBut_Left = new Button( this, "scroll_left", "<", this, "scroll_left" );
 	m_pBut_Right = new Button( this, "scroll_right", ">", this, "scroll_right" );
 
- 	m_pBut_Left->SetTextInset( 6, -1 );
+	m_pBut_Left->SetTextInset( 6, -1 );
 	m_pBut_Right->SetTextInset( 6, -1 );
 
- 	//m_pBut_Left->MakePopup( false );
+	//m_pBut_Left->MakePopup( false );
 	//m_pBut_Right->MakePopup( false );
 
- 	m_pBut_Left->SetVisible( false );
+	m_pBut_Left->SetVisible( false );
 	m_pBut_Right->SetVisible( false );
 
- 	pTabBar = new CTabBar( this );
+	pTabBar = new CTabBar( this );
 	m_pAddTab = NULL;
 }
 
- void PropertySheet::SetAddTabButtonEnabled( bool bEnabled )
+void PropertySheet::SetAddTabButtonEnabled( bool bEnabled )
 {
 	if ( !!m_pAddTab == bEnabled )
 		return;
 
- 	if ( bEnabled )
+	if ( bEnabled )
 	{
 		m_pAddTab = new Button( pTabBar, "add_tab", "+", this, "add_tab" );
 		InvalidateLayout();
@@ -1110,6 +1108,40 @@ Panel *PropertySheet::GetActiveTab()
 	return _activeTab;
 }
 
+void PropertySheet::MoveTab( PageTab *pTab, int newIndex )
+{
+	int oldIndex = m_PageTabs.Find( pTab );
+
+	if ( !m_PageTabs.IsValidIndex( oldIndex ) )
+		return;
+
+	if ( newIndex == oldIndex )
+		return;
+
+	bool bAfter = oldIndex < newIndex;
+	if ( bAfter )
+		newIndex--;
+
+	Page_t tPage = m_Pages[oldIndex];
+
+	m_PageTabs.Remove( oldIndex );
+	m_Pages.Remove( oldIndex );
+	Assert( m_PageTabs.IsValidIndex( newIndex ) );
+
+	if ( bAfter )
+	{
+		m_PageTabs.InsertAfter( newIndex, pTab );
+		m_Pages.InsertAfter( newIndex, tPage );
+	}
+	else
+	{
+		m_PageTabs.InsertBefore( newIndex, pTab );
+		m_Pages.InsertBefore( newIndex, tPage );
+	}
+
+	InvalidateLayout();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: returns the number of panels in the sheet
 //-----------------------------------------------------------------------------
@@ -1125,40 +1157,6 @@ int PropertySheet::GetNumPages()
 void PropertySheet::GetActiveTabTitle (char *textOut, int bufferLen )
 {
 	if(_activeTab) _activeTab->GetText(textOut, bufferLen);
-}
-
-void PropertySheet::MoveTab( PageTab *pTab, int newIndex )
-{
-	int oldIndex = m_PageTabs.Find( pTab );
-
- 	if ( !m_PageTabs.IsValidIndex( oldIndex ) )
-		return;
-
- 	if ( newIndex == oldIndex )
-		return;
-
- 	bool bAfter = oldIndex < newIndex;
-	if ( bAfter )
-		newIndex--;
-
- 	Page_t tPage = m_Pages[oldIndex];
-
- 	m_PageTabs.Remove( oldIndex );
-	m_Pages.Remove( oldIndex );
-	Assert( m_PageTabs.IsValidIndex( newIndex ) );
-
- 	if ( bAfter )
-	{
-		m_PageTabs.InsertAfter( newIndex, pTab );
-		m_Pages.InsertAfter( newIndex, tPage );
-	}
-	else
-	{
-		m_PageTabs.InsertBefore( newIndex, pTab );
-		m_Pages.InsertBefore( newIndex, tPage );
-	}
-
- 	InvalidateLayout();
 }
 
 //-----------------------------------------------------------------------------
@@ -1389,18 +1387,18 @@ bool PropertySheet::ShouldShowArrows()
 	if ( !_showTabs )
 		return false;
 
- 	int sx, sy;
+	int sx, sy;
 	GetSize( sx, sy );
 
- 	return GetAccumTabX() > sx;
+	return GetAccumTabX() > sx;
 }
 
- int PropertySheet::GetAccumTabX()
+int PropertySheet::GetAccumTabX()
 {
 	int xtab;
 	xtab = m_iTabXIndent * 2;
 
- 	int width, tall;
+	int width, tall;
 	for (int i = 0; i < m_PageTabs.Count(); i++)
 	{
 		//m_PageTabs[i]->GetSize(width, tall);
@@ -1408,13 +1406,13 @@ bool PropertySheet::ShouldShowArrows()
 		xtab += (width + 1) + m_iTabXDelta;
 	}
 
- 	if ( m_pAddTab )
+	if ( m_pAddTab )
 	{
 		m_pAddTab->GetSize( width, tall );
 		xtab += width + 1;
 	}
 
- 	return xtab;
+	return xtab;
 }
 
 //-----------------------------------------------------------------------------
@@ -1507,23 +1505,23 @@ void PropertySheet::OnThink()
 	m_dFrametime = curTime - m_dLastTime;
 	m_dLastTime = curTime;
 
- 	if ( ShouldShowArrows() )
+	if ( ShouldShowArrows() )
 	{
 		int wide, tall;
 		GetSize( wide, tall );
 		m_iTabXScroll_Target = clamp( m_iTabXScroll_Target, 0, GetAccumTabX() - wide + GetScrollButtonSize() * 2 );
 
- 		int iOldPos = m_iTabXScroll_Cur;
+		int iOldPos = m_iTabXScroll_Cur;
 
- 		if ( abs( m_iTabXScroll_Target - m_flTabXScroll_Accum ) > 1.0f )
+		if ( abs( m_iTabXScroll_Target - m_flTabXScroll_Accum ) > 1.0f )
 			m_flTabXScroll_Accum += ( (float)m_iTabXScroll_Target - m_flTabXScroll_Accum ) * min( 1.0f, m_dFrametime * 16.0f );
 			//m_flTabXScroll_Accum = Approach( m_iTabXScroll_Target, m_flTabXScroll_Accum, m_dFrametime * 1000.0f );
 		else
 			m_flTabXScroll_Accum = m_iTabXScroll_Target;
 
- 		m_iTabXScroll_Cur = m_flTabXScroll_Accum;
+		m_iTabXScroll_Cur = m_flTabXScroll_Accum;
 
- 		if ( iOldPos != m_iTabXScroll_Cur )
+		if ( iOldPos != m_iTabXScroll_Cur )
 			InvalidateLayout();
 	}
 	else
@@ -1533,7 +1531,7 @@ void PropertySheet::OnThink()
 		m_iTabXScroll_Target = 0;
 	}
 
- 	for ( int i = 0; i < m_PageTabs.Count(); i++ )
+	for ( int i = 0; i < m_PageTabs.Count(); i++ )
 	{
 		if ( m_PageTabs[i]->IsAnimating() )
 		{
@@ -1542,102 +1540,102 @@ void PropertySheet::OnThink()
 		}
 	}
 
- 	m_pBut_Left->MoveToFront();
+	m_pBut_Left->MoveToFront();
 	m_pBut_Right->MoveToFront();
 
- 	BaseClass::OnThink();
+	BaseClass::OnThink();
 }
 
- void PropertySheet::ClosePage( Panel *page )
+void PropertySheet::ClosePage( Panel *page )
 {
 	int i = FindPage( page );
 	if ( i == m_PageTabs.InvalidIndex() )
 		return;
 
- 	m_PageTabs[i]->CloseTab();
+	m_PageTabs[i]->CloseTab();
 }
 
- bool PropertySheet::DoScroll()
+bool PropertySheet::DoScroll()
 {
 	if ( !ShouldShowArrows() )
 		return false;
 
- 	int x, y, sx, sy;
+	int x, y, sx, sy;
 	input()->GetCursorPosition( x, y );
 	ScreenToLocal( x, y );
 	GetSize( sx, sy );
 
- 	int min = GetScrollButtonSize();
+	int min = GetScrollButtonSize();
 	int max = sx - GetScrollButtonSize();
 
- 	if ( x > min && x < max )
+	if ( x > min && x < max )
 	{
 		m_flMouseScroll = 0;
 		return false;
 	}
 
- 	if ( x > min )
+	if ( x > min )
 		x-=max-1;
 	else
 		x -= min;
 
- 	m_flMouseScroll += ( system()->GetCurrentTime() - system()->GetFrameTime() ) * x * 1000.0l;
+	m_flMouseScroll += ( system()->GetCurrentTime() - system()->GetFrameTime() ) * x * 1000.0l;
 
- 	if ( abs(m_flMouseScroll) < 1.0l )
+	if ( abs(m_flMouseScroll) < 1.0l )
 		return false;
 
- 	double integral = floor( m_flMouseScroll );
+	double integral = floor( m_flMouseScroll );
 	m_iTabXScroll_Target += integral;
 	m_flMouseScroll -= integral;
 	InvalidateLayout();
 	return true;
 }
 
- void PropertySheet::DoScroll( int delta )
+void PropertySheet::DoScroll( int delta )
 {
 	if ( !ShouldShowArrows() )
 		return;
 
- 	m_iTabXScroll_Target += delta;
+	m_iTabXScroll_Target += delta;
 	InvalidateLayout();
 }
 
- void PropertySheet::ScrollToActivePage()
+void PropertySheet::ScrollToActivePage()
 {
 	if ( !ShouldShowArrows() )
 		return;
 
- 	PageTab *pActive = (PageTab*)GetActiveTab();
+	PageTab *pActive = (PageTab*)GetActiveTab();
 
- 	if ( !pActive )
+	if ( !pActive )
 		return;
 
- 	InvalidateLayout(true);
+	InvalidateLayout(true);
 	pActive->InvalidateLayout(true);
 
- 	int tab_px, tab_py, tab_sx, tab_sy;
+	int tab_px, tab_py, tab_sx, tab_sy;
 	pActive->GetBounds( tab_px, tab_py, tab_sx, tab_sy );
 	tab_sx = pActive->GetDesignatedWidth();
 	int sheet_px, sheet_py, sheet_sx, sheet_sy;
 	GetBounds( sheet_px, sheet_py, sheet_sx, sheet_sy );
 
- 	//page_px += m_iTabXScroll;
+	//page_px += m_iTabXScroll;
 	int containersize = sheet_sx - GetScrollButtonSize() * 2;
 	int extent_x = tab_px + tab_sx;
 
- 	if ( m_pAddTab && GetActiveTab() == GetTab( GetNumPages() - 1 ) )
+	if ( m_pAddTab && GetActiveTab() == GetTab( GetNumPages() - 1 ) )
 	{
 		extent_x += 1 + GetScrollButtonSize();
 	}
 
- 	if ( tab_px < GetScrollButtonSize() )
+	if ( tab_px < GetScrollButtonSize() )
 		m_iTabXScroll_Target += tab_px; //+= GetScrollButtonSize() - tab_px;
 	else if ( extent_x > containersize )
 		m_iTabXScroll_Target += extent_x - containersize + 1;
 	else
 		return;
 
- 	InvalidateLayout();
+	InvalidateLayout();
 }
 
 //-----------------------------------------------------------------------------
@@ -1676,15 +1674,15 @@ PageTab *PropertySheet::GetTab(int i)
 	if ( !m_PageTabs.IsValidIndex(i) )
 		return NULL;
 
- 	return m_PageTabs[i];
+	return m_PageTabs[i];
 }
 
- void PropertySheet::SetTabColor( int index, Color c )
+void PropertySheet::SetTabColor( int index, Color c )
 {
 	if ( !m_PageTabs.IsValidIndex(index) )
 		return;
 
- 	m_PageTabs[index]->SetCustomBgColor( c );
+	m_PageTabs[index]->SetCustomBgColor( c );
 }
 
 //-----------------------------------------------------------------------------
@@ -1748,16 +1746,16 @@ void PropertySheet::UpdateTabCloseButtons()
 {
 	bool bShowCloseButtons = AllowClosing();
 
- 	for ( int i = 0; i < m_PageTabs.Count(); i++ )
+	for ( int i = 0; i < m_PageTabs.Count(); i++ )
 	{
 		m_PageTabs[i]->SetCloseButtonVisible( bShowCloseButtons );
 		m_PageTabs[i]->InvalidateLayout(true);
 	}
 
- 	InvalidateLayout( false, true );
+	InvalidateLayout( false, true );
 }
 
- int PropertySheet::GetNumActiveTabs()
+int PropertySheet::GetNumActiveTabs()
 {
 	int activePages = 0;
 	for ( int i = 0; i < m_PageTabs.Count(); i++ )
@@ -1766,7 +1764,7 @@ void PropertySheet::UpdateTabCloseButtons()
 	return activePages;
 }
 
- bool PropertySheet::AllowClosing()
+bool PropertySheet::AllowClosing()
 {
 	return GetNumActiveTabs() > 1;
 }

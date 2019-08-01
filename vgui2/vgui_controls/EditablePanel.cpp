@@ -55,7 +55,6 @@ EditablePanel::EditablePanel(Panel *parent, const char *panelName) : Panel(paren
 	m_iConfigID = 0;
 	m_pDialogVariables = NULL;
 	m_bShouldSkipAutoResize = false;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -545,7 +544,7 @@ void EditablePanel::PaintBackground()
 void EditablePanel::LoadControlSettings(const char *resourceName, const char *pathID, KeyValues *pKeyValues, KeyValues *pConditions)
 {
 #if defined( DBGFLAG_ASSERT ) && !defined(OSX) && !defined(LINUX)
-//	extern IFileSystem *g_pFullFileSystem;
+	//extern IFileSystem *g_pFullFileSystem;
 	// Since nobody wants to fix this assert, I'm making it a Msg instead:
 	//     editablepanel.cpp (535) : Resource file "resource\DebugOptionsPanel.res" not found on disk!
 	// AssertMsg( g_pFullFileSystem->FileExists( resourceName ), CFmtStr( "Resource file \"%s\" not found on disk!", resourceName ).Access() );

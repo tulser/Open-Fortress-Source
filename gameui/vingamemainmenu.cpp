@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "VInGameMainMenu.h"
+#include "UI_Shared.h"
 #include "VGenericConfirmation.h"
 #include "VFooterPanel.h"
 #include "VFlyoutMenu.h"
@@ -244,6 +245,32 @@ void InGameMainMenu::OnCommand( const char *command )
 
 		confirmation->SetUsageData(data);
 	}
+	else if (!Q_strcmp(command, "QuitGame"))
+	{
+		if ( IsPC() )
+		{
+			GenericConfirmation* confirmation = 
+				static_cast< GenericConfirmation* >( CBaseModPanel::GetSingleton().OpenWindow( WT_GENERICCONFIRMATION, this, false ) );
+
+			GenericConfirmation::Data_t data;
+
+			data.pWindowTitle = "#GameUI_Quit_Confirm";
+			data.pMessageText = GetRandomQuitString();
+
+			data.bOkButtonEnabled = true;
+			data.pfnOkCallback = &AcceptQuitGameCallback;
+			data.bCancelButtonEnabled = true;
+
+			confirmation->SetUsageData(data);
+
+			NavigateFrom();
+		}
+
+		if ( IsX360() )
+		{
+			engine->ExecuteClientCmd( "demo_exit" );
+		}
+	}	
 	else if( !Q_strcmp( command, "OpenPlayerListDialog" ) )
 	{	
 		CBaseModPanel::GetSingleton().OpenPlayerListDialog( this );
@@ -360,6 +387,13 @@ void InGameMainMenu::OnThink()
 	}
 }
 
+void InGameMainMenu::AcceptQuitGameCallback()
+{
+	if ( InGameMainMenu *pInGameMainMenu = static_cast< InGameMainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_INGAMEMAINMENU ) ) )
+	{
+		pInGameMainMenu->OnCommand( "QuitGame_NoConfirm" );
+	}
+}
 //=============================================================================
 void InGameMainMenu::PerformLayout( void )
 {

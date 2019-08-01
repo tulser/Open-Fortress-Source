@@ -44,7 +44,7 @@ ImagePanel::ImagePanel(Panel *parent, const char *name) : Panel(parent, name)
 	m_DrawColor = Color(255,255,255,255);
 	m_iRotation = ROTATED_UNROTATED;
 	m_nFrame = 0;
-	
+
 	SetImage( m_pImage );
 
 	REGISTER_COLOR_AS_OVERRIDABLE( m_FillColor, "fillcolor_override" );
@@ -450,7 +450,7 @@ bool ImagePanel::EvictImage()
 	delete [] m_pszImageName;
 	m_pszImageName = NULL;
 	m_nFrame = 0;
-	
+
 	return true;
 }
 

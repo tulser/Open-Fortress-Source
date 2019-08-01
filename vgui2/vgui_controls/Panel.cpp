@@ -161,6 +161,7 @@ class CDragDropHelperPanel : public Panel
 public:
 	CDragDropHelperPanel();
 	virtual ~CDragDropHelperPanel() {}
+
 	virtual VPANEL IsWithinTraverse(int x, int y, bool traversePopups);
 	virtual void PostChildPaint();
 
@@ -412,8 +413,8 @@ KeyBindingContextHandle_t Panel::CreateKeyBindingsContext( char const *filename,
 
 COMPILE_TIME_ASSERT( ( MOUSE_MIDDLE - MOUSE_LEFT ) == 2 );
 Panel* Panel::m_sMousePressedPanels[] = { NULL, NULL, NULL };
-
 int Panel::s_NavLock = 0;
+
 //-----------------------------------------------------------------------------
 // Purpose: static method
 // Input  :  - 
@@ -761,13 +762,13 @@ void Panel::Init( int x, int y, int wide, int tall )
 	m_bWorldPositionCurrentFrame = false;
 	m_bForceStereoRenderToFrameBuffer = false;
 
- 	_buildModeFlags = 0; // not editable or deletable in buildmode dialog by default
+	_buildModeFlags = 0; // not editable or deletable in buildmode dialog by default
 	_buildGroupHandle = UTLHANDLE_INVALID;
 
- 	_buildGroup = new BuildGroup(this, this);
+	_buildGroup = new BuildGroup(this, this);
 
- 	// add ourselves to the build group
-	SetBuildGroup(GetBuildGroup());	
+	// add ourselves to the build group
+	SetBuildGroup(GetBuildGroup());
 }
 
 //-----------------------------------------------------------------------------
@@ -831,7 +832,6 @@ Panel::~Panel()
 	delete [] _pinToSibling;
 
 	_vpanel = NULL;
-	
 #if defined( VGUI_USEDRAGDROP )
 	delete m_pDragDrop;
 #endif // VGUI_USEDRAGDROP
@@ -1509,7 +1509,7 @@ void Panel::OnChildAdded(VPANEL child)
 	if(panel)
 	{
 		panel->SetBuildGroup(_buildGroup);
-	}	
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1786,7 +1786,7 @@ void Panel::InternalCursorMoved(int x, int y)
 
 	if (IsBuildGroupEnabled())
 	{
-		if ( _buildGroupHandle->CursorMoved(x, y, this))
+		if ( _buildGroupHandle->CursorMoved(x, y, this) )
 		{
 			return;
 		}
@@ -3083,8 +3083,6 @@ void Panel::OnMouseWheeled(int delta)
 // base implementation forwards Key messages to the Panel's parent - override to 'swallow' the input
 void Panel::OnKeyCodePressed(KeyCode code)
 {
-	static ConVarRef vgui_nav_lock( "vgui_nav_lock" );
-
 	bool handled = false;
 	switch( GetBaseButtonCode( code ) )
 	{
@@ -3156,12 +3154,12 @@ void Panel::OnKeyCodeTyped(KeyCode keycode)
 	bool ctrl = (input()->IsKeyDown(KEY_LCONTROL) || input()->IsKeyDown(KEY_RCONTROL));
 	bool alt = (input()->IsKeyDown(KEY_LALT) || input()->IsKeyDown(KEY_RALT));
 
- 	if(ctrl && shift && alt && code == KEY_B)
+	if(ctrl && shift && alt && code == KEY_B)
 	{
 		// enable build mode
 		ActivateBuildMode();
-	}	
-	
+	}
+
 	// handle focus change
 	if ( IsX360() || IsConsoleStylePanel() )
 	{
@@ -3801,9 +3799,11 @@ void Panel::SetBuildGroup(BuildGroup* buildGroup)
 	Assert(buildGroup != NULL);
 	
 	_buildGroupHandle = buildGroup;
+
+	_buildGroupHandle->PanelAdded(this);
 }
 
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Purpose: Activates the build mode dialog for editing panels.
 //-----------------------------------------------------------------------------
 void Panel::ActivateBuildMode()
@@ -5637,7 +5637,7 @@ bool Panel::RequestInfo( KeyValues *outputData )
 		outputData->SetPtr("PanelPtr", new BuildModeDialog( (BuildGroup *)outputData->GetPtr("BuildGroupPtr")));
 		return true;
 	}
-	
+
 	if ( InternalRequestInfo( GetAnimMap(), outputData ) )
 	{
 		return true;

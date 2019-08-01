@@ -132,7 +132,7 @@ public:
 
 	// Temporarily enables or disables the fade effect rather than zeroing the fade times as done in DisableFadeEffect
 	void SetFadeEffectDisableOverride( bool disabled );
-	
+
 	Color GetOutOfFocusColor();
 	void SetOutOfFocusColor(Color col);
 

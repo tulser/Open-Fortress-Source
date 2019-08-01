@@ -33,7 +33,7 @@ PanelListPanel::PanelListPanel( vgui::Panel *parent, char const *panelName ) : E
 {
 	SetBounds( 0, 0, 100, 100 );
 	m_bInnerPanel = false;
-	
+
 	m_vbar = new ScrollBar(this, "PanelListPanelVScroll", true);
 	m_vbar->SetVisible(false);
 	m_vbar->AddActionSignalTarget( this );
@@ -421,6 +421,7 @@ void PanelListPanel::OnMouseWheeled(int delta)
 			GetParent()->OnMouseWheeled( delta );
 		return;
 	}
+
 	int val = m_vbar->GetValue();
 	val -= (delta * DEFAULT_HEIGHT);
 	m_vbar->SetValue(val);	

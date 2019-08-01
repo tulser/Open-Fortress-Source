@@ -267,9 +267,9 @@ public:
 		MENU_DOWN = 1
 	};
 
- 	void MoveAlongMenuItemList(int direction, int loopCount, bool bArmItem = false);
+	void MoveAlongMenuItemList(int direction, int loopCount, bool bArmItem = false);
 	int GetVisibleItemIndex(int sortedIndex);
-	
+
 protected:
 	// helper functions	
 	int AddMenuItemCharCommand(MenuItem *item, const char *command, Panel *target, const KeyValues *userData);

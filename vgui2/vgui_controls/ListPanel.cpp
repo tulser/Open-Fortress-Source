@@ -65,7 +65,7 @@ class ColumnButton : public Button
 public:
 	ColumnButton(vgui::Panel *parent, const char *name, const char *text);
 	virtual ~ColumnButton() {}
-	
+
 	// Inherited from Button
 	virtual void ApplySchemeSettings(IScheme *pScheme);
 	virtual void OnMousePressed(MouseCode code);
@@ -130,7 +130,7 @@ class Dragger : public Panel
 public:
 	Dragger(int column);
 	virtual ~Dragger() {}
-	
+
 	// Inherited from Panel
 	virtual void OnMousePressed(MouseCode code);
 	virtual void OnMouseDoublePressed(MouseCode code);

@@ -32,6 +32,7 @@ class ScrollBar : public Panel
 public:
 	ScrollBar(Panel *parent, const char *panelName, bool vertical);
 	virtual ~ScrollBar() {}
+
 	// Set the value of the scroll bar slider.
 	virtual void    SetValue(int value);
 

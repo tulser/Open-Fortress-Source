@@ -31,7 +31,7 @@ class PropertySheet : public EditablePanel
 	DECLARE_CLASS_SIMPLE( PropertySheet, EditablePanel );
 
 	friend class PageTab;
-	
+
 public:
 	PropertySheet(Panel *parent, const char *panelName, bool draggableTabs = false, bool closeableTabs = false);
 	PropertySheet(Panel *parent, const char *panelName,ComboBox *combo);
@@ -73,7 +73,7 @@ public:
 	virtual Panel *GetPage(int i);
 	virtual PageTab *GetTab(int i);
 	virtual void SetTabColor(int index, Color c);
-	
+
 	// deletes this panel from the sheet
 	virtual void DeletePage(Panel *panel);
 	// removes this panel from the sheet, sets its parent to NULL, but does not delete it
@@ -107,8 +107,8 @@ public:
 	virtual bool IsSmallTabs() const;
 
 	virtual int GetTabHeight();
-	virtual void MoveTab(PageTab *pTab, int newIndex);	
-	
+	virtual void MoveTab(PageTab *pTab, int newIndex);
+
 	/* MESSAGES SENT TO PAGES
 		"PageShow"	- sent when a page is shown
 		"PageHide"	- sent when a page is hidden
@@ -135,14 +135,14 @@ public:
 
 	virtual void OnThink();
 
- 	virtual bool DoScroll();
+	virtual bool DoScroll();
 	virtual void DoScroll(int delta);
 
- 	virtual void ScrollToActivePage();
+	virtual void ScrollToActivePage();
 	virtual void SetAddTabButtonEnabled(bool bEnabled);
 
- 	virtual void ClosePage(Panel *page);
-	
+	virtual void ClosePage(Panel *page);
+
 protected:
 	virtual void PaintBorder();
 	virtual void PerformLayout();
@@ -153,7 +153,7 @@ protected:
 	virtual void ApplySchemeSettings(IScheme *pScheme);
 	virtual void ApplySettings(KeyValues *inResourceData);
 	virtual void Init();
-	
+
 	// internal message handlers
 	MESSAGE_FUNC_PTR( OnTabPressed, "TabPressed", panel );
 	MESSAGE_FUNC_PTR_WCHARPTR( OnTextChanged, "TextChanged", panel, text );
@@ -172,7 +172,7 @@ private:
 
 	void UpdateTabCloseButtons();
 	const int GetScrollButtonSize() { return 20; };
-	
+
 	struct Page_t
 	{
 		Page_t() :
@@ -203,7 +203,7 @@ private:
 	bool	m_bContextButton;
 	bool	m_bKBNavigationEnabled;
 	bool	m_bCloseableTabs;
-	
+
 	CPanelAnimationVarAliasType( int, m_iTabXIndent, "tabxindent", "0", "proportional_int" );
 	CPanelAnimationVarAliasType( int, m_iTabXDelta, "tabxdelta", "0", "proportional_int" );
 	CPanelAnimationVarAliasType( bool, m_bTabFitText, "tabxfittotext", "1", "bool" );
@@ -225,25 +225,25 @@ private:
 
 	KeyValues	*m_pTabKV;
 
- 	Panel *pTabBar;
+	Panel *pTabBar;
 	Button *m_pBut_Left;
 	Button *m_pBut_Right;
 	Button *m_pAddTab;
 
- 	bool ShouldShowArrows();
+	bool ShouldShowArrows();
 	int GetAccumTabX();
 
- 	int m_iTabXScroll_Target;
+	int m_iTabXScroll_Target;
 	int m_iTabXScroll_Cur;
 	float m_flTabXScroll_Accum;
 	double m_flMouseScroll;
 
- protected:
+protected:
 	double m_dLastTime;
 	double m_dFrametime;
 
- 	int GetNumActiveTabs();
-	bool AllowClosing();	
+	int GetNumActiveTabs();
+	bool AllowClosing();
 };
 
 }; // namespace vgui

@@ -110,7 +110,7 @@ public:
 	virtual bool HasImage();
 	virtual int GetImage();
 
- 	virtual bool ShouldIgnoreFirstClick();
+	virtual bool ShouldIgnoreFirstClick();
 	virtual void SetIgnoreFirstClick(bool bEnable);
 
 protected:
@@ -135,10 +135,10 @@ private:
 	TextImage	*m_pCurrentKeyBinding; // An optional indicator for the key currently bound to this menu item
 
 	KeyValues *m_pUserData;
-
+	
 	int m_iImage;
 	bool m_bIgnoreFirstClick;
-	bool m_bFirstClick;	
+	bool m_bFirstClick;
 };
 
 } // namespace vgui

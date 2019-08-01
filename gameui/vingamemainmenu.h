@@ -41,6 +41,7 @@ public:
 
 private:
 	void SetFooterState();
+	static void AcceptQuitGameCallback();
 };
 
 }

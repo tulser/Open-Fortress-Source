@@ -110,6 +110,7 @@ $Project "GameUI"
 		$File	"basemodframe.h"
 		$File	"gamemodes.h"
 		$File	"optionsmousedialog.h"
+		$File	"UI_Shared.h"
 		$File	"UIGameData.h"
 
 		$File	"vachievements.h"		
@@ -166,6 +167,7 @@ $Project "GameUI"
 		$File	"vslidercontrol.cpp"
 		$File	"vtransitionscreen.cpp"
 		$File	"vvideo.cpp"
+		$File	"UI_Shared.cpp"
 		$File	"UIGameData.cpp"
 
 		$File	"backgroundmenubutton.cpp" \

@@ -50,7 +50,7 @@ public:
 	{
 	}
 	virtual ~CNonFocusableMenu() {}
-	
+
 	void SetFocusPanel( Panel *panel )
 	{
 		m_pFocus = panel;
@@ -81,7 +81,7 @@ public:
 		SetDragEnabled( true );
 	}
 	virtual ~TabCatchingTextEntry() {}
-	
+
 	virtual void OnKeyCodeTyped(KeyCode code)
 	{
 		if (code == KEY_TAB)

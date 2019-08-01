@@ -346,9 +346,9 @@ public:
 	// Override to change how build mode is activated
 	void ActivateBuildMode();
 
- 	// Return the buildgroup that this panel is part of.
-	BuildGroup *GetBuildGroup();	
-	
+	// Return the buildgroup that this panel is part of.
+	BuildGroup *GetBuildGroup();
+
 	// scheme access functions
 	virtual HScheme GetScheme();
 	virtual void SetScheme(const char *tag);
@@ -917,7 +917,7 @@ private:
 	PHandle m_NavBack;
 protected:
 	static int s_NavLock;
-	
+
 private:
 
 	char			*_tooltipText;		// Tool tip text for panels that share tooltip panels with other panels
@@ -954,7 +954,7 @@ private:
 
 	// obselete, remove soon
 	void OnOldMessage(KeyValues *params, VPANEL ifromPanel);
-	
+
 	BuildGroup *_buildGroup;
 };
 
@@ -967,7 +967,6 @@ inline bool	Panel::IsMouseInputDisabledForThisPanel() const
 {
 	return _flags.IsFlagSet( IS_MOUSE_DISABLED_FOR_THIS_PANEL_ONLY );
 }
-
 
 // This function cannot be defined here because it requires on a full definition of
 // KeyValues (to call KeyValues::MakeCopy()) whereas the rest of this header file
@@ -993,7 +992,6 @@ inline void Panel::PostMessageToAllSiblingsOfType( KeyValues *msg, float delaySe
 
 	msg->deleteThis();
 }
-
 
 class Button;
 

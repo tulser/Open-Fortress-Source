@@ -189,22 +189,22 @@ void MenuItem::SetImage( int i )
 	m_iImage = i;
 }
 
- bool MenuItem::HasImage()
+bool MenuItem::HasImage()
 {
 	return m_iImage >= 0;
 }
 
- int MenuItem::GetImage()
+int MenuItem::GetImage()
 {
 	return m_iImage;
 }
 
- bool MenuItem::ShouldIgnoreFirstClick()
+bool MenuItem::ShouldIgnoreFirstClick()
 {
 	return m_bIgnoreFirstClick;
 }
 
- void MenuItem::SetIgnoreFirstClick( bool bEnable )
+void MenuItem::SetIgnoreFirstClick( bool bEnable )
 {
 	m_bIgnoreFirstClick = bEnable;
 }
@@ -310,7 +310,7 @@ void MenuItem::ArmItem()
 void MenuItem::DisarmItem()
 {
 	m_bFirstClick = false;
-	
+
 	// normal behaviour is that the button becomes unarmed
 	// do not unarm if there is a cascading menu. CloseCascadeMenu handles this.
 	// and the menu handles it since we close at different times depending
@@ -356,8 +356,8 @@ void MenuItem::FireActionSignal()
 		GetParentMenu()->SetCurrentlyHighlightedItem( GetParentMenu()->m_MenuItems.Find( this ) );
 		m_bFirstClick = true;
 		return;
-	}	
-	
+	}
+
 	// cascading menus items don't trigger the parent menu to disappear
 	// (they trigger the cascading menu to open/close when cursor is moved over/off them)
 	if (!m_pCascadeMenu) 

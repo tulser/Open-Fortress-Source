@@ -1647,7 +1647,7 @@ Color Frame::GetOutOfFocusColor()
 	return m_OutOfFocusBgColor;
 }
 
- void Frame::SetOutOfFocusColor(Color col)
+void Frame::SetOutOfFocusColor(Color col)
 {
 	m_OutOfFocusBgColor = col;
 }
