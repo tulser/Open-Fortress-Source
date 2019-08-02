@@ -153,6 +153,12 @@ public:
 	char	m_szExplosionPlayerEffect[128];
 	char	m_szExplosionWaterEffect[128];
 
+	// Explosion Effect
+	char	m_szExplosionSoundClassic[128];
+	char	m_szExplosionEffectClassic[128];
+	char	m_szExplosionPlayerEffectClassic[128];
+	char	m_szExplosionWaterEffectClassic[128];	
+	
 	bool	m_bDontDrop;
 };
 

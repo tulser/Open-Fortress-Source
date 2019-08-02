@@ -10,6 +10,7 @@
 #include "tf_shareddefs.h"
 #include "engine/IEngineSound.h"
 #include "tf_weapon_parse.h"
+#include "tf_weapon_rocketlauncher.h"
 #include "c_basetempentity.h"
 #include "tier0/vprof.h"
 #include "dlight.h"
@@ -40,7 +41,7 @@ CTFWeaponInfo *GetTFWeaponInfo( int iWeapon )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, ClientEntityHandle_t hEntity)
+void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, ClientEntityHandle_t hEntity, CBaseEntity *m_hLauncher)
 {
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
@@ -74,36 +75,39 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		VectorAngles(vecNormal, angExplosion);
 		bInAir = false;
 	}
-
+	CTFOriginal *pOriginal = dynamic_cast<CTFOriginal *>(m_hLauncher);
+	bool bClassic = false;
+	if ( pOriginal )
+		bClassic = pOriginal->m_bClassic;
 	// Base explosion effect and sound.
-	char *pszEffect = "explosion";
+	char *pszEffect = "ExplosionCore_wall";
 	char *pszSound = "BaseExplosionEffect.Sound";
 
 	if (pWeaponInfo)
 	{
 		// Explosions.
-		if (bIsWater)
+		if ( bIsWater )
 		{
-			if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
-			{
-				pszEffect = pWeaponInfo->m_szExplosionWaterEffect;
-			}
+			if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffectClassic) > 0)
+								pszEffect = pWeaponInfo->m_szExplosionWaterEffectClassic;}
+			else{ if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
+					pszEffect = pWeaponInfo->m_szExplosionWaterEffect;}
 		}
 		else
 		{
 			if (bIsPlayer || bInAir)
 			{
-				if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
-				{
-					pszEffect = pWeaponInfo->m_szExplosionPlayerEffect;
-				}
+				if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffectClassic) > 0)
+									pszEffect = pWeaponInfo->m_szExplosionPlayerEffectClassic;}
+				else{ if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
+						pszEffect = pWeaponInfo->m_szExplosionPlayerEffect;}
 			}
 			else
 			{
-				if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
-				{
-					pszEffect = pWeaponInfo->m_szExplosionEffect;
-				}
+				if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionEffectClassic) > 0)
+						pszEffect = pWeaponInfo->m_szExplosionEffectClassic;}
+				else{ if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
+						pszEffect = pWeaponInfo->m_szExplosionEffect;}
 			}
 		}
 
@@ -165,6 +169,7 @@ public:
 	Vector		m_vecNormal;
 	int			m_iWeaponID;
 	ClientEntityHandle_t m_hEntity;
+	CNetworkHandle( CBaseEntity, m_hLauncher );
 };
 
 //-----------------------------------------------------------------------------
@@ -176,6 +181,7 @@ C_TETFExplosion::C_TETFExplosion( void )
 	m_vecNormal.Init();
 	m_iWeaponID = TF_WEAPON_NONE;
 	m_hEntity = INVALID_EHANDLE_INDEX;
+	m_hLauncher = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -185,7 +191,7 @@ void C_TETFExplosion::PostDataUpdate( DataUpdateType_t updateType )
 {
 	VPROF( "C_TETFExplosion::PostDataUpdate" );
 
-	TFExplosionCallback( m_vecOrigin, m_vecNormal, m_iWeaponID, m_hEntity );
+	TFExplosionCallback( m_vecOrigin, m_vecNormal, m_iWeaponID, m_hEntity, m_hLauncher );
 }
 
 static void RecvProxy_ExplosionEntIndex( const CRecvProxyData *pData, void *pStruct, void *pOut )
@@ -201,5 +207,6 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFExplosion, DT_TETFExplosion, CTETFExplosio
 	RecvPropVector( RECVINFO( m_vecNormal ) ),
 	RecvPropInt( RECVINFO( m_iWeaponID ) ),
 	RecvPropInt( "entindex", 0, SIZEOF_IGNORE, 0, RecvProxy_ExplosionEntIndex ),
+	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 END_RECV_TABLE()
 

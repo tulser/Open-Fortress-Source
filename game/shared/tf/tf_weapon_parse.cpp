@@ -66,6 +66,11 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szExplosionEffect[0] = '\0';
 	m_szExplosionPlayerEffect[0] = '\0';
 	m_szExplosionWaterEffect[0] = '\0';
+	
+	m_szExplosionSoundClassic[0] = '\0';
+	m_szExplosionEffectClassic[0] = '\0';
+	m_szExplosionPlayerEffectClassic[0] = '\0';
+	m_szExplosionWaterEffectClassic[0] = '\0';	
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
 }
@@ -260,7 +265,12 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	{
 		Q_strncpy( m_szExplosionSound, pszSound, sizeof( m_szExplosionSound ) );
 	}
-
+	
+	pszSound = pKeyValuesData->GetString( "ExplosionSoundClassic", NULL );
+	if ( pszSound )
+	{
+		Q_strncpy( m_szExplosionSoundClassic, pszSound, sizeof( m_szExplosionSoundClassic ) );
+	}
 	const char *pszEffect = pKeyValuesData->GetString( "ExplosionEffect", NULL );
 	if ( pszEffect )
 	{
@@ -277,6 +287,24 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	if ( pszEffect )
 	{
 		Q_strncpy( m_szExplosionWaterEffect, pszEffect, sizeof( m_szExplosionWaterEffect ) );
+	}
+	
+	pszEffect = pKeyValuesData->GetString( "ExplosionEffectClassic", NULL );
+	if ( pszEffect )
+	{
+		Q_strncpy( m_szExplosionEffectClassic, pszEffect, sizeof( m_szExplosionEffectClassic ) );
+	}
+
+	pszEffect = pKeyValuesData->GetString( "ExplosionPlayerEffectClassic", NULL );
+	if ( pszEffect )
+	{
+		Q_strncpy( m_szExplosionPlayerEffectClassic, pszEffect, sizeof( m_szExplosionPlayerEffectClassic ) );
+	}
+
+	pszEffect = pKeyValuesData->GetString( "ExplosionWaterEffectClassic", NULL );
+	if ( pszEffect )
+	{
+		Q_strncpy( m_szExplosionWaterEffectClassic, pszEffect, sizeof( m_szExplosionWaterEffectClassic ) );
 	}
 
 	m_bDontDrop = ( pKeyValuesData->GetInt( "DontDrop", 0 ) > 0 );

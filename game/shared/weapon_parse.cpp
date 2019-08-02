@@ -322,6 +322,8 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 
 	szViewModel[0] = 0;
 	szWorldModel[0] = 0;
+	szCenteredViewModel[0] = 0;
+	szCenteredWorldModel[0] = 0;
 	szAnimationPrefix[0] = 0;
 	iSlot = 0;
 	iPosition = 0;
@@ -372,6 +374,10 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	// View model & world model
 	Q_strncpy( szViewModel, pKeyValuesData->GetString( "viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szWorldModel, pKeyValuesData->GetString( "playermodel" ), MAX_WEAPON_STRING );
+	// View model & world model for the Centered Option
+	Q_strncpy( szCenteredViewModel, pKeyValuesData->GetString( "centered_viewmodel" ), MAX_WEAPON_STRING );
+	Q_strncpy( szCenteredWorldModel, pKeyValuesData->GetString( "centered_playermodel" ), MAX_WEAPON_STRING );
+	
 	Q_strncpy( szAnimationPrefix, pKeyValuesData->GetString( "anim_prefix" ), MAX_WEAPON_PREFIX );
 	iSlot = pKeyValuesData->GetInt( "bucket", 0 );
 	iPosition = pKeyValuesData->GetInt( "bucket_position", 0 );

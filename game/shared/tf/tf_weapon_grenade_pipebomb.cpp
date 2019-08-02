@@ -349,7 +349,6 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			// we'll do less damage. If we explode on contact, we'll restore this to full damage.
 			pGrenade->SetDamage( pGrenade->GetDamage() * TF_WEAPON_PIPEBOMB_TIMER_DMG_REDUCTION );
 		}
-
 		pGrenade->ApplyLocalAngularVelocityImpulse( angVelocity );
 	}
 

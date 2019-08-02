@@ -68,6 +68,7 @@ public:
 	virtual bool				IsAllowedToSwitchWeapons( void );
 
 	virtual void ClientThink();
+	CNewParticleEffect	*SetParticleEnd( CNewParticleEffect *pParticle );
 
 	// Deal with recording
 	virtual void GetToolRecordingState( KeyValues *msg );
@@ -353,6 +354,7 @@ public:
 	// Burning
 	CSoundPatch			*m_pBurningSound;
 	CNewParticleEffect	*m_pBurningEffect;
+	CNewParticleEffect	*m_pLightningParticle_tp;
 	float				m_flBurnEffectStartTime;
 	float				m_flBurnEffectEndTime;
 

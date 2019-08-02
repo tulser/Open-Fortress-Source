@@ -66,6 +66,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
+	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropBool( SENDINFO( m_bCritical ) ),
@@ -76,7 +77,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 	SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 	
-
+	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -140,7 +141,7 @@ void CTFWeaponBaseGrenadeProj::Spawn()
 {
 	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
-
+	
 	CreateLightEffects();
 }
 
@@ -257,6 +258,7 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 	if ( pGrenade )
 	{
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo, pWeapon);
+		pGrenade->SetLauncher( pWeapon );
 	}
 
 	return pGrenade;
@@ -278,7 +280,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetGravity( 0.4f/*BaseClass::GetGrenadeGravity()*/ );
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
 	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
-
+	
 	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 )  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	else SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nInstagibDamage );
 	
@@ -379,22 +381,22 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, -1, GetLauncher() );
 		}
 	}
 	else
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1 );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1, GetLauncher() );
 		}
 	}
 

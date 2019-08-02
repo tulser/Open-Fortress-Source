@@ -87,6 +87,8 @@ private:
 	CNetworkVar( int, m_iTF2WorldIndex);
 	CNetworkVar( int, m_iQuakeViewIndex);
 	CNetworkVar( int, m_iQuakeWorldIndex);
+public:
+	CNetworkVar( bool, m_bClassic );
 };
 
 //Quad RPG

@@ -51,6 +51,10 @@ public:
 	
 	virtual int			GetDamageType();
 	
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
+	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
+public:
+		CNetworkHandle( CBaseEntity, m_hLauncher );	
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
