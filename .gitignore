@@ -56,8 +56,8 @@ ipch
 # Ignore tier1 since its compiled in VPC projs
 lib/public/tier1.lib
 lib/public/raytrace.lib
-lib/public/mathlib.lib
-lib/public/vgui_controls.lib
+//lib/public/mathlib.lib
+//lib/public/vgui_controls.lib
 lib/osx32/tier1.a
 lib/osx32/raytrace.a
 lib/public/linux32/tier1.a
