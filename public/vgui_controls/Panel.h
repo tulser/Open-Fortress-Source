@@ -13,6 +13,7 @@
 #endif
 
 #include "tier1/utlflags.h"
+#include "tier1/KeyValues.h"
 #include "vgui/VGUI.h"
 #include "vgui/Dar.h"
 #include "vgui_controls/MessageMap.h"
