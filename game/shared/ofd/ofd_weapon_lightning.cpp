@@ -348,8 +348,7 @@ void CTFLightningGun::PrimaryAttack()
 
 	FireProjectile( pOwner );
 #ifdef CLIENT_DLL
-	if( m_pLightningParticle )
-		SetParticleEnd( m_pLightningParticle );
+		SetParticleEnd();
 #endif
 	
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFiringInterval;
@@ -472,7 +471,7 @@ void CTFLightningGun::RestartParticleEffect( void )
 		return;
 
 	// Start the appropriate particle effect
-	const char *pszParticleEffect;
+	const char *pszParticleEffect;	
 	
 	if ( m_bCritFire )
 	{
@@ -482,28 +481,29 @@ void CTFLightningGun::RestartParticleEffect( void )
 	{
 		pszParticleEffect = "LG_bolt";
 	}		
-
+		
 	// Start the effect on the viewmodel if our owner is the local player
 	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	DevMsg("Particle creation started \n");
 	if ( pLocalPlayer && pLocalPlayer == GetOwner() )
-	{
+	{	
 		if ( pLocalPlayer->GetViewModel() )
 		{
 			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission( m_pLightningParticle );
 			m_pLightningParticle = NULL;
 			m_pLightningParticle = pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
-			pOwner->m_Shared.UpdateParticleColor ( m_pLightningParticle );
 		}
 	}
 	else
-	{
-		ParticleProp()->StopEmission( m_pLightningParticle );
-		m_pLightningParticle = NULL;
-		m_pLightningParticle = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
-		pOwner->m_Shared.UpdateParticleColor ( m_pLightningParticle );
+	{		
+		DevMsg("Third person Lightning particle created \n ");
+		ParticleProp()->StopEmission( pOwner->m_pLightningParticle_tp );
+		pOwner->m_pLightningParticle_tp = NULL;
+		pOwner->m_pLightningParticle_tp = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
+		
 	}
 	
-
+	SetParticleEnd();
 	m_bLightningEffects = true;
 }
 
@@ -515,8 +515,8 @@ public:
 	// It does have a base, but we'll never network anything below here..
 	DECLARE_CLASS( CTraceFilterIgnoreTeammates, CTraceFilterSimple );
 
-	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam )
-		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam )
+	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam, CBaseEntity *pOwner )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam ), m_hOwner( pOwner )
 	{
 	}
 
@@ -524,22 +524,22 @@ public:
 	{
 		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
-		if ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
+		if ( ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam ) || pEntity == m_hOwner )
 		{
 			return false;
 		}
 
 		return true;
 	}
-
+	CBaseEntity *m_hOwner;
 	int m_iIgnoreTeam;
 };
 
-CNewParticleEffect *CTFLightningGun::SetParticleEnd( CNewParticleEffect *pParticle )
+void CTFLightningGun::SetParticleEnd()
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
-		return false;
+		return;
 	
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pOwner->EyeAngles(), &vecForward, &vecRight, &vecUp );
@@ -554,15 +554,17 @@ CNewParticleEffect *CTFLightningGun::SetParticleEnd( CNewParticleEffect *pPartic
 	
 	trace_t tr;
 	
-	CTraceFilterIgnoreTeammates filter( pOwner, COLLISION_GROUP_NONE, team );
+	CTraceFilterIgnoreTeammates filter( pOwner, COLLISION_GROUP_NONE, team, pOwner );
 	UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );	
 	
-	if ( pParticle )
+	if ( pOwner->m_pLightningParticle_tp )
 	{
-		pParticle->SetControlPoint( 1, tr.endpos );
-		return pParticle;
+		pOwner->m_pLightningParticle_tp->SetControlPoint( 1, tr.endpos );
 	}
-	return false;
+	if ( m_pLightningParticle )
+	{
+		m_pLightningParticle->SetControlPoint( 1, tr.endpos );
+	}
 }
 
 #endif
@@ -649,7 +651,9 @@ void CTFLightningGun::StopLightning( bool bAbrupt /* = false */ )
 		CSoundEnvelopeController::GetController().SoundDestroy( m_pFiringStartSound );
 		m_pFiringStartSound = NULL;
 	}
-
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	
 	if ( m_bLightningEffects )
 	{
 		// Stop the effect on the viewmodel if our owner is the local player
@@ -662,10 +666,10 @@ void CTFLightningGun::StopLightning( bool bAbrupt /* = false */ )
 				m_pLightningParticle = NULL;
 			}
 		}
-		else
+		else if ( pOwner )
 		{
-			ParticleProp()->StopEmission(m_pLightningParticle);
-			m_pLightningParticle = NULL;
+			ParticleProp()->StopEmission( pOwner->m_pLightningParticle_tp );
+			pOwner->m_pLightningParticle_tp = NULL;
 		}
 	}
 

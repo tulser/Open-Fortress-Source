@@ -110,6 +110,7 @@ public:
 	Vector m_vecNormal;
 	int m_iWeaponID;
 	int m_nEntIndex;
+	CNetworkHandle( CBaseEntity, m_hLauncher );
 };
 
 // Singleton to fire explosion objects
@@ -125,6 +126,7 @@ CTETFExplosion::CTETFExplosion( const char *name ) : CBaseTempEntity( name )
 	m_vecNormal.Init();
 	m_iWeaponID = TF_WEAPON_NONE;
 	m_nEntIndex = 0;
+	m_hLauncher = NULL;
 }
 
 IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
@@ -134,15 +136,16 @@ IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
 	SendPropVector( SENDINFO_NOCHECK( m_vecNormal ), 6, 0, -1.0f, 1.0f ),
 	SendPropInt( SENDINFO_NOCHECK( m_iWeaponID ), Q_log2( TF_WEAPON_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO_NAME( m_nEntIndex, entindex ), MAX_EDICT_BITS ),
+	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 END_SEND_TABLE()
 
-void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex )
+void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, CBaseEntity *pWeapon  )
 {
 	VectorCopy( vecOrigin, g_TETFExplosion.m_vecOrigin );
 	VectorCopy( vecNormal, g_TETFExplosion.m_vecNormal );
 	g_TETFExplosion.m_iWeaponID	= iWeaponID;	
 	g_TETFExplosion.m_nEntIndex	= nEntIndex;
-
+	g_TETFExplosion.m_hLauncher = pWeapon;
 	// Send it over the wire
 	g_TETFExplosion.Create( filter, flDelay );
 }

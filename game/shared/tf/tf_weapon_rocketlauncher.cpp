@@ -265,11 +265,13 @@ RecvPropInt(RECVINFO(m_iTF2ViewIndex)),
 RecvPropInt(RECVINFO(m_iTF2WorldIndex)),
 RecvPropInt(RECVINFO(m_iQuakeViewIndex)),
 RecvPropInt(RECVINFO(m_iQuakeWorldIndex)),
+RecvPropBool(RECVINFO(m_bClassic)),
 #else
 SendPropInt(SENDINFO(m_iTF2ViewIndex)),
 SendPropInt(SENDINFO(m_iTF2WorldIndex)),
 SendPropInt(SENDINFO(m_iQuakeViewIndex)),
 SendPropInt(SENDINFO(m_iQuakeWorldIndex)),
+SendPropBool(SENDINFO(m_bClassic)),
 #endif
 END_NETWORK_TABLE()
 
@@ -306,7 +308,6 @@ void CTFOriginal::Precache( void )
 	m_iTF2WorldIndex		= PrecacheModel( SOLDIER_WORLD_MODEL );
 	m_iQuakeViewIndex		= PrecacheModel( QUAKE_VIEW_MODEL );
 	m_iQuakeWorldIndex		= PrecacheModel( QUAKE_WORLD_MODEL );
-
 	BaseClass::Precache();
 }
 
@@ -339,6 +340,7 @@ bool CTFOriginal::Deploy( void )
 
 void CTFOriginal::ActivateSoldierModel( void )
 {
+	m_bClassic = false;
 	m_iViewModelIndex	= m_iTF2ViewIndex;
 	m_iWorldModelIndex	= m_iTF2WorldIndex;
 	SetModel( GetViewModel() );
@@ -347,6 +349,7 @@ void CTFOriginal::ActivateSoldierModel( void )
 
 void CTFOriginal::ActivateQuakeModel( void )
 {
+	m_bClassic = true;
 	m_iViewModelIndex	= m_iQuakeViewIndex;
 	m_iWorldModelIndex	= m_iQuakeWorldIndex;
 	SetModel( GetViewModel() );

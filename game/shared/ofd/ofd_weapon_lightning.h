@@ -77,7 +77,7 @@ public:
 	void			StopLightning( bool bAbrupt = false );
 
 	void			RestartParticleEffect();
-	CNewParticleEffect	*SetParticleEnd( CNewParticleEffect *pParticle );
+	virtual void	SetParticleEnd();
 
 	// constant pilot light sound
 //	void 			StartPilotLight();
@@ -102,6 +102,7 @@ private:
 	CSoundPatch	*m_pFiringLoop;
 	bool		m_bFiringLoopCritical;
 	bool		m_bLightningEffects;
+
 	CNewParticleEffect	*m_pLightningParticle;
 #endif
 
