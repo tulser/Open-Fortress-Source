@@ -2,10 +2,10 @@
 #define C_CPICKER_H
 
 
-#include "vgui_controls/controls.h"
-#include "vgui_controls/panel.h"
-#include "vgui_controls/frame.h"
-#include "vgui_controls/textentry.h"
+#include "vgui_controls/Controls.h"
+#include "vgui_controls/Panel.h"
+#include "vgui_controls/Frame.h"
+#include "vgui_controls/TextEntry.h"
 #include "vgui_controls/utilities.h"
 
 using namespace vgui;

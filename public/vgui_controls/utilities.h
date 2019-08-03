@@ -12,7 +12,7 @@
 #include "vgui/ISurface.h"
 #include "vgui/IVGui.h"
 
-#include "vgui_controls/controls.h"
+#include "vgui_controls/Controls.h"
 #include "vgui_controls/tokenchannels.h"
 
 void IntToHex( int value, char *out, int bufSize );
