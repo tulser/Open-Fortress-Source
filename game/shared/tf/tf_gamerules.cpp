@@ -129,6 +129,7 @@ ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
+ConVar ofd_allow_allclass_pickups ("ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
 
 // Not implemented.
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );

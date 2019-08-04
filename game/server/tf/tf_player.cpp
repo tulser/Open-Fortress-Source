@@ -739,7 +739,10 @@ void CTFPlayer::Precache()
 
 	PrecacheScriptSound( TFGameRules()->GetMusicName( false ) );
 	PrecacheScriptSound( TFGameRules()->GetMusicName( true ) );
-	
+
+	// needed to suppress console spam about weapon spawners
+	PrecacheMaterial( "VGUI/flagtime_full" );
+	PrecacheMaterial( "VGUI/flagtime_empty" );
 
 	BaseClass::Precache();
 }
@@ -2904,8 +2907,8 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 				// exclude some undesirable classes
 				do
 				{
-					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
-				} while( nClass == TF_CLASS_SCOUT || nClass == TF_CLASS_SPY );
+					nClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_MERCENARY );
+				} while( nClass == TF_CLASS_SCOUT || nClass == TF_CLASS_MERCENARY );
 			}
 
 			m_Shared.Disguise( ( GetTeamNumber() == TF_TEAM_BLUE ) ? TF_TEAM_RED : TF_TEAM_BLUE, nClass );

@@ -23,9 +23,9 @@
 extern ConVar ofd_mutators;
 extern ConVar ofd_multiweapons;
 extern ConVar ofd_weaponspawners;
+extern ConVar ofd_allow_allclass_pickups;
 
-ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Weapons dont dissapeer.");
-ConVar ofd_allow_allclass_pickups( "ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
+ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_NOTIFY, "Weapons dont disappear.");
  
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Weapon Spawner
@@ -57,6 +57,10 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 
 void CWeaponSpawner::Spawn( void )
 {
+	// if the gamemode is deathmatch, allow all classes to pick up weapons
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+		ofd_allow_allclass_pickups.SetValue(1);
+
 	m_nRenderFX = kRenderFxNone;
 	if (ofd_weaponspawners.GetInt() >= 1 &&
 		ofd_mutators.GetInt() == 0 && 

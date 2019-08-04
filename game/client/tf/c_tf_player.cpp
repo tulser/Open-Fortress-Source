@@ -83,7 +83,9 @@ ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT, "Max 
 
 ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, sniper rifle will re-zoom after firing a zoomed shot." );
 
-ConVar of_muzzlelight("of_muzzlelight", "1", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower");
+ConVar of_muzzlelight("of_muzzlelight", "1", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
+ConVar of_beta_muzzleflash("of_beta_muzzleflash", "0", FCVAR_ARCHIVE, "Enable the TF2 beta muzzleflash model when firing.");
+
 ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake.");
 
 ConVar ofd_color_r( "ofd_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's red channel value", true, -1, true, 255 );
