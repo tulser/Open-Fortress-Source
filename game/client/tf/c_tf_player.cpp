@@ -97,6 +97,8 @@ ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Bi
 ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
 ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats\n");
 
+ConVar tf_hud_no_crosshair_on_scope_zoom("tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun.");
+
 static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls.");
 
 ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
@@ -1362,6 +1364,7 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFLocalPlayerExclusive )
 		0, 
 		"player_object_array"	),
 
+	RecvPropEHandle( RECVINFO( m_hLadder ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 //	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
 
@@ -4430,4 +4433,18 @@ void C_TFPlayer::CalcViewIdle(QAngle& eyeAngles)
 int C_TFPlayer::GetAccount() const
 {
 	return m_iAccount;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Helper to remove from ladder
+//-----------------------------------------------------------------------------
+void C_TFPlayer::ExitLadder()
+{
+	if ( MOVETYPE_LADDER != GetMoveType() )
+		return;
+	
+	SetMoveType( MOVETYPE_WALK );
+	SetMoveCollide( MOVECOLLIDE_DEFAULT );
+	// Remove from ladder
+	/*m_HL2Local.*/m_hLadder = NULL;
 }

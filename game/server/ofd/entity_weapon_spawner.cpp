@@ -57,10 +57,6 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 
 void CWeaponSpawner::Spawn( void )
 {
-	// if the gamemode is deathmatch, allow all classes to pick up weapons
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
-		ofd_allow_allclass_pickups.SetValue(1);
-
 	m_nRenderFX = kRenderFxNone;
 	if (ofd_weaponspawners.GetInt() >= 1 &&
 		ofd_mutators.GetInt() == 0 && 
