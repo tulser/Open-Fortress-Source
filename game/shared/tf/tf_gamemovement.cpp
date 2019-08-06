@@ -1942,7 +1942,10 @@ bool CTFGameMovement::ContinueForcedMove()
 //-----------------------------------------------------------------------------
 bool CTFGameMovement::OnLadder( trace_t &trace )
 {
-	return ( GetLadder() != NULL ) ? true : false;
+	if (GetLadder() == nullptr)
+		return BaseClass::OnLadder(trace);
+	else
+		return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2181,6 +2184,12 @@ bool CTFGameMovement::ExitLadderViaDismountNode( CFuncLadder *ladder, bool stric
 //-----------------------------------------------------------------------------
 void CTFGameMovement::FullLadderMove()
 {
+	if (GetLadder() == nullptr)
+	{
+		BaseClass::FullLadderMove();
+		return;
+	}
+
 #if !defined( CLIENT_DLL )
 	CFuncLadder *ladder = GetLadder();
 	Assert( ladder );
@@ -2547,7 +2556,8 @@ bool CTFGameMovement::LadderMove( void )
 	if ( player->GetMoveType() == MOVETYPE_NOCLIP )
 	{
 		SetLadder( NULL );
-		return false;
+
+		return BaseClass::LadderMove();
 	}
 
 	// If being forced to mount/dismount continue to act like we are on the ladder
@@ -2616,7 +2626,7 @@ bool CTFGameMovement::LadderMove( void )
 			}
 		}
 
-		return false;
+		return BaseClass::LadderMove();
 	}
 
 	if ( !ladder && 
@@ -2630,7 +2640,7 @@ bool CTFGameMovement::LadderMove( void )
 	ladder = GetLadder();
 	if ( !ladder )
 	{
-		return false;
+		return BaseClass::LadderMove();
 	}
 
 	// Don't play the deny sound
@@ -2695,7 +2705,8 @@ bool CTFGameMovement::LadderMove( void )
 		{
 			mv->m_vecVelocity.z = mv->m_vecVelocity.z + 50;
 		}
-		return false;
+
+		return BaseClass::LadderMove();
 	}
 
 	if ( forwardSpeed != 0 || rightSpeed != 0 )
@@ -2727,7 +2738,9 @@ bool CTFGameMovement::LadderMove( void )
 			player->SetMoveType( MOVETYPE_WALK );
 			// Remove from ladder
 			SetLadder( NULL );
-			return false;
+
+			return BaseClass::LadderMove();
+
 		}
 
 		bool ishorizontal = fabs( topPosition.z - bottomPosition.z ) < 64.0f ? true : false;
