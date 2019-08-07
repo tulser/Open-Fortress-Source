@@ -1582,14 +1582,16 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flAdjustedDamage = flDistanceToEntity * falloff;
 			flAdjustedDamage = info.GetDamage() - flAdjustedDamage;
 		}
-		if( pEntity->GetClassname() )
+		/*
+		if ( pEntity->GetClassname() )
 			DevMsg( "Traced entity class is %d\n",pEntity->GetClassname() );
-		if( info.GetAttacker()->GetClassname() )
+		if ( info.GetAttacker()->GetClassname() )
 			DevMsg( "Attacker class is %d\n",info.GetAttacker()->GetClassname() );
+		*/
 		// Take a little less damage from yourself
-		if ( pEntity == info.GetAttacker())
+		if ( pEntity == info.GetAttacker() )
 		{
-			DevMsg("Damaged yourself.");
+			// DevMsg("Damaged yourself.");
 			flNonSelfDamage = flAdjustedDamage;
 			
 			switch ( of_selfdamage.GetInt() )
@@ -1616,10 +1618,10 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					break;
 			}
 		}
-	
-//		if ( flAdjustedDamage <= 0 && !flNonSelfDamage )
-//			continue;
-
+		/*
+		if ( flAdjustedDamage <= 0 && !flNonSelfDamage )
+			continue;
+		*/
 		// the explosion can 'see' this entity, so hurt them!
 		if (tr.startsolid)
 		{
@@ -1630,10 +1632,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		
 		CTakeDamageInfo adjustedInfo = info;
 		//Msg("%s: Blocked damage: %f percent (in:%f  out:%f)\n", pEntity->GetClassname(), flBlockedDamagePercent * 100, flAdjustedDamage, flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
-		if (bInstantKill)
-			adjustedInfo.SetDamage( pEntity->GetMaxHealth() * 6 );
-		else
-			adjustedInfo.SetDamage( flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
+		adjustedInfo.SetDamage( flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
 
 		// Now make a consideration for skill level!
 		if( info.GetAttacker() && info.GetAttacker()->IsPlayer() && pEntity->IsNPC() )
@@ -1655,16 +1654,19 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 		else
 		{
-			DevMsg("Damage force exists\n");
+			// DevMsg("Damage force exists\n");
 			// Assume the force passed in is the maximum force. Decay it based on falloff.
 			float flForce = adjustedInfo.GetDamageForce().Length() * falloff;
 			adjustedInfo.SetDamageForce(dir * flForce);
 			adjustedInfo.SetDamagePosition(vecSrc);
 		}
 		
+		if ( bInstantKill )
+			adjustedInfo.SetDamage( pEntity->GetHealth() / falloff );
+
 		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt)
 		{
-			DevMsg("Stickybombs \n");
+			// DevMsg("Stickybombs \n");
 			ClearMultiDamage( );
 			pEntity->DispatchTraceAttack( adjustedInfo, dir, &tr );
 			if ( flNonSelfDamage )
