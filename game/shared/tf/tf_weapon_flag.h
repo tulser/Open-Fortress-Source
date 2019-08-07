@@ -10,7 +10,7 @@
 #pragma once
 #endif
 
-#include "tf_weaponbase_melee.h"
+#include "tf_weaponbase_gun.h"
 
 #ifdef CLIENT_DLL
 #define CTFFlag C_TFFlag
@@ -20,21 +20,26 @@
 //
 // Bottle class.
 //
-class CTFFlag : public CTFWeaponBaseMelee
+class CTFFlag : public CTFWeaponBaseGun
 {
 public:
 
-	DECLARE_CLASS( CTFFlag, CTFWeaponBaseMelee );
+	DECLARE_CLASS( CTFFlag, CTFWeaponBaseGun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
+	DECLARE_DATADESC();
 
 	CTFFlag();
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_FLAG; }
-	virtual void		SecondaryAttack();
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_C4; }
 	bool				Deploy( void );
+	virtual void 		PrimaryAttack( void );
+	virtual void 		ItemPostFrame( void );
 
 	virtual bool		CanDrop( void ) { return true; }
-
+public:
+	CNetworkVar( bool,	m_bInPlantZone );
+	CNetworkVar( bool,	m_bPlanting );
+	CNetworkVar( float, m_flPlantStart );
 private:
 
 	CTFFlag( const CTFFlag & ) {}

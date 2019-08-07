@@ -115,6 +115,8 @@ public:
 	float	m_flPickupMultiplier;
 	bool	m_bDropOnNoAmmo;
 	bool 	m_bDisableSecondaryAttack;
+	int 	m_iCost;
+	bool	m_bBuyable;
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function

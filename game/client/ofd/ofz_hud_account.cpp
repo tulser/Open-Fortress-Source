@@ -39,7 +39,8 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar ofd_disablemoneycount( "ofd_disablemoneycount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable moneycount showing in your HUD" );
+ConVar ofb_disablemoneycount( "ofb_disablemoneycount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable moneycount showing in your HUD" );
+ConVar ofb_forcemoneycount( "ofb_forcemoneycount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Force the Money Count on" );
 
 DECLARE_HUDELEMENT( CTFHudMoney );
 
@@ -93,7 +94,7 @@ bool CTFHudMoney::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ( TFGameRules() && !TFGameRules()->UsesMoney() ) )
+	if ( !pPlayer || ( TFGameRules() && !TFGameRules()->UsesMoney() && !ofb_forcemoneycount.GetBool() ) )
 	{
 		return false;
 	}

@@ -135,6 +135,8 @@ ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "To
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar ofd_allow_allclass_pickups ("ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
+ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
+ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 
 // Not implemented.
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
@@ -1543,6 +1545,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		// Adjust the damage - apply falloff.
 		float flAdjustedDamage = 0.0f;
+		float flNonSelfDamage = 0.0f;
 
 		float flDistanceToEntity;
 
@@ -1579,15 +1582,43 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flAdjustedDamage = flDistanceToEntity * falloff;
 			flAdjustedDamage = info.GetDamage() - flAdjustedDamage;
 		}
-		
+		if( pEntity->GetClassname() )
+			DevMsg( "Traced entity class is %d\n",pEntity->GetClassname() );
+		if( info.GetAttacker()->GetClassname() )
+			DevMsg( "Attacker class is %d\n",info.GetAttacker()->GetClassname() );
 		// Take a little less damage from yourself
-		if ( tr.m_pEnt == info.GetAttacker())
+		if ( pEntity == info.GetAttacker())
 		{
-			flAdjustedDamage = flAdjustedDamage * 0.75;
+			DevMsg("Damaged yourself.");
+			flNonSelfDamage = flAdjustedDamage;
+			
+			switch ( of_selfdamage.GetInt() )
+			{
+				case -1:
+					switch ( ofd_mutators.GetInt() )
+					{	
+						case 3:
+						case 4:
+						case 5:
+							flAdjustedDamage = 0.0f;
+							break;
+						default:
+							flAdjustedDamage = flAdjustedDamage * 0.75f;
+							break;
+					}
+					break;
+				case 0:
+					flAdjustedDamage = flAdjustedDamage * 0.0f;
+					break;
+				default:
+				case 1:
+					flAdjustedDamage = flAdjustedDamage * 0.75f;
+					break;
+			}
 		}
 	
-		if ( flAdjustedDamage <= 0 )
-			continue;
+//		if ( flAdjustedDamage <= 0 && !flNonSelfDamage )
+//			continue;
 
 		// the explosion can 'see' this entity, so hurt them!
 		if (tr.startsolid)
@@ -1617,10 +1648,14 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		// If we don't have a damage force, manufacture one
 		if (adjustedInfo.GetDamagePosition() == vec3_origin || adjustedInfo.GetDamageForce() == vec3_origin)
 		{
+			float SelfDamage = adjustedInfo.GetDamage();
+			adjustedInfo.SetDamage ( flNonSelfDamage );
 			CalculateExplosiveDamageForce(&adjustedInfo, dir, vecSrc);
+			adjustedInfo.SetDamage ( SelfDamage );
 		}
 		else
 		{
+			DevMsg("Damage force exists\n");
 			// Assume the force passed in is the maximum force. Decay it based on falloff.
 			float flForce = adjustedInfo.GetDamageForce().Length() * falloff;
 			adjustedInfo.SetDamageForce(dir * flForce);
@@ -1629,13 +1664,20 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		
 		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt)
 		{
+			DevMsg("Stickybombs \n");
 			ClearMultiDamage( );
 			pEntity->DispatchTraceAttack( adjustedInfo, dir, &tr );
-			ApplyMultiDamage();
+			if ( flNonSelfDamage )
+				ApplyMultiSelfDamage( flNonSelfDamage * of_rocketjump_multiplier.GetFloat() );
+			else
+				ApplyMultiDamage();
 		}
 		else
 		{
-			pEntity->TakeDamage( adjustedInfo );
+			if ( flNonSelfDamage )
+				pEntity->TakeSelfDamage( adjustedInfo, flNonSelfDamage * of_rocketjump_multiplier.GetFloat() );
+			else
+				pEntity->TakeDamage( adjustedInfo/*, flNonSelfDamage, flNonSelfDamage */);
 		}
 
 		// Now hit all triggers along the way that respond to damage... 

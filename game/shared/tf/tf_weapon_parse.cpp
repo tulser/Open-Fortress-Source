@@ -39,6 +39,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	
 	m_bNeverStrip = false;
 	
+	m_bBuyable = false;
+	
 	szScoutViewModel[0] = 0;
 	szSoldierViewModel[0] = 0;
 	szPyroViewModel[0] = 0;
@@ -73,6 +75,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szExplosionWaterEffectClassic[0] = '\0';	
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
+	m_iCost = 0;
 }
 
 CTFWeaponInfo::~CTFWeaponInfo()
@@ -207,6 +210,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flBombletMultiplier		= pKeyValuesData->GetFloat( "BombletDamageMultiplier", 0.0f );
 	m_iBombletLevel		= pKeyValuesData->GetInt( "BombletLevel", 1 );
 	
+	m_iCost		= pKeyValuesData->GetInt( "Cost", -1 );
+	
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
@@ -220,6 +225,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
 	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
 	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
+	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
 	
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szSoldierViewModel, pKeyValuesData->GetString( "soldier_viewmodel" ), MAX_WEAPON_STRING );

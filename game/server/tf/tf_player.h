@@ -305,8 +305,9 @@ public:
 
 	// Dropping Ammo
 	void DropAmmoPack( void );
-	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolbe = false );
-
+	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolve = false, int Clip = -1, int Reserve = -1 );
+	
+	CTFWeaponBase *GetWeaponInSlot( int iSlot, int iSlotPos );
 	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );
 	
 	bool CanDisguise( void );
@@ -354,7 +355,7 @@ public:
 	// HL2 ladder related methods
 	LadderMove_t		*GetLadderMove() { return &/*m_HL2Local.*/m_LadderMove; }
 	virtual void		ExitLadder();
-	virtual surfacedata_t *GetLadderSurface( const Vector &origin );
+	virtual surfacedata_t *GetLadderSurface( const Vector &origin );	
 
 	void	UpdateExpression( void );
 	void	ClearExpression( void );
@@ -644,7 +645,7 @@ public:
 	void				MissedAR2AltFire() {;}
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
-
+	
 	bool	m_bTransition;
 
 	// Commander Mode for controller NPCs

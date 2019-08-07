@@ -1,35 +1,28 @@
 //======= Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
 //
-// Purpose: CTF Regenerate Zone.
+// Purpose: De_ Bomb Plant Zone.
 //
 //=============================================================================//
 
-// datamap dump data https://raw.githubusercontent.com/powerlord/tf2-data/master/datamaps.txt
-//CBaseEntity - func_respawnflag
-//- CFuncRespawnFlagZoneTouch(Offset 0) (FunctionTable)(0 Bytes)
-
 #include "cbase.h"
-#include "tf_player.h"
-#include "entity_capture_flag.h"
 #include "tf_item.h"
 
-#include "func_respawnflag.h"
 #include "func_bomb_target.h"
 
-LINK_ENTITY_TO_CLASS( func_respawnflag, CFuncRespawnFlagZoneTouch );
+LINK_ENTITY_TO_CLASS( func_bomb_target, CBombTargetZone );
 
 //=============================================================================
 //
-// CTF Regenerate Zone tables.
+// De_ Bomb Plant Zone tables.
 //
 
-BEGIN_DATADESC( CFuncRespawnFlagZoneTouch )
+BEGIN_DATADESC( CBombTargetZone )
 	DEFINE_FUNCTION( Touch ),
 END_DATADESC();
 
 //=============================================================================
 //
-// CTF Regenerate Zone functions.
+// De_ Bomb Plant Zone functions.
 //
 
 //-----------------------------------------------------------------------------
@@ -37,15 +30,15 @@ END_DATADESC();
 //-----------------------------------------------------------------------------
 
 // is the flag in this trigger zone?
-bool InRespawnFlagZone( const Vector &vecPoint )
+bool InBombTargetZone( const Vector &vecPoint )
 {
 	CBaseEntity *pEntity = NULL;
 
-	while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_respawnflag" ) ) != NULL )
+	while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_bomb_target" ) ) != NULL )
 	{
-		CFuncRespawnFlagZoneTouch *pFlag = ( CFuncRespawnFlagZoneTouch * )pEntity;
+		CBombTargetZone *pBombZone = ( CBombTargetZone * )pEntity;
 
-		if ( !pFlag->IsDisabled() && pFlag->PointIsWithin( vecPoint ) )
+		if ( !pBombZone->IsDisabled() && pBombZone->PointIsWithin( vecPoint ) )
 		{
 			// return false;
 			return true;	
@@ -59,7 +52,7 @@ bool InRespawnFlagZone( const Vector &vecPoint )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CFuncRespawnFlagZoneTouch::CFuncRespawnFlagZoneTouch()
+CBombTargetZone::CBombTargetZone()
 {
 	m_bDisabled = false;
 }
@@ -67,17 +60,17 @@ CFuncRespawnFlagZoneTouch::CFuncRespawnFlagZoneTouch()
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the entity
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::Spawn(void)
+void CBombTargetZone::Spawn(void)
 {
 	Precache();
 	InitTrigger();
-	SetTouch( &CFuncRespawnFlagZoneTouch::Touch );
+	SetTouch( &CBombTargetZone::Touch );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::Activate(void)
+void CBombTargetZone::Activate(void)
 {
 	BaseClass::Activate();
 }
@@ -85,42 +78,18 @@ void CFuncRespawnFlagZoneTouch::Activate(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::Touch( CBaseEntity *pOther )
+void CBombTargetZone::Touch( CBaseEntity *pOther )
 {
 	if ( !IsDisabled() )
 	{
-		CTFPlayer *pPlayer = ToTFPlayer( pOther );
-
-		if ( pPlayer && pPlayer->HasTheFlag() )
-		{
-			CTFItem *pItem = pPlayer->GetItem();
-
-			// drop flag if the player has it and then reset it
-			if ( pItem )
-			{
-				CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*>( pItem );
-
-				pPlayer->DropFlag();
-
-				if ( pFlag )
-				{
-					pFlag->Reset();
-
-					pFlag->ResetMessage();
-				}
-			}
-			else
-			{
-					pPlayer->DropFlag();
-			}
-		}
+		// Nutin here yet
 	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::InputEnable( inputdata_t &inputdata )
+void CBombTargetZone::InputEnable( inputdata_t &inputdata )
 {
 	SetDisabled( false );
 }
@@ -128,7 +97,7 @@ void CFuncRespawnFlagZoneTouch::InputEnable( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::InputDisable( inputdata_t &inputdata )
+void CBombTargetZone::InputDisable( inputdata_t &inputdata )
 {
 	SetDisabled( true );
 }
@@ -136,7 +105,7 @@ void CFuncRespawnFlagZoneTouch::InputDisable( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CFuncRespawnFlagZoneTouch::IsDisabled( void )
+bool CBombTargetZone::IsDisabled( void )
 {
 	return m_bDisabled;
 }
@@ -144,7 +113,7 @@ bool CFuncRespawnFlagZoneTouch::IsDisabled( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::InputToggle( inputdata_t &inputdata )
+void CBombTargetZone::InputToggle( inputdata_t &inputdata )
 {
 	if ( m_bDisabled )
 	{
@@ -159,7 +128,7 @@ void CFuncRespawnFlagZoneTouch::InputToggle( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CFuncRespawnFlagZoneTouch::SetDisabled( bool bDisabled )
+void CBombTargetZone::SetDisabled( bool bDisabled )
 {
 	m_bDisabled = bDisabled;
 }

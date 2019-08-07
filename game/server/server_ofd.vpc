@@ -19,7 +19,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;.\ofd;$SRCDIR\game\shared\ofd;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;.\ofd;.\ofcs;$SRCDIR\game\shared\ofd;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
 		$PreprocessorDefinitions		"$BASE;TF_MOD;GLOWS_ENABLE;OPENFORTRESS_DLL;USE_NAV_MESH"
 	}
 }
@@ -61,7 +61,9 @@ $Project "Server (OFD)"
 			$File	"ofd\of_tfcgrenade_frag.cpp"
 			$File	"ofd\of_tfcgrenade_frag.h"
 			$File	"tf\tf_weapon_grapple.cpp"
-			$File	"tf\tf_weapon_grapple.h"			
+			$File	"tf\tf_weapon_grapple.h"		
+			$File	"ofcs\func_bomb_target.cpp"
+			$File	"ofcs\func_bomb_target.h"
 		}
 		
 		$File	"ai_relationship.cpp"

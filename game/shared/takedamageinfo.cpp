@@ -225,6 +225,31 @@ void ApplyMultiDamage( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: inflicts contents of global multi damage register on gMultiDamage.pEntity
+//-----------------------------------------------------------------------------
+void ApplyMultiSelfDamage( float flTotalDamage )
+{
+	Vector		vecSpot1;//where blood comes from
+	Vector		vecDir;//direction blood should go
+	trace_t		tr;
+
+	if ( !g_MultiDamage.GetTarget() )
+		return;
+
+#ifndef CLIENT_DLL
+	const CBaseEntity *host = te->GetSuppressHost();
+	te->SetSuppressHost( NULL );
+		
+	g_MultiDamage.GetTarget()->TakeSelfDamage( g_MultiDamage, flTotalDamage );
+
+	te->SetSuppressHost( (CBaseEntity*)host );
+#endif
+
+	// Damage is done, clear it out
+	ClearMultiDamage();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Add damage to the existing multidamage, and apply if it won't fit
 //-----------------------------------------------------------------------------
 void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )

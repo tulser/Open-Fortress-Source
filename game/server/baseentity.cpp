@@ -1438,6 +1438,72 @@ int CBaseEntity::OnTakeDamage( const CTakeDamageInfo &info )
 	return 1;
 }
 
+// inflict damage on this entity.  bitsDamageType indicates type of damage inflicted, ie: DMG_CRUSH
+
+int CBaseEntity::OnTakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage )
+{
+	Vector			vecTemp;
+
+	if ( !edict() || !m_takedamage )
+		return 0;
+
+	if ( info.GetInflictor() )
+	{
+		vecTemp = info.GetInflictor()->WorldSpaceCenter() - ( WorldSpaceCenter() );
+	}
+	else
+	{
+		vecTemp.Init( 1, 0, 0 );
+	}
+
+	// this global is still used for glass and other non-NPC killables, along with decals.
+	g_vecAttackDir = vecTemp;
+	VectorNormalize(g_vecAttackDir);
+		
+	// save damage based on the target's armor level
+
+	// figure momentum add (don't let hurt brushes or other triggers move player)
+
+	// physics objects have their own calcs for this: (don't let fire move things around!)
+	if ( !IsEFlagSet( EFL_NO_DAMAGE_FORCES ) )
+	{
+		if ( ( GetMoveType() == MOVETYPE_VPHYSICS ) )
+		{
+			VPhysicsTakeDamage( info );
+		}
+		else
+		{
+			if ( info.GetInflictor() && (GetMoveType() == MOVETYPE_WALK || GetMoveType() == MOVETYPE_STEP) && 
+				!info.GetAttacker()->IsSolidFlagSet(FSOLID_TRIGGER) )
+			{
+				Vector vecDir, vecInflictorCentroid;
+				vecDir = WorldSpaceCenter( );
+				vecInflictorCentroid = info.GetInflictor()->WorldSpaceCenter( );
+				vecDir -= vecInflictorCentroid;
+				VectorNormalize( vecDir );
+
+				float flForce = flTotalDamage * ((32 * 32 * 72.0) / (WorldAlignSize().x * WorldAlignSize().y * WorldAlignSize().z)) * 5;
+				
+				if (flForce > 1000.0) 
+					flForce = 1000.0;
+				ApplyAbsVelocityImpulse( vecDir * flForce );
+			}
+		}
+	}
+
+	if ( m_takedamage != DAMAGE_EVENTS_ONLY )
+	{
+	// do the damage
+		m_iHealth -= info.GetDamage();
+		if (m_iHealth <= 0)
+		{
+			Event_Killed( info );
+			return 0;
+		}
+	}
+
+	return 1;
+}
 //-----------------------------------------------------------------------------
 // Purpose: Scale damage done and call OnTakeDamage
 //-----------------------------------------------------------------------------
@@ -1504,6 +1570,77 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 		//Msg("%s took %.2f Damage, at %.2f\n", GetClassname(), info.GetDamage(), gpGlobals->curtime );
 
 		return OnTakeDamage( info );
+	}
+	return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Scale damage done and call OnTakeSelfDamage
+//-----------------------------------------------------------------------------
+int CBaseEntity::TakeSelfDamage( const CTakeDamageInfo &inputInfo, float flTotalDamage )
+{
+	if ( !g_pGameRules )
+		return 0;
+
+	bool bHasPhysicsForceDamage = !g_pGameRules->Damage_NoPhysicsForce( inputInfo.GetDamageType() );
+	if ( bHasPhysicsForceDamage && inputInfo.GetDamageType() != DMG_GENERIC )
+	{
+		// If you hit this assert, you've called TakeDamage with a damage type that requires a physics damage
+		// force & position without specifying one or both of them. Decide whether your damage that's causing 
+		// this is something you believe should impart physics force on the receiver. If it is, you need to 
+		// setup the damage force & position inside the CTakeDamageInfo (Utility functions for this are in
+		// takedamageinfo.cpp. If you think the damage shouldn't cause force (unlikely!) then you can set the 
+		// damage type to DMG_GENERIC, or | DMG_CRUSH if you need to preserve the damage type for purposes of HUD display.
+
+		if ( inputInfo.GetDamageForce() == vec3_origin || inputInfo.GetDamagePosition() == vec3_origin )
+		{
+			static int warningCount = 0;
+			if ( ++warningCount < 10 )
+			{
+				if ( inputInfo.GetDamageForce() == vec3_origin )
+				{
+					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
+				}
+				if ( inputInfo.GetDamagePosition() == vec3_origin )
+				{
+					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
+				}
+			}
+		}
+	}
+
+	// Make sure our damage filter allows the damage.
+	if ( !PassesDamageFilter( inputInfo ))
+	{
+		return 0;
+	}
+
+	if( !g_pGameRules->AllowDamage(this, inputInfo) )
+	{
+		return 0;
+	}
+
+	if ( PhysIsInCallback() )
+	{
+		PhysCallbackDamage( this, inputInfo );
+	}
+	else
+	{
+		CTakeDamageInfo info = inputInfo;
+		
+		// Scale the damage by the attacker's modifier.
+		if ( info.GetAttacker() )
+		{
+			info.ScaleDamage( info.GetAttacker()->GetAttackDamageScale( this ) );
+		}
+
+		// Scale the damage by my own modifiers
+		info.ScaleDamage( GetReceivedDamageScale( info.GetAttacker() ) );
+
+		//Msg("%s took %.2f Damage, at %.2f\n", GetClassname(), info.GetDamage(), gpGlobals->curtime );
+
+		return OnTakeSelfDamage( info, flTotalDamage );
 	}
 	return 0;
 }

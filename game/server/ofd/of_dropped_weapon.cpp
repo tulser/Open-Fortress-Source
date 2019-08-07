@@ -17,7 +17,6 @@
 
 //----------------------------------------------
 
-extern ConVar ofd_multiweapons;
 extern ConVar ofd_allow_allclass_pickups;
 
 // Network table.
@@ -131,32 +130,40 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		}
 		if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() ) // Are we in the 3 slot system?
 		{
-			bSuccess = false;  // Dont auto pick up
-			
-			if ( pCarriedWeapon && pWeapon && pTFPlayer->CanPickupWeapon( pCarriedWeapon, pWeapon ) ) //If we can pick it up
+			if ( pCarriedWeapon && pWeapon )
 			{
-				if ( pCarriedWeapon )								
+				// Dont auto pick up
+				if ( pCarriedWeapon->GetSlot() == pWeapon->GetSlot() )
 				{
-					pTFPlayer->DropWeapon( pCarriedWeapon );		// Drop our current weapon
-					pTFPlayer->Weapon_Detach( pCarriedWeapon );		// And remove it from our inventory
-					UTIL_Remove( pCarriedWeapon );
-					pCarriedWeapon = NULL;				
+					bSuccess = false;
+					if( pTFPlayer->m_nButtons & IN_USE )
+					{
+						pTFPlayer->DropWeapon( pCarriedWeapon );		// Drop our current weapon
+						pTFPlayer->Weapon_Detach( pCarriedWeapon );		// And remove it from our inventory
+						UTIL_Remove( pCarriedWeapon );
+						pCarriedWeapon = NULL;	
+				
+						CSingleUserRecipientFilter filter( pTFPlayer );		// Filter our sound to the player who picked this up
+						EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
+						CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
+						pGivenWeapon->GiveTo( pPlayer );														// and give it to the player
+					
+						if ( m_iReserveAmmo > -1 )
+							pGivenWeapon->m_iReserveAmmo = m_iReserveAmmo;
+						if ( m_iClip > -1 )
+							pGivenWeapon->m_iClip1 = m_iClip;
+					
+						UTIL_Remove( this );																	// Then remove the dropped weapon entity
+				
+						if ( pWeapon )
+						{
+							pTFPlayer->Weapon_Detach( pWeapon );												// Remove the temp weapon
+							UTIL_Remove( pWeapon );
+							pWeapon = NULL;
+						}
+						return;
+					}
 				}
-				
-				CSingleUserRecipientFilter filter( pTFPlayer );		// Filter our sound to the player who picked this up
-				EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
-				CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
-				pGivenWeapon->GiveTo( pPlayer );														// and give it to the player
-				UTIL_Remove( this );																	// Then remove the dropped weapon entity
-				
-				if ( pWeapon )
-				{
-					pTFPlayer->Weapon_Detach( pWeapon );												// Remove the temp weapon
-					UTIL_Remove( pWeapon );
-					pWeapon = NULL;
-				}
-				
-				return;
 			}
 		}
 	}
@@ -167,6 +174,10 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
 		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
 		pGivenWeapon->GiveTo( pPlayer );														// and give it to the player
+		if ( m_iReserveAmmo > -1 )
+			pGivenWeapon->m_iReserveAmmo = m_iReserveAmmo;
+		if ( m_iClip > -1 )
+			pGivenWeapon->m_iClip1 = m_iClip;
 		UTIL_Remove( this );																	// Remove the dropped weapon entity
 	}
 	

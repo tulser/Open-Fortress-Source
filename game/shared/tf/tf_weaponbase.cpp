@@ -565,7 +565,7 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 		}
 	}
 #endif
-
+	AbortReload();
 	return BaseClass::Holster( pSwitchingTo );
 }
 
@@ -622,7 +622,7 @@ void CTFWeaponBase::BurstFire( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::BeginBurstFire(void)
 {
-	if (InBurst() )
+	if ( InBurst() )
 		return;
 
 	m_iShotsDue = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize;

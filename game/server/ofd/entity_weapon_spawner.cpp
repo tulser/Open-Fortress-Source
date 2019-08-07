@@ -140,7 +140,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pTFPlayer->GetWeapon( iWeapon );      // Get a weapon in the player's inventory
 			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() && pCarriedWeapon && pWeapon && pTFPlayer->CanPickupWeapon( pCarriedWeapon, pWeapon ) )  //If we're using the 3 Weapon System and we can pickup the Weapon
 			{
-					pTFPlayer->DropWeapon( pCarriedWeapon );	//Drop the weapon
+					pTFPlayer->DropWeapon( pCarriedWeapon, false, false, pCarriedWeapon->m_iClip1, pCarriedWeapon->m_iReserveAmmo );	//Drop the weapon
 					if ( pCarriedWeapon )
 					{
 						pTFPlayer->Weapon_Detach( pCarriedWeapon ); //Remove the weapon that the new weapon replaces

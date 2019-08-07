@@ -902,9 +902,11 @@ public:
 
 	// returns the amount of damage inflicted
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
+	virtual int		OnTakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage );
 
 	// This is what you should call to apply damage to an entity.
 	int TakeDamage( const CTakeDamageInfo &info );
+	int TakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage );
 	virtual void AdjustDamageDirection( const CTakeDamageInfo &info, Vector &dir, CBaseEntity *pEnt ) {}
 
 	virtual int		TakeHealth( float flHealth, int bitsDamageType );

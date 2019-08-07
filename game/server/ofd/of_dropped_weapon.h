@@ -35,6 +35,9 @@ public:
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
 
+public:
+		CNetworkVar( int, m_iReserveAmmo );
+		CNetworkVar( int, m_iClip )
 private:
 	float m_flCreationTime;
 

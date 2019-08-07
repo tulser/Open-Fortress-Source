@@ -114,6 +114,8 @@ ConVar of_healonkill		( "of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "
 
 ConVar ofd_resistance		( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "Defines the resistance of the Shield powerup." );
 
+ConVar ofd_fullammo("ofd_fullammo", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Weapons have full ammo when dropped.");
+
 ConVar of_knockback_all("of_knockback_all", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for all damage types");
 ConVar of_knockback_bullets("of_knockback_bullets", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for bullets");
 ConVar of_knockback_explosives("of_knockback_explosives", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for explosions");
@@ -134,6 +136,7 @@ extern ConVar tf_spectalk;
 extern ConVar of_allow_special_teams;
 extern ConVar ofd_spawnprotecttime;
 extern ConVar ofe_huntedcount;
+extern ConVar friendlyfire;
 
 ConVar ofd_teamplay_collision	( "ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables collision with teammates in TDM mode." );
 ConVar ofd_dynamic_color_update	( "ofd_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Updates player color immediately." );
@@ -3485,7 +3488,30 @@ void CTFPlayer::TFWeaponRemove( int iWeaponID )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::DropCurrentWeapon( void )
 {
-	return false;
+	if( !m_Shared.GetActiveTFWeapon() )
+		return false;
+	
+	int Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
+	int ReserveAmmo = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+	
+	DevMsg("You dropped %s with %d Clip and %d Reserve ammo", m_Shared.GetActiveTFWeapon()->GetClassname(), Clip, ReserveAmmo );
+	if ( m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+	{
+		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
+		DropWeapon( pTFPistol, true, false, Clip / 2, ReserveAmmo );
+		pTFPistol = NULL;
+		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
+	}
+	else
+	{
+		DropWeapon( m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
+		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
+	}
+	if ( GetLastWeapon() )
+		Weapon_Switch( GetLastWeapon() );
+	else
+		SwitchToNextBestWeapon( m_Shared.GetActiveTFWeapon() );
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -4412,16 +4438,22 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	
-	if (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
+	int Clip = -1;
+	int Reserve = -1;
+	if ( !ofd_fullammo.GetBool() )
+	{
+		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
+		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+	}
+	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol );
-		DropWeapon( pTFPistol );
+		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
+		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
 		pTFPistol = NULL;
 	}
 	else
-		DropWeapon( m_Shared.GetActiveTFWeapon()  );
+		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
@@ -4837,6 +4869,7 @@ void CTFPlayer::DropAmmoPack( void )
 	pWeapon->SetModel( pWeapon->GetViewModel() );
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: drops the flag
 //-----------------------------------------------------------------------------
@@ -4845,31 +4878,113 @@ void CC_DropWeapon( void )
 	if ( !of_dropweapons.GetBool() )
 		return;
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+	if ( !pPlayer )
+		return;
+	
+	if( !pPlayer->m_Shared.GetActiveTFWeapon() )
+		return;
+	
 	if ( !pPlayer->m_Shared.GetActiveTFWeapon()->CanDropManualy() )
 		return;
-	if ( pPlayer )
+	
+	int Clip = pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1;
+	int ReserveAmmo = pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+	
+	DevMsg("You dropped %s with %d Clip and %d Reserve ammo", pPlayer->m_Shared.GetActiveTFWeapon()->GetClassname(), Clip, ReserveAmmo );
+	if ( pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
-		if ( pPlayer->m_Shared.GetActiveTFWeapon() && pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
-		{
-			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-			pPlayer->DropWeapon( pTFPistol, true );
-			pPlayer->DropWeapon( pTFPistol, true );
-			pTFPistol = NULL;
-			UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
-		}
-		else
-		{
-			pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true  );
-			UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
-		}
-		
-		if ( pPlayer->GetLastWeapon() )
-			pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
-		else
-			pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
+		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
+		pPlayer->DropWeapon( pTFPistol, true, false, Clip / 2, ReserveAmmo );
+		pTFPistol = NULL;
+		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 	}
+	else
+	{
+		pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
+		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
+	}
+	if ( pPlayer->GetLastWeapon() )
+		pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
+	
+	else
+		pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
 }
 static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CON_COMMAND( buy, "Buy weapon.\n\tArguments: <item_name>" )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	if ( pPlayer 
+		/*&& (  TFGameRules()->CanBuy() not yet implemented) */
+		&& args.ArgC() >= 2 )
+	{
+		char item_to_give[ 256 ];
+		Q_strncpy( item_to_give, args[1], sizeof( item_to_give ) );
+		Q_strlower( item_to_give );
+
+		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
+		
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( item_to_give );			  //Get the weapon info
+		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
+		Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );		
+		if( pWeaponInfo && pWeaponInfo->m_bBuyable )
+		{
+			int WeaponID = AliasToWeaponID( item_to_give );
+			int WeaponCost = pWeaponInfo->m_iCost;
+			DevMsg( "The Gun Costs %d\n And the player has %d money \n", WeaponCost, pPlayer->m_iAccount );
+			if( !pPlayer->OwnsWeaponID( WeaponID ) && WeaponCost <= pPlayer->m_iAccount )
+			{
+				CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( STRING(iszItem) );  // Create the specified weapon 
+				CTFWeaponBase *pOverlappingWeapon = pPlayer->GetWeaponInSlot( pGivenWeapon->GetSlot(), pGivenWeapon->GetPosition() );
+				if( pOverlappingWeapon )
+				{
+					pPlayer->DropWeapon( pOverlappingWeapon, true, false, pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1, pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo  );
+					UTIL_Remove( pOverlappingWeapon );
+				}
+				pPlayer->m_iAccount -= WeaponCost;
+				pGivenWeapon->GiveTo( pPlayer );
+			}
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+CON_COMMAND( give_money, "Give yourself a certain amount of curecy.\n\tArguments: <amount>" )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
+	if ( pPlayer 
+		&& (gpGlobals->maxClients == 1 || sv_cheats->GetBool()) 
+		&& args.ArgC() >= 2 )
+	{
+		int amount = atof( args[1] );
+		
+		pPlayer->m_iAccount += amount;
+
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: returns the weapon in the specified slot
+//-----------------------------------------------------------------------------
+CTFWeaponBase *CTFPlayer::GetWeaponInSlot( int iSlot, int iSlotPos )
+{
+	for ( int i = 0; i < MAX_WEAPONS; i++ )
+	{
+		CTFWeaponBase *pWeapon =(CTFWeaponBase*)GetWeapon(i);
+
+		if ( pWeapon == NULL )
+			continue;
+
+		if ( pWeapon->GetSlot() == iSlot && pWeapon->GetPosition() == iSlotPos )
+			return pWeapon;
+	}
+	
+	return NULL;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Check to see if we can pickup the weapon, Used in the 3 slot weapon system in DM
@@ -4883,7 +4998,7 @@ bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve )
+void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve, int Clip, int Reserve )
 {
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
@@ -5029,7 +5144,8 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 		pDroppedWeapon->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 		pDroppedWeapon->m_takedamage = DAMAGE_YES;		
 		pDroppedWeapon->SetHealth( 900 );
-		
+		pDroppedWeapon->m_iReserveAmmo = Reserve;
+		pDroppedWeapon->m_iClip = Clip;
 		pDroppedWeapon->SetBodygroup( 1, 1 );
 		if ( dissolve )
 		{
@@ -7390,7 +7506,7 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
 	bool bIsMedic = false;
-
+	
 	//Do Lag comp on medics trying to heal team mates.
 	if ( IsPlayerClass( TF_CLASS_MEDIC ) == true )
 	{
@@ -7409,8 +7525,10 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 			}
 		}
 	}
-
-	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && TFGameRules() && !TFGameRules()->IsDMGamemode() )
+	
+	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && !friendlyfire.GetBool()
+	// Deathmatch Specific Lag Comp, If either the shooter or the Victim is on the merc team, dont return false here
+	&& pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY && GetTeamNumber() != TF_TEAM_MERCENARY )
 		return false;
 	
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.
@@ -8446,6 +8564,8 @@ void CTFPlayer::StopLoopingSounds( void )
 }
 
 ConVar	sk_battery("sk_battery", "0");
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Helper to remove from ladder

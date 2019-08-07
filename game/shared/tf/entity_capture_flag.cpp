@@ -36,6 +36,7 @@ ConVar cl_flag_return_size( "cl_flag_return_size", "20", FCVAR_CHEAT );
 #include "datacache/imdlcache.h"
 
 #include "func_respawnflag.h"
+#include "func_bomb_target.h"
 
 extern ConVar tf_flag_caps_per_round;
 
