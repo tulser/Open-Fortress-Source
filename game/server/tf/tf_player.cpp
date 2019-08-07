@@ -3297,13 +3297,27 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 		return;
 
 	CTFPlayer *pTargetPlayer = this;
+
 	// if the player has no build PDA, abort the building
-	CTFWeaponBase *pWeapon = ((CTFPlayer*)pTargetPlayer)->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
+	// if the player is a spy though, allow him to build a sapper but don't allow the building of anything else unless he has a engineer pda too
+	TFPlayerClassData_t *pData = ( (CTFPlayer* )pTargetPlayer )->GetPlayerClass()->GetData();
+
+	CTFWeaponBase *pWeapon = ( (CTFPlayer*)pTargetPlayer )->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
 
 	if ( pWeapon == NULL )
 	{
-		ClientPrint((CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
-		return;
+		if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+		{
+			ClientPrint( (CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+			StopPlacement();
+			return;
+		}
+		else if ( pData->m_aBuildable[0] == OBJ_ATTACHMENT_SAPPER && iType != 3 )
+		{
+			ClientPrint( (CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+			StopPlacement();
+			return;
+		}
 	}
 
 	for ( int i = 0; i < WeaponCount(); i++) 

@@ -1108,16 +1108,6 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 		}
 		*/
 
-		// if the player has no build PDA, abort the building
-		CTFWeaponBase *pWeapon = ( (CTFPlayer*)pBuilder )->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
-
-		if (pWeapon == NULL)
-		{
-			ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
-			StopPlacement();
-			return false;
-		}
-
 		int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
 		if ( of_infiniteammo.GetBool() ) iAmountPlayerPaidForMe = 1;
 		if ( !iAmountPlayerPaidForMe )
@@ -1126,6 +1116,23 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 			ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Not enough metal to build.\n" );
 			StopPlacement();
 			return false;
+		}
+
+		// if the player has no build PDA, abort the building
+		// if the player is a spy though, allow him to build a sapper but don't allow the building of anything else unless he has a engineer pda too
+		TFPlayerClassData_t *pData = ((CTFPlayer*)pBuilder)->GetPlayerClass()->GetData();
+
+		CTFWeaponBase *pWeapon = ( (CTFPlayer*)pBuilder )->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
+
+		if ( pWeapon == NULL )
+		{
+			if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+			{
+
+				ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+				StopPlacement();
+				return false;
+			}
 		}
 
 		((CTFPlayer*)pBuilder)->SpeakConceptIfAllowed( MP_CONCEPT_BUILDING_OBJECT, GetResponseRulesModifier() );

@@ -1051,6 +1051,8 @@ void CTFGameRules::Activate()
 		of_gamemode_dm.SetValue(1);
 		of_bunnyhop.SetValue(1);
 		of_crouchjump.SetValue(1);
+		// lower bullet knockback a bit due to bunnyhopping
+		of_knockback_bullets.SetValue(0.1f);
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		ofd_allow_allclass_pickups.SetValue(1);
 		tf_maxspeed.SetValue(0);
