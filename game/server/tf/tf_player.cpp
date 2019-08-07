@@ -4953,7 +4953,7 @@ CON_COMMAND( buy, "Buy weapon.\n\tArguments: <item_name>" )
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-CON_COMMAND( give_money, "Give yourself a certain amount of curecy.\n\tArguments: <amount>" )
+CON_COMMAND( give_money, "Give yourself a certain amount of currency.\n\tArguments: <amount>" )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
 	if ( pPlayer 
