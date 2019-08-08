@@ -1051,8 +1051,11 @@ void CTFGameRules::Activate()
 		of_gamemode_dm.SetValue(1);
 		of_bunnyhop.SetValue(1);
 		of_crouchjump.SetValue(1);
-		// lower bullet knockback a bit due to bunnyhopping
+
+		// lower bullet and melee knockback a bit to migitate bunnyhop boosting
 		of_knockback_bullets.SetValue(0.1f);
+		of_knockback_melee.SetValue(0.4f);
+
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		ofd_allow_allclass_pickups.SetValue(1);
 		tf_maxspeed.SetValue(0);
@@ -1099,6 +1102,7 @@ void CTFGameRules::Activate()
 		of_gamemode_dm.SetValue(1);
 		of_crouchjump.SetValue(1);
 		of_usehl2hull.SetValue(1);
+
 		of_knockback_all.SetValue(0.1f);
 		of_knockback_bullets.SetValue(0.1f);
 		of_knockback_explosives.SetValue(0.1f);
@@ -1107,6 +1111,11 @@ void CTFGameRules::Activate()
 		ofd_allow_allclass_pickups.SetValue(1);
 		ofd_forceclass.SetValue(0);
 		fraglimit.SetValue(999);
+	}
+	// test
+	if ( !Q_strncmp( STRING( gpGlobals->mapname), "ctf_moonman", 11 ) )
+	{
+		Error("player: backwards mins/maxs");
 	}
 }
 

@@ -575,6 +575,7 @@ bool C_LocalTempEntity::Frame( float frametime, int framenumber )
 		dl->color.g = 120;
 		dl->color.b = 0;
 		dl->die = gpGlobals->curtime + 0.01;
+		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 	}
 
 	if ( flags & FTENT_SMOKETRAIL )
@@ -2782,10 +2783,11 @@ void CTempEnts::MuzzleFlash_Combine_NPC( ClientEntityHandle_t hEntity, int attac
 			el->color.g = 128;
 			el->color.b = 255;
 			el->color.exponent = 5;
-
+			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 			el->radius	= random->RandomInt( 32, 128 );
 			el->decay	= el->radius / 0.05f;
 			el->die		= gpGlobals->curtime + 0.05f;
+		
 		}
 	}
 }

@@ -424,6 +424,8 @@ void CreateMuzzleflashELight( const Vector &origin, int exponent, int nMinRadius
 			el->radius	= random->RandomInt( nMinRadius, nMaxRadius );
 			el->decay	= el->radius / 0.05f;
 			el->die		= gpGlobals->curtime + 0.1f;
+			
+			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		}
 	}
 }

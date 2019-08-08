@@ -95,6 +95,7 @@ void TE_DynamicLight( IRecipientFilter& filter, float delay,
 	dl->color.exponent	= exponent;
 	dl->die		= gpGlobals->curtime + time;
 	dl->decay	= decay;
+	dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 
 	if ( ToolsEnabled() && clienttools->IsInRecordingMode() )
 	{

@@ -939,6 +939,8 @@ void MuzzleFlash_Strider( ClientEntityHandle_t hEntity, int attachmentIndex )
 		el->radius	= random->RandomInt( 100, 150 );
 		el->decay	= el->radius / 0.05f;
 		el->die		= gpGlobals->curtime + 0.1f;
+		
+		el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 	}
 }
 
