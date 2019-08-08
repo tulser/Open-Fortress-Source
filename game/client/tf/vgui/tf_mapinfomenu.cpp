@@ -563,13 +563,19 @@ const char *GetMapDisplayName( const char *mapName )
 	// we haven't found a "friendly" map name, so let's just clean up what we have
 	if ( !Q_strncmp( szTempName, "cp_", 3 ) ||
 		 !Q_strncmp( szTempName, "tc_", 3 ) ||
-		 !Q_strncmp( szTempName, "ad_", 3 ) )
+		 !Q_strncmp( szTempName, "ad_", 3 ) ||
+		 !Q_strncmp( szTempName, "gg_", 3 ) ||
+		 !Q_strncmp( szTempName, "dm_", 3 ) )
 	{
 		pszSrc = szTempName + 3;
 	}
 	else if ( !Q_strncmp( szTempName, "ctf_", 4 ) )
 	{
 		pszSrc = szTempName + 4;
+	}
+	else if ( !Q_strncmp( szTempName, "mctf_", 5 ) )
+	{
+		pszSrc = szTempName + 5;
 	}
 	else
 	{

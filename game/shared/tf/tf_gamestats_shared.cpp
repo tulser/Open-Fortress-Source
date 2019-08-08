@@ -72,6 +72,15 @@ void TF_Gamestats_LevelStats_t::Init( const char *pszMapName, int nIPAddr, short
 	
 	// Start the level timer.
 	m_flRoundStartTime = flStartTime;
+
+	// test
+	if (pszMapName)
+	{
+		if (!Q_strncmp(pszMapName, "ctf_moonman", 11))
+		{
+			Error("player: backwards mins/maxs");
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
