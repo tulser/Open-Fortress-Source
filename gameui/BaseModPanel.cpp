@@ -155,7 +155,7 @@ ConVar demo_campaign_name( "demo_campaign_name", "L4D2C5", FCVAR_DEVELOPMENTONLY
 
 ConVar ui_lobby_noresults_create_msg_time( "ui_lobby_noresults_create_msg_time", "2.5", FCVAR_DEVELOPMENTONLY );
 
-
+ConVar ui_scaling	( "ui_scaling", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Scales VGUI elements with different screen resolutions." );
 
 CGameMenuItem::CGameMenuItem(vgui::Menu *parent, const char *name)  : BaseClass(parent, name, "GameMenuItem") 
 {

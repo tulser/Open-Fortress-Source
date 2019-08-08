@@ -37,18 +37,20 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern ConVar ui_scaling;
+
 //-----------------------------------------------------------------------------
 // Purpose: Basic help dialog
 //-----------------------------------------------------------------------------
 COptionsDialog::COptionsDialog(vgui::Panel *parent, OptionsDialogTabStyle iTabStyle) : PropertyDialog(parent, "OptionsDialog")
 {
-	SetProportional( true );
+	SetProportional( ui_scaling.GetBool() );
 	SetDeleteSelfOnClose( true );
 	SetBounds( 
 		0, 
 		0, 
-		vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 512 ),
-		vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 415 ) );
+		ui_scaling.GetBool() ? vgui::scheme()->GetProportionalScaledValueEx(GetScheme(), 512) : 512,
+		ui_scaling.GetBool() ? vgui::scheme()->GetProportionalScaledValueEx(GetScheme(), 415) : 415);
 	SetSizeable( false );
 
 	// debug timing code, this function takes too long

@@ -26,15 +26,18 @@ using namespace vgui;
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
+extern ConVar ui_scaling;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) : PropertyDialog(parent, "CreateMultiplayerGameDialog")
 {
 	m_bBotsEnabled = false;
-	SetDeleteSelfOnClose(true);
-	SetSize(625, 540);
-	SetSizeable( true );
+	SetProportional( ui_scaling.GetBool() );
+	SetDeleteSelfOnClose( true );
+	SetSize(420, 516);
+	SetSizeable( false );
 	
 	SetTitle("#GameUI_CreateServer", true);
 	SetOKButtonText("#GameUI_Start");

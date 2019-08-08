@@ -25,11 +25,14 @@
 
 using namespace vgui;
 
+extern ConVar ui_scaling;
+
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CPlayerListDialog::CPlayerListDialog(vgui::Panel *parent) : BaseClass(parent, "PlayerListDialog")
 {
+	SetProportional( ui_scaling.GetBool() );
 	SetSize(320, 240);
 	SetTitle("#GameUI_CurrentPlayers", true);
 
