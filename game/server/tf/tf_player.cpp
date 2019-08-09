@@ -923,7 +923,7 @@ void CTFPlayer::Spawn()
 
 	if ( GetViewModel( TF_VIEWMODEL_SPYWATCH ) )
 		GetViewModel( TF_VIEWMODEL_SPYWATCH )->SetModel( "" );
-	
+
 	GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 
 	if (IsRetroModeOn())
@@ -2448,7 +2448,12 @@ void CTFPlayer::ForceChangeTeam( int iTeamNum )
 		return;
 
 	RemoveAllObjects();
-	RemoveNemesisRelationships();
+
+	// don't let cheeky people remove their domination after switching to spectator in DM
+	if ( !TFGameRules()->IsDMGamemode() )
+	{
+		RemoveNemesisRelationships();
+	}
 
 	BaseClass::ChangeTeam( iNewTeam );
 
@@ -2498,7 +2503,12 @@ void CTFPlayer::ChangeTeam( int iTeamNum )
 		return;
 
 	RemoveAllObjects();
-	RemoveNemesisRelationships();
+
+	// don't let cheeky people remove their domination after switching to spectator in DM
+	if ( !TFGameRules()->IsDMGamemode() )
+	{
+		RemoveNemesisRelationships();
+	}
 
 	BaseClass::ChangeTeam( iTeamNum );
 
@@ -4500,12 +4510,14 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
+	
 	if ( GetActiveWeapon() )
 	{
 		GetActiveWeapon()->SendViewModelAnim( ACT_IDLE );
 		GetActiveWeapon()->Holster();
 		SetActiveWeapon( NULL );
 	}
+	
 
 	ClearZoomOwner();
 
@@ -5200,6 +5212,7 @@ void CTFPlayer::RemoveAllItems( bool removeSuit )
 			gameeventmanager->FireEvent( event );
 		}
 	}
+	
 
 	if ( m_hOffHandWeapon.Get() )
 	{ 
@@ -5215,6 +5228,7 @@ void CTFPlayer::RemoveAllItems( bool removeSuit )
 
 		m_hOffHandWeapon = NULL;
 	}
+	
 
 	Weapon_SetLast( NULL );
 	UpdateClientData();
