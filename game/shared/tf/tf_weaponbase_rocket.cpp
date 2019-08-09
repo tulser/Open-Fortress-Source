@@ -302,6 +302,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	{
 		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
 	}
+	// SetAbsOrigin( pTrace->endpos - GetAbsVelocity() );
 
 	// Play explosion sound and effect.
 	Vector vecOrigin = GetAbsOrigin();

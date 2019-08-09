@@ -62,6 +62,8 @@ lib/osx32/tier1.a
 lib/osx32/raytrace.a
 lib/public/linux32/tier1.a
 lib/public/linux32/raytrace.a
+lib/public/linux32/mathlib.a
+lib/public/linux32/vgui_controls.a
 
 # Compiled stuff
 vgui2/vgui_controls/Debug/

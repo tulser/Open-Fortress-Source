@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -130,12 +130,21 @@ void CTFWrench::Smack( void )
 		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &traceFilter, &trace );
 	}
 
+	int iPlayerTeam = pPlayer->GetTeamNumber();
+
 	// We hit, setup the smack.
-	if ( trace.fraction < 1.0f &&
-		 trace.m_pEnt &&
-		 trace.m_pEnt->IsBaseObject() &&
-		 trace.m_pEnt->GetTeamNumber() == pPlayer->GetTeamNumber() )
-	{
+	if (
+		trace.fraction < 1.0f &&
+		trace.m_pEnt &&
+		trace.m_pEnt->IsBaseObject() &&
+		(
+			(
+				iPlayerTeam != TF_TEAM_MERCENARY &&
+				trace.m_pEnt->GetTeamNumber() == iPlayerTeam
+			) ||
+			pPlayer == ((CBaseObject *) trace.m_pEnt)->GetOwner()
+		)
+	){
 #ifdef GAME_DLL
 		OnFriendlyBuildingHit( dynamic_cast< CBaseObject * >( trace.m_pEnt ), pPlayer );
 #endif
