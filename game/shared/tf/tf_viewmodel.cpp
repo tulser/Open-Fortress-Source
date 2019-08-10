@@ -234,7 +234,7 @@ int CTFViewModel::DrawModel( int flags )
 	{
 		pViewModel->AddEffects( EF_NODRAW );
 	}
-	else
+	else if ( pViewModel )
 	{
 		pViewModel->RemoveEffects( EF_NODRAW );
 	}
