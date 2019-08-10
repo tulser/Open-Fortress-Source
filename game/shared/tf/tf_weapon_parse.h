@@ -162,6 +162,14 @@ public:
 	char	m_szExplosionWaterEffectClassic[128];	
 	
 	bool	m_bDontDrop;
+
+	float	m_flCenteredViewmodelOffsetX;
+	float	m_flCenteredViewmodelOffsetY;
+	float	m_flCenteredViewmodelOffsetZ;
+
+	float	m_flCenteredViewmodelAngleX;
+	float	m_flCenteredViewmodelAngleY;
+	float	m_flCenteredViewmodelAngleZ;
 };
 
 #endif // TF_WEAPON_PARSE_H

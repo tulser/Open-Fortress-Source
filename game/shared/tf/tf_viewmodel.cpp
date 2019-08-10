@@ -73,14 +73,16 @@ CTFViewModel::~CTFViewModel()
 
 #ifdef CLIENT_DLL
 // TODO:  Turning this off by setting interp 0.0 instead of 0.1 for now since we have a timing bug to resolve
-ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.0", FCVAR_CLIENTDLL );
-ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "5.0", FCVAR_CLIENTDLL );
+ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.1", FCVAR_CLIENTDLL );
+ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "0.0", FCVAR_CLIENTDLL );
 ConVar viewmodel_offset_x( "viewmodel_offset_x", "0", FCVAR_ARCHIVE );
 ConVar viewmodel_offset_y( "viewmodel_offset_y", "0", FCVAR_ARCHIVE );
 ConVar viewmodel_offset_z( "viewmodel_offset_z", "0", FCVAR_ARCHIVE );
 ConVar viewmodel_angle_x( "viewmodel_angle_x", "0", FCVAR_ARCHIVE );
 ConVar viewmodel_angle_y( "viewmodel_angle_y", "0", FCVAR_ARCHIVE );
 ConVar viewmodel_angle_z( "viewmodel_angle_z", "0", FCVAR_ARCHIVE );
+ConVar viewmodel_centered("viewmodel_centered", "0", FCVAR_ARCHIVE, "Center every viewmodel." );
+ConVar viewmodel_hide_arms("viewmodel_hide_arms", "0", FCVAR_ARCHIVE, "Hide the arms on all viewmodels." );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -156,15 +158,59 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 
 	QAngle vecLoweredAngles(0,0,0);
 
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetOwningWeapon();
+
 	m_vLoweredWeaponOffset.x = Approach( bLowered ? cl_gunlowerangle.GetFloat() : 0, m_vLoweredWeaponOffset.x, cl_gunlowerspeed.GetFloat() );
 	vecLoweredAngles.x += m_vLoweredWeaponOffset.x;
 	Vector	forward, right, up;
-	QAngle 	con(viewmodel_angle_x.GetFloat(), viewmodel_angle_y.GetFloat(), viewmodel_angle_z.GetFloat());
-	AngleVectors(eyeAngles, &forward, &right, &up);
-	
-	vecNewAngles += con;
-	vecNewOrigin += forward*viewmodel_offset_x.GetFloat() + right*viewmodel_offset_y.GetFloat() + up*viewmodel_offset_z.GetFloat();
-	
+
+	// for some reason the viewmodel_angle must be seperated from the offset as otherwise it freaks out
+	if ( pWeapon )
+	{
+		if ( viewmodel_centered.GetBool() )
+		{
+			const CTFWeaponInfo *pTFInfo = NULL;
+
+			pTFInfo = &pWeapon->GetTFWpnData();
+
+			float angle_x = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleX;
+			float angle_y = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleY;
+			float angle_z = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleZ;
+
+			QAngle 	con( angle_x, angle_y, angle_z );
+			AngleVectors( eyeAngles, &forward, &right, &up );
+
+			vecNewAngles += con;
+		}
+		else
+		{
+			QAngle 	con( viewmodel_angle_x.GetFloat(), viewmodel_angle_y.GetFloat(), viewmodel_angle_z.GetFloat() );
+			AngleVectors( eyeAngles, &forward, &right, &up );
+
+			vecNewAngles += con;
+		}
+	}
+
+	if ( pWeapon )
+	{
+		if ( viewmodel_centered.GetBool() )
+		{
+			const CTFWeaponInfo *pTFInfo = NULL;
+
+			pTFInfo = &pWeapon->GetTFWpnData();
+
+			float offset_x = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetX;
+			float offset_y = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetY;
+			float offset_z = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetZ;
+
+			vecNewOrigin += forward*offset_x + right*offset_y + up*offset_z;
+		}
+		else
+		{
+			vecNewOrigin += forward*viewmodel_offset_x.GetFloat() + right*viewmodel_offset_y.GetFloat() + up*viewmodel_offset_z.GetFloat();
+		}
+	}
+
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 
 #endif
@@ -182,6 +228,17 @@ int CTFViewModel::DrawModel( int flags )
 
 	Assert( pPlayer );
 
+	CBaseViewModel *pViewModel = pPlayer->GetViewModel( 2 );
+
+	if ( pViewModel && viewmodel_hide_arms.GetBool() )
+	{
+		pViewModel->AddEffects( EF_NODRAW );
+	}
+	else
+	{
+		pViewModel->RemoveEffects( EF_NODRAW );
+	}
+
 	bool bLowered = pPlayer->IsWeaponLowered();
 
 	if ( bLowered && fabs( m_vLoweredWeaponOffset.x - cl_gunlowerangle.GetFloat() ) < 0.1 )
@@ -191,6 +248,7 @@ int CTFViewModel::DrawModel( int flags )
 	}
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
 	if ( pLocalPlayer && pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE && 
 		pLocalPlayer->GetObserverTarget() && pLocalPlayer->GetObserverTarget()->IsPlayer() )
 	{

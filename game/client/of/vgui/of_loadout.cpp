@@ -28,8 +28,6 @@
 
 using namespace vgui;
 
-extern ConVar ofd_use_quake_rl;
-
 CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
 
 //-----------------------------------------------------------------------------
@@ -140,14 +138,7 @@ void CTFLoadoutPanel::OnCommand( const char *command )
 	{
 		UpdateTip();
 	}
-	else if ( 0 == Q_stricmp( command, "EquipQRL" ) )
-	{
-		ofd_use_quake_rl.SetValue( 1 );
-	}
-	else if ( 0 == Q_stricmp( command, "UnEquipQRL" ) )
-	{
-		ofd_use_quake_rl.SetValue( 0 );
-	}
+
 	BaseClass::OnCommand( command );
 }
 //-----------------------------------------------------------------------------

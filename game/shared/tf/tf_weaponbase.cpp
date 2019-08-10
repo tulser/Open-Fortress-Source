@@ -213,8 +213,6 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iCurrentSeed = -1;
 	m_iGGLevel = -1;
 	m_bNeverStrip = false;
-
-	m_bQuakeRLHack = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -919,9 +917,6 @@ bool CTFWeaponBase::ReloadSingly( void )
 			}
 
 #ifndef CLIENT_DLL
-			if (m_bQuakeRLHack)
-				WeaponSound( RELOAD_NPC );
-			else
 				WeaponSound( RELOAD );
 #endif
 
@@ -1039,10 +1034,6 @@ bool CTFWeaponBase::DefaultReload( int iClipSize1, int iClipSize2, int iActivity
 		return false;
 
 #ifndef CLIENT_DLL
-	// Play reload
-	if (m_bQuakeRLHack)
-		WeaponSound( RELOAD_NPC );
-	else
 		WeaponSound( RELOAD );
 #endif
 

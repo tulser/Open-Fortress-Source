@@ -462,12 +462,14 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 #ifdef GAME_DLL
 	
 	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+
 	int iQuakeCvar = 0;
-	iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "ofd_use_quake_rl"));
+	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
-	if ( bCenter && iQuakeCvar )
+	if ( bCenter || iQuakeCvar )
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
@@ -476,7 +478,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
-		if ( bCenter && iQuakeCvar )
+		if ( bCenter || iQuakeCvar )
 			vecOffset.z = 0.0f;
 		else
 			vecOffset.z = 8.0f;
@@ -631,12 +633,14 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 #ifdef GAME_DLL
 	
 	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+
 	int iQuakeCvar = 0;
-	iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "ofd_use_quake_rl"));
+	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
-	if ( bCenter && iQuakeCvar )
+	if ( bCenter || iQuakeCvar )
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
@@ -645,7 +649,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 	
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
-		if ( bCenter && iQuakeCvar )
+		if ( bCenter || iQuakeCvar )
 			vecOffset.z = 0.0f;
 		else
 			vecOffset.z = 8.0f;
@@ -670,27 +674,13 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PlayWeaponShootSound( void )
 {
-	if (!m_bQuakeRLHack)
+	if (IsCurrentAttackACrit() )
 	{
-		if (IsCurrentAttackACrit())
-		{
-			WeaponSound(BURST);
-		}
-		else
-		{
-			WeaponSound(SINGLE);
-		}
+		WeaponSound( BURST );
 	}
 	else
 	{
-		if (IsCurrentAttackACrit())
-		{
-			WeaponSound(SPECIAL1);
-		}
-		else
-		{
-			WeaponSound(SPECIAL2);
-		}
+		WeaponSound( SINGLE );
 	}
 }
 

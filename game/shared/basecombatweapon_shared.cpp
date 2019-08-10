@@ -1455,10 +1455,7 @@ bool CBaseCombatWeapon::DefaultDeploy( char *szViewModel, char *szWeaponModel, i
 	m_bReloadHudHintDisplayed = false;
 	m_flHudHintPollTime = gpGlobals->curtime + 5.0f;
 	
-	if (m_bQuakeRLHack)
-		WeaponSound( SPECIAL3 );
-	else
-		WeaponSound( DEPLOY );
+	WeaponSound( DEPLOY );
 
 	SetWeaponVisible( true );
 
@@ -2037,11 +2034,7 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 		return false;
 
 #ifdef CLIENT_DLL
-	// Play reload
-	if (m_bQuakeRLHack)
-		WeaponSound( RELOAD_NPC );
-	else
-		WeaponSound( RELOAD );
+	WeaponSound( RELOAD );
 #endif
 	SendWeaponAnim( iActivity );
 
@@ -2235,10 +2228,7 @@ void CBaseCombatWeapon::FinishReload( void )
 void CBaseCombatWeapon::AbortReload( void )
 {
 #ifdef CLIENT_DLL
-	if (m_bQuakeRLHack)
-		StopWeaponSound( RELOAD_NPC ); 
-	else
-		StopWeaponSound( RELOAD ); 
+	StopWeaponSound( RELOAD ); 
 #endif
 	m_bInReload = false;
 }
@@ -2331,10 +2321,7 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	while ( m_flNextPrimaryAttack <= gpGlobals->curtime )
 	{
 		// MUST call sound before removing a round from the clip of a CMachineGun
-		if (m_bQuakeRLHack)
-			WeaponSound(SPECIAL1, m_flNextPrimaryAttack);
-		else
-			WeaponSound(SINGLE, m_flNextPrimaryAttack);
+		WeaponSound(SINGLE, m_flNextPrimaryAttack);
 
 		m_flNextPrimaryAttack = m_flNextPrimaryAttack + fireRate;
 		info.m_iShots++;

@@ -674,22 +674,25 @@ void CTFMinigun::StartMuzzleEffect()
 {
 	StopMuzzleEffect();
 
-	C_BaseEntity *pEffectOwner = GetWeaponForEffect();
-	if ( !pEffectOwner )
-		return;
-
-	// Try and setup the attachment point if it doesn't already exist.
-	// This caching will mess up if we go third person from first - we only do this in taunts and don't fire so we should
-	// be okay for now.
-	if ( m_iMuzzleAttachment == -1 )
+	if ( !of_beta_muzzleflash.GetBool() )
 	{
-		m_iMuzzleAttachment = pEffectOwner->LookupAttachment( "muzzle" );
-	}
+		C_BaseEntity *pEffectOwner = GetWeaponForEffect();
+		if ( !pEffectOwner )
+			return;
 
-	// Start the muzzle flash, if a system hasn't already been started.
-	if ( m_iMuzzleAttachment != -1 && m_pMuzzleEffect == NULL )
-	{
-		m_pMuzzleEffect = pEffectOwner->ParticleProp()->Create( "muzzle_minigun_constant", PATTACH_POINT_FOLLOW, m_iMuzzleAttachment );
+		// Try and setup the attachment point if it doesn't already exist.
+		// This caching will mess up if we go third person from first - we only do this in taunts and don't fire so we should
+		// be okay for now.
+		if ( m_iMuzzleAttachment == -1 )
+		{
+			m_iMuzzleAttachment = pEffectOwner->LookupAttachment( "muzzle" );
+		}
+
+		// Start the muzzle flash, if a system hasn't already been started.
+		if ( m_iMuzzleAttachment != -1 && m_pMuzzleEffect == NULL )
+		{
+			m_pMuzzleEffect = pEffectOwner->ParticleProp()->Create( "muzzle_minigun_constant", PATTACH_POINT_FOLLOW, m_iMuzzleAttachment );
+		}
 	}
 }
 

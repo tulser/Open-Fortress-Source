@@ -75,10 +75,6 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		VectorAngles(vecNormal, angExplosion);
 		bInAir = false;
 	}
-	CTFOriginal *pOriginal = dynamic_cast<CTFOriginal *>(m_hLauncher);
-	bool bClassic = false;
-	if ( pOriginal )
-		bClassic = pOriginal->m_bClassic;
 	// Base explosion effect and sound.
 	char *pszEffect = "ExplosionCore_wall";
 	char *pszSound = "BaseExplosionEffect.Sound";
@@ -88,26 +84,20 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		// Explosions.
 		if ( bIsWater )
 		{
-			if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffectClassic) > 0)
-								pszEffect = pWeaponInfo->m_szExplosionWaterEffectClassic;}
-			else{ if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
-					pszEffect = pWeaponInfo->m_szExplosionWaterEffect;}
+			if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
+				pszEffect = pWeaponInfo->m_szExplosionWaterEffect;
 		}
 		else
 		{
 			if (bIsPlayer || bInAir)
 			{
-				if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffectClassic) > 0)
-									pszEffect = pWeaponInfo->m_szExplosionPlayerEffectClassic;}
-				else{ if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
-						pszEffect = pWeaponInfo->m_szExplosionPlayerEffect;}
+				if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
+					pszEffect = pWeaponInfo->m_szExplosionPlayerEffect;
 			}
 			else
 			{
-				if ( bClassic ){ if (Q_strlen(pWeaponInfo->m_szExplosionEffectClassic) > 0)
-						pszEffect = pWeaponInfo->m_szExplosionEffectClassic;}
-				else{ if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
-						pszEffect = pWeaponInfo->m_szExplosionEffect;}
+				if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
+					pszEffect = pWeaponInfo->m_szExplosionEffect;
 			}
 		}
 

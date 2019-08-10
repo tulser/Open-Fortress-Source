@@ -72,23 +72,6 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER_DM; }
-	
-	void	ActivateSoldierModel( void );
-	void	ActivateQuakeModel( void );
-	
-	const char	*GetViewModel( int viewmodelindex = 0 ) const;
-	const char	*GetWorldModel( void ) const;
-	
-	bool	Deploy( void );
-	void	Precache( void );
-
-private:
-	CNetworkVar( int, m_iTF2ViewIndex);
-	CNetworkVar( int, m_iTF2WorldIndex);
-	CNetworkVar( int, m_iQuakeViewIndex);
-	CNetworkVar( int, m_iQuakeWorldIndex);
-public:
-	CNetworkVar( bool, m_bClassic );
 };
 
 //Quad RPG

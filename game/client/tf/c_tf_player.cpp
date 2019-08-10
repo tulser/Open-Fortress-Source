@@ -92,7 +92,6 @@ ConVar ofd_color_r( "ofd_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets 
 ConVar ofd_color_g( "ofd_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
 ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
-ConVar ofd_use_quake_rl("ofd_use_quake_rl", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Is 1, use the Quake Rocket Launcher (The Original), otherwise the stock soldier RL.\n");
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
 ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
 ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats\n");
