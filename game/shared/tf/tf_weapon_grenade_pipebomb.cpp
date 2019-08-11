@@ -187,7 +187,11 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 		m_bPulsed = false;
 
-		pPlayer->m_Shared.UpdateParticleColor( pParticle );
+		if ( pPlayer && pParticle )
+		{
+			pPlayer->m_Shared.UpdateParticleColor( pParticle );
+		}
+
 		CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
 
 		if ( pLauncher )
@@ -304,6 +308,9 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe_remote );
 
 LINK_ENTITY_TO_CLASS( tf_projectile_pipe, CTFGrenadePipebombProjectile );
 PRECACHE_WEAPON_REGISTER( tf_projectile_pipe );
+
+LINK_ENTITY_TO_CLASS( tf_projectile_pipe_dm, CTFGrenadePipebombProjectile );
+PRECACHE_WEAPON_REGISTER( tf_projectile_pipe_dm );
 
 //-----------------------------------------------------------------------------
 // Purpose:

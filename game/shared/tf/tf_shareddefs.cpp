@@ -380,6 +380,7 @@ const char *g_szProjectileNames[] =
 	"projectile_nail",
 	"projectile_tripmine",
 	"projectile_incendrocket",
+	"projectile_pipe_dm",
 };
 
 //NOTENOTE: This has been reworked, above char list not related anymore

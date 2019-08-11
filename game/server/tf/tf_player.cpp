@@ -2450,7 +2450,7 @@ void CTFPlayer::ForceChangeTeam( int iTeamNum )
 	RemoveAllObjects();
 
 	// don't let cheeky people remove their domination after switching to spectator in DM
-	if ( !TFGameRules()->IsDMGamemode() )
+	if ( !TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay() )
 	{
 		RemoveNemesisRelationships();
 	}
@@ -2505,7 +2505,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum )
 	RemoveAllObjects();
 
 	// don't let cheeky people remove their domination after switching to spectator in DM
-	if ( !TFGameRules()->IsDMGamemode() )
+	if ( !TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay() )
 	{
 		RemoveNemesisRelationships();
 	}
@@ -5338,6 +5338,7 @@ void CTFPlayer::TeamFortress_RemoveRockets( void )
 void CTFPlayer::TeamFortress_RemovePipebombs( void )
 {
 	RemoveOwnedEnt( "tf_projectile_pipe", true );
+	RemoveOwnedEnt( "tf_projectile_pipe_dm", true );
 }
 
 

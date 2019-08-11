@@ -302,6 +302,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
+	case TF_PROJECTILE_PIPEBOMB_DM:
+		pProjectile = FirePipeBombDM( pPlayer, false );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -575,6 +580,41 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 
 	return NULL;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire a DM pipe bomb (no rotation midair)
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteDetonate )
+{
+	PlayWeaponShootSound();
+
+#ifdef GAME_DLL
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	// Create grenades here!!
+	Vector vecSrc = pPlayer->Weapon_ShootPosition();
+	vecSrc += vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + vecRight;
+
+	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity,
+		AngularImpulse( 0, 0, 0 ),
+		pPlayer, GetTFWpnData(), bRemoteDetonate, this );
+
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+	}
+
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: "Fires" a tripmine

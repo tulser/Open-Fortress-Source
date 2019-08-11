@@ -68,6 +68,7 @@ public:
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireNail( CTFPlayer *pPlayer, int iSpecificNail );
 	CBaseEntity *FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDetonate );
+	CBaseEntity *FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteDetonate );
 	CBaseEntity *FireTripmine( CTFPlayer *pPlayer );
 	CBaseEntity *FireIncendRocket( CTFPlayer *pPlayer );
 
