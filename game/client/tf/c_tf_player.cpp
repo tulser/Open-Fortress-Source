@@ -2475,11 +2475,15 @@ CNewParticleEffect *C_TFPlayer::SetParticleEnd( CNewParticleEffect *pParticle )
 	CTraceFilterIgnoreTeammates filter( this, COLLISION_GROUP_NONE, team, this );
 	UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );	
 	
-	if ( pParticle )
+	if ( tr.fraction < 1.0 )
 	{
-		pParticle->SetControlPoint( 1, tr.endpos );
-		return pParticle;
+		if ( pParticle )
+		{
+			pParticle->SetControlPoint( 1, tr.endpos );
+			return pParticle;
+		}
 	}
+
 	return false;
 }
 
