@@ -110,15 +110,30 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	
 	// disabled for gameplay reasons
 	/*
-	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) && !pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_AKIMBO) )// If the weapon is a pistol and we already own a pistol, give us the akimbos and remove the singular pistol, but don't do that if we already have akimbos
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_MERCENARY ) && !pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_AKIMBO ) )// If the weapon is a pistol and we already own a pistol, give us the akimbos and remove the singular pistol, but don't do that if we already have akimbos
 	{
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
-		pTFPlayer->TFWeaponRemove(TF_WEAPON_PISTOL_MERCENARY);
+		pTFPlayer->TFWeaponRemove( TF_WEAPON_PISTOL_MERCENARY );
 	}
 	*/
-	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID(TF_WEAPON_PISTOL_MERCENARY) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
+
+	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_MERCENARY ) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
-		
+
+	// don't allow multiple shotguns to be picked up at the same time
+	if ( WeaponID == TF_WEAPON_SHOTGUN_PRIMARY || WeaponID == TF_WEAPON_SHOTGUN_SOLDIER || WeaponID == TF_WEAPON_SHOTGUN_HWG || WeaponID == TF_WEAPON_SHOTGUN_PYRO || WeaponID == TF_WEAPON_SHOTGUN_MERCENARY )
+	{
+		if ( pTFPlayer->OwnsWeaponID( TF_WEAPON_SHOTGUN_PRIMARY ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_SHOTGUN_SOLDIER ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_SHOTGUN_HWG ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_SHOTGUN_PYRO ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_SHOTGUN_MERCENARY ) )
+			return;
+	}
+
+	// don't allow multiple pistols to be picked up at the same time
+	if ( WeaponID == TF_WEAPON_PISTOL || WeaponID == TF_WEAPON_PISTOL_SCOUT )
+	{
+		if ( pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_SCOUT ) )
+			return;
+	}
+
 	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( pszWeaponName );
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
