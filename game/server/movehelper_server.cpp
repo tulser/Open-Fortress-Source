@@ -364,7 +364,11 @@ bool CMoveHelperServer::PlayerFallingDamage( void )
 	if ( flFallDamage > 0 && of_falldamage.GetBool() == 1 )
 	{
 		m_pHostPlayer->TakeDamage( CTakeDamageInfo( GetContainingEntity(INDEXENT(0)), GetContainingEntity(INDEXENT(0)), flFallDamage, DMG_FALL ) ); 
-		StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
+		
+		if ( m_pHostPlayer->m_iHealth > 0 )
+			StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallDamage" );
+		else
+			StartSound( m_pHostPlayer->GetAbsOrigin(), "Player.FallGib" );
 
         //=============================================================================
         // HPE_BEGIN:
