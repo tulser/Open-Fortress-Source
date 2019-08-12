@@ -2496,7 +2496,7 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	Vector vecZero(0,0,0);		
 #endif
 
-	if (!pentLandmark && !HasSpawnFlags(SF_TELEPORT_PRESERVE_ANGLES) )
+	if (!pentLandmark)
 	{
 		pAngles = &pentTarget->GetAbsAngles();
 
