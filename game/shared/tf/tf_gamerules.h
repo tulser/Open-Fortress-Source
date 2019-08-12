@@ -386,6 +386,7 @@ public:
 	virtual bool	IsArenaGamemode(void) { return InGametype( TF_GAMETYPE_ARENA ); }
 	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
 	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
+	virtual bool	IsCoopGamemode(void) { return GetGameType() == TF_GAMETYPE_COOP; }
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
 	virtual bool	UsesDMBuckets( void );

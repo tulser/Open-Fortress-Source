@@ -133,6 +133,7 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar of_coop				( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar ofd_allow_allclass_pickups ("ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
 ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
@@ -632,6 +633,21 @@ void CTFLogicESC::Spawn(void)
 {
 	BaseClass::Spawn();
 }
+
+class CTFLogicCoop : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicCoop, CBaseEntity);
+	void	Spawn(void);
+};
+
+LINK_ENTITY_TO_CLASS(of_logic_coop, CTFLogicCoop);
+
+void CTFLogicCoop::Spawn(void)
+{
+	BaseClass::Spawn();
+}
+
 class CTFLogicArena : public CBaseEntity
 {
 public:
@@ -1094,6 +1110,22 @@ void CTFGameRules::Activate()
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
 	}
+
+	// this is for a future zombie survival gamemode
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_coop") || !Q_strncmp(STRING(gpGlobals->mapname), "zm_", 3) || of_coop.GetBool() )
+	{
+		AddGametype(TF_GAMETYPE_COOP);
+
+		of_gamemode_dm.SetValue(1);
+		of_crouchjump.SetValue(1);
+
+		of_knockback_all.SetValue(0.01f);
+
+		ofd_allow_allclass_pickups.SetValue(1);
+
+		// not a great way to do it...
+		fraglimit.SetValue(999);
+	}
 	
 	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
 	{
@@ -1112,6 +1144,8 @@ void CTFGameRules::Activate()
 		ofd_forceclass.SetValue(0);
 		fraglimit.SetValue(999);
 	}
+
+
 	// test
 	if ( !Q_strncmp( STRING( gpGlobals->mapname), "ctf_moonman", 11 ) )
 	{
@@ -4299,6 +4333,8 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
 	if ( InGametype( TF_GAMETYPE_ESC ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
+	if ( InGametype( TF_GAMETYPE_COOP) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
 	return GameType;
 }
 

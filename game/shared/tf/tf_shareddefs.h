@@ -171,6 +171,7 @@ enum
 	TF_GAMETYPE_GG,
 	TF_GAMETYPE_3WAVE,
 	TF_GAMETYPE_ARENA,
+	TF_GAMETYPE_COOP,
 	TF_GAMETYPE_LAST
 };
 extern const char *g_aGameTypeNames[];	// localized gametype names
