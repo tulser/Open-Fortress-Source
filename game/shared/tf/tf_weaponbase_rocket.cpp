@@ -302,7 +302,9 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	{
 		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
 	}
-	// SetAbsOrigin( pTrace->endpos - GetAbsVelocity() );
+	// TODO: Troubleshoot reports of rockets getting stuck in thin walls (touching far side?)
+	// float const BACKTRACK_DIST = 1.0f; // TODO: Discover good value
+	// SetAbsOrigin( pTrace->endpos - BACKTRACK_DIST * GetAbsVelocity() );
 
 	// Play explosion sound and effect.
 	Vector vecOrigin = GetAbsOrigin();

@@ -1597,6 +1597,8 @@ extern ConVar sv_transitions;
 
 void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 {
+
+
 	CBaseEntity	*pLandmark;
 	levellist_t	levels[16];	
 
@@ -1606,13 +1608,7 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 	if (!pPlayer)
 		return;
 	
-	// show a message if the player touches this trigger
-	if ( pPlayer->IsAlive() && !pPlayer->m_bTransition )
-	{
-		UTIL_ClientPrintAll( HUD_PRINTCENTER, "A player touched changelevel trigger. More players required to change level..." );
-
-		pPlayer->m_bTransition = true;
-	}
+	pPlayer->m_bTransition = true;
 
 	if (mp_transition_players_percent.GetInt() > 0)
 	{
@@ -2386,7 +2382,7 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 // Teleport trigger
 //-----------------------------------------------------------------------------
 const int SF_TELEPORT_PRESERVE_ANGLES = 0x20;	// Preserve angles even when a local landmark is not specified
-
+const int SF_TELEPORT_ADJUST_ANGLES = 0x2000; // adjust angles and velocity when a local landmark is specified
 class CTriggerTeleport : public CBaseTrigger
 {
 public:
@@ -2441,6 +2437,14 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	{
 	   return;
 	}
+
+	// The angle and velocity to give pOther
+	const QAngle *pAngles = NULL;
+	const Vector *pVelocity = NULL;
+	// These will only be used if there's a landmark, and we're adjusting angels.
+	// They need to live until we call pOther->Teleport(), as above pXx might point to computedXx
+	QAngle computedAngles;
+	Vector computedVelocity;
 	
 	//
 	// If a landmark was specified, offset the player relative to the landmark.
@@ -2454,6 +2458,23 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 		if (pentLandmark)
 		{
 			vecLandmarkOffset = pOther->GetAbsOrigin() - pentLandmark->GetAbsOrigin();
+			if ( HasSpawnFlags(SF_TELEPORT_ADJUST_ANGLES) )
+			{
+				//relative angle = landmark -> target
+				float fAngleOffset = pentTarget->GetAbsAngles().y - pentLandmark->GetAbsAngles().y;
+				float fLocale = pentTarget->GetLocalAngles().y - pentLandmark->GetLocalAngles().y;
+				computedAngles = pOther->GetLocalAngles();
+				computedAngles.y += fAngleOffset;
+				pAngles = &computedAngles;
+
+				Vector othersVelocity = pOther->GetAbsVelocity();
+				float sin, cos;
+				SinCos(DEG2RAD(fAngleOffset), &sin, &cos);
+				computedVelocity.x = cos*othersVelocity.x - sin*othersVelocity.y;
+				computedVelocity.y = sin*othersVelocity.x + cos*othersVelocity.y;
+				computedVelocity.z = othersVelocity.z;
+				pVelocity = &computedVelocity;
+			}
 		}
 	}
 
@@ -2470,8 +2491,6 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	//
 	// Only modify the toucher's angles and zero their velocity if no landmark was specified.
 	//
-	const QAngle *pAngles = NULL;
-	Vector *pVelocity = NULL;
 
 #ifdef HL1_DLL
 	Vector vecZero(0,0,0);		

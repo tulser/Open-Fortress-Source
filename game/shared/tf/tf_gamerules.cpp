@@ -1054,13 +1054,13 @@ void CTFGameRules::Activate()
 		if ( (  ( ( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") ) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
 			AddGametype(TF_GAMETYPE_TDM);
-			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n", NULL);
+			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n");
 			engine->ServerCommand("exec config_tdm.cfg \n");
 			engine->ServerExecute();
 		}
 		else 
 		{
-			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server DM gamemode config file\n", NULL);
+			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server DM gamemode config file\n");
 			engine->ServerCommand("exec config_dm.cfg \n");
 			engine->ServerExecute();
 		}
@@ -1083,7 +1083,7 @@ void CTFGameRules::Activate()
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == 6 )
 	{
 		AddGametype(TF_GAMETYPE_GG);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n", NULL);
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n");
 		engine->ServerCommand("exec config_gg.cfg \n");
 		engine->ServerExecute();
 		mp_disable_respawn_times.SetValue(1);
@@ -1092,7 +1092,7 @@ void CTFGameRules::Activate()
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_3wave") && !m_bListOnly ) || ofd_threewave.GetInt() == 1 )
 	{
 		AddGametype(TF_GAMETYPE_3WAVE);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Threewave gamemode config file\n", NULL);
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Threewave gamemode config file\n");
 		engine->ServerCommand("exec config_3wave.cfg \n");
 		engine->ServerExecute();
 		mp_disable_respawn_times.SetValue(1);
@@ -1102,7 +1102,7 @@ void CTFGameRules::Activate()
 	{
 		TF_HUNTED_COUNT = 0;
 		AddGametype(TF_GAMETYPE_ESC);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Escort gamemode config file\n", NULL);
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
 	}
@@ -1127,6 +1127,7 @@ void CTFGameRules::Activate()
 		fraglimit.SetValue(999);
 	}
 	
+	// HL2 Deathmatch
 	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
