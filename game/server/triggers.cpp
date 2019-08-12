@@ -2470,8 +2470,14 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 				Vector othersVelocity = pOther->GetAbsVelocity();
 				float sin, cos;
 				SinCos(DEG2RAD(fAngleOffset), &sin, &cos);
+				
+				Vector vecTemp = vecLandmarkOffset;
+				vecLandmarkOffset.x = cos*vecTemp.x - sin*vecTemp.y;
+				vecLandmarkOffset.y = sin*vecTemp.x + cos*vecTemp.y;
+
 				computedVelocity.x = cos*othersVelocity.x - sin*othersVelocity.y;
 				computedVelocity.y = sin*othersVelocity.x + cos*othersVelocity.y;
+				
 				computedVelocity.z = othersVelocity.z;
 				pVelocity = &computedVelocity;
 			}
