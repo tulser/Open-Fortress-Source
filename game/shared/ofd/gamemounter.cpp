@@ -15,7 +15,7 @@ void MountPathLocal( KeyValues* pGame )
 	if ( !steamapicontext || !steamapicontext->SteamApps() )
 	{
 		if ( bRequired )
-			Error( "Failed to mount required game: %s, unable to determine app install path.\n", szGameName );
+			Error( "Failed to mount required game: %s, unable to determine app install path.\nPlease make sure Steam is running, and the game is installed properly.\n", szGameName );
 		else
 			Msg( "Skipping %s, unable to get app install path.\n", szGameName );
 
