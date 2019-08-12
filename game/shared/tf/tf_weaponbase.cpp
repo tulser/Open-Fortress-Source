@@ -1795,6 +1795,14 @@ int CTFWeaponBase::CalcOverrideModelIndex( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: hacky method to make clientside bodygroups work
+// ----------------------------------------------------------------------------
+C_BaseAnimating *C_TFWeaponBase::GetOwnModel( void )
+{
+	return this;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 // ----------------------------------------------------------------------------
 int CTFWeaponBase::GetWorldModelIndex( void )
@@ -2433,30 +2441,17 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 			const char *p = options;
 
 			// Bodygroup Name
-			p = nexttoken(token, p, ' ');
-			Q_strncpy( szBodygroupName, token, sizeof(szBodygroupName) );
+			p = nexttoken( token, p, ' ' );
+			Q_strncpy( szBodygroupName, token, sizeof( szBodygroupName ) );
 
 			// Get the desired value
-			p = nexttoken(token, p, ' ');
+			p = nexttoken( token, p, ' ' );
 			value = token[0] ? atoi( token ) : 0;
 
 			int index = FindBodygroupByName( szBodygroupName );
 			if ( index >= 0 )
 			{
 				SetBodygroup( index, value );
-				CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
-
-				if ( pTFPlayer )
-				{
-					if ( pTFPlayer->GetViewModel() )
-					{
-						pTFPlayer->GetViewModel()->SetBodygroup( index, value );
-					}
-					else if ( pTFPlayer->GetActiveTFWeapon() )
-					{
-						pTFPlayer->GetActiveTFWeapon()->SetBodygroup( index, value );
-					}
-				}
 			}
 	}
 	break;

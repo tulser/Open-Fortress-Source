@@ -2462,7 +2462,7 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 			{
 				//relative angle = landmark -> target
 				float fAngleOffset = pentTarget->GetAbsAngles().y - pentLandmark->GetAbsAngles().y;
-				float fLocale = pentTarget->GetLocalAngles().y - pentLandmark->GetLocalAngles().y;
+
 				computedAngles = pOther->GetLocalAngles();
 				computedAngles.y += fAngleOffset;
 				pAngles = &computedAngles;

@@ -3790,32 +3790,18 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	switch( event )
 	{
 
-	case AE_CL_MAG_UNEJECT:
-		
-		if (pOwner && pGun)
-		{
-			// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
-			// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
-			//pGun->SetBodygroup( 0, 0 );
-		}
-		break;
-		
-		// mag eject system, similar to CSGO
-		// eject2 is for akimbo
+
+	// mag eject system, similar to CSGO
+	// eject2 is for akimbo
 	case AE_CL_MAG_EJECT2:
     case AE_CL_MAG_EJECT:
 	{
-		
 		if ( pOwner && pGun )
 		{
 			if ( pGun->GetTFWpnData().m_bDropsMag )
 			{
 				if ( event == AE_CL_MAG_EJECT )
 				{
-					// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
-					// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
-					//pGun->SetBodygroup( 0, 1 );
-
 					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
 
 					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
@@ -3831,7 +3817,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						return;
 					}
 
-					int iAttachment = pGun->LookupAttachment( "magazine" );
+					int iAttachment = pGun->LookupAttachment( "mag_eject" );
 
 					Vector vecSrc;
 					QAngle vecAng;
@@ -3878,14 +3864,10 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 					}
 
 					// todo: add spam checks 
-					pEntity->StartFadeOut( 10.0 );
+					pEntity->StartFadeOut( 5.0 );
 				}
-				if ( event == AE_CL_MAG_EJECT2 )
+				if ( event == AE_CL_MAG_EJECT )
 				{
-					// this doesnt work, I just resorted to AE_CL_BODYGROUP_SET_VALUE instead
-					// AE_CL_BODYGROUP_SET_VALUE doesn't work either... fuck
-					//pGun->SetBodygroup( 0, 1 );
-
 					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
 
 					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
@@ -3901,7 +3883,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						return;
 					}
 
-					int iAttachment = pGun->LookupAttachment( "magazine2" );
+					int iAttachment = pGun->LookupAttachment( "mag_eject" );
 
 					Vector vecSrc;
 					QAngle vecAng;
@@ -3948,7 +3930,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 					}
 
 					// todo: add spam checks 
-					pEntity->StartFadeOut( 10.0 );
+					pEntity->StartFadeOut( 5.0 );
 				}
 			}
 		}

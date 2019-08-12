@@ -3995,9 +3995,16 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 		
 		if ( pTFWeapon )
 		{
-			pTFWeapon->FireEvent(origin, angles, AE_CL_BODYGROUP_SET_VALUE, options);
+			// hacky!
+			C_BaseAnimating *pWeapon = pTFWeapon->GetOwnModel();
+
+			if ( pWeapon )
+			{
+				pTFWeapon->FireEvent( origin, angles, AE_CL_BODYGROUP_SET_VALUE, options );
+			}
 		}
 	}
+
 	else if ( event == TF_AE_CIGARETTE_THROW )
 	{
 		CEffectData data;

@@ -126,6 +126,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	// View model.
 	virtual const char *GetViewModel( int iViewModel = 0 ) const;
 
+#ifdef CLIENT_DLL
+	C_BaseAnimating *GetOwnModel( void );
+#endif
+
 	virtual void Drop( const Vector &vecVelocity );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual bool Deploy( void );
