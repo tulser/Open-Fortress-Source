@@ -16,11 +16,7 @@
 #include "tier0/memdbgon.h"
 
 // some cvars used by player movement system
-#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 #define DEFAULT_GRAVITY_STRING	"800"
-#else
-#define DEFAULT_GRAVITY_STRING	"800"
-#endif
 
 float GetCurrentGravity( void )
 {
@@ -62,8 +58,11 @@ ConVar	sv_maxvelocity	( "sv_maxvelocity","3500", FCVAR_REPLICATED, "Maximum spee
 ConVar	sv_stepsize		( "sv_stepsize","18", FCVAR_NOTIFY | FCVAR_REPLICATED, "The maximum size of a step a player can ~~teleport~~ walk up"  );
 ConVar	sv_backspeed	( "sv_backspeed", "0.6", FCVAR_ARCHIVE | FCVAR_REPLICATED, "How much to slow down backwards motion" );
 ConVar  sv_waterdist	( "sv_waterdist","12", FCVAR_REPLICATED, "Vertical view fixup when eyes are near water plane." );
-
-ConVar	sv_skyname		( "sv_skyname", "sky_urb01", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Current name of the skybox texture" );
+#if defined ( TF_CLIENT_DLL )
+ConVar	sv_skyname		( "sv_skyname", "sky_tf2_04", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Current skybox texture name" );
+#else
+ConVar	sv_skyname		( "sv_skyname", "sky_urb01", FCVAR_ARCHIVE | FCVAR_REPLICATED, "Current skybox texture name" );
+#endif
 
 // Vehicle convars
 ConVar r_VehicleViewDampen( "r_VehicleViewDampen", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED );
