@@ -407,6 +407,16 @@ void CTFDiscordRPC::FireGameEvent( IGameEvent *event )
 
 void CTFDiscordRPC::UpdateRichPresence()
 {
+	//The elapsed timer function using <ctime>
+	//this is for setting up the time when the player joins a server
+	//-Nbc66
+	time_t iSysTime;
+	time(&iSysTime);
+	struct tm *tStartTime = NULL;
+	tStartTime = localtime(&iSysTime);
+	tStartTime->tm_sec += 0 - gpGlobals->curtime;
+	
+
 	if (!NeedToUpdate())
 		return;
 
@@ -416,13 +426,20 @@ void CTFDiscordRPC::UpdateRichPresence()
 	{
 		UpdatePlayerInfo();
 		UpdateNetworkInfo();
+		//starts the elapsed timer for discord rpc
+		//-Nbc66
+		m_sDiscordRichPresence.startTimestamp = mktime(tStartTime);
 	}
-	else
+
+	//checks if the loading bar is being drawn
+	//and sets the discord status to "Currently is loading..."
+	//-Nbc66
+	if (engine->IsDrawingLoadingImage() == true)
 	{
 		m_sDiscordRichPresence.state = "";
 		m_sDiscordRichPresence.details = "Currently is loading...";
 	}
-
+	
 	SetLogo();
 
 	Discord_UpdatePresence(&m_sDiscordRichPresence);
