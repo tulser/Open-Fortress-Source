@@ -1145,13 +1145,6 @@ void CTFGameRules::Activate()
 		ofd_forceclass.SetValue(0);
 		fraglimit.SetValue(999);
 	}
-
-
-	// test
-	if ( !Q_strncmp( STRING( gpGlobals->mapname), "ctf_moonman", 11 ) )
-	{
-		Error("player: backwards mins/maxs");
-	}
 }
 
 void CTFGameRules::FireGamemodeOutputs()

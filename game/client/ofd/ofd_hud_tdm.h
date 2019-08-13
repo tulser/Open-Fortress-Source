@@ -21,31 +21,37 @@
 
 
 //-----------------------------------------------------------------------------
-// Purpose:  Clips the health image to the appropriate percentage
+// Purpose:  Clips the frag image to the appropriate percentage
 //-----------------------------------------------------------------------------
-class CTFKillsProgress : public CTFImagePanel
+class CTFKillsProgressBlu : public CTFImagePanel
 {
 public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgress, CTFImagePanel );
+	DECLARE_CLASS_SIMPLE( CTFKillsProgressBlu, CTFImagePanel );
 
-	CTFKillsProgress( vgui::Panel *parent, const char *name );
+	CTFKillsProgressBlu( vgui::Panel *parent, const char *name );
 	virtual void Paint();
-	void SetHealth( float flHealth ){ m_flHealth = ( flHealth <= 1.0 ) ? flHealth : 1.0f; }
+	void SetProgress( float flProgress ){ m_flProgress = ( flProgress <= 1.0 ) ? flProgress : 1.0f; }
 
-	float	m_flHealth; // percentage from 0.0 -> 1.0
+	float	m_flProgress; // percentage from 0.0 -> 1.0
 	int		m_iMaterialIndex;
 	int		m_iDeadMaterialIndex;
 };
 
 //-----------------------------------------------------------------------------
-// Purpose:  Clips the health image to the appropriate percentage
+// Purpose:  Clips the frag meter to the appropriate percentage
 //-----------------------------------------------------------------------------
-class CTFKillsProgressRED : public CTFKillsProgress
+class CTFKillsProgressRed : public CTFImagePanel
 {
 public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgressRED, CTFKillsProgress );
+	DECLARE_CLASS_SIMPLE( CTFKillsProgressRed, CTFImagePanel );
 
-	CTFKillsProgressRED( vgui::Panel *parent, const char *name );
+	CTFKillsProgressRed( vgui::Panel *parent, const char *name );
+	virtual void Paint();
+	void SetProgress(float flProgress){ m_flProgress = (flProgress <= 1.0) ? flProgress : 1.0f; }
+
+	float	m_flProgress; // percentage from 0.0 -> 1.0
+	int		m_iMaterialIndex;
+	int		m_iDeadMaterialIndex;
 };
 
 //-----------------------------------------------------------------------------
@@ -81,8 +87,8 @@ private:
 
 	CTFLabel						*m_pKills;
 	CTFLabel						*m_pKillsShadow;
-	CTFKillsProgressRED 			*m_pRedKills;
-	CTFKillsProgress 				*m_pBluKills;
+	CTFKillsProgressRed 			*m_pRedKills;
+	CTFKillsProgressBlu				*m_pBluKills;
 };
 
 

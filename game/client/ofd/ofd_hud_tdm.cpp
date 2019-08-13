@@ -58,8 +58,8 @@ CTFHudTDM::CTFHudTDM( const char *pElementName ) : CHudElement( pElementName ), 
 
 	hudlcd->SetGlobalStat( "(kills)", "0" );
 
-	m_pRedKills = new CTFKillsProgressRED( this, "RedKills" );
-	m_pBluKills = new CTFKillsProgress( this, "BluKills" );
+	m_pRedKills = new CTFKillsProgressRed( this, "RedKills" );
+	m_pBluKills = new CTFKillsProgressBlu( this, "BluKills" );
 	
 	m_nKills	= 0;
 	m_flNextThink = 0.0f;
@@ -105,9 +105,9 @@ bool CTFHudTDM::ShouldDraw( void )
 	}
 	
 	if (TFGameRules() &&
+		(TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay()) &&
 		!TFGameRules()->DontCountKills() &&
-		!of_arena.GetBool() &&
-		(TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay()))
+		!of_arena.GetBool())
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -129,14 +129,13 @@ void CTFHudTDM::UpdateKillLabel( bool bKills )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Get ammo info from the weapon and update the displays.
+// Purpose: Update the team frag meter in TDM
 //-----------------------------------------------------------------------------
 void CTFHudTDM::OnThink()
 {
 	// Get the player and active weapon.
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
-	
 	
 	if ( m_flNextThink < gpGlobals->curtime )
 	{
@@ -164,12 +163,16 @@ void CTFHudTDM::OnThink()
 			
 			UpdateKillLabel( true );
 			wchar_t string1[1024];
+
 			C_Team *pRedTeam = GetGlobalTeam( TF_TEAM_RED );
 			C_Team *pBluTeam = GetGlobalTeam( TF_TEAM_BLUE );
-			m_pRedKills->SetHealth( (float)(pRedTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
-			m_pBluKills->SetHealth( (float)(pBluTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
-			SetDialogVariable( "RedKills",pRedTeam->Get_Score() );
-			SetDialogVariable( "BluKills",pBluTeam->Get_Score() );			
+
+			m_pRedKills->SetProgress( (float)(pRedTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+			m_pBluKills->SetProgress( (float)(pBluTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+
+			SetDialogVariable( "RedKills", pRedTeam->Get_Score() );
+			SetDialogVariable( "BluKills", pBluTeam->Get_Score() );
+
 			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 			{
 				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel  );
@@ -187,22 +190,6 @@ void CTFHudTDM::OnThink()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFKillsProgress::CTFKillsProgress(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
-{
-	m_flHealth = 1.0f;
-	
-	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_tdm_left" );
-	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
-	{
-		m_iMaterialIndex = surface()->CreateNewTextureID();	
-	}
-
-	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_left", true, false );	
-}
-
 ConVar uv1_1_x( "uv1_1_x", "1", FCVAR_CHEAT );
 ConVar uv2_1_x( "uv2_1_x", "1", FCVAR_CHEAT );
 ConVar uv2_2_x( "uv2_2_x", "1", FCVAR_CHEAT );
@@ -213,15 +200,15 @@ ConVar uv2_1_y( "uv2_1_y", "1", FCVAR_CHEAT );
 ConVar uv2_2_y( "uv2_2_y", "1", FCVAR_CHEAT );
 ConVar uv1_2_y( "uv1_2_y", "1", FCVAR_CHEAT );
 
-
 ConVar vert0_x( "vert0_x", "1", FCVAR_CHEAT );
 ConVar vert1_x( "vert1_x", "1", FCVAR_CHEAT );
 ConVar vert2_x( "vert2_x", "1", FCVAR_CHEAT );
 ConVar vert3_x( "vert3_x", "1", FCVAR_CHEAT );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFKillsProgress::Paint()
+void CTFKillsProgressRed::Paint()
 {
 	BaseClass::Paint();
 
@@ -234,21 +221,56 @@ void CTFKillsProgress::Paint()
 	int xpos = 0;
 	int ypos = 0;
 
-
-	float flDamageY = h * ( 1.0f - m_flHealth );
+	float flProgressX = w * ( m_flProgress );
 
 	// blend in the red "damage" part
 	surface()->DrawSetTexture( m_iMaterialIndex );
 	
-	Vector2D uv11( uv1, uv2 - m_flHealth );		//topleft
-	Vector2D uv21( uv2, uv2 - m_flHealth );		//topright
-	Vector2D uv22( uv2, uv2 );					//bottomright
-	Vector2D uv12( uv1, uv2 );					//bottomleft
+	Vector2D uv11( uv1, uv2 );						//topleft
+	Vector2D uv21( uv2, uv2 - m_flProgress );		//topright
+	Vector2D uv22( uv2, uv2 - m_flProgress );		//bottomright
+	Vector2D uv12( uv1, uv2 );						//bottomleft
 
-	vert[0].Init( Vector2D( xpos, flDamageY ), uv11 );
-	vert[1].Init( Vector2D( xpos + w, flDamageY ), uv21 );
-	vert[2].Init( Vector2D( xpos + w, ypos + h ), uv22 );				
+	vert[0].Init( Vector2D( xpos, ypos ), uv11 );
+	vert[1].Init( Vector2D( flProgressX, ypos ), uv21 );
+	vert[2].Init( Vector2D( flProgressX, ypos + h ), uv22 );				
 	vert[3].Init( Vector2D( xpos, ypos + h ), uv12 );
+
+	surface()->DrawSetColor( GetFgColor() );
+	
+	surface()->DrawTexturedPolygon( 4, vert );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFKillsProgressBlu::Paint()
+{
+	BaseClass::Paint();
+
+	int x, y, w, h;
+	GetBounds( x, y, w, h );
+
+	Vertex_t vert[4];	
+	float uv1 = 1.0f;
+	float uv2 = 0.0f;
+	int xpos = 0;
+	int ypos = 0;
+
+	float flProgressX = w * ( m_flProgress );
+
+	// blend in the red "damage" part
+	surface()->DrawSetTexture( m_iMaterialIndex );
+	
+	Vector2D uv11( uv1, uv2 );						//topleft
+	Vector2D uv21( uv2, uv2 - m_flProgress );		//topright
+	Vector2D uv22( uv2, uv2 - m_flProgress );		//bottomright
+	Vector2D uv12( uv1, uv2 );						//bottomleft
+
+	vert[0].Init( Vector2D( xpos + w - flProgressX, ypos ), uv11 );
+	vert[1].Init( Vector2D( xpos + w, ypos ), uv21 );
+	vert[2].Init( Vector2D( xpos + w, ypos + h ), uv22 );				
+	vert[3].Init( Vector2D( xpos + w - flProgressX, ypos + h ), uv12 );
 
 	surface()->DrawSetColor( GetFgColor() );
 	
@@ -258,9 +280,9 @@ void CTFKillsProgress::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFKillsProgressRED::CTFKillsProgressRED(Panel *parent, const char *panelName) : CTFKillsProgress(parent, panelName)
+CTFKillsProgressRed::CTFKillsProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
 {
-	m_flHealth = 1.0f;
+	m_flProgress = 1.0f;
 	
 	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_tdm_right" );
 	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
@@ -269,4 +291,20 @@ CTFKillsProgressRED::CTFKillsProgressRED(Panel *parent, const char *panelName) :
 	}
 
 	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_right", true, false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFKillsProgressBlu::CTFKillsProgressBlu(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
+{
+	m_flProgress = 1.0f;
+	
+	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_tdm_left" );
+	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
+	{
+		m_iMaterialIndex = surface()->CreateNewTextureID();	
+	}
+
+	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_left", true, false );	
 }
