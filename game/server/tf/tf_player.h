@@ -103,7 +103,6 @@ public:
 	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
-	virtual void		SaveTransitionFile(void);
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();

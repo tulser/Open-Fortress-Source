@@ -2417,7 +2417,8 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
 	{
 		// wow...
-		if ( pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
+		// some fools assigned teampoints to spectator team so i have to check this too
+		if ( pSpot->GetTeamNumber() == TEAM_UNASSIGNED || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
 		{
 		}
 		else

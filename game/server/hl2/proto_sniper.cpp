@@ -302,8 +302,6 @@ private:
 
 	void PaintTarget( const Vector &vecTarget, float flPaintTime );
 
-	bool IsPlayerAllySniper();
-
 private:
 
 	/// This is the variable from which m_flPaintTime gets set.
@@ -831,15 +829,6 @@ void CProtoSniper::PaintTarget( const Vector &vecTarget, float flPaintTime )
 	m_pBeam->RelinkBeam();
 
 	m_vecPaintCursor = tr.endpos;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-bool CProtoSniper::IsPlayerAllySniper()
-{
-	CBaseEntity *pPlayer = AI_GetSinglePlayer();
-
-	return IRelationType( pPlayer ) == D_LI;
 }
 			
 //-----------------------------------------------------------------------------
@@ -1395,7 +1384,7 @@ int CProtoSniper::SelectSchedule ( void )
 		return SCHED_RELOAD;
 	}
 
-	if( !AI_GetSinglePlayer()->IsAlive() && m_bKilledPlayer )
+	if ( UTIL_GetLocalPlayer() && !UTIL_GetLocalPlayer()->IsAlive() && m_bKilledPlayer )
 	{
 		if( HasCondition(COND_IN_PVS) )
 		{
@@ -1407,24 +1396,6 @@ int CProtoSniper::SelectSchedule ( void )
 	{
 		// Next priority is to be suppressed!
 		ScopeGlint();
-
-		CSound *pSound = GetBestSound();
-
-		if( pSound && pSound->IsSoundType( SOUND_DANGER ) && BaseClass::FVisible( pSound->GetSoundReactOrigin() ) )
-		{
-			// The sniper will scream if the sound of a grenade about to detonate is heard.
-			// If this COND_HEAR_DANGER is due to the sound really being SOUND_DANGER_SNIPERONLY,
-			// the sniper keeps quiet, because the player's grenade might miss the mark.
-
-			// Make sure the sound is visible, otherwise the sniper will scream at a grenade that
-			// probably won't harm him.
-
-			// Also, don't play the sound effect if we're an ally.
-			if ( IsPlayerAllySniper() == false )
-			{
-				EmitSound( "NPC_Sniper.HearDanger" );
-			}
-		}
 
 		return SCHED_PSNIPER_SUPPRESSED;
 	}
@@ -1960,7 +1931,7 @@ void CProtoSniper::StartTask( const Task_t *pTask )
 	{
 	case TASK_SNIPER_PLAYER_DEAD:
 		{
-			m_hSweepTarget = AI_GetSinglePlayer();
+			m_hSweepTarget = UTIL_GetLocalPlayer();
 			SetWait( 4.0f );
 			LaserOn( m_hSweepTarget->GetAbsOrigin(), vec3_origin );
 		}
@@ -2605,10 +2576,10 @@ Vector CProtoSniper::LeadTarget( CBaseEntity *pTarget )
 CBaseEntity *CProtoSniper::PickDeadPlayerTarget()
 {
 	const int iSearchSize = 32;
-	CBaseEntity *pTarget = AI_GetSinglePlayer();
+	CBaseEntity *pTarget = UTIL_GetLocalPlayer();
 	CBaseEntity *pEntities[ iSearchSize ];
 
-	int iNumEntities = UTIL_EntitiesInSphere( pEntities, iSearchSize, AI_GetSinglePlayer()->GetAbsOrigin(), 180.0f, 0 );
+	int iNumEntities = UTIL_EntitiesInSphere( pEntities, iSearchSize, UTIL_GetLocalPlayer()->GetAbsOrigin(), 180.0f, 0 );
 
 	// Not very robust, but doesn't need to be. Randomly select a nearby object in the list that isn't an NPC.
 	if( iNumEntities > 0 )

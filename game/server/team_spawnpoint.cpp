@@ -44,6 +44,9 @@ void CTeamSpawnPoint::Activate( void )
 
 	if ( TFGameRules()->IsDMGamemode() )
 	{
+		// some fools assigned teampoints to spectator team so i have to check this too
+		GetGlobalTeam( 0 )->AddSpawnpoint( this );
+
 		GetGlobalTeam( 2 )->AddSpawnpoint( this );
 		GetGlobalTeam( 3 )->AddSpawnpoint( this );
 		GetGlobalTeam( 4 )->AddSpawnpoint( this );

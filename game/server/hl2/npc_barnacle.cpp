@@ -1218,7 +1218,7 @@ void CNPC_Barnacle::LiftPrey( void )
 	}
 
 	// Height from the barnacle's origin to the point at which it bites
-	float flBiteZOffset = 60.0;
+	float flBiteZOffset = 10.0;
 
 	if ( IsEnemyAPlayer() )
 	{
@@ -1629,7 +1629,9 @@ void CNPC_Barnacle::BitePrey( void )
 	}
 	else
 	{
-		nDamage = BARNACLE_BITE_DAMAGE_TO_PLAYER; 
+			iDamageType |= DMG_LASTGENERICFLAG;
+			nDamage = 5000;
+			EmitSound( "NPC_Barnacle.Digest" );
 	}
 
 	if ( m_hRagdoll )

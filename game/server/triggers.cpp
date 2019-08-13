@@ -1599,49 +1599,59 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 {
 
 
-	CBaseEntity	*pLandmark;
-	levellist_t	levels[16];	
+	//CBaseEntity	*pLandmark;
+	//levellist_t	levels[16];	
 
-	Assert(!FStrEq(m_szMapName, ""));
+	//Assert(!FStrEq(m_szMapName, ""));
 
-	CBasePlayer *pPlayer = (pActivator && pActivator->IsPlayer()) ? ToBasePlayer(pActivator) : UTIL_GetLocalPlayer(); // Get all the players who activate our multiplayer transition.
-	if (!pPlayer)
+	CTFPlayer *pPlayer = ToTFPlayer( pActivator );
+
+	if ( !pPlayer )
 		return;
 	
-	pPlayer->m_bTransition = true;
-
-	if (mp_transition_players_percent.GetInt() > 0)
+	if ( pPlayer->IsAlive() && !pPlayer->m_bTransition )
 	{
-		int totalPlayers = 0;
+		// good enough
+		pPlayer->m_bTransition = true;
+		DevMsg( "Transitions: Not enough players to trigger level change\n" );
+		UTIL_ClientPrintAll( HUD_PRINTCENTER, "More players required to change level\n" );
+	}
+
+
+	if ( mp_transition_players_percent.GetInt() > 0 )
+	{
+		// checking all teams doesn't work so im just hardcoding it to DM team
+		CTeam *pTeam = GetGlobalTeam( TF_TEAM_MERCENARY );
+
+		int totalPlayers = pTeam->GetNumPlayers(); /*0*/
 		int transitionPlayers = 0;
-		for (int i = 1; i <= gpGlobals->maxClients; i++)
+
+		for ( int i = /*1*/ 0; i /*<= gpGlobals->maxClients*/ < totalPlayers; i++ )
 		{
-			CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
-			if (pPlayer && pPlayer->IsAlive())
+			//CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
+			//CTFPlayer *pPlayer = UTIL_PlayerByIndex(i);
+			CTFPlayer *pPlayer = ToTFPlayer( pTeam->GetPlayer( i ) );
+			if ( pPlayer && pPlayer->IsAlive() )
 			{
-				totalPlayers++;
-				if (pPlayer->m_bTransition)
+				//totalPlayers++;
+				if ( pPlayer->m_bTransition )
 					transitionPlayers++;
 			}
 		}
 
-		if (((int)(transitionPlayers / totalPlayers * 100)) < mp_transition_players_percent.GetInt())
+		//if ( ( ( int )( transitionPlayers / totalPlayers * 100 ) ) < mp_transition_players_percent.GetInt() )
+		//if ( ( ( float )( transitionPlayers / totalPlayers * 100 ) ) < mp_transition_players_percent.GetInt() )
+		if ( roundf( (float)transitionPlayers / (float)totalPlayers * 100 ) < mp_transition_players_percent.GetInt() )
 		{
-			DevMsg("Transitions: Not enough players to trigger level change\n");
-			return;
+			DevMsg( "Transitions: Not enough players to trigger level change\n" );
+			UTIL_ClientPrintAll( HUD_PRINTCENTER, "More players required to change level\n" );
+				return;
 		}
 	}
-	CTFPlayer *p2Player = (CTFPlayer *)UTIL_GetLocalPlayer();
-	p2Player->SaveTransitionFile();
-	Transitioned = true;
 
-	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
-	Q_strncpy(st_szNextMap, m_szMapName, sizeof(st_szNextMap));
+	//CTFPlayer *p2Player = (CTFPlayer *)UTIL_GetLocalPlayer();
 
-	// Change to the next map.
-	engine->ChangeLevel(st_szNextMap, NULL);
-	// As far as we're concerned this is where we stop the code because we just transitioned.
-	return;
+	//Transitioned = true;
 
 	// Some people are firing these multiple times in a frame, disable
 	if ( m_bTouched )
@@ -1649,6 +1659,7 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 	m_bTouched = true;
 
+	/*
 	int transitionState = InTransitionVolume(pPlayer, m_szLandmarkName);
 	if ( transitionState == TRANSITION_VOLUME_SCREENED_OUT )
 	{
@@ -1658,9 +1669,17 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 	// look for a landmark entity		
 	pLandmark = FindLandmark( m_szLandmarkName );
+	*/
 
-	if ( !pLandmark )
-		return;
+	//if ( !pLandmark )
+		//return;
+
+	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
+	Q_strncpy( st_szNextMap, m_szMapName, sizeof( st_szNextMap ) );
+
+	// Change to the next map.
+	engine->ChangeLevel( st_szNextMap, NULL );
+
 
 	/*
 	// no transition volumes, check PVS of landmark
@@ -1688,21 +1707,23 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 	}
 	*/
 
+	/*
 	WarnAboutActiveLead();
 
 	g_iDebuggingTransition = 0;
 	st_szNextSpot[0] = 0;	// Init landmark to NULL
-	Q_strncpy(st_szNextSpot, m_szLandmarkName,sizeof(st_szNextSpot));
+	Q_strncpy( st_szNextSpot, m_szLandmarkName,sizeof( st_szNextSpot ) );
 	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
-	Q_strncpy(st_szNextMap, m_szMapName, sizeof(st_szNextMap));
+	Q_strncpy( st_szNextMap, m_szMapName, sizeof( st_szNextMap ) );
 
 	m_hActivator = pActivator;
 
-	m_OnChangeLevel.FireOutput(pActivator, this);
+	m_OnChangeLevel.FireOutput( pActivator, this );
 
 	NotifyEntitiesOutOfTransition();
+	*/
 
-
+	/*
 ////	Msg( "Level touches %d levels\n", ChangeList( levels, 16 ) );
 	if ( g_debug_transitions.GetInt() )
 	{
@@ -1714,6 +1735,9 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 	{
 		engine->ChangeLevel( st_szNextMap, st_szNextSpot );
 	}
+	*/
+
+	/*
 	else
 	{
 		// Build a change list so we can see what would be transitioning
@@ -1727,6 +1751,7 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 		SetTouch( NULL );
 	}
+	*/
 }
 
 //
