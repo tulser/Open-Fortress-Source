@@ -177,33 +177,33 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 		if (args.FindArg( "-all" ))
 			iClass = 9 - count ;
 
-		int iTeam = TF_TEAM_BLUE;
+		int iTeam = TEAM_SPECTATOR;
 		pVal = args.FindArg( "-team" );
 		if (pVal)
 		{
 			if (stricmp(pVal, "red") == 0)
 				iTeam = TF_TEAM_RED;
+			if (stricmp(pVal, "blue") == 0)
+				iTeam = TF_TEAM_BLUE;
 			else if (stricmp(pVal, "spectator") == 0)
 				iTeam = TEAM_SPECTATOR;
 			else if (stricmp(pVal, "mercenary") == 0)
 				iTeam = TF_TEAM_MERCENARY;
-			else if (stricmp(pVal, "random") == 0){
-					iTeam = RandomInt(0, 900);
-				if (iTeam < 300)
-					iTeam = TF_TEAM_RED;
-				else if (iTeam < 600)
-					iTeam = TF_TEAM_BLUE;
-				else
-					{
-						//if (isdeathmatch==1)
-						iTeam = TF_TEAM_MERCENARY;
-						//else iTeam = TF_TEAM_BLUE
-					}
-				}
 			else
+				iTeam = RandomInt(0, 1);
+				if (iTeam == 0)
+					iTeam = TF_TEAM_RED;
+				else if (iTeam == 1)
+					iTeam = TF_TEAM_BLUE;
+		}
+		else
+		{
+		iTeam = RandomInt(0, 1);
+			if (iTeam == 0)
+				iTeam = TF_TEAM_RED;
+			else if (iTeam == 1)
 				iTeam = TF_TEAM_BLUE;
 		}
-
 		char const *pName = args.FindArg( "-name" );
 
 		// pick a random color!

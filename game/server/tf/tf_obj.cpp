@@ -986,20 +986,21 @@ bool CBaseObject::FindSnapToBuildPos( void )
 
 	int nTeamCount = TFTeamMgr()->GetTeamCount();
 	for ( int iTeam = FIRST_GAME_TEAM; iTeam < nTeamCount; ++iTeam )
-	{
+	{	
 		// Hostile attachments look for enemy objects only
 		if ( bHostileAttachment ) 
 		{
-			if ( iTeam == iMyTeam )
+			if ( iTeam == iMyTeam && iMyTeam != TF_TEAM_MERCENARY )
 			{
 				continue;
 			}
 		}
 		// Friendly attachments look for friendly objects only
-		else if ( iTeam != iMyTeam )
+		else if ( iTeam != iMyTeam && iMyTeam != TF_TEAM_MERCENARY )
 		{
 			continue;
 		}
+		
 
 		CTFTeam *pTeam = ( CTFTeam * )GetGlobalTeam( iTeam );
 		if ( !pTeam )

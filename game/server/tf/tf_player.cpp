@@ -1397,7 +1397,7 @@ int CTFPlayer::RestockAmmo( float PowerupSize )
 	{
 		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 		//If we have a weapon in this slot, count up
-		if ( pWeapon )
+		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_NONE )
 		{
 			if ( pWeapon->m_iReserveAmmo < pWeapon->GetMaxReserveAmmo() )
 			{

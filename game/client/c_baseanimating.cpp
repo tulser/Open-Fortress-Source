@@ -3866,7 +3866,7 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 					// todo: add spam checks 
 					pEntity->StartFadeOut( 5.0 );
 				}
-				if ( event == AE_CL_MAG_EJECT )
+				if ( event == AE_CL_MAG_EJECT2 )
 				{
 					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
 

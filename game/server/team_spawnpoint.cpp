@@ -41,21 +41,21 @@ END_DATADESC()
 void CTeamSpawnPoint::Activate( void )
 {
 	BaseClass::Activate();
-	if ( GetTeamNumber() > 0 && GetTeamNumber() <= MAX_TEAMS )
+
+	if ( TFGameRules()->IsDMGamemode() )
+	{
+		GetGlobalTeam( 2 )->AddSpawnpoint( this );
+		GetGlobalTeam( 3 )->AddSpawnpoint( this );
+		GetGlobalTeam( 4 )->AddSpawnpoint( this );
+	}
+	else if ( GetTeamNumber() > 0 && GetTeamNumber() <= MAX_TEAMS )
 	{
 		GetGlobalTeam( GetTeamNumber() )->AddSpawnpoint( this );
 	}
 	else
 	{
-		if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
-		{
-			GetGlobalTeam( 4 )->AddSpawnpoint( this );
-		}
-		else
-		{
-			Warning( "info_player_teamspawn with invalid team number: %d\n", GetTeamNumber() );
-			UTIL_Remove( this );
-		}
+		Warning( "info_player_teamspawn with invalid team number: %d\n", GetTeamNumber() );
+		UTIL_Remove( this );
 	}
 }
 
