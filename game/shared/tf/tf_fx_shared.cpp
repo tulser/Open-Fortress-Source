@@ -8,6 +8,7 @@
 #include "tf_weaponbase.h"
 #include "takedamageinfo.h"
 #include "tf_shareddefs.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -198,8 +199,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	fireInfo.m_vecSrc = vecOrigin;
 	if ( flDamage < 0.0f )
 	{
-		
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
+		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
 		else fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nInstagibDamage;
 	}
 	else

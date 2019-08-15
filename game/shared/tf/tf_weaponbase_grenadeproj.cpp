@@ -281,7 +281,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	SetFriction( 0.2f/*BaseClass::GetGrenadeFriction()*/ );
 	SetElasticity( 0.45f/*BaseClass::GetGrenadeElasticity()*/ );
 	
-	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 )  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE )  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	else SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nInstagibDamage );
 	
 	SetDamageRadius( weaponInfo.m_flDamageRadius );

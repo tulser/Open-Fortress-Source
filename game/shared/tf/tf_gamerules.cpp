@@ -1080,7 +1080,7 @@ void CTFGameRules::Activate()
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == 6 )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == GUN_GAME )
 	{
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n");
@@ -1596,7 +1596,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// Full damage, we hit this entity directly
 			flDistanceToEntity = 0;
 			
-			if ( ofd_mutators.GetInt() == 5 && !TFGameRules()->IsGGGamemode() )
+			if ( ofd_mutators.GetInt() == ROCKET_ARENA && !TFGameRules()->IsGGGamemode() )
 				bInstantKill = true;
 		}
 		else if ( pEntity->IsPlayer() )
@@ -1638,9 +1638,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				case -1:
 					switch ( ofd_mutators.GetInt() )
 					{	
-						case 3:
-						case 4:
-						case 5:
+						case CLAN_ARENA:
+						case UNHOLY_TRINITY:
+						case ROCKET_ARENA:
 							flAdjustedDamage = 0.0f;
 							break;
 						default:

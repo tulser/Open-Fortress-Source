@@ -10,6 +10,7 @@
 #include "engine/IEngineSound.h"
 #include "entity_condpowerup.h"
 #include "of_dropped_powerup.h"
+#include "tf_gamerules.h"
 
 #include "tier0/memdbgon.h"
 
@@ -46,7 +47,7 @@ LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
 
 void CCondPowerup::Spawn( void )
 {
-	if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 ||
+	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ||
 		 !ofd_powerups.GetBool() )
 		return;
 	Precache();

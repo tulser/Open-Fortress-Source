@@ -11,6 +11,7 @@
 #include "takedamageinfo.h"
 #include "tf_projectile_nail.h"
 #include "in_buttons.h"
+#include "tf_gamerules.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -748,7 +749,7 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
-	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
 	else return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

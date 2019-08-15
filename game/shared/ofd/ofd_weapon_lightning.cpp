@@ -367,7 +367,7 @@ float CTFLightningGun::GetProjectileDamage( void )
 	// create the flame entity
 	int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
 		iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 	float flDamage = (float)iDamagePerSec * flFiringInterval;
 	

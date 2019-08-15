@@ -370,7 +370,7 @@ void CTFWeaponBaseMelee::Smack( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
-	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
+	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
 	else return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage );
 }
 

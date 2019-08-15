@@ -293,7 +293,7 @@ int CTFWeaponBase::GetPosition( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDamage( void ) const
 {
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

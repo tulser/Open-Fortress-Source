@@ -1301,13 +1301,13 @@ void CTFPlayer::GiveDefaultItems()
 	// Give weapons.
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		ManageGunGameWeapons( pData );
-	else if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+	else if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
 		ManageInstagibWeapons( pData );
-	else if ( ofd_mutators.GetInt() == 3 || ofd_mutators.GetInt() == 4 )
+	else if ( ofd_mutators.GetInt() == CLAN_ARENA || ofd_mutators.GetInt() == UNHOLY_TRINITY )
 		ManageClanArenaWeapons( pData );
-	else if ( ofd_mutators.GetInt() == 5 )
+	else if ( ofd_mutators.GetInt() == ROCKET_ARENA )
 		ManageRocketArenaWeapons( pData );
-	else if ( ofd_threewave.GetInt() == 1 )
+	else if ( ofd_threewave.GetBool() )
 		Manage3WaveWeapons( pData );
 	else if ( IsRetroModeOn() )
 		ManageTFCWeapons( pData );
@@ -1693,7 +1693,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			
 		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_RAILGUN )
 		{
-			if ( ofd_mutators.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == INSTAGIB )
 			{
 				if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_CROWBAR )
 				{
@@ -1714,7 +1714,7 @@ void CTFPlayer::ManageInstagibWeapons( TFPlayerClassData_t *pData )
 			{
 				pWeapon->DefaultTouch( this );
 			}
-			if ( ofd_mutators.GetInt() == 1 )
+			if ( ofd_mutators.GetInt() == INSTAGIB )
 			{
 				pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_crowbar" );
 				if ( pWeapon )
@@ -1801,7 +1801,7 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 	if (pWeapon)	
 		pWeapon->DefaultTouch(this);
 
-	if ( ofd_mutators.GetInt() == 3 )
+	if ( ofd_mutators.GetInt() == CLAN_ARENA )
 	{
 		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
 		if (pWeapon)
@@ -4301,7 +4301,7 @@ bool CTFPlayer::ShouldGib( const CTakeDamageInfo &info )
 	// Check to see if we should allow players to gib.
 	if ( !tf_playergib.GetBool() )
 		return false;
-	if ( tf_playergib.GetInt()== 2 || ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+	if ( tf_playergib.GetInt()== 2 || ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
 		return true;
 
 	if ( ( ( info.GetDamageType() & DMG_BLAST ) != 0 ) 

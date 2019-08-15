@@ -415,7 +415,7 @@ void CTFFlameThrower::PrimaryAttack()
 #ifdef GAME_DLL
 		// create the flame entity
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-		if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 ) iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+		if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ) iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage );
 #endif
