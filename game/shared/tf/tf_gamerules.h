@@ -49,6 +49,17 @@ extern ConVar	tf_avoidteammates;
 
 extern Vector g_TFClassViewVectors[];
 
+// Mutator enums
+enum
+{
+	INSTAGIB = 1,
+	INSTAGIB_NO_MELEE = 2,
+	CLAN_ARENA = 3,
+	UNHOLY_TRINITY = 4,
+	ROCKET_ARENA = 5,
+	GUN_GAME = 6,
+};
+
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
 {
 public:

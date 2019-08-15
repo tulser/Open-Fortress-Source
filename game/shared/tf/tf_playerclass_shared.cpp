@@ -284,6 +284,7 @@ TFPlayerClassData_t *GetPlayerClassData( int iClass )
 BEGIN_RECV_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	RecvPropInt( RECVINFO( m_iClass ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomModel ) ),
+	RecvPropString( RECVINFO( m_iszSetCustomArmModel ) ),
 END_RECV_TABLE()
 
 // Server specific.
@@ -292,6 +293,7 @@ END_RECV_TABLE()
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	SendPropInt( SENDINFO( m_iClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropStringT( SENDINFO( m_iszSetCustomModel ) ),
+	SendPropStringT( SENDINFO( m_iszSetCustomArmModel ) ),
 END_SEND_TABLE()
 
 #endif
@@ -323,6 +325,19 @@ void CTFPlayerClassShared::SetCustomModel( const char *pszModelName )
 	}
 	else
 		m_iszSetCustomModel.Set( NULL_STRING );
+}
+void CTFPlayerClassShared::SetCustomArmModel( const char *pszModelName )
+{
+	if (pszModelName && pszModelName[0])
+	{
+		bool bPrecache = CBaseEntity::IsPrecacheAllowed();
+		CBaseEntity::SetAllowPrecache( true );
+		CBaseEntity::PrecacheModel( pszModelName );
+		CBaseEntity::SetAllowPrecache( bPrecache );
+		m_iszSetCustomArmModel.Set( AllocPooledString( pszModelName ) );
+	}
+	else
+		m_iszSetCustomArmModel.Set( NULL_STRING );
 }
 #endif
 
@@ -361,6 +376,8 @@ bool CTFPlayerClassShared::CanBuildObject( int iObjectType )
 	return bFound;
 }
 
+extern ConVar of_retromode;
+
 const char	*CTFPlayerClassShared::GetModelName( void ) const						
 { 
 #ifdef CLIENT_DLL
@@ -389,6 +406,51 @@ bool CTFPlayerClassShared::UsesCustomModel( void )
 	if ( m_iszSetCustomModel[0] ) return true;
 #else
 	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return true;
+#endif	
+return false;
+}
+
+const char	*CTFPlayerClassShared::GetArmModelName( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
+#else
+	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
+#endif
+	static char modelFilename[ 256 ];
+	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetArmModelName(), sizeof( modelFilename ) );
+	
+	return modelFilename;
+}
+
+const char	*CTFPlayerClassShared::GetTFCArmModelName( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
+#else
+	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
+#endif
+	static char modelFilename[ 256 ];
+	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetTFCArmModelName(), sizeof( modelFilename ) );
+	
+	return modelFilename;
+}
+
+const char	*CTFPlayerClassShared::GetSetCustomArmModel( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	return m_iszSetCustomArmModel;
+#else
+	return ( STRING( m_iszSetCustomArmModel.Get() ) );
+#endif
+}
+
+bool CTFPlayerClassShared::UsesCustomArmModel( void )
+{
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomArmModel[0] ) return true;
+#else
+	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return true;
 #endif	
 return false;
 }

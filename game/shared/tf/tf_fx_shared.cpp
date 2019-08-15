@@ -8,6 +8,7 @@
 #include "tf_weaponbase.h"
 #include "takedamageinfo.h"
 #include "tf_shareddefs.h"
+#include "tf_gamerules.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -112,7 +113,7 @@ void EndGroupingSounds() {}
 // only does the damage calculations.  On the client, it does all the effects.
 //-----------------------------------------------------------------------------
 void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
-					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, bool bCritical /* = false*/ )
+					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, int bCritical /* = false*/ )
 {
 	// Get the weapon information.
 	const char *pszWeaponAlias = WeaponIdToAlias( iWeapon );
@@ -198,8 +199,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	fireInfo.m_vecSrc = vecOrigin;
 	if ( flDamage < 0.0f )
 	{
-		
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
+		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
 		else fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nInstagibDamage;
 	}
 	else
@@ -224,6 +224,11 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		}
 
 		nCustomDamageType = pWeapon->GetCustomDamageType();
+		
+		if ( pWeapon->IsCurrentAttackACrit() >= 2 || bCritical >= 2 )
+		{
+			nCustomDamageType |= TF_DMG_CRIT_POWERUP;
+		}		
 	}
 
 	if ( iWeapon != TF_WEAPON_MINIGUN && iWeapon != TF_WEAPON_GATLINGGUN )

@@ -45,7 +45,7 @@ CTFProjectile_Syringe::~CTFProjectile_Syringe()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Syringe *CTFProjectile_Syringe::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical )
+CTFProjectile_Syringe *CTFProjectile_Syringe::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical )
 {
 	return static_cast<CTFProjectile_Syringe*>( CTFBaseProjectile::Create( "tf_projectile_syringe", vecOrigin, vecAngles, pOwner, CTFProjectile_Syringe::GetInitialVelocity(), g_sModelIndexSyringe, SYRINGE_DISPATCH_EFFECT, pScorer, bCritical ) );
 }
@@ -147,7 +147,7 @@ CTFProjectile_Nail::~CTFProjectile_Nail()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFProjectile_Nail *CTFProjectile_Nail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, bool bCritical)
+CTFProjectile_Nail *CTFProjectile_Nail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
 {
 	return static_cast<CTFProjectile_Nail*>(CTFBaseProjectile::Create("tf_projectile_nail", vecOrigin, vecAngles, pOwner, CTFProjectile_Nail::GetInitialVelocity(), g_sModelIndexNail, NAILGUN_NAIL_DISPATCH_EFFECT, pScorer, bCritical));
 }
@@ -177,15 +177,15 @@ const char *GetNailTrailParticleName(int iTeamNumber, bool bCritical)
 {
 	if (iTeamNumber == TF_TEAM_BLUE)
 	{
-		return (bCritical ? "nailtrails_scout_blue_crit" : "nailtrails_scout_blue");
+		return (bCritical ? "nailtrails_super_blue_crit" : "nailtrails_super_blue");
 	}
 	else if (iTeamNumber == TF_TEAM_RED)
 	{
-		return (bCritical ? "nailtrails_scout_red_crit" : "nailtrails_scout_red");
+		return (bCritical ? "nailtrails_super_red_crit" : "nailtrails_super_red");
 	}
 	else 
 	{
-		return (bCritical ? "nailtrails_scout_dm_crit" : "nailtrails_scout_dm");
+		return (bCritical ? "nailtrails_super_dm_crit" : "nailtrails_super_dm");
 	}
 }
 

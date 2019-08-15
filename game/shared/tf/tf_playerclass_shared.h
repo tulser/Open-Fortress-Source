@@ -102,18 +102,21 @@ public:
 	const char	*GetName( void ) const							{ return GetPlayerClassData( m_iClass )->m_szClassName; }
 #ifndef CLIENT_DLL
 	void		SetCustomModel( const char *pszModelName );
+	void		SetCustomArmModel( const char *pszModelName );
 #endif	
 	const char	*GetModelName( void ) const;
 	const char	*GetTFCModelName( void ) const;
 	const char 	*GetSetCustomModel ( void ) const;		
-	bool 		UsesCustomModel ( void );		
+	bool 		UsesCustomModel ( void );	
+	const char 	*GetSetCustomArmModel ( void ) const;		
+	bool 		UsesCustomArmModel ( void );		
 
-	const char	*GetArmModelName( void ) const			{ return GetPlayerClassData( m_iClass )->GetArmModelName(); }		
+	const char	*GetArmModelName( void ) const;
+	const char	*GetTFCArmModelName( void ) const;
 	float		GetMaxSpeed( void )						{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
 	int			GetMaxHealth( void )					{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
 	int			GetMaxArmor( void )						{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
 	
-	const char	*GetTFCArmModelName( void ) const				{ return GetPlayerClassData( m_iClass )->GetTFCArmModelName(); }		
 	float		GetTFCMaxSpeed( void )							{ return GetPlayerClassData( m_iClass )->m_flTFCMaxSpeed; }
 	int			GetTFCMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxHealth; }
 	int			GetTFCMaxArmor( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxArmor; }
@@ -128,8 +131,10 @@ protected:
 	CNetworkVar( int,	m_iClass );
 #ifdef CLIENT_DLL
 	char	m_iszSetCustomModel[MAX_PATH];
+	char	m_iszSetCustomArmModel[MAX_PATH];
 #else
 	CNetworkVar(string_t,m_iszSetCustomModel);
+	CNetworkVar(string_t,m_iszSetCustomArmModel);
 #endif
 };
 

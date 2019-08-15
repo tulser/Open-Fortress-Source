@@ -10,6 +10,7 @@
 #include "tf_fx_shared.h"
 #include "in_buttons.h"
 #include "ammodef.h"
+#include "tf_gamerules.h"
 
 #if defined( CLIENT_DLL )
 
@@ -24,7 +25,6 @@
 
 	#include "explode.h"
 	#include "tf_player.h"
-	#include "tf_gamerules.h"
 	#include "tf_gamestats.h"
 	#include "ilagcompensationmanager.h"
 	#include "collisionutils.h"
@@ -47,17 +47,17 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFLightningGun, DT_WeaponLightningGun )
 BEGIN_NETWORK_TABLE( CTFLightningGun, DT_WeaponLightningGun )
 	#if defined( CLIENT_DLL )
 		RecvPropInt( RECVINFO( m_iWeaponState ) ),
-		RecvPropBool( RECVINFO( m_bCritFire ) )
+		RecvPropInt( RECVINFO( m_bCritFire ) )
 	#else
 		SendPropInt( SENDINFO( m_iWeaponState ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-		SendPropBool( SENDINFO( m_bCritFire ) )
+		SendPropInt( SENDINFO( m_bCritFire ) )
 	#endif
 END_NETWORK_TABLE()
 
 #if defined( CLIENT_DLL )
 BEGIN_PREDICTION_DATA( CTFLightningGun )
 	DEFINE_PRED_FIELD( m_iWeaponState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bCritFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bCritFire, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
 
@@ -331,14 +331,21 @@ void CTFLightningGun::PrimaryAttack()
 
 	// Burn & Ignite 'em
 	int iDmgType = g_aWeaponDamageTypes[ GetWeaponID() ];
+	int iCustomDmgType = BaseClass::GetCustomDamageType();
 	m_bCritFire = IsCurrentAttackACrit();
-	if ( m_bCritFire )
+	if ( m_bCritFire == 1 )
 	{
 		iDmgType |= DMG_CRITICAL;
 	}
+	else if ( m_bCritFire >= 2 )
+	{
+		iCustomDmgType |= TF_DMG_CRIT_POWERUP;
+	}
+
+	
 
 #ifdef CLIENT_DLL
-	if ( bWasCritical != m_bCritFire )
+	if ( bWasCritical != ( m_bCritFire > 0 ) )
 	{
 		RestartParticleEffect();
 	}
@@ -367,7 +374,7 @@ float CTFLightningGun::GetProjectileDamage( void )
 	// create the flame entity
 	int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
 		iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 	float flDamage = (float)iDamagePerSec * flFiringInterval;
 	
@@ -578,7 +585,7 @@ void CTFLightningGun::StartLightning()
 	// normally, crossfade between start sound & firing loop in 3.5 sec
 	float flCrossfadeTime = 3.5;
 
-	if ( m_pFiringLoop && ( m_bCritFire != m_bFiringLoopCritical ) )
+	if ( m_pFiringLoop && ( ( m_bCritFire > 0 ) != m_bFiringLoopCritical ) )
 	{
 		// If we're firing and changing between critical & noncritical, just need to change the firing loop.
 		// Set crossfade time to zero so we skip the start sound and go to the loop immediately.

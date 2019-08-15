@@ -33,7 +33,7 @@ public:
 	virtual const char *GetTrailParticleName( void ) { return "rockettrail"; }
 
 private:
-	bool	m_bCritical;
+	int			m_bCritical;
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

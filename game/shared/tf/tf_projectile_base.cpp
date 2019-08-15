@@ -127,7 +127,7 @@ void CTFBaseProjectile::Spawn( void )
 //-----------------------------------------------------------------------------
 CTFBaseProjectile *CTFBaseProjectile::Create( const char *pszClassname, const Vector &vecOrigin, 
 											 const QAngle &vecAngles, CBaseEntity *pOwner, float flVelocity, short iProjModelIndex, const char *pszDispatchEffect,
-											CBaseEntity *pScorer, bool bCritical )
+											CBaseEntity *pScorer, int bCritical )
 {
 	CTFBaseProjectile *pProjectile = NULL;
 
@@ -372,6 +372,7 @@ void CTFBaseProjectile::ProjectileTouch( CBaseEntity *pOther )
 	info.SetDamageForce( GetDamageForce() );
 	info.SetDamagePosition( GetAbsOrigin() );
 	info.SetDamageType( GetDamageType() );
+	info.SetDamageCustom(GetCustomDamageType());
 
 	Vector dir;
 	AngleVectors( GetAbsAngles(), &dir );
@@ -422,6 +423,24 @@ int CTFBaseProjectile::GetDamageType( void )
 		iDmgType |= DMG_CRITICAL;
 	}
 	return iDmgType;
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFBaseProjectile::GetCustomDamageType() 
+{ 
+	if ( m_bCritical >= 2)
+	{
+		DevMsg("Projectile Has Crit Powerup flag\n");
+		return TF_DMG_CRIT_POWERUP;
+	}
+	else
+	{
+		DevMsg("Projectile is normal\n");
+		return TF_DMG_CUSTOM_NONE;
+	}
 }
 
 #endif

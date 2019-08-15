@@ -10,6 +10,7 @@
 #include "engine/IEngineSound.h"
 #include "entity_condpowerup.h"
 #include "of_dropped_powerup.h"
+#include "tf_gamerules.h"
 
 #include "tier0/memdbgon.h"
 
@@ -46,7 +47,7 @@ LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
 
 void CCondPowerup::Spawn( void )
 {
-	if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 ||
+	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ||
 		 !ofd_powerups.GetBool() )
 		return;
 	Precache();
@@ -79,6 +80,23 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		if ( !pTFPlayer )
 			return false;
+		
+		switch ( m_bCondition )
+		{
+			case TF_COND_STEALTHED:
+				m_bCondition = TF_COND_INVIS_POWERUP;
+				break;
+			case TF_COND_CRITBOOSTED:
+				m_bCondition = TF_COND_CRIT_POWERUP;
+				break;
+			case TF_COND_INVIS_POWERUP:
+				m_bCondition = TF_COND_STEALTHED;
+				break;
+			case TF_COND_CRIT_POWERUP:
+				m_bCondition = TF_COND_CRITBOOSTED;
+				break;
+		}		
+		
 		if ( pTFPlayer->m_Shared.InCond(m_bCondition) )
 			return false;
 		bSuccess = true;

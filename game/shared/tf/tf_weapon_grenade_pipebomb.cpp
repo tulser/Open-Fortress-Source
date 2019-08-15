@@ -516,13 +516,13 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		// Save this entity as enemy, they will take 100% damage.
 		m_hEnemy = pOther;
 
-		Explode( &pTrace, GetDamageType() );
+		Explode( &pTrace, GetDamageType(), GetCustomDamageType() );
 	}
 
 	// Train hack!
 	if ( pOther->GetModelName() == s_iszTrainName && ( pOther->GetAbsVelocity().LengthSqr() > 1.0f ) )
 	{
-		Explode( &pTrace, GetDamageType() );
+		Explode(&pTrace, GetDamageType(), GetCustomDamageType());
 	}
 }
 

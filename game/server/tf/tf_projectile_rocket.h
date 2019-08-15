@@ -36,12 +36,13 @@ public:
 
 	void	SetScorer( CBaseEntity *pScorer );
 
-	void	SetCritical( bool bCritical ) { m_bCritical = bCritical; }
+	void	SetCritical( int bCritical ) { m_bCritical = bCritical; }
 	virtual int		GetDamageType();
+	virtual int		GetCustomDamageType();
 
 private:
 	CBaseHandle m_Scorer;
-	CNetworkVar( bool,	m_bCritical );
+	CNetworkVar( int,	m_bCritical );
 };
 
 class CTFCProjectile_IncendRocket : public CTFProjectile_Rocket

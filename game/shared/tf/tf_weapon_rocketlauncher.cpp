@@ -79,6 +79,8 @@ BEGIN_DATADESC( CTFCIncendiaryCannon )
 END_DATADESC()
 #endif
 
+ConVar ofd_quad_explode_delay( "ofd_quad_explode_delay", "0.2", FCVAR_REPLICATED, "How long the rocket has to be active for before you can detonate it." );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
@@ -91,6 +93,7 @@ CTFRocketLauncher::CTFRocketLauncher()
 CTFSuperRocketLauncher::CTFSuperRocketLauncher()
 {
 	m_bReloadsSingly = false;
+	m_flLastPingSoundTime = 0;
 }
 
 CTFCRPG::CTFCRPG()
@@ -128,7 +131,22 @@ void CTFRocketLauncher::Precache()
 CBaseEntity *CTFRocketLauncher::FireProjectile( CTFPlayer *pPlayer )
 {
 	m_flShowReloadHintAt = gpGlobals->curtime + 30;
-	return BaseClass::FireProjectile( pPlayer );
+	CBaseEntity *pProjectile = BaseClass::FireProjectile( pPlayer );
+	if ( pProjectile )
+	{
+#ifdef GAME_DLL
+		CTFBaseRocket *pRocket = (CTFBaseRocket*)pProjectile;
+		pRocket->SetLauncher( this );
+
+		RocketHandle hHandle;
+		hHandle = pRocket;
+		m_Rockets.AddToTail( hHandle );
+
+		m_iRocketCount = m_Rockets.Count();
+ #endif
+	}
+
+	return pProjectile;	
 }
 
 //-----------------------------------------------------------------------------
@@ -249,6 +267,113 @@ void CTFRocketLauncher::DrawCrosshair( void )
 
 #endif
 
+void CTFSuperRocketLauncher::AddRocket( CTFBaseRocket *pRocket )
+{
+	RocketHandle hHandle;
+	hHandle = pRocket;
+	m_Rockets.AddToTail( hHandle );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Detonate the Rockets if secondary fire is down.
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::ItemPostFrame( void )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( pOwner && pOwner->m_nButtons & IN_ATTACK2 )
+	{
+		// We need to do this to catch the case of player trying to detonate
+		// pipebombs while in the middle of reloading.
+		SecondaryAttack();
+	}
+#ifdef CLIENT_DLL
+	else if ( m_flLastPingSoundTime <= gpGlobals->curtime )
+	{
+		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission(); 
+	}
+#endif
+	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Detonate active pipebombs
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::SecondaryAttack( void )
+{
+	if ( !CanAttack() || !CanSecondaryAttack() )
+		return;
+
+	if ( m_iRocketCount )
+	{
+		// Get a valid player.
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if ( !pPlayer )
+			return;
+		//If one or more pipebombs failed to detonate then play a sound.
+		if ( DetonateRockets() && m_flLastPingSoundTime <= gpGlobals->curtime )
+		{
+			// PING!
+#ifdef CLIENT_DLL
+			C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+			if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+			{
+				if ( pLocalPlayer->GetViewModel() )
+				{
+					pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission();
+					pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
+				}
+			}
+#endif
+			m_flLastPingSoundTime = gpGlobals->curtime + 1;
+			WeaponSound( SPECIAL3 );
+		}	
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: If a pipebomb has been removed, remove it from our list
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::DeathNotice( CBaseEntity *pVictim )
+{
+	Assert( dynamic_cast<CTFBaseRocket*>(pVictim) );
+
+	RocketHandle hHandle;
+	hHandle = (CTFBaseRocket*)pVictim;
+	m_Rockets.FindAndRemove( hHandle );
+
+	m_iRocketCount = m_Rockets.Count();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Remove *with* explosions
+//-----------------------------------------------------------------------------
+bool CTFSuperRocketLauncher::DetonateRockets()
+{
+
+	int count = m_Rockets.Count();
+
+	bool bDetonated = true;
+	
+	for ( int i = 0; i < count; i++ )
+	{
+		CTFBaseRocket *pTemp = m_Rockets[i];
+		if ( pTemp )
+		{
+			//This guy will die soon enough.
+			if ( pTemp->IsEffectActive( EF_NODRAW ) || pTemp->m_flCreationTime + ofd_quad_explode_delay.GetFloat() > gpGlobals->curtime )
+				continue;
+#ifdef GAME_DLL
+			pTemp->Detonate();
+#endif
+			bDetonated = true;
+		}
+	}
+	return bDetonated;
+}
+
 IMPLEMENT_NETWORKCLASS_ALIASED(TFOriginal, DT_TFOriginal);
 
 BEGIN_NETWORK_TABLE( CTFOriginal, DT_TFOriginal )
@@ -263,6 +388,11 @@ PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
 IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
 
 BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
+#ifdef CLIENT_DLL
+	RecvPropInt( RECVINFO( m_iRocketCount ) ),
+#else
+	SendPropInt( SENDINFO( m_iRocketCount ), 5, SPROP_UNSIGNED ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFSuperRocketLauncher )

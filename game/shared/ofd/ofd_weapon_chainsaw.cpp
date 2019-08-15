@@ -32,11 +32,11 @@ BEGIN_NETWORK_TABLE( CTFChainsaw, DT_WeaponChainsaw )
 // Client specific.
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iWeaponState ) ),
-	RecvPropBool( RECVINFO( m_bCritShot ) )
+	RecvPropInt( RECVINFO( m_bCritShot ) )
 // Server specific.
 #else
 	SendPropInt( SENDINFO( m_iWeaponState ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropBool( SENDINFO( m_bCritShot ) )
+	SendPropInt( SENDINFO( m_bCritShot ) )
 #endif
 END_NETWORK_TABLE()
 
@@ -700,7 +700,7 @@ void CTFChainsaw::WeaponSoundUpdate()
 		break;
 	case AC_STATE_FIRING:
 		{
-			if ( m_bCritShot == true ) 
+			if ( m_bCritShot ) 
 			{
 				iSound = BURST;	// Crit sound
 			}

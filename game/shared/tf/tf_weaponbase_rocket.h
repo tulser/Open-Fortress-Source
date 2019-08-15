@@ -60,6 +60,8 @@ protected:
 public:
 
 	CNetworkHandle( CBaseEntity, m_hLauncher );
+	
+	float	m_flCreationTime;
 
 //=============================================================================
 //
@@ -89,10 +91,13 @@ public:
 	static CTFBaseRocket *Create( CTFWeaponBase *pWeapon, const char *szClassname, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL );	
 
 	virtual void	RocketTouch( CBaseEntity *pOther );
-	void			Explode( trace_t *pTrace, CBaseEntity *pOther );
+	virtual void	Explode( trace_t *pTrace, CBaseEntity *pOther );
+	virtual void 	Detonate( void );
+	virtual void 	ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
 
 	virtual float	GetDamage() { return m_flDamage; }
 	virtual int		GetDamageType() { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
+	virtual int		GetCustomDamageType();
 	virtual void	SetDamage(float flDamage) { m_flDamage = flDamage; }
 	virtual float	GetRadius() { return TF_ROCKET_RADIUS; }	
 	void			DrawRadius( float flRadius );
@@ -109,7 +114,7 @@ public:
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
 	
 	
-	int m_hWeaponID;
+	int 	m_hWeaponID;
 
 protected:
 

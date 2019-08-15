@@ -442,9 +442,9 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		break;
 
 	case TF_COND_STEALTHED:
+	case TF_COND_INVIS_POWERUP:
 		OnAddStealthed();
 		break;
-
 	case TF_COND_INVULNERABLE:
 		OnAddInvulnerable();
 		break;
@@ -484,6 +484,7 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		}
 		break;
 	case TF_COND_CRITBOOSTED:
+	case TF_COND_CRIT_POWERUP:
 		OnAddCritBoosted();
 		break;
 	case TF_COND_BERSERK:
@@ -521,6 +522,7 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		break;
 
 	case TF_COND_STEALTHED:
+	case TF_COND_INVIS_POWERUP:
 		OnRemoveStealthed();
 		break;
 
@@ -544,10 +546,15 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		OnRemoveShield();
 		break;	
 	
+	case TF_COND_TAUNTING:
+		OnRemoveTaunting();
+		break;	
+		
 	case TF_COND_TELEPORTED:
 		OnRemoveTeleported();
 		break;
 	case TF_COND_CRITBOOSTED:
+	case TF_COND_CRIT_POWERUP:
 		OnRemoveCritBoosted();
 		break;
 	case TF_COND_BERSERK:
@@ -829,7 +836,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	}
 	
 	
-	if ( InCond( TF_COND_CRITBOOSTED )  )
+	if ( InCondCrit() )
 	{
 
 	}
@@ -931,12 +938,12 @@ void CTFPlayerShared::OnRemoveZoomed( void )
 void CTFPlayerShared::OnAddDisguising( void )
 {
 #ifdef CLIENT_DLL
-	if ( m_pOuter->m_pDisguisingEffect && InCond( TF_COND_STEALTHED ) )
+	if ( m_pOuter->m_pDisguisingEffect && InCondInvis() )
 	{
 		m_pOuter->ParticleProp()->StopEmission( m_pOuter->m_pDisguisingEffect );
 	}
 
-	if ( !m_pOuter->IsLocalPlayer() && ( !InCond( TF_COND_STEALTHED ) || !m_pOuter->IsEnemyPlayer() ) )
+	if ( !m_pOuter->IsLocalPlayer() && ( !InCondInvis() || !m_pOuter->IsEnemyPlayer() ) )
 	{
 		const char *pEffectName;
 		if ( m_pOuter->GetTeamNumber() == TF_TEAM_RED )
@@ -1248,6 +1255,13 @@ void CTFPlayerShared::OnRemoveTeleported( void )
 #endif
 }
 
+void CTFPlayerShared::OnRemoveTaunting( void )
+{
+#ifndef CLIENT_DLL
+	m_pOuter->m_iTaunt = -1;
+	m_pOuter->m_iTauntLayer = 0;
+#endif
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1549,7 +1563,7 @@ void CTFPlayerShared::OnSpyTouchedByEnemy( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::FadeInvis( float flInvisFadeTime )
 {
-	RemoveCond( TF_COND_STEALTHED );
+	RemoveCondInvis();
 
 	if ( flInvisFadeTime < 0.15 )
 	{
@@ -1580,7 +1594,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 	// Go invisible or appear.
 	if ( m_flInvisChangeCompleteTime > gpGlobals->curtime )
 	{
-		if ( InCond( TF_COND_STEALTHED ) )
+		if ( InCondInvis() )
 		{
 			flTargetInvis = 1.0f - ( ( m_flInvisChangeCompleteTime - gpGlobals->curtime ) );
 		}
@@ -1591,7 +1605,7 @@ void CTFPlayerShared::InvisibilityThink( void )
 	}
 	else
 	{
-		if ( InCond( TF_COND_STEALTHED ) )
+		if ( InCondInvis() )
 		{
 			flTargetInvis = 1.0f;
 		}
@@ -2749,23 +2763,12 @@ bool CTFPlayer::CanAttack( void )
 
 	Assert( pRules );
 
-	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCond( TF_COND_STEALTHED ) ) )
+	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCondInvis() ) )
 	{
-		if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
-		{
-			if (IsPlayerClass(TF_CLASS_SPY))
-			{
-#ifdef CLIENT_DLL
-				HintMessage( HINT_CANNOT_ATTACK_WHILE_CLOAKED, true, true );
-#endif
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-		return false;
+		if ( m_Shared.InCond( TF_COND_INVIS_POWERUP ) )
+			return true;
+		else
+			return false;
 	}
 
 	if ( ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() ) )
@@ -2954,3 +2957,42 @@ void CTFPlayerShared::RemoveCondShield( void )
 	RemoveCond( TF_COND_SHIELD );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::InCondCrit( void )
+{
+	if ( InCond( TF_COND_CRITBOOSTED ) || InCond( TF_COND_CRIT_POWERUP ) )
+		return true;
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveCondCrit( void )
+{
+	RemoveCond( TF_COND_CRITBOOSTED );
+	RemoveCond( TF_COND_CRIT_POWERUP );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::InCondInvis( void )
+{
+	if ( InCond( TF_COND_STEALTHED ) || InCond( TF_COND_INVIS_POWERUP ) )
+		return true;
+	else
+		return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::RemoveCondInvis( void )
+{
+	RemoveCond( TF_COND_STEALTHED );
+	RemoveCond( TF_COND_INVIS_POWERUP );
+}

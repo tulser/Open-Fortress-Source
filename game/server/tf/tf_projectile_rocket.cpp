@@ -20,7 +20,7 @@ PRECACHE_REGISTER( tf_projectile_rocket );
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Rocket, DT_TFProjectile_Rocket )
 
 BEGIN_NETWORK_TABLE( CTFProjectile_Rocket, DT_TFProjectile_Rocket )
-	SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropInt( SENDINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -88,6 +88,24 @@ int	CTFProjectile_Rocket::GetDamageType()
 
 	return iDmgType;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFProjectile_Rocket::GetCustomDamageType() 
+{ 
+	if ( m_bCritical >= 2)
+	{
+		DevMsg("Projectile Has Crit Powerup flag\n");
+		return TF_DMG_CRIT_POWERUP;
+	}
+	else
+	{
+		DevMsg("Projectile is normal\n");
+		return TF_DMG_CUSTOM_NONE;
+	}
+}
+
 
 
 //-----------------------------------------------------------------------------

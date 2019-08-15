@@ -116,6 +116,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int GetWeaponID( void ) const;
 	bool IsWeapon( int iWeapon ) const;
 	virtual int	GetDamageType() const { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
+	
 	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 
 	int			GetGGLevel( void ){ return m_iGGLevel; }
@@ -140,15 +141,18 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool			CanSecondaryAttack( void ) const;
 	virtual bool			CanDropManualy( void ) const;
 	virtual bool			DontAutoEquip( void ) const;
+	virtual bool 			LoadsManualy( void ) const;
+	virtual int 			GetDefaultClip1( void ) const;
 	
 	virtual void PlayWeaponShootSound( void );
 	
 	// Attacks.
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();
+	virtual bool FiresInBursts();
 	void CalcIsAttackCritical( void );
 	virtual bool CalcIsAttackCriticalHelper();
-	bool IsCurrentAttackACrit() { return m_bCurrentAttackIsCrit; }
+	int IsCurrentAttackACrit();
 
 	// Reloads.
 	virtual bool Reload( void );
@@ -165,13 +169,17 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
 	
+	// Reloading
+	virtual	void			CheckReload( void );	
+	
 	void			BurstFire( void );
 	void			BeginBurstFire( void );
 
-	bool InBurst( )
+	bool InBurst()
 	{
 		return m_iShotsDue > 0;
 	}
+	virtual bool InBarrage();
 	
 	virtual float	GetBurstTotalTime( void ) { return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
 		
@@ -311,6 +319,7 @@ protected:
 	CNetworkVar(float, m_flNextShotTime);
 
 	CNetworkVar( int, m_iShotsDue );
+	CNetworkVar( bool, m_bInBarrage );
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };

@@ -18,7 +18,7 @@
 #endif
 
 #define ZOOM_CONTEXT		"ZoomContext"
-#define ZOOM_REZOOM_TIME	1.4f
+#define ZOOM_REZOOM_TIME	0.1f
 
 //=============================================================================
 //
@@ -49,6 +49,7 @@ public:
 
 	virtual void PrimaryAttack();
 	virtual void ItemPostFrame();
+	virtual bool FiresInBursts();
 	virtual void SecondaryAttack( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
 	

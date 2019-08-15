@@ -117,6 +117,7 @@ public:
 	bool 	m_bDisableSecondaryAttack;
 	int 	m_iCost;
 	bool	m_bBuyable;
+	bool	m_bLoadsManualy;
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
@@ -162,14 +163,14 @@ public:
 	char	m_szExplosionWaterEffectClassic[128];	
 	
 	bool	m_bDontDrop;
-
+	
 	float	m_flCenteredViewmodelOffsetX;
 	float	m_flCenteredViewmodelOffsetY;
 	float	m_flCenteredViewmodelOffsetZ;
 
 	float	m_flCenteredViewmodelAngleX;
 	float	m_flCenteredViewmodelAngleY;
-	float	m_flCenteredViewmodelAngleZ;
+	float	m_flCenteredViewmodelAngleZ;	
 };
 
 #endif // TF_WEAPON_PARSE_H

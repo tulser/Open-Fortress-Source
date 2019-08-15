@@ -41,6 +41,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	
 	m_bBuyable = false;
 	
+	m_bLoadsManualy = false;
+	
 	szScoutViewModel[0] = 0;
 	szSoldierViewModel[0] = 0;
 	szPyroViewModel[0] = 0;
@@ -234,15 +236,16 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
 	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
 	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
-
+	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
+	
 	m_flCenteredViewmodelOffsetX = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_X", 0.0f );
 	m_flCenteredViewmodelOffsetY = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Y", 0.0f );
 	m_flCenteredViewmodelOffsetZ = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Z", 0.0f );
 
 	m_flCenteredViewmodelAngleX = pKeyValuesData->GetFloat("CenteredViewmodelAngle_X", 0.0f );
 	m_flCenteredViewmodelAngleY = pKeyValuesData->GetFloat("CenteredViewmodelAngle_Y", 0.0f );
-	m_flCenteredViewmodelAngleZ = pKeyValuesData->GetFloat("CenteredViewmodelAngle_Z", 0.0f );
-
+	m_flCenteredViewmodelAngleZ = pKeyValuesData->GetFloat("CenteredViewmodelAngle_Z", 0.0f );	
+	
 	Q_strncpy( szScoutViewModel, pKeyValuesData->GetString( "scout_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szSoldierViewModel, pKeyValuesData->GetString( "soldier_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szPyroViewModel, pKeyValuesData->GetString( "pyro_viewmodel" ), MAX_WEAPON_STRING );

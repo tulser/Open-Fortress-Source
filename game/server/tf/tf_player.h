@@ -1,4 +1,4 @@
-//========= Copyright ï¿½ 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -202,6 +202,7 @@ public:
 	// Utility.
 	void				RemoveOwnedEnt( char *pEntName, bool bGrenade = false );
 	void				UpdateModel( void );
+	void				UpdateArmModel( void );
 	void				UpdateSkin( int iTeam );
 
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
@@ -426,13 +427,18 @@ public:
 	void				Manage3WaveWeapons( TFPlayerClassData_t *pData );
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
-	void				ManageBuilderWeapons( TFPlayerClassData_t *pData );
+	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
 	void				Taunt( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }
+	virtual void		SetTauntEffect( int nTaunt, float flThinkTime, int nTauntLayer = 0 );
+	virtual void		TauntEffectThink( void );
 	QAngle				m_angTauntCamera;
+	CNetworkVar( int,	m_iTaunt);
+	CNetworkVar( int,	m_iTauntLayer); //  Just as Onions, Taunts have layers
+	CNetworkVar( float,	m_fTauntEffectTick);
 
 	virtual float		PlayScene( const char *pszScene, float flDelay = 0.0f, AI_Response *response = NULL, IRecipientFilter *filter = NULL );
 	void				ResetTauntHandle( void )				{ m_hTauntScene = NULL; }
@@ -609,6 +615,7 @@ public:
 //	void				PowerplayThink( void );
 //	float				m_flPowerPlayTime;
 	void				SetCustomModel( inputdata_t &inputdata );
+	void				SetCustomArmModel( inputdata_t &inputdata );
 	void				AddMoney( inputdata_t &inputdata );
 	void				SetMoney( inputdata_t &inputdata );
 	void				InputStripWeapons( inputdata_t &inputdata );

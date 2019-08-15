@@ -48,6 +48,7 @@ ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles random crits." );
+ConVar ofd_crit_multiplier( "ofd_crit_multiplier", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles infinite ammo." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
@@ -124,13 +125,14 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropInt( RECVINFO( m_iReloadMode ) ),
 	RecvPropBool( RECVINFO( m_bResetParity ) ), 
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
+	RecvPropBool( RECVINFO( m_bInBarrage ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bLowered ) ),
 	SendPropBool( SENDINFO( m_bResetParity ) ),
 	SendPropInt( SENDINFO( m_iReloadMode ), 4, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
-
+	SendPropBool( SENDINFO( m_bInBarrage ) ),
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
@@ -150,6 +152,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bLowered, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bInBarrage, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 #if defined( CLIENT_DLL )
 	DEFINE_PRED_FIELD( m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
@@ -213,6 +216,8 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iCurrentSeed = -1;
 	m_iGGLevel = -1;
 	m_bNeverStrip = false;
+
+	m_bQuakeRLHack = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -270,6 +275,14 @@ bool CTFWeaponBase::DontAutoEquip( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFWeaponBase::LoadsManualy( void ) const
+{
+	return GetTFWpnData().m_bLoadsManualy;
+	
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
 	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
@@ -293,7 +306,7 @@ int CTFWeaponBase::GetPosition( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDamage( void ) const
 {
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > 2 ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 
@@ -520,6 +533,17 @@ const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+int CTFWeaponBase::GetDefaultClip1( void ) const
+{
+	int DefClip = GetWpnData().iDefaultClip1;
+	if ( LoadsManualy() )
+		DefClip = 0;
+	return DefClip;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFWeaponBase::Drop( const Vector &vecVelocity )
 {
 #ifndef CLIENT_DLL
@@ -546,6 +570,24 @@ void CTFWeaponBase::PlayWeaponShootSound(void)
 	{
 		WeaponSound(SINGLE);
 	}
+}
+
+int CTFWeaponBase::IsCurrentAttackACrit()
+{
+	int nCritMod = m_bCurrentAttackIsCrit;
+	if ( nCritMod )
+	{
+		return m_bCurrentAttackIsCrit;
+	}
+	else
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_CRIT_POWERUP ) )
+			return 2;
+		else
+			return false;
+	}
+	return m_bCurrentAttackIsCrit;
 }
 
 //-----------------------------------------------------------------------------
@@ -609,8 +651,12 @@ void CTFWeaponBase::BurstFire( void )
 {
 	PrimaryAttack();
 	PlayWeaponShootSound();
+	if ( FiresInBursts() )
 	m_iShotsDue--;
-	m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+	if ( FiresInBursts() )
+		m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+	else if ( LoadsManualy() )
+		m_flNextPrimaryAttack = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
 }
 
 //-----------------------------------------------------------------------------
@@ -628,6 +674,15 @@ void CTFWeaponBase::BeginBurstFire(void)
 	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay;
 }
 
+bool CTFWeaponBase::FiresInBursts( void )
+{
+	return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0;
+}
+
+bool CTFWeaponBase::InBarrage(void)
+{
+	return m_bInBarrage;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -667,7 +722,7 @@ void CTFWeaponBase::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 // Purpose: Most calls use the prediction seed
 //-----------------------------------------------------------------------------
-void CTFWeaponBase::CalcIsAttackCritical( void)
+void CTFWeaponBase::CalcIsAttackCritical( void )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
@@ -816,7 +871,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	else
 	{
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
-		if ( UsesClipsForAmmo1() && !AutoFiresFullClip() && 
+		if ( UsesClipsForAmmo1() && !LoadsManualy() && 
 			 (GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
 			 m_flNextPrimaryAttack < gpGlobals->curtime && 
 			 m_flNextSecondaryAttack < gpGlobals->curtime )
@@ -917,6 +972,9 @@ bool CTFWeaponBase::ReloadSingly( void )
 			}
 
 #ifndef CLIENT_DLL
+			if (m_bQuakeRLHack)
+				WeaponSound( RELOAD_NPC );
+			else
 				WeaponSound( RELOAD );
 #endif
 
@@ -1226,7 +1284,115 @@ void CTFWeaponBase::ItemPostFrame( void )
 		return;
 
 	// Call the base item post frame.
-	BaseClass::ItemPostFrame();
+
+	//Track the duration of the fire
+	//FIXME: Check for IN_ATTACK2 as well?
+	//FIXME: What if we're calling ItemBusyFrame?
+	m_fFireDuration = ( pOwner->m_nButtons & IN_ATTACK ) ? ( m_fFireDuration + gpGlobals->frametime ) : 0.0f;
+
+	if ( UsesClipsForAmmo1() )
+	{
+		CheckReload();
+	}
+
+	bool bFired = false;
+
+	// Secondary attack has priority
+	if ((pOwner->m_nButtons & IN_ATTACK2) && CanPerformSecondaryAttack() )
+	{
+		if (UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType)<=0 )
+		{
+			if (m_flNextEmptySoundTime < gpGlobals->curtime)
+			{
+				WeaponSound(EMPTY);
+				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
+			}
+		}
+		else if (pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false)
+		{
+			// This weapon doesn't fire underwater
+			WeaponSound(EMPTY);
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
+			return;
+		}
+		else
+		{
+			// FIXME: This isn't necessarily true if the weapon doesn't have a secondary fire!
+			// For instance, the crossbow doesn't have a 'real' secondary fire, but it still 
+			// stops the crossbow from firing on the 360 if the player chooses to hold down their
+			// zoom button. (sjb) Orange Box 7/25/2007
+#if !defined(CLIENT_DLL)
+			if( !IsX360() || !ClassMatches("weapon_crossbow") )
+#endif
+			{
+				bFired = ShouldBlockPrimaryFire();
+			}
+
+			SecondaryAttack();
+
+			// Secondary ammo doesn't have a reload animation
+			if ( UsesClipsForAmmo2() )
+			{
+				// reload clip2 if empty
+				if (m_iClip2 < 1)
+				{
+					if ( of_infiniteammo.GetBool() != 1 ) 
+						pOwner->RemoveAmmo( 1, m_iSecondaryAmmoType );
+					
+					
+					m_iClip2 = m_iClip2 + 1;
+				}
+			}
+		}
+	}
+	
+	if ( !bFired && !LoadsManualy() && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+	{
+		// Clip empty? Or out of ammo on a no-clip weapon?
+		if ( !IsMeleeWeapon() &&  
+			(( UsesClipsForAmmo1() && m_iClip1 <= 0 ) || ( !UsesClipsForAmmo1() && m_iReserveAmmo<=0 )) )
+		{
+			HandleFireOnEmpty();
+		}
+		else if (pOwner->GetWaterLevel() == 3 && m_bFiresUnderwater == false)
+		{
+			// This weapon doesn't fire underwater
+			WeaponSound(EMPTY);
+			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
+			return;
+		}
+		else
+		{
+			//NOTENOTE: There is a bug with this code with regards to the way machine guns catch the leading edge trigger
+			//			on the player hitting the attack key.  It relies on the gun catching that case in the same frame.
+			//			However, because the player can also be doing a secondary attack, the edge trigger may be missed.
+			//			We really need to hold onto the edge trigger and only clear the condition when the gun has fired its
+			//			first shot.  Right now that's too much of an architecture change -- jdw
+			
+			// If the firing button was just pressed, or the alt-fire just released, reset the firing time
+			if ( ( pOwner->m_afButtonPressed & IN_ATTACK ) || ( pOwner->m_afButtonReleased & IN_ATTACK2 ) )
+			{
+				 m_flNextPrimaryAttack = gpGlobals->curtime;
+			}
+
+			PrimaryAttack();
+
+#ifdef CLIENT_DLL
+			pOwner->SetFiredWeapon( true );
+#endif
+		}
+	}
+
+	// -----------------------
+	//  Reload pressed / Clip Empty
+	//  Can only start the Reload Cycle after the firing cycle
+	if ( pOwner->m_nButtons & IN_RELOAD 
+		&& m_flNextPrimaryAttack <= gpGlobals->curtime && UsesClipsForAmmo1() && !m_bInReload ) 
+	{
+		// reload when reload is pressed or if we're loading a barrage, or if no buttons are down and weapon is empty.
+		Reload();
+		m_fFireDuration = 0.0f;
+	}
 
 	// Check for reload singly interrupts.
 	if ( m_bReloadsSingly )
@@ -1236,7 +1402,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	// -----------------------
 	//  No buttons down
 	// -----------------------
-	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD)))
+	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD) || InBarrage()))
 	{
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -1245,6 +1411,66 @@ void CTFWeaponBase::ItemPostFrame( void )
 		}
 	}
 }
+
+
+//====================================================================================
+// WEAPON RELOAD TYPES
+//====================================================================================
+void CTFWeaponBase::CheckReload( void )
+{
+	if ( m_bReloadsSingly )
+	{
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( !pOwner )
+			return;
+
+		if ((m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+		{
+			if ( ( pOwner->m_nButtons & (IN_ATTACK | IN_ATTACK2) ) && m_iClip1 > 0 )
+			{
+				m_bInReload = false;
+				return;
+			}
+
+			// If out of ammo end reload
+			if ( m_iReserveAmmo <=0 )
+			{
+				FinishReload();
+				return;
+			}
+			// If clip not full reload again
+			else if (m_iClip1 < GetMaxClip1())
+			{
+				// Add them to the clip
+				m_iClip1 += 1;
+				if ( of_infiniteammo.GetBool() != 1 ) 
+					m_iReserveAmmo -= 1;
+
+				Reload();
+				return;
+			}
+			// Clip full, stop reloading
+			else
+			{
+				FinishReload();
+				m_flNextPrimaryAttack	= gpGlobals->curtime;
+				m_flNextSecondaryAttack = gpGlobals->curtime;
+				return;
+			}
+		}
+	}
+	else
+	{
+		if ( (m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+		{
+			FinishReload();
+			m_flNextPrimaryAttack	= gpGlobals->curtime;
+			m_flNextSecondaryAttack = gpGlobals->curtime;
+			m_bInReload = false;
+		}
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

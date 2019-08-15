@@ -111,7 +111,7 @@ END_PREDICTION_DATA()
 #define SF_DETONATE		0x0001
 
 // UNDONE: temporary scorching for PreAlpha - find a less sleazy permenant solution.
-void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
+void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
 {
 #if !defined( CLIENT_DLL )
 	
@@ -173,7 +173,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
 	Vector vecReported = m_hThrower ? m_hThrower->GetAbsOrigin() : vec3_origin;
 	
 	CTakeDamageInfo info( this, m_hThrower, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
-
+	info.SetDamageCustom( bitsCustomDamageType );
 	RadiusDamage( info, GetAbsOrigin(), m_DmgRadius, CLASS_NONE, NULL );
 
 	UTIL_DecalTrace( pTrace, "Scorch" );

@@ -115,7 +115,7 @@ private:
 	virtual void PlayWeaponShootSound( void ) {}	// override base class call to play shoot sound; we handle that ourselves separately
 
 	CNetworkVar( MinigunState_t, m_iWeaponState );
-	CNetworkVar( bool, m_bCritShot );
+	CNetworkVar( int, m_bCritShot );
 
 	float			m_flNextFiringSpeech;
 	float			m_flStartedFiringAt;

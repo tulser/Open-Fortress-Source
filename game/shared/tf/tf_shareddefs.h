@@ -341,7 +341,7 @@ enum TFWeaponIDs
 	TF_WEAPON_TRIPMINE,
 	TF_WEAPON_LIGHTNING_GUN,
 	TF_WEAPON_GRAPPLE,
-
+	TF_WEAPON_GRANT,
 	TFC_WEAPON_SHOTGUN_SB,
 	TFC_WEAPON_SHOTGUN_DB,
 	TFC_WEAPON_CROWBAR,
@@ -497,6 +497,8 @@ enum
 	TF_COND_SHIELD_CHARGE,
 	TF_COND_BERSERK,
 	TF_COND_SHIELD,
+	TF_COND_CRIT_POWERUP,
+	TF_COND_INVIS_POWERUP,
 
 	// The following conditions all expire faster when the player is being healed
 	// If you add a new condition that shouldn't have this behavior, add it before this section.
@@ -763,6 +765,7 @@ enum
 	TF_DMG_CUSTOM_MINIGUN,
 	TF_DMG_CUSTOM_SUICIDE,
 	TF_DMG_TELEFRAG,
+	TF_DMG_CRIT_POWERUP,
 };
 
 enum

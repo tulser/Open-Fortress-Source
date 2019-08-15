@@ -29,6 +29,7 @@
 #include "c_tf_player.h"
 #include "ihudlcd.h"
 #include "tf_hud_ammostatus.h"
+#include "tf_gamerules.h"
 
 using namespace vgui;
 
@@ -223,7 +224,7 @@ void CTFHudWeaponAmmo::OnThink()
 					UpdateAmmoLabels( true, true, false );
 
 					SetDialogVariable( "Ammo", m_nAmmo );
-					if ( of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2 )
+					if ( of_infiniteammo.GetBool() || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
 						SetDialogVariable( "AmmoInReserve", "Inf" );
 					else
 						SetDialogVariable( "AmmoInReserve", m_nAmmo2 );
@@ -232,12 +233,12 @@ void CTFHudWeaponAmmo::OnThink()
 				{
 					UpdateAmmoLabels( false, false, true );
 					if ( of_noreload.GetBool() )
-						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2)
+						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE)
 							SetDialogVariable( "Ammo", "Inf" );
 						else
 							SetDialogVariable( "Ammo", m_nAmmo+m_nAmmo2 );
 					else
-						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == 2)
+						if (of_infiniteammo.GetBool() || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE)
 							SetDialogVariable( "Ammo", "Inf" );
 						else
 							SetDialogVariable( "Ammo", m_nAmmo );

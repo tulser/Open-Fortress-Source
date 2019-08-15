@@ -115,6 +115,7 @@ extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
 extern ConVar of_crouchjump;
 extern ConVar ofd_forceclass;
+extern ConVar ofd_resistance;
 extern ConVar mp_disable_respawn_times;
 extern ConVar fraglimit;
 extern ConVar of_bunnyhop_max_speed_factor;
@@ -1080,7 +1081,7 @@ void CTFGameRules::Activate()
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == 6 )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == GUN_GAME )
 	{
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n");
@@ -1596,7 +1597,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// Full damage, we hit this entity directly
 			flDistanceToEntity = 0;
 			
-			if ( ofd_mutators.GetInt() == 5 && !TFGameRules()->IsGGGamemode() )
+			if ( ofd_mutators.GetInt() == ROCKET_ARENA && !TFGameRules()->IsGGGamemode() )
 				bInstantKill = true;
 		}
 		else if ( pEntity->IsPlayer() )
@@ -1631,30 +1632,37 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		if ( pEntity == info.GetAttacker() )
 		{
 			// DevMsg("Damaged yourself.");
-			flNonSelfDamage = flAdjustedDamage;
-			
-			switch ( of_selfdamage.GetInt() )
+			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
+			CTFPlayer *pSelf = ToTFPlayer(pEntity);
+			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
+				flNonSelfDamage *= ofd_resistance.GetFloat();
+			if ( pSelf && pSelf->m_Shared.InCondUber() )
+				flNonSelfDamage = 0;
+			else
 			{
-				case -1:
-					switch ( ofd_mutators.GetInt() )
-					{	
-						case 3:
-						case 4:
-						case 5:
-							flAdjustedDamage = 0.0f;
-							break;
-						default:
-							flAdjustedDamage = flAdjustedDamage * 0.75f;
-							break;
-					}
-					break;
-				case 0:
-					flAdjustedDamage = flAdjustedDamage * 0.0f;
-					break;
-				default:
-				case 1:
-					flAdjustedDamage = flAdjustedDamage * 0.75f;
-					break;
+				switch ( of_selfdamage.GetInt() )
+				{
+					case -1:
+						switch ( ofd_mutators.GetInt() )
+						{	
+						case CLAN_ARENA:
+						case UNHOLY_TRINITY:
+						case ROCKET_ARENA:
+								flAdjustedDamage = 0.0f;
+								break;
+							default:
+								flAdjustedDamage = flAdjustedDamage * 0.75f;
+								break;
+						}
+						break;
+					case 0:
+						flAdjustedDamage = flAdjustedDamage * 0.0f;
+						break;
+					default:
+					case 1:
+						flAdjustedDamage = flAdjustedDamage * 0.75f;
+						break;
+				}
 			}
 		}
 		/*
@@ -2028,7 +2036,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 							int bFoundLiveOne = 0;
 							for ( int player = 0; player < iPlayers; player++ )
 							{
-								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->Lives() > 0 )
+								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->IsAlive())
 								{
 									bFoundLiveOne++;
 									if ( pTeam->GetTeamNumber() != TF_TEAM_MERCENARY )
@@ -2877,7 +2885,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			CalcDominationAndRevenge( pAssister, pTFPlayerVictim, true, &iDeathFlags );
 		}
 
-		if (IsTeamplay() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() )
+		if ( IsTeamplay() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() && !IsArenaGamemode() )
 		{
 			TFTeamMgr()->AddTeamScore( pTFPlayerScorer->GetTeamNumber(), 1 );
 		}
@@ -3853,7 +3861,7 @@ bool CTFGameRules::PlayerMayCapturePoint( CBasePlayer *pPlayer, int iPointIndex,
 	}
 
 	// Disguised and invisible spies cannot capture points
-	if ( pTFPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( pTFPlayer->m_Shared.InCondInvis() )
 	{
 		if ( pszReason )
 		{

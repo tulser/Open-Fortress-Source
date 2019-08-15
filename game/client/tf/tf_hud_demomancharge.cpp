@@ -125,6 +125,7 @@ void CHudDemomanChargeMeter::OnTick( void )
 
 			// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
 			C_BaseEntity::StopSound(pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp");
+			C_BaseEntity::StopSound(pPlayer->entindex(), "Weapon_DynamiteBundle.Fuse");
 
 			mbCharging = false;
 		}
@@ -152,6 +153,7 @@ void CHudDemomanChargeMeter::OnTick( void )
 					// int index = player->entindex();
 
 					// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
+					if ( pWpn->GetWeaponID() != TF_WEAPON_DYNAMITE_BUNDLE )
 					C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
 
 					mbCharging = true;
@@ -166,7 +168,7 @@ void CHudDemomanChargeMeter::OnTick( void )
 
 					// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
 					C_BaseEntity::StopSound( pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
-
+					C_BaseEntity::StopSound( pPlayer->entindex(), "Weapon_DynamiteBundle.Fuse" );
 					mbCharging = false;
 				}
 			}

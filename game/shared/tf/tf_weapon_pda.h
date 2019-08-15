@@ -44,7 +44,8 @@ public:
 #endif
 
 	virtual bool	ShouldShowControlPanels( void );
-
+	
+	virtual	void	Equip( CBaseCombatCharacter *owner );
 	virtual void	PrimaryAttack();
 	virtual void	SecondaryAttack();
 	virtual int		GetWeaponID( void ) const						{ return TF_WEAPON_PDA; }
