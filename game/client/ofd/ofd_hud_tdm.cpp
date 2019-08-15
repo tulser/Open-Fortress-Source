@@ -208,7 +208,7 @@ ConVar vert3_x( "vert3_x", "1", FCVAR_CHEAT );
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFKillsProgressRed::Paint()
+void CTFKillsProgressBlu::Paint()
 {
 	BaseClass::Paint();
 
@@ -244,7 +244,7 @@ void CTFKillsProgressRed::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFKillsProgressBlu::Paint()
+void CTFKillsProgressRed::Paint()
 {
 	BaseClass::Paint();
 
@@ -262,10 +262,10 @@ void CTFKillsProgressBlu::Paint()
 	// blend in the red "damage" part
 	surface()->DrawSetTexture( m_iMaterialIndex );
 	
-	Vector2D uv11( uv1, uv2 );						//topleft
-	Vector2D uv21( uv2, uv2 - m_flProgress );		//topright
-	Vector2D uv22( uv2, uv2 - m_flProgress );		//bottomright
-	Vector2D uv12( uv1, uv2 );						//bottomleft
+	Vector2D uv11( uv1, uv2 - m_flProgress);		//topleft
+	Vector2D uv21( uv2, uv2 );						//topright
+	Vector2D uv22( uv2, uv2 );						//bottomright
+	Vector2D uv12( uv1, uv2 - m_flProgress );		//bottomleft
 
 	vert[0].Init( Vector2D( xpos + w - flProgressX, ypos ), uv11 );
 	vert[1].Init( Vector2D( xpos + w, ypos ), uv21 );
@@ -275,22 +275,6 @@ void CTFKillsProgressBlu::Paint()
 	surface()->DrawSetColor( GetFgColor() );
 	
 	surface()->DrawTexturedPolygon( 4, vert );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFKillsProgressRed::CTFKillsProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
-{
-	m_flProgress = 1.0f;
-	
-	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_tdm_right" );
-	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
-	{
-		m_iMaterialIndex = surface()->CreateNewTextureID();	
-	}
-
-	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_right", true, false );
 }
 
 //-----------------------------------------------------------------------------
@@ -307,4 +291,20 @@ CTFKillsProgressBlu::CTFKillsProgressBlu(Panel *parent, const char *panelName) :
 	}
 
 	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_left", true, false );	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFKillsProgressRed::CTFKillsProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
+{
+	m_flProgress = 1.0f;
+
+	m_iMaterialIndex = surface()->DrawGetTextureId("hud/objectives_tdm_right");
+	if (m_iMaterialIndex == -1) // we didn't find it, so create a new one
+	{
+		m_iMaterialIndex = surface()->CreateNewTextureID();
+	}
+
+	surface()->DrawSetTextureFile(m_iMaterialIndex, "hud/objectives_tdm_right", true, false);
 }
