@@ -18,7 +18,7 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_Rocket, DT_TFProjectile_Rocket )
 extern ConVar of_muzzlelight;
 
 BEGIN_NETWORK_TABLE( C_TFProjectile_Rocket, DT_TFProjectile_Rocket )
-	RecvPropBool( RECVINFO( m_bCritical ) ),
+	RecvPropInt( RECVINFO( m_bCritical ) ),
 END_NETWORK_TABLE()
 
 //-----------------------------------------------------------------------------

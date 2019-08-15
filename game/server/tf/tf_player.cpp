@@ -87,6 +87,7 @@ extern ConVar	tf_stalematechangeclasstime;
 extern ConVar	ofd_mutators;
 extern ConVar	ofd_threewave;
 extern ConVar	of_infiniteammo;
+extern ConVar	ofd_crit_multiplier;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
@@ -285,6 +286,7 @@ int SendProxyArrayLength_PlayerObjects( const void *pStruct, int objectID )
 
 BEGIN_DATADESC( CTFPlayer )
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetCustomModel", SetCustomModel ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetCustomArmModel", SetCustomArmModel ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddMoney", AddMoney ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoney", SetMoney ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StripWeapons", InputStripWeapons )
@@ -482,6 +484,7 @@ void CTFPlayer::TFPlayerThink()
 	if ( ofd_dynamic_color_update.GetBool() )
 		UpdatePlayerColor();
 
+	TauntEffectThink();
 	// Check to see if we are in the air and taunting.  Stop if so.
 /*	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
@@ -923,7 +926,7 @@ void CTFPlayer::Spawn()
 
 	if ( GetViewModel( TF_VIEWMODEL_SPYWATCH ) )
 		GetViewModel( TF_VIEWMODEL_SPYWATCH )->SetModel( "" );
-
+	
 	GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 
 	if (IsRetroModeOn())
@@ -1096,6 +1099,8 @@ void CTFPlayer::Spawn()
 	m_bGotKilled = false;
 	m_bDied = false;
 
+	m_iTaunt = -1;
+	
 	UpdateModel();
 }
 
@@ -1315,7 +1320,13 @@ void CTFPlayer::GiveDefaultItems()
 		ManageRegularWeapons( pData );
 
 	// Give a builder weapon for each object the player class is allowed to build
-	ManageBuilderWeapons( pData );
+	switch ( GetPlayerClass()->GetClassIndex() )
+	{
+		case TF_CLASS_ENGINEER:
+		case TF_CLASS_SPY:
+			ManageBuilderWeapons( pData );
+			break;
+	}
 }
 
 void CTFPlayer::StripWeapons( void )
@@ -1397,7 +1408,7 @@ int CTFPlayer::RestockAmmo( float PowerupSize )
 	{
 		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 		//If we have a weapon in this slot, count up
-		if ( pWeapon && pWeapon->GetWeaponID() != TF_WEAPON_NONE )
+		if ( pWeapon )
 		{
 			if ( pWeapon->m_iReserveAmmo < pWeapon->GetMaxReserveAmmo() )
 			{
@@ -1440,20 +1451,26 @@ int CTFPlayer::RestockCloak( float PowerupSize )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
+void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch )
 {
 	if ( m_hActiveWeapon )
 	{
 	    int active = m_hActiveWeapon.Get()->GetSlot();
 	    int last = m_hActiveWeapon.Get()->GetSlot();
 	    if (GetLastWeapon())
-	    	last = GetLastWeapon()->GetSlot();
+		{
+			CTFWeaponBase *pLastWeapon = (CTFWeaponBase *)GetLastWeapon();
+			if ( pLastWeapon && pLastWeapon->GetWeaponID() == TF_WEAPON_INVIS )
+				last = 1;
+			else
+				last = GetLastWeapon()->GetSlot();
+		}
 	    if ( pData->m_aBuildable[0] != OBJ_LAST )
 	    {
 	    	CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
         
 	    	// Give the player a new builder weapon when they switch between engy and spy
-	    	if ( pBuilder && !GetPlayerClass()->CanBuildObject( pBuilder->GetSubType() ) )
+	    	if ( pBuilder && !GetPlayerClass()->CanBuildObject( pBuilder->GetSubType() ) && bSwitch )
 	    	{
 	    		Weapon_Detach( pBuilder );
 	    		UTIL_Remove( pBuilder );
@@ -1500,8 +1517,11 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData )
 	    	Weapon_Detach( pWpn );
 	    	UTIL_Remove( pWpn );
 	    }
-	    Weapon_Switch( Weapon_GetSlot( active ) );
-	    Weapon_SetLast( Weapon_GetSlot( last ) );
+		if ( bSwitch )
+		{
+			Weapon_Switch( Weapon_GetSlot( active ) );
+			Weapon_SetLast( Weapon_GetSlot( last ) );
+		}
 	}
 }
 //-----------------------------------------------------------------------------
@@ -1578,7 +1598,7 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				if ( pWeapon )
 				{
 					pWeapon->DefaultTouch( this );
-					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID()  != TF_WEAPON_INVIS )
+					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID() != TF_WEAPON_INVIS )
 					{
 						pWeaponSlot[1] = pWeaponSlot[0];
 						pWeaponSlot[0] = pWeapon->GetSlot();
@@ -2510,6 +2530,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum )
 		RemoveNemesisRelationships();
 	}
 
+
 	BaseClass::ChangeTeam( iTeamNum );
 
 	if ( iTeamNum == TEAM_UNASSIGNED )
@@ -3235,7 +3256,7 @@ bool CTFPlayer::CanAutoswitch( void )
 	if ( bShouldSwitch > 1 )
 		return true;
 	
-	if ( GetNextAttack() > gpGlobals->curtime || m_nButtons & IN_ATTACK || bShouldSwitch < 1 )
+	if ( GetNextAttack() > gpGlobals->curtime || m_nButtons & IN_ATTACK || bShouldSwitch < 1 || m_Shared.InCond( TF_COND_TAUNTING ) )
 		return false;
 	
 	return true;
@@ -3704,6 +3725,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	int bTookDamage = 0;
  
 	int bitsDamage = inputInfo.GetDamageType();
+	int bitsCustomDamage = inputInfo.GetDamageCustom();
 
 	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
 	if ( m_Shared.InCondUber() )
@@ -3771,8 +3793,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				Warning( "    CRITICAL!\n");
 			}
-
-			flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
+			if ( bitsCustomDamage & TF_DMG_CRIT_POWERUP )
+				flDamage = info.GetDamage() * ofd_crit_multiplier.GetFloat();
+			else
+				flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
 
 			// Show the attacker, unless the target is a disguised spy
 			if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() && !m_Shared.InCond( TF_COND_DISGUISED ) )
@@ -4458,7 +4482,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	RemoveTeleportEffect();
 	
 	// Stop being invisible
-	m_Shared.RemoveCond( TF_COND_STEALTHED );
+	m_Shared.RemoveCondInvis();
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
@@ -4510,14 +4534,12 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-	
 	if ( GetActiveWeapon() )
 	{
 		GetActiveWeapon()->SendViewModelAnim( ACT_IDLE );
 		GetActiveWeapon()->Holster();
 		SetActiveWeapon( NULL );
 	}
-	
 
 	ClearZoomOwner();
 
@@ -5212,7 +5234,6 @@ void CTFPlayer::RemoveAllItems( bool removeSuit )
 			gameeventmanager->FireEvent( event );
 		}
 	}
-	
 
 	if ( m_hOffHandWeapon.Get() )
 	{ 
@@ -5228,7 +5249,6 @@ void CTFPlayer::RemoveAllItems( bool removeSuit )
 
 		m_hOffHandWeapon = NULL;
 	}
-	
 
 	Weapon_SetLast( NULL );
 	UpdateClientData();
@@ -5262,6 +5282,18 @@ void CTFPlayer::UpdateModel( void )
 		SetModel( GetPlayerClass()->GetTFCModelName() );
 	else
 		SetModel( GetPlayerClass()->GetModelName() );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::UpdateArmModel( void )
+{
+	if ( IsRetroModeOn() )
+		GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetTFCArmModelName() );
+	else
+		GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 }
 
 //-----------------------------------------------------------------------------
@@ -6545,7 +6577,7 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveInvisibility( void )
 {
-	if ( !m_Shared.InCond( TF_COND_STEALTHED ) || TFGameRules()->IsDMGamemode() )
+	if ( !m_Shared.InCondInvis() || TFGameRules()->IsDMGamemode() )
 		return;
 
 	// remove quickly
@@ -7090,7 +7122,7 @@ void CTFPlayer::CheckUncoveringSpies( CTFPlayer *pTouchedPlayer )
 	}
 
 	// Only uncover if they're stealthed
-	if ( !pTouchedPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( !pTouchedPlayer->m_Shared.InCondInvis() )
 	{
 		return;
 	}
@@ -7098,6 +7130,13 @@ void CTFPlayer::CheckUncoveringSpies( CTFPlayer *pTouchedPlayer )
 	// pulse their invisibility
 	pTouchedPlayer->m_Shared.OnSpyTouchedByEnemy();
 }
+
+enum
+{
+	TF_TAUNT_HADUKEN = 0,
+	TF_TAUNT_POW,
+	TF_TAUNT_FENCING
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -7136,9 +7175,159 @@ void CTFPlayer::Taunt( void )
 
 		// Slam velocity to zero.
 //		SetAbsVelocity( vec3_origin );
+
+		if ( V_stricmp( szResponse, "scenes/player/pyro/low/taunt02.vcd" ) == 0 )
+		{
+			SetTauntEffect( TF_TAUNT_HADUKEN, 2.0f );
+		}
+		else if ( V_stricmp( szResponse, "scenes/player/heavy/low/taunt03_v1.vcd" ) == 0 || V_stricmp( szResponse, "scenes/player/heavy/low/taunt03.vcd" ) == 0|| V_stricmp( szResponse, "scenes/player/heavy/low/taunt03_v2.vcd" ) == 0 )
+		{
+			SetTauntEffect( TF_TAUNT_POW, 1.8f );
+		}
+		else if ( V_stricmp( szResponse, "scenes/player/spy/low/taunt03_v1.vcd" ) == 0 || V_stricmp( szResponse, "scenes/player/spy/low/taunt03_v2.vcd" ) == 0 )
+		{
+			SetTauntEffect( TF_TAUNT_FENCING, 1.8f );
+		}
 	}
 
 	pExpresser->DisallowMultipleScenes();
+}
+
+void CTFPlayer::SetTauntEffect( int nTaunt, float flThinkTime, int nTauntLayer )
+{
+	m_iTaunt = nTaunt;
+ 	m_fTauntEffectTick = gpGlobals->curtime + flThinkTime;
+	m_iTauntLayer = nTauntLayer;
+}
+
+void CTFPlayer::TauntEffectThink()
+{
+	if ( gpGlobals->curtime < m_fTauntEffectTick || m_iTaunt == -1 )
+		return;
+	
+	switch ( m_iTaunt )
+	{
+	case TF_TAUNT_POW:	
+		{
+			// Fire a bullet in the direction player was looking at.
+			Vector vecSrc, vecShotDir, vecEnd;
+			QAngle angShot = EyeAngles();
+			AngleVectors( angShot, &vecShotDir );
+			vecSrc = Weapon_ShootPosition();
+			vecEnd = vecSrc + vecShotDir * 500;
+
+			trace_t tr;
+			UTIL_TraceLine( vecSrc, vecEnd, MASK_SOLID|CONTENTS_HITBOX, this, COLLISION_GROUP_PLAYER, &tr );
+
+			if ( tr.fraction < 1.0f )
+			{
+				CBaseEntity *pEntity = tr.m_pEnt;
+				if ( pEntity && pEntity->IsPlayer() && ( !InSameTeam( pEntity ) || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY ) )
+				{
+					Vector vecForce, vecDamagePos;
+					QAngle angForce( -45, angShot[YAW], 0 );
+					AngleVectors( angForce, &vecForce );
+					vecForce *= 25000;
+
+					vecDamagePos = tr.endpos;
+
+					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET );
+					pEntity->TakeDamage( info );
+				}
+			}
+			m_iTaunt = -1;
+			break;
+		}
+	case TF_TAUNT_HADUKEN:
+		{
+			Vector vecAttackDir = BodyDirection2D();
+			Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
+			Vector mins = vecOrigin - Vector( 24, 24, 24 );
+			Vector maxs = vecOrigin + Vector( 24, 24, 24 );
+
+			QAngle angForce( -45, EyeAngles()[YAW], 0 );
+			Vector vecForce;
+			AngleVectors( angForce, &vecForce );
+			vecForce *= 25000;
+			float flDamage = 500;
+			int nDamageType = DMG_IGNITE;
+			CBaseEntity *pEnts[256];
+
+			int numEnts = UTIL_EntitiesInBox( pEnts, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
+
+			for ( int i = 0; i < numEnts; i++ )
+			{
+				CBaseEntity *pEntity = pEnts[i];
+
+				if ( pEntity == this || !pEntity->IsAlive() || ( InSameTeam( pEntity ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) || !FVisible( pEntity, MASK_SOLID ) )
+					continue;
+
+				Vector vecDamagePos = WorldSpaceCenter();
+				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
+
+				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType );
+				pEntity->TakeDamage( info );
+			}
+			m_iTaunt = -1;
+			break;
+		}
+		case TF_TAUNT_FENCING:
+		{
+			Vector vecAttackDir = BodyDirection2D();
+			Vector vecOrigin = WorldSpaceCenter() + vecAttackDir * 64;
+			Vector mins = vecOrigin - Vector( 24, 24, 24 );
+			Vector maxs = vecOrigin + Vector( 24, 24, 24 );
+
+			QAngle angForce( -45, EyeAngles()[YAW], 0 );
+			Vector vecForce;
+			AngleVectors( angForce, &vecForce );
+			vecForce *= 25000;
+			float flDamage = 0;
+			switch ( m_iTauntLayer )
+			{
+				case 0:
+				case 1:
+					flDamage = 25;
+					break;
+				case 2:
+					flDamage = 500;
+					break;
+			}
+			int nDamageType = DMG_SLASH;
+			CBaseEntity *pEnts[256];
+
+			int numEnts = UTIL_EntitiesInBox( pEnts, 256, mins, maxs, FL_CLIENT|FL_OBJECT );
+
+			for ( int i = 0; i < numEnts; i++ )
+			{
+				CBaseEntity *pEntity = pEnts[i];
+
+				if ( pEntity == this || !pEntity->IsAlive() || ( InSameTeam( pEntity ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) || !FVisible( pEntity, MASK_SOLID ) )
+					continue;
+
+				Vector vecDamagePos = WorldSpaceCenter();
+				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
+
+				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, nDamageType );
+				pEntity->TakeDamage( info );
+			}
+			switch ( m_iTauntLayer )
+			{
+				case 0:
+					SetTauntEffect( TF_TAUNT_FENCING, 0.33f, 1 );
+					break;
+				case 1:
+					SetTauntEffect( TF_TAUNT_FENCING, 1.8f, 2 );
+					break;
+				case 2:
+					m_iTaunt = -1;
+					break;
+			}
+			break;
+		}
+	default:
+		break;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -7196,7 +7385,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	criteriaSet.AppendCriteria( "killsthislife", UTIL_VarArgs( "%d", iTotalKills ) );
 	criteriaSet.AppendCriteria( "disguised", m_Shared.InCond( TF_COND_DISGUISED ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "invulnerable", m_Shared.InCondUber() ? "1" : "0" );
-	criteriaSet.AppendCriteria( "critboosted", m_Shared.InCond( TF_COND_CRITBOOSTED ) ? "1" : "0" );
+	criteriaSet.AppendCriteria( "critboosted", m_Shared.InCondCrit() ? "1" : "0" );
 	criteriaSet.AppendCriteria( "shielded", m_Shared.InCondShield() ? "1" : "0" );
 	criteriaSet.AppendCriteria( "beinghealed", m_Shared.InCond( TF_COND_HEALTH_BUFF ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "waitingforplayers", (TFGameRules()->IsInWaitingForPlayers() || TFGameRules()->IsInPreMatch()) ? "1" : "0" );
@@ -7261,7 +7450,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 				if ( !InSameTeam(pTFPlayer) )
 				{
 					// Prevent spotting stealthed enemies who haven't been exposed recently
-					if ( pTFPlayer->m_Shared.InCond( TF_COND_STEALTHED ) )
+					if ( pTFPlayer->m_Shared.InCondInvis() )
 					{
 						if ( pTFPlayer->m_Shared.GetLastStealthExposedTime() < (gpGlobals->curtime - 3.0) )
 						{
@@ -7898,7 +8087,7 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 { 
 	if ( IsPlayerClass( TF_CLASS_SPY ) )
 	{
-		if ( m_Shared.InCond( TF_COND_STEALTHED ) ||
+		if ( m_Shared.InCondInvis() ||
 			 m_Shared.InCond( TF_COND_DISGUISED ) ||
 			 m_Shared.InCond( TF_COND_DISGUISING ) )
 		{
@@ -7942,6 +8131,30 @@ void CTFPlayer::SetCustomModel(inputdata_t &inputdata)
 		GetPlayerClass()->SetCustomModel( "" );
 	}
 	UpdateModel();
+	DevMsg("CTFPlayer::SetCustomModel - Input successful, data input %s\n", inputdata.value.String());
+}
+
+
+void CTFPlayer::SetCustomArmModel(inputdata_t &inputdata)
+{
+	MDLCACHE_CRITICAL_SECTION();
+	InvalidateMdlCache();
+	if (inputdata.value.String())
+	{
+		PrecacheModel( inputdata.value.String() );
+		const char *pszModel = inputdata.value.String();
+		if ( pszModel && pszModel[0] )
+		{
+			int iModel = PrecacheModel( pszModel );
+			PrecacheGibsForModel( iModel );
+		}		
+		GetPlayerClass()->SetCustomArmModel( inputdata.value.String() );
+	}
+	else
+	{
+		GetPlayerClass()->SetCustomArmModel( "" );
+	}
+	UpdateArmModel();
 	DevMsg("CTFPlayer::SetCustomModel - Input successful, data input %s\n", inputdata.value.String());
 }
 

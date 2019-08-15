@@ -61,13 +61,13 @@ public:
 	virtual int   GetWeaponID( void ) const { return m_iWeaponID; }
 	void		  SetWeaponID( int iID ) { m_iWeaponID = iID; }
 
-	bool		  IsCritical( void )				{ return m_bCritical; }
-	virtual void  SetCritical( bool bCritical )		{ m_bCritical = bCritical; }
+	bool		  IsCritical( void )				{ return m_bCritical > 0; }
+	virtual void  SetCritical( int bCritical )		{ m_bCritical = bCritical; }
 
 private:
 
 	int				m_iWeaponID;
-	bool			m_bCritical;
+	int				m_bCritical;
 
 protected:
 
@@ -75,7 +75,7 @@ protected:
 	CNetworkVector( m_vInitialVelocity );
 
 	static CTFBaseProjectile *Create( const char *pszClassname, const Vector &vecOrigin, 
-		const QAngle &vecAngles, CBaseEntity *pOwner, float flVelocity, short iProjModelIndex, const char *pszDispatchEffect = NULL, CBaseEntity *pScorer = NULL, bool bCritical = false );
+		const QAngle &vecAngles, CBaseEntity *pOwner, float flVelocity, short iProjModelIndex, const char *pszDispatchEffect = NULL, CBaseEntity *pScorer = NULL, int bCritical = false );
 
 	virtual const char *GetProjectileModelName( void );
 	virtual float GetGravity( void ) { return 0.001f; }
@@ -112,6 +112,7 @@ public:
 
 	virtual Vector	GetDamageForce( void );
 	virtual int		GetDamageType( void );
+	virtual int		GetCustomDamageType( void );
 
 	unsigned int	PhysicsSolidMaskForEntity( void ) const;
 

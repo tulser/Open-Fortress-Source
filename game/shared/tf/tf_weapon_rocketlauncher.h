@@ -12,13 +12,17 @@
 #include "tf_weaponbase_gun.h"
 #include "tf_weaponbase_rocket.h"
 
+
 // Client specific.
 #ifdef CLIENT_DLL
+
 #define CTFRocketLauncher C_TFRocketLauncher
 #define CTFOriginal C_TFOriginal
 #define CTFSuperRocketLauncher C_TFSuperRocketLauncher
 #define CTFCRPG C_TFCRPG
 #define CTFCIncendiaryCannon C_TFCIncendiaryCannon
+#else
+#include "tf_projectile_rocket.h"
 #endif
 
 //=============================================================================
@@ -55,6 +59,13 @@ public:
 	//virtual void DrawCrosshair( void );
 #endif
 
+	// List of active pipebombs
+	typedef CHandle<CTFBaseRocket>	RocketHandle;
+	CUtlVector<RocketHandle>		m_Rockets;	
+	
+	// This is here so we can network the pipebomb count for prediction purposes
+	CNetworkVar( int,				m_iRocketCount );
+
 private:
 	float	m_flShowReloadHintAt;
 
@@ -85,6 +96,13 @@ public:
 	CTFSuperRocketLauncher();
 	
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
+	virtual	void	AddRocket( CTFBaseRocket *pRocket );
+	virtual	void	SecondaryAttack( void );
+	virtual	bool	DetonateRockets( void );
+	virtual void	ItemPostFrame( void );
+	virtual	void	DeathNotice( CBaseEntity *pVictim );
+	
+	float m_flLastPingSoundTime;
 	
 };
 

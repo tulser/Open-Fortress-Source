@@ -87,7 +87,7 @@ public:
 private:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
-	CNetworkVar( bool, m_bCritFire );
+	CNetworkVar( int, m_bCritFire );
 
 	float m_flStartFiringTime;
 	float m_flNextPrimaryAttackAnim;
@@ -140,7 +140,7 @@ public:
 	virtual void Spawn( void );
 
 public:
-	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount );
+	static CTFFlameEntity *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float m_flDmgAmount, int m_iCustomDmgType );
 
 	void FlameThink( void );
 	void CheckCollision( CBaseEntity *pOther, bool *pbHitWorld );
@@ -153,6 +153,7 @@ private:
 	Vector					m_vecAttackerVelocity;	// velocity of attacking player at time flame was fired
 	float					m_flTimeRemove;			// time at which the flame should be removed
 	int						m_iDmgType;				// damage type
+	int						m_iCustomDmgType;		// custom damage type
 	float					m_flDmgAmount;			// amount of base damage
 	CUtlVector<EHANDLE>		m_hEntitiesBurnt;		// list of entities this flame has burnt
 	EHANDLE					m_hAttacker;			// attacking player

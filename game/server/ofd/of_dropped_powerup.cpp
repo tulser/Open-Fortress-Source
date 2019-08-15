@@ -136,6 +136,23 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 	Assert( pPlayer );
 
 	bool bSuccess = true;
+	
+	switch ( PowerupID )
+	{
+		case TF_COND_STEALTHED:
+			PowerupID = TF_COND_INVIS_POWERUP;
+			break;
+		case TF_COND_CRITBOOSTED:
+			PowerupID = TF_COND_CRIT_POWERUP;
+			break;
+		case TF_COND_INVIS_POWERUP:
+			PowerupID = TF_COND_STEALTHED;
+			break;
+		case TF_COND_CRIT_POWERUP:
+			PowerupID = TF_COND_CRITBOOSTED;
+			break;
+	}
+	
 	if ( pTFPlayer->m_Shared.InCond(PowerupID) )  // If we already have this condition, dont pick it up
 		return;
 	if ( bSuccess )			// If we picked it up

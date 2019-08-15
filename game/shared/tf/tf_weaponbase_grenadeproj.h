@@ -47,9 +47,10 @@ public:
 
 	virtual float		GetShakeAmplitude( void ) { return 10.0; }
 	virtual float		GetShakeRadius( void ) { return 300.0; }
-	void				SetCritical( bool bCritical ) { m_bCritical = bCritical; }
+	void				SetCritical( int bCritical ) { m_bCritical = bCritical; }
 	
 	virtual int			GetDamageType();
+	virtual int			GetCustomDamageType();
 	
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
@@ -67,7 +68,7 @@ public:
 	virtual void			OnDataChanged( DataUpdateType_t type );
 
 	float					m_flSpawnTime;
-	bool					m_bCritical;
+	int						m_bCritical;
 
 	virtual void			CreateLightEffects(void);
 	
@@ -101,7 +102,7 @@ public:
 
 	void					VPhysicsUpdate( IPhysicsObject *pPhysics );
 
-	void					Explode( trace_t *pTrace, int bitsDamageType );
+	void					Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
 
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
@@ -122,7 +123,7 @@ private:
 
 	bool					m_bInSolid;
 
-	CNetworkVar( bool,		m_bCritical );
+	CNetworkVar( int,		m_bCritical );
 
 	float					m_flCollideWithTeammatesTime;
 	bool					m_bCollideWithTeammates;

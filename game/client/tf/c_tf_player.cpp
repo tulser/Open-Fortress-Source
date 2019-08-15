@@ -388,6 +388,8 @@ void C_TFRagdoll::CreateTFRagdoll()
 	if ( pData )
 	{
 		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+		if ( pPlayer && pPlayer->m_bRetroMode )
+			nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
 		if (  pPlayer && pPlayer->GetPlayerClass()->UsesCustomModel() )
 			nModelIndex = modelinfo->GetModelIndex( pPlayer->GetPlayerClass()->GetSetCustomModel() );
 		SetModelIndex( nModelIndex );
@@ -1102,7 +1104,7 @@ public:
 			}
 		}	
 		
-		if ( pPlayer  && pPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED )  )
+		if ( pPlayer  && pPlayer->m_Shared.InCondCrit()  )
 		{
 			if ( !pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) || pPlayer->GetTeamNumber() == pPlayer->m_Shared.GetDisguiseTeam() || !pPlayer->IsEnemyPlayer() )
 			{
@@ -2944,7 +2946,7 @@ float C_TFPlayer::GetEffectiveInvisibilityLevel( void )
 
 	// If this is a teammate of the local player or viewer is observer,
 	// dont go above a certain max invis
-	if ( !IsEnemyPlayer() || GetTeamNumber() == TF_TEAM_MERCENARY )
+	if ( !IsEnemyPlayer() || ( GetTeamNumber() == TF_TEAM_MERCENARY && m_Shared.InCond( TF_COND_INVIS_POWERUP ) ) )
 	{
 		float flMax = tf_teammate_max_invis.GetFloat();
 		if ( flPercentInvisible > flMax )
@@ -3595,7 +3597,7 @@ bool C_TFPlayer::IsPlayerClass( int iClass )
 void C_TFPlayer::AddDecal( const Vector& rayStart, const Vector& rayEnd,
 							const Vector& decalCenter, int hitbox, int decalIndex, bool doTrace, trace_t& tr, int maxLODToDecal )
 {
-	if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+	if ( m_Shared.InCondInvis() )
 	{
 		return;
 	}
@@ -3761,7 +3763,7 @@ void C_TFPlayer::CreateChattingEffect(void)
 
 	// If I'm disguised as the enemy, don't create
 	// if ( !m_Shared.InCond( TF_COND_DISGUISED ) && m_bChatting )
-	if ( ( !m_Shared.InCond( TF_COND_STEALTHED ) ) && m_bChatting && IsAlive() )
+	if ( ( !m_Shared.InCondInvis() ) && m_bChatting && IsAlive() )
 	{
 		if ( !m_pChattingEffect ) 
 		{
@@ -3925,14 +3927,20 @@ void C_TFPlayer::ValidateModelIndex( void )
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
 	{
 		TFPlayerClassData_t *pData = GetPlayerClassData( m_Shared.GetDisguiseClass() );
-		m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+		if ( m_bRetroMode )
+			m_nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
+		else
+			m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
 	}
 	else
 	{
 		C_TFPlayerClass *pClass = GetPlayerClass();
 		if ( pClass )
 		{
-			m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
+			if ( m_bRetroMode )
+				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetTFCModelName() );
+			else
+				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
 		}
 	}
 
@@ -4126,7 +4134,7 @@ bool C_TFPlayer::ShouldShowNemesisIcon()
 	// and is not dead, cloaked or disguised
 	if ( IsNemesisOfLocalPlayer() && g_PR && g_PR->IsConnected( entindex() ) )
 	{
-		bool bStealthed = m_Shared.InCond( TF_COND_STEALTHED );
+		bool bStealthed = m_Shared.InCondInvis();
 		bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 		if ( IsAlive() && !bStealthed && !bDisguised )
 			return true;

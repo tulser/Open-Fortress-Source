@@ -28,7 +28,7 @@ public:
 	int		m_iMode;
 	int		m_iSeed;
 	float	m_flSpread;
-	bool	m_bCritical;
+	int		m_bCritical;
 };
 
 IMPLEMENT_CLIENTCLASS_EVENT( C_TEFireBullets, DT_TEFireBullets, CTEFireBullets );

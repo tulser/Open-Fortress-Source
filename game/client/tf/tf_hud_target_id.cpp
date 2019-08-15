@@ -158,7 +158,7 @@ bool CTargetID::ShouldDraw( void )
 				bool bDisguisedEnemy = false;
 				if ( pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && // they're disguised
 					!pPlayer->m_Shared.InCond( TF_COND_DISGUISING ) && // they're not in the process of disguising
-					!pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) ) // they're not cloaked
+					!pPlayer->m_Shared.InCondInvis() ) // they're not cloaked
 				{
 					bDisguisedEnemy = (ToTFPlayer( pPlayer->m_Shared.GetDisguiseTarget() ) != NULL);
 				}
@@ -301,7 +301,7 @@ void CTargetID::UpdateID( void )
 			// determine if the target is a disguised spy (either friendly or enemy)
 			if ( pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && // they're disguised
 				//!pPlayer->m_Shared.InCond( TF_COND_DISGUISING ) && // they're not in the process of disguising
-				!pPlayer->m_Shared.InCond( TF_COND_STEALTHED ) ) // they're not cloaked
+				!pPlayer->m_Shared.InCondInvis() ) // they're not cloaked
 			{
 				bDisguisedTarget = true;
 				pDisguiseTarget = ToTFPlayer( pPlayer->m_Shared.GetDisguiseTarget() );

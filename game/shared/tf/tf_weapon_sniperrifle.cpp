@@ -25,9 +25,7 @@
 void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #endif
 
-#define TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC	50.0
 #define TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC	75.0
-#define TF_WEAPON_SNIPERRIFLE_RELOAD_TIME		1.5f
 #define TF_WEAPON_SNIPERRIFLE_ZOOM_TIME			0.3f
 
 #define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
@@ -35,16 +33,11 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 #define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
 
-// Railgun
-#define TF_WEAPON_RAILGUN_CHARGE_PER_SEC	100.0
-#define TF_WEAPON_RAILGUN_UNCHARGE_PER_SEC	75.0
-#define TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB	9999
-#define TF_WEAPON_RAILGUN_RELOAD_TIME		1.5f
-#define TF_WEAPON_RAILGUN_ZOOM_TIME			0.3f
-
-#define TF_WEAPON_RAILGUN_NO_CRIT_AFTER_ZOOM_TIME	0.0f
-
 extern ConVar ofd_mutators;
+
+#if defined (CLIENT_DLL)
+ConVar of_holdtozoom( "of_holdtozoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hold Mouse2 to zoom instead of Toggling it." );
+#endif
 
 //=============================================================================
 //
@@ -266,6 +259,12 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flRezoomTime = -1;
 		}
 	}
+	int HoldToZoom = 0;
+#ifdef GAME_DLL
+		HoldToZoom = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
+#else
+		HoldToZoom = V_atoi(of_holdtozoom.GetString());
+#endif	
 
 	if ( ( pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
 	{
@@ -276,10 +275,14 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flNextSecondaryAttack = m_flRezoomTime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 			m_flRezoomTime = -1;
 		}
-		else
+		else if ( !pPlayer->m_Shared.InCond( TF_COND_AIMING ) || HoldToZoom == 0 )
 		{
 			Zoom();
 		}
+	}
+	else if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !( pPlayer->m_nButtons & IN_ATTACK2 ) && HoldToZoom == 1 )
+	{
+		Zoom();
 	}
 }
 
@@ -316,24 +319,12 @@ void CTFSniperRifle::ItemPostFrame( void )
 	}
 #endif
 
-	// Start charging when we're zoomed in, and allowed to fire
-//	if ( pPlayer->m_Shared.IsJumping() )
-//	{
-		// Unzoom if we're jumping
-//		if ( IsZoomed() )
-//		{
-//			ToggleZoom();
-//		}
-
-//		m_flChargedDamage = 0.0f;
-//		m_bRezoomAfterShot = false;
-//	}
-/*	else */ if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+	if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, ( GetDamage() ) );
+			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * GetDamage(), GetDamage() * 3 );
 		}
 		else
 		{
@@ -382,7 +373,7 @@ bool CTFSniperRifle::Lower( void )
 void CTFSniperRifle::Zoom( void )
 {
 	// Don't allow the player to zoom in while jumping
-//	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
 //	if ( pPlayer && pPlayer->m_Shared.IsJumping() )
 //	{
 //		if ( pPlayer->GetFOV() >= 75 )
@@ -390,10 +381,13 @@ void CTFSniperRifle::Zoom( void )
 //	}
 
 	ToggleZoom();
-
+	
 	// at least 0.1 seconds from now, but don't stomp a previous value
 	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
-	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+	float ZoomTime = 0.1;
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
+		ZoomTime = TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+	m_flNextSecondaryAttack = gpGlobals->curtime + ZoomTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -684,7 +678,7 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 float CTFSniperRifle::GetHUDDamagePerc( void )
 {
-	return (m_flChargedDamage / ( GetDamage() ));
+	return ( m_flChargedDamage / ( GetDamage() * 3 ));
 }
 
 //-----------------------------------------------------------------------------
@@ -906,7 +900,7 @@ int CSniperDot::DrawModel( int flags )
 	pRenderContext->Bind( m_hSpriteMaterial, this );
 
 	float flLifeTime = gpGlobals->curtime - m_flChargeStartTime;
-	float flStrength = RemapValClamped( flLifeTime, 0.0, m_nDamage *3 / TF_WEAPON_SNIPERRIFLE_CHARGE_PER_SEC, 0.1, 1.0 );
+	float flStrength = RemapValClamped( flLifeTime, 0.0, m_nDamage * 3 / m_nDamage, 0.1, 1.0 );
 
 	color32 innercolor = { 255, 255, 255, 255 };
 	color32 outercolor = { 255, 255, 255, 128 };

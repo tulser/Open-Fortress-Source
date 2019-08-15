@@ -90,7 +90,7 @@ private:
 private:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
-	CNetworkVar( bool, m_bCritFire );
+	CNetworkVar( int, m_bCritFire );
 
 	float m_flStartFiringTime;
 	float m_flNextPrimaryAttackAnim;

@@ -340,6 +340,9 @@ void CTFWeaponBaseMelee::Smack( void )
 		{
 			// TODO: Not removing the old critical path yet, but the new custom damage is marking criticals as well for melee now.
 			iDmgType |= DMG_CRITICAL;
+			if ( IsCurrentAttackACrit() >= 2 )
+
+			iCustomDamage |= TF_DMG_CRIT_POWERUP;
 		}
 		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );
 		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * tf_meleeattackforcescale.GetFloat() );
@@ -398,4 +401,22 @@ bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 	float flPlayerCritMult = pPlayer->GetCritMult();
 
 	return ( RandomInt( 0, WEAPON_RANDOM_RANGE-1 ) <= ( TF_DAMAGE_CRIT_CHANCE_MELEE * flPlayerCritMult ) * WEAPON_RANDOM_RANGE );
+}
+
+int CTFWeaponBaseMelee::IsCurrentAttackACritical()
+{
+	int nCritMod = m_bCurrentAttackIsCrit;
+	if ( nCritMod )
+	{
+		return m_bCurrentAttackIsCrit;
+	}
+	else
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+		if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_CRIT_POWERUP ) )
+			return 2;
+		else
+			return false;
+	}
+	return m_bCurrentAttackIsCrit;
 }

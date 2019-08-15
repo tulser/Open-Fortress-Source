@@ -63,7 +63,7 @@ public:
 
 	virtual void	SendPlayerAnimEvent( CTFPlayer *pPlayer );
 
-	bool			IsCurrentAttackACritical( void ) { return m_bCurrentAttackIsCrit; }
+	int				IsCurrentAttackACritical( void );
 	bool			ConnectedHit( void ) { return m_bConnected; }
 
 public:	

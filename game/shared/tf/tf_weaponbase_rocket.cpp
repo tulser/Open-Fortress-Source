@@ -5,6 +5,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include "tf_weaponbase_rocket.h"
+#include "tf_weapon_rocketlauncher.h"
 #include "tf_gamerules.h"
 #include "tf_weaponbase.h"
 
@@ -179,9 +180,15 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 		interpolator.AddToHead( flChangeTime, &vCurOrigin, false );
 
 		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
+		
+		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
+
+		if ( pLauncher )
+		{
+			pLauncher->AddRocket( this );
+		}		
 	}
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -233,10 +240,11 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	QAngle angles;
 	VectorAngles( vecVelocity, angles );
 	pRocket->SetAbsAngles( angles );
-
+	
 	// Set team.
 	pRocket->ChangeTeam( pOwner->GetTeamNumber() );
-
+	pRocket->m_flCreationTime = gpGlobals->curtime;
+	
 	return pRocket;
 }
 
@@ -246,10 +254,12 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 void CTFBaseRocket::RocketTouch( CBaseEntity *pOther )
 {
 	// Verify a correct "other."
-	Assert( pOther );
-	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
-		return;
-
+	if( pOther )
+	{
+		Assert( pOther );
+		if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
+			return;
+	}
 	// Handle hitting skybox (disappear).
 	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
 	if( pTrace->surface.flags & SURF_SKY )
@@ -287,9 +297,98 @@ unsigned int CTFBaseRocket::PhysicsSolidMaskForEntity( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+int	CTFBaseRocket::GetCustomDamageType() 
+{ 
+	return TF_DMG_CUSTOM_NONE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBaseRocket::Detonate( void )
+{
+	trace_t		tr;
+	Vector		vecSpot;// trace starts here!
+
+	SetThink( NULL );
+
+	vecSpot = GetAbsOrigin() + Vector ( 0 , 0 , 8 );
+	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
+
+	ExplodeManualy(&tr, GetDamageType(), GetCustomDamageType());
+
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
+{
+	SetModelName( NULL_STRING );//invisible
+	AddSolidFlags( FSOLID_NOT_SOLID );
+
+	m_takedamage = DAMAGE_NO;
+
+	// Pull out of the wall a bit
+	if ( pTrace->fraction != 1.0 )
+	{
+		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
+	}
+
+	CSoundEnt::InsertSound ( SOUND_COMBAT, GetAbsOrigin(), BASEGRENADE_EXPLOSION_VOLUME, 3.0 );
+	
+	// Explosion effect on client
+	Vector vecOrigin = GetAbsOrigin();
+	CPVSFilter filter( vecOrigin );
+	
+	int UseWeaponID = m_hWeaponID;
+
+	if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
+	{
+		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
+	}
+	else
+	{
+		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1, GetLauncher() );
+	}
+
+
+	// Use the thrower's position as the reported position
+	Vector vecReported = GetOwnerEntity() ? GetOwnerEntity()->GetAbsOrigin() : vec3_origin;
+
+	CTakeDamageInfo info( this, GetOwnerEntity(), vec3_origin, vecOrigin, GetDamage(), bitsDamageType, 0, &vecReported );
+
+	float flRadius = GetRadius();
+	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
+		flRadius *= 0.75;
+
+	if ( tf_rocket_show_radius.GetBool() )
+	{
+		DrawRadius( flRadius );
+	}
+
+	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
+
+	// Don't decal players with scorch.
+	if ( pTrace->m_pEnt && !pTrace->m_pEnt->IsPlayer() )
+	{
+		UTIL_DecalTrace( pTrace, "Scorch" );
+	}
+
+	UTIL_Remove( this );
+
+	AddEffects( EF_NODRAW );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 {
 	// Save this entity as enemy, they will take 100% damage.
+	if ( !pOther )
+		pOther = pTrace->m_pEnt;
 	m_hEnemy = pOther;
 
 	// Invisible.
@@ -302,14 +401,15 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	{
 		SetAbsOrigin( pTrace->endpos + ( pTrace->plane.normal * 1.0f ) );
 	}
-	// TODO: Troubleshoot reports of rockets getting stuck in thin walls (touching far side?)
-	// float const BACKTRACK_DIST = 1.0f; // TODO: Discover good value
-	// SetAbsOrigin( pTrace->endpos - BACKTRACK_DIST * GetAbsVelocity() );
+	// SetAbsOrigin( pTrace->endpos - GetAbsVelocity() );
 
 	// Play explosion sound and effect.
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
-	TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, m_hWeaponID, pOther->entindex(), GetLauncher() );
+	int EntIndex = 0;
+	if ( pOther )
+		EntIndex = pOther->entindex();
+	TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, m_hWeaponID, EntIndex, GetLauncher() );
 	CSoundEnt::InsertSound ( SOUND_COMBAT, vecOrigin, 1024, 3.0 );
 
 	// Damage.
@@ -321,8 +421,9 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	}
 
 	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
+	info.SetDamageCustom( GetCustomDamageType() );
 	float flRadius = GetRadius();
-	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM ||  m_hWeaponID == TF_WEAPON_SUPER_ROCKETLAUNCHER )
+	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
 		flRadius *= 0.75;
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 

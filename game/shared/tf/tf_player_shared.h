@@ -119,6 +119,13 @@ public:
 	
 	bool InCondShield( void );
 	void RemoveCondShield( void );
+	
+	bool InCondCrit( void );
+	void RemoveCondCrit( void );
+	
+	bool InCondInvis( void );
+	void RemoveCondInvis( void );	
+	
 	void SetSpawnEffect( int iEffect ){ m_iRespawnEffect = iEffect; }
 	int GetSpawnEffects( void ){ return m_iRespawnEffect; };
 
@@ -231,6 +238,7 @@ private:
 	void OnRemoveDisguising( void );
 	void OnRemoveInvulnerable( void );
 	void OnRemoveCritBoosted( void );
+	void OnRemoveTaunting( void );
 	void OnRemoveTeleported( void );
 	void OnRemoveBerserk( void );
 	void OnRemoveShield( void );

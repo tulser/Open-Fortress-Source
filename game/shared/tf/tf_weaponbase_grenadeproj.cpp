@@ -61,7 +61,7 @@ PRECACHE_REGISTER( tf_weaponbase_grenade_proj );
 BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
-	RecvPropBool( RECVINFO( m_bCritical ) ),
+	RecvPropInt( RECVINFO( m_bCritical ) ),
 	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
@@ -69,7 +69,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
-	SendPropBool( SENDINFO( m_bCritical ) ),
+	SendPropInt( SENDINFO( m_bCritical ) ),
 
 	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
@@ -113,6 +113,22 @@ int	CTFWeaponBaseGrenadeProj::GetDamageType()
 	return iDmgType;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFWeaponBaseGrenadeProj::GetCustomDamageType() 
+{ 
+	if ( m_bCritical >= 2)
+	{
+		DevMsg("Projectile Has Crit Powerup flag\n");
+		return TF_DMG_CRIT_POWERUP;
+	}
+	else
+	{
+		DevMsg("Projectile is normal\n");
+		return TF_DMG_CUSTOM_NONE;
+	}
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -356,7 +372,7 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
+void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
 {
 	SetModelName( NULL_STRING );//invisible
 	AddSolidFlags( FSOLID_NOT_SOLID );
@@ -405,7 +421,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType )
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 
 	CTakeDamageInfo info( this, GetThrower(), GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
-
+	info.SetDamageCustom( bitsCustomDamageType );
 	float flRadius = GetDamageRadius();
 
 	if ( tf_grenade_show_radius.GetBool() )
@@ -523,7 +539,7 @@ void CTFWeaponBaseGrenadeProj::Detonate( void )
 	vecSpot = GetAbsOrigin() + Vector ( 0 , 0 , 8 );
 	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ), MASK_SHOT_HULL, this, COLLISION_GROUP_NONE, & tr);
 
-	Explode( &tr, GetDamageType() );
+	Explode(&tr, GetDamageType(), GetCustomDamageType());
 
 	if ( GetShakeAmplitude() )
 	{

@@ -46,6 +46,60 @@ void CTFWeaponPDA::Spawn()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Become a child of the owner (MOVETYPE_FOLLOW)
+//			disables collisions, touch functions, thinking
+// Input  : *pOwner - new owner/operator
+//-----------------------------------------------------------------------------
+void CTFWeaponPDA::Equip( CBaseCombatCharacter *pOwner )
+{
+	// Attach the weapon to an owner
+	SetAbsVelocity( vec3_origin );
+	RemoveSolidFlags( FSOLID_TRIGGER );
+	FollowEntity( pOwner );
+	SetOwner( pOwner );
+	SetOwnerEntity( pOwner );
+
+	// Break any constraint I might have to the world.
+	RemoveEffects( EF_ITEM_BLINK );
+
+#if !defined( CLIENT_DLL )
+	if ( GetConstraint() != NULL )
+	{
+		RemoveSpawnFlags( SF_WEAPON_START_CONSTRAINED );
+		physenv->DestroyConstraint( GetConstraint() );
+		SetConstrained( NULL );
+	}
+#endif
+
+
+	m_flNextPrimaryAttack		= gpGlobals->curtime;
+	m_flNextSecondaryAttack		= gpGlobals->curtime;
+	SetTouch( NULL );
+	SetThink( NULL );
+#if !defined( CLIENT_DLL )
+	VPhysicsDestroyObject();
+	
+	CTFPlayer *pTFPlayer = (CTFPlayer *)pOwner;
+	// Get the player class data.
+	TFPlayerClassData_t *pData = pTFPlayer->GetPlayerClass()->GetData();
+	// Give a builder weapon for each object the player class is allowed to build
+	pTFPlayer->ManageBuilderWeapons( pData, false );
+#endif
+
+	if ( pOwner->IsPlayer() )
+	{
+		SetModel( GetViewModel() );
+	}
+	else
+	{
+		// Make the weapon ready as soon as any NPC picks it up.
+		m_flNextPrimaryAttack = gpGlobals->curtime;
+		m_flNextSecondaryAttack = gpGlobals->curtime;
+		SetModel( GetWorldModel() );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: cancel menu
 //-----------------------------------------------------------------------------
 void CTFWeaponPDA::PrimaryAttack( void )

@@ -64,7 +64,7 @@ public:
 	void Event_Headshot( CTFPlayer *pKiller );
 	void Event_Backstab( CTFPlayer *pKiller );
 	void Event_PlayerUsedTeleport( CTFPlayer *pTeleportOwner, CTFPlayer *pTeleportingPlayer );
-	void Event_PlayerFiredWeapon( CTFPlayer *pPlayer, bool bCritical );
+	void Event_PlayerFiredWeapon( CTFPlayer *pPlayer, int bCritical );
 	void Event_PlayerDamage( CBasePlayer *pPlayer, const CTakeDamageInfo &info, int iDamageTaken );
 	void Event_PlayerKilledOther( CBasePlayer *pAttacker, CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	void Event_PlayerCapturedPoint( CTFPlayer *pPlayer );

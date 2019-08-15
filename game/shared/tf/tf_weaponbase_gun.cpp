@@ -108,7 +108,10 @@ void CTFWeaponBaseGun::BurstFire( void )
 {
 	if ( m_iClip1 <= 0 )
 	{
+		if ( FiresInBursts() )
 		m_iShotsDue = 0;
+		if ( LoadsManualy() )
+		m_bInBarrage = false;
 		return;
 	}
 	BaseClass::BurstFire();
@@ -129,27 +132,35 @@ void CTFWeaponBaseGun::BeginBurstFire(void)
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PrimaryAttack( void )
 {
-	// Check for ammunition.
-	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
-	{
-		m_iShotsDue = 0;
-		return;
-	}
-	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
-	{
-		// Are we capable of firing again?
-		if ( m_flNextPrimaryAttack > gpGlobals->curtime  )
-			return;
-	}
-	else if ( m_iShotsDue == 0 )
-		return;
-	
 	
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return;
-
+	
+	// Check for ammunition.
+	
+	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
+	{
+		if ( FiresInBursts() )
+		m_iShotsDue = 0;
+		if ( LoadsManualy() )
+		{
+			m_bInBarrage = false;
+			AbortReload();
+		}
+		return;
+	}
+	if ( !FiresInBursts() && !LoadsManualy() )
+	{
+		// Are we capable of firing again?
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime  )
+			return;
+	}
+	else if ( ( FiresInBursts() && m_iShotsDue == 0 ) || ( LoadsManualy() && !InBarrage() ) )
+		return;
+	if ( LoadsManualy() )
+		DevMsg("En-Bloc Clip \n");
 	if ( !CanAttack() )
 		return;
 
@@ -211,29 +222,77 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	// Check the reload mode and behave appropriately.
 	if ( m_bReloadsSingly )
 	{
-//		m_iReloadMode.Set( TF_RELOAD_START );
+		m_iReloadMode.Set( TF_RELOAD_START );
 	}
 }	
 
 void CTFWeaponBaseGun::ItemPostFrame( void )
 {
-	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 )
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
+	if ( !pOwner )
+		return;
+	
+	if ( LoadsManualy() &&  m_iClip1 <= 0 )
 	{
+		m_bInBarrage = false;
+	}
+	
+	if ( InBarrage() )
+	{
+        // If it's firing the clip don't let them repress attack to reload
+		DevMsg("In a Barrage, cant press reload nor attack\n");
+        pOwner->m_nButtons &= ~IN_ATTACK;
+		pOwner->m_nButtons &= ~IN_RELOAD;
+		AbortReload();
+	}
+	
+    // Try to fire if there's ammo in the clip and we're not holding the button
+    m_bInBarrage = LoadsManualy() && m_iClip1 > 0 && !( pOwner->m_nButtons & IN_ATTACK ) && !( pOwner->m_nButtons & IN_RELOAD );
+
+	if ( LoadsManualy() )
+	{
+		if( !InBarrage() )
+		{
+			if ( CanReload() && ( pOwner->m_nButtons & IN_ATTACK ) )
+			{
+				// Convert the attack key into the reload key
+				pOwner->m_nButtons |= IN_RELOAD;
+				DevMsg("Start Reloading\n");
+			}
+
+			// Don't allow attack button if we're not attacking
+			pOwner->m_nButtons &= ~IN_ATTACK;
+		}
+		else if ( FiresInBursts() )
+		{
+			// Fake the attack key
+			if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
+				BurstFire();
+			
+			if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
+				BeginBurstFire();
+		}
+		else if ( m_flNextPrimaryAttack < gpGlobals->curtime )
+		{
+			BurstFire();
+		}
+	}
+	else {
 		if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
 			BurstFire();
 
-		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
-		if ( !pOwner )
-			return;
-
-		if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
+		if ( FiresInBursts() && pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
 		{
 			BeginBurstFire();
 		}
 	}
-
 	BaseClass::ItemPostFrame();	
 	
+}
+
+bool CTFWeaponBaseGun::FiresInBursts( void )
+{
+	return BaseClass::FiresInBursts();
 }
 
 //-----------------------------------------------------------------------------
@@ -475,6 +534,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
+
 	if ( bCenter || iQuakeCvar )
 	{
 		vecOffset.x = 12.0f; //forward backwards
@@ -513,8 +573,26 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 
 	Vector vecSrc;
 	QAngle angForward;
-	GetProjectileFireSetup( pPlayer, Vector(16,6,-8), &vecSrc, &angForward );
+	Vector vecOffset( 16,6,-8 );
+	
+	int iQuakeCvar = 0;
+	
+#ifdef GAME_DLL
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );	
+#else
+		extern ConVar viewmodel_centered;
+		iQuakeCvar = V_atoi(viewmodel_centered.GetString());
+#endif	
 
+	if ( iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	GetProjectileFireSetup( pPlayer, vecOffset , &vecSrc, &angForward );
+	
 	// Add some spread
 	float flSpread = 1.5;
 	angForward.x += RandomFloat( -flSpread, flSpread );
@@ -673,7 +751,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 	// Server only - create the rocket.
 #ifdef GAME_DLL
 	
-	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+//	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
 
 	int iQuakeCvar = 0;
 	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
@@ -681,7 +759,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
-	if ( bCenter || iQuakeCvar )
+	if ( iQuakeCvar )
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
@@ -690,7 +768,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 	
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
-		if ( bCenter || iQuakeCvar )
+		if ( iQuakeCvar )
 			vecOffset.z = 0.0f;
 		else
 			vecOffset.z = 8.0f;
@@ -761,7 +839,7 @@ bool CTFWeaponBaseGun::Holster( CBaseCombatWeapon *pSwitchingTo )
 // Server specific.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	
-	if ( InBurst() && !pPlayer->m_Shared.InCond( TF_COND_BERSERK ) )
+	if ( ( InBurst() || InBarrage() ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK ) )
 		return false;
 #if !defined( CLIENT_DLL )
 
@@ -786,6 +864,14 @@ void CTFWeaponBaseGun::DoFireEffects()
 
 	// Muzzle flash on weapon.
 	bool bMuzzleFlash = true;
+	if ( pPlayer->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
+	{
+		CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+		if ( pWeapon && ( pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
+		{
+			bMuzzleFlash = false;
+		}
+	}
 
 	if ( bMuzzleFlash )
 	{

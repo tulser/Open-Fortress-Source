@@ -113,7 +113,7 @@ void EndGroupingSounds() {}
 // only does the damage calculations.  On the client, it does all the effects.
 //-----------------------------------------------------------------------------
 void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
-					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, bool bCritical /* = false*/ )
+					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, int bCritical /* = false*/ )
 {
 	// Get the weapon information.
 	const char *pszWeaponAlias = WeaponIdToAlias( iWeapon );
@@ -224,6 +224,11 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		}
 
 		nCustomDamageType = pWeapon->GetCustomDamageType();
+		
+		if ( pWeapon->IsCurrentAttackACrit() >= 2 || bCritical >= 2 )
+		{
+			nCustomDamageType |= TF_DMG_CRIT_POWERUP;
+		}		
 	}
 
 	if ( iWeapon != TF_WEAPON_MINIGUN && iWeapon != TF_WEAPON_GATLINGGUN )

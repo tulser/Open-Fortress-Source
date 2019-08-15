@@ -532,7 +532,7 @@ void CTFGameStats::Event_PlayerUsedTeleport( CTFPlayer *pTeleportOwner, CTFPlaye
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameStats::Event_PlayerFiredWeapon( CTFPlayer *pPlayer, bool bCritical ) 
+void CTFGameStats::Event_PlayerFiredWeapon( CTFPlayer *pPlayer, int bCritical ) 
 {
 	// If normal gameplay state, track weapon stats. 
 	if ( TFGameRules()->State_Get() == GR_STATE_RND_RUNNING )

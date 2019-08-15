@@ -1631,7 +1631,7 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 			if ( !pPlayer )
 				continue;
 			if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
-				pPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+				pPlayer->m_Shared.InCondCrit();
 		}
 	}
 }
@@ -1710,7 +1710,7 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 		if ( bTeam && pPlayer->GetTeamNumber() != iTeam )
 			continue;
 
-		if ( TFGameRules() && TFGameRules()->IsArenaGamemode() && State_Get() == GR_STATE_RND_RUNNING && pPlayer->Lives() <= 0 )
+		if ( TFGameRules() && TFGameRules()->IsArenaGamemode() && State_Get() == GR_STATE_RND_RUNNING )
 			return;		
 		// players that haven't chosen a team/class can never spawn
 		if ( !pPlayer->IsReadyToPlay() )

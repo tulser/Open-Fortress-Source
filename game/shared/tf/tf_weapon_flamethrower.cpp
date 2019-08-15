@@ -61,17 +61,17 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
 BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
 	#if defined( CLIENT_DLL )
 		RecvPropInt( RECVINFO( m_iWeaponState ) ),
-		RecvPropBool( RECVINFO( m_bCritFire ) )
+		RecvPropInt( RECVINFO( m_bCritFire ) )
 	#else
 		SendPropInt( SENDINFO( m_iWeaponState ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-		SendPropBool( SENDINFO( m_bCritFire ) )
+		SendPropInt( SENDINFO( m_bCritFire ) )
 	#endif
 END_NETWORK_TABLE()
 
 #if defined( CLIENT_DLL )
 BEGIN_PREDICTION_DATA( CTFFlameThrower )
 	DEFINE_PRED_FIELD( m_iWeaponState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bCritFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bCritFire, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
 
@@ -398,14 +398,19 @@ void CTFFlameThrower::PrimaryAttack()
 
 		// Burn & Ignite 'em
 		int iDmgType = g_aWeaponDamageTypes[ GetWeaponID() ];
+		int iCustomDmgType = GetCustomDamageType();
 		m_bCritFire = IsCurrentAttackACrit();
 		if ( m_bCritFire )
 		{
 			iDmgType |= DMG_CRITICAL;
 		}
+		if ( m_bCritFire >= 2 )
+		{
+			iCustomDmgType |= TF_DMG_CRIT_POWERUP;
+		}		
 
 #ifdef CLIENT_DLL
-		if ( bWasCritical != m_bCritFire )
+		if ( bWasCritical != ( m_bCritFire > 0 ) )
 		{
 			RestartParticleEffect();
 		}
@@ -417,7 +422,7 @@ void CTFFlameThrower::PrimaryAttack()
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ) iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
-		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage );
+		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, iCustomDmgType );
 #endif
 	}
 
@@ -588,7 +593,7 @@ void CTFFlameThrower::StartFlame()
 	// normally, crossfade between start sound & firing loop in 3.5 sec
 	float flCrossfadeTime = 3.5;
 
-	if ( m_pFiringLoop && ( m_bCritFire != m_bFiringLoopCritical ) )
+	if ( m_pFiringLoop && ( ( m_bCritFire > 0 ) != m_bFiringLoopCritical ) )
 	{
 		// If we're firing and changing between critical & noncritical, just need to change the firing loop.
 		// Set crossfade time to zero so we skip the start sound and go to the loop immediately.
@@ -824,7 +829,7 @@ void CTFFlameEntity::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: Creates an instance of this entity
 //-----------------------------------------------------------------------------
-CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float flDmgAmount )
+CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, int iDmgType, float flDmgAmount, int iCustomDmgType )
 {
 	CTFFlameEntity *pFlame = static_cast<CTFFlameEntity*>( CBaseEntity::Create( "tf_flame", vecOrigin, vecAngles, pOwner ) );
 	if ( !pFlame )
@@ -844,6 +849,7 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	else */ 
 	pFlame->ChangeTeam( pOwner->GetTeamNumber()  );
 	pFlame->m_iDmgType = iDmgType;
+	pFlame->m_iCustomDmgType = iCustomDmgType;
 	pFlame->m_flDmgAmount = flDmgAmount;
 
 	// Setup the initial velocity.
@@ -1048,8 +1054,10 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 	CBaseEntity *pAttacker = m_hAttacker;
 	if ( !pAttacker )
 		return;
-	
-	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, flDamage, m_iDmgType, TF_DMG_CUSTOM_BURNING );
+
+	m_iCustomDmgType |= TF_DMG_CUSTOM_BURNING;
+
+	CTakeDamageInfo info( GetOwnerEntity(), pAttacker, flDamage, m_iDmgType, m_iCustomDmgType );
 	info.SetReportedPosition( pAttacker->GetAbsOrigin() );
 
 	// We collided with pOther, so try to find a place on their surface to show blood

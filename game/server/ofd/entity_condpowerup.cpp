@@ -80,6 +80,23 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		if ( !pTFPlayer )
 			return false;
+		
+		switch ( m_bCondition )
+		{
+			case TF_COND_STEALTHED:
+				m_bCondition = TF_COND_INVIS_POWERUP;
+				break;
+			case TF_COND_CRITBOOSTED:
+				m_bCondition = TF_COND_CRIT_POWERUP;
+				break;
+			case TF_COND_INVIS_POWERUP:
+				m_bCondition = TF_COND_STEALTHED;
+				break;
+			case TF_COND_CRIT_POWERUP:
+				m_bCondition = TF_COND_CRITBOOSTED;
+				break;
+		}		
+		
 		if ( pTFPlayer->m_Shared.InCond(m_bCondition) )
 			return false;
 		bSuccess = true;
