@@ -3014,6 +3014,11 @@ void CTeamplayRoundBasedRules::CheckRespawnWaves( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 {
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
+	{
+		return;
+	}
+
 	if ( mp_autoteambalance.GetBool() == false || ( IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true ) )
 	{
 		return;
@@ -3498,6 +3503,9 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 	if ( iNewTeam < FIRST_GAME_TEAM )
 		return false;
 
+	if ( iNewTeam == TF_TEAM_MERCENARY )
+		return false;
+
 	CTeam *pNewTeam = GetGlobalTeam( iNewTeam );
 
 	if ( !pNewTeam )
@@ -3513,8 +3521,8 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 	int i = FIRST_GAME_TEAM;
 
 	CTeam *pTeam;
-
-	for ( pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
+		
+	for ( pTeam = GetGlobalTeam(i); pTeam != GetGlobalTeam(TF_TEAM_MERCENARY); pTeam = GetGlobalTeam(++i) )
 	{
 		if ( pTeam == pNewTeam )
 			continue;

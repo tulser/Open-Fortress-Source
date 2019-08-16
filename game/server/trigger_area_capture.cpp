@@ -1113,6 +1113,9 @@ bool CTriggerAreaCapture::CheckIfDeathCausesBlock( CBaseMultiplayerPlayer *pVict
 	if ( !IsTouching( pVictim ) )
 		return false;
 
+	if ( pVictim->GetTeamNumber() == 77 )//merc team reference
+		return true;
+
 	// Teamkills shouldn't give a block reward
 	if ( pVictim->GetTeamNumber() == pKiller->GetTeamNumber() )
 		return true;
