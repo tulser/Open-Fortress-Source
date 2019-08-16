@@ -3522,10 +3522,11 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 
 	CTeam *pTeam;
 		
-	for ( pTeam = GetGlobalTeam(i); pTeam != GetGlobalTeam(TF_TEAM_MERCENARY); pTeam = GetGlobalTeam(++i) )
+	for ( pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
 	{
 		if ( pTeam == pNewTeam )
 			continue;
+
 		if ( pTeam == GetGlobalTeam( TF_TEAM_MERCENARY) )
 			continue;
 
@@ -3569,7 +3570,7 @@ bool CTeamplayRoundBasedRules::AreTeamsUnbalanced( int &iHeaviestTeam, int &iLig
 
 	int i = FIRST_GAME_TEAM;
 
-	for ( CTeam *pTeam = GetGlobalTeam(i); pTeam != NULL; pTeam = GetGlobalTeam(++i) )
+	for (CTeam *pTeam = GetGlobalTeam(i); pTeam != GetGlobalTeam(TF_TEAM_MERCENARY) ; pTeam = GetGlobalTeam(++i))
 	{
 		int iNumPlayers = pTeam->GetNumPlayers();
 

@@ -3571,7 +3571,7 @@ int C_TFPlayer::GetSkin()
 	}
 	else if ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() )
 	{
-		nSkin += 4 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
+		nSkin += 6 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
 	}
 
 	return nSkin;

@@ -88,6 +88,10 @@ BEGIN_DATADESC( CBaseObject )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetSolidToPlayer", InputSetSolidToPlayer ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "Show", InputShow ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "Hide", InputHide ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "Enable", InputEnable ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "Disable", InputDisable ),
 
 	// Outputs
 	DEFINE_OUTPUT( m_OnDestroyed, "OnDestroyed" ),
@@ -2083,6 +2087,44 @@ void CBaseObject::InputSetSolidToPlayer( inputdata_t &inputdata )
 	ival = clamp( ival, (int)SOLID_TO_PLAYER_USE_DEFAULT, (int)SOLID_TO_PLAYER_NO );
 	OBJSOLIDTYPE stp = (OBJSOLIDTYPE)ival;
 	SetSolidToPlayers( stp );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Show the building
+//-----------------------------------------------------------------------------
+void CBaseObject::InputShow( inputdata_t &inputdata )
+{
+	RemoveFlag( EF_NODRAW );
+
+	SetDisabled( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Hide the building and disable
+//-----------------------------------------------------------------------------
+void CBaseObject::InputHide( inputdata_t &inputdata )
+{
+	AddFlag( EF_NODRAW );
+
+	SetDisabled( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Enable building
+//-----------------------------------------------------------------------------
+void CBaseObject::InputEnable( inputdata_t &inputdata )
+{
+	SetDisabled( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Disable building and hide
+//-----------------------------------------------------------------------------
+void CBaseObject::InputDisable( inputdata_t &inputdata )
+{
+	AddFlag( EF_NODRAW );
+
+	SetDisabled( true );
 }
 
 //-----------------------------------------------------------------------------

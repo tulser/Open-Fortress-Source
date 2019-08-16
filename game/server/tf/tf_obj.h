@@ -153,6 +153,10 @@ public:
 	void			InputAddHealth( inputdata_t &inputdata );
 	void			InputRemoveHealth( inputdata_t &inputdata );
 	void			InputSetSolidToPlayer( inputdata_t &inputdata );
+	void			InputShow( inputdata_t &inputdata );
+	void			InputHide( inputdata_t &inputdata );
+	void			InputEnable( inputdata_t &inputdata );
+	void			InputDisable( inputdata_t &inputdata );
 
 	// Wrench hits
 	bool			InputWrenchHit( CTFPlayer *pPlayer );

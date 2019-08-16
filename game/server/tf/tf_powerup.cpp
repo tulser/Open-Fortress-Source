@@ -56,7 +56,7 @@ CTFPowerup::CTFPowerup()
 {
 	m_bDisabled = false;
 	m_bRespawning = false;
-	fl_RespawnTime = -1.0f;
+	fl_RespawnTime = 10;
 	fl_RespawnDelay = -1.0f;
 
 	UseClientSideAnimation();
