@@ -67,7 +67,8 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Escort",
 	"Zombie Survival",
 	"Gun Game",
-	"Arena"
+	"Arena",
+	"Payload"
 };
 
 const char *g_aMapList[] =

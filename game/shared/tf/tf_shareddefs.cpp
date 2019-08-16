@@ -94,7 +94,8 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_ESC",
 	"#Gametype_ZS",
 	"#Gametype_GG",
-	"#Gametype_ARENA"
+	"#Gametype_ARENA",
+	"#Gametype_PAYLOAD"
 };
 
 //-----------------------------------------------------------------------------
