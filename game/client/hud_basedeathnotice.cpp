@@ -384,7 +384,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 	bool bPlayerDeath = EventIsPlayerDeath( pszEventName );
 	bool bObjectDeath = FStrEq( pszEventName, "object_destroyed" );
 
-	bool bIsFeignDeath = event->GetInt( "death_flags" );
+	bool bIsFeignDeath = event->GetInt( "death_flags" ) & TF_DEATH_FEIGN_DEATH;
 	if ( bPlayerDeath )
 	{
 		if ( !ShouldShowDeathNotice( event ) )
@@ -457,7 +457,12 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			bLocalPlayerInvolved = true;
 		}
 
-		if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
+		if ( event->GetInt( "death_flags" ) & TF_DEATH_AUSTRALIUM )
+		{
+			m_DeathNotices[iMsg].bCrit= true;
+			m_DeathNotices[iMsg].iconCritDeath = GetIcon( "d_australium", bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
+		}
+		else if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
 		{
 			m_DeathNotices[iMsg].bCrit= true;
 			m_DeathNotices[iMsg].iconCritDeath = GetIcon( "d_crit", bLocalPlayerInvolved ? kDeathNoticeIcon_Inverted : kDeathNoticeIcon_Standard );
@@ -482,7 +487,12 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			m_DeathNotices[iMsg].bSelfInflicted = true;
 			m_DeathNotices[iMsg].Killer.szName[0] = 0;
 
-			if ( event->GetInt( "damagebits" ) & DMG_FALL )
+			if ( event->GetInt( "death_flags" ) & TF_DEATH_PURGATORY )
+			{
+				// special case icon for dying in purgatory
+				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_purgatory", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
+			}
+			else if ( event->GetInt( "damagebits" ) & DMG_FALL )
 			{
 				// special case text for falling death
 				V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Fall" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
@@ -597,6 +607,53 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 	else if ( FStrEq( "teamplay_flag_event", pszEventName ) )
 	{
 		const char *pszMsgKey = NULL;
+		int iEventType = event->GetInt( "eventtype" );
+
+		bool bIsMvM = TFGameRules() && TFGameRules()->IsMannVsMachineMode();
+		if ( bIsMvM )
+		{
+			// MvM only cares about Defend notifications
+			if ( iEventType != TF_FLAGEVENT_DEFEND )
+			{
+				// unsupported, don't put anything up			
+				m_DeathNotices.Remove( iMsg );
+				return;
+			}
+		}
+
+		bool bIsHalloween2014 = TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY );
+
+		switch ( iEventType )
+		{
+		case TF_FLAGEVENT_PICKUP: 
+			pszMsgKey = bIsHalloween2014 ? "#Msg_PickedUpFlagHalloween2014" : "#Msg_PickedUpFlag"; 
+			break;
+		case TF_FLAGEVENT_CAPTURE: 
+			pszMsgKey = bIsHalloween2014 ? "#Msg_CapturedFlagHalloween2014" : "#Msg_CapturedFlag"; 
+			break;
+		case TF_FLAGEVENT_DEFEND: 
+			if ( bIsMvM )
+			{
+				pszMsgKey = "#Msg_DefendedBomb";
+			}
+			else
+			{
+				pszMsgKey = bIsHalloween2014 ? "#Msg_DefendedFlagHalloween2014" : "#Msg_DefendedFlag";
+			}
+
+
+			break;
+
+		// Add this when we can get localization for it
+		//case TF_FLAGEVENT_DROPPED: 
+		//	pszMsgKey = "#Msg_DroppedFlag"; 
+		//	break;
+
+		default:
+			// unsupported, don't put anything up			
+			m_DeathNotices.Remove( iMsg );
+			return;
+		}
 
 		wchar_t *pwzEventText = g_pVGuiLocalize->Find( pszMsgKey );
 		Assert( pwzEventText );
