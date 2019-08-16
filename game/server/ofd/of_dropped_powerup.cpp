@@ -146,10 +146,10 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 			PowerupID = TF_COND_CRIT_POWERUP;
 			break;
 		case TF_COND_INVIS_POWERUP:
-			PowerupID = TF_COND_STEALTHED;
+			PowerupID = TF_COND_INVIS_POWERUP;
 			break;
 		case TF_COND_CRIT_POWERUP:
-			PowerupID = TF_COND_CRITBOOSTED;
+			PowerupID = TF_COND_CRIT_POWERUP;
 			break;
 	}
 	

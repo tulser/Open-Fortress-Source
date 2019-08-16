@@ -30,6 +30,8 @@ public:
 	bool IsDisabled( void ) { return m_bDisabled; }
 	void SetDisabled( bool bDisabled ) { m_bDisabled = bDisabled; }
 
+	int GetMatchSummary( void ) { return m_nMatchSummaryType; }
+
 	// Inputs/Outputs.
 	void InputEnable( inputdata_t &inputdata );
 	void InputDisable( inputdata_t &inputdata );
@@ -44,6 +46,8 @@ public:
 
 private:
 	bool	m_bDisabled;		// Enabled/Disabled?
+
+	int								m_nMatchSummaryType;
 
 	string_t						m_iszControlPointName;
 	string_t						m_iszRoundBlueSpawn;

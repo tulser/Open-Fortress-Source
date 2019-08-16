@@ -25,6 +25,9 @@ BEGIN_DATADESC( CTFTeamSpawn )
 	DEFINE_KEYFIELD( m_iszRoundBlueSpawn, FIELD_STRING, "round_bluespawn" ),
 	DEFINE_KEYFIELD( m_iszRoundRedSpawn, FIELD_STRING, "round_redspawn" ),
 
+	// backwards compatibility for live tf2
+	DEFINE_KEYFIELD( m_nMatchSummaryType, FIELD_INTEGER, "MatchSummary" ),
+
 	// Inputs.
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),

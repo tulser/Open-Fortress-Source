@@ -975,7 +975,7 @@ bool CTFGameRules::CanChangelevelBecauseOfTimeLimit( void )
 	// we're playing mini-rounds, and the master says we need to play all of them before changing (for maps like Dustbowl)
 	if ( !m_bForceMapReset && pMaster && pMaster->PlayingMiniRounds() && pMaster->ShouldPlayAllControlPointRounds() )
 	{
-		if ( pMaster->FindControlPointRoundToPlay() )
+		if ( pMaster->NumPlayableControlPointRounds() )
 		{
 			return false;
 		}
@@ -1443,15 +1443,6 @@ void CTFGameRules::PreviousRoundEnd( void )
 	}
 
 	m_iPreviousRoundWinners = GetWinningTeam();
-}
-
-void CTFGameRules::RoundWinAny( void )
-{
-	// Fire an RoundWinAny output when the round gets won
-	if ( g_hEntityRoundWins.Count() && g_hEntityRoundWins[0] )
-	{
-		g_hEntityRoundWins[0]->OnRoundWinAny();
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2442,6 +2433,11 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 	if ( pCTFSpawn )
 	{
 		if ( pCTFSpawn->IsDisabled() )
+			return false;
+
+		// live tf2 uses spawnpoints for the comp end screen, which are given the unassigned team (and unassigned spawnpoints are regarded as valid here)
+		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
+		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
 			return false;
 	}
 
@@ -3664,6 +3660,8 @@ void CTFGameRules::HandleScrambleTeams( void )
 			pTFPlayer->ForceChangeTeam( TF_TEAM_AUTOASSIGN );
 		}
 	}
+	
+	ResetTeamsRoundWinTracking();
 }
 
 //-----------------------------------------------------------------------------

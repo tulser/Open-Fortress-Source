@@ -23,6 +23,7 @@ C_TFObjectiveResource::C_TFObjectiveResource()
 {
 	PrecacheMaterial( "sprites/obj_icons/icon_obj_cap_blu" );
 	PrecacheMaterial( "sprites/obj_icons/icon_obj_cap_red" );
+	PrecacheMaterial( "sprites/obj_icons/icon_obj_cap_mercenary" );
 }
 
 //-----------------------------------------------------------------------------
@@ -43,6 +44,9 @@ const char *C_TFObjectiveResource::GetGameSpecificCPCappingSwipe( int index, int
 	if ( iCappingTeam == TF_TEAM_RED )
 		return "sprites/obj_icons/icon_obj_cap_red";	
 
+	if ( iCappingTeam == TF_TEAM_MERCENARY )
+		return "sprites/obj_icons/icon_obj_cap_mercenary";	
+
 	return "sprites/obj_icons/icon_obj_cap_blu";
 }
 
@@ -58,8 +62,10 @@ const char *C_TFObjectiveResource::GetGameSpecificCPBarFG( int index, int iOwnin
 
 	if ( iOwningTeam == TF_TEAM_BLUE )
 		return "progress_bar_blu";
-	if ( iOwningTeam == TF_TEAM_MERCENARY )
+
+	if (iOwningTeam == TF_TEAM_MERCENARY)
 		return "progress_bar_mercenary";
+
 	return "progress_bar";
 }
 
@@ -74,6 +80,9 @@ const char *C_TFObjectiveResource::GetGameSpecificCPBarBG( int index, int iCappi
 	if ( iCappingTeam == TF_TEAM_RED )
 		return "progress_bar_red";
 
+	if ( iCappingTeam == TF_TEAM_MERCENARY )
+		return "progress_bar_mercenary";
+
 	return "progress_bar_blu";
 }
 
@@ -82,7 +91,7 @@ void C_TFObjectiveResource::SetCappingTeam( int index, int team )
 	//Display warning that someone is capping our point.
 	//Only do this at the start of a cap and if WE own the point.
 	//Also don't warn on a point that will do a "Last Point cap" warning.
-	if ( GetNumControlPoints() > 0 && ShouldWarnOnCap( index ) == false && GetCPCapPercentage( index ) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam( index ) != TEAM_UNASSIGNED )
+	if ( GetNumControlPoints() > 0 && GetCapWarningLevel( index ) == CP_WARN_NORMAL && GetCPCapPercentage( index ) == 0.0f && team != TEAM_UNASSIGNED && GetOwningTeam( index ) != TEAM_UNASSIGNED )
 	{
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 		if ( pLocalPlayer )
