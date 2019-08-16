@@ -3518,12 +3518,14 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 	{
 		if ( pTeam == pNewTeam )
 			continue;
+		if ( pTeam == GetGlobalTeam( TF_TEAM_MERCENARY) )
+			continue;
 
 		int iNumPlayers = pTeam->GetNumPlayers();
 
 		if ( i == iCurrentTeam )
 		{
-			iNumPlayers = MAX( 0, iNumPlayers-1 );
+			iNumPlayers = max( 0, iNumPlayers-1 );
 		}
 
 		if ( ( iNewTeamPlayers - iNumPlayers ) > mp_teams_unbalance_limit.GetInt() )
@@ -3531,6 +3533,7 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 			return true;
 		}
 	}
+
 
 	return false;
 }
