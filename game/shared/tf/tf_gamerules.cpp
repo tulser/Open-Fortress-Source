@@ -1074,7 +1074,6 @@ void CTFGameRules::Activate()
 		of_knockback_melee.SetValue(0.4f);
 
 		of_bunnyhop_max_speed_factor.SetValue(0);
-		ofd_allow_allclass_pickups.SetValue(1);
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
 		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 25 );

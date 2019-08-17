@@ -321,6 +321,8 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	int iProjectile = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile;
 	CBaseEntity *pProjectile = NULL;
 
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+
 	switch( iProjectile )
 	{
 	case TF_PROJECTILE_BULLET:
@@ -376,13 +378,13 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	if ( m_iClip1 != -1 )
 	{
-		if ( of_noreload.GetBool() == 0 || ReserveAmmo() <= 0 )
+		if ( !of_noreload.GetBool() || ReserveAmmo() <= 0 || ( pWeapon && (pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN) ) )
 		{
 			m_iClip1 -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
 		}
 		else
 		{
-			if ( of_infiniteammo.GetBool() != 1 ) 
+			if ( !of_infiniteammo.GetBool() ) 
 					m_iReserveAmmo -= 1;
 		}
 		
@@ -391,12 +393,12 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	{
 		if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
 		{
-			if ( of_infiniteammo.GetBool() != 1 ) 
+			if ( !of_infiniteammo.GetBool() ) 
 				m_iReserveAmmo -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
 		}
 		else
 		{
-			if ( of_infiniteammo.GetBool() != 1 ) 
+			if ( !of_infiniteammo.GetBool() ) 
 				pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
 				
 		}
