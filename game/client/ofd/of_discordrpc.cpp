@@ -135,7 +135,8 @@ const char *g_aMapList[] =
     "dm_coaltown",
 	"ctf_push",
 	"dm_bloodcovenant",
-	"dm_badworks"
+	"dm_badworks",
+	"ctf_xpress3"
 };
 
 CTFDiscordRPC g_discordrpc;
