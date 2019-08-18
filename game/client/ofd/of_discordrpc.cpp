@@ -38,7 +38,7 @@ ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Disc
 #define DISCORD_UPDATE_RATE 10.0f
 
 // placeholder code SUCKS i go to BED.
-#define MAP_COUNT 63
+#define MAP_COUNT 64
 
 // TODO give these better fitting names and move them to .h
 const char *g_aClassImage[] =
