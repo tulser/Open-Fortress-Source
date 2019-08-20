@@ -451,7 +451,7 @@ void CGibShooter::Spawn( void )
 
 CGib *CGibShooter::CreateGib ( void )
 {
-	ConVarRef violence_hgibs( "violence_hgibs" );
+	ConVarRef violence_hgibs( "violence_hgibs", /* bIgnoreMissing */ true );
 	if ( violence_hgibs.IsValid() && !violence_hgibs.GetInt() )
 		return NULL;
 

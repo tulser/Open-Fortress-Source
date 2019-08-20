@@ -70,7 +70,7 @@ void CSkyboxSwapper::Precache( void )
 //-----------------------------------------------------------------------------
 void CSkyboxSwapper::InputTrigger( inputdata_t &inputdata )
 {
-	static ConVarRef skyname( "sv_skyname", false );
+	static ConVarRef skyname( "sv_skyname", /* bIgnoreMissing */ true );
 	if ( !skyname.IsValid() )
 	{
 		Warning( "skybox_swapper (%s) trigger input failed - cannot find 'sv_skyname' convar!\n", GetEntityName() );

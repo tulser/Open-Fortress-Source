@@ -53,7 +53,6 @@ ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
 extern ConVar ofd_mutators;
-extern ConVar ofd_multiweapons;
 //=============================================================================
 //
 // Global functions.
@@ -285,7 +284,7 @@ bool CTFWeaponBase::LoadsManualy( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
+	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 
 	return GetWpnData().iSlot;
@@ -296,7 +295,7 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetPosition( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
+	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
 }

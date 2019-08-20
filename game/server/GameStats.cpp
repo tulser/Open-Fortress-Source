@@ -207,7 +207,7 @@ void CBaseGameStats::Event_Init( void )
 	SetHL2UnlockedChapterStatistic();
 	SetSteamStatistic( filesystem->IsSteam() );
 	SetCyberCafeStatistic( gamestatsuploader->IsCyberCafeUser() );
-	ConVarRef pDXLevel( "mat_dxlevel" );
+	ConVarRef pDXLevel( "mat_dxlevel", /* bIgnoreMissing */ true );
 	if( pDXLevel.IsValid() )
 	{
 		SetDXLevelStatistic( pDXLevel.GetInt() );
@@ -239,7 +239,7 @@ void CBaseGameStats::Event_LevelInit( void )
 	// HACK HACK:  Punching this hole through only works in single player!!!
 	if ( gpGlobals->maxClients == 1 )
 	{
-		ConVarRef closecaption( "closecaption" );
+		ConVarRef closecaption( "closecaption", /* bIgnoreMissing */ true );
 		if( closecaption.IsValid() )
 			SetCaptionsStatistic( closecaption.GetBool() );
 
