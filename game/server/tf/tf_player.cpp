@@ -897,6 +897,50 @@ void CTFPlayer::InitialSpawn( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::Spawn()
 {
+	// entity limit measures, if we are above 1950 then start clearing out entities (doing this in player death as its most reliable and less resource consuming at the same time)
+	//  this really only happens with >24 players on large maps such as tc_hydro
+	if ( engine->GetEntityCount() > 1950 )
+	{
+		Warning("Entity count exceeded 1950, removing unnecessary entities...");
+
+		CBaseEntity *pEntity = NULL;
+		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "spotlight_end")) != NULL)
+		{
+			UTIL_Remove(pEntity);
+		}
+		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "beam")) != NULL)
+		{
+			UTIL_Remove(pEntity);
+		}
+		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "point_spotlight")) != NULL)
+		{
+			UTIL_Remove(pEntity);
+		}
+
+		// if the server manages to somehow get more than 2000 entities after the previous killing, take desperate measures and kill more visual elements
+		if ( engine->GetEntityCount() > 2000 )
+		{
+			Warning("Entity count exceeded 2000!!!!! Removing more visual entities...");
+
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_lightglow")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_sprite")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "move_rope")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "keyframe_rope")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+		}
+	}
+
 	MDLCACHE_CRITICAL_SECTION();
 	
 	if (m_bTransition)

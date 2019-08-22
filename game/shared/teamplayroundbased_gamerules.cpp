@@ -309,6 +309,9 @@ static const char *s_PreserveEnts[] =
 	"commentary_auto",
 	"bot_roster",
 	"info_populator",
+	"point_spotlight",
+	"beam",
+	"spotlight_end",
 	"", // END Marker
 };
 

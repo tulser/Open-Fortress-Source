@@ -142,6 +142,14 @@ void CPointSpotlight::Precache(void)
 //-----------------------------------------------------------------------------
 void CPointSpotlight::Spawn(void)
 {
+	// entity limit measures, if we are above 1900 then don't spawn ourselves
+	if ( engine->GetEntityCount() > 1950 )
+	{
+		Warning("point_spotlight removed itself due to entity count exceeding 1950");
+		UTIL_Remove(this);
+		return;
+	}
+
 	Precache();
 
 	UTIL_SetSize( this,vec3_origin,vec3_origin );

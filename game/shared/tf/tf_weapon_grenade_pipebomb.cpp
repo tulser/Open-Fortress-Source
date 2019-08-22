@@ -290,6 +290,8 @@ void CTFGrenadePipebombProjectile::Simulate( void )
 
 void CTFGrenadePipebombProjectile::CreateLightEffects(void)
 {
+	if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
+	{
 	// Handle the dynamic light
 	if ( of_muzzlelight.GetBool() )
 	{
@@ -354,6 +356,7 @@ void CTFGrenadePipebombProjectile::CreateLightEffects(void)
 
 			tempents->RocketFlare(GetAbsOrigin() );
 		}
+	}
 	}
 }
 
