@@ -370,6 +370,14 @@ bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pA
 		{
 			return true;
 		}
+
+		// my teammate hit me.
+		else if ( ( of_teamplay_knockback.GetInt() == 1 ) & (friendlyfire.GetInt() == 0 ) && pAttacker != pPlayer)
+		{
+			// hack: we tell ourselves to pass the damage but then zero out this damage later
+			return true;
+		}
+
 		// my teammate hit me.
 		else if ( (friendlyfire.GetInt() == 0) && (pAttacker != pPlayer))
 		{

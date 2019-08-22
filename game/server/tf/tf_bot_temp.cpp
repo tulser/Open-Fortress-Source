@@ -191,18 +191,18 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 			else if (stricmp(pVal, "mercenary") == 0)
 				iTeam = TF_TEAM_MERCENARY;
 			else
-				iTeam = RandomInt( 0, 100 );
-				if ( iTeam <= 50 )
+				iTeam = RandomInt( 1, 1000 );
+				if ( iTeam <= 500 )
 					iTeam = TF_TEAM_RED;
-				else if ( iTeam > 50 )
+				else if ( iTeam > 500 )
 					iTeam = TF_TEAM_BLUE;
 		}
 		else
 		{
-			iTeam = RandomInt( 0, 100 );
-			if ( iTeam <= 50 )
+			iTeam = RandomInt( 1, 1000 );
+			if ( iTeam <= 500 )
 				iTeam = TF_TEAM_RED;
-			else if ( iTeam > 50 )
+			else if ( iTeam > 500 )
 				iTeam = TF_TEAM_BLUE;
 		}
 

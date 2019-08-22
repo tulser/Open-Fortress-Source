@@ -28,10 +28,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifdef CLIENT_DLL
-extern ConVar of_muzzlelight;
-#endif
-
 extern ConVar sv_gravity;
 extern ConVar ofd_mutators;
 
@@ -157,8 +153,6 @@ void CTFWeaponBaseGrenadeProj::Spawn()
 {
 	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
-	
-	CreateLightEffects();
 }
 
 //-----------------------------------------------------------------------------
@@ -183,77 +177,6 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 		// Add the current sample.
 		vCurOrigin = GetLocalOrigin();
 		interpolator.AddToHead( changeTime, &vCurOrigin, false );
-
-		CreateLightEffects();
-	}
-}
-
-void CTFWeaponBaseGrenadeProj::CreateLightEffects(void)
-{
-	// Handle the dynamic light
-	if (of_muzzlelight.GetBool())
-	{
-		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
-		dlight_t *dl;
-		AddEffects(EF_DIMLIGHT);
-		if ( IsEffectActive(EF_DIMLIGHT) )
-		{
-			dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
-			dl->origin = GetAbsOrigin();
-			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
-			switch ( GetTeamNumber() )
-			{
-				case TF_TEAM_RED:
-					if (!m_bCritical) 
-					{
-						dl->color.r = 255; dl->color.g = 30; dl->color.b = 10; dl->style = 0;
-					}
-					else 
-					{
-						dl->color.r = 255; dl->color.g = 10; dl->color.b = 10; dl->style = 1;
-					}
-					break;
-				case TF_TEAM_BLUE:
-					if (!m_bCritical) 
-					{
-						dl->color.r = 10; dl->color.g = 30; dl->color.b = 255; dl->style = 0;
-					}
-					else 
-					{
-						dl->color.r = 10; dl->color.g = 10; dl->color.b = 255; dl->style = 1;
-					}
-					break;
-				case TF_TEAM_MERCENARY:
-					if (!pPlayer)
-						break;
-					float r = pPlayer->m_vecPlayerColor.x * 255;
-					float g = pPlayer->m_vecPlayerColor.y * 255;
-					float b = pPlayer->m_vecPlayerColor.z * 255;
-					if ( r < TF_LIGHT_COLOR_CLAMP && g < TF_LIGHT_COLOR_CLAMP && b < TF_LIGHT_COLOR_CLAMP )
-					{
-						float maxi = max(max(r, g), b);
-						maxi = TF_LIGHT_COLOR_CLAMP - maxi;
-						r += maxi;
-						g += maxi;
-						b += maxi;
-					}
-					if (!m_bCritical) 
-					{
-						dl->color.r = r; dl->color.g = g ; dl->color.b = b ; dl->style = 0;
-					}
-					else 
-					{
-						dl->color.r = r; dl->color.g = g; dl->color.b = b; dl->style = 1;
-					}
-					break;
-			}
-			dl->die = gpGlobals->curtime + 0.01f;
-			dl->radius = 256.0f;
-			dl->decay = 512.0f;
-			dl->die = gpGlobals->curtime + 0.001;
-
-			tempents->RocketFlare(GetAbsOrigin());
-		}
 	}
 }
 

@@ -69,8 +69,6 @@ public:
 
 	float					m_flSpawnTime;
 	int						m_bCritical;
-
-	virtual void			CreateLightEffects(void);
 	
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetThrower(); }
 

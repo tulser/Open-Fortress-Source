@@ -93,6 +93,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	if( !pOther->IsAlive() )
 		return;	
+
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		return;
 	//Don't let the person who threw this ammo pick it up until it hits the ground.
@@ -105,6 +106,10 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !ofd_allow_allclass_pickups.GetBool() ) // Dont let non Mercenary classes pick up weapons unless thats turned on
 		return;
 	Assert( pPlayer );
+
+	// bail out early if the weaponid somehow doesn't exist
+	if ( !WeaponID )
+		return;
 
 	bool bSuccess = true;
 	

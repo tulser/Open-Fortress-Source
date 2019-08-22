@@ -2379,7 +2379,7 @@ void C_TFPlayer::ClientThink()
 	// Ugh, this check is getting ugly
 
 	// Start smoke if we're not invisible or disguised
-	if ( IsPlayerClass( TF_CLASS_SPY ) && IsAlive() &&									// only on spy model
+	if ( !m_bRetroMode && IsPlayerClass( TF_CLASS_SPY ) && IsAlive() &&									// only on spy model when not with TFC model
 		( !m_Shared.InCond( TF_COND_DISGUISED ) || !IsEnemyPlayer() ) &&	// disguise doesn't show for teammates
 		GetPercentInvisible() <= 0 &&										// don't start if invis
 		( pLocalPlayer != this ) && 										// don't show to local player
@@ -2427,6 +2427,19 @@ void C_TFPlayer::ClientThink()
 		{
 			ParticleProp()->StopEmissionAndDestroyImmediately( m_pSaveMeEffect );
 			m_pSaveMeEffect = NULL;
+		}
+	}
+
+	if ( m_pChattingEffect )
+	{
+		// Kill the effect if either
+		// a) the player is dead
+		// b) the enemy disguised spy is now invisible
+
+		if ( !IsAlive() && ( GetPercentInvisible() > 0 ) )
+		{
+			ParticleProp()->StopEmissionAndDestroyImmediately( m_pChattingEffect );
+			m_pChattingEffect = NULL;
 		}
 	}
 }

@@ -51,9 +51,10 @@ public:
 
 #ifdef CLIENT_DLL
 
-	virtual void OnDataChanged( DataUpdateType_t updateType );
+	virtual void    OnDataChanged( DataUpdateType_t updateType );
+	virtual void	CreateLightEffects(void);
 	virtual const char *GetTrailParticleName( void );
-	virtual int DrawModel( int flags );
+	virtual int     DrawModel( int flags );
 	virtual void	Simulate( void );
 	
 #else

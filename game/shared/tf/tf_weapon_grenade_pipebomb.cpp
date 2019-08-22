@@ -18,7 +18,10 @@
 #include "materialsystem/imaterial.h"
 #include "materialsystem/imaterialvar.h"
 #include "prediction.h"
-
+#include "iefx.h"
+#include "dlight.h"
+#include "tempent.h"
+#include "c_te_legacytempents.h"
 #else
 #include "tf_player.h"
 #include "items.h"
@@ -42,6 +45,10 @@
 extern ConVar tf_grenadelauncher_max_chargetime;
 ConVar tf_grenadelauncher_chargescale( "tf_grenadelauncher_chargescale", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED );
 ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_CHEAT | FCVAR_REPLICATED );
+
+#ifdef CLIENT_DLL
+extern ConVar of_muzzlelight;
+#endif
 
 #ifndef CLIENT_DLL
 ConVar tf_grenadelauncher_min_contact_speed( "tf_grenadelauncher_min_contact_speed", "100" );
@@ -187,6 +194,11 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 		m_bPulsed = false;
 
+		if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
+		{
+			CreateLightEffects();
+		}
+
 		if ( pPlayer && pParticle )
 		{
 			pPlayer->m_Shared.UpdateParticleColor( pParticle );
@@ -272,6 +284,75 @@ void CTFGrenadePipebombProjectile::Simulate( void )
 				ParticleProp()->Create( "stickybomb_pulse_dm", PATTACH_ABSORIGIN );
 			}
 			m_bPulsed = true;
+		}
+	}
+}
+
+void CTFGrenadePipebombProjectile::CreateLightEffects(void)
+{
+	// Handle the dynamic light
+	if ( of_muzzlelight.GetBool() )
+	{
+		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
+		dlight_t *dl;
+		AddEffects(EF_DIMLIGHT);
+		if ( IsEffectActive(EF_DIMLIGHT) )
+		{
+			dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC + index);
+			dl->origin = GetAbsOrigin();
+			dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+			switch ( GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+					if (!m_bCritical) 
+					{
+						dl->color.r = 255; dl->color.g = 30; dl->color.b = 10; dl->style = 0;
+					}
+					else 
+					{
+						dl->color.r = 255; dl->color.g = 10; dl->color.b = 10; dl->style = 1;
+					}
+					break;
+				case TF_TEAM_BLUE:
+					if (!m_bCritical) 
+					{
+						dl->color.r = 10; dl->color.g = 30; dl->color.b = 255; dl->style = 0;
+					}
+					else 
+					{
+						dl->color.r = 10; dl->color.g = 10; dl->color.b = 255; dl->style = 1;
+					}
+					break;
+				case TF_TEAM_MERCENARY:
+					if (!pPlayer)
+						break;
+					float r = pPlayer->m_vecPlayerColor.x * 255;
+					float g = pPlayer->m_vecPlayerColor.y * 255;
+					float b = pPlayer->m_vecPlayerColor.z * 255;
+					if ( r < TF_LIGHT_COLOR_CLAMP && g < TF_LIGHT_COLOR_CLAMP && b < TF_LIGHT_COLOR_CLAMP )
+					{
+						float maxi = max(max(r, g), b);
+						maxi = TF_LIGHT_COLOR_CLAMP - maxi;
+						r += maxi;
+						g += maxi;
+						b += maxi;
+					}
+					if (!m_bCritical) 
+					{
+						dl->color.r = r; dl->color.g = g ; dl->color.b = b ; dl->style = 0;
+					}
+					else 
+					{
+						dl->color.r = r; dl->color.g = g; dl->color.b = b; dl->style = 1;
+					}
+					break;
+			}
+			dl->die = gpGlobals->curtime + 0.01f;
+			dl->radius = 256.0f;
+			dl->decay = 512.0f;
+			dl->die = gpGlobals->curtime + 0.001;
+
+			tempents->RocketFlare(GetAbsOrigin() );
 		}
 	}
 }
@@ -378,6 +459,12 @@ void CTFGrenadePipebombProjectile::Spawn()
 		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
+#ifdef CLIENT_DLL
+		if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
+		{
+			CreateLightEffects();
+		}
+#endif
 	}
 	if ( s_PipebombModel )
 	{
@@ -609,21 +696,36 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 
 	bool bSameTeam = ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetThrower() ));
 
-
-	if ( m_bTouched && ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_BLAST) ) && bSameTeam == false )
+	if ( m_bTouched && ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_BLAST|DMG_SLASH|DMG_CLUB) ) && bSameTeam == false )
 	{
 		Vector vecForce = info.GetDamageForce();
-		if ( info.GetDamageType() & DMG_BULLET )
+		if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 		{
-			vecForce *= tf_grenade_forcefrom_bullet.GetFloat();
+			if ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_SLASH|DMG_CLUB) )
+			{
+				//m_bFizzle = false;
+				m_bFizzle = true;
+				Detonate();
+			}
+			else if ( info.GetDamageType() & DMG_BLAST )
+			{
+				vecForce *= tf_grenade_forcefrom_blast.GetFloat();
+			}
 		}
-		else if ( info.GetDamageType() & DMG_BUCKSHOT )
+		else
 		{
-			vecForce *= tf_grenade_forcefrom_buckshot.GetFloat();
-		}
-		else if ( info.GetDamageType() & DMG_BLAST )
-		{
-			vecForce *= tf_grenade_forcefrom_blast.GetFloat();
+			if ( info.GetDamageType() & DMG_BULLET )
+			{
+				vecForce *= tf_grenade_forcefrom_bullet.GetFloat();
+			}
+			else if ( info.GetDamageType() & DMG_BUCKSHOT )
+			{
+				vecForce *= tf_grenade_forcefrom_buckshot.GetFloat();
+			}
+			else if ( info.GetDamageType() & DMG_BLAST )
+			{
+				vecForce *= tf_grenade_forcefrom_blast.GetFloat();
+			}
 		}
 
 		// If the force is sufficient, detach & move the pipebomb

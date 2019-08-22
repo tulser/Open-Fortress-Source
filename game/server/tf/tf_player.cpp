@@ -139,7 +139,7 @@ extern ConVar ofd_spawnprotecttime;
 extern ConVar ofe_huntedcount;
 extern ConVar friendlyfire;
 
-ConVar ofd_teamplay_collision	( "ofd_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables collision with teammates in TDM mode." );
+ConVar of_teamplay_collision	( "of_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables collision with teammates in teamplay." );
 ConVar ofd_dynamic_color_update	( "ofd_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Updates player color immediately." );
 // -------------------------------------------------------------------------------- //
 // Player animation event. Sent to the client when a player fires, jumps, reloads, etc..
@@ -4072,7 +4072,7 @@ bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 			return BaseClass::ShouldCollide(collisionGroup, contentsMask);
 		}
 		
-		if ( ofd_teamplay_collision.GetBool() && TFGameRules()->IsTeamplay() )
+		if ( of_teamplay_collision.GetBool() && TFGameRules()->IsTeamplay() )
 			return true;
 
 		switch( GetTeamNumber() )
@@ -4150,29 +4150,69 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		VectorNormalize( vecDir );
 	}
 	g_vecAttackDir = vecDir;
-
+	
 	// Do the damage.
 	m_bitsDamageType |= info.GetDamageType();
 
 	int iOldHealth = m_iHealth;
 	bool bIgniting = false;
 
-	if ( m_takedamage != DAMAGE_EVENTS_ONLY )
+	//if (pAttacker != this && pAttacker->IsPlayer())
+	//{
+	//	ToTFPlayer(pAttacker)->RecordDamageEvent(info, (m_iHealth <= 0));
+	//}
+
+	// Apply a damage force.
+	CBaseEntity *pAttacker = info.GetAttacker();
+
+	
+	//if (pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && !friendlyfire.GetBool()
+	//	// Deathmatch Specific Lag Comp, If either the shooter or the Victim is on the merc team, dont return false here
+	//	&& pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY && GetTeamNumber() != TF_TEAM_MERCENARY)
+	//	return false;
+
+	//		if ( pAttacker && pAttacker->GetTeamNumber() == GetTeamNumber() && !friendlyfire.GetBool() && pAttacker->GetTeamNumber() == TF_TEAM_MERCENARY )
+
+
+	if ( !of_teamplay_knockback.GetBool() )
 	{
-		// Start burning if we took ignition damage
-		bIgniting = ( ( info.GetDamageType() & DMG_IGNITE ) && ( GetWaterLevel() < WL_Waist ) );
+		if ( m_takedamage != DAMAGE_EVENTS_ONLY )
+		{
+			// Start burning if we took ignition damage
+			bIgniting = ( ( info.GetDamageType() & DMG_IGNITE ) && ( GetWaterLevel() < WL_Waist ) );
 
-		if ( info.GetDamage() == 0.0f )
-			return 0;
+			if ( info.GetDamage() == 0.0f )
+				return 0;
 
-		// Take damage - round to the nearest integer.
-		m_iHealth -= ( info.GetDamage() + 0.5f );
+			// Take damage - round to the nearest integer.
+			m_iHealth -= ( info.GetDamage() + 0.5f );
+		}
+	}
+	// if we have teamplay knockback enabled and friendlyfire is off, then allow teammates to apply knockback force to other teammates without causing damage
+	else
+	{
+		if ( pAttacker && pAttacker->GetTeamNumber() == GetTeamNumber() && !friendlyfire.GetBool() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY )
+		{
+			// i know, this sucks, but it doesnt work if I invert it, feel free to fix it if you can
+		}
+		else
+		{
+			if ( m_takedamage != DAMAGE_EVENTS_ONLY )
+			{
+				// Start burning if we took ignition damage
+				bIgniting = ( ( info.GetDamageType() & DMG_IGNITE ) && ( GetWaterLevel() < WL_Waist ) );
+
+				if ( info.GetDamage() == 0.0f )
+					return 0;
+
+				// Take damage - round to the nearest integer.
+				m_iHealth -= ( info.GetDamage() + 0.5f );
+			}	
+		}
 	}
 
 	m_flLastDamageTime = gpGlobals->curtime;
 
-	// Apply a damage force.
-	CBaseEntity *pAttacker = info.GetAttacker();
 	if ( !pAttacker )
 		return 0;
 

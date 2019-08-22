@@ -54,5 +54,12 @@ ConVar mp_fadetoblack(
 	FCVAR_REPLICATED | FCVAR_NOTIFY, 
 	"fade a player's screen to black when he dies" );
 
+ConVar of_teamplay_knockback(
+	"of_teamplay_knockback",
+	"0",
+	FCVAR_REPLICATED | FCVAR_NOTIFY,
+	"Allows team members to knockback other members of their team"
+	);
+
 
 ConVar sv_hudhint_sound( "sv_hudhint_sound", "1", FCVAR_REPLICATED );
