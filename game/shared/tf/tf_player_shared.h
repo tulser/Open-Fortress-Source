@@ -183,6 +183,9 @@ public:
 	CTFWeaponBase *GetActiveTFWeapon() const;
 
 	// Utility.
+	// loser state
+	bool	IsLoser( void );
+
 	bool	IsAlly( CBaseEntity *pEntity );
 
 	// Separation force

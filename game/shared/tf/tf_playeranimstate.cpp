@@ -14,6 +14,8 @@
 #include "base_playeranimstate.h"
 #include "datacache/imdlcache.h"
 
+//#include "tf_weapon_grapple.h"
+
 #ifdef CLIENT_DLL
 #include "c_tf_player.h"
 #else
@@ -23,6 +25,43 @@
 #define TF_RUN_SPEED			320.0f
 #define TF_WALK_SPEED			75.0f
 #define TF_CROUCHWALK_SPEED		110.0f
+
+/*
+acttable_t m_acttableGrapple[] = 
+{
+	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_LOSERSTATE,			false },
+	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_LOSERSTATE,			false },
+	{ ACT_MP_RUN,				ACT_MP_RUN_LOSERSTATE,				false },
+	{ ACT_MP_WALK,				ACT_MP_WALK_LOSERSTATE,				false },
+	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_LOSERSTATE,			false },
+	{ ACT_MP_CROUCHWALK,		ACT_MP_CROUCHWALK_LOSERSTATE,		false },
+	{ ACT_MP_JUMP,				ACT_MP_JUMP_LOSERSTATE,				false },
+	{ ACT_MP_JUMP_START,		ACT_MP_JUMP_START_LOSERSTATE,		false },
+	{ ACT_MP_JUMP_FLOAT,		ACT_MP_JUMP_FLOAT_LOSERSTATE,		false },
+	{ ACT_MP_JUMP_LAND,			ACT_MP_JUMP_LAND_LOSERSTATE,		false },
+	{ ACT_MP_SWIM,				ACT_MP_SWIM_LOSERSTATE,				false },
+	{ ACT_MP_DOUBLEJUMP,		ACT_MP_DOUBLEJUMP_LOSERSTATE,		false },
+	{ ACT_MP_DOUBLEJUMP_CROUCH, ACT_MP_DOUBLEJUMP_CROUCH_LOSERSTATE, false },
+};
+*/
+
+acttable_t m_acttableLoserState[] = 
+{
+	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_LOSERSTATE,			false },
+	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_LOSERSTATE,			false },
+	{ ACT_MP_RUN,				ACT_MP_RUN_LOSERSTATE,				false },
+	{ ACT_MP_WALK,				ACT_MP_WALK_LOSERSTATE,				false },
+	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_LOSERSTATE,			false },
+	{ ACT_MP_CROUCHWALK,		ACT_MP_CROUCHWALK_LOSERSTATE,		false },
+	{ ACT_MP_JUMP,				ACT_MP_JUMP_LOSERSTATE,				false },
+	{ ACT_MP_JUMP_START,		ACT_MP_JUMP_START_LOSERSTATE,		false },
+	{ ACT_MP_JUMP_FLOAT,		ACT_MP_JUMP_FLOAT_LOSERSTATE,		false },
+	{ ACT_MP_JUMP_LAND,			ACT_MP_JUMP_LAND_LOSERSTATE,		false },
+	{ ACT_MP_SWIM,				ACT_MP_SWIM_LOSERSTATE,				false },
+	{ ACT_MP_DOUBLEJUMP,		ACT_MP_DOUBLEJUMP_LOSERSTATE,		false },
+	{ ACT_MP_DOUBLEJUMP_CROUCH, ACT_MP_DOUBLEJUMP_CROUCH_LOSERSTATE, false },
+};
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -111,6 +150,45 @@ Activity CTFPlayerAnimState::TranslateActivity( Activity actDesired )
 {
 	Activity translateActivity = BaseClass::TranslateActivity( actDesired );
 
+	// nope, this doesnt work
+	/*
+	CTFPlayer *pTFPlayer = GetTFPlayer();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GetActiveWeapon();
+
+	if ( pWeapon )
+	{
+		int actCount = ARRAYSIZE( m_acttableLoserState );
+		for ( int i = 0; i < actCount; i++ )
+		{
+			const acttable_t& act = m_acttableGrapple[ i ];
+			if ( actDesired == act.baseAct)
+				return (Activity)act.weaponAct;
+		}
+	}
+	*/
+
+	// loser stuff (also done with no weapon)
+	// copied from CBaseCombatWeapon
+	if ( GetTFPlayer()->m_Shared.IsLoser() )
+	{
+		//int actCount = 0;
+		//acttable_t *pTable = ActivityList( actCount );
+		int actCount = ARRAYSIZE( m_acttableLoserState );
+
+		for ( int i = 0; i < actCount; i++ )
+		{
+			//const acttable_t& act = pTable[i];
+			const acttable_t& act = m_acttableLoserState[i];
+			//if ( baseAct == act.baseAct )
+			if ( actDesired == act.baseAct)
+			{
+				//return (Activity)act.weaponAct;
+				return ( Activity )act.weaponAct;
+			}
+		}
+	}
+	
+
 	if ( GetTFPlayer()->GetActiveWeapon() )
 	{
 		translateActivity = GetTFPlayer()->GetActiveWeapon()->ActivityOverride( translateActivity, NULL );
@@ -188,7 +266,7 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 				return;
 
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-			bool bIsMinigun = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN ) );
+			bool bIsMinigun = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWpn->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON ) );
 			bool bIsSniperRifle = ( pWpn && pWpn->GetWeaponID() == TF_WEAPON_SNIPERRIFLE || pWpn && pWpn->GetWeaponID() == TF_WEAPON_RAILGUN );
 
 			// Heavy weapons primary fire.
@@ -278,7 +356,7 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 				return;
 
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-			bool bIsMinigun  = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN ) );
+			bool bIsMinigun  = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWpn->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON ) );
 
 			bool bAutoKillPreFire = false;
 			if ( bIsMinigun )
@@ -313,7 +391,7 @@ void CTFPlayerAnimState::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 				return;
 
 			CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
-			bool bIsMinigun  = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN ) );
+			bool bIsMinigun  = ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWpn->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON ) );
 
 			if ( m_bInSwim && bIsMinigun )
 			{
@@ -426,7 +504,7 @@ bool CTFPlayerAnimState::HandleSwimming( Activity &idealActivity )
 		if ( m_pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) )
 		{
 			CTFWeaponBase *pWpn = m_pTFPlayer->GetActiveTFWeapon();
-			if ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
+			if ( pWpn && ( pWpn->GetWeaponID() == TF_WEAPON_MINIGUN || pWpn->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWpn->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON ) )
 			{
 				idealActivity = ACT_MP_SWIM_DEPLOYED;
 			}
@@ -459,6 +537,12 @@ bool CTFPlayerAnimState::HandleMoving( Activity &idealActivity )
 		m_flHoldDeployedPoseUntilTime = 0.0;
 	}
 
+	// loser state, must be at this order as it doesn't work below or above
+	if ( m_pTFPlayer->m_Shared.IsLoser() )
+	{
+		return BaseClass::HandleMoving( idealActivity );
+	}
+
 	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) ) 
 	{
 		if ( flSpeed > MOVING_MINIMUM_SPEED )
@@ -470,6 +554,12 @@ bool CTFPlayerAnimState::HandleMoving( Activity &idealActivity )
 			idealActivity = ACT_MP_DEPLOYED_IDLE;
 		}
 	}
+	/*
+	else if ( m_pTFPlayer->m_Shared.IsLoser() )
+	{
+		return BaseClass::HandleMoving( idealActivity );
+	}
+	*/
 	else if ( m_flHoldDeployedPoseUntilTime > gpGlobals->curtime )
 	{
 		// Unless we move, hold the deployed pose for a number of seconds after being deployed
@@ -492,7 +582,8 @@ bool CTFPlayerAnimState::HandleDucking( Activity &idealActivity )
 {
 	if ( GetBasePlayer()->GetFlags() & FL_DUCKING )
 	{
-		if ( GetOuterXYSpeed() < MOVING_MINIMUM_SPEED )
+		// don't allow crouchwalking as loser
+		if ( m_pTFPlayer->m_Shared.IsLoser() || GetOuterXYSpeed() < MOVING_MINIMUM_SPEED )
 		{
 			idealActivity = ACT_MP_CROUCH_IDLE;		
 			if ( m_pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) || m_flHoldDeployedPoseUntilTime > gpGlobals->curtime )
@@ -512,7 +603,7 @@ bool CTFPlayerAnimState::HandleDucking( Activity &idealActivity )
 				CTFPlayer *pPlayer = GetTFPlayer();
 				if ( pPlayer && pPlayer->GetActiveTFWeapon() )
 				{
-					bIsMinigun = ( pPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN || pPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_GATLINGGUN );
+					bIsMinigun = ( pPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN || pPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_GATLINGGUN || pPlayer->GetActiveTFWeapon()->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON );
 				}
 
 				if ( !bIsMinigun )

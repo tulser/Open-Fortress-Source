@@ -97,6 +97,10 @@ bool CHudCrosshair::ShouldDraw( void )
 	if ( !pPlayer )
 		return false;
 
+	// don't draw as a loser
+	if ( pPlayer->m_Shared.IsLoser() )
+		return false;
+
 	// don't draw crosshair if scoped with a railgun or sniper rifle
 	if ( tf_hud_no_crosshair_on_scope_zoom.GetBool() )
 	{

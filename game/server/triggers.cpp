@@ -2545,13 +2545,16 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 
 	// telefragging
 	// copied from tf_player
-	for ( CEntitySphereQuery sphere( pentTarget->GetAbsOrigin(), 100 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+	if ( pOther->IsPlayer() )
 	{
-		// don't telefrag ourselves
-		if ( ent->IsPlayer() && ent != pOther )
+		for ( CEntitySphereQuery sphere( pentTarget->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 		{
-			CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_TELEFRAG );
-			ent->TakeDamage( info );
+			// don't telefrag ourselves
+			if ( ent->IsPlayer() && ent != pOther )
+			{
+				CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_TELEFRAG );
+				ent->TakeDamage( info );
+			}
 		}
 	}
 }

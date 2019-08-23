@@ -2237,7 +2237,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 			// telefragging
 			CBaseEntity *ent = NULL;
 
-			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 95 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 			{
 				// don't telefrag ourselves
 				if ( ent->IsPlayer() && ent != this )
@@ -7507,7 +7507,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 				criteriaSet.AppendCriteria( "sniperzoomed", "1" );
 			}
 		}
-		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN  ||  pActiveWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pActiveWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN || pActiveWeapon->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON )
 		{
 			CTFMinigun *pMinigun = dynamic_cast<CTFMinigun*>(pActiveWeapon);
 			if ( pMinigun )

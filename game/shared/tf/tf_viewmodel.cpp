@@ -291,7 +291,7 @@ void CTFViewModel::StandardBlendingRules( CStudioHdr *hdr, Vector pos[], Quatern
 	if ( !pWeapon ) 
 		return;
 
-	if ( pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+	if ( pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWeapon->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON )
 	{
 		CTFMinigun *pMinigun = ( CTFMinigun * )pWeapon;
 

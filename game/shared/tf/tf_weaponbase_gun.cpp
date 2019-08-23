@@ -172,7 +172,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	pPlayer->m_Shared.RemoveCond( TF_COND_SPAWNPROTECT );
 
 	// Minigun has custom handling
-	if ( GetWeaponID() != TF_WEAPON_MINIGUN && GetWeaponID() != TF_WEAPON_GATLINGGUN )
+	if ( GetWeaponID() != TF_WEAPON_MINIGUN && GetWeaponID() != TF_WEAPON_GATLINGGUN && GetWeaponID() != TFC_WEAPON_ASSAULTCANNON )
 	{
 		pPlayer->SpeakWeaponFire();
 	}
@@ -865,15 +865,19 @@ void CTFWeaponBaseGun::DoFireEffects()
 		return;
 
 	// Muzzle flash on weapon.
+	
 	bool bMuzzleFlash = true;
+
+	/*
 	if ( pPlayer->IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
 	{
 		CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-		if ( pWeapon && ( pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
+		if ( pWeapon && ( pWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN || pWeapon->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON ) )
 		{
 			bMuzzleFlash = false;
 		}
 	}
+	*/
 
 	if ( bMuzzleFlash )
 	{

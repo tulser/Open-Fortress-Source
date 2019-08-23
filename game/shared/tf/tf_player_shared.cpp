@@ -2035,6 +2035,28 @@ CTFWeaponBase *CTFPlayerShared::GetActiveTFWeapon() const
 //-----------------------------------------------------------------------------
 // Purpose: Team check.
 //-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsLoser( void )
+{
+	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
+	{
+		int iWinner = TFGameRules()->GetWinningTeam();
+
+		//if ( iWinner == GetTeamNumber() )
+		if ( iWinner != TEAM_UNASSIGNED && iWinner != m_pOuter->GetTeamNumber() )
+		{
+			return true;
+		}
+		if ( iWinner == TEAM_UNASSIGNED )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Team check.
+//-----------------------------------------------------------------------------
 bool CTFPlayerShared::IsAlly( CBaseEntity *pEntity )
 {
 	return ( pEntity->GetTeamNumber() == m_pOuter->GetTeamNumber() );
@@ -2377,7 +2399,7 @@ void CTFPlayer::ImpactWaterTrace( trace_t &trace, const Vector &vecStart )
 
 		const char *pszEffectName = "tf_gunshotsplash";
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
-		if ( pWeapon && ( TF_WEAPON_MINIGUN == pWeapon->GetWeaponID() || TF_WEAPON_GATLINGGUN == pWeapon->GetWeaponID() ) )
+		if ( pWeapon && ( TF_WEAPON_MINIGUN == pWeapon->GetWeaponID() || TF_WEAPON_GATLINGGUN == pWeapon->GetWeaponID() || TFC_WEAPON_ASSAULTCANNON == pWeapon->GetWeaponID() ) )
 		{
 			// for the minigun, use a different, cheaper splash effect because it can create so many of them
 			pszEffectName = "tf_gunshotsplash_minigun";

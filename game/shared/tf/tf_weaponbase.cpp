@@ -1663,7 +1663,7 @@ const char *CTFWeaponBase::GetTracerType( void )
 		return m_szTracerName;
 	}
 
-	if ( GetWeaponID() == TF_WEAPON_MINIGUN || GetWeaponID() == TF_WEAPON_GATLINGGUN )
+	if ( GetWeaponID() == TF_WEAPON_MINIGUN || GetWeaponID() == TF_WEAPON_GATLINGGUN || GetWeaponID() == TFC_WEAPON_ASSAULTCANNON )
 		return "BrightTracer";
 
 	return BaseClass::GetTracerType();

@@ -100,7 +100,7 @@ void CTFPlayerMove::SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper 
 	if ( pVehicle && gpGlobals->frametime != 0 )
 	{
 		pVehicle->SetupMove( player, ucmd, pHelper, move );
-}
+	}
 }
 
 
