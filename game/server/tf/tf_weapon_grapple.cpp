@@ -520,7 +520,7 @@ void CWeaponGrapple::PrimaryAttack( void )
 	UTIL_TraceLine( vecShootOrigin, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
 
 	//Draws the beam
-	DrawBeam( vecShootOrigin, tr.endpos, 1 );
+	DrawBeam( vecShootOrigin, tr.endpos, 2 );
 
 	#endif
 
@@ -817,17 +817,17 @@ void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, flo
 	if ( pPlayer )
 	{
 		if ( pPlayer->GetTeamNumber() == TF_TEAM_RED  )
-			pBeam = CBeam::BeamCreate("cable/cable_red.vmt", 1);
+			pBeam = CBeam::BeamCreate("cable/cable_red.vmt", 2);
 		else if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
-			pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", 1);
+			pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", 2);
 		else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
-			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 1);
+			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
 		else
-			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 1);
+			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
 	}
 	else
 	{
-		pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 1);
+		pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
 	}
 
 	// It starts at startPos
