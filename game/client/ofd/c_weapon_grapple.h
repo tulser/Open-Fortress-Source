@@ -18,7 +18,7 @@
 
 #include "tf_weaponbase_gun.h"
 //#include "c_basehlcombatweapon.h"              
-#include "sprite.h"                            
+#include "Sprite.h"
  
 #ifndef CLIENT_DLL
 	#include "rope.h"
