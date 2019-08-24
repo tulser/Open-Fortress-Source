@@ -2817,6 +2817,10 @@ void OnCaptionLanguageChanged(IConVar *pConVar, const char *pOldString, float fl
 			hudCloseCaption->InitCaptionDictionary(dbfile);
 		}
 	}
+        if (!engine->IsInGame())
+ 	{ 	
+	engine->ClientCmd_Unrestricted("hud_reloadscheme"); 
+        }
 	DevMsg("cc_lang = %s\n", var.GetString());
 }
 
