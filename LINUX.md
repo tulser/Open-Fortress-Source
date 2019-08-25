@@ -3,6 +3,7 @@ from..
 * [Ubuntu/Debian](for-the-lucky),
 * [Some other *nix](for-the-rest-of-us),
 * or even [Microsoft Windows](for-the-foolish).
+[Appendix A: Dedicated Server]
 
 ## For the lucky
 On Debian, Ubuntu, or derivitives, installing the Steam Runtime should be easy.
@@ -66,8 +67,17 @@ $ docker run -it -v ~/proj/ofd:/ofd -v ~/proj/ofd/ccache:/root/.ccache -w /ofd j
 On Windows, linux builds can be made with 'Docker Machines'..
 Again, I havn't done it, but [jimbly's containers][jimbly] were actually purpose-built for this.
 
+# Appendix A: Dedicated Server
+### this section is quite WIP
+Basically, you've gotta: Install Linux, SteamCMD, Git, and Git LFS.
+Then, using SteamCMD, install appids 440 (TF2) and 244310 (SSDK2013 DS)
+and then launch the game, making sure to put TF2 where it is expected (next to srcds_linux, in a folder called `tf`)
+ReddKing was having problems with SRCDS not installing TF2 files, but worked around it by transferring TF2 to the server over FTP.
+
 ## Any problems?
 Contact me! I'm `Nopey Nope#5837` on Discord, and `imjustagan@gmail.com` is my email.
+
+
 
 [jimbly]: https://github.com/Jimbly/steam-runtime-docker
 [prebuilt]: http://repo.steamstatic.com/steamrt/steamrt-scout/snapshots/
