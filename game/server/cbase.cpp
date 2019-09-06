@@ -263,7 +263,12 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			//
 			// Post the event with the default parameter.
 			//
-			g_EventQueue.AddEvent( STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), Value, ev->m_flDelay + fDelay, pActivator, pCaller, ev->m_iIDStamp );
+			g_EventQueue.AddEvent( STRING(ev->m_iTarget),
+				STRING(ev->m_iTargetInput), 
+				Value, ev->m_flDelay + fDelay, 
+				pActivator, 
+				pCaller, 
+				ev->m_iIDStamp );
 		}
 		else
 		{

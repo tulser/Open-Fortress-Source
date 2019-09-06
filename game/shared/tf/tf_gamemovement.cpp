@@ -236,7 +236,10 @@ void CTFGameMovement::ShieldChargeMove( void )
 
 Vector CTFGameMovement::GetPlayerViewOffset( bool ducked ) const
 {
-	return ducked ? VEC_DUCK_VIEW_SCALED (m_pTFPlayer) : ( m_pTFPlayer->GetClassEyeHeight() );
+	Vector DuckedView = VEC_DUCK_VIEW_SCALED (m_pTFPlayer);
+	 if ( m_pTFPlayer->GetClassEyeHeight().z < 68 )
+		DuckedView.z = m_pTFPlayer->GetClassEyeHeight().z / 1.5 * player->GetModelScale();
+	return ducked ? DuckedView : ( m_pTFPlayer->GetClassEyeHeight() );
 }
 
 //-----------------------------------------------------------------------------
@@ -397,6 +400,7 @@ void CTFGameMovement::AirDash( void )
 	mv->m_vecVelocity.z += flDashZ;
 
 	m_pTFPlayer->m_Shared.SetAirDash( true );
+	m_pTFPlayer->m_Shared.AddAirDashCount();
 
 	// Play the gesture.
 	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_DOUBLEJUMP );
@@ -439,7 +443,7 @@ bool CTFGameMovement::CheckJumpButton()
 		return false;
 
 	// Check to see if the player is a scout.
-	bool bScout = m_pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_SCOUT );
+	bool bCanAirDash = m_pTFPlayer->GetPlayerClass()->CanAirDash();
 	bool bAirDash = false;
 	bool bOnGround = ( player->GetGroundEntity() != NULL );
 
@@ -447,7 +451,7 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( player->GetFlags() & FL_DUCKING )
 	{
 		// Let a scout do it.
-		bool bAllow = ( bScout && !bOnGround ) || ( of_crouchjump.GetBool() && bOnGround );
+		bool bAllow = ( bCanAirDash && !bOnGround ) || ( of_crouchjump.GetBool() && bOnGround );
 		
 		if ( !bAllow )
 			return false;
@@ -468,7 +472,7 @@ bool CTFGameMovement::CheckJumpButton()
 	// In air, so ignore jumps (unless you are a scout).
 	if ( !bOnGround )
 	{
-		if ( bScout && !m_pTFPlayer->m_Shared.IsAirDashing() )
+		if ( bCanAirDash && m_pTFPlayer->m_Shared.GetAirDashCount() < m_pTFPlayer->GetPlayerClass()->MaxAirDashCount() )
 		{
 			bAirDash = true;
 		}
@@ -1236,7 +1240,8 @@ void CTFGameMovement::CheckWaterJump( void )
 				return;
 		}
 
-		vecStart.z = mv->GetAbsOrigin().z + player->GetViewOffset().z + WATERJUMP_HEIGHT; 
+		float ViewOffset = (player->GetViewOffset().z < 68.0f) ? 68.0f : player->GetViewOffset().z;
+		vecStart.z = mv->GetAbsOrigin().z + ViewOffset + WATERJUMP_HEIGHT; 
 		VectorMA( vecStart, TF_WATERJUMP_FORWARD/*tf_waterjump_forward.GetFloat()*/, flatforward, vecEnd );
 		VectorMA( vec3_origin, -50.0f, tr.plane.normal, player->m_vecWaterJumpVel );
 
@@ -1613,6 +1618,7 @@ void CTFGameMovement::SetGroundEntity( trace_t *pm )
 	if ( pm && pm->m_pEnt )
 	{
 		m_pTFPlayer->m_Shared.SetAirDash( false );
+		m_pTFPlayer->m_Shared.SetAirDashCount( 0 );
 	}
 }
 

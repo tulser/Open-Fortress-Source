@@ -62,7 +62,8 @@ const char *g_aPlayerClassNames[] =
 	"#TF_Class_Name_Spy",
 	"#TF_Class_Name_Engineer",
 	"#TF_Class_Name_Mercenary",
-	"#TF_Class_Name_Civilian"
+	"#TF_Class_Name_Civilian",
+	"#TF_Class_Name_Juggernaut"
 };
 
 const char *g_aPlayerClassNames_NonLocalized[] =
@@ -79,6 +80,7 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Engineer",
 	"Mercenary",
 	"Civilian",
+	"Juggernaut",
 };
 
 //-----------------------------------------------------------------------------
@@ -184,7 +186,6 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_TRIPMINE",
 	"TF_WEAPON_LIGHTNING_GUN",
 	"TF_WEAPON_GRAPPLE",
-	"TF_WEAPON_GRANT",
 	"TF_WEAPON_FLAREGUN",
 
 	"TFC_WEAPON_SHOTGUN_SB",
@@ -315,14 +316,14 @@ int g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
 	DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
-	DMG_GENERIC,		// TF_WEAPON_LIGHTNING_GUN,
-	DMG_BULLET ,	// TF_WEAPON_GRANT,
-	
+	DMG_GENERIC,		// TF_WEAPON_GRAPPLE,
+	DMG_IGNITE,			// TF_WEAPON_FLAREGUN
+
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_DB
 	DMG_CLUB,		// TFC_WEAPON_CROWBAR,
 	DMG_CLUB,		// TFC_WEAPON_UMBRELLA,
-	DMG_BULLET | DMG_USE_HITLOCATIONS,	// TFC_WEAPON_RAILPISTOL,
+	DMG_BULLET,		// TFC_WEAPON_RAILPISTOL,
 	DMG_BULLET | DMG_USEDISTANCEMOD,		// TFC_WEAPON_ASSAULTCANNON
 	DMG_BULLET | DMG_USEDISTANCEMOD | DMG_NOCLOSEDISTANCEMOD ,		// TFC_WEAPON_NAILGUN,
 	DMG_BULLET | DMG_USEDISTANCEMOD | DMG_NOCLOSEDISTANCEMOD ,		// TFC_WEAPON_NAILGUN_SUPER,

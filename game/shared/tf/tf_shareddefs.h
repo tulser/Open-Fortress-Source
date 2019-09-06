@@ -24,7 +24,7 @@
 //-----------------------------------------------------------------------------
 enum
 {
-	TF_TEAM_RED = LAST_SHARED_TEAM+1,
+	TF_TEAM_RED = LAST_SHARED_TEAM+1, // 2
 	TF_TEAM_BLUE,
 	TF_TEAM_MERCENARY,
 	TF_TEAM_COUNT
@@ -134,7 +134,8 @@ enum
 
 	// Add any new classes after Engineer
 	TF_CLASS_MERCENARY,
-	TF_CLASS_CIVILIAN,		// Civilians are a special class. It is not a player class.	
+	TF_CLASS_CIVILIAN,
+	TF_CLASS_JUGGERNAUT,
 	TF_CLASS_COUNT_ALL,
 
 	TF_CLASS_RANDOM
@@ -342,7 +343,6 @@ enum TFWeaponIDs
 	TF_WEAPON_TRIPMINE,
 	TF_WEAPON_LIGHTNING_GUN,
 	TF_WEAPON_GRAPPLE,
-	TF_WEAPON_GRANT,
 	TF_WEAPON_FLAREGUN,
 	TFC_WEAPON_SHOTGUN_SB,
 	TFC_WEAPON_SHOTGUN_DB,

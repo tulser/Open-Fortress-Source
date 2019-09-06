@@ -30,6 +30,8 @@
 #include "c_tf_player.h"
 #else
 #include "tf_player.h"
+#include "trains.h"
+#include "team_train_watcher.h"
 #endif
 
 #ifdef CLIENT_DLL
@@ -46,8 +48,6 @@
 #endif
 
 extern ConVar	tf_avoidteammates;
-
-extern Vector g_TFClassViewVectors[];
 
 // Mutator enums
 enum
@@ -176,6 +176,8 @@ public:
 
 	// Called when a new round is being initialized
 	virtual void	SetupOnRoundStart( void );
+	
+	virtual void	PassAllTracks( void );
 
 	// Called when a new round is off and running
 	virtual void	SetupOnRoundRunning( void );
@@ -244,6 +246,9 @@ public:
 	virtual bool	ShouldCollide( int collisionGroup0, int collisionGroup1 );
 	
 	int GetTimeLeft( void );
+	
+	virtual int GetMaxHunted( int iTeamNumber );
+	virtual int GetHuntedCount( int iTeamNumber );
 
 	// Get the view vectors for this mod.
 	virtual const CViewVectors *GetViewVectors() const;
@@ -281,6 +286,7 @@ public:
 
 	virtual bool ClientCommand( CBaseEntity *pEdict, const CCommand &args );
 	virtual void Think();
+	virtual	void EntityLimitPrevention();
 
 	bool CheckTimeLimit();
 	bool CheckWinLimit();
@@ -365,19 +371,34 @@ private:
 	int m_iCurrentRoundState;
 	int m_iCurrentMiniRoundMask;
 	float m_flTimerMayExpireAt;
-
+	
 #endif
-
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );
 public:
-
 	bool m_bControlSpawnsPerTeam[ MAX_TEAMS ][ MAX_CONTROL_POINTS ];
 	int	 m_iPreviousRoundWinners;
-	CNetworkVar( int, TF_HUNTED_COUNT ); // Type of game this map is (CTF, CP)
+	CNetworkVar( bool, m_bCapsInitialized );
+	CNetworkVar( bool, m_bEscortOverride );
+	CNetworkVar( int, m_nHuntedCount_red );
+	CNetworkVar( int, m_nMaxHunted_red );
+	CNetworkVar( int, m_nHuntedCount_blu );
+	CNetworkVar( int, m_nMaxHunted_blu );
+#ifdef GAME_DLL
+	// List of active pipebombs
+	typedef CHandle<CPathTrack>	TrackHandle;
+	CUtlVector<TrackHandle>		m_hTracksToPass;
+
+	typedef CHandle<CTFTeamSpawn>	SpawnHandle;
+	CUtlVector<SpawnHandle>		m_hReEnableSpawns;
+	bool	m_bDisableRedSpawns;
+	bool	m_bDisableBluSpawns;
+	virtual void	KeepTeamSpawns( int iTeamNumber );
+	virtual void	DisableSpawns( int iTeamNumber );
+#endif
 	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
 	
 	string_t 		m_iszWeaponName[50];
@@ -386,28 +407,35 @@ public:
 	bool			m_bListOnly;
 	int				m_iRequiredKills;
 	
-	virtual bool	IsDMGamemode(void) { return InGametype( TF_GAMETYPE_DM ); }
-	virtual bool	IsTeamplay(void) { return InGametype( TF_GAMETYPE_TDM ); }
-	virtual bool 	DontCountKills( void ) { return m_nbDontCountKills; }
-	virtual bool	IsGGGamemode(void) { return InGametype( TF_GAMETYPE_GG ); }
-	virtual bool	Is3WaveGamemode(void) { return InGametype( TF_GAMETYPE_3WAVE ); }
-	virtual bool	IsArenaGamemode(void) { return InGametype( TF_GAMETYPE_ARENA ); }
-	virtual bool	IsESCGamemode(void) { return GetGameType() == TF_GAMETYPE_ESC; }
-	virtual bool	IsZSGamemode(void) { return GetGameType() == TF_GAMETYPE_ZS; }
-	virtual bool	IsCoopGamemode(void) { return GetGameType() == TF_GAMETYPE_COOP; }
+	virtual bool	IsDMGamemode(void);
+	virtual bool	IsTDMGamemode(void);
+	virtual void	CheckTDM(void);
+	virtual bool	IsTeamplay(void);
+	virtual bool 	DontCountKills( void );
+	virtual bool	IsGGGamemode(void);
+	virtual bool	Is3WaveGamemode(void);
+	virtual bool	IsArenaGamemode(void);
+	virtual bool	IsESCGamemode(void);
+	virtual bool	IsZSGamemode(void);
+	virtual bool	IsCoopGamemode(void);
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
-	virtual bool	UsesMoney(void)	{ return m_bUsesMoney; }
+	virtual bool	UsesMoney(void);
 	virtual bool	UsesDMBuckets( void );
 	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
 	
 	bool InGametype( int nGametype );
 	void AddGametype( int nGametype );	
+	void RemoveGametype( int nGametype );	
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );
 	CNetworkVar( bool, m_bForce3DSkybox );
 	CNetworkVar( bool, m_bUsesMoney );
 	CNetworkVar( bool, m_bIsTeamplay ); //Used to check if of_logic_dm has teamplay enabled
+	CNetworkVar( bool, m_bIsTDM ); //Usualy we would just make this a bool function but since it requires a big loop 
+								   // which would make it fairly unoptimized and the fact that its used in a lot of places
+								   // we decided to make a bool thats set on the start of the round
+								   // should we find a better solution this could get removed
 	
 #ifdef GAME_DLL
 	virtual const char* GetMusicName( bool activeRound );

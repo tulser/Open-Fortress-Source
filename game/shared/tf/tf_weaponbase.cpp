@@ -53,6 +53,7 @@ ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
 extern ConVar ofd_mutators;
+extern ConVar ofd_multiweapons;
 //=============================================================================
 //
 // Global functions.
@@ -284,10 +285,19 @@ bool CTFWeaponBase::LoadsManualy( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
+	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
-
-	return GetWpnData().iSlot;
+	
+	CTFPlayer *pOwner = ToTFPlayer ( GetOwner() );
+	if ( !pOwner )
+		return GetWpnData().iSlot;
+	
+	int ClassIndex = pOwner->GetPlayerClass()->GetClassIndex();
+	
+	if ( GetTFWpnData().m_iClassSlot[ ClassIndex ] != -1 )
+		return GetTFWpnData().m_iClassSlot[ ClassIndex ];
+	else
+		return GetWpnData().iSlot;
 }
 
 //-----------------------------------------------------------------------------
@@ -295,7 +305,7 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetPosition( void ) const
 {
-	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
 }
@@ -503,6 +513,7 @@ const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 	bool bSpy = pPlayer->GetPlayerClass()->IsClass( TF_CLASS_SPY );
 	bool bCivilian = pPlayer->GetPlayerClass()->IsClass( TF_CLASS_CIVILIAN );
 	bool bMercenary = pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY );
+	bool bJuggernaut = pPlayer->GetPlayerClass()->IsClass( TF_CLASS_JUGGERNAUT );
 	
 	if ( bScout && GetTFWpnData().szScoutViewModel[0] != 0 )
 		return GetTFWpnData().szScoutViewModel;
@@ -526,6 +537,8 @@ const char *CTFWeaponBase::GetViewModel( int iViewModel ) const
 		return GetTFWpnData().szCivilianViewModel;
 	if ( bMercenary && GetTFWpnData().szMercenaryViewModel[0] != 0 )
 		return GetTFWpnData().szMercenaryViewModel;
+	if ( bJuggernaut && GetTFWpnData().szJuggernautViewModel[0] != 0 )
+		return GetTFWpnData().szJuggernautViewModel;
 	return GetTFWpnData().szViewModel;
 }
 

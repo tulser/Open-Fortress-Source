@@ -559,6 +559,22 @@ CPathTrack *CPathTrack::Instance( edict_t *pent )
 	return NULL;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CPathTrack::Pass( CBaseEntity *pActivator )
+{
+	m_OnPass.FireOutput( pActivator, this );
+
+#ifdef TF_DLL
+	IGameEvent * event = gameeventmanager->CreateEvent( "path_track_passed" );
+	if ( event )
+	{
+		event->SetInt( "index", entindex() );
+		gameeventmanager->FireEvent( event, true );
+	}
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

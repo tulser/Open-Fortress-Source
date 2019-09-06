@@ -297,7 +297,7 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 	{
 		GetGlobalTeam( iTeam )->AddScore( 1 );
 		TeamplayRoundBasedRules()->HandleTeamScoreModify( iTeam, 1 );
-
+		
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{

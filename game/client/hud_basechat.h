@@ -258,6 +258,7 @@ public:
 #ifdef _XBOX
 	virtual bool	ShouldDraw();
 #endif
+	virtual bool 	AffectedByDrawHUD( void ){ return false; }
 	vgui::Panel		*GetInputPanel( void );
 
 	static int		m_nLineCounter;

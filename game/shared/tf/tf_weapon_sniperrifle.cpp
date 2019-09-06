@@ -322,7 +322,7 @@ void CTFSniperRifle::ItemPostFrame( void )
 	if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
-		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
+		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge )
 		{
 			m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * GetDamage(), GetDamage() * 3 );
 		}
@@ -373,7 +373,7 @@ bool CTFSniperRifle::Lower( void )
 void CTFSniperRifle::Zoom( void )
 {
 	// Don't allow the player to zoom in while jumping
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
+//	CTFPlayer *pPlayer = GetTFPlayerOwner();
 //	if ( pPlayer && pPlayer->m_Shared.IsJumping() )
 //	{
 //		if ( pPlayer->GetFOV() >= 75 )
@@ -384,10 +384,7 @@ void CTFSniperRifle::Zoom( void )
 	
 	// at least 0.1 seconds from now, but don't stomp a previous value
 	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
-	float ZoomTime = 0.1;
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
-		ZoomTime = TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
-	m_flNextSecondaryAttack = gpGlobals->curtime + ZoomTime;
+	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 }
 
 //-----------------------------------------------------------------------------

@@ -54,8 +54,22 @@ struct TFPlayerClassData_t
 	char		m_szTFCArmModelName[TF_NAME_LENGTH];
 	int			m_aTFCWeapons[TF_PLAYER_WEAPON_COUNT];
 
+	int			m_nCapNumber;
+	int			m_nMaxAirDashCount;
 	bool		m_bDontDoAirwalk;
 	bool		m_bDontDoNewJump;
+	
+	bool		m_bSpecialClass;
+	char 		m_szClassSelectImageRed[TF_NAME_LENGTH];
+	char 		m_szClassSelectImageBlue[TF_NAME_LENGTH];
+	char 		m_szClassSelectImageMercenary[TF_NAME_LENGTH];	
+	
+	char 		m_szClassImageRed[TF_NAME_LENGTH];
+	char 		m_szClassImageBlue[TF_NAME_LENGTH];
+	char 		m_szClassImageMercenary[TF_NAME_LENGTH];		
+	char 		m_szClassImageColorless[TF_NAME_LENGTH];	
+	
+	int			m_nViewVector;
 
 	bool		m_bParsed;
 
@@ -72,6 +86,14 @@ struct TFPlayerClassData_t
 	const char *GetArmModelName() const { return m_szArmModelName; }
 	const char *GetTFCModelName() const { return m_szTFCModelName; }
 	const char *GetTFCArmModelName() const  { return m_szTFCArmModelName; }
+	const char *GetClassSelectImageRed() const { return m_szClassSelectImageRed; }
+	const char *GetClassSelectImageBlue() const { return m_szClassSelectImageBlue; }
+	const char *GetClassSelectImageMercenary() const { return m_szClassSelectImageMercenary; }
+	
+	const char *GetClassImageRed() const { return m_szClassImageRed; }
+	const char *GetClassImageBlue() const { return m_szClassImageBlue; }
+	const char *GetClassImageMercenary() const { return m_szClassImageMercenary; }
+	const char *GetClassImageColorless() const { return m_szClassImageColorless; }
 	void Parse( const char *pszClassName );
 
 private:
@@ -116,10 +138,15 @@ public:
 	float		GetMaxSpeed( void )						{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
 	int			GetMaxHealth( void )					{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
 	int			GetMaxArmor( void )						{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }
+	bool		IsSpecialClass( void )					{ return GetPlayerClassData( m_iClass )->m_bSpecialClass; }
+	bool		CanAirDash( void );
+	int			MaxAirDashCount( void );
+	int			GetCapNumber( void )					{ return GetPlayerClassData( m_iClass )->m_nCapNumber; }
 	
 	float		GetTFCMaxSpeed( void )							{ return GetPlayerClassData( m_iClass )->m_flTFCMaxSpeed; }
 	int			GetTFCMaxHealth( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxHealth; }
 	int			GetTFCMaxArmor( void )							{ return GetPlayerClassData( m_iClass )->m_nTFCMaxArmor; }
+	
 
 	TFPlayerClassData_t  *GetData( void )						{ return GetPlayerClassData( m_iClass ); }
 

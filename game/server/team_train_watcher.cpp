@@ -17,6 +17,9 @@
 #include "mp_shareddefs.h"
 #include "props.h"
 #include "physconstraint.h"
+#include "tf_gamerules.h"
+#include "pathtrack.h"
+#include "triggers.h"
 
 #ifdef TF_DLL
 #include "tf_shareddefs.h"
@@ -24,6 +27,9 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+extern ConVar ofe_payload_override;
+
 /*
 #define TWM_FIRSTSTAGEOUTCOME01	"Announcer.PLR_FirstStageOutcome01"
 #define TWM_FIRSTSTAGEOUTCOME02	"Announcer.PLR_FirstStageOutcome02"
@@ -61,6 +67,67 @@
 EHANDLE g_hTeamTrainWatcherMaster = NULL;
 */
 #define MAX_ALARM_TIME_NO_RECEDE 18 // max amount of time to play the alarm if the train isn't going to recede
+
+
+class CEscortTouchTrigger : public CBaseTrigger
+{
+	DECLARE_CLASS( CEscortTouchTrigger, CBaseTrigger );
+
+public:
+	CEscortTouchTrigger() {}
+
+	void Spawn( void )
+	{
+		BaseClass::Spawn();
+		AddSpawnFlags( SF_TRIGGER_ALLOW_CLIENTS );
+		InitTrigger();
+		SetSolid( SOLID_BBOX );
+		UTIL_SetSize(this, Vector(-70,-70,-70), Vector(70,70,70) );
+	}
+	int iTeam;
+	bool bLastTrigger;
+	CPathTrack *pFirstTrack;
+	CPathTrack *pLastTrack;
+
+	virtual void StartTouch( CBaseEntity *pEntity )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer( pEntity );
+		if( pPlayer && pPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN && pPlayer->GetTeamNumber() == iTeam && TFGameRules() )
+		{
+			if ( bLastTrigger )
+			{
+				CTriggerMultiple *pCaptureTrigger =dynamic_cast<CTriggerMultiple*>( gEntList.FindEntityByName( NULL, "cap_c_capturetrigger" ) );
+				if ( pCaptureTrigger )
+				{
+					DevMsg("Triggered\n");
+					pCaptureTrigger->m_OnTrigger.FireOutput(pPlayer, this);
+				}
+			}
+			else if( pFirstTrack )
+			{
+				CPathTrack *pTarget = pFirstTrack; // Get the first stop of the train
+				if ( !pTarget )
+					return;
+				CPathTrack *pNextTarget = dynamic_cast<CPathTrack*>( pTarget->GetNextTarget() ); // Setup the next stop
+				bool Bruh = false;
+				for ( pTarget ; pTarget && !Bruh; pTarget = pNextTarget ) // Search all paths
+				{
+					if ( pTarget == pLastTrack )
+						Bruh = true;
+					if ( pTarget )
+					{
+						pNextTarget = dynamic_cast<CPathTrack*>( pTarget->GetNextTarget() ); // Get the next stop target
+						if( pTarget )
+							pTarget->Pass( this );																														      
+					}
+				}
+			}			
+		}
+	}
+
+};
+
+LINK_ENTITY_TO_CLASS( escort_touch_trigger, CEscortTouchTrigger );
 
 BEGIN_DATADESC( CTeamTrainWatcher )
 
@@ -135,6 +202,7 @@ IMPLEMENT_SERVERCLASS_ST(CTeamTrainWatcher, DT_TeamTrainWatcher)
 	SendPropInt( SENDINFO( m_iTrainSpeedLevel ), 4 ),
 	SendPropTime( SENDINFO( m_flRecedeTime ) ),
 	SendPropInt( SENDINFO( m_nNumCappers ) ),
+	SendPropInt( SENDINFO( m_nTeam ) ),
 #ifdef GLOWS_ENABLE
 	SendPropEHandle( SENDINFO( m_hGlowEnt ) ),
 #endif // GLOWS_ENABLE
@@ -319,11 +387,11 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 	m_hGlowEnt.Set( NULL );
 #endif // GLOWS_ENABLE
 
-#ifdef TF_DLL
+//#ifdef TF_DLL
 	ChangeTeam( TF_TEAM_BLUE );
-#else
-	ChangeTeam( TEAM_UNASSIGNED );
-#endif
+//#else
+//	ChangeTeam( TEAM_UNASSIGNED );
+//#endif
 /*
 	// create a CTeamTrainWatcherMaster entity
 	if ( g_hTeamTrainWatcherMaster.Get() == NULL )
@@ -1033,9 +1101,122 @@ void CTeamTrainWatcher::WatcherActivate( void )
 #endif // GLOWS_ENABLE
 
 	InternalSetSpeedForwardModifier( m_flSpeedForwardModifier );
+	
+	CheckPayloadOverride();
 
 	SetContextThink( &CTeamTrainWatcher::WatcherThink, gpGlobals->curtime + 0.1, TW_THINK );
 }
+
+void CTeamTrainWatcher::CheckPayloadOverride( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() && TFGameRules()->m_bEscortOverride ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
+	{	
+		CPathTrack *pGoalNode = GetGoalNode();
+		SetupTracksToPass();
+		SaveTeamSpawnPoints();
+		TFGameRules()->KeepTeamSpawns( GetTeamNumber() );
+		switch ( GetTeamNumber() )
+		{
+			case TF_TEAM_RED:
+				TFGameRules()->m_nMaxHunted_red = 1;
+			break;
+			case TF_TEAM_BLUE:
+				TFGameRules()->m_nMaxHunted_blu = 1;
+			break;
+		}
+		CEscortTouchTrigger *pCaptureZone =(CEscortTouchTrigger *)CBaseEntity::Create( "escort_touch_trigger",
+		pGoalNode->GetAbsOrigin() ,
+		vec3_angle );
+		if ( pCaptureZone )
+		{
+			pCaptureZone->iTeam = GetTeamNumber(); // We set its team so that our civi boy can cap
+			pCaptureZone->pFirstTrack = GetSecondToLastNode();
+			pCaptureZone->pLastTrack = GetGoalNode();
+		}	
+		CTriggerMultiple *pCaptureTrigger = dynamic_cast<CTriggerMultiple*>( gEntList.FindEntityByName( NULL, "cap_c_capturetrigger" ) );
+		if ( pCaptureTrigger )
+		{
+			DevMsg("Trigger exsits\n");
+			CEscortTouchTrigger *pLastTrigger =(CEscortTouchTrigger *)CBaseEntity::Create( "escort_touch_trigger",
+			pCaptureTrigger->GetAbsOrigin() ,
+			vec3_angle );
+			if ( pLastTrigger )
+			{
+				pLastTrigger->iTeam = GetTeamNumber();
+				pLastTrigger->bLastTrigger = true; // Set so that we trigger the last Trigger Once instead of the tracks
+			}
+		}
+		Shutdown();
+	}
+}
+
+void CTeamTrainWatcher::SetupTracksToPass( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() && TFGameRules()->m_bEscortOverride ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
+	{	
+		CPathTrack *pTrack = GetStartNode();
+		CPathTrack *pLastTrack = GetSecondToLastNode();
+		if ( !pTrack || !pLastTrack )
+			return;
+		do{
+			TrackHandle hHandle;
+			hHandle = pTrack;
+			TFGameRules()->m_hTracksToPass.AddToTail( hHandle );
+			pTrack = dynamic_cast<CPathTrack*>(pTrack->GetNextTarget());
+		} while ( pTrack != pLastTrack );
+	}
+}
+
+void CTeamTrainWatcher::SaveTeamSpawnPoints()
+{
+	const char *pEntClassName = "info_player_teamspawn";
+	CBaseEntity *pSpot;
+	// Get an initial spawn point.
+	pSpot = gEntList.FindEntityByClassname( NULL, pEntClassName );
+	if ( !pSpot )
+	{
+		// Sometimes the first spot can be NULL????
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+	// First we try to find a spawn point that is fully clear. If that fails,
+	// we look for a spawnpoint that's clear except for another players. We
+	// don't collide with our team members, so we should be fine.
+	CBaseEntity *pFirstSpot = pSpot;
+	do{
+		if ( pSpot )
+		{
+			CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
+			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
+			if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+			{
+				// Check to see if this is a valid team spawn (player is on this team, etc.).
+				if( pSpot->GetTeamNumber() == GetTeamNumber() && !pCTFSpawn->IsDisabled() )
+				{
+					// Check for a bad spawn entity.
+					if ( pSpot->GetAbsOrigin() != Vector( 0, 0, 0 ) )
+					{
+						// Found a valid spawn point.
+						SpawnHandle hHandle;
+						hHandle = pCTFSpawn;
+						TFGameRules()->m_hReEnableSpawns.AddToTail( hHandle );
+					}
+				}
+				
+				pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+				if ( pSpot != pFirstSpot )
+				{
+					continue;
+				}
+				else
+					break;
+			}
+		}
+		else
+			break;
+	}
+		// Continue until a valid spawn point is found or we hit the start.
+	while ( pSpot != pFirstSpot );
+} 
 
 void CTeamTrainWatcher::StopCaptureAlarm( void )
 {
@@ -1080,6 +1261,7 @@ ConVar tf_show_train_path( "tf_show_train_path", "0", FCVAR_CHEAT );
 
 void CTeamTrainWatcher::WatcherThink( void )
 {
+	DevMsg("%d\n", GetTeamNumber());
 	if ( m_bWaitingToRecede )
 	{
 		if ( m_flRecedeTime < gpGlobals->curtime )
@@ -1396,6 +1578,26 @@ CBaseEntity *CTeamTrainWatcher::GetTrainEntity( void )
 	return m_hTrain.Get();
 }
 
+CPathTrack *CTeamTrainWatcher::GetSecondToLastNode( void )
+{
+/*	int i, lastnode = 0;
+	for ( i = 0 ; i < MAX_CONTROL_POINTS ; i++ )
+	{
+		CPathTrack *pPathTrack = dynamic_cast<CPathTrack*>( gEntList.FindEntityByName( NULL, m_iszLinkedPathTracks[i] ) );
+		if ( pPathTrack )
+		{
+				lastnode++;
+		}
+	}*/
+	CPathTrack *pPathTrack = dynamic_cast<CPathTrack*>( gEntList.FindEntityByName( NULL, m_iszLinkedPathTracks[m_iNumCPLinks-1] ) );
+	if ( pPathTrack )
+	{
+		return pPathTrack;
+	}
+	else
+		return NULL;
+}
+
 bool CTeamTrainWatcher::TimerMayExpire( void )
 {
 	if ( IsDisabled() )
@@ -1523,6 +1725,15 @@ Vector CTeamTrainWatcher::GetNextCheckpointPosition( void ) const
 
 	Assert( !"No checkpoint found in team train watcher\n" );
 	return vec3_origin;
+}
+
+void CTeamTrainWatcher::Shutdown( void )
+{
+	inputdata_t Temp;
+	if ( GetTrainEntity() )
+	GetTrainEntity()->InputKillHierarchy( Temp );
+	InputKillHierarchy( Temp );
+	UTIL_Remove ( this );
 }
 
 #if defined( STAGING_ONLY ) && defined( TF_DLL )

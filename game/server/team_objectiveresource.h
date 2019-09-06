@@ -47,6 +47,7 @@ public:
 	void SetCPOverlays( int index, int iTeam, int iIcon );
 	void SetTeamBaseIcons( int iTeam, int iBaseIcon );
 	void SetCPPosition( int index, const Vector& vPosition );
+	Vector GetCPPosition( int index );
 	void SetCPVisible( int index, bool bVisible );
 	void SetCPRequiredCappers( int index, int iTeam, int iReqPlayers );
 	void SetCPCapTime( int index, int iTeam, float flTime );

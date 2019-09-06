@@ -65,11 +65,20 @@ public:
 	// calculate the distance between each
 	// ==========================================================
 	void WatcherActivate( void );
+	
+	void CheckPayloadOverride( void );
+	void SetupTracksToPass( void );
+	void SaveTeamSpawnPoints( void );
+	typedef CHandle<CPathTrack>	TrackHandle;
+	typedef CHandle<CBaseEntity>	SpawnHandle;
 
 	void WatcherThink( void );
 	void WatcherAlarmThink( void );
 
 	CBaseEntity *GetTrainEntity( void );
+	CPathTrack 	*GetSecondToLastNode( void );
+	CPathTrack	*GetStartNode  ( void ) { return m_hStartNode; }
+	CPathTrack	*GetGoalNode   ( void ) { return m_hGoalNode;  }
 	bool IsDisabled( void ) { return m_bDisabled; }
 
 	bool TimerMayExpire( void );
@@ -90,6 +99,8 @@ public:
 
 	float GetTrainDistanceAlongTrack( void ) const;
 	Vector GetNextCheckpointPosition( void ) const;	// return world space location of next checkpoint along the path
+	
+	virtual void Shutdown( void );
 
 #if defined( STAGING_ONLY ) && defined( TF_DLL )
 	void DumpStats( void );
@@ -109,6 +120,8 @@ private:
 	void HandleTrainMovement( bool bStartReceding = false );
 	void HandleSparks( bool bSparks );
 
+public:
+	CNetworkVar( int, m_nTeam );
 private:
 
 	bool m_bDisabled;

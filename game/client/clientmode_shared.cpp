@@ -608,10 +608,10 @@ void ClientModeShared::Update()
 	UpdateReplayMessages();
 #endif
 
-	if ( m_pViewport->IsVisible() != cl_drawhud.GetBool() )
-	{
-		m_pViewport->SetVisible( cl_drawhud.GetBool() );
-	}
+//	if ( m_pViewport->IsVisible() != cl_drawhud.GetBool() )
+//	{
+		m_pViewport->SetVisible( true );//cl_drawhud.GetBool() );
+//	}
 
 	UpdateRumbleEffects();
 

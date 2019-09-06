@@ -37,7 +37,7 @@
 	#include "team_control_point_master.h"
 	#include "entity_roundwin.h"
 	#include "playerclass_info_parse.h"
-	#include "team_control_point_master.h"
+	#include "team_train_watcher.h"
 	#include "entity_roundwin.h"
 	#include "coordsize.h"
 	#include "entity_healthkit.h"
@@ -53,6 +53,10 @@
 	#include "hltvdirector.h"
 	#include "globalstate.h"
     #include "igameevents.h"
+	#include "trains.h"
+	#include "pathtrack.h"
+	#include "entitylist.h"
+	#include "trigger_area_capture.h"
 	
 	#include "ai_basenpc.h"
 	#include "ai_dynamiclink.h"
@@ -89,6 +93,7 @@ static int g_TauntCamAchievements[] =
 
 	0,		// TF_CLASS_MERCENARY,
 	0,		// TF_CLASS_CIVILIAN,
+	0,		// TF_CLASS_JUGGERNAUT,
 	0,		// TF_CLASS_COUNT_ALL,
 };
 
@@ -131,14 +136,16 @@ ConVar tf_stalematechangeclasstime		( "tf_stalematechangeclasstime", "20", FCVAR
 ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
-ConVar of_gamemode_dm		( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
-ConVar mp_teamplay			( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
-ConVar of_arena				( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
-ConVar of_coop				( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
+ConVar of_gamemode_dm				( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
+ConVar mp_teamplay					( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
+ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
-ConVar ofd_allow_allclass_pickups ("ofd_allow_allclass_pickups", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Non Merc Classes can pickup weapons.");
+ConVar ofd_allow_allclass_pickups 	( "ofd_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non Merc Classes can pickup weapons.");
 ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
 ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
+ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
+ConVar ofe_payload_override			( "ofe_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
 
 // Not implemented.
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
@@ -270,23 +277,6 @@ static CViewVectors g_HLViewVectors(
 	Vector( 0, 0, 14 )			//VEC_DEAD_VIEWHEIGHT (m_vDeadViewHeight)
 );					
 
-Vector g_TFClassViewVectors[12] =
-{
-	Vector( 0, 0, 72 ),		// TF_CLASS_UNDEFINED
-
-	Vector( 0, 0, 65 ),		// TF_CLASS_SCOUT,			// TF_FIRST_NORMAL_CLASS
-	Vector( 0, 0, 75 ),		// TF_CLASS_SNIPER,
-	Vector( 0, 0, 68 ),		// TF_CLASS_SOLDIER,
-	Vector( 0, 0, 68 ),		// TF_CLASS_DEMOMAN,
-	Vector( 0, 0, 75 ),		// TF_CLASS_MEDIC,
-	Vector( 0, 0, 75 ),		// TF_CLASS_HEAVYWEAPONS,
-	Vector( 0, 0, 68 ),		// TF_CLASS_PYRO,
-	Vector( 0, 0, 75 ),		// TF_CLASS_SPY,
-	Vector( 0, 0, 68 ),		// TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
-	Vector( 0, 0, 68 ),		// TF_CLASS_MERCENARY,
-	Vector( 0, 0, 68 ),		// TF_CLASS_CIVILIAN,
-};
-
 const CViewVectors *CTFGameRules::GetViewVectors() const
 {
 
@@ -302,10 +292,17 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
+	RecvPropInt( RECVINFO( m_nHuntedCount_red ) ),
+	RecvPropInt( RECVINFO( m_nMaxHunted_red ) ),
+	RecvPropInt( RECVINFO( m_nHuntedCount_blu ) ),
+	RecvPropInt( RECVINFO( m_nMaxHunted_blu ) ),	
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
 	RecvPropString( RECVINFO(m_pszTeamGoalStringMercenary)),
+	RecvPropBool( RECVINFO( m_bEscortOverride ) ),
+	RecvPropBool( RECVINFO( m_bCapsInitialized ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
+	RecvPropBool( RECVINFO( m_bIsTDM ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
@@ -314,10 +311,17 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nHuntedCount_red ) ),
+	SendPropInt( SENDINFO( m_nMaxHunted_red ) ),
+	SendPropInt( SENDINFO( m_nHuntedCount_blu ) ),
+	SendPropInt( SENDINFO( m_nMaxHunted_blu ) ),	
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringMercenary ) ),
+	SendPropBool( SENDINFO( m_bCapsInitialized ) ),
+	SendPropBool( SENDINFO( m_bEscortOverride ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
+	SendPropBool( SENDINFO( m_bIsTDM ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
@@ -624,14 +628,34 @@ void CTFLogicTDM::Spawn(void)
 class CTFLogicESC : public CBaseEntity
 {
 public:
-	DECLARE_CLASS(CTFLogicESC, CBaseEntity);
+	DECLARE_CLASS(CTFLogicESC,	CBaseEntity);
 	void	Spawn(void);
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	int m_nMaxHunted_red;
+	int m_nMaxHunted_blu;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS(of_logic_esc, CTFLogicESC);
 
+//-----------------------------------------------------------------------------
+// GG Logic 
+//-----------------------------------------------------------------------------
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFLogicESC )
+	//Keyfields
+	DEFINE_KEYFIELD( m_nMaxHunted_red, FIELD_INTEGER, "MaxRedHunted"),
+	DEFINE_KEYFIELD( m_nMaxHunted_blu, FIELD_INTEGER, "MaxBluHunted"),
+END_DATADESC()
+#endif
+
 void CTFLogicESC::Spawn(void)
 {
+#ifdef GAME_DLL
+	TFGameRules()->m_nMaxHunted_red = m_nMaxHunted_red;
+	TFGameRules()->m_nMaxHunted_blu = m_nMaxHunted_blu;
+#endif
 	BaseClass::Spawn();
 }
 
@@ -943,6 +967,11 @@ void CTFGameRules::AddGametype( int nGametype )
 	m_nGameType |= (1<<nGametype);
 }
 
+void CTFGameRules::RemoveGametype( int nGametype )
+{
+	Assert( nGametype >= 0 && nGametype < TF_GAMETYPE_LAST );
+	m_nGameType &= ~(1<<nGametype);
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -983,7 +1012,6 @@ bool CTFGameRules::CanChangelevelBecauseOfTimeLimit( void )
 
 	return true;
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1017,10 +1045,8 @@ static const char *s_PreserveEnts[] =
 	"tf_player_manager",
 	"tf_team",
 	"tf_objective_resource",
-	"tf_viewmodel",
 	"", // END Marker
 };
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1037,22 +1063,33 @@ void CTFGameRules::Activate()
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
 	
 	m_nCurrFrags.Set(0);
+	m_bDisableRedSpawns = false;
+	m_bDisableBluSpawns = false;
 //	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
 	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*> (gEntList.FindEntityByClassname(NULL, "item_teamflag"));
 	if (pFlag)
 	{
 		AddGametype(TF_GAMETYPE_CTF);
 	}
+	CTeamTrainWatcher *pTrain = dynamic_cast<CTeamTrainWatcher*> (gEntList.FindEntityByClassname(NULL, "team_train_watcher"));
 
+	if (pTrain)
+	{
+		AddGametype(TF_GAMETYPE_PAYLOAD);
+	}
+	
 	if (g_hControlPointMasters.Count())
 	{
 		AddGametype(TF_GAMETYPE_CP);
+		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server CP gamemode config file\n");
+		engine->ServerCommand("exec config_cp.cfg \n");
+		engine->ServerExecute();
 	}
 
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
-		if ( (  ( ( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm") ) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
+		if ( ((( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm")) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
 			AddGametype(TF_GAMETYPE_TDM);
 			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n");
@@ -1076,7 +1113,6 @@ void CTFGameRules::Activate()
 		of_bunnyhop_max_speed_factor.SetValue(0);
 		tf_maxspeed.SetValue(0);
 		sv_airaccelerate.SetValue(500);
-		if ( fraglimit.GetFloat() == 0 ) fraglimit.SetValue( 25 );
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
@@ -1098,14 +1134,19 @@ void CTFGameRules::Activate()
 		mp_disable_respawn_times.SetValue(1);
 	}
 	
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) )
+	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( ofe_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
 	{
-		TF_HUNTED_COUNT = 0;
 		AddGametype(TF_GAMETYPE_ESC);
 		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
 		engine->ServerCommand("exec config_esc.cfg \n");
 		engine->ServerExecute();
+		
+		if ( ofe_payload_override.GetBool() && !( gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) ) ) // We're replacing payload with Escort
+		{
+			m_bEscortOverride = true;
+		}
 	}
+	
 	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
@@ -1145,7 +1186,82 @@ void CTFGameRules::Activate()
 		ofd_forceclass.SetValue(0);
 		fraglimit.SetValue(999);
 	}
+	
+	CheckTDM();
 }
+
+#endif
+
+void CTFGameRules::CheckTDM( void )
+{
+	for( int i = TF_GAMETYPE_UNDEFINED + 1; i < TF_GAMETYPE_LAST; i++ )
+	{
+		if ( i == TF_GAMETYPE_DM || i == TF_GAMETYPE_TDM )
+			continue;
+		if ( InGametype ( i ) )
+		{
+			m_bIsTDM = false;
+			return;
+		}
+	}
+	m_bIsTDM = InGametype( TF_GAMETYPE_DM ) && InGametype( TF_GAMETYPE_TDM );
+}
+
+bool CTFGameRules::IsDMGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_DM ); 
+}
+
+bool CTFGameRules::IsTDMGamemode( void )
+{ 
+	return m_bIsTDM;
+}
+
+bool CTFGameRules::IsTeamplay( void )
+{ 
+	return InGametype( TF_GAMETYPE_TDM );
+}
+
+bool CTFGameRules::DontCountKills( void )
+{ 
+	return m_nbDontCountKills || IsGGGamemode(); 
+}
+
+bool CTFGameRules::IsGGGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_GG );
+}
+
+bool CTFGameRules::Is3WaveGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_3WAVE );
+}
+
+bool CTFGameRules::IsArenaGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_ARENA );
+}
+
+bool CTFGameRules::IsESCGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_ESC );
+}
+
+bool CTFGameRules::IsZSGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_ZS );
+}
+
+bool CTFGameRules::IsCoopGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_COOP );
+}
+
+bool CTFGameRules::UsesMoney( void )
+{ 
+	return m_bUsesMoney;
+}
+#ifdef GAME_DLL
 
 void CTFGameRules::FireGamemodeOutputs()
 {
@@ -1341,7 +1457,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 	{
 		m_iNumCaps[i] = 0;
 	}
-	TF_HUNTED_COUNT = 0;
 
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
@@ -1393,6 +1508,107 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_szMostRecentCappers[0] = 0;
 #endif
 }
+
+void CTFGameRules::PassAllTracks( void )
+{
+	// At here we trigger all but the last 2 Track Trains
+	// We do this because some maps have doors that only open when the train passes
+	// or completley block off areas
+	for ( int i = 0; i < m_hTracksToPass.Count(); i++ )
+	{
+		if( m_hTracksToPass[i] ) 
+			m_hTracksToPass[i]->Pass( NULL ); 
+	}
+	for ( int i = 0; i < m_hTracksToPass.Count(); i++ )
+	{
+		if( m_hTracksToPass[i] ) 
+			m_hTracksToPass.Remove(i);
+	}
+	if ( m_bDisableRedSpawns )
+		DisableSpawns( TF_TEAM_RED );
+	if ( m_bDisableBluSpawns )
+		DisableSpawns( TF_TEAM_BLUE );
+}
+
+void CTFGameRules::KeepTeamSpawns( int iTeamNumber )
+{
+	switch ( iTeamNumber )
+	{
+		case TF_TEAM_RED:
+			m_bDisableRedSpawns = true;
+		break;
+		case TF_TEAM_BLUE:
+			m_bDisableBluSpawns = true;
+		break;
+	}
+}
+
+void CTFGameRules::DisableSpawns( int iTeamNumber )
+{
+	const char *pEntClassName = "info_player_teamspawn";
+	CBaseEntity *pSpot;
+	DevMsg("Start Checking Team Spawns for team %d\n", iTeamNumber );
+	// Get an initial spawn point.
+	pSpot = gEntList.FindEntityByClassname( NULL, pEntClassName );
+	if ( !pSpot )
+	{
+		DevMsg("First Ent was NULL\n");
+		// Sometimes the first spot can be NULL????
+		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
+	// First we try to find a spawn point that is fully clear. If that fails,
+	// we look for a spawnpoint that's clear except for another players. We
+	// don't collide with our team members, so we should be fine.
+	CBaseEntity *pFirstSpot = pSpot;
+	do{
+		if ( pSpot )
+		{
+			CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
+			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
+			if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+			{
+				bool bSpotCreated = false;
+				// Check to see if this is a valid team spawn (player is on this team, etc.).
+				if( pSpot->GetTeamNumber() == iTeamNumber )
+				{
+					// Check for a bad spawn entity.
+					if ( pSpot->GetAbsOrigin() != Vector( 0, 0, 0 ) )
+					{
+						bool bKill = true;
+						for ( int i = 0; i < m_hReEnableSpawns.Count(); i++ )
+						{
+							if ( m_hReEnableSpawns[i] == pCTFSpawn )
+							{
+								bKill = false;
+							}
+						}
+						if ( bKill )
+						{
+							DevMsg("Spot Deleted\n");
+							// Found a valid spawn point.
+							pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+							bSpotCreated = true;
+							inputdata_t Temp;
+							UTIL_Remove( pCTFSpawn );//->InputDisable( Temp );
+						}
+					}
+				}
+				if ( !bSpotCreated )
+					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+				if ( pSpot != pFirstSpot )
+				{
+					continue;
+				}
+				else
+					break;
+			}
+		}
+		else
+			break;
+	}
+		// Continue until a valid spawn point is found or we hit the start.
+	while ( pSpot != pFirstSpot );
+} 
 
 //-----------------------------------------------------------------------------
 // Purpose: Called when a new round is off and running
@@ -1908,7 +2124,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		return BaseClass::ClientCommand( pEdict, args );
 	}
-
 	// Add the ability to ignore the world trace
 	void CTFGameRules::Think()
 	{
@@ -1922,15 +2137,14 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 						return;
 				}
 			}
-			
-			if ( TFGameRules()->IsDMGamemode() && CountActivePlayers() > 0 && !TFGameRules()->DontCountKills() )
+			if ( IsDMGamemode() && CountActivePlayers() > 0 && !DontCountKills() )
 			{
 				int iFragLimit = fraglimit.GetInt();
-				if ( TFGameRules()->IsGGGamemode() )
+				if ( IsGGGamemode() )
 						iFragLimit = (m_iMaxLevel * m_iRequiredKills) - m_iRequiredKills+1;
-				if (iFragLimit > 0) 
+				if ( iFragLimit > 0 ) 
 				{
-					if ( TFGameRules()->IsTeamplay() && !TFGameRules()->IsGGGamemode() )
+					if ( IsTDMGamemode() )
 					{
 						if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() )
 						{
@@ -1991,7 +2205,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				}
 			}
 			
-			if ( TFGameRules()->IsGGGamemode() && CountActivePlayers() > 0 )
+			if ( IsGGGamemode() && CountActivePlayers() > 0 )
 			{
 						// check if any player is over the frag limit
 						// and creates a game event for achivement shit because why not
@@ -2019,7 +2233,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					{
 						CTeam *pTeam = GetGlobalTeam(i);
 						Assert( pTeam );
-	
+						if ( !pTeam )
+							continue;
 						int iPlayers = pTeam->GetNumPlayers();
 						if ( iPlayers )
 						{
@@ -2037,16 +2252,12 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 							{
 								if ( bFoundLiveOne <= 1 )
 								{
-									DevMsg("Degenerates \n");
 									iAliveTeam = i;
 									iDeadTeam = i;
 									break;
 								}
 								else
-								{
-									DevMsg("Ok Cool %d \n", bFoundLiveOne );
 									iAliveTeam = i;
-								}
 							}
 							else
 							{
@@ -2063,19 +2274,128 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					}
 
 					if ( iDeadTeam && iAliveTeam )
-					{
-//						if ( iAliveTeam == TF_TEAM_MERCENARY )
-//							GoToIntermission();
-//						else						
-							SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
+					{					
+						SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
 					}
 				}
 			}
+			
+			if ( IsESCGamemode() )
+			{
+				// If a team is fully killed, the other team has won
+				for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
+				{
+					CTeam *pTeam = GetGlobalTeam(i);
+					Assert( pTeam );
+							int iPlayers = pTeam->GetNumPlayers();
+					if ( iPlayers )
+					{
+						int bFoundCivs = 0;
+						for ( int player = 0; player < iPlayers; player++ )
+						{
+							if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->IsConnected() )
+							{
+								CTFPlayer *pCiv = ToTFPlayer ( pTeam->GetPlayer(player) );
+								if ( pCiv && pCiv->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+								{
+									bFoundCivs++;
+									if ( bFoundCivs > GetMaxHunted( i ) && !of_allow_special_classes.GetBool() )
+									{
+										pCiv->HandleCommand_JoinClass( "random", true );
+										pCiv->AllowInstantSpawn();
+										pCiv->ForceRespawn();											
+										bFoundCivs--;
+									}
+								}
+							}
+						}
+						if ( GetMaxHunted( i ) <= 0 )
+							continue;
+						int HuntedTracker = GetMaxHunted( i );
+						if( iPlayers < GetMaxHunted( i ) )
+							HuntedTracker = iPlayers;
+						while( bFoundCivs < HuntedTracker )
+						{
+							int iPlayerIndex;
+							iPlayerIndex = random->RandomInt( 0, iPlayers );
+							if( pTeam->GetPlayer(iPlayerIndex) && pTeam->GetPlayer(iPlayerIndex)->IsConnected() )
+							{
+								CTFPlayer *pCiv = ToTFPlayer( pTeam->GetPlayer(iPlayerIndex) );
+								if ( pCiv && !pCiv->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+								{
+									pCiv->SetDesiredPlayerClassIndex( TF_CLASS_CIVILIAN );
+									pCiv->AllowInstantSpawn();
+									pCiv->ForceRespawn();								
+									bFoundCivs++;
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			if (m_hReEnableSpawns.Count())
+			{
+				for ( int i = 0; i < m_hReEnableSpawns.Count(); i++ )
+				{
+					if ( m_hReEnableSpawns[i] )
+						{
+							inputdata_t Temp; 
+							m_hReEnableSpawns[i]->InputEnable( Temp );
+						}
+				}
+			}
 		} // Game playerdie
-
+		// Play( MineOddity );
 		BaseClass::Think();
 	}
+	// entity limit measures, if we are above 1950 then start clearing out entities 
+	// this really only happens with >24 players on large maps such as tc_hydro	
+	void CTFGameRules::EntityLimitPrevention()
+	{
+		if ( engine->GetEntityCount() > 1950 )
+		{
+			Warning("Entity count exceeded 1950, removing unnecessary entities...");
 
+			CBaseEntity *pEntity = NULL;
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "spotlight_end")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "beam")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "point_spotlight")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+
+			// if the server manages to somehow get more than 2000 entities after the previous killing, take desperate measures and kill more visual elements
+			if ( engine->GetEntityCount() > 2000 )
+			{
+				Warning("Entity count exceeded 2000!!!!! Removing more visual entities...");
+
+				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_lightglow")) != NULL)
+				{
+					UTIL_Remove(pEntity);
+				}
+				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_sprite")) != NULL)
+				{
+					UTIL_Remove(pEntity);
+				}
+				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "move_rope")) != NULL)
+				{
+					UTIL_Remove(pEntity);
+				}
+				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "keyframe_rope")) != NULL)
+				{
+					UTIL_Remove(pEntity);
+				}
+			}
+		}
+	}	
+	
 	//Runs think for all player's conditions
 	//Need to do this here instead of the player so players that crash still run their important thinks
 	void CTFGameRules::RunPlayerConditionThink ( void )
@@ -2880,7 +3200,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			CalcDominationAndRevenge( pAssister, pTFPlayerVictim, true, &iDeathFlags );
 		}
 
-		if ( IsTeamplay() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() && !IsArenaGamemode() )
+		if ( IsTeamplay() && IsTDMGamemode() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() )
 		{
 			TFTeamMgr()->AddTeamScore( pTFPlayerScorer->GetTeamNumber(), 1 );
 		}
@@ -4074,17 +4394,17 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if ( pTFPlayer->IsPlayerClass( TF_CLASS_SCOUT ) )
+	if ( pTFPlayer->GetPlayerClass()->GetCapNumber() > 1)
 	{
 		if ( mp_capstyle.GetInt() == 1 )
 		{
 			// Scouts count for 2 people in timebased capping.
-			return 2;
+			return pTFPlayer->GetPlayerClass()->GetCapNumber();
 		}
 		else
 		{
 			// Scouts can cap all points on their own.
-			return 10;
+			return pTFPlayer->GetPlayerClass()->GetCapNumber() * 5;
 		}
 	}
 
@@ -4108,6 +4428,44 @@ int CTFGameRules::GetTimeLeft( void )
 	float flMapChangeTime = m_flMapResetTime + flTimeLimit;
 
 	return ( (int)(flMapChangeTime - gpGlobals->curtime) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFGameRules::GetMaxHunted( int iTeamNumber )
+{
+	switch ( iTeamNumber )
+	{
+		case TF_TEAM_RED:
+			return m_nMaxHunted_red;
+			break;
+		case TF_TEAM_BLUE:
+			return m_nMaxHunted_blu;
+			break;
+		default:
+			return -1;
+			break;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CTFGameRules::GetHuntedCount( int iTeamNumber )
+{
+	switch ( iTeamNumber )
+	{
+		case TF_TEAM_RED:
+			return m_nHuntedCount_red;
+			break;
+		case TF_TEAM_BLUE:
+			return m_nHuntedCount_blu;
+			break;
+		default:
+			return -2;
+			break;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4333,7 +4691,7 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
 	if ( InGametype( TF_GAMETYPE_ESC ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
-	if (InGametype(TF_GAMETYPE_PAYLOAD))
+	if (InGametype(TF_GAMETYPE_PAYLOAD) && !m_bEscortOverride )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_PAYLOAD]);
 	if ( InGametype( TF_GAMETYPE_COOP) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);

@@ -105,9 +105,8 @@ bool CTFHudTDM::ShouldDraw( void )
 	}
 	
 	if (TFGameRules() &&
-		(TFGameRules()->IsDMGamemode() && TFGameRules()->IsTeamplay()) &&
-		!TFGameRules()->DontCountKills() &&
-		!of_arena.GetBool())
+		TFGameRules()->IsTDMGamemode() &&
+		!TFGameRules()->DontCountKills() )
 		return CHudElement::ShouldDraw();
 	else
 		return false;

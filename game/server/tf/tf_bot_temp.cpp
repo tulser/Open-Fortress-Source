@@ -42,6 +42,8 @@ ConVar bot_selectweaponslot( "bot_selectweaponslot", "-1", FCVAR_CHEAT, "set to 
 ConVar bot_randomnames( "bot_randomnames", "0", FCVAR_CHEAT );
 ConVar bot_jump( "bot_jump", "0", FCVAR_CHEAT, "Force all bots to repeatedly jump." );
 
+extern ConVar of_allow_special_classes;
+
 static int BotNumber = 1;
 static int g_iNextBotTeam = -1;
 static int g_iNextBotClass = -1;
@@ -161,7 +163,14 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 	while ( --count >= 0 )
 	{
 		// What class do they want?
-		int iClass = RandomInt( 1, TF_CLASS_COUNT-1 );
+		int iClass = 1;
+		
+		// We do this check so that the bots dont spawn as classes they Shouldnt
+		do{
+			// Don't let them be the same class twice in a row
+			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+		} while( ( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
+		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off		
 		char const *pVal = args.FindArg( "-class" );
 		if ( pVal )
 		{

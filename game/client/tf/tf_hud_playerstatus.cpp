@@ -29,75 +29,6 @@ using namespace vgui;
 
 extern ConVar tf_max_health_boost;
 
-
-static char *g_szBlueClassImages[] = 
-{ 
-	"",
-	"../hud/class_scoutblue", 
-	"../hud/class_sniperblue",
-	"../hud/class_soldierblue",
-	"../hud/class_demoblue",
-	"../hud/class_medicblue",
-	"../hud/class_heavyblue",
-	"../hud/class_pyroblue",
-	"../hud/class_spyblue",
-	"../hud/class_engiblue",
-	"../hud/class_mercenaryblue",
-	"../hud/class_civilianblue",
-	"",
-};
-
-static char *g_szRedClassImages[] = 
-{ 
-	"",
-	"../hud/class_scoutred", 
-	"../hud/class_sniperred",
-	"../hud/class_soldierred",
-	"../hud/class_demored",
-	"../hud/class_medicred",
-	"../hud/class_heavyred",
-	"../hud/class_pyrored",
-	"../hud/class_spyred",
-	"../hud/class_engired",
-	"../hud/class_mercenaryred",
-	"../hud/class_civilianred",
-	"",
-};
-
-static char *g_szMercenaryClassImages[] = 
-{ 
-	"",
-	"../hud/class_scoutmercenary", 
-	"../hud/class_snipermercenary",
-	"../hud/class_soldiermercenary",
-	"../hud/class_demomercenary",
-	"../hud/class_medicmercenary",
-	"../hud/class_heavymercenary",
-	"../hud/class_pyromercenary",
-	"../hud/class_spymercenary",
-	"../hud/class_engimercenary",
-	"../hud/class_mercenarymercenary",
-	"../hud/class_civilianmercenary",
-	"",
-};
-
-static char *g_szMercenaryColorlessClassImages[] = 
-{ 
-	"",
-	"../hud/colorless/class_scoutcolorless", 
-	"../hud/colorless/class_snipercolorless",
-	"../hud/colorless/class_soldiercolorless",
-	"../hud/colorless/class_democolorless",
-	"../hud/colorless/class_mediccolorless",
-	"../hud/colorless/class_heavycolorless",
-	"../hud/colorless/class_pyrocolorless",
-	"../hud/colorless/class_spycolorless",
-	"../hud/colorless/class_engicolorless",
-	"../hud/colorless/class_mercenarycolorless",
-	"../hud/colorless/class_civiliancolorless",
-	"",
-};
-
 static char *g_szEmpty[] = 
 { 
 	"../hud/empty"
@@ -586,15 +517,18 @@ void CTFClassImage::SetClass( int iTeam, int iClass, int iCloakstate )
 
 	if ( iTeam == TF_TEAM_BLUE )
 	{
-		Q_strncpy( szImage, g_szBlueClassImages[ iClass ], sizeof(szImage) );
+		if ( GetPlayerClassData( iClass )->GetClassImageBlue() )
+			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageBlue(), sizeof(szImage) );
 	}
 	else if ( iTeam == TF_TEAM_MERCENARY )
 	{
-		Q_strncpy( szImage, g_szMercenaryClassImages[ iClass ], sizeof(szImage) );
+		if ( GetPlayerClassData( iClass )->GetClassImageMercenary() )
+			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageMercenary(), sizeof(szImage) );
 	}
 	else
 	{
-		Q_strncpy( szImage, g_szRedClassImages[ iClass ], sizeof(szImage) );
+		if ( GetPlayerClassData( iClass )->GetClassImageRed() )
+			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageRed(), sizeof(szImage) );
 	}
 
 	switch( iCloakstate )
@@ -626,7 +560,7 @@ void CTFClassImage::SetClassColorless( int iTeam, int iClass, int iCloakstate )
 
 	if ( iTeam == TF_TEAM_MERCENARY )
 	{
-		Q_strncpy( szImageColorless, g_szMercenaryColorlessClassImages[ iClass ], sizeof(szImageColorless) );
+		Q_strncpy( szImageColorless, GetPlayerClassData( iClass )->GetClassImageColorless(), sizeof(szImageColorless) );
 		switch( iCloakstate )
 		{
 			case 2:

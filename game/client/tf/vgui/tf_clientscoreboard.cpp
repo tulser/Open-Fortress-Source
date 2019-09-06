@@ -471,7 +471,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 						iClass = tf_PR->GetPlayerClass( playerIndex );
 					}
 
-					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS )
+					if( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT_ALL )
 					{
 						pKeyValues->SetString( "class", g_aPlayerClassNames[iClass] );
 					}
@@ -644,7 +644,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 
 	int iClass = pLocalPlayer->m_Shared.GetDesiredPlayerClassIndex();
 	int iTeam = pLocalPlayer->GetTeamNumber();
-	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_LAST_NORMAL_CLASS ) )
+	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_CLASS_COUNT_ALL ) )
 	{
 		if ( iTeam == TF_TEAM_MERCENARY )
 		{

@@ -35,6 +35,7 @@ const char *g_aClassNames[] =
 	"TF_CLASS_ENGINEER",
 	"TF_CLASS_MERCENARY",
 	"TF_CLASS_CIVILIAN",
+	"TF_CLASS_JUGGERNAUT",
 };
 
 //-----------------------------------------------------------------------------
@@ -377,7 +378,7 @@ void CTFGameStats::Event_PlayerSpawned( CTFPlayer *pPlayer )
 		}
 	}
 
-	if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS )
+	if ( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT_ALL )
 	{
 		SendStatsToPlayer( pPlayer, STATMSG_PLAYERSPAWN );
 	}

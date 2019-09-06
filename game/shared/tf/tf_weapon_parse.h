@@ -118,11 +118,13 @@ public:
 	int 	m_iCost;
 	bool	m_bBuyable;
 	bool	m_bLoadsManualy;
+	bool	m_bNoSniperCharge;
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
 	bool    m_bDropsMag;
 
+	int	m_iClassSlot[TF_CLASS_COUNT_ALL];
 
 	//Viewmodels
 	char					szScoutViewModel[MAX_WEAPON_STRING];
@@ -136,6 +138,7 @@ public:
 	char					szSpyViewModel[MAX_WEAPON_STRING];
 	char					szMercenaryViewModel[MAX_WEAPON_STRING];	
 	char					szCivilianViewModel[MAX_WEAPON_STRING];	
+	char					szJuggernautViewModel[MAX_WEAPON_STRING];	
 
 	
 	// Muzzle flash

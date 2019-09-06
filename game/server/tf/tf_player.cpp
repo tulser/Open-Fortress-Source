@@ -84,9 +84,11 @@ extern ConVar	tf_spy_invis_time;
 extern ConVar	tf_spy_invis_unstealth_time;
 extern ConVar	tf_stalematechangeclasstime;
 
+extern ConVar	of_infiniteammo;
+extern ConVar	of_allow_special_classes;
+
 extern ConVar	ofd_mutators;
 extern ConVar	ofd_threewave;
-extern ConVar	of_infiniteammo;
 extern ConVar	ofd_crit_multiplier;
 
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
@@ -485,7 +487,12 @@ void CTFPlayer::TFPlayerThink()
 		UpdatePlayerColor();
 
 	TauntEffectThink();
-	// Check to see if we are in the air and taunting.  Stop if so.
+	
+	if ( TFGameRules() )
+		TFGameRules()->EntityLimitPrevention();
+	
+	// Check to see if we are in the air and taunting.  Stop if so. 
+	// Removed because mid air taunts are fun
 /*	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
 		if( m_hTauntScene.Get() )
@@ -897,50 +904,6 @@ void CTFPlayer::InitialSpawn( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::Spawn()
 {
-	// entity limit measures, if we are above 1950 then start clearing out entities (doing this in player death as its most reliable and less resource consuming at the same time)
-	//  this really only happens with >24 players on large maps such as tc_hydro
-	if ( engine->GetEntityCount() > 1950 )
-	{
-		Warning("Entity count exceeded 1950, removing unnecessary entities...");
-
-		CBaseEntity *pEntity = NULL;
-		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "spotlight_end")) != NULL)
-		{
-			UTIL_Remove(pEntity);
-		}
-		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "beam")) != NULL)
-		{
-			UTIL_Remove(pEntity);
-		}
-		while ((pEntity = gEntList.FindEntityByClassname(pEntity, "point_spotlight")) != NULL)
-		{
-			UTIL_Remove(pEntity);
-		}
-
-		// if the server manages to somehow get more than 2000 entities after the previous killing, take desperate measures and kill more visual elements
-		if ( engine->GetEntityCount() > 2000 )
-		{
-			Warning("Entity count exceeded 2000!!!!! Removing more visual entities...");
-
-			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_lightglow")) != NULL)
-			{
-				UTIL_Remove(pEntity);
-			}
-			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_sprite")) != NULL)
-			{
-				UTIL_Remove(pEntity);
-			}
-			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "move_rope")) != NULL)
-			{
-				UTIL_Remove(pEntity);
-			}
-			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "keyframe_rope")) != NULL)
-			{
-				UTIL_Remove(pEntity);
-			}
-		}
-	}
-
 	MDLCACHE_CRITICAL_SECTION();
 	
 	if (m_bTransition)
@@ -1001,8 +964,13 @@ void CTFPlayer::Spawn()
 		{
 			m_Shared.RemoveDisguise();
 		}
-
-		EmitSound( "Player.Spawn" );
+		if ( m_bDied )
+			EmitSound( "Player.Spawn" );
+		else
+		{
+			CSingleUserRecipientFilter filter( this );	// We only play your own Spawn sound on round start so we dont get earraped
+			EmitSound( filter, entindex(), "Player.Spawn" );
+		}
 		FireTargets( "game_playerspawn", this, this, USE_TOGGLE, 0 );
 		InitClass();
 		m_Shared.RemoveAllCond( NULL ); // Remove conc'd, burning, rotting, hallucinating, etc.
@@ -2078,8 +2046,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 
 	CBaseEntity *pFirstSpot = pSpot;
 
-	do 
-	{
+	do{
 		if ( pSpot )
 		{
 			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
@@ -2237,7 +2204,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 			// telefragging
 			CBaseEntity *ent = NULL;
 
-			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 95 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 			{
 				// don't telefrag ourselves
 				if ( ent->IsPlayer() && ent != this )
@@ -2340,9 +2307,6 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		
 	}
 	
-	if ( TFGameRules()->IsESCGamemode() && GetPlayerClass()->IsClass( TF_CLASS_CIVILIAN ) && GetTeamNumber() == TF_TEAM_RED )
-		return;
-	
 	int iTeam = TEAM_INVALID;
 	if ( stricmp( pTeamName, "auto" ) == 0 )
 	{
@@ -2429,27 +2393,13 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 		{
 				if ( iTeam == TF_TEAM_RED ) 
 				{
-					if ( TFGameRules()->IsESCGamemode() && TFGameRules()->TF_HUNTED_COUNT < ofe_huntedcount.GetInt() )
-						{
-							SetDesiredPlayerClassIndex( TF_CLASS_CIVILIAN );
-							TFGameRules()->TF_HUNTED_COUNT++;
-							ChangeTeam(TF_TEAM_RED);
-						}
-					else
-						ShowViewPortPanel( PANEL_CLASS_RED );
+					ShowViewPortPanel( PANEL_CLASS_RED );
 				}
 				else if ( iTeam == TF_TEAM_BLUE ) {
-					if ( TFGameRules()->IsESCGamemode() )
-						{
-							SetDesiredPlayerClassIndex( TF_CLASS_SNIPER );
-							ChangeTeam(TF_TEAM_BLUE);
-						}
-					else
 					ShowViewPortPanel( PANEL_CLASS_BLUE );
 				}
 				else if ( iTeam == TF_TEAM_MERCENARY ) {
-					if ( !TFGameRules()->IsESCGamemode() )
-						ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+					ShowViewPortPanel( PANEL_CLASS_MERCENARY );
 				}
 		}
 	}	
@@ -2623,30 +2573,66 @@ void CTFPlayer::ChangeTeam( int iTeamNum )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
+void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 {
+	
+if ( bForced )
+{
+	int iClass = TF_CLASS_UNDEFINED;
+	
+	if ( stricmp( pClassName, "random" ) != 0 )
+	{
+		int i = 0;
+
+		for ( i = TF_CLASS_SCOUT ; i < TF_CLASS_COUNT_ALL ; i++ )
+		{							
+			if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
+			{
+				iClass = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// The player has selected Random class...so let's pick one for them.
+		do{
+			// Don't let them be the same class twice in a row
+			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+		} while( iClass == GetPlayerClass()->GetClassIndex() ||  // don't select the same class
+		( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
+		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off
+	}
+	SetDesiredPlayerClassIndex( iClass );
+	IGameEvent * event = gameeventmanager->CreateEvent( "player_changeclass" );
+	if ( event )
+	{
+		event->SetInt( "userid", GetUserID() );
+		event->SetInt( "class", iClass );
+
+		gameeventmanager->FireEvent( event );
+	}
+
+	// are they TF_CLASS_RANDOM and trying to select the class they're currently playing as (so they can stay this class)?
+	if ( iClass == GetPlayerClass()->GetClassIndex() )
+	{
+		// If we're dead, and we have instant spawn, respawn us immediately. Catches the case
+		// were a player misses respawn wave because they're at the class menu, and then changes
+		// their mind and reselects their current class.
+		if ( m_bAllowInstantSpawn && !IsAlive() )
+		{
+			ForceRespawn();
+		}
+		return;
+	}	
+	return;
+}
 	// can only join a class after you join a valid team
 	if ( GetTeamNumber() <= LAST_SHARED_TEAM )
 		return;
 
 	if (TFGameRules()->IsDMGamemode() && ofd_forceclass.GetBool()== 1 )
 		return;
-	
-	if ( TFGameRules()->IsESCGamemode() )
-	{
-		if ( GetPlayerClass()->IsClass( TF_CLASS_CIVILIAN ) && GetTeamNumber()== TF_TEAM_RED )
-		return;
-
-		if ( GetPlayerClass()->IsClass( TF_CLASS_SNIPER ) && GetTeamNumber()== TF_TEAM_BLUE )
-		return;
-	
-		if ( TFGameRules()->TF_HUNTED_COUNT < ofe_huntedcount.GetInt() && GetTeamNumber() == TF_TEAM_RED )
-		{
-			TFGameRules()->TF_HUNTED_COUNT++;
-			SetDesiredPlayerClassIndex(TF_CLASS_CIVILIAN);
-			return;
-		}
-	}
 	
 	// In case we don't get the class menu message before the spawn timer
 	// comes up, fake that we've closed the menu.
@@ -2676,6 +2662,16 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 
 		for ( i = TF_CLASS_SCOUT ; i < TF_CLASS_COUNT_ALL ; i++ )
 		{
+			if ( i == TF_CLASS_CIVILIAN && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() )
+				return;
+			
+			if (TFGameRules()->IsESCGamemode() && GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN  
+				&& TFGameRules()->GetMaxHunted( GetTeamNumber() ) != 0 && TFGameRules()->GetMaxHunted( GetTeamNumber() ) >= TFGameRules()->GetHuntedCount( GetTeamNumber() ) )
+				return;
+			
+			if ( GetPlayerClassData( i )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() )
+				return;				
+						
 			if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
 			{
 				iClass = i;
@@ -2683,10 +2679,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 			}
 		}
 		
-		if ( i == TF_CLASS_CIVILIAN && TFGameRules()->IsESCGamemode() )
-			return;
-		
-		if ( i > TF_LAST_NORMAL_CLASS )
+		if ( i > TF_CLASS_COUNT_ALL ) // Bruh Wait this cant even happen now, remove this later i guess?
 		{
 			Warning( "HandleCommand_JoinClass( %s ) - invalid class name.\n", pClassName );
 			return;
@@ -2697,8 +2690,10 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName )
 		// The player has selected Random class...so let's pick one for them.
 		do{
 			// Don't let them be the same class twice in a row
-			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
-		} while( iClass == GetPlayerClass()->GetClassIndex() );
+			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+		} while( iClass == GetPlayerClass()->GetClassIndex() ||  // don't select the same class
+		( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
+		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off
 	}
 
 	// joining the same class?
@@ -5420,8 +5415,6 @@ void CTFPlayer::DisplayLocalItemStatus( CTFGoal *pGoal )
 // Called when the player disconnects from the server.
 void CTFPlayer::TeamFortress_ClientDisconnected( void )
 {
-	if ( GetPlayerClass()->IsClass ( TF_CLASS_CIVILIAN ) )
-		TFGameRules()->TF_HUNTED_COUNT--;
 	TeamFortress_RemoveEverythingFromWorld();
 	RemoveNemesisRelationships();
 
@@ -5989,7 +5982,7 @@ void CTFPlayer::ForceRespawn()
 	{
 		// Don't let them be the same class twice in a row
 		do{
-			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_LAST_NORMAL_CLASS );
+			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
 		} while( iDesiredClass == GetPlayerClass()->GetClassIndex() );
 	}
 
@@ -7456,7 +7449,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 			criteriaSet.AppendCriteria( "playerclass", g_aPlayerClassNames_NonLocalized[ GetPlayerClass()->GetClassIndex() ] );
 		}
 	}
-
+	criteriaSet.AppendCriteria("TFCClass", UTIL_VarArgs("%d", IsRetroModeOn()));
 	criteriaSet.AppendCriteria( "recentkills", UTIL_VarArgs("%d", m_Shared.GetNumKillsInTime(30.0)) );
 
 	int iTotalKills = 0;
@@ -7507,7 +7500,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 				criteriaSet.AppendCriteria( "sniperzoomed", "1" );
 			}
 		}
-		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN || pActiveWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN || pActiveWeapon->GetWeaponID() == TFC_WEAPON_ASSAULTCANNON )
+		else if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_MINIGUN  ||  pActiveWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
 		{
 			CTFMinigun *pMinigun = dynamic_cast<CTFMinigun*>(pActiveWeapon);
 			if ( pMinigun )
@@ -7551,7 +7544,7 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 					}
 				}
 
-				if ( iClass > TF_CLASS_UNDEFINED && iClass <= TF_LAST_NORMAL_CLASS )
+				if ( iClass > TF_CLASS_UNDEFINED && iClass <= TF_CLASS_COUNT_ALL )
 				{
 					criteriaSet.AppendCriteria( "crosshair_on", g_aPlayerClassNames_NonLocalized[iClass] );
 				}
@@ -7643,7 +7636,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 		iClass = m_Shared.GetDisguiseClass();
 	}
 
-	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_LAST_NORMAL_CLASS );
+	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT_ALL );
 	bool bValidConcept = ( m_iCurrentConcept >= 0 && m_iCurrentConcept < MP_TF_CONCEPT_COUNT );
 	Assert( bValidClass );
 	Assert( bValidConcept );

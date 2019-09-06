@@ -133,6 +133,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
+	RecvPropInt( RECVINFO( m_iAirDashCount) ),
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 	RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
@@ -153,6 +154,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
@@ -177,6 +179,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_iAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
@@ -206,6 +209,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
 	m_bAirDash = false;
+	m_iAirDashCount = 0;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_iCritMult = 0;
@@ -2083,6 +2087,16 @@ void CTFPlayerShared::SetAirDash( bool bAirDash )
 	m_bAirDash = bAirDash;
 }
 
+void CTFPlayerShared::AddAirDashCount()
+{
+	m_iAirDashCount++;
+}
+
+void CTFPlayerShared::SetAirDashCount( int iAirDashCount )
+{
+	m_iAirDashCount = iAirDashCount;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2896,10 +2910,13 @@ Vector CTFPlayer::GetClassEyeHeight( void )
 
 	int iClassIndex = pClass->GetClassIndex();
 
-	if ( iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_LAST_NORMAL_CLASS )
+	if ( iClassIndex < TF_FIRST_NORMAL_CLASS || iClassIndex > TF_CLASS_COUNT_ALL )
 		return VEC_VIEW;
 
-	return ( g_TFClassViewVectors[pClass->GetClassIndex()] * GetModelScale() );
+	Vector ViewHeight(0, 0, 0);
+	ViewHeight.z = GetPlayerClassData(pClass->GetClassIndex())->m_nViewVector;
+
+	return ( ViewHeight * GetModelScale());
 }
 
 

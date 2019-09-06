@@ -369,8 +369,8 @@ void CTFStatPanel::WriteStats( void )
 	{
 		const ClassStats_t &stat = m_aClassStats[ i ];
 
-		// strip out any garbage class data
-		if ( ( stat.iPlayerClass > TF_LAST_NORMAL_CLASS ) || ( stat.iPlayerClass < TF_FIRST_NORMAL_CLASS ) )
+		// strip out any garbage class data, who you callin garbage
+		if ( ( stat.iPlayerClass > TF_CLASS_COUNT_ALL ) || ( stat.iPlayerClass < TF_FIRST_NORMAL_CLASS ) )
 			continue;
 
 		CDmxElement *pClass = CreateDmxElement( "ClassStats_t" );
@@ -519,7 +519,7 @@ int CTFStatPanel::CalcCRC( int iSteamID )
 	// make a CRC of stat data
 	CRC32_ProcessBuffer( &crc, &iSteamID, sizeof( iSteamID ) );
 
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT_ALL; iClass++ )
 	{
 		// add each class' data to the CRC
 		ClassStats_t &classStats = GetClassStats( iClass );
@@ -585,7 +585,7 @@ void CTFStatPanel::ShowStatPanel( int iClass, int iTeam, int iCurStatValue, TFSt
 	pLabel->GetText( szOriginalSummary, sizeof( szOriginalSummary ) );
 	const wchar_t *pszPlayerClass = L"undefined";
 
-	if ( ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_LAST_NORMAL_CLASS ) )
+	if ( ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_CLASS_COUNT_ALL ) )
 	{
 		pszPlayerClass = g_pVGuiLocalize->Find( g_aPlayerClassNames[ iClass ] );
 	}
@@ -739,7 +739,7 @@ ClassStats_t &CTFStatPanel::GetClassStats( int iClass )
 {
 	Assert( statPanel );
 	Assert( iClass >= TF_FIRST_NORMAL_CLASS );
-	Assert( iClass <= TF_LAST_NORMAL_CLASS );
+	Assert( iClass <= TF_CLASS_COUNT_ALL );
 	int i;
 	for( i = 0; i < statPanel->m_aClassStats.Count(); i++ )
 	{
@@ -810,8 +810,8 @@ void CTFStatPanel::MsgFunc_PlayerStatsUpdate( bf_read &msg )
 		Assert( false );
 	}
 
-	Assert( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_LAST_NORMAL_CLASS );
-	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_LAST_NORMAL_CLASS )
+	Assert( iClass >= TF_FIRST_NORMAL_CLASS && iClass <= TF_CLASS_COUNT_ALL );
+	if ( iClass < TF_FIRST_NORMAL_CLASS || iClass > TF_CLASS_COUNT_ALL )
 		return;
 	
 	m_iClassCurrentLife = iClass;

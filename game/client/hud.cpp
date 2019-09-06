@@ -32,6 +32,8 @@
 
 static 	CClassMemoryPool< CHudTexture >	 g_HudTextureMemoryPool( 128 );
 
+extern ConVar cl_drawhud;
+
 //-----------------------------------------------------------------------------
 // Purpose: Parses the weapon txt files to get the sprites needed.
 //-----------------------------------------------------------------------------
@@ -288,7 +290,10 @@ void CHudElement::SetHiddenBits( int iBits )
 bool CHudElement::ShouldDraw( void )
 {
 	bool bShouldDraw = ( !gHUD.IsHidden( m_iHiddenBits ) );
-
+	
+	if ( AffectedByDrawHUD() && !cl_drawhud.GetBool() )
+		return false;
+	
 	if ( bShouldDraw )
 	{
 		// for each render group

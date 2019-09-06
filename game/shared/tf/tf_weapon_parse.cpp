@@ -42,6 +42,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bBuyable = false;
 	
 	m_bLoadsManualy = false;
+	m_bNoSniperCharge = false;
 	
 	szScoutViewModel[0] = 0;
 	szSoldierViewModel[0] = 0;
@@ -54,6 +55,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	szSpyViewModel[0] = 0;
 	szMercenaryViewModel[0] = 0;
 	szCivilianViewModel[0] = 0;
+	szJuggernautViewModel[0] = 0;
 	
 	m_nProjectileModel[0] = 0;
 
@@ -86,6 +88,12 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_flCenteredViewmodelAngleX = 0.0f;
 	m_flCenteredViewmodelAngleY = 0.0f;
 	m_flCenteredViewmodelAngleZ = 0.0f;
+	
+	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		m_iClassSlot[i]	= -1;
+	}
+	
 }
 
 CTFWeaponInfo::~CTFWeaponInfo()
@@ -237,6 +245,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
 	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
 	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
+	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
 	
 	m_flCenteredViewmodelOffsetX = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_X", 0.0f );
 	m_flCenteredViewmodelOffsetY = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Y", 0.0f );
@@ -257,7 +266,14 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	Q_strncpy( szSpyViewModel, pKeyValuesData->GetString( "spy_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szMercenaryViewModel, pKeyValuesData->GetString( "mercenary_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szCivilianViewModel, pKeyValuesData->GetString( "civilian_viewmodel" ), MAX_WEAPON_STRING );
+	Q_strncpy( szJuggernautViewModel, pKeyValuesData->GetString( "juggernaut_viewmodel" ), MAX_WEAPON_STRING );
 	
+	for ( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		char pKeyValueName[128];
+		Q_snprintf( pKeyValueName, sizeof( pKeyValueName ), "%s_slot", g_aPlayerClassNames_NonLocalized[i] );
+		m_iClassSlot[i]	= pKeyValuesData->GetInt( pKeyValueName, -1 );
+	}
 	// Model muzzleflash
 	const char *pszMuzzleFlashModel = pKeyValuesData->GetString( "MuzzleFlashModel", NULL );
 

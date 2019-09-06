@@ -50,6 +50,7 @@ static int iRemapIndexToClass[TF_CLASS_MENU_BUTTONS] =
 	TF_CLASS_MERCENARY,
 	TF_CLASS_RANDOM,
 	TF_CLASS_CIVILIAN,
+	TF_CLASS_JUGGERNAUT,
 };
 
 int GetIndexForClass( int iClass )
@@ -326,6 +327,12 @@ void CTFClassMenu::OnKeyCodeReleased( vgui::KeyCode code )
 //-----------------------------------------------------------------------------
 void CTFClassMenu::OnThink()
 {
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( !pLocalPlayer->CanShowClassMenu() )
+	{
+		SetVisible( false );
+		SetMouseInputEnabled( false );
+	}
 	vgui::KeyCode code = m_KeyRepeat.KeyRepeated();
 	if ( code )
 	{
@@ -487,61 +494,9 @@ static const char *g_sDialogVariables[] = {
 	"",
 };
 
-static const char *g_sClassImagesBlue[] = {
+static const char *g_sClassImagesPlaceholder[] = {
 	"",
-	"class_sel_sm_scout_blu",
-	"class_sel_sm_soldier_blu",
-	"class_sel_sm_pyro_blu",
-
-	"class_sel_sm_demo_blu",
-	"class_sel_sm_heavy_blu",
-	"class_sel_sm_engineer_blu",
-
-	"class_sel_sm_medic_blu",
-	"class_sel_sm_sniper_blu",
-	"class_sel_sm_spy_blu",
-	
-	"class_sel_sm_mercenary_blu",
-	"class_sel_sm_civilian_blu",
-	"",
-};
-
-static const char *g_sClassImagesRed[] = {
-	"",
-	"class_sel_sm_scout_red",
-	"class_sel_sm_soldier_red",
-	"class_sel_sm_pyro_red",
-	
-	"class_sel_sm_demo_red",
-	"class_sel_sm_heavy_red",
-	"class_sel_sm_engineer_red",
-	
-	"class_sel_sm_medic_red",
-	"class_sel_sm_sniper_red",
-	"class_sel_sm_spy_red",
-	
-	"class_sel_sm_mercenary_red",
-	"class_sel_sm_civilian_red",	
-	"",
-};
-
-static const char *g_sClassImagesMercenary[] = {
-	"",
-	"class_sel_sm_scout_mercenary",
-	"class_sel_sm_soldier_mercenary",
-	"class_sel_sm_pyro_mercenary",
-	
-	"class_sel_sm_demo_mercenary",
-	"class_sel_sm_heavy_mercenary",
-	"class_sel_sm_engineer_mercenary",
-	
-	"class_sel_sm_medic_mercenary",
-	"class_sel_sm_sniper_mercenary",
-	"class_sel_sm_spy_mercenary",
-	
-	"class_sel_sm_mercenary_mercenary",
-	"class_sel_sm_civilian_mercenary",
-	"",
+	""
 };
 
 static int g_sClassDefines[] = {
@@ -559,6 +514,7 @@ static int g_sClassDefines[] = {
 	TF_CLASS_SPY,
 	TF_CLASS_MERCENARY,
 	TF_CLASS_CIVILIAN,
+	TF_CLASS_JUGGERNAUT,
 	0,
 };
 
@@ -576,7 +532,7 @@ void CTFClassMenu::UpdateNumClassLabels( int iTeam )
 	if ( iTeam < FIRST_GAME_TEAM || iTeam >= TF_TEAM_COUNT ) // invalid team number
 		return;
 
-	for( int i = TF_FIRST_NORMAL_CLASS ; i <= TF_LAST_NORMAL_CLASS ; i++ )
+	for( int i = TF_FIRST_NORMAL_CLASS ; i <= TF_CLASS_COUNT_ALL ; i++ )
 	{
 		int classCount = tf_PR->GetCountForPlayerClass( iTeam, g_sClassDefines[i], true );
 
@@ -599,16 +555,26 @@ void CTFClassMenu::UpdateNumClassLabels( int iTeam )
 				{
 					pImage->SetVisible( true );
 					if ( iTeam == TF_TEAM_RED ){
-						pImage->SetImage( g_sClassImagesRed[i] );
+						if ( GetPlayerClassData( i )->GetClassSelectImageRed() )
+							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageRed() );
+						else
+							pImage->SetImage( g_sClassImagesPlaceholder[0] );
+							
 					}
 					else if ( iTeam == TF_TEAM_BLUE )
 					{
-						pImage->SetImage( g_sClassImagesBlue[i] );
+						if( GetPlayerClassData( i )->GetClassSelectImageBlue() )
+							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageBlue() );
+						else
+							pImage->SetImage( g_sClassImagesPlaceholder[0] );
 					}
 					else if ( iTeam == TF_TEAM_MERCENARY )
 					{
-						pImage->SetImage( g_sClassImagesMercenary[i] );
-					}					
+						if ( GetPlayerClassData( i )->GetClassSelectImageMercenary() )
+							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageMercenary() );
+						else
+							pImage->SetImage( g_sClassImagesPlaceholder[0] );
+					}
 				}
 
 				nTotalCount++;

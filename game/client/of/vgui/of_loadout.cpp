@@ -177,7 +177,7 @@ void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	// fill the class names in the class combo box
 	KeyValues *pKeyValues = new KeyValues( "data" );
 	pKeyValues->SetInt( "class", TF_CLASS_UNDEFINED );
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT_ALL; iClass++ )
 	{
 		pKeyValues = new KeyValues( "data" );
 		pKeyValues->SetInt( "class", iClass );

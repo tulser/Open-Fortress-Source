@@ -53,6 +53,7 @@ struct DeathNoticeItem
 		szIcon[0] = 0;
 		wzInfoText[0] = 0;
 		iconDeath = NULL;
+		bCrit = false;
 		bSelfInflicted = false;
 		flCreationTime = 0;
 		bLocalPlayerInvolved = false;
@@ -65,8 +66,10 @@ struct DeathNoticeItem
 	char		szIcon[32];		// name of icon to display
 	wchar_t		wzInfoText[32];	// any additional text to display next to icon
 	CHudTexture *iconDeath;
+	CHudTexture *iconCrit;
 
 	bool		bSelfInflicted;
+	bool		bCrit;
 	float		flCreationTime;
 	bool		bLocalPlayerInvolved;
 };
@@ -283,6 +286,12 @@ void CTFHudDeathNotice::Paint()
 			DrawText(x, yText, m_hTextFont, clr, killer);
 			x += iKillerTextWide;
 		}
+		
+		// Draw glow behind weapon icon to show it was a crit death
+		if ( msg.bCrit && msg.iconCrit )
+		{
+			msg.iconCrit->DrawSelf( x, yIcon, iconActualWide, iconTall, m_clrIcon );
+		}
 
 		// Draw death icon
 		if ( icon )
@@ -441,6 +450,13 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_vehicle", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
 			}
 		}
+
+		if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
+		{
+			// special case text for falling death
+			m_DeathNotices[iMsg].bCrit= true;
+			m_DeathNotices[iMsg].iconCrit = GetIcon( "d_crit", bLocalPlayerInvolved );
+		}	
 
 		char sDeathMsg[512];
 

@@ -42,6 +42,7 @@ public:
 	CHudScopeCharge( const char *pElementName );
 
 	void	Init( void );
+	bool	ShouldDraw( void );
 
 protected:
 	virtual void ApplySchemeSettings(vgui::IScheme *scheme);
@@ -95,6 +96,29 @@ void CHudScopeCharge::ApplySchemeSettings( vgui::IScheme *scheme )
 	SetPaintBackgroundEnabled(false);
 	SetPaintBorderEnabled(false);
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CHudScopeCharge::ShouldDraw( void )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( !pPlayer )
+	{
+		return false;
+	}
+	
+	CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+	if ( !pWeapon )
+		return false;
+	
+	if ( !pWeapon->GetTFWpnData().m_bNoSniperCharge )
+		return CHudElement::ShouldDraw();
+	else
+		return false;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: draws the zoom effect

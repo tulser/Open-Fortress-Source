@@ -493,7 +493,9 @@ private:
 
 	// Client commands.
 	void				HandleCommand_JoinTeam( const char *pTeamName );
-	void				HandleCommand_JoinClass( const char *pClassName );
+public:
+	void				HandleCommand_JoinClass( const char *pClassName, bool bForced = false );
+private:
 	void				HandleCommand_JoinTeam_NoMenus( const char *pTeamName );
 
 	// Bots.

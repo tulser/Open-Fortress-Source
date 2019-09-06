@@ -58,6 +58,7 @@ public:
 
 	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos );
 	virtual void SelectWeaponSlot( int iSlot );
+	virtual bool 	AffectedByDrawHUD( void ){ return false; }
 
 	virtual C_BaseCombatWeapon	*GetSelectedWeapon( void )
 	{ 

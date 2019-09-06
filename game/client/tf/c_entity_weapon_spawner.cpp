@@ -75,7 +75,6 @@ void C_WeaponSpawner::Spawn( void )
 	BaseClass::Spawn();
 	absAngle = GetAbsAngles();
 	iTeamNum = TEAM_INVALID;
-
 	UpdateGlowEffect();
 
 	ClientThink();
@@ -86,6 +85,7 @@ void C_WeaponSpawner::Spawn( void )
 //-----------------------------------------------------------------------------
 void C_WeaponSpawner::ClientThink( void )
 {	
+	Warning("Weapon spawner spawned and initialized\n");
 	if ( !m_bDisableSpin )
 	{
 		absAngle.y += 90 * gpGlobals->frametime;

@@ -44,6 +44,8 @@ private:
 	void DestroyGlowEffect( void );
 #endif // GLOWS_ENABLE
 
+public:
+	CNetworkVar( int, m_nTeam );
 private:
 
 	// === Networked Data ===

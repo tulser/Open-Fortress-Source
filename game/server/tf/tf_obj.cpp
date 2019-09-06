@@ -1806,51 +1806,6 @@ void CBaseObject::CreateObjectGibs( void )
 			pAmmoPack->m_takedamage = DAMAGE_YES;		
 			pAmmoPack->SetHealth( 900 );
 		}
-		
-		CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( GetAbsOrigin(), GetAbsAngles(), this, szGibModel );
-		Assert( pDroppedWeapon );
-		if ( pDroppedWeapon )
-		{
-			pDroppedWeapon->ActivateWhenAtRest();
-
-			// Fill up the ammo pack.
-
-			// Calculate the initial impulse on the weapon.
-			Vector vecImpulse( random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( -0.5, 0.5 ), random->RandomFloat( 0.75, 1.25 ) );
-			VectorNormalize( vecImpulse );
-			vecImpulse *= random->RandomFloat( tf_obj_gib_velocity_min.GetFloat(), tf_obj_gib_velocity_max.GetFloat() );
-
-			QAngle angImpulse( random->RandomFloat ( -100, -500 ), 0, 0 );
-
-			// Cap the impulse.
-			float flSpeed = vecImpulse.Length();
-			if ( flSpeed > tf_obj_gib_maxspeed.GetFloat() )
-			{
-				VectorScale( vecImpulse, tf_obj_gib_maxspeed.GetFloat() / flSpeed, vecImpulse );
-			}
-
-			if ( pDroppedWeapon->VPhysicsGetObject() )
-			{
-				// We can probably remove this when the mass on the weapons is correct!
-				//pAmmoPack->VPhysicsGetObject()->SetMass( 25.0f );
-				AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
-				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
-			}
-
-			pDroppedWeapon->SetInitialVelocity( vecImpulse );
-
-			if ( GetTeamNumber() == TF_TEAM_RED )
-				pDroppedWeapon->m_nSkin = 0;
-			else if ( GetTeamNumber() == TF_TEAM_BLUE )
-				pDroppedWeapon->m_nSkin = 1;
-			else
-				pDroppedWeapon->m_nSkin = 2;
-
-			// Give the ammo pack some health, so that trains can destroy it.
-			pDroppedWeapon->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
-			pDroppedWeapon->m_takedamage = DAMAGE_YES;		
-			pDroppedWeapon->SetHealth( 900 );
-		}
 	}
 }
 

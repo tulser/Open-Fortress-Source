@@ -209,6 +209,9 @@ public:
 	void	SetJumping( bool bJumping );
 	bool    IsAirDashing( void ) { return m_bAirDash; }
 	void    SetAirDash( bool bAirDash );
+	int     GetAirDashCount( void ) { return m_iAirDashCount; }
+	void    AddAirDashCount();
+	void    SetAirDashCount( int iAirDashCount );
 
 	void	DebugPrintConditions( void );
 
@@ -326,6 +329,7 @@ private:
 
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
+	CNetworkVar( int,  m_iAirDashCount );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );

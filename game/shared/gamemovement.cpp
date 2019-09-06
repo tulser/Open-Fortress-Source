@@ -1321,8 +1321,9 @@ void CGameMovement::CheckWaterJump( void )
 			if ( pPhysObj->GetGameFlags() & FVPHYSICS_PLAYER_HELD )
 				return;
 		}
-
-		vecStart.z = mv->GetAbsOrigin().z + player->GetViewOffset().z + WATERJUMP_HEIGHT; 
+		float ViewOffset = (player->GetViewOffset().z < 68.0f) ? 68.0f : player->GetViewOffset().z;
+		
+		vecStart.z = mv->GetAbsOrigin().z + ViewOffset + WATERJUMP_HEIGHT; 
 		VectorMA( vecStart, 24.0f, flatforward, vecEnd );
 		VectorMA( vec3_origin, -50.0f, tr.plane.normal, player->m_vecWaterJumpVel );
 

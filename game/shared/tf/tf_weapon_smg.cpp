@@ -102,27 +102,6 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tfc_weapon_assault_rifle, CTFCAssaultRifle);
 PRECACHE_WEAPON_REGISTER( tfc_weapon_assault_rifle );
 
-//=============================================================================
-//
-// Grant
-//
-//=============================================================================
-
-IMPLEMENT_NETWORKCLASS_ALIASED( TFGrant, DT_WeaponGrant )
-
-BEGIN_NETWORK_TABLE( CTFGrant, DT_WeaponGrant )
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFGrant )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS( tf_weapon_grant, CTFGrant );
-PRECACHE_WEAPON_REGISTER( tf_weapon_grant );
-
-CTFGrant::CTFGrant()
-{
-	m_bReloadsSingly = true;
-}
 // Server specific.
 #ifndef CLIENT_DLL
 BEGIN_DATADESC( CTFSMG )

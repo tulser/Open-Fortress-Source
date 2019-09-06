@@ -124,7 +124,6 @@ public:
 // Global list of triggers that care about weapon fire
 extern CUtlVector< CHandle<CTriggerMultiple> >	g_hWeaponFireTriggers;
 
-
 //------------------------------------------------------------------------------
 // Base VPhysics trigger implementation
 // NOTE: This uses vphysics to compute touch events.  It doesn't do a per-frame Touch call, so the 

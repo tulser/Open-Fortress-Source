@@ -3700,7 +3700,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	}
 	
 	// don't draw the respawn particle in first person
-	if ( !InFirstPersonView() || !IsLocalPlayer() )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && (!InFirstPersonView() || !IsLocalPlayer()) )
 	{
 		const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
 		if ( pEffectName )
@@ -3894,6 +3894,9 @@ CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
 //-----------------------------------------------------------------------------
 bool C_TFPlayer::CanShowClassMenu( void )
 {
+	if ( TFGameRules()->IsESCGamemode() && m_PlayerClass.GetClassIndex() == TF_CLASS_CIVILIAN  
+				&& TFGameRules()->GetMaxHunted( GetTeamNumber() ) != 0 && TFGameRules()->GetMaxHunted( GetTeamNumber() ) >= TFGameRules()->GetHuntedCount( GetTeamNumber() ) )
+		return false;
 	return ( GetTeamNumber() > LAST_SHARED_TEAM );
 }
 

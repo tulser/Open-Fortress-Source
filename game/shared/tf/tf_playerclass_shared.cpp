@@ -12,6 +12,8 @@
 bool UseHWMorphModels();
 #endif
 
+ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_CHEAT | FCVAR_NOTIFY );
+
 extern ConVar of_retromode;
 
 #define TF_CLASS_UNDEFINED_FILE			""
@@ -26,6 +28,7 @@ extern ConVar of_retromode;
 #define TF_CLASS_ENGINEER_FILE			"scripts/playerclasses/engineer"
 #define TF_CLASS_MERCENARY_FILE			"scripts/playerclasses/mercenary"
 #define TF_CLASS_CIVILIAN_FILE			"scripts/playerclasses/civilian"
+#define TF_CLASS_JUGGERNAUT_FILE		"scripts/playerclasses/juggernaut"
 
 const char *s_aPlayerClassFiles[] =
 {
@@ -41,6 +44,7 @@ const char *s_aPlayerClassFiles[] =
 	TF_CLASS_ENGINEER_FILE,
 	TF_CLASS_MERCENARY_FILE,
 	TF_CLASS_CIVILIAN_FILE,
+	TF_CLASS_JUGGERNAUT_FILE,
 };
 
 TFPlayerClassData_t s_aTFPlayerClassData[TF_CLASS_COUNT_ALL];
@@ -58,6 +62,10 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	m_flMaxSpeed = 0.0f;
 	m_nMaxHealth = 0;
 	m_nMaxArmor = 0;
+	
+	m_nMaxAirDashCount = 0;
+	
+	m_nCapNumber = 1;
 
 #ifdef GAME_DLL
 	m_szDeathSound[0] = '\0';
@@ -65,6 +73,15 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	m_szMeleeDeathSound[0] = '\0';
 	m_szExplosionDeathSound[0] = '\0';
 #endif
+
+	m_szClassSelectImageRed[0] = '\0';
+	m_szClassSelectImageBlue[0] = '\0';
+	m_szClassSelectImageMercenary[0] = '\0';
+	
+	m_szClassImageRed[0] = '\0';
+	m_szClassImageBlue[0] = '\0';
+	m_szClassImageMercenary[0] = '\0';
+	m_szClassImageColorless[0] = '\0';
 
 	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
 	{
@@ -170,7 +187,11 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	m_flMaxSpeed = pKeyValuesData->GetFloat( "speed_max" );
 	m_nMaxHealth = pKeyValuesData->GetInt( "health_max" );
 	m_nMaxArmor = pKeyValuesData->GetInt( "armor_max" );
-
+	
+	m_nMaxAirDashCount = pKeyValuesData->GetInt( "MaxAirDashCount" );
+	
+	m_nCapNumber = pKeyValuesData->GetInt( "CapMultiplier" );
+	
 	// Weapons.
 	int i;
 	char buf[32];
@@ -205,6 +226,12 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	// Temp animation flags
 	m_bDontDoAirwalk = ( pKeyValuesData->GetInt( "DontDoAirwalk", 0 ) > 0 );
 	m_bDontDoNewJump = ( pKeyValuesData->GetInt( "DontDoNewJump", 0 ) > 0 );
+	
+	// Open Fortress
+	
+	m_nViewVector = pKeyValuesData->GetInt( "ViewVector" );
+	
+	m_bSpecialClass = ( pKeyValuesData->GetInt( "SpecialClass", 0 ) > 0 );
 
 #ifdef GAME_DLL		// right now we only emit these sounds from server. if that changes we can do this in both dlls
 
@@ -213,8 +240,16 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szCritDeathSound, pKeyValuesData->GetString( "sound_crit_death", "TFPlayer.CritDeath" ), MAX_PLAYERCLASS_SOUND_LENGTH );
 	Q_strncpy( m_szMeleeDeathSound, pKeyValuesData->GetString( "sound_melee_death", "Player.MeleeDeath" ), MAX_PLAYERCLASS_SOUND_LENGTH );
 	Q_strncpy( m_szExplosionDeathSound, pKeyValuesData->GetString( "sound_explosion_death", "Player.ExplosionDeath" ), MAX_PLAYERCLASS_SOUND_LENGTH );
-
 #endif
+
+	Q_strncpy( m_szClassSelectImageRed, 		pKeyValuesData->GetString( "ClassSelectImageRed" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassSelectImageBlue, 		pKeyValuesData->GetString( "ClassSelectImageBlue" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassSelectImageMercenary, 	pKeyValuesData->GetString( "ClassSelectImageMercenary" ), 	TF_NAME_LENGTH );	
+
+	Q_strncpy( m_szClassImageRed, 		pKeyValuesData->GetString( "ClassImageRed" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageBlue, 		pKeyValuesData->GetString( "ClassImageBlue" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageMercenary, pKeyValuesData->GetString( "ClassImageMercenary" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageColorless, pKeyValuesData->GetString( "ClassImageColorless" ), TF_NAME_LENGTH );
 	
 	int j;
 	char bup[32];
@@ -249,6 +284,10 @@ void InitPlayerClasses( void )
 	Q_strncpy( pClassData->m_szLocalizableName, "undefined", TF_NAME_LENGTH );
 	Q_strncpy( pClassData->m_szTFCModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
 	Q_strncpy( pClassData->m_szTFCArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
+	
+	Q_strncpy( pClassData->m_szClassSelectImageRed, "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
+	Q_strncpy( pClassData->m_szClassSelectImageBlue, "class_sel_sm_civilian_blu", TF_NAME_LENGTH );
+	Q_strncpy( pClassData->m_szClassSelectImageMercenary, "class_sel_sm_civilian_mercenary", TF_NAME_LENGTH );
 
 	// Initialize the classes.
 	for ( int iClass = 1; iClass < TF_CLASS_COUNT_ALL; ++iClass )
@@ -421,6 +460,19 @@ const char	*CTFPlayerClassShared::GetArmModelName( void ) const
 	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetArmModelName(), sizeof( modelFilename ) );
 	
 	return modelFilename;
+}
+
+int CTFPlayerClassShared::MaxAirDashCount( void )
+{
+	if ( of_airdashcount.GetInt() > GetPlayerClassData( m_iClass )->m_nMaxAirDashCount )
+		return of_airdashcount.GetInt();
+	else
+		return GetPlayerClassData( m_iClass )->m_nMaxAirDashCount; 
+}
+
+bool CTFPlayerClassShared::CanAirDash( void )
+{ 
+	return GetPlayerClassData( m_iClass )->m_nMaxAirDashCount > 0 || of_airdashcount.GetInt() > 0; 
 }
 
 const char	*CTFPlayerClassShared::GetTFCArmModelName( void ) const						

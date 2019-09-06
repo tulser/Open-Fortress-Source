@@ -303,6 +303,15 @@ void CBaseTeamObjectiveResource::SetCPPosition( int index, const Vector& vPositi
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+Vector CBaseTeamObjectiveResource::GetCPPosition( int index )
+{
+	AssertValidIndex(index);
+	return m_vCPPositions.Get(index);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CBaseTeamObjectiveResource::SetCPVisible( int index, bool bVisible )
 {
 	AssertValidIndex(index);

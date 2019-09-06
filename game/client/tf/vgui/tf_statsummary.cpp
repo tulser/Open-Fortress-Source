@@ -236,7 +236,7 @@ void CTFStatsSummaryPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	KeyValues *pKeyValues = new KeyValues( "data" );
 	pKeyValues->SetInt( "class", TF_CLASS_UNDEFINED );
 	m_pClassComboBox->AddItem( "#StatSummary_Label_AsAnyClass", pKeyValues );
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT_ALL; iClass++ )
 	{
 		pKeyValues = new KeyValues( "data" );
 		pKeyValues->SetInt( "class", iClass );
@@ -303,7 +303,7 @@ void CTFStatsSummaryPanel::UpdateDialog()
 	m_iTotalSpawns = 0;
 
 	// if we don't have stats for any class, add empty stat entries for them 
-	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+	for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_CLASS_COUNT_ALL; iClass++ )
 	{
 		int j;
 		for ( j = 0; j < m_aClassStats.Count(); j++ )

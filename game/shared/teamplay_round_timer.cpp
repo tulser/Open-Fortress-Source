@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
+#include "tf_gamerules.h"
 
 #ifdef CLIENT_DLL
 #include "iclientmode.h"
@@ -81,6 +82,7 @@ enum
 #include "tier0/memdbgon.h"
 
 extern bool IsInCommentaryMode();
+extern ConVar ofe_payload_override;
 
 #if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( TF_MOD ) )
 ConVar tf_overtime_nag( "tf_overtime_nag", "0", FCVAR_NOTIFY, "Announcer overtime nag." );
@@ -851,6 +853,10 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		inputdata_t data;
 		InputDisable( data );
 		m_OnSetupFinished.FireOutput( this, this );
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() )
+		{
+			TFGameRules()->PassAllTracks();
+		}
 	}
 
 	if ( IsDisabled() || m_bTimerPaused )
@@ -895,6 +901,10 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		if ( ShowInHud() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
 		{
 			UTIL_LogPrintf( "World triggered \"Round_Setup_End\"\n" );
+		}
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() )
+		{
+			TFGameRules()->PassAllTracks();
 		}
 		return;
 	}
