@@ -549,7 +549,7 @@ public:
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	HandleOvertimeBegin(){}
-	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b ){ r = 0.76f; g = 0.76f; b = 0.76f; }
+	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b );
 
 private:
 	bool			m_bOldInWaitingForPlayers;

@@ -565,15 +565,16 @@ const char *GetMapDisplayName( const char *mapName )
 		 !Q_strncmp( szTempName, "tc_", 3 ) ||
 		 !Q_strncmp( szTempName, "ad_", 3 ) ||
 		 !Q_strncmp( szTempName, "gg_", 3 ) ||
+		 !Q_strncmp( szTempName, "pl_", 3 ) ||
 		 !Q_strncmp( szTempName, "dm_", 3 ) )
 	{
 		pszSrc = szTempName + 3;
 	}
-	else if ( !Q_strncmp( szTempName, "ctf_", 4 ) )
+	else if ( !Q_strncmp( szTempName, "ctf_", 4 ) || !Q_strncmp( szTempName, "esc_", 4 ) )
 	{
 		pszSrc = szTempName + 4;
 	}
-	else if ( !Q_strncmp( szTempName, "mctf_", 5 ) )
+	else if ( !Q_strncmp( szTempName, "mctf_", 5 ) || !Q_strncmp( szTempName, "koth_", 5 ) )
 	{
 		pszSrc = szTempName + 5;
 	}

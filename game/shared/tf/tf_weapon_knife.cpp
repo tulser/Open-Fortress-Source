@@ -95,7 +95,8 @@ void CTFKnife::PrimaryAttack( void )
 					m_hBackstabVictim = trace.m_pEnt;
 				}
 			}
-			else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY ){
+			else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+			{
 				// Deal extra damage to players when stabbing them from behind
 				if ( IsBehindTarget( trace.m_pEnt ) )
 				{

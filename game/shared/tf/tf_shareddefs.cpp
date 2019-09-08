@@ -97,7 +97,8 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_ZS",
 	"#Gametype_GG",
 	"#Gametype_ARENA",
-	"#Gametype_PAYLOAD"
+	"#Gametype_PAYLOAD",
+	"#Gametype_KOTH"
 };
 
 //-----------------------------------------------------------------------------
@@ -318,7 +319,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
 	DMG_GENERIC,		// TF_WEAPON_GRAPPLE,
 	DMG_IGNITE,			// TF_WEAPON_FLAREGUN
-
+	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_DB
 	DMG_CLUB,		// TFC_WEAPON_CROWBAR,
@@ -386,6 +387,7 @@ const char *g_szProjectileNames[] =
 	"projectile_tripmine",
 	"projectile_incendrocket",
 	"projectile_pipe_dm",
+	"projectile_tranq",
 };
 
 //NOTENOTE: This has been reworked, above char list not related anymore

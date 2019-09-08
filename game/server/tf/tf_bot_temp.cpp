@@ -34,7 +34,7 @@ ConVar bot_forceattackon( "bot_forceattackon", "1", 0, "When firing, don't tap f
 ConVar bot_flipout( "bot_flipout", "0", 0, "When on, all bots fire their guns." );
 ConVar bot_defend( "bot_defend", "0", 0, "Set to a team number, and that team will all keep their combat shields raised." );
 ConVar bot_changeclass( "bot_changeclass", "0", 0, "Force all bots to change to the specified class." );
-ConVar bot_dontmove( "bot_dontmove", "0", FCVAR_CHEAT );
+ConVar bot_dontmove( "bot_dontmove", "1", FCVAR_CHEAT );
 ConVar bot_saveme( "bot_saveme", "0", FCVAR_CHEAT );
 static ConVar bot_mimic( "bot_mimic", "0", 0, "Bot uses usercmd of player by index." );
 static ConVar bot_mimic_yaw_offset( "bot_mimic_yaw_offset", "0", 0, "Offsets the bot yaw." );
@@ -164,13 +164,14 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 	{
 		// What class do they want?
 		int iClass = 1;
-		
+
 		// We do this check so that the bots dont spawn as classes they Shouldnt
 		do{
 			// Don't let them be the same class twice in a row
 			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
 		} while( ( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
 		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off		
+
 		char const *pVal = args.FindArg( "-class" );
 		if ( pVal )
 		{
@@ -737,7 +738,11 @@ CON_COMMAND_F( bot_changeteams, "Make all bots change teams", FCVAR_CHEAT )
 			{
 				// toggle team between red & blue
 				pPlayer->ChangeTeam( TF_TEAM_BLUE + TF_TEAM_RED - iTeam );
-			}			
+			}	
+			else if ( iTeam == TEAM_SPECTATOR || iTeam == TEAM_UNASSIGNED )
+			{
+				pPlayer->ChangeTeam( RandomInt( TF_TEAM_RED, TF_TEAM_BLUE ) );
+			}
 		}
 	}
 }

@@ -70,9 +70,7 @@ C_SceneEntity::~C_SceneEntity( void )
 void C_SceneEntity::OnResetClientTime()
 {
 	// In TF2 we ignore this as the scene is played entirely client-side.
-#if !defined( TF_CLIENT_DLL ) && !defined( TF_MOD_CLIENT )
 	m_flCurrentTime = m_flForceClientTime;
-#endif
 }
 
 char const *C_SceneEntity::GetSceneFileName()
@@ -804,7 +802,6 @@ bool CChoreoStringPool::GetString( short stringId, char *buff, int buffSize )
 
 CChoreoStringPool g_ChoreoStringPool;
 
-/*
 CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 {
 	char loadfile[ 512 ];
@@ -812,96 +809,67 @@ CChoreoScene *C_SceneEntity::LoadScene( const char *filename )
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
 
-	char *pBuffer = NULL;
-	size_t bufsize = scenefilecache->GetSceneBufferSize( loadfile );
-	if ( bufsize <= 0 )
-		return NULL;
-
-	pBuffer = new char[ bufsize ];
-	if ( !scenefilecache->GetSceneData( filename, (byte *)pBuffer, bufsize ) )
-	{
-		delete[] pBuffer;
-		return NULL;
-	}
-
 	CChoreoScene *pScene;
-	if ( IsBufferBinaryVCD( pBuffer, bufsize ) )
+	void *pBuffer = NULL;
+
 	{
-		pScene = new CChoreoScene( this );
-		CUtlBuffer buf( pBuffer, bufsize, CUtlBuffer::READ_ONLY );
-		if ( !pScene->RestoreFromBinaryBuffer( buf, loadfile, &g_ChoreoStringPool ) )
+		int fileSize = filesystem->ReadFileEx(loadfile, "MOD", &pBuffer, true, true);
+
+		if (fileSize)
 		{
-			Warning( "Unable to restore binary scene '%s'\n", loadfile );
-			delete pScene;
-			pScene = NULL;
+			g_TokenProcessor.SetBuffer((char*)pBuffer);
+			pScene = ChoreoLoadScene(loadfile, this, &g_TokenProcessor, Scene_Printf);
 		}
 		else
 		{
-			pScene->SetPrintFunc( Scene_Printf );
-			pScene->SetEventCallbackInterface( this );
-		}
-	}
-	else
-	{
-		g_TokenProcessor.SetBuffer( pBuffer );
-		pScene = ChoreoLoadScene( loadfile, this, &g_TokenProcessor, Scene_Printf );
-	}
+			char *pBuffer2 = NULL;
+			size_t bufsize = scenefilecache->GetSceneBufferSize(loadfile);
+			if (bufsize <= 0)
+				return NULL;
 
-	delete[] pBuffer;
-	return pScene;
-}
-*/
-
-CChoreoScene *C_SceneEntity::LoadScene(const char *filename)
-{
-	char loadfile[MAX_PATH];
-	Q_strncpy(loadfile, filename, sizeof(loadfile));
-	Q_SetExtension(loadfile, ".vcd", sizeof(loadfile));
-	Q_FixSlashes(loadfile);
-
-	void *pBuffer = 0;
-	CChoreoScene *pScene = NULL;
-
-	int fileSize = filesystem->ReadFileEx(loadfile, "MOD", &pBuffer, true);
-	if (fileSize)
-	{
-		g_TokenProcessor.SetBuffer((char*)pBuffer);
-		pScene = ChoreoLoadScene(loadfile, this, &g_TokenProcessor, Scene_Printf);
-	}
-	else
-	{
-		fileSize = scenefilecache->GetSceneBufferSize(loadfile);
-		if (fileSize <= 0)
-			return NULL;
-
-		pBuffer = new char[fileSize];
-		if (!scenefilecache->GetSceneData(filename, (byte *)pBuffer, fileSize))
-		{
-			delete[] pBuffer;
-			return NULL;
-		}
-
-
-		if (IsBufferBinaryVCD((char*)pBuffer, fileSize))
-		{
-			pScene = new CChoreoScene(this);
-			CUtlBuffer buf(pBuffer, fileSize, CUtlBuffer::READ_ONLY);
-			if (!pScene->RestoreFromBinaryBuffer(buf, loadfile, &g_ChoreoStringPool))
+			pBuffer2 = new char[bufsize];
+			if (!scenefilecache->GetSceneData(filename, (byte *)pBuffer2, bufsize))
 			{
-				Warning("Unable to restore scene '%s'\n", loadfile);
-				delete pScene;
-				pScene = NULL;
+				delete[] pBuffer2;
+				return NULL;
 			}
+
+			if (IsBufferBinaryVCD(pBuffer2, bufsize))
+			{
+				pScene = new CChoreoScene(this);
+				CUtlBuffer buf(pBuffer2, bufsize, CUtlBuffer::READ_ONLY);
+				if (!pScene->RestoreFromBinaryBuffer(buf, loadfile, &g_ChoreoStringPool))
+				{
+					Warning("Unable to restore binary scene '%s'\n", loadfile);
+					delete pScene;
+					pScene = NULL;
+				}
+				else
+				{
+					pScene->SetPrintFunc(Scene_Printf);
+					pScene->SetEventCallbackInterface(this);
+				}
+			}
+			else
+			{
+				g_TokenProcessor.SetBuffer(pBuffer2);
+				pScene = ChoreoLoadScene(loadfile, this, &g_TokenProcessor, Scene_Printf);
+			}
+
+			delete[] pBuffer2;
+			return pScene;
 		}
 	}
-
+	
 	if (pScene)
 	{
 		pScene->SetPrintFunc(Scene_Printf);
 		pScene->SetEventCallbackInterface(this);
 	}
 
-	delete[] pBuffer;
+	
+	filesystem->FreeOptimalReadBuffer(pBuffer);
+
 	return pScene;
 }
 

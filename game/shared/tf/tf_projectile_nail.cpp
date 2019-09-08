@@ -223,3 +223,113 @@ void ClientsideProjectileNailCallback(const CEffectData &data)
 DECLARE_CLIENT_EFFECT(NAILGUN_NAIL_DISPATCH_EFFECT, ClientsideProjectileNailCallback);
 
 #endif
+
+//=============================================================================
+//
+// TF Tranq Projectile functions (Server specific).
+//
+
+#define TRANQ_MODEL				"models/weapons/w_models/w_classic_tranq_proj.mdl"
+#define TRANQ_DISPATCH_EFFECT	"ClientProjectile_Tranq"
+#define TRANQ_GRAVITY	0.01f
+
+LINK_ENTITY_TO_CLASS(tf_projectile_tranq, CTFProjectile_Tranq);
+PRECACHE_REGISTER(tf_projectile_tranq);
+
+short g_sModelIndexTranq;
+void PrecacheTranq(void *pUser)
+{
+	g_sModelIndexTranq = modelinfo->GetModelIndex(TRANQ_MODEL);
+}
+
+PRECACHE_REGISTER_FN(PrecacheTranq);
+
+
+CTFProjectile_Tranq::CTFProjectile_Tranq()
+{
+}
+
+CTFProjectile_Tranq::~CTFProjectile_Tranq()
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFProjectile_Tranq *CTFProjectile_Tranq::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
+{
+	return static_cast<CTFProjectile_Tranq*>(CTFBaseProjectile::Create("tf_projectile_tranq", vecOrigin, vecAngles, pOwner, CTFProjectile_Tranq::GetInitialVelocity(), g_sModelIndexTranq, TRANQ_DISPATCH_EFFECT, pScorer, bCritical));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+const char *CTFProjectile_Tranq::GetProjectileModelName(void)
+{
+	return TRANQ_MODEL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFProjectile_Tranq::GetGravity(void)
+{
+	return TRANQ_GRAVITY;
+}
+
+#ifdef CLIENT_DLL
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output : const char
+//-----------------------------------------------------------------------------
+const char *GetTranqTrailParticleName(int iTeamNumber, bool bCritical)
+{
+	if (iTeamNumber == TF_TEAM_BLUE)
+	{
+		return (bCritical ? "nailtrails_super_blue_crit" : "tranq_tracer_teamcolor_blue");
+	}
+	else if (iTeamNumber == TF_TEAM_RED)
+	{
+		return (bCritical ? "nailtrails_super_red_crit" : "tranq_tracer_teamcolor_red");
+	}
+	else 
+	{
+		return (bCritical ? "nailtrails_super_dm_crit" : "tranq_tracer_teamcolor_dm");
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void ClientsideProjectileTranqCallback(const CEffectData &data)
+{
+	C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer*>(ClientEntityList().GetBaseEntityFromHandle(data.m_hEntity));
+	if (pPlayer)
+	{
+		C_LocalTempEntity *pNail = ClientsideProjectileCallback(data, TRANQ_GRAVITY);
+		if (pNail)
+		{
+			switch (pPlayer->GetTeamNumber())
+			{
+			case TF_TEAM_RED:
+				pNail->m_nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				pNail->m_nSkin = 1;
+				break;
+			case TF_TEAM_MERCENARY:
+				pNail->m_nSkin = 2;
+				break;
+			}
+			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
+			pPlayer->m_Shared.UpdateParticleColor( pNail->AddParticleEffect(GetTranqTrailParticleName(pPlayer->GetTeamNumber(), bCritical)) );
+			pNail->AddEffects(EF_NOSHADOW);
+			pNail->flags |= FTENT_USEFASTCOLLISIONS;
+		}
+	}
+}
+
+DECLARE_CLIENT_EFFECT(TRANQ_DISPATCH_EFFECT, ClientsideProjectileTranqCallback);
+
+#endif

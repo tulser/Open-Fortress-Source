@@ -7,9 +7,11 @@
 #include "cbase.h"
 #include "c_tf_player.h"
 #include "view.h"
-#include "tier0/memdbgon.h"
+
 #include "glow_outline_effect.h"
 #include "tf_gamerules.h"
+
+#include "tier0/memdbgon.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Weapon Spawner

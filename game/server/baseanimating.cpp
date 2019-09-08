@@ -261,6 +261,10 @@ IMPLEMENT_SERVERCLASS_ST(CBaseAnimating, DT_BaseAnimating)
 	SendPropFloat( SENDINFO( m_fadeMaxDist ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_flFadeScale ), 0, SPROP_NOSCALE ),
 
+#ifdef GLOWS_ENABLE
+	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
+#endif // GLOWS_ENABLE
+
 END_SEND_TABLE()
 
 
@@ -288,6 +292,10 @@ CBaseAnimating::CBaseAnimating()
 	m_fadeMaxDist = 0;
 	m_flFadeScale = 0.0f;
 	m_fBoneCacheFlags = 0;
+
+#ifdef GLOWS_ENABLE
+	m_bGlowEnabled.Set( false );
+#endif // GLOWS_ENABLE
 }
 
 CBaseAnimating::~CBaseAnimating()
@@ -1516,6 +1524,56 @@ void CBaseAnimating::InitStepHeightAdjust( void )
 	m_flEstIkOffset = 0;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseAnimating::UpdateOnRemove( void )
+{
+#ifdef GLOWS_ENABLE
+	RemoveGlowEffect();
+#endif // GLOWS_ENABLE
+
+	BaseClass::UpdateOnRemove();
+}
+
+#ifdef GLOWS_ENABLE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseAnimating::AddGlowEffect( void )
+{
+	SetTransmitState( FL_EDICT_ALWAYS );
+	m_bGlowEnabled.Set( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseAnimating::RemoveGlowEffect( void )
+{
+	m_bGlowEnabled.Set( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CBaseAnimating::IsGlowEffectActive( void )
+{
+	return m_bGlowEnabled;
+}
+#endif // GLOWS_ENABLE
+
+//-----------------------------------------------------------------------------
+// Purpose: Changing team, maintain associated data
+//-----------------------------------------------------------------------------
+void CBaseAnimating::ChangeTeam( int iTeamNum )
+{
+#ifdef GLOWS_ENABLE
+	RemoveGlowEffect();
+#endif // GLOWS_ENABLE
+
+	BaseClass::ChangeTeam( iTeamNum );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Interpolates client IK floor position and drops entity down so that the feet will reach

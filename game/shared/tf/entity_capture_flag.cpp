@@ -527,6 +527,8 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 		}
 	}
 
+	pPlayer->AddGlowEffect();
+
 	// Remove the touch function.
 	SetTouch( NULL );
 
@@ -778,6 +780,8 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 	pPlayer->TeamFortress_SetSpeed();
 	pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_FLAGCAPTURED );
+
+	pPlayer->RemoveGlowEffect();
 	
 	// Output.
 	m_outputOnCapture.FireOutput(pPlayer, this, 0);
@@ -919,6 +923,8 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 
 	// Reset the flag's angles.
 	SetAbsAngles( m_vecResetAng );
+
+	pPlayer->RemoveGlowEffect();
 
 	// Reset the touch function.
 	SetTouch( &CCaptureFlag::FlagTouch );

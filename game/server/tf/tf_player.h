@@ -257,6 +257,7 @@ public:
 	void PainSound( const CTakeDamageInfo &info );
 	void DeathSound( const CTakeDamageInfo &info );
 
+
 	// TF doesn't want the explosion ringing sound
 	virtual void			OnDamagedByExplosion( const CTakeDamageInfo &info ) { return; }
 
@@ -298,7 +299,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve );
+	void CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve, int iDamageCustom );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
@@ -465,6 +466,22 @@ public:
 	int				RestockMetal( float PowerupSize );
 	int				RestockCloak( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
+
+	// Gore
+	/*
+	int m_HeadBodygroup;
+	int	m_LeftArmBodygroup;
+	int	m_RightArmBodygroup;
+	int	m_LeftLegBodygroup;
+	int	m_RightLegBodygroup;
+	*/
+
+	unsigned short m_iGoreHead;
+	unsigned short m_iGoreLeftArm;
+	unsigned short m_iGoreRightArm;
+	unsigned short m_iGoreLeftLeg;
+	unsigned short m_iGoreRightLeg;
+
 private:
 
 	int					GetAutoTeam( void );
@@ -528,7 +545,9 @@ private:
 
 	bool				PlayGesture( const char *pGestureName );
 	bool				PlaySpecificSequence( const char *pSequenceName );
-	bool				PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo &info_modified );
+
+	// moved to tf_playerclass_shared
+	//bool				PlayDeathAnimation( const CTakeDamageInfo &info, CTakeDamageInfo &info_modified );
 
 	bool				GetResponseSceneFromConcept( int iConcept, char *chSceneBuffer, int numSceneBufferBytes );
 
@@ -621,6 +640,7 @@ public:
 	void				AddMoney( inputdata_t &inputdata );
 	void				SetMoney( inputdata_t &inputdata );
 	void				InputStripWeapons( inputdata_t &inputdata );
+	void				InputSpeakResponseConcept( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;
 	bool				IsAllowedToPickupWeapons( void ) { return true; }
 	bool				Weapon_CanUse( void ) { return true; }

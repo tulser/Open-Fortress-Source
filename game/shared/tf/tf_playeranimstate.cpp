@@ -543,6 +543,13 @@ bool CTFPlayerAnimState::HandleMoving( Activity &idealActivity )
 		return BaseClass::HandleMoving( idealActivity );
 	}
 
+	// grappling state
+	if ( m_pTFPlayer->m_Shared.IsGrappling() )
+	{
+		idealActivity = ACT_GRAPPLE_PULL_IDLE;
+		return true;
+	}
+
 	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_AIMING ) ) 
 	{
 		if ( flSpeed > MOVING_MINIMUM_SPEED )

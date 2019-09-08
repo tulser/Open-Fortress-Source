@@ -275,8 +275,8 @@ bool CBaseProp::KeyValue( const char *szKeyName, const char *szValue )
 {
 	if ( FStrEq(szKeyName, "health") )
 	{
-		// Only override props are allowed to override health.
-		if ( FClassnameIs( this, "prop_physics_override" ) || FClassnameIs( this, "prop_dynamic_override" ) )
+		// Only override props and tf bombs are allowed to override health.
+		if ( FClassnameIs( this, "prop_physics_override" ) || FClassnameIs( this, "prop_dynamic_override" ) || FClassnameIs( this, "tf_generic_bomb" ) || FClassnameIs( this, "tf_pumpkin_bomb" ) )
 			return BaseClass::KeyValue( szKeyName, szValue );
 
 		return true;
@@ -1733,9 +1733,6 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		WRITE_ANGLES( GetAbsAngles() );
 		MessageEnd();
 
-#ifdef HL2MP
-		UTIL_Remove( this );
-#endif
 		return;
 	}
 
@@ -1799,9 +1796,7 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		}
 	}
 
-#ifndef HL2MP
 	UTIL_Remove( this );
-#endif
 }
 
 
@@ -1985,7 +1980,7 @@ void CDynamicProp::BoneFollowerHierarchyChanged()
 //-----------------------------------------------------------------------------
 bool CDynamicProp::OverridePropdata( void )
 {
-	return ( FClassnameIs(this, "prop_dynamic_override" ) );
+	return ( FClassnameIs(this, "prop_dynamic_override" ) || FClassnameIs(this, "tf_generic_bomb" ) || FClassnameIs(this, "tf_pumpkin_bomb" ) );
 }
 
 //------------------------------------------------------------------------------

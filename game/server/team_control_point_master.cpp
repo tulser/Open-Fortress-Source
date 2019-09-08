@@ -10,9 +10,7 @@
 #include "team_control_point_master.h"
 #include "teamplayroundbased_gamerules.h"
 
-#if defined ( TF_DLL )
 #include "tf_gamerules.h"
-#endif
 
 BEGIN_DATADESC( CTeamControlPointMaster )
 	DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
@@ -676,7 +674,6 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 		{
 			bool bWinner = true;
 
-#if defined( TF_DLL)
 			if ( TFGameRules() && TFGameRules()->IsInKothMode() )
 			{
 				CTeamRoundTimer *pTimer = NULL;
@@ -697,7 +694,7 @@ void CTeamControlPointMaster::CheckWinConditions( void )
 					}
 				}
 			}
-#endif
+
 			if ( bWinner )
 			{
 				TeamplayGameRules()->SetWinningTeam( iWinners, WINREASON_ALL_POINTS_CAPTURED, true, m_bSwitchTeamsOnWin );

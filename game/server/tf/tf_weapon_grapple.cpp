@@ -77,7 +77,7 @@ CGrappleHook *CGrappleHook::HookCreate( const Vector &vecOrigin, const QAngle &a
 	CWeaponGrapple *pOwner = (CWeaponGrapple *)pentOwner;
 	pHook->m_hOwner = pOwner;
 	pHook->SetOwnerEntity( pOwner->GetOwner() );
-	pHook->m_hPlayer = (CBasePlayer *)pOwner->GetOwner();
+	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
  
 	return pHook;
 }
@@ -172,6 +172,9 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 	if ( (pOther != m_hOwner) && (pOther->m_takedamage != DAMAGE_NO) )
 	{
 		m_hOwner->NotifyHookDied();
+
+		if ( m_hPlayer )
+			m_hPlayer->m_Shared.SetGrapple( false );
  
 		SetTouch( NULL );
 		SetThink( NULL );
@@ -223,7 +226,10 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
  
 			// Set Jay's gai flag
 			m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, true );
- 
+
+			m_hPlayer->m_Shared.SetGrapple( true );
+			m_hPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START );
+
 			//IPhysicsObject *pPhysObject = m_hPlayer->VPhysicsGetObject();
 
 			/*
@@ -448,7 +454,7 @@ void CWeaponGrapple::PrimaryAttack( void )
 		return;
  
 	#ifndef CLIENT_DLL
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
 	if ( !pPlayer )
 	{
@@ -477,10 +483,9 @@ void CWeaponGrapple::PrimaryAttack( void )
 	//Obligatory for MP so the sound can be played
 	CDisablePredictionFiltering disabler;
 	WeaponSound( SINGLE );
-	pPlayer->DoMuzzleFlash();
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GRAPPLE_FIRE_START );
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.75;
@@ -640,7 +645,12 @@ void CWeaponGrapple::ItemPostFrame( void )
  
 			UTIL_Remove( m_hHook );
 			m_hHook = NULL;
- 
+
+			CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+
+			if ( pPlayer )
+				pPlayer->m_Shared.SetGrapple( false );
+	
 			NotifyHookDied();
  
 			m_bMustReload = true;
@@ -723,6 +733,11 @@ bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
  
 		UTIL_Remove( m_hHook );
 		m_hHook = NULL;
+
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+
+		if ( pPlayer )
+			pPlayer->m_Shared.SetGrapple( false );
  
 		NotifyHookDied();
  
@@ -746,6 +761,11 @@ void CWeaponGrapple::Drop( const Vector &vecVelocity )
  
 		UTIL_Remove( m_hHook );
 		m_hHook = NULL;
+
+		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+
+		if ( pPlayer )
+			pPlayer->m_Shared.SetGrapple( false );
  
 		NotifyHookDied();
  
@@ -820,8 +840,6 @@ void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, flo
 			pBeam = CBeam::BeamCreate("cable/cable_red.vmt", 2);
 		else if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 			pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", 2);
-		else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
-			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
 		else
 			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
 	}

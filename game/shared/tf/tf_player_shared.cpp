@@ -134,6 +134,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
 	RecvPropInt( RECVINFO( m_iAirDashCount) ),
+	RecvPropInt( RECVINFO( m_bGrapple) ),
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 	RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
@@ -155,6 +156,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bGrapple, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
@@ -180,6 +182,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_bGrapple ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
@@ -210,6 +213,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bJumping = false;
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
+	m_bGrapple = false;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_iCritMult = 0;
@@ -2077,6 +2081,36 @@ int CTFPlayerShared::GetDesiredPlayerClassIndex( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+int CTFPlayerShared::PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom )
+{
+	//const char *pszSequence = -1;
+	const char *pszSequence = NULL;
+
+	// play a custom death animation depending on the type of damage it was
+	switch( iDamageCustom )
+		{
+		case TF_DMG_CUSTOM_HEADSHOT:
+			pszSequence = "primary_death_headshot";
+			break;
+		case TF_DMG_CUSTOM_BACKSTAB:
+			pszSequence = "primary_death_backstab";
+			break;
+		}
+
+//	if ( pszSequence != -1 )
+	if ( pszSequence != NULL )
+	{
+		return pAnim->LookupSequence( pszSequence );
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayerShared::SetJumping( bool bJumping )
 {
 	m_bJumping = bJumping;
@@ -2095,6 +2129,11 @@ void CTFPlayerShared::AddAirDashCount()
 void CTFPlayerShared::SetAirDashCount( int iAirDashCount )
 {
 	m_iAirDashCount = iAirDashCount;
+}
+
+void CTFPlayerShared::SetGrapple( bool bGrapple )
+{
+	m_bGrapple = bGrapple;
 }
 
 //-----------------------------------------------------------------------------

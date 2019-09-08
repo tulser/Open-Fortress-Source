@@ -15,16 +15,15 @@
 #include "vgui_controls/AnimationController.h"
 #include "c_playerresource.h"
 #include "c_team_objectiveresource.h"
-#if defined( TF_CLIENT_DLL )
+
 #include "tf_gamerules.h"
 #include "c_tf_player.h"
-#endif // TF_CLIENT_DLL
+
 #else
 #include "team.h"
 #include "team_objectiveresource.h"
-#if defined( TF_DLL )
+
 #include "tf_player.h"
-#endif // TF_DLL
 #endif
 
 #define ROUND_TIMER_60SECS	"Announcer.RoundEnds60seconds"

@@ -70,6 +70,7 @@
 #include "checksum_crc.h"
 #include "iservervehicle.h"
 #include "filters.h"
+
 #if TRUE //def HL2_DLL
 #include "npc_bullseye.h"
 #include "hl2_player.h"
@@ -113,7 +114,7 @@ extern ConVar sk_healthkit;
 #include "tf_player.h"
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
-
+#include "base_boss.h"
 	
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -759,6 +760,7 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		}
 		newInfo.SetDamage(flDamage);
 	}
+
 	if (!BaseClass::OnTakeDamage_Alive(newInfo))
 		return 0;
 
@@ -842,6 +844,45 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	{
 		SetCondition( COND_PHYSICS_DAMAGE );
 	}
+
+	 float m_iCurrentHealth = m_iHealth;
+
+		if ( ( m_iMaxHealth * 0.1 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow10Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.2 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow20Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.3 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow30Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.4 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow40Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.5 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow50Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.6 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow60Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.7 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow70Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.8 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow80Percent.FireOutput( info.GetAttacker(), this );
+		}
+		else if ( ( m_iMaxHealth * 0.9 ) > m_iCurrentHealth )
+		{
+			m_outputOnHealthBelow90Percent.FireOutput( info.GetAttacker(), this );
+		}
 
 	if ( m_iHealth <= ( m_iMaxHealth / 2 ) )
 	{
@@ -1658,20 +1699,6 @@ void CAI_BaseNPC::MakeDamageBloodDecal ( int cCount, float flNoise, trace_t *ptr
 	trace_t Bloodtr;
 	Vector vecTraceDir;
 	int i;
-
-	if ( !IsAlive() )
-	{
-		// dealing with a dead npc.
-		if ( m_iMaxHealth <= 0 )
-		{
-			// no blood decal for a npc that has already decalled its limit.
-			return;
-		}
-		else
-		{
-			m_iMaxHealth -= 1;
-		}
-	}
 
 	for ( i = 0 ; i < cCount ; i++ )
 	{
@@ -10514,6 +10541,10 @@ CBaseEntity *CAI_BaseNPC::DropItem ( const char *pszItemName, Vector vecPos, QAn
 
 bool CAI_BaseNPC::ShouldFadeOnDeath( void )
 {
+	// always return true as otherwise ragdolls remain forever
+	return true;
+
+	/*
 	if ( g_RagdollLVManager.IsLowViolence() )
 	{
 		return true;
@@ -10523,6 +10554,7 @@ bool CAI_BaseNPC::ShouldFadeOnDeath( void )
 		// if flagged to fade out
 		return HasSpawnFlags(SF_NPC_FADE_CORPSE);
 	}
+	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -10851,11 +10883,23 @@ BEGIN_DATADESC( CAI_BaseNPC )
 	DEFINE_OUTPUT( m_OnForcedInteractionStarted,	"OnForcedInteractionStarted" ),
 	DEFINE_OUTPUT( m_OnForcedInteractionAborted,	"OnForcedInteractionAborted" ),
 	DEFINE_OUTPUT( m_OnForcedInteractionFinished,	"OnForcedInteractionFinished" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow90Percent , "OnHealthBelow90Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow80Percent , "OnHealthBelow80Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow70Percent , "OnHealthBelow70Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow60Percent , "OnHealthBelow60Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow50Percent , "OnHealthBelow50Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow40Percent , "OnHealthBelow40Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow30Percent , "OnHealthBelow30Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow20Percent , "OnHealthBelow20Percent" ),
+	DEFINE_OUTPUT( m_outputOnHealthBelow10Percent , "OnHealthBelow10Percent" ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetRelationship", InputSetRelationship ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetEnemyFilter", InputSetEnemyFilter ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxHealth", InputSetMaxHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "BeginRappel", InputBeginRappel ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetSquad", InputSetSquad ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Wake", InputWake ),
@@ -11672,6 +11716,40 @@ void CAI_BaseNPC::InputSetHealth( inputdata_t &inputdata )
 	else if ( iNewHealth < GetHealth() )
 	{
 		TakeDamage( CTakeDamageInfo( this, this, iDelta, DMG_GENERIC ) );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CAI_BaseNPC::InputSetMaxHealth( inputdata_t &inputdata )
+{
+	m_iMaxHealth = inputdata.value.Int();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Add health to the NPC
+//-----------------------------------------------------------------------------
+void CAI_BaseNPC::InputAddHealth( inputdata_t &inputdata )
+{
+	int iHealth = inputdata.value.Int();
+	SetHealth( min( GetMaxHealth(), GetHealth() + iHealth ) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Remove health from the NPC
+//-----------------------------------------------------------------------------
+void CAI_BaseNPC::InputRemoveHealth( inputdata_t &inputdata )
+{
+	int iDamage = inputdata.value.Int();
+
+	SetHealth( GetHealth() - iDamage );
+	if ( GetHealth() <= 0 )
+	{
+		m_lifeState = LIFE_DEAD;
+
+		CTakeDamageInfo info( inputdata.pCaller, inputdata.pActivator, vec3_origin, GetAbsOrigin(), iDamage, DMG_GENERIC );
+		Event_Killed( info );
 	}
 }
 

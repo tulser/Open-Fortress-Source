@@ -387,11 +387,8 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 	m_hGlowEnt.Set( NULL );
 #endif // GLOWS_ENABLE
 
-//#ifdef TF_DLL
 	ChangeTeam( TF_TEAM_BLUE );
-//#else
-//	ChangeTeam( TEAM_UNASSIGNED );
-//#endif
+
 /*
 	// create a CTeamTrainWatcherMaster entity
 	if ( g_hTeamTrainWatcherMaster.Get() == NULL )

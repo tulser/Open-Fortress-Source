@@ -18,20 +18,20 @@
 //
 // Weapon Tranq tables.
 //
-IMPLEMENT_NETWORKCLASS_ALIASED( TFTranq, DT_WeaponTranq )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFCTranq, DT_WeaponTranq )
 
-BEGIN_NETWORK_TABLE( CTFTranq, DT_WeaponTranq )
+BEGIN_NETWORK_TABLE( CTFCTranq, DT_WeaponTranq )
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFTranq )
+BEGIN_PREDICTION_DATA( CTFCTranq )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_tranq, CTFTranq );
-PRECACHE_WEAPON_REGISTER( tf_weapon_tranq );
+LINK_ENTITY_TO_CLASS( tfc_weapon_tranq, CTFCTranq );
+PRECACHE_WEAPON_REGISTER( tfc_weapon_tranq );
 
 // Server specific.
 #ifndef CLIENT_DLL
-BEGIN_DATADESC( CTFTranq )
+BEGIN_DATADESC( CTFCTranq )
 END_DATADESC()
 #endif
 
@@ -39,3 +39,17 @@ END_DATADESC()
 //
 // Weapon Tranq functions.
 //
+
+void CTFCTranq::Precache()
+{
+	BaseClass::Precache();
+
+#ifndef CLIENT_DLL
+	PrecacheParticleSystem( "nailtrails_super_blue_crit" );
+	PrecacheParticleSystem( "tranq_tracer_teamcolor_blue" );
+	PrecacheParticleSystem( "nailtrails_super_red_crit" );
+	PrecacheParticleSystem( "tranq_tracer_teamcolor_red" );
+	PrecacheParticleSystem( "nailtrails_super_dm_crit" );
+	PrecacheParticleSystem( "tranq_tracer_teamcolor_dm" );
+#endif
+}

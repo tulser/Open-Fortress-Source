@@ -130,6 +130,9 @@ void CTFModeManager::LevelInit( const char *newmap )
 	g_ThirdPersonManager.Init();
 	
 	g_discordrpc.LevelInit( newmap );
+
+	DevMsg("Loading .mp3 phonemes from game_sounds_vo_phonemes.txt ...\n");
+	engine->AddPhonemeFile( "scripts/game_sounds_vo_phonemes.txt" );
 }
 
 void CTFModeManager::LevelShutdown( void )

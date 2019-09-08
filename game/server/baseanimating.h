@@ -272,6 +272,9 @@ public:
 
 	void				UpdateModelScale();
 	virtual	void		RefreshCollisionBounds( void );
+
+	virtual void			UpdateOnRemove( void );
+	virtual void			ChangeTeam( int iTeamNum );
 	
 	// also calculate IK on server? (always done on client)
 	void EnableServerIK();
@@ -334,9 +337,24 @@ public:
 
 	bool PrefetchSequence( int iSequence );
 
+#ifdef GLOWS_ENABLE
+	// Glows
+	void				AddGlowEffect( void );
+	void				RemoveGlowEffect( void );
+	bool				IsGlowEffectActive( void );
+#endif // GLOWS_ENABLE
+
+#ifdef GLOWS_ENABLE
+protected:
+	CNetworkVar( bool, m_bGlowEnabled );
+#endif // GLOWS_ENABLE
+
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();
+
+	void				UpdateGlowEffect( void );
+	void				DestroyGlowEffect( void );
 
 	void StudioFrameAdvanceInternal( CStudioHdr *pStudioHdr, float flInterval );
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );
@@ -379,15 +397,17 @@ public:
 	Vector	GetStepOrigin( void ) const;
 	QAngle	GetStepAngles( void ) const;
 
-private:
+	CNetworkVar(float, m_flCycle);
+	CNetworkVar(int, m_nSequence);
+
 	bool				m_bSequenceFinished;// flag set when StudioAdvanceFrame moves across a frame boundry
 	bool				m_bSequenceLoops;	// true if the sequence loops
 	bool				m_bResetSequenceInfoOnLoad; // true if a ResetSequenceInfo was queued up during dynamic load
 	float				m_flDissolveStartTime;
 
-	// was pev->frame
-	CNetworkVar( float, m_flCycle );
-	CNetworkVar( int, m_nSequence );	
+private:
+
+	// was pev->frame	
 	CNetworkArray( float, m_flPoseParameter, NUM_POSEPAREMETERS );	// must be private so manual mode works!
 	CNetworkArray( float, m_flEncodedController, NUM_BONECTRLS );		// bone controller setting (0..1)
 

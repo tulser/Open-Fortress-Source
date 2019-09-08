@@ -902,7 +902,7 @@ bool CMultiPlayerAnimState::HandleDying( Activity &idealActivity )
 			m_bFirstDyingFrame = false;
 		}
 
-		idealActivity = ACT_DIESIMPLE;
+		//idealActivity = ACT_DIESIMPLE;
 		return true;
 	}
 	else

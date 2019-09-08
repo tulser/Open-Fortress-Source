@@ -532,7 +532,7 @@ extern void FormatViewModelAttachment( Vector &vOrigin, bool bInverse );
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int iPoint, bool bInitializing )
-{
+{;
 	ParticleControlPoint_t *pPoint = &pEffect->pControlPoints[iPoint];
 
 	if ( !pPoint->hEntity.Get() )
@@ -658,6 +658,204 @@ void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int i
 					{
 						MatrixVectors( rootBone, &vecForward, &vecRight, &vecUp );
 						MatrixPosition( rootBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_HEAD:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_neck" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						//return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_UPPERARM_L:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_upperArm_L" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_UPPERARM_R:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_upperArm_R" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_LOWERARM_L:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_lowerArm_L" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_LOWERARM_R:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_lowerArm_R" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_UPPERLEG_R:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_knee_R" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_UPPERLEG_L:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_knee_L" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_LOWERLEG_L:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_foot_L" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
+					}
+				}
+			}
+			break;
+		case PATTACH_GORE_LOWERLEG_R:
+			{
+				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
+
+				if ( pAnimating )
+				{
+					int iBone = Studio_BoneIndexByName( pAnimating->GetModelPtr(), "bip_foot_R" );
+					if ( iBone < 0 )
+					{
+						StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
+						return;
+					}
+					else
+					{
+						bUsingHeadOrigin = true;
+						const matrix3x4_t headBone = pAnimating->GetBone( iBone );
+						MatrixVectors( headBone, &vecForward, &vecRight, &vecUp );
+						MatrixPosition( headBone, vecOrigin );
 					}
 				}
 			}

@@ -63,6 +63,7 @@ struct DeathNoticeItem
 
 	DeathNoticePlayer	Killer;
 	DeathNoticePlayer   Victim;
+	DeathNoticePlayer   Assister;
 	char		szIcon[32];		// name of icon to display
 	wchar_t		wzInfoText[32];	// any additional text to display next to icon
 	CHudTexture *iconDeath;
@@ -104,6 +105,8 @@ public:
 
 	virtual void FireGameEvent( IGameEvent *event );
 
+	//virtual Color GetInfoTextColor( int iDeathNoticeMsg ){ return Color( 255, 255, 255, 255 ); }
+	virtual Color GetInfoTextColor( int iDeathNoticeMsg, bool bLocalPlayerInvolved ){ return bLocalPlayerInvolved ? Color( 0, 0, 0, 255 ) : Color( 255, 255, 255, 255 ); }
 	void PlayRivalrySounds( int iKillerIndex, int iVictimIndex, int iType );
 
 protected:
@@ -229,13 +232,16 @@ void CTFHudDeathNotice::Paint()
 
 		wchar_t victim[256] = L"";
 		wchar_t killer[256] = L"";
+		wchar_t assister[256] = L"";
 
 		// TEMP - print the death icon name if we don't have a material for it
 
 		g_pVGuiLocalize->ConvertANSIToUnicode( msg.Victim.szName, victim, sizeof( victim ) );
 		g_pVGuiLocalize->ConvertANSIToUnicode( msg.Killer.szName, killer, sizeof( killer ) );
+		g_pVGuiLocalize->ConvertANSIToUnicode( msg.Assister.szName, assister, sizeof( assister ) );
 
 		int iVictimTextWide = UTIL_ComputeStringWidth( m_hTextFont, victim ) + xSpacing;
+		int iAssisterTextWide = assister[0] ? UTIL_ComputeStringWidth( m_hTextFont, assister ) + xSpacing : 0;
 		int iDeathInfoTextWide = msg.wzInfoText[0] ? UTIL_ComputeStringWidth( m_hTextFont, msg.wzInfoText ) + xSpacing : 0;
 		int iKillerTextWide = killer[0] ? UTIL_ComputeStringWidth( m_hTextFont, killer ) + xSpacing : 0;
 		int iLineTall = m_flLineHeight;
@@ -257,7 +263,7 @@ void CTFHudDeathNotice::Paint()
 			iconTall *= flScale;
 			iconWide *= flScale;
 		}
-		int iTotalWide = iKillerTextWide + iconWide + iVictimTextWide + iDeathInfoTextWide + ( xMargin * 2 );
+		int iTotalWide = iKillerTextWide + iAssisterTextWide + iconWide + iVictimTextWide + iDeathInfoTextWide + ( xMargin * 2 );
 		int y = yStart + ( ( iLineTall + m_flLineSpacing ) * i );
 		int yText = y + ( ( iLineTall - iTextTall ) / 2 );
 		int yIcon = y + ( ( iLineTall - iconTall ) / 2 );
@@ -283,10 +289,23 @@ void CTFHudDeathNotice::Paint()
 		{
 			Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(msg.Killer.iPlayerID) : GetTeamColor( msg.Killer.iTeam );
 
-			DrawText(x, yText, m_hTextFont, clr, killer);
+			DrawText( x, yText, m_hTextFont, clr, killer );
 			x += iKillerTextWide;
 		}
-		
+
+		if ( assister[0] )
+		{
+			// Draw a + between the names
+			Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(msg.Assister.iPlayerID) : GetTeamColor( msg.Assister.iTeam );
+
+			DrawText(x, yText, m_hTextFont, GetInfoTextColor( i, msg.bLocalPlayerInvolved ), L" +  ");
+			x += 20;
+
+			// Draw assister's name
+			DrawText( x, yText, m_hTextFont, clr, assister );
+			x += iAssisterTextWide;
+		}
+
 		// Draw glow behind weapon icon to show it was a crit death
 		if ( msg.bCrit && msg.iconCrit )
 		{
@@ -309,7 +328,7 @@ void CTFHudDeathNotice::Paint()
 				iVictimTextOffset -= iDeathInfoTextWide;
 			}
 
-			DrawText( x + iDeathInfoOffset, yText, m_hTextFont, Color( 255, 255, 255, 255 ), msg.wzInfoText );
+			DrawText( x + iDeathInfoOffset, yText, m_hTextFont, GetInfoTextColor( i, msg.bLocalPlayerInvolved ), msg.wzInfoText );
 			x += iDeathInfoTextWide;
 		}
 
@@ -454,7 +473,7 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 		if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
 		{
 			// special case text for falling death
-			m_DeathNotices[iMsg].bCrit= true;
+			m_DeathNotices[iMsg].bCrit = true;
 			m_DeathNotices[iMsg].iconCrit = GetIcon( "d_crit", bLocalPlayerInvolved );
 		}	
 
@@ -658,12 +677,16 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 		const char *assister_name = ( iAssisterID > 0 ? g_PR->GetPlayerName( iAssisterID ) : NULL );
 		if ( assister_name )
 		{
-			char szKillerBuf[MAX_PLAYER_NAME_LENGTH*2];
-			Q_snprintf( szKillerBuf, ARRAYSIZE(szKillerBuf), "%s + %s", msg.Killer.szName, assister_name );
-			Q_strncpy( msg.Killer.szName, szKillerBuf, ARRAYSIZE( msg.Killer.szName ) );
+			// compose the string
+			m_DeathNotices[ iDeathNoticeMsg ].Assister.iTeam = ( iAssisterID > 0 ) ? g_PR->GetTeam( iAssisterID ) : 0;
+
+			char szKillerBuf[ MAX_PLAYER_NAME_LENGTH ] ;
+			Q_snprintf( szKillerBuf, ARRAYSIZE( szKillerBuf ), "%s", assister_name );
+			Q_strncpy( m_DeathNotices[ iDeathNoticeMsg ].Assister.szName, szKillerBuf, ARRAYSIZE( m_DeathNotices[ iDeathNoticeMsg ].Assister.szName ) );
+
 			if ( iLocalPlayerIndex == iAssisterID )
 			{
-				msg.bLocalPlayerInvolved = true;
+				m_DeathNotices[ iDeathNoticeMsg ].bLocalPlayerInvolved = true;
 			}
 		}
 
@@ -759,6 +782,21 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				}			
 				break;
 			}
+		case TF_DMG_TAUNT_HADUKEN:
+			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
+			Q_strncpy( msg.szIcon, "d_taunt_pyro", ARRAYSIZE( msg.szIcon ) );
+			msg.wzInfoText[0] = 0;
+			break;
+		case TF_DMG_TAUNT_POW:
+			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
+			Q_strncpy( msg.szIcon, "d_taunt_heavy", ARRAYSIZE( msg.szIcon ) );
+			msg.wzInfoText[0] = 0;
+			break;
+		case TF_DMG_TAUNT_FENCING:
+			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
+			Q_strncpy( msg.szIcon, "d_taunt_spy", ARRAYSIZE( msg.szIcon ) );
+			msg.wzInfoText[0] = 0;
+			break;
 		default:
 			break;
 		}

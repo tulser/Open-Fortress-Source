@@ -450,7 +450,7 @@ void CWeaponGrapple::PrimaryAttack( void )
 		return;
  
 	#ifndef CLIENT_DLL
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
 	if ( !pPlayer )
 	{
@@ -479,10 +479,9 @@ void CWeaponGrapple::PrimaryAttack( void )
 	//Obligatory for MP so the sound can be played
 	CDisablePredictionFiltering disabler;
 	WeaponSound( SINGLE );
-	pPlayer->DoMuzzleFlash();
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
-	pPlayer->SetAnimation( PLAYER_ATTACK1 );
+	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GRAPPLE_FIRE_START );
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.75;

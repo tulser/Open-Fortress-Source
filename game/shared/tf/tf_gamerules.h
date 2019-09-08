@@ -80,6 +80,8 @@ public:
 	void	InputSetRedTeamRole( inputdata_t &inputdata );
 	void	InputSetBlueTeamRole( inputdata_t &inputdata );
 	void	InputSetMercenaryTeamRole( inputdata_t &inputdata );
+	void	InputSetRedKothClockActive( inputdata_t &inputdata) ;
+	void	InputSetBlueKothClockActive( inputdata_t &inputdata );
 
 	virtual void Activate();
 	
@@ -158,6 +160,9 @@ public:
 	virtual bool	TeamMayCapturePoint( int iTeam, int iPointIndex );
 	virtual bool	PlayerMayCapturePoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
 	virtual bool	PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
+
+	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
+	CTeamRoundTimer* GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
 	
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
@@ -209,6 +214,9 @@ public:
 
 	virtual bool	TimerMayExpire( void );
 
+	void			SetRedKothRoundTimer(CTeamRoundTimer *pTimer) { m_hRedKothTimer.Set( pTimer ); }
+	void			SetBlueKothRoundTimer(CTeamRoundTimer *pTimer) { m_hBlueKothTimer.Set( pTimer ); }
+
 	virtual void	Activate();
 
 	virtual bool	AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
@@ -259,6 +267,8 @@ public:
 
 	virtual bool FlagsMayBeCapped( void );
 	virtual bool WeaponSpawnersMayBeUsed( void );
+
+	virtual bool	IsInKothMode( void ) { return m_bKOTH; }
 
 	void	RunPlayerConditionThink ( void );
 
@@ -375,6 +385,9 @@ private:
 #endif
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
+	CNetworkVar( bool, m_bKOTH ); // is the gamemode KOTH right now?
+	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
+	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );

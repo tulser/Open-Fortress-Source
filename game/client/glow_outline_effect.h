@@ -169,6 +169,11 @@ public:
 		g_GlowObjectManager.UnregisterGlowObject( m_nGlowObjectHandle );
 	}
 
+	void Destroy( void )
+	{
+		g_GlowObjectManager.UnregisterGlowObject( m_nGlowObjectHandle );
+	}
+
 	void SetEntity( C_BaseEntity *pEntity )
 	{
 		g_GlowObjectManager.SetEntity( m_nGlowObjectHandle, pEntity );

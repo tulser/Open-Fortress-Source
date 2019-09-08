@@ -149,8 +149,17 @@ public:
 
 	void ClientPlayerRespawn( void );
 
+	//void				LoadMapMusic( IBaseFileSystem *pFileSystem );
+	//void				PlayMapMusic( void );
+	//void				ReplayMapMusic(void);
+	//bool				m_bPlayingMusic;
+	//char				*m_pzMusicLink;	
+	//float				m_fMusicDuration;
+
 	void CreateSaveMeEffect( void );
 	void CreateChattingEffect(void);
+
+	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
 
 	virtual bool	IsOverridingViewmodel( void );
 	virtual int		DrawOverriddenViewmodel( C_BaseViewModel *pViewmodel, int flags );

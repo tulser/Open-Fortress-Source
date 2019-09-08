@@ -1813,6 +1813,10 @@ public:
 	void InputSetRelationship( inputdata_t &inputdata );
 	void InputSetEnemyFilter( inputdata_t &inputdata );
 	void InputSetHealth( inputdata_t &inputdata );
+	void InputSetMaxHealth( inputdata_t &inputdata );
+	void InputAddHealth( inputdata_t &inputdata );
+	void InputRemoveHealth( inputdata_t &inputdata );
+
 	void InputBeginRappel( inputdata_t &inputdata );
 	void InputSetSquad( inputdata_t &inputdata );
 	void InputWake( inputdata_t &inputdata );
@@ -1902,6 +1906,16 @@ public:
 	COutputEvent		m_OnForcedInteractionStarted;
 	COutputEvent		m_OnForcedInteractionAborted;
 	COutputEvent		m_OnForcedInteractionFinished;
+
+	COutputEvent m_outputOnHealthBelow90Percent;
+	COutputEvent m_outputOnHealthBelow80Percent;
+	COutputEvent m_outputOnHealthBelow70Percent;
+	COutputEvent m_outputOnHealthBelow60Percent;
+	COutputEvent m_outputOnHealthBelow50Percent;
+	COutputEvent m_outputOnHealthBelow40Percent;
+	COutputEvent m_outputOnHealthBelow30Percent;
+	COutputEvent m_outputOnHealthBelow20Percent;
+	COutputEvent m_outputOnHealthBelow10Percent;
 
 public:
 	// use this to shrink the bbox temporarily

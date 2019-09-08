@@ -1149,6 +1149,46 @@ static int GamesoundCompletion( const char *partial, char commands[ COMMAND_COMP
 }
 
 static ConCommand Command_Playgamesound( "playgamesound", Playgamesound_f, "Play a sound from the game sounds txt file", FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_SERVER_CAN_EXECUTE, GamesoundCompletion );
+
+void Playmusicsound_f( const CCommand &args )
+{
+	CBasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( pPlayer )
+	{
+		if ( args.ArgC() > 2 )
+		{
+			ConVar *snd_musicvolume = cvar->FindVar("snd_musicvolume");
+			float fVolume = (snd_musicvolume ? snd_musicvolume->GetFloat() : 1.0f);
+
+			Vector position = pPlayer->EyePosition();
+			Vector forward;
+			pPlayer->GetVectors( &forward, NULL, NULL );
+			position += atof( args[2] ) * forward;
+			CPASAttenuationFilter filter( pPlayer );
+			EmitSound_t params;
+			params.m_pSoundName = args[1];
+			params.m_pOrigin = &position;
+			params.m_flVolume = fVolume;
+			params.m_nPitch = 0;
+
+			g_SoundEmitterSystem.EmitSound( filter, 0, params );
+		}
+		else
+		{
+			pPlayer->EmitSound( args[1] );
+		}
+	}
+	else
+	{
+		Msg("Can't play until a game is started.\n");
+		// UNDONE: Make something like this work?
+		//CBroadcastRecipientFilter filter;
+		//g_SoundEmitterSystem.EmitSound( filter, 1, args[1], 0.0, 0, 0, &vec3_origin, 0, NULL );
+	}
+}
+
+static ConCommand Command_Playmusicsound( "playmusicsound", Playmusicsound_f, "Play a music file", FCVAR_CLIENTCMD_CAN_EXECUTE | FCVAR_SERVER_CAN_EXECUTE, GamesoundCompletion );
+
 #endif
 
 #endif

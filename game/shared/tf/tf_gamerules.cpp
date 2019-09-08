@@ -307,6 +307,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
 	RecvPropBool( RECVINFO( m_bUsesMoney ) ),
+	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
+	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
+	RecvPropBool( RECVINFO( m_bKOTH ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -326,6 +329,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
 	SendPropBool( SENDINFO( m_bUsesMoney ) ),
+	SendPropBool( SENDINFO( m_bKOTH ) ),
+	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ), 
+	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) )
 #endif
 END_NETWORK_TABLE()
 
@@ -377,6 +383,10 @@ BEGIN_DATADESC( CTFGameRulesProxy )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTeamRole", InputSetRedTeamRole ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTeamRole", InputSetBlueTeamRole ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMercenaryTeamRole", InputSetMercenaryTeamRole ),
+// - InputSetRedKothClockActive (Offset 0) (Input)(0 Bytes) - SetRedKothClockActive
+// - InputSetBlueKothClockActive (Offset 0) (Input)(0 Bytes) - SetBlueKothClockActive
+	DEFINE_INPUTFUNC( FIELD_VOID, "SetRedKothClockActive", InputSetRedKothClockActive ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "SetBlueKothClockActive", InputSetBlueKothClockActive ),
 	
 	DEFINE_OUTPUT( m_OutputIsCTF,	"IsCTF" ),
 	DEFINE_OUTPUT( m_OutputIsCP,	"IsCP" ),
@@ -384,6 +394,40 @@ BEGIN_DATADESC( CTFGameRulesProxy )
 	DEFINE_OUTPUT( m_OutputIsTeamplay,	"IsTeamplay" ),
 	DEFINE_OUTPUT( m_OutputIsGunGame,	"IsGunGame" ),
 END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRulesProxy::InputSetRedKothClockActive(inputdata_t &inputdata)
+{
+	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
+	{
+		TFGameRules()->GetRedKothRoundTimer()->InputEnable( inputdata );
+
+		if ( TFGameRules()->GetBlueKothRoundTimer() )
+		{
+			TFGameRules()->GetBlueKothRoundTimer()->InputDisable( inputdata );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRulesProxy::InputSetBlueKothClockActive(inputdata_t &inputdata)
+{
+	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
+	{
+		TFGameRules()->GetBlueKothRoundTimer()->InputEnable( inputdata );
+
+		if ( TFGameRules()->GetRedKothRoundTimer() )
+		{
+			TFGameRules()->GetRedKothRoundTimer()->InputDisable( inputdata );
+		}
+	}
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -491,27 +535,22 @@ void CTFGameRulesProxy::Activate()
 
 	BaseClass::Activate();
 }
-#endif
 
 
 LINK_ENTITY_TO_CLASS(of_logic_dm, CTFLogicDM);
 //-----------------------------------------------------------------------------
 // DM Logic 
 //-----------------------------------------------------------------------------
-#ifdef GAME_DLL
 BEGIN_DATADESC( CTFLogicDM )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bIsTeamplay, FIELD_BOOLEAN, "IsTeamplay"),
 	DEFINE_KEYFIELD( m_bDontCountKills, FIELD_BOOLEAN, "DontCountKills"),
 END_DATADESC()
-#endif
 
 void CTFLogicDM::Spawn(void)
 {
-	#ifdef GAME_DLL
 	TFGameRules()->m_bIsTeamplay = m_bIsTeamplay;
 	TFGameRules()->m_nbDontCountKills = m_bDontCountKills;
-	#endif
 	BaseClass::Spawn();
 }
 
@@ -520,7 +559,6 @@ LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
 //-----------------------------------------------------------------------------
 // GG Logic 
 //-----------------------------------------------------------------------------
-#ifdef GAME_DLL
 BEGIN_DATADESC( CTFLogicGG )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bListOnly, FIELD_BOOLEAN, "ListOnly"),
@@ -577,22 +615,18 @@ BEGIN_DATADESC( CTFLogicGG )
 	DEFINE_KEYFIELD(m_iszWeaponName[48], FIELD_STRING, "WeaponName49"),
 	DEFINE_KEYFIELD(m_iszWeaponName[49], FIELD_STRING, "WeaponName50"),
 END_DATADESC()
-#endif
 
 CTFLogicGG::CTFLogicGG()
 {
-#ifdef GAME_DLL
 	for ( int i = 0; i < 50; i++ )
 	{
 		m_iszWeaponName[i] = MAKE_STRING("NULL");
 		TFGameRules()->m_iszWeaponName[i] = MAKE_STRING("");
 	}
-#endif
 }
 
 void CTFLogicGG::Spawn(void)
 {
-#ifdef GAME_DLL
 	int y = 0;
 	m_iMaxLevel = 0;
 	for ( int i = 0; i < 50; i++ )
@@ -607,7 +641,6 @@ void CTFLogicGG::Spawn(void)
 	TFGameRules()->m_iMaxLevel = m_iMaxLevel;
 	TFGameRules()->m_bListOnly = m_bListOnly;
 	TFGameRules()->m_iRequiredKills = m_iRequiredKills;
-#endif
 	BaseClass::Spawn();
 }
 
@@ -630,11 +663,9 @@ class CTFLogicESC : public CBaseEntity
 public:
 	DECLARE_CLASS(CTFLogicESC,	CBaseEntity);
 	void	Spawn(void);
-#ifdef GAME_DLL
 	DECLARE_DATADESC();
 	int m_nMaxHunted_red;
 	int m_nMaxHunted_blu;
-#endif
 };
 
 LINK_ENTITY_TO_CLASS(of_logic_esc, CTFLogicESC);
@@ -642,20 +673,18 @@ LINK_ENTITY_TO_CLASS(of_logic_esc, CTFLogicESC);
 //-----------------------------------------------------------------------------
 // GG Logic 
 //-----------------------------------------------------------------------------
-#ifdef GAME_DLL
 BEGIN_DATADESC( CTFLogicESC )
 	//Keyfields
 	DEFINE_KEYFIELD( m_nMaxHunted_red, FIELD_INTEGER, "MaxRedHunted"),
 	DEFINE_KEYFIELD( m_nMaxHunted_blu, FIELD_INTEGER, "MaxBluHunted"),
 END_DATADESC()
-#endif
 
 void CTFLogicESC::Spawn(void)
 {
-#ifdef GAME_DLL
+
 	TFGameRules()->m_nMaxHunted_red = m_nMaxHunted_red;
 	TFGameRules()->m_nMaxHunted_blu = m_nMaxHunted_blu;
-#endif
+
 	BaseClass::Spawn();
 }
 
@@ -678,19 +707,21 @@ class CTFLogicArena : public CBaseEntity
 public:
 	DECLARE_CLASS(CTFLogicArena, CBaseEntity);
 	void	Spawn(void);
-	
-#ifdef GAME_DLL
+
+	float			m_iCapEnableDelay;
+
 	DECLARE_DATADESC();
 	COutputEvent m_ArenaRoundStart;
-#endif
+	COutputEvent m_OnCapEnabled;
 	
 };
 
-#ifdef GAME_DLL
 BEGIN_DATADESC( CTFLogicArena )
-	DEFINE_OUTPUT( m_ArenaRoundStart,	"OnArenaRoundStart" ),
+	DEFINE_KEYFIELD( m_iCapEnableDelay, FIELD_FLOAT, "CapEnableDelay" ),
+	DEFINE_OUTPUT( m_ArenaRoundStart, "OnArenaRoundStart" ),
+	DEFINE_OUTPUT( m_OnCapEnabled, "OnCapEnabled" ),
 END_DATADESC()
-#endif
+
 
 LINK_ENTITY_TO_CLASS(tf_logic_arena, CTFLogicArena);
 
@@ -698,6 +729,138 @@ void CTFLogicArena::Spawn(void)
 {
 	BaseClass::Spawn();
 }
+
+// https://raw.githubusercontent.com/powerlord/tf2-data/master/datamaps.txt
+/*
+CBaseEntity - tf_logic_koth
+- m_nTimerInitialLength (Offset 856) (Save|Key)(4 Bytes) - timer_length
+- m_nTimeToUnlockPoint (Offset 860) (Save|Key)(4 Bytes) - unlock_point
+- InputRoundSpawn (Offset 0) (Input)(0 Bytes) - RoundSpawn
+- InputRoundActivate (Offset 0) (Input)(0 Bytes) - RoundActivate
+- InputSetRedTimer (Offset 0) (Input)(0 Bytes) - SetRedTimer
+- InputSetBlueTimer (Offset 0) (Input)(0 Bytes) - SetBlueTimer
+- InputAddRedTimer (Offset 0) (Input)(0 Bytes) - AddRedTimer
+- InputAddBlueTimer (Offset 0) (Input)(0 Bytes) - AddBlueTimer
+*/
+
+class CTFLogicKOTH : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CTFLogicKOTH, CBaseEntity );
+	DECLARE_DATADESC();
+
+	CTFLogicKOTH();
+
+	// called at setup
+	virtual void	InputRoundSpawn( inputdata_t &inputdata );
+
+	virtual void	InputSetBlueTimer( inputdata_t &inputdata );
+	virtual void	InputSetRedTimer( inputdata_t &inputdata );
+	virtual void	InputAddBlueTimer( inputdata_t &inputdata );
+	virtual void	InputAddRedTimer( inputdata_t &inputdata );
+
+private:
+	int m_nTimerInitialLength;
+	int m_nTimeToUnlockPoint;
+
+};
+
+BEGIN_DATADESC( CTFLogicKOTH )
+
+	DEFINE_KEYFIELD( m_nTimerInitialLength, FIELD_INTEGER, "timer_length" ),
+	DEFINE_KEYFIELD( m_nTimeToUnlockPoint, FIELD_INTEGER, "unlock_point" ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "RoundSpawn", InputRoundSpawn ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetBlueTimer", InputSetBlueTimer ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRedTimer", InputSetRedTimer ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddBlueTimer", InputAddBlueTimer ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddRedTimer", InputAddRedTimer ),
+
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( tf_logic_koth, CTFLogicKOTH );
+
+CTFLogicKOTH::CTFLogicKOTH()
+{
+	m_nTimerInitialLength = 180;
+	m_nTimeToUnlockPoint = 30;
+}
+
+void CTFLogicKOTH::InputRoundSpawn(inputdata_t &inputdata)
+{
+	if ( TFGameRules() )
+	{
+		variant_t sVariant;
+
+		sVariant.SetInt( TFGameRules()->GetTimeLeft() );
+
+		TFGameRules()->SetBlueKothRoundTimer( ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
+
+		if ( TFGameRules()->GetBlueKothRoundTimer() )
+		{
+			TFGameRules()->GetBlueKothRoundTimer()->SetName( MAKE_STRING( "zz_blue_koth_timer" ) );
+
+			TFGameRules()->GetBlueKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
+			TFGameRules()->GetBlueKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
+
+			TFGameRules()->GetBlueKothRoundTimer()->SetTimeRemaining( m_nTimerInitialLength ); 
+
+			TFGameRules()->GetBlueKothRoundTimer()->SetShowInHud( false );
+
+			TFGameRules()->GetBlueKothRoundTimer()->ChangeTeam( TF_TEAM_BLUE );
+		}
+
+		TFGameRules()->SetRedKothRoundTimer( ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
+
+		if ( TFGameRules()->GetRedKothRoundTimer() )
+		{
+			TFGameRules()->GetRedKothRoundTimer()->SetName( MAKE_STRING( "zz_red_koth_timer" ) );
+
+			TFGameRules()->GetRedKothRoundTimer()->AcceptInput( "Pause", NULL, NULL, sVariant, 0 );
+			TFGameRules()->GetRedKothRoundTimer()->AcceptInput( "SetTime", NULL, NULL, sVariant, 0 );
+
+			TFGameRules()->GetRedKothRoundTimer()->SetTimeRemaining( m_nTimerInitialLength );
+
+			TFGameRules()->GetRedKothRoundTimer()->SetShowInHud( false );
+
+			TFGameRules()->GetRedKothRoundTimer()->ChangeTeam( TF_TEAM_RED );
+		}
+	}
+}
+
+void CTFLogicKOTH::InputAddBlueTimer( inputdata_t &inputdata )
+{
+	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
+	{
+		TFGameRules()->GetBlueKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicKOTH::InputAddRedTimer( inputdata_t &inputdata )
+{
+	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
+	{
+		TFGameRules()->GetRedKothRoundTimer()->AddTimerSeconds( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicKOTH::InputSetBlueTimer( inputdata_t &inputdata )
+{
+	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
+	{
+		TFGameRules()->GetBlueKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicKOTH::InputSetRedTimer( inputdata_t &inputdata )
+{
+	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
+	{
+		TFGameRules()->GetRedKothRoundTimer()->SetTimeRemaining( inputdata.value.Int() );
+	}
+}
+
+#endif
 
 // (We clamp ammo ourselves elsewhere).
 ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
@@ -1038,6 +1201,7 @@ bool CTFGameRules::CanGoToStalemate( void )
 }
 
 // Classnames of entities that are preserved across round restarts
+// Updated to modern TF2
 static const char *s_PreserveEnts[] =
 {
 	"tf_gamerules",
@@ -1045,6 +1209,32 @@ static const char *s_PreserveEnts[] =
 	"tf_player_manager",
 	"tf_team",
 	"tf_objective_resource",
+	"keyframe_rope",
+	"move_rope",
+	"tf_",
+	"tf_logic_training",
+	"tf_logic_training_mode",
+	"tf_powerup_bottle",
+	"tf_mann_vs_machine_stats",
+	"tf_viewmodel"
+	"tf_wearable",
+	"tf_wearable_demoshield",
+	"tf_wearable_robot_arm",
+	"tf_wearable_vm",
+	"tf_logic_bonusround",
+	"vote_controller",
+	"monster_resource",
+	"tf_logic_medieval",
+	"tf_logic_cp_timer",
+	"tf_logic_tower_defense",
+	"func_upgradestation",
+	"entity_rocket",
+	"entity_carrier",
+	"entity_sign",
+	"entity_saucer",
+	"tf_halloween_gift_pickup",
+	"tf_logic_competitive",
+	"tf_wearable_razorback",
 	"", // END Marker
 };
 
@@ -1076,13 +1266,17 @@ void CTFGameRules::Activate()
 	if (pTrain)
 	{
 		AddGametype(TF_GAMETYPE_PAYLOAD);
+		AddGametype(TF_GAMETYPE_GG);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Payload gamemode config file\n");
+		engine->ServerCommand("exec config_default_pl.cfg \n");
+		engine->ServerExecute();
 	}
 	
 	if (g_hControlPointMasters.Count())
 	{
 		AddGametype(TF_GAMETYPE_CP);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server CP gamemode config file\n");
-		engine->ServerCommand("exec config_cp.cfg \n");
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server CP gamemode config file\n");
+		engine->ServerCommand("exec config_default_cp.cfg \n");
 		engine->ServerExecute();
 	}
 
@@ -1092,53 +1286,39 @@ void CTFGameRules::Activate()
 		if ( ((( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm")) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
 		{
 			AddGametype(TF_GAMETYPE_TDM);
-			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server TDM gamemode config file\n");
-			engine->ServerCommand("exec config_tdm.cfg \n");
+			ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server TDM gamemode config file\n");
+			engine->ServerCommand("exec config_default_tdm.cfg \n");
 			engine->ServerExecute();
 		}
 		else 
 		{
-			ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server DM gamemode config file\n");
-			engine->ServerCommand("exec config_dm.cfg \n");
+			ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server DM gamemode config file\n");
+			engine->ServerCommand("exec config_default_dm.cfg \n");
 			engine->ServerExecute();
 		}
-		of_gamemode_dm.SetValue(1);
-		of_bunnyhop.SetValue(1);
-		of_crouchjump.SetValue(1);
-
-		// lower bullet and melee knockback a bit to migitate bunnyhop boosting
-		of_knockback_bullets.SetValue(0.1f);
-		of_knockback_melee.SetValue(0.4f);
-
-		of_bunnyhop_max_speed_factor.SetValue(0);
-		tf_maxspeed.SetValue(0);
-		sv_airaccelerate.SetValue(500);
-		mp_disable_respawn_times.SetValue(1);
 	}
 	
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == GUN_GAME )
 	{
 		AddGametype(TF_GAMETYPE_GG);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server GG gamemode config file\n");
-		engine->ServerCommand("exec config_gg.cfg \n");
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server GG gamemode config file\n");
+		engine->ServerCommand("exec config_default_gg.cfg \n");
 		engine->ServerExecute();
-		mp_disable_respawn_times.SetValue(1);
 	}	
 	
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_3wave") && !m_bListOnly ) || ofd_threewave.GetInt() == 1 )
 	{
 		AddGametype(TF_GAMETYPE_3WAVE);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Threewave gamemode config file\n");
-		engine->ServerCommand("exec config_3wave.cfg \n");
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Threewave gamemode config file\n");
+		engine->ServerCommand("exec config_default_3wave.cfg \n");
 		engine->ServerExecute();
-		mp_disable_respawn_times.SetValue(1);
 	}
 	
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( ofe_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
 	{
 		AddGametype(TF_GAMETYPE_ESC);
-		ConColorMsg(Color(77, 116, 85, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
-		engine->ServerCommand("exec config_esc.cfg \n");
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
+		engine->ServerCommand("exec config_default_esc.cfg \n");
 		engine->ServerExecute();
 		
 		if ( ofe_payload_override.GetBool() && !( gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) ) ) // We're replacing payload with Escort
@@ -1150,41 +1330,38 @@ void CTFGameRules::Activate()
 	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_ARENA);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Arena gamemode config file\n");
+		engine->ServerCommand("exec config_default_arena.cfg \n");
+		engine->ServerExecute();
+	}
+
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_koth") || !Q_strncmp(STRING(gpGlobals->mapname), "koth_", 5) )
+	{
+		AddGametype(TF_GAMETYPE_CP);
+		m_bKOTH = true;
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server KOTH gamemode config file\n");
+		engine->ServerCommand("exec config_default_koth.cfg \n");
+		engine->ServerExecute();
 	}
 
 	// this is for a future zombie survival gamemode
 	if (gEntList.FindEntityByClassname(NULL, "tf_logic_coop") || !Q_strncmp(STRING(gpGlobals->mapname), "zm_", 3) || of_coop.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_COOP);
-
-		of_gamemode_dm.SetValue(1);
-		of_crouchjump.SetValue(1);
-
-		of_knockback_all.SetValue(0.01f);
-
-		ofd_allow_allclass_pickups.SetValue(1);
-
-		// not a great way to do it...
-		fraglimit.SetValue(999);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
+		engine->ServerCommand("exec config_default_coop.cfg \n");
+		engine->ServerExecute();
 	}
 	
 	// HL2 Deathmatch
 	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
 	{
+		AddGametype(TF_GAMETYPE_COOP);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
+		engine->ServerCommand("exec config_default_hl2.cfg \n");
+		engine->ServerExecute();
+
 		AddGametype(TF_GAMETYPE_DM);
-
-		of_gamemode_dm.SetValue(1);
-		of_crouchjump.SetValue(1);
-		of_usehl2hull.SetValue(1);
-
-		of_knockback_all.SetValue(0.1f);
-		of_knockback_bullets.SetValue(0.1f);
-		of_knockback_explosives.SetValue(0.1f);
-		of_knockback_melee.SetValue(0.05f);
-
-		ofd_allow_allclass_pickups.SetValue(1);
-		ofd_forceclass.SetValue(0);
-		fraglimit.SetValue(999);
 	}
 	
 	CheckTDM();

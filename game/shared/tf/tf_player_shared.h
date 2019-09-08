@@ -183,8 +183,6 @@ public:
 	CTFWeaponBase *GetActiveTFWeapon() const;
 
 	// Utility.
-	// loser state
-	bool	IsLoser( void );
 
 	bool	IsAlly( CBaseEntity *pEntity );
 
@@ -212,8 +210,15 @@ public:
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
+	bool	IsGrappling( void ) { return m_bGrapple; }
+	void    SetGrapple( bool bGrapple );
+
+	// loser state
+	bool	IsLoser( void );
 
 	void	DebugPrintConditions( void );
+
+	int		PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom );
 
 	float	GetStealthNoAttackExpireTime( void );
 
@@ -330,6 +335,7 @@ private:
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
+	CNetworkVar( bool, m_bGrapple );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );

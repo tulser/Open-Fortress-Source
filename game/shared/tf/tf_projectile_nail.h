@@ -54,4 +54,25 @@ public:
 	static float	GetInitialVelocity(void) { return 1000.0; }
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: Tranq projectile
+//-----------------------------------------------------------------------------
+class CTFProjectile_Tranq : public CTFBaseProjectile
+{
+	DECLARE_CLASS(CTFProjectile_Tranq, CTFBaseProjectile);
+
+public:
+	CTFProjectile_Tranq();
+	~CTFProjectile_Tranq();
+
+	// Creation.
+	static CTFProjectile_Tranq *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, int bCritical = false);
+
+	virtual const char *GetProjectileModelName(void);
+	virtual float GetGravity(void);
+
+	static float	GetInitialVelocity(void) { return 1000.0; }
+};
+
+
 #endif	//TF_PROJECTILE_NAIL_H

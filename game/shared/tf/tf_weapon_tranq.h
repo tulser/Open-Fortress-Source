@@ -12,18 +12,18 @@
 
 // Client specific.
 #ifdef CLIENT_DLL
-#define CTFTranq C_TFTranq
+#define CTFCTranq C_TFCTranq
 #endif
 
 //=============================================================================
 //
 // TF Weapon Tranq.
 //
-class CTFTranq : public CTFWeaponBaseGun
+class CTFCTranq : public CTFWeaponBaseGun
 {
 public:
 
-	DECLARE_CLASS( CTFTranq, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFCTranq, CTFWeaponBaseGun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
@@ -32,14 +32,16 @@ public:
 	DECLARE_DATADESC();
 #endif
 
-	CTFTranq() {}
-	~CTFTranq() {}
+	CTFCTranq() {}
+	~CTFCTranq() {}
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_TRANQ; }
+	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_TRANQ; }
+
+	virtual void	Precache();
 
 private:
 
-	CTFTranq( const CTFTranq & ) {}
+	CTFCTranq( const CTFCTranq & ) {}
 };
 
 #endif // TF_WEAPON_TRANQ_H

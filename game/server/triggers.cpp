@@ -34,6 +34,7 @@
 #include "ai_behavior_lead.h"
 #include "gameinterface.h"
 #include "ilagcompensationmanager.h"
+#include "baseanimating.h"
 
 //#ifdef HL2_DLL
 //#include "hl2_player.h"
@@ -42,6 +43,8 @@
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #include "team.h"
+
+#include "entity_croc.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2869,7 +2872,6 @@ void CTriggerGravity::GravityTouch( CBaseEntity *pOther )
 	pOther->SetGravity( GetGravity() );
 }
 
-
 // this is a really bad idea.
 class CAI_ChangeTarget : public CBaseEntity
 {
@@ -5252,6 +5254,76 @@ void CFrictionModifier::EndTouch( CBaseEntity *pOther )
 
 #endif //HL1_DLL
 
+
+class CFuncCroc : public CBaseTrigger
+{
+	DECLARE_CLASS( CFuncCroc, CBaseTrigger );
+public:
+
+	void Spawn( void );
+	void StartTouch( CBaseEntity *pOther );
+	void EndTouch( CBaseEntity *pOther );
+	
+	DECLARE_DATADESC();
+
+	COutputEvent m_OnEat;
+	COutputEvent m_OnEatRed;
+	COutputEvent m_OnEatBlue;
+	COutputEvent m_OnEatMercenary;
+};
+
+BEGIN_DATADESC( CFuncCroc )
+	DEFINE_OUTPUT( m_OnEat, "OnEat" ),
+	DEFINE_OUTPUT( m_OnEatRed, "OnEatRed" ),
+	DEFINE_OUTPUT( m_OnEatBlue, "OnEatBlue" ),
+	DEFINE_OUTPUT( m_OnEatMercenary, "OnEatMercenary" ),
+END_DATADESC()
+
+
+LINK_ENTITY_TO_CLASS( func_croc, CFuncCroc );
+
+//-----------------------------------------------------------------------------
+// Purpose: Called when spawning, after keyvalues have been handled.
+//-----------------------------------------------------------------------------
+void CFuncCroc::Spawn( void )
+{
+	BaseClass::Spawn();
+
+	InitTrigger();
+}
+
+void CFuncCroc::StartTouch( CBaseEntity *pOther )
+{	
+	if ( !pOther->IsPlayer() )
+		return;
+
+	if ( GetTeamNumber() != TEAM_UNASSIGNED )
+		if ( GetTeamNumber() == TF_TEAM_RED && pOther->GetTeamNumber() == TF_TEAM_RED )
+			return;
+		if ( GetTeamNumber() == TF_TEAM_BLUE && pOther->GetTeamNumber() == TF_TEAM_BLUE )
+			return;
+
+	m_OnEat.FireOutput( pOther, this );
+		if ( pOther->GetTeamNumber() == TF_TEAM_RED )
+			m_OnEatRed.FireOutput( pOther, this );
+		if ( pOther->GetTeamNumber() == TF_TEAM_BLUE )
+			m_OnEatBlue.FireOutput( pOther, this );
+		if ( pOther->GetTeamNumber() == TF_TEAM_MERCENARY )
+			m_OnEatMercenary.FireOutput( pOther, this );
+
+	CTakeDamageInfo info( this, pOther, 1000, DMG_ACID | DMG_BLAST | TF_DMG_CROCODILE );
+	pOther->TakeDamage( info );
+
+	CBaseEntity::Create( "entity_croc", pOther->GetAbsOrigin(), pOther->GetAbsAngles(), this );
+}
+
+void CFuncCroc::EndTouch( CBaseEntity *pOther )
+{
+	if ( !pOther->IsPlayer() )
+		return;
+}
+
+
 bool IsTriggerClass( CBaseEntity *pEntity )
 {
 	if ( NULL != dynamic_cast<CBaseTrigger *>(pEntity) )
@@ -5265,3 +5337,4 @@ bool IsTriggerClass( CBaseEntity *pEntity )
 	
 	return false;
 }
+

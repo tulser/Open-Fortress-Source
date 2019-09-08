@@ -126,7 +126,7 @@ bool CTFHudWeaponAmmo::ShouldDraw( void )
 		return false;
 	}
 
-	if ( pWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN || pWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN )
+	if ( pWeapon->GetWeaponID() == TF_WEAPON_MEDIGUN || pWeapon->GetWeaponID() == TFC_WEAPON_MEDKIT || pWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN )
 	{
 		return false;
 	}

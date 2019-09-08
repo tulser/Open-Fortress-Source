@@ -2293,22 +2293,6 @@ void CBaseEntity::TraceBleed( float flDamage, const Vector &vecDir, trace_t *ptr
 	int cCount;
 	int i;
 
-#ifdef GAME_DLL
-	if ( !IsAlive() )
-	{
-		// dealing with a dead npc.
-		if ( GetMaxHealth() <= 0 )
-		{
-			// no blood decal for a npc that has already decalled its limit.
-			return;
-		}
-		else
-		{
-			m_iMaxHealth -= 1;
-		}
-	}
-#endif
-
 	if (flDamage < 10)
 	{
 		flNoise = 0.1;

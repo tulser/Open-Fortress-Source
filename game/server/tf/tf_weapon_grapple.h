@@ -64,7 +64,7 @@ protected:
 private:
   
     CHandle<CWeaponGrapple>     m_hOwner;
-    CHandle<CBasePlayer>        m_hPlayer;
+	CHandle<CTFPlayer>          m_hPlayer;
     CHandle<CDynamicProp>       m_hBolt;
     IPhysicsSpring              *m_pSpring;
     float                       m_fSpringLength;

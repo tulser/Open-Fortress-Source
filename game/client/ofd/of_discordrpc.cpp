@@ -68,7 +68,8 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Zombie Survival",
 	"Gun Game",
 	"Arena",
-	"Payload"
+	"Payload",
+	"King of the Hill"
 };
 
 const char *g_aMapList[] =
@@ -137,7 +138,7 @@ const char *g_aMapList[] =
 	"dm_bloodcovenant",
 	"dm_badworks",
 	"ctf_xpress3",
-        "dm_shipment"
+    "dm_shipment"
 };
 
 CTFDiscordRPC g_discordrpc;

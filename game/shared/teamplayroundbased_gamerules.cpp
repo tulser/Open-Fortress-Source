@@ -1065,17 +1065,6 @@ void CTeamplayRoundBasedRules::CheckRestartRound( void )
 				else if ( ShouldScrambleTeams() )
 				{
 					pFormat = ( iRestartDelay > 1 ) ? "#game_scramble_in_secs" : "#game_scramble_in_sec";
-
-#ifdef TF_DLL
-					IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_alert" );
-					if ( event )
-					{
-						event->SetInt( "alert_type", HUD_ALERT_SCRAMBLE_TEAMS );
-						gameeventmanager->FireEvent( event );
-					}
-
-					pFormat = NULL;
-#endif
 				}
 			}
 			else if ( mp_restartround.GetInt() > 0 )
@@ -3413,6 +3402,10 @@ CTeamRoundTimer *CTeamplayRoundBasedRules::GetActiveRoundTimer( void )
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleWithNumPlayers /* = true */ )
 {
+	// bruh
+	if ( TFGameRules()->IsArenaGamemode() )
+		return 99999;
+
 	if ( State_Get() != GR_STATE_RND_RUNNING )
 		return 0;
 
@@ -3679,6 +3672,28 @@ void CTeamplayRoundBasedRules::ResetTeamsRoundWinTracking( void )
 	m_GameTeams[1] = 0;
 }
 #endif // GAME_DLL
+
+#ifdef CLIENT_DLL
+void CTeamplayRoundBasedRules::GetTeamGlowColor( int nTeam, float &r, float &g, float &b )
+{
+	switch ( nTeam )
+	{
+		case TF_TEAM_RED:
+			r = 0.62; g = 0.21; b = 0.13;
+			break;
+		case TF_TEAM_BLUE:
+			r = 0.3; g = 0.42; b = 0.5;
+			break;
+		case TF_TEAM_MERCENARY:
+			r = 0.5; g = 0.0; b = 0.5;
+			break; 
+
+		default:
+			r = 0.76; g = 0.76; b = 0.76;
+			break;
+	}
+}
+#endif
 
 #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
 //-----------------------------------------------------------------------------
