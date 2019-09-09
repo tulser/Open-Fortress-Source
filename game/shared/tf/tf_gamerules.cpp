@@ -1266,7 +1266,6 @@ void CTFGameRules::Activate()
 	if (pTrain)
 	{
 		AddGametype(TF_GAMETYPE_PAYLOAD);
-		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Payload gamemode config file\n");
 		engine->ServerCommand("exec config_default_pl.cfg \n");
 		engine->ServerExecute();
@@ -2375,6 +2374,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 								//fire the event and go straight to Intermission
 								//-Nbc66
 								gameeventmanager->FireEvent(mEvent);
+//								SendTeamScoresEvent();
+//								SetWinningTeam( TEAM_UNASSIGNED, WINREASON_POINTLIMIT, true );
 								GoToIntermission();
 							}
 						}

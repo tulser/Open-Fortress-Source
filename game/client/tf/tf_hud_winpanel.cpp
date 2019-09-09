@@ -127,8 +127,12 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		int iFlagCapLimit = event->GetInt( "flagcaplimit" );
 		bool bRoundComplete = (bool) event->GetInt( "round_complete" );
 		int iRoundsRemaining = event->GetInt( "rounds_remaining" );
-
-		LoadControlSettings( "resource/UI/WinPanel.res" );		
+		
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTDMGamemode() && !TFGameRules()->DontCountKills() )
+			LoadControlSettings( "resource/UI/DMWinPanel.res" );					
+		else
+			LoadControlSettings( "resource/UI/WinPanel.res" );
+		
 		InvalidateLayout( false, true );
 
 		SetDialogVariable( "WinningTeamLabel", "" );
@@ -202,7 +206,10 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 			break;
 		case WINREASON_STALEMATE:
 			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_Stalemate" ), 0 );
-			break;	
+			break;
+		case WINREASON_POINTLIMIT:
+			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_PointLimit" ), 0 );
+			break;			
 		default:
 			Assert( false );
 			break;

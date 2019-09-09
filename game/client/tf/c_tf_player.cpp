@@ -4672,45 +4672,6 @@ void C_TFPlayer::AddDecal( const Vector& rayStart, const Vector& rayEnd,
 	BaseClass::AddDecal( rayStart, rayEnd, decalCenter, hitbox, decalIndex, doTrace, tr, maxLODToDecal );
 }
 
-const char *TF_RESPAWN_PARTICLES[] =
-{
-	"dm_respawn_01",
-	"dm_respawn_03",
-	"dm_respawn_04",
-	"dm_respawn_05",
-	"dm_respawn_06",
-	"dm_respawn_09",
-	"dm_respawn_10",
-	"dm_respawn_11",
-	"dm_respawn_12",
-	"dm_respawn_13",
-	"dm_respawn_14",
-	"dm_respawn_15",
-	"dm_respawn_16",
-	"dm_respawn_17",
-	"dm_respawn_18",
-	"dm_respawn_19",
-	"dm_respawn_20",
-	"dm_respawn_21",
-	"dm_respawn_22",
-	"dm_respawn_23",
-	"dm_respawn_26",
-	"dm_respawn_27",
-	"dm_respawn_28",
-	"dm_respawn_29",
-	"dm_respawn_30",
-	"dm_respawn_31",
-	"dm_respawn_32",
-	"dm_respawn_35",
-	"dm_respawn_36",
-	"dm_respawn_37",
-	"dm_respawn_38",
-	"dm_respawn_39",
-	"dm_respawn_40",
-	"dm_respawn_41",
-	"dm_respawn_42",
-};
-
 /*
 //-----------------------------------------------------------------------------
 // Get the map music
@@ -4815,7 +4776,11 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	// don't draw the respawn particle in first person
 	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && (!InFirstPersonView() || !IsLocalPlayer()) )
 	{
-		const char *pEffectName = TF_RESPAWN_PARTICLES[ m_Shared.GetSpawnEffects() - 1 ];
+		char pEffectName[32];
+		if ( m_Shared.GetSpawnEffects() < 10 )
+			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
+		else
+			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
 		if ( pEffectName )
 			m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN) );
 	}

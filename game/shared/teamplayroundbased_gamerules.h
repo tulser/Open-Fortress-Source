@@ -94,6 +94,7 @@ enum {
 	WINREASON_RD_CORES_COLLECTED,
 	WINREASON_RD_REACTOR_RETURNED,
 #endif
+	WINREASON_POINTLIMIT,
 };
 
 enum stalemate_reasons_t
