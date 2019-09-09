@@ -45,7 +45,115 @@ LINK_ENTITY_TO_CLASS( info_player_teamspawn, CTFTeamSpawn );
 CTFTeamSpawn::CTFTeamSpawn()
 {
 	m_bDisabled = false;
+
+	// all are set to false first, and then spawnflags re-enable them (otherwise, you could have civilians/mercenaries spawning in all spawns...)
+	m_bScout = false;
+	m_bSniper = false;
+	m_bSoldier = false;
+	m_bDemoman = false;
+	m_bMedic = false;
+	m_bHeavyweapons = false;
+	m_bPyro = false;
+	m_bSpy = false;
+	m_bEngineer = false;
+
+	// this breaks DM maps so nope
+	//m_bMercenary = false;
+	m_bCivilian = false;
+	m_bJuggernaut = false;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFTeamSpawn::Spawn( void )
+{
+	BaseClass::Spawn();
+
+	// don't run these checks if the flags don't exist or equal 0
+	if ( !m_spawnflags || m_spawnflags == 0 )
+	{
+		m_bScout = true;
+		m_bSniper = true;
+		m_bSoldier = true;
+		m_bDemoman = true;
+		m_bMedic = true;
+		m_bHeavyweapons = true;
+		m_bPyro = true;
+		m_bSpy = true;
+		m_bEngineer = true;
+		//m_bMercenary = true;
+		m_bCivilian = true;
+		m_bJuggernaut = true;
+	}
+	else if ( m_spawnflags == 511 )
+	{
+		m_bScout = true;
+		m_bSniper = true;
+		m_bSoldier = true;
+		m_bDemoman = true;
+		m_bMedic = true;
+		m_bHeavyweapons = true;
+		m_bPyro = true;
+		m_bSpy = true;
+		m_bEngineer = true;
+
+		// hack to make civilian be able to spawn in normal maps
+		m_bCivilian = true;
+	}
+	else
+	{
+		if ( HasSpawnFlags( SF_CLASS_SCOUT ) )
+		{
+			m_bScout = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_SNIPER ) )
+		{
+			m_bSniper = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_SOLDIER ) )
+		{
+			m_bSoldier = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_DEMOMAN ) )
+		{
+			m_bDemoman = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_MEDIC ) )
+		{
+			m_bMedic = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_HEAVYWEAPONS ) )
+		{
+			m_bHeavyweapons = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_PYRO ) )
+		{
+			m_bPyro = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_SPY ) )
+		{
+			m_bSpy = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_ENGINEER ) )
+		{
+			m_bEngineer = true;
+		}
+		//if ( HasSpawnFlags( SF_CLASS_MERCENARY ) )
+		//{
+		//	m_bMercenary = true;
+		//}
+		if ( HasSpawnFlags( SF_CLASS_CIVILIAN ) )
+		{
+			m_bCivilian = true;
+		}
+		if ( HasSpawnFlags( SF_CLASS_JUGGERNAUT ) )
+		{
+			m_bJuggernaut = true;
+		}
+	}
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -63,7 +171,7 @@ void CTFTeamSpawn::Activate( void )
 	if ( !bClear )
 	{
 		Warning("Spawnpoint at (%.2f %.2f %.2f) is not clear.\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
-		// m_debugOverlays |= OVERLAY_TEXT_BIT;
+		//m_debugOverlays |= OVERLAY_TEXT_BIT;
 	}
 }
 

@@ -2324,6 +2324,10 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 	if (pOther->GetMoveParent())
 		return;
 
+	// ignore grappling hooks
+	if ( FClassnameIs( pOther, "grapple_hook" ) )
+		return;
+
 	// Transform the push dir into global space
 	Vector vecAbsDir;
 	VectorRotate( m_vecPushDir, EntityToWorldTransform(), vecAbsDir );
@@ -2458,6 +2462,10 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	{
 		return;
 	}
+
+	// ignore grappling hooks
+	if ( FClassnameIs( pOther, "grapple_hook" ) )
+		return;
 
 	// The activator and caller are the same
 	pentTarget = gEntList.FindEntityByName( pentTarget, m_target, NULL, pOther, pOther );

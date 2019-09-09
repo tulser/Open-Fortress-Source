@@ -99,7 +99,6 @@ public:
 				CTriggerMultiple *pCaptureTrigger =dynamic_cast<CTriggerMultiple*>( gEntList.FindEntityByName( NULL, "cap_c_capturetrigger" ) );
 				if ( pCaptureTrigger )
 				{
-					DevMsg("Triggered\n");
 					pCaptureTrigger->m_OnTrigger.FireOutput(pPlayer, this);
 				}
 			}
@@ -1133,7 +1132,6 @@ void CTeamTrainWatcher::CheckPayloadOverride( void )
 		CTriggerMultiple *pCaptureTrigger = dynamic_cast<CTriggerMultiple*>( gEntList.FindEntityByName( NULL, "cap_c_capturetrigger" ) );
 		if ( pCaptureTrigger )
 		{
-			DevMsg("Trigger exsits\n");
 			CEscortTouchTrigger *pLastTrigger =(CEscortTouchTrigger *)CBaseEntity::Create( "escort_touch_trigger",
 			pCaptureTrigger->GetAbsOrigin() ,
 			vec3_angle );
@@ -1258,7 +1256,6 @@ ConVar tf_show_train_path( "tf_show_train_path", "0", FCVAR_CHEAT );
 
 void CTeamTrainWatcher::WatcherThink( void )
 {
-	DevMsg("%d\n", GetTeamNumber());
 	if ( m_bWaitingToRecede )
 	{
 		if ( m_flRecedeTime < gpGlobals->curtime )

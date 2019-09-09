@@ -1979,6 +1979,10 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 			{
 				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
 			}
+			else
+			{
+				pSpot = NULL;
+			}
 
 			// need to save this for later so we can apply and modifiers to the armor and grenades...after the call to InitClass() //by tf2team
 			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
@@ -1995,6 +1999,10 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 				if ( bFind )
 				{
 					g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
+				}
+				else
+				{
+					pSpot = NULL;
 				}
 
 				m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
@@ -2022,6 +2030,10 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 						{
 							g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
 						}
+						else
+						{
+							pSpot = NULL;
+						}
 
 						m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
 					}
@@ -2039,10 +2051,10 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 		}
 	}
 
-	//
 	if ( !pSpot )
 	{
 		Warning( "Player Spawn: no valid spawn point was found!\n" );
+		pSpot = CBaseEntity::Instance( INDEXENT(0) );
 	}
 
 	return pSpot;

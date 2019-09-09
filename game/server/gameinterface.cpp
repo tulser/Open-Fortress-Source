@@ -130,7 +130,9 @@ extern ConVar tf_mm_servermode;
 #include "replay/ireplaysystem.h"
 #endif
 
+#if defined( WIN32 )
 #include "signon_buffer_hack.h"
+#endif
 
 #include "gamemounter.h"
 
@@ -763,8 +765,10 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		return false;
 	}
 	
+#if defined( WIN32 )
 	// Calling as soon as DLLInit cannot possibly return false.
 	SIGNON_BUFFER_HACK::InitBufferHack();
+#endif 
 
 	InvalidateQueryCache();
 
@@ -794,8 +798,10 @@ void CServerGameDLL::PostInit()
 
 void CServerGameDLL::DLLShutdown( void )
 {
+#if defined( WIN32 )
 	SIGNON_BUFFER_HACK::ShutdownBufferHack();
-	
+#endif 
+
 	// Due to dependencies, these are not autogamesystems
 	ModelSoundsCacheShutdown();
 

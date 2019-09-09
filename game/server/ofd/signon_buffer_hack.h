@@ -1,3 +1,5 @@
+#if defined( WIN32 )
+
 #ifndef SIGNON_BUFFER_HACK_H
 #pragma once
 
@@ -8,3 +10,5 @@ namespace SIGNON_BUFFER_HACK
 }
 
 #endif // !SIGNON_BUFFER_HACK_H
+
+#endif

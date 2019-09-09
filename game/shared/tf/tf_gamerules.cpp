@@ -2936,6 +2936,35 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
 		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
 			return false;
+
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+		// check if this spawnpoint allows our class to spawn here
+		if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SCOUT && !pCTFSpawn->AllowScout() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SNIPER && !pCTFSpawn->AllowSniper() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER && !pCTFSpawn->AllowSoldier() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_DEMOMAN && !pCTFSpawn->AllowDemoman() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MEDIC && !pCTFSpawn->AllowMedic() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_HEAVYWEAPONS && !pCTFSpawn->AllowHeavyweapons() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_PYRO && !pCTFSpawn->AllowPyro() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY && !pCTFSpawn->AllowSpy() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && !pCTFSpawn->AllowEngineer() )
+			return false;
+		//else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY && !pCTFSpawn->AllowMercenary() )
+		//	return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN && !pCTFSpawn->AllowCivilian() )
+			return false;
+		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_JUGGERNAUT && !pCTFSpawn->AllowJuggernaut() )
+			return false;
 	}
 
 	Vector mins = GetViewVectors()->m_vHullMin;

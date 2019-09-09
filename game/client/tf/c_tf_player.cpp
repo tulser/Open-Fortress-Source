@@ -92,7 +92,7 @@ ConVar of_beta_muzzleflash("of_beta_muzzleflash", "0", FCVAR_ARCHIVE, "Enable th
 
 ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake.");
 
-ConVar of_gore("of_gore", "0", FCVAR_CHEAT, "Enables or disables dismemberment and gore effects on players. Does not affect gibbing");
+ConVar of_gore("of_gore", "1", FCVAR_ARCHIVE, "Enables or disables dismemberment and gore effects on players. Does not affect gibbing");
 
 ConVar ofd_color_r( "ofd_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's red channel value", true, -1, true, 255 );
 ConVar ofd_color_g( "ofd_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
@@ -227,6 +227,10 @@ static void ScaleGoreLeftArm( C_BaseAnimating *pAnimating )
 			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
 
 		iBone = pAnimating->LookupBone( "bip_hand_L" );
+		if ( iBone != -1 )
+			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+
+		iBone = pAnimating->LookupBone( "hlp_forearm_L" );
 		if ( iBone != -1 )
 			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
 
@@ -375,6 +379,10 @@ static void ScaleGoreRightArm( C_BaseAnimating *pAnimating )
 		int iBone;
 		iBone = pAnimating->LookupBone( "bip_lowerArm_R" );
 
+		if ( iBone != -1 )
+			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+
+		iBone = pAnimating->LookupBone( "hlp_forearm_R" );
 		if ( iBone != -1 )
 			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
 
@@ -917,13 +925,13 @@ void C_TFRagdoll::DismemberHead( )
 	// this isn't actually attached to the head attachment
 	// it goes to the bone, but an attachment is needed here to shut the particle system up
 	// for some reason blood_decap does not work here so each effect needs to be created individually
-	ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "blood_decap_fountain", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "blood_decap_streaks", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_HEAD, "eyes" );
-	ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_HEAD, "eyes" );
+	ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "blood_decap_fountain", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "blood_decap_streaks", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_HEAD, "head" );
 
 	Vector	vecSpot;
 	trace_t	tr;
@@ -952,11 +960,11 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERARM_L, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERARM_L, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERARM_L, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERARM_L, "head" );
 	}
 	else
 	{
@@ -968,11 +976,11 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_LOWERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERARM_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERARM_L, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERARM_L, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_LOWERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERARM_L, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERARM_L, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERARM_L, "head" );
 
 	}
 
@@ -993,11 +1001,11 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERARM_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERARM_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERARM_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERARM_R, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERARM_R, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERARM_R, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERARM_R, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERARM_R, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERARM_R, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERARM_R, "head" );
 	}
 	else
 	{
@@ -1009,11 +1017,11 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_GORE_LOWERARM_R, "eyes");
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERARM_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERARM_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERARM_R, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERARM_R, "eyes" );
+		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_GORE_LOWERARM_R, "head");
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERARM_R, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERARM_R, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERARM_R, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERARM_R, "head" );
 
 	}
 
@@ -1034,11 +1042,11 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERLEG_L, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERLEG_L, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERLEG_L, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERLEG_L, "head" );
 	}
 	else
 	{
@@ -1050,11 +1058,11 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERLEG_L, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERLEG_L, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_L, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERLEG_L, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERLEG_L, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_L, "head" );
 
 	}
 
@@ -1075,11 +1083,11 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERLEG_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERLEG_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERLEG_R, "eyes" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERLEG_R, "eyes" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERLEG_R, "eyes" );
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_UPPERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_UPPERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_UPPERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_UPPERLEG_R, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_UPPERLEG_R, "head" );
 	}
 	else
 	{
@@ -1091,11 +1099,11 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_R, "eyes");
-		ParticleProp()->Create("env_sawblood_mist", PATTACH_GORE_LOWERLEG_R, "eyes");
-		ParticleProp()->Create("env_sawblood_goop", PATTACH_GORE_LOWERLEG_R, "eyes");
-		ParticleProp()->Create("env_sawblood_chunk", PATTACH_GORE_LOWERLEG_R, "eyes");
-		ParticleProp()->Create("blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_R, "eyes");
+		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_R, "head");
+		ParticleProp()->Create("env_sawblood_mist", PATTACH_GORE_LOWERLEG_R, "head");
+		ParticleProp()->Create("env_sawblood_goop", PATTACH_GORE_LOWERLEG_R, "head");
+		ParticleProp()->Create("env_sawblood_chunk", PATTACH_GORE_LOWERLEG_R, "head");
+		ParticleProp()->Create("blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_R, "head");
 
 	}
 

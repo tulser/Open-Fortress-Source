@@ -1,6 +1,8 @@
 // by Petercov: https://github.com/Petercov/Source-PlusPlus/
 
 #include "cbase.h"
+
+#if defined( WIN32 )
 #include "eiface.h"
 #include <iserver.h>
 
@@ -8,16 +10,9 @@
 
 namespace SIGNON_BUFFER_HACK
 {
-#if defined( WIN32 )
 #define INDEXOF_ISMULTIPLAYER 24
 #define INDEXOF_CLEAR 40
 #define MAX_INDEX 64
-#if defined( LINUX )
-#define INDEXOF_ISMULTIPLAYER 25
-#define INDEXOF_CLEAR 41
-#define MAX_INDEX 65
-#endif
-#endif
 
 	typedef bool(*IsMultiplayerProto) (void*);
 	typedef void(*ClearProto) (void*);
@@ -89,3 +84,5 @@ namespace SIGNON_BUFFER_HACK
 		original_gs_vt = nullptr;
 	}
 }
+
+#endif

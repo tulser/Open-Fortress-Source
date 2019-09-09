@@ -13,6 +13,20 @@
 class CTeamControlPoint;
 class CTeamControlPointRound;
 
+// what classes can spawn here
+#define SF_CLASS_SCOUT			1
+#define SF_CLASS_SNIPER			2
+#define SF_CLASS_SOLDIER		4
+#define SF_CLASS_DEMOMAN		8
+#define SF_CLASS_MEDIC			16
+#define SF_CLASS_HEAVYWEAPONS	32
+#define SF_CLASS_PYRO			64
+#define SF_CLASS_SPY			128	
+#define SF_CLASS_ENGINEER		256
+#define SF_CLASS_MERCENARY		512
+#define SF_CLASS_CIVILIAN		1024
+#define SF_CLASS_JUGGERNAUT		2048
+
 //=============================================================================
 //
 // TF team spawning entity.
@@ -25,7 +39,34 @@ public:
 
 	CTFTeamSpawn();
 
-	void Activate( void );
+	virtual void Spawn( void );
+	virtual void Activate( void );
+
+	bool m_bScout;
+	bool m_bSniper;
+	bool m_bSoldier;
+	bool m_bDemoman;
+	bool m_bMedic;
+	bool m_bHeavyweapons;
+	bool m_bPyro;
+	bool m_bSpy;
+	bool m_bEngineer;
+	//bool m_bMercenary;
+	bool m_bCivilian;
+	bool m_bJuggernaut;
+
+	bool AllowScout( void ) { return m_bScout; }
+	bool AllowSniper( void ) { return m_bSniper; }
+	bool AllowSoldier( void ) { return m_bSoldier; }
+	bool AllowDemoman( void ) { return m_bDemoman; }
+	bool AllowMedic( void ) { return m_bMedic; }
+	bool AllowHeavyweapons( void ) { return m_bHeavyweapons; }
+	bool AllowPyro( void ) { return m_bPyro; }
+	bool AllowSpy( void ) { return m_bSpy; }
+	bool AllowEngineer( void ) { return m_bEngineer; }
+	//bool AllowMercenary( void ) { return m_bMercenary; }
+	bool AllowCivilian( void ) { return m_bCivilian; }
+	bool AllowJuggernaut( void ) { return m_bJuggernaut; }
 
 	bool IsDisabled( void ) { return m_bDisabled; }
 	void SetDisabled( bool bDisabled ) { m_bDisabled = bDisabled; }
