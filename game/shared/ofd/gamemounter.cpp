@@ -3,6 +3,24 @@
 #include "filesystem.h"
 #include "steam/steam_api.h"
 
+bool EvaluateExtraConditionals( const char* str )
+{
+	bool bNot = false; // should we negate this command?
+	if ( *str == '!' )
+		bNot = true;
+
+	if ( Q_stristr( str, "$DEDICATED" ) )
+	{
+#ifdef CLIENT_DLL
+		return false ^ bNot;
+#else
+		return engine->IsDedicatedServer() ^ bNot;
+#endif
+	}
+
+	return false;
+}
+
 // brute forces our search paths, reads the users steam configs
 // to determine any additional steam library directories people have
 // as there's no other way to currently mount a different game (css) 
@@ -59,6 +77,7 @@ void MountPathLocal( KeyValues* pGame )
 	}
 }
 
+#ifdef GAME_DLL
 void MountPathDedicated( KeyValues* pGame )
 {
 	const char* szGameName = pGame->GetName();
@@ -77,29 +96,24 @@ void MountPathDedicated( KeyValues* pGame )
 			continue;
 
 		const char* szRelativePath = pPath->GetString();
+		char gamedir[FILENAME_MAX];
+		filesystem->GetCurrentDirectory( gamedir, sizeof( gamedir ) );
+		V_StripLastDir( gamedir, sizeof( gamedir ) );
+		V_strcat( gamedir, szGameName, sizeof( gamedir ) );
+		V_AppendSlash( gamedir, sizeof( gamedir ) );
+		V_strcat( gamedir, szRelativePath, sizeof( gamedir ) );
+		V_FixSlashes( gamedir );
 
-		// If it's required, at least try and ensure it exists
-		// Todo, find a way to handle .vpk files, we pass cstrike_pak.vpk but the filesystem mounts cstrike_pak_dir.vpk so 
-		// we can't do simple fileexists checks.
-		/*if ( !g_pFullFileSystem->IsDirectory( szRelativePath ) && !g_pFullFileSystem->FileExists( szRelativePath ) )
-		{
-			if ( bRequired )
-			{
-				Error( "Failed to mount required game: %s - %s\n", szGameName, szRelativePath );
-			}
-			else
-			{
-				Msg( "%s - %s not found on system. Skipping.\n", szGameName, szRelativePath );
-			}
-		}*/
-		
-		g_pFullFileSystem->AddSearchPath( szRelativePath, "GAME" );
-		Msg( "\tAdding path: %s\n", szRelativePath );
+		g_pFullFileSystem->AddSearchPath( gamedir, "GAME" );
+		Msg( "\tAdding path: %s\n", gamedir );
 	}
 }
+#endif
 
 void AddRequiredSearchPaths()
 {
+	SetExtraConditionalFunc( &EvaluateExtraConditionals ); //To-Do: Move this
+
 	KeyValues *pMountFile = new KeyValues( "gamemounting.txt" );
 	pMountFile->LoadFromFile( g_pFullFileSystem, "gamemounting.txt", "MOD" );
 
