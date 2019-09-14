@@ -207,6 +207,13 @@ int C_PlayerAttachedModel::GetSkin( void )
 	}
 	else
 	{
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+
+		if ( pOwner )
+		{
+			return ( pOwner->GetTeamNumber() - 2 );
+		}
+
 		return 0;
 	}
 }

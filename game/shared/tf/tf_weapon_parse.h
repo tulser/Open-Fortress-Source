@@ -166,6 +166,10 @@ public:
 	char	m_szExplosionWaterEffectClassic[128];	
 	
 	bool	m_bDontDrop;
+
+	float	m_flMinViewmodelOffsetX;
+	float	m_flMinViewmodelOffsetY;
+	float	m_flMinViewmodelOffsetZ;
 	
 	float	m_flCenteredViewmodelOffsetX;
 	float	m_flCenteredViewmodelOffsetY;

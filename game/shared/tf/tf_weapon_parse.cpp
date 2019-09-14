@@ -81,6 +81,10 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
 	m_iCost = 0;
 
+	m_flMinViewmodelOffsetX = 0.0f;
+	m_flMinViewmodelOffsetY = 0.0f;
+	m_flMinViewmodelOffsetZ = 0.0f;
+
 	m_flCenteredViewmodelOffsetX = 0.0f;
 	m_flCenteredViewmodelOffsetY = 0.0f;
 	m_flCenteredViewmodelOffsetZ = 0.0f;
@@ -254,6 +258,10 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flCenteredViewmodelOffsetX = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_X", 0.0f );
 	m_flCenteredViewmodelOffsetY = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Y", 0.0f );
 	m_flCenteredViewmodelOffsetZ = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Z", 0.0f );
+
+	m_flMinViewmodelOffsetX = pKeyValuesData->GetFloat( "MinViewmodelOffset_X", 0.0f );
+	m_flMinViewmodelOffsetY = pKeyValuesData->GetFloat( "MinViewmodelOffset_Y", 0.0f );
+	m_flMinViewmodelOffsetZ = pKeyValuesData->GetFloat( "MinViewmodelOffset_Z", 0.0f );
 
 	m_flCenteredViewmodelAngleX = pKeyValuesData->GetFloat("CenteredViewmodelAngle_X", 0.0f );
 	m_flCenteredViewmodelAngleY = pKeyValuesData->GetFloat("CenteredViewmodelAngle_Y", 0.0f );

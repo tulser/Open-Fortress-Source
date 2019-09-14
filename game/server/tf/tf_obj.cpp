@@ -715,6 +715,16 @@ float CBaseObject::GetTotalTime( void )
 //-----------------------------------------------------------------------------
 void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 {
+	bool m_bOwned = ( ( CTFPlayer* ) pPlayer)->PlayerOwnsThisObject( m_iObjectType );
+
+	if ( m_bOwned )
+	{
+		// Player already owns this object, abort!
+		DevMsg( "Tried to place an object that's already built.\n" );
+		StopPlacement();
+		return;
+	}
+
 	AddSolidFlags( FSOLID_NOT_SOLID );
 
 	m_bPlacing = true;
@@ -1113,12 +1123,22 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 		}
 		*/
 
+		bool m_bOwned = ( ( CTFPlayer* ) pBuilder)->PlayerOwnsThisObject( m_iObjectType );
+
+		if ( m_bOwned )
+		{
+			// Player already owns this object, abort!
+			DevMsg( "Tried to build an object that's already built.\n" );
+			StopPlacement();
+			return false;
+		}
+
 		int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
 		if ( of_infiniteammo.GetBool() ) iAmountPlayerPaidForMe = 1;
 		if ( !iAmountPlayerPaidForMe )
 		{
 			// Player couldn't afford to pay for me, so abort
-			ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Not enough metal to build.\n" );
+			DevMsg( "Not enough metal to build.\n" );
 			StopPlacement();
 			return false;
 		}
@@ -1133,7 +1153,6 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 		{
 			if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
 			{
-
 				DevMsg( "Tried to build something without a Construction PDA.\n" );
 				StopPlacement();
 				return false;

@@ -83,6 +83,7 @@ ConVar viewmodel_angle_y( "viewmodel_angle_y", "0", FCVAR_ARCHIVE | FCVAR_USERIN
 ConVar viewmodel_angle_z( "viewmodel_angle_z", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );
 ConVar viewmodel_centered("viewmodel_centered", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Center every viewmodel." );
 ConVar viewmodel_hide_arms("viewmodel_hide_arms", "0", FCVAR_ARCHIVE| FCVAR_USERINFO, "Hide the arms on all viewmodels." );
+ConVar tf_use_min_viewmodels("tf_use_min_viewmodels", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Use minimized viewmodels.");
 #endif
 
 //-----------------------------------------------------------------------------
@@ -167,7 +168,7 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	// for some reason the viewmodel_angle must be seperated from the offset as otherwise it freaks out
 	if ( pWeapon )
 	{
-		if ( viewmodel_centered.GetBool() )
+		if ( viewmodel_centered.GetBool() && !tf_use_min_viewmodels.GetBool() )
 		{
 			const CTFWeaponInfo *pTFInfo = NULL;
 
@@ -193,7 +194,7 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 
 	if ( pWeapon )
 	{
-		if ( viewmodel_centered.GetBool() )
+		if ( viewmodel_centered.GetBool() && !tf_use_min_viewmodels.GetBool() )
 		{
 			const CTFWeaponInfo *pTFInfo = NULL;
 
@@ -202,6 +203,18 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 			float offset_x = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetX;
 			float offset_y = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetY;
 			float offset_z = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetZ;
+
+			vecNewOrigin += forward*offset_x + right*offset_y + up*offset_z;
+		}
+		else if ( !viewmodel_centered.GetBool() && tf_use_min_viewmodels.GetBool() )
+		{
+			const CTFWeaponInfo *pTFInfo = NULL;
+
+			pTFInfo = &pWeapon->GetTFWpnData();
+
+			float offset_x = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetX;
+			float offset_y = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetY;
+			float offset_z = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetZ;
 
 			vecNewOrigin += forward*offset_x + right*offset_y + up*offset_z;
 		}

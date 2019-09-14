@@ -2233,28 +2233,28 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 	{
 		pSpot = pFurthest;
 
-		// Found a valid spawn point.
-		return true;
-	}
-
-	if ( pSpot )
-	{
-		if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+		if ( pSpot )
 		{
-			// telefragging
-			CBaseEntity *ent = NULL;
-
-			for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+			if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
 			{
-				// don't telefrag ourselves
-				if ( ent->IsPlayer() && ent != this )
+				// telefragging
+				CBaseEntity *ent = NULL;
+
+				for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
 				{
-					// special damage type to bypass uber or spawn protection in DM
-					CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
-					ent->TakeDamage( info );
-				}
+					// don't telefrag ourselves
+					if ( ent->IsPlayer() && ent != this )
+					{
+						// special damage type to bypass uber or spawn protection in DM
+						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+						ent->TakeDamage( info );
+					}
+			}	
 			}
 		}
+
+		// Found a valid spawn point.
+		return true;
 	}
 
 	return false;
@@ -3404,6 +3404,27 @@ void CTFPlayer::DetonateOwnedObjectsOfType( int iType )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFPlayer::PlayerOwnsThisObject( int iType )
+{
+	int i;
+	int iNumObjects = GetObjectCount();
+
+	for ( i=0;i<iNumObjects;i++ )
+	{
+		CBaseObject *pObj = GetObject(i);
+
+		if ( pObj && pObj->GetType() == iType )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTFPlayer::StartBuildingObjectOfType( int iType )
 {
 	// early out if we can't build this type of object
@@ -3444,22 +3465,25 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 //		if ( pWpn->GetWeaponID() != TF_WEAPON_BUILDER )
 //			continue;
 
-		CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pWpn );
-
-		// Is this the builder that builds the object we're looking for?
-		if ( pBuilder )
+		if ( pWpn )
 		{
-			pBuilder->SetSubType( iType );
+			CTFWeaponBuilder *pBuilder = dynamic_cast< CTFWeaponBuilder * >( pWpn );
 
-			if ( GetActiveTFWeapon() == pBuilder )
+			// Is this the builder that builds the object we're looking for?
+			if ( pBuilder )
 			{
-				SetActiveWeapon( NULL );
-			}
+				pBuilder->SetSubType( iType );
 
-			// try to switch to this weapon
-			if ( Weapon_Switch( pBuilder ) )
-			{
-				break;
+				if ( GetActiveTFWeapon() == pBuilder )
+				{
+					SetActiveWeapon( NULL );
+				}
+
+				// try to switch to this weapon
+				if ( Weapon_Switch( pBuilder ) )
+				{
+					break;
+				}
 			}
 		}
 	}

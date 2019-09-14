@@ -286,6 +286,7 @@ public:
 	void OwnedObjectDestroyed( CBaseObject *pObject );
 	void RemoveObject( CBaseObject *pObject );
 	bool PlayerOwnsObject( CBaseObject *pObject );
+	bool PlayerOwnsThisObject( int iType );
 	void DetonateOwnedObjectsOfType( int iType );
 	void StartBuildingObjectOfType( int iType );
 	virtual CBaseEntity	*GetHeldObject(void);
