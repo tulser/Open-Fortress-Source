@@ -200,20 +200,14 @@ int C_PlayerAttachedModel::GetSkin( void )
 
 		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
-			return ( pOwner->m_Shared.GetDisguiseClass() - 1 );
+			m_nSkin = pOwner->m_Shared.GetDisguiseClass() - 1;
+			return ( m_nSkin );
 		}
 
-		return 0;
+		return m_nSkin;
 	}
 	else
 	{
-		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
-
-		if ( pOwner )
-		{
-			return ( pOwner->GetTeamNumber() - 2 );
-		}
-
-		return 0;
+		return m_nSkin;
 	}
 }

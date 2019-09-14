@@ -658,16 +658,6 @@ void CTFLogicTDM::Spawn(void)
 	BaseClass::Spawn();
 }
 
-class CTFLogicESC : public CBaseEntity
-{
-public:
-	DECLARE_CLASS(CTFLogicESC,	CBaseEntity);
-	void	Spawn(void);
-	DECLARE_DATADESC();
-	int m_nMaxHunted_red;
-	int m_nMaxHunted_blu;
-};
-
 LINK_ENTITY_TO_CLASS(of_logic_esc, CTFLogicESC);
 
 //-----------------------------------------------------------------------------
@@ -677,6 +667,8 @@ BEGIN_DATADESC( CTFLogicESC )
 	//Keyfields
 	DEFINE_KEYFIELD( m_nMaxHunted_red, FIELD_INTEGER, "MaxRedHunted"),
 	DEFINE_KEYFIELD( m_nMaxHunted_blu, FIELD_INTEGER, "MaxBluHunted"),
+
+	DEFINE_OUTPUT( m_OnHuntedDeath, "OnHuntedDeath" ),
 END_DATADESC()
 
 void CTFLogicESC::Spawn(void)

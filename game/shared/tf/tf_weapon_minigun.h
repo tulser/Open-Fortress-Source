@@ -155,10 +155,10 @@ public:
 	virtual bool	IsChainGun() const { return true; }
 };
 
-class CTFCAssaultCannon : public CTFGatlingGun
+class CTFCAssaultCannon : public CTFMinigun
 {
 public:
-	DECLARE_CLASS( CTFCAssaultCannon, CTFGatlingGun );
+	DECLARE_CLASS( CTFCAssaultCannon, CTFMinigun );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 

@@ -1836,7 +1836,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 		pAttachEnt->GetAttachment(iMuzzleFlashAttachment, vecOrigin, angAngles);
 
 		// Muzzleflash light
-		if (of_muzzlelight.GetBool())
+		if ( of_muzzlelight.GetBool() )
 		{
 			CLocalPlayerFilter filter;
 			TE_DynamicLight(filter, 0.0f, &vecOrigin, 255, 192, 64, 5, 70.0f, 0.05f, 70.0f / 0.05f, LIGHT_INDEX_MUZZLEFLASH);
@@ -1875,7 +1875,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 			}
 		}
 
-		if ( pszMuzzleFlashParticleEffect ) 
+		if ( pszMuzzleFlashParticleEffect && !of_beta_muzzleflash.GetBool() ) 
 		{
 			DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
 		}

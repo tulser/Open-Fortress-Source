@@ -41,7 +41,7 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	
 	int flags = FTENT_FADEOUT | FTENT_GRAVITY | FTENT_COLLIDEALL | FTENT_HITSOUND | FTENT_ROTATE;
 
-	if ( data.m_nHitBox == TF_WEAPON_MINIGUN || data.m_nHitBox == TF_WEAPON_GATLINGGUN )
+	if ( data.m_nHitBox == TF_WEAPON_MINIGUN || data.m_nHitBox == TF_WEAPON_GATLINGGUN || data.m_nHitBox == TFC_WEAPON_ASSAULTCANNON )
 	{
 		// More velocity for Jake
 		vecVelocity = random->RandomFloat( 130, 250 ) * vForward +

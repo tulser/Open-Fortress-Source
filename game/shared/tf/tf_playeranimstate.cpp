@@ -638,7 +638,7 @@ bool CTFPlayerAnimState::HandleJumping( Activity &idealActivity )
 	if (pWpn)
 	{
 		// Don't allow a Minigun to jump or air walk.
-		if (m_pTFPlayer->m_Shared.InCond(TF_COND_AIMING) && (m_pTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN))
+		if (m_pTFPlayer->m_Shared.InCond(TF_COND_AIMING) && ( m_pTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_MINIGUN || m_pTFPlayer->GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_GATLINGGUN ) )
 			return false;
 	}
 		

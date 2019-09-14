@@ -131,6 +131,21 @@ public:
 #endif
 };
 
+class CTFLogicESC : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicESC,	CBaseEntity);
+	void	Spawn(void);
+
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	int m_nMaxHunted_red;
+	int m_nMaxHunted_blu;
+
+	COutputEvent m_OnHuntedDeath;
+#endif
+};
+
 struct PlayerRoundScore_t
 {
 	int iPlayerIndex;	// player index

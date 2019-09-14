@@ -790,6 +790,15 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		// g_EventQueue.AddEvent( "game_playerdie", "Use", value, 0, pVictim, pVictim );
 		FireTargets( "game_playerdie", pVictim, pVictim, USE_TOGGLE, 0 );
 
+		CTFPlayer *pPlayer = ToTFPlayer( pVictim );
+
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && pPlayer && pPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+		{
+			CTFLogicESC *pEsc = dynamic_cast<CTFLogicESC*> ( gEntList.FindEntityByClassname( NULL, "of_logic_esc" ) );
+			if ( pEsc )
+				pEsc->m_OnHuntedDeath.FireOutput( pVictim, pEsc );
+		}
+
 		// Did the player kill himself?
 		if ( pVictim == pScorer )  
 		{			

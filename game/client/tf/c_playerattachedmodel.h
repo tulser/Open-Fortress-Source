@@ -36,7 +36,7 @@ public:
 	int						DrawOverriddenViewmodel( int flags );
 
 	bool	ShouldDraw( void );
-	int		GetSkin( void );
+	virtual int		GetSkin( void );
 
 
 

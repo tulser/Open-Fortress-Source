@@ -7883,7 +7883,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 	Assert( bValidClass );
 	Assert( bValidConcept );
 
-	if ( !bValidClass || !bValidConcept )
+	if ( !bValidClass || !bValidConcept || !TFGameRules() )
 	{
 		return BaseClass::GetResponseSystem();
 	}
