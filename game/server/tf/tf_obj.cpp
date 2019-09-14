@@ -1134,7 +1134,7 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 			if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
 			{
 
-				ClientPrint( (CBasePlayer*)pBuilder, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+				DevMsg( "Tried to build something without a Construction PDA.\n" );
 				StopPlacement();
 				return false;
 			}

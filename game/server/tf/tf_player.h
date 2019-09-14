@@ -467,15 +467,9 @@ public:
 	int				RestockCloak( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
 
-	// Gore
-	/*
-	int m_HeadBodygroup;
-	int	m_LeftArmBodygroup;
-	int	m_RightArmBodygroup;
-	int	m_LeftLegBodygroup;
-	int	m_RightLegBodygroup;
-	*/
+	float				m_flLastAction;
 
+	// Gore
 	unsigned short m_iGoreHead;
 	unsigned short m_iGoreLeftArm;
 	unsigned short m_iGoreRightArm;
@@ -608,7 +602,6 @@ private:
 
 	float				m_flSpawnTime;
 
-	float				m_flLastAction;
 	bool				m_bIsIdle;
 
 	CUtlVector<EHANDLE>	m_hObservableEntities;
@@ -716,7 +709,10 @@ public:
 //-----------------------------------------------------------------------------
 inline CTFPlayer *ToTFPlayer( CBaseEntity *pEntity )
 {
-	if ( !pEntity || !pEntity->IsPlayer() )
+	if ( !pEntity )
+		return NULL;
+
+	if ( !pEntity->IsPlayer() )
 		return NULL;
 
 	Assert( dynamic_cast<CTFPlayer*>( pEntity ) != 0 );

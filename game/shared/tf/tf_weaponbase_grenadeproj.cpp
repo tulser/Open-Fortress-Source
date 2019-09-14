@@ -212,7 +212,11 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
 	SetOwnerEntity( NULL );
-	SetThrower( pOwner ); 
+
+	if ( pOwner )
+	{
+		SetThrower( pOwner ); 
+	}
 
 	SetupInitialTransmittedGrenadeVelocity( velocity );
 
@@ -225,7 +229,10 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	
 	SetDamageRadius( weaponInfo.m_flDamageRadius );
 
-	ChangeTeam( pOwner->GetTeamNumber() );
+	if ( pOwner )
+		ChangeTeam( pOwner->GetTeamNumber() );
+	else
+		ChangeTeam( TF_TEAM_MERCENARY );
 
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
 /*
@@ -280,7 +287,10 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	m_takedamage = DAMAGE_EVENTS_ONLY;
 
 	// Set the team.
-	ChangeTeam( GetThrower()->GetTeamNumber() );
+	if ( GetThrower() )
+		ChangeTeam( GetThrower()->GetTeamNumber() );
+	else
+		ChangeTeam( TF_TEAM_MERCENARY );
 
 	// Set skin based on team ( red = 1, blue = 2 )
 	if ( GetTeamNumber() == TF_TEAM_RED ) m_nSkin = 0;

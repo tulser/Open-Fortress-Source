@@ -25,7 +25,7 @@
 #define CTFBaseRocket C_TFBaseRocket
 #endif
 
-#define TF_ROCKET_RADIUS	(110.0f * 1.1f)	//radius * TF scale up factor
+//#define TF_ROCKET_RADIUS	(110.0f * 1.1f)	//radius * TF scale up factor
 
 //=============================================================================
 //
@@ -99,7 +99,9 @@ public:
 	virtual int		GetDamageType() { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
 	virtual int		GetCustomDamageType();
 	virtual void	SetDamage(float flDamage) { m_flDamage = flDamage; }
-	virtual float	GetRadius() { return TF_ROCKET_RADIUS; }	
+	virtual void	SetDamageRadius(float flDamageRadius) { m_flDamageRadius = flDamageRadius; }
+
+	virtual float	GetRadius() { return m_flDamageRadius; }	
 	void			DrawRadius( float flRadius );
 
 	unsigned int	PhysicsSolidMaskForEntity( void ) const;
@@ -124,6 +126,7 @@ protected:
 
 	// Not networked.
 	float					m_flDamage;
+	float					m_flDamageRadius;
 
 	float					m_flCollideWithTeammatesTime;
 	bool					m_bCollideWithTeammates;

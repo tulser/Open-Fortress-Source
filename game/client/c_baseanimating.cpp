@@ -61,6 +61,8 @@
 #include "tempent.h"
 #include "physpropclientside.h"
 
+#include "teamplayroundbased_gamerules.h"
+
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
 #include "c_baseobject.h"
@@ -888,17 +890,17 @@ void C_BaseAnimating::GetGlowEffectColor( float *r, float *g, float *b )
 	switch ( GetTeamNumber() )
 	{
 		case TF_TEAM_RED:
-			*r = 0.62; *g = 0.21; *b = 0.13;
+			*r = 1.0; *g = 0.59; *b = 0.51;
 			break;
 		case TF_TEAM_BLUE:
-			*r = 0.3; *g = 0.42; *b = 0.5;
+			*r = 0.8; *g = 0.92; *b = 1.0;
 			break;
 		case TF_TEAM_MERCENARY:
-			*r = 0.5; *g = 0.0; *b = 0.5;
+			*r = 1.0; *g = 0.0; *b = 1.0;
 			break; 
 
 		default:
-			*r = 0.76; *g = 0.76; *b = 0.76;
+			*r = 1.0; *g = 1.0; *b = 1.0;
 			break;
 	}
 }
@@ -934,9 +936,9 @@ void C_BaseAnimating::UpdateGlowEffect( void )
 	if ( m_bGlowEnabled || m_bClientSideGlowEnabled )
 	{
 		float r, g, b;
-		GetGlowEffectColor( &r, &g, &b );
+		TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
 
-		m_pGlowEffect = new CGlowObject( this, Vector( r, g, b ), 1.0, true );
+		m_pGlowEffect = new CGlowObject( this, Vector( r, g, b ), 1.0, true, true );
 	}
 }
 

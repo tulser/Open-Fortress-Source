@@ -2937,6 +2937,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
 			return false;
 
+		/*
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		// check if this spawnpoint allows our class to spawn here
 		if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
@@ -2965,6 +2966,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 			return false;
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_JUGGERNAUT && !pCTFSpawn->AllowJuggernaut() )
 			return false;
+			*/
 	}
 
 	Vector mins = GetViewVectors()->m_vHullMin;
@@ -4532,6 +4534,11 @@ bool CTFGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		return false;
 
 	if ( ( collisionGroup0 == TF_COLLISIONGROUP_GRENADES ) && 
+		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
+		return false;
+		
+	// rockets do not collide with each other (tf_point_weapon_mimic)
+	if ( ( collisionGroup0 == TFCOLLISION_GROUP_ROCKETS ) && 
 		( collisionGroup1 == TFCOLLISION_GROUP_ROCKETS ) )
 		return false;
 

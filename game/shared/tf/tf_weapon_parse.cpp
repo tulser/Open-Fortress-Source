@@ -205,6 +205,10 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	{
 		m_iWeaponType = TF_WPN_TYPE_MELEE;
 	}
+	else if ( !Q_strcmp( pszWeaponType, "melee_allclass" ) )
+	{
+		m_iWeaponType = TF_WPN_TYPE_MELEE_ALLCLASS;
+	}
 	else if ( !Q_strcmp( pszWeaponType, "grenade" ) )
 	{
 		m_iWeaponType = TF_WPN_TYPE_GRENADE;

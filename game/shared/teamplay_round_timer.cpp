@@ -1035,8 +1035,36 @@ void CTeamRoundTimer::RoundTimerThink( void )
 			return;
 		}
 
-		m_OnFinished.FireOutput( this, this );
-		m_bFireFinished = false;
+		// HACK: in payload override we want to put the timer into overtime if the Civilian is still alive and end the round if he dies during overtime 
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
+		{
+			CBasePlayer *pPlayer = NULL;
+
+			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+			{
+				pPlayer = UTIL_PlayerByIndex( i );
+
+				if ( !pPlayer )
+					continue;
+
+				CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+				if ( pTFPlayer->IsAlive() && pTFPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+				{
+					TeamplayRoundBasedRules()->SetOvertime( true );
+					SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
+					return;
+				}
+			}
+
+			m_OnFinished.FireOutput( this, this );
+			m_bFireFinished = false;
+		}
+		else
+		{
+			m_OnFinished.FireOutput( this, this );
+			m_bFireFinished = false;
+		}
 	}
 	else if ( flTime <= 300.0 && m_bFire5MinRemain )
 	{

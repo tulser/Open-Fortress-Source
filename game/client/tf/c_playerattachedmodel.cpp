@@ -19,13 +19,13 @@
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags )
+C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, bool SpyMask )
 {
 	C_PlayerAttachedModel *pFlash = new C_PlayerAttachedModel;
 	if ( !pFlash )
 		return NULL;
 
-	if ( !pFlash->Initialize( pszModelName, pParent, iAttachment, vecOffset, flLifetime, iFlags ) )
+	if ( !pFlash->Initialize( pszModelName, pParent, iAttachment, vecOffset, flLifetime, iFlags, SpyMask ) )
 		return NULL;
 
 	return pFlash;
@@ -34,13 +34,19 @@ C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_PlayerAttachedModel::Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags )
+bool C_PlayerAttachedModel::Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, bool SpyMask )
 {
-	AddEffects( EF_NORECEIVESHADOW | EF_NOSHADOW | EF_BONEMERGE );
+	m_bSpyMask = false;
+	AddEffects( EF_NOSHADOW | EF_BONEMERGE );
 	if ( InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
 	{
 		Release();
 		return false;
+	}
+
+	if ( SpyMask == true )
+	{
+		m_bSpyMask = true;
 	}
 
 	SetParent( pParent, iAttachment ); 
@@ -162,4 +168,45 @@ int C_PlayerAttachedModel::DrawModel( int flags )
 int C_PlayerAttachedModel::DrawOverriddenViewmodel( int flags )
 {
 	return BaseClass::DrawModel( flags );
+}
+
+bool C_PlayerAttachedModel::ShouldDraw( void )
+{
+	if ( m_bSpyMask )
+	{
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+		if ( !pOwner )
+			return false;
+
+		if ( !pOwner->ShouldDrawThisPlayer() )
+			return false;
+
+		if ( pOwner->IsEnemyPlayer() )
+			return false;
+
+		return BaseClass::ShouldDraw();
+	}
+	else
+	{
+		return BaseClass::ShouldDraw();
+	}
+}
+
+int C_PlayerAttachedModel::GetSkin( void )
+{
+	if ( m_bSpyMask )
+	{
+		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
+
+		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+		{
+			return ( pOwner->m_Shared.GetDisguiseClass() - 1 );
+		}
+
+		return 0;
+	}
+	else
+	{
+		return 0;
+	}
 }

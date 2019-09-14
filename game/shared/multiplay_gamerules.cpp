@@ -15,6 +15,8 @@
 #include "mp_shareddefs.h"
 #include "utlbuffer.h"
 
+#include "tf_gamerules.h"
+
 #ifdef CLIENT_DLL
 
 #else
@@ -37,6 +39,8 @@
 	#include "team.h"
 	#include "usermessages.h"
 	#include "tier0/icommandline.h"
+
+	#include "tf_player.h"
 
 #ifdef NEXT_BOT
 	#include "NextBotManager.h"
@@ -694,6 +698,14 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	//=========================================================
 	bool CMultiplayRules::FPlayerCanRespawn( CBasePlayer *pPlayer )
 	{
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+		// don't allow civilians to respawn if the gamemode is Escort and we are in overtime
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->InOvertime() && pTFPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+		{
+			return false;
+		}
+
 		return true;
 	}
 

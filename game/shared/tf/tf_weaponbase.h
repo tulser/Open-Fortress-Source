@@ -190,6 +190,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	static acttable_t m_acttablePrimary[];
 	static acttable_t m_acttableSecondary[];
 	static acttable_t m_acttableMelee[];
+	static acttable_t m_acttableMeleeAllClass[];
 	static acttable_t m_acttableBuilding[];
 	static acttable_t m_acttablePDA[];
 

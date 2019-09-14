@@ -583,7 +583,6 @@ void COptionsSubMultiplayer::OnCommand( const char *command )
 			m_hImportSprayDialog = new FileOpenDialog(NULL, "#GameUI_ImportSprayImage", true);
 			m_hImportSprayDialog->AddFilter("*.tga,*.jpg,*.bmp,*.vtf", "#GameUI_All_Images", true);
 			m_hImportSprayDialog->AddFilter("*.tga", "#GameUI_TGA_Images", false);
-			m_hImportSprayDialog->AddFilter("*.jpg", "#GameUI_JPEG_Images", false);
 			m_hImportSprayDialog->AddFilter("*.bmp", "#GameUI_BMP_Images", false);
 			m_hImportSprayDialog->AddFilter("*.vtf", "#GameUI_VTF_Images", false);
 			m_hImportSprayDialog->AddActionSignalTarget(this);
@@ -647,47 +646,7 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 			++index;
 		} while (_access(tgaPath, 0) != -1);
 
-		if (!stricmp(extension, "jpg") || !stricmp(extension, "jpeg"))
-		{
-			// convert from the jpeg file format to the TGA file format
-			errcode = ConvertJPEGToTGA(fullpath, tgaPath);
-			if (errcode == CE_SUCCESS)
-			{
-				deleteIntermediateTGA = true;
-			}
-			else
-			{
-				failed = true;
-				vgui::MessageBox *errorDialog = NULL;
-
-				if (errcode == CE_MEMORY_ERROR)
-				{
-					errorDialog = new vgui::MessageBox("#GameUI_Spray_Import_Error_Title", "#GameUI_Spray_Import_Error_Memory");
-				}
-				else if (errcode == CE_CANT_OPEN_SOURCE_FILE)
-				{
-					errorDialog = new vgui::MessageBox("#GameUI_Spray_Import_Error_Title", "#GameUI_Spray_Import_Error_Reading_Image");
-				}
-				else if (errcode == CE_ERROR_PARSING_SOURCE)
-				{
-					errorDialog = new vgui::MessageBox("#GameUI_Spray_Import_Error_Title", "#GameUI_Spray_Import_Error_Image_File_Corrupt");
-				}
-				else if (errcode == CE_ERROR_WRITING_OUTPUT_FILE)
-				{
-					errorDialog = new vgui::MessageBox("#GameUI_Spray_Import_Error_Title", "#GameUI_Spray_Import_Error_Writing_Temp_Output");
-				}
-				else if (errcode == CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED )
-				{
-					errorDialog = new vgui::MessageBox("#GameUI_Spray_Import_Error_Title", "#GameUI_Spray_Import_Image_Wrong_Size");
-				}
-
-				if (errorDialog != NULL)
-				{
-					errorDialog->DoModal();
-				}
-			}
-		}
-		else if (!stricmp(extension, "bmp"))
+		if (!stricmp(extension, "bmp"))
 		{
 			// convert from the bmp file format to the TGA file format
 			errcode = ConvertBMPToTGA(fullpath, tgaPath);

@@ -30,6 +30,11 @@ public:
 
 	CTFKnife();
 	virtual void		PrimaryAttack( void );
+	virtual bool		Deploy( void );
+	virtual void		ItemPostFrame( void );
+	virtual bool		SendWeaponAnim( int iActivity );
+	virtual void		KnifeThink( void );
+
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_KNIFE; }
 
 	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
@@ -44,6 +49,7 @@ private:
 	EHANDLE				m_hBackstabVictim;
 
 	CTFKnife( const CTFKnife & ) {}
+	CNetworkVar( bool, m_bReady );
 };
 
 class CTFCKnife : public CTFKnife

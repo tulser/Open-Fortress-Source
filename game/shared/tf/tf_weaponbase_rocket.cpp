@@ -79,6 +79,7 @@ CTFBaseRocket::CTFBaseRocket()
 #else
 
 	m_flDamage = 0.0f;
+	m_flDamageRadius = (110.0f * 1.1f);
 
 #endif
 }
@@ -220,7 +221,7 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	
 	// Initialize the owner.
 	pRocket->SetOwnerEntity( pOwner );
-	if (pWeapon)
+	if ( pWeapon )
 	{
 		pRocket->m_hWeaponID = pWeapon->GetWeaponID();
 		pRocket->SetLauncher(pWeapon);
@@ -242,7 +243,11 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	pRocket->SetAbsAngles( angles );
 	
 	// Set team.
-	pRocket->ChangeTeam( pOwner->GetTeamNumber() );
+	if ( pOwner )
+		pRocket->ChangeTeam( pOwner->GetTeamNumber() );
+	else
+		pRocket->ChangeTeam( TF_TEAM_MERCENARY );
+
 	pRocket->m_flCreationTime = gpGlobals->curtime;
 	
 	return pRocket;

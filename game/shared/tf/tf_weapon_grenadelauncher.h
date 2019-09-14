@@ -18,6 +18,8 @@
 #define CTFCGrenadeLauncher C_TFCGrenadeLauncher
 #endif
 
+#define TF_GRENADE_LAUNCER_MIN_VEL 1200
+
 #define TF_GRENADE_LAUNCHER_XBOX_CLIP 4
 
 //=============================================================================

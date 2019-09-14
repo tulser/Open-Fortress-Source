@@ -2340,6 +2340,8 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 				continue;
 			if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
 				pPlayer->m_Shared.InCondCrit();
+
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_GAME_OVER_COMP );
 		}
 	}
 
@@ -3679,17 +3681,17 @@ void CTeamplayRoundBasedRules::GetTeamGlowColor( int nTeam, float &r, float &g, 
 	switch ( nTeam )
 	{
 		case TF_TEAM_RED:
-			r = 0.62; g = 0.21; b = 0.13;
+			r = 1.0; g = 0.59; b = 0.51;
 			break;
 		case TF_TEAM_BLUE:
-			r = 0.3; g = 0.42; b = 0.5;
+			r = 0.8; g = 0.92; b = 1.0;
 			break;
 		case TF_TEAM_MERCENARY:
-			r = 0.5; g = 0.0; b = 0.5;
+			r = 1.0; g = 0.0; b = 1.0;
 			break; 
 
 		default:
-			r = 0.76; g = 0.76; b = 0.76;
+			r = 1.0; g = 1.0; b = 1.0;
 			break;
 	}
 }

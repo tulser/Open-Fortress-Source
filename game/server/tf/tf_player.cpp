@@ -834,6 +834,9 @@ void CTFPlayer::PrecachePlayerModels( void )
 //	{
 //		PrecacheModel( pszArmModel );
 //	}	
+
+	PrecacheModel( "models/player/spy_mask.mdl" );
+
 	if ( TFGameRules() && TFGameRules()->IsBirthday() )
 	{
 		for ( i = 1; i < ARRAYSIZE(g_pszBDayGibs); i++ )
@@ -1136,6 +1139,20 @@ void CTFPlayer::Spawn()
 	m_iTaunt = -1;
 	
 	UpdateModel();
+
+	// the Civilian glows to his own teammates in Escort
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() )
+	{
+		if ( IsPlayerClass( TF_CLASS_CIVILIAN ) )
+		{
+			SetTransmitState( FL_EDICT_ALWAYS );
+			//AddGlowEffect();
+		}
+		else
+		{
+			//RemoveGlowEffect();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1979,10 +1996,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 			{
 				g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
 			}
-			else
-			{
-				pSpot = NULL;
-			}
 
 			// need to save this for later so we can apply and modifiers to the armor and grenades...after the call to InitClass() //by tf2team
 			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
@@ -1999,10 +2012,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 				if ( bFind )
 				{
 					g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
-				}
-				else
-				{
-					pSpot = NULL;
 				}
 
 				m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
@@ -2029,10 +2038,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 						if ( bFind )
 						{
 							g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
-						}
-						else
-						{
-							pSpot = NULL;
 						}
 
 						m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
@@ -3417,13 +3422,13 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 	{
 		if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
 		{
-			ClientPrint( (CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+			DevMsg( "Tried to build something without a Construction PDA.\n" );
 			StopPlacement();
 			return;
 		}
 		else if ( pData->m_aBuildable[0] == OBJ_ATTACHMENT_SAPPER && iType != 3 )
 		{
-			ClientPrint( (CBasePlayer*)pTargetPlayer, HUD_PRINTCENTER, "Tried to build something without a Construction PDA.\n");
+			DevMsg( "Tried to build something without a Construction PDA.\n" );
 			StopPlacement();
 			return;
 		}
@@ -4887,7 +4892,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// If we died in sudden death, explode our buildings
 	//if ( IsPlayerClass( TF_CLASS_ENGINEER ) && TFGameRules()->InStalemate() )
-	if (TFGameRules() && TFGameRules()->InStalemate())
+	if ( TFGameRules() && TFGameRules()->InStalemate() )
 	{
 		for (int i = GetObjectCount()-1; i >= 0; i--)
 		{
@@ -4906,6 +4911,14 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		pPlayerAttacker->TakeHealth(of_healonkill.GetFloat(), DMG_GENERIC);
 
 	DestroyViewModels();
+
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
+	{
+		CBroadcastRecipientFilter filter;
+		EmitSound( filter, entindex(), "Esc.Death" );
+		UTIL_ClientPrintAll( HUD_PRINTCENTER, "The Hunted was eliminated! :(\n" );
+	}
+
 	m_bDied = true;
 }
 
@@ -7638,6 +7651,23 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	criteriaSet.AppendCriteria( "beinghealed", m_Shared.InCond( TF_COND_HEALTH_BUFF ) ? "1" : "0" );
 	criteriaSet.AppendCriteria( "waitingforplayers", (TFGameRules()->IsInWaitingForPlayers() || TFGameRules()->IsInPreMatch()) ? "1" : "0" );
 
+	// this is for paylaod
+	criteriaSet.AppendCriteria( "teamrole", GetTFTeam()->GetRole() ? "defense" : "offense" );
+
+	if ( GetTFTeam() )
+	{
+		int iTeamRole = GetTFTeam()->GetRole();
+
+		if ( iTeamRole == 1 )
+		{
+			criteriaSet.AppendCriteria( "teamrole", "defense" );
+		}
+		else
+		{
+			criteriaSet.AppendCriteria( "teamrole", "offense" );
+		}
+	}
+
 	// Current weapon role
 	CTFWeaponBase *pActiveWeapon = m_Shared.GetActiveTFWeapon();
 	if ( pActiveWeapon )
@@ -7653,6 +7683,9 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 			criteriaSet.AppendCriteria( "weaponmode", "secondary" );
 			break;
 		case TF_WPN_TYPE_MELEE:
+			criteriaSet.AppendCriteria( "weaponmode", "melee" );
+			break;
+		case TF_WPN_TYPE_MELEE_ALLCLASS:
 			criteriaSet.AppendCriteria( "weaponmode", "melee" );
 			break;
 		case TF_WPN_TYPE_BUILDING:
@@ -7720,6 +7753,20 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 					criteriaSet.AppendCriteria( "crosshair_on", g_aPlayerClassNames_NonLocalized[iClass] );
 				}
 			}
+		}
+	}
+
+	// end of round voicelines
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->GetWinningTeam() == this->GetTeamNumber() )
+		{
+			criteriaSet.AppendCriteria( "OnWinningTeam", "1" );
+			criteriaSet.AppendCriteria( "IsCompWinner", "1" );
+		}
+		else
+		{
+			criteriaSet.AppendCriteria( "OnWinningTeam", "0" );
 		}
 	}
 
@@ -8242,22 +8289,6 @@ void TestRR( const CCommand &args )
 	}
 }
 static ConCommand tf_testrr( "tf_testrr", TestRR, "Force the player under your crosshair to speak a response rule concept. Format is tf_testrr <concept>, or tf_testrr <player name> <concept>", FCVAR_CHEAT );
-
-
-CON_COMMAND_F(tf_crashclients, "Testing only, crashes about 50 percent of the connected clients.", FCVAR_CHEAT)
-{
-	for (int i = 1; i < gpGlobals->maxClients; ++i)
-	{
-		if (RandomFloat(0.0f, 1.0f) < 0.5f)
-		{
-			CBasePlayer* pl = UTIL_PlayerByIndex(i + 1);
-			if (pl)
-			{
-				engine->ClientCommand(pl->edict(), "crash\n");
-			}
-		}
-	}
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

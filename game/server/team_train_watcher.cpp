@@ -1724,9 +1724,44 @@ Vector CTeamTrainWatcher::GetNextCheckpointPosition( void ) const
 void CTeamTrainWatcher::Shutdown( void )
 {
 	inputdata_t Temp;
+
+	string_t iszTrainName = m_hTrain->GetEntityName();
+
+	CBaseEntity *pGlowEnt = NULL;
+	CPhysFixed *pPhysConstraint = dynamic_cast<CPhysFixed*>( gEntList.FindEntityByClassname( NULL, "phys_constraint" ) );
+
+	while ( pPhysConstraint )
+	{
+		string_t iszName1 = pPhysConstraint->GetNameAttach1();
+		string_t iszName2 = pPhysConstraint->GetNameAttach2();
+
+		if ( iszTrainName == iszName1 )
+		{
+			pGlowEnt = gEntList.FindEntityByName( NULL, STRING( iszName2 ) );
+			if ( pGlowEnt )
+			{
+				pGlowEnt->InputKillHierarchy( Temp );
+			}
+			break;
+		}
+		else if ( iszTrainName == iszName2 )
+		{
+			pGlowEnt = gEntList.FindEntityByName( NULL, STRING( iszName1 ) );
+			if ( pGlowEnt )
+			{
+				pGlowEnt->InputKillHierarchy( Temp );
+			}
+			break;
+		}
+			
+		pPhysConstraint = dynamic_cast<CPhysFixed*>( gEntList.FindEntityByClassname( pPhysConstraint, "phys_constraint" ) );
+	}
+
 	if ( GetTrainEntity() )
-	GetTrainEntity()->InputKillHierarchy( Temp );
-	InputKillHierarchy( Temp );
+	{
+		GetTrainEntity()->InputKillHierarchy( Temp );
+	}
+
 	UTIL_Remove ( this );
 }
 

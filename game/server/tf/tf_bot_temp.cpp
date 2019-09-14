@@ -34,11 +34,11 @@ ConVar bot_forceattackon( "bot_forceattackon", "1", 0, "When firing, don't tap f
 ConVar bot_flipout( "bot_flipout", "0", 0, "When on, all bots fire their guns." );
 ConVar bot_defend( "bot_defend", "0", 0, "Set to a team number, and that team will all keep their combat shields raised." );
 ConVar bot_changeclass( "bot_changeclass", "0", 0, "Force all bots to change to the specified class." );
-ConVar bot_dontmove( "bot_dontmove", "1", FCVAR_CHEAT );
+ConVar bot_dontmove( "bot_dontmove", "1", 0, "Force bots to not move." );
 ConVar bot_saveme( "bot_saveme", "0", FCVAR_CHEAT );
 static ConVar bot_mimic( "bot_mimic", "0", 0, "Bot uses usercmd of player by index." );
 static ConVar bot_mimic_yaw_offset( "bot_mimic_yaw_offset", "0", 0, "Offsets the bot yaw." );
-ConVar bot_selectweaponslot( "bot_selectweaponslot", "-1", FCVAR_CHEAT, "set to weapon slot that bot should switch to." );
+ConVar bot_selectweaponslot( "bot_selectweaponslot", "-1", FCVAR_CHEAT, "Set to weapon slot that bot should switch to." );
 ConVar bot_randomnames( "bot_randomnames", "0", FCVAR_CHEAT );
 ConVar bot_jump( "bot_jump", "0", FCVAR_CHEAT, "Force all bots to repeatedly jump." );
 
@@ -151,10 +151,10 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 
 	// Look at -count.
 	int count = args.FindArgInt( "-count", 1 );
-	count = clamp( count, 1, 16 );
+	count = clamp( count, 1, 128 );
 
 	if (args.FindArg( "-all" ))
-		count = 9;
+		count = 128;
 
 	// Look at -frozen.
 	bool bFrozen = !!args.FindArg( "-frozen" );
@@ -245,6 +245,58 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 
 		// BotPutInServer( bFrozen, iTeam, iClass, pName );
 		BotPutInServer( bFrozen, iTeam, iClass, pName, m_vecPlayerColor );
+	}
+}
+
+// Handler for the bot_kick command
+CON_COMMAND_F( bot_kick, "Kick the specified bot(s).", 0 )
+{
+	CBasePlayer *pPlayer = NULL;
+
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{				
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+
+				CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+				engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pTFPlayer->GetUserID() ) );
+				pTFPlayer->m_flLastAction = gpGlobals->curtime;
+					
+			}
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}
+
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pTFPlayer->GetUserID() ) );
+		pTFPlayer->m_flLastAction = gpGlobals->curtime;
 	}
 }
 
@@ -412,7 +464,7 @@ void Bot_Think( CTFPlayer *pBot )
 		// Stop when shot
 		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) )
 		{
-			if ( pBot->m_iHealth == 100 )
+			if ( !bot_dontmove.GetBool() )
 			{
 				forwardmove = 600 * ( botdata->backwards ? -1 : 1 );
 				if ( botdata->sidemove != 0.0f )
@@ -432,7 +484,7 @@ void Bot_Think( CTFPlayer *pBot )
 		}
 
 		// Only turn if I haven't been hurt
-		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) && pBot->m_iHealth == 100 )
+		if ( !pBot->IsEFlagSet(EFL_BOT_FROZEN) && !bot_dontmove.GetBool() )
 		{
 			Vector vecEnd;
 			Vector forward;
@@ -678,13 +730,6 @@ void cc_bot_sendcommand( const CCommand &args )
 		return;
 	}
 
-	// get the bot's player object
-	CBasePlayer *pPlayer = UTIL_PlayerByName( args[1] );
-	if ( !pPlayer )
-	{
-		Msg( "No bot with name %s\n", args[1] );
-		return;
-	}	
 	const char *commandline = args.GetCommandString();
 
 	// find the rest of the command line past the bot index
@@ -704,8 +749,49 @@ void cc_bot_sendcommand( const CCommand &args )
 	CCommand command;
 	command.Tokenize( pBuf );
 
-	// send the command
-	TFGameRules()->ClientCommand( pPlayer, command );
+	CBasePlayer *pPlayer = NULL;
+
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+			}
+
+			// send the command
+			TFGameRules()->ClientCommand( pPlayer, command );
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}	
+
+		// send the command
+		TFGameRules()->ClientCommand( pPlayer, command );
+
+	}
 }
 static ConCommand bot_sendcommand( "bot_command", cc_bot_sendcommand, "<bot id> <command string...>.  Sends specified command on behalf of specified bot", FCVAR_CHEAT );
 
@@ -714,11 +800,45 @@ static ConCommand bot_sendcommand( "bot_command", cc_bot_sendcommand, "<bot id> 
 //------------------------------------------------------------------------------
 void cc_bot_kill( const CCommand &args )
 {
-	// get the bot's player object
-	CBasePlayer *pPlayer = UTIL_PlayerByName( args[1] );
+	CBasePlayer *pPlayer = NULL;
 
-	if ( pPlayer )
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
 	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{				
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+
+				pPlayer->CommitSuicide();
+					
+			}
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}
+
 		pPlayer->CommitSuicide();
 	}
 }
@@ -771,18 +891,54 @@ CON_COMMAND_F( bot_whack, "Deliver lethal damage from player to specified bot", 
 		return;
 	}
 	
-	// get the bot's player object
-	CBasePlayer *pBot = UTIL_PlayerByName( args[1] );
-	if ( !pBot )
-	{
-		Msg( "No bot with name %s\n", args[1] );
-		return;
-	}
+	CBasePlayer *pPlayer = NULL;
 
 	CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( 1 ) );
-	CTakeDamageInfo info( pBot, pTFPlayer, 1000, DMG_BULLET );
-	info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
-	pBot->TakeDamage( info );	
+
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{				
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+
+				CTakeDamageInfo info( pPlayer, pTFPlayer, 1000, DMG_BULLET );
+				info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
+				pPlayer->TakeDamage( info );	
+					
+			}
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}
+
+		CTakeDamageInfo info( pPlayer, pTFPlayer, 1000, DMG_BULLET );
+		info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
+		pPlayer->TakeDamage( info );	
+	}
+
 }
 
 CON_COMMAND_F( bot_teleport, "Teleport the specified bot to the specified position & angles.\n\tFormat: bot_teleport <bot name> <X> <Y> <Z> <Pitch> <Yaw> <Roll>", FCVAR_CHEAT )
@@ -793,15 +949,49 @@ CON_COMMAND_F( bot_teleport, "Teleport the specified bot to the specified positi
 		return;
 	}
 
-	// get the bot's player object
-	CBasePlayer *pBot = UTIL_PlayerByName( args[1] );
-	if ( !pBot )
-	{
-		Msg( "No bot with name %s\n", args[1] );
-		return;
-	}
+	CBasePlayer *pPlayer = NULL;
 
-	Vector vecPos( atof(args[2]), atof(args[3]), atof(args[4]) );
-	QAngle vecAng( atof(args[5]), atof(args[6]), atof(args[7]) );
-	pBot->Teleport( &vecPos, &vecAng, NULL );
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{				
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+
+				Vector vecPos( atof(args[2]), atof(args[3]), atof(args[4]) );
+				QAngle vecAng( atof(args[5]), atof(args[6]), atof(args[7]) );
+				pPlayer->Teleport( &vecPos, &vecAng, NULL );
+					
+			}
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}
+
+		Vector vecPos( atof(args[2]), atof(args[3]), atof(args[4]) );
+		QAngle vecAng( atof(args[5]), atof(args[6]), atof(args[7]) );
+		pPlayer->Teleport( &vecPos, &vecAng, NULL );
+	}
 }

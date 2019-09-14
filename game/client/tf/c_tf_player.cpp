@@ -3109,14 +3109,10 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 		InitPhonemeMappings();
 	}
 
-	if ( IsPlayerClass( TF_CLASS_SPY ) )
+	if ( m_hSpyMask )
 	{
-		m_iSpyMaskBodygroup = FindBodygroupByName( "spyMask" );
-	}
-	else
-	{
-		m_iSpyMaskBodygroup = -1;
-	}
+		m_hSpyMask->UpdateVisibility();
+	}	
 
 	m_bUpdatePlayerAttachments = true;
 
@@ -3149,7 +3145,7 @@ void C_TFPlayer::UpdatePartyHat( void )
 		}
 		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() ) // If we're the local player and not in third person, bail
 			return;
-		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
 												  // Model name, object it gets attached to, attachment name,
 		// C_PlayerAttachedModel::Create can return NULL!
 		if ( m_hPartyHat )
@@ -3165,6 +3161,46 @@ void C_TFPlayer::UpdatePartyHat( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Update the party hat players wear in birthday mode
+//-----------------------------------------------------------------------------
+void C_TFPlayer::UpdateSpyMask( void )
+{
+	C_PlayerAttachedModel *pMask = m_hSpyMask.Get();
+
+	if ( m_Shared.InCond( TF_COND_DISGUISED ) )
+	{
+		if ( !pMask )
+		{
+			pMask = C_PlayerAttachedModel::Create( "models/player/spy_mask.mdl", this, LookupAttachment( "partyhat" ), vec3_origin, PAM_PERMANENT, 0, true );
+
+			if ( !pMask )
+			{
+				pMask->Release();
+
+				return;
+			}
+
+			pMask->SetOwnerEntity( this );
+			pMask->FollowEntity( this );
+
+			// this might cause some bugs...
+			pMask->UpdateVisibility();
+
+			m_hSpyMask = pMask;
+		}
+	}
+	else if ( pMask )
+	{
+		pMask->Release();
+
+		// nuke from orbit
+		m_hSpyMask = NULL;
+	}
+}
+
+
+
+//-----------------------------------------------------------------------------
 // Purpose: Update the hats you're wearing
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateWearables( void )
@@ -3177,7 +3213,7 @@ void C_TFPlayer::UpdateWearables( void )
 		
 		if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
 		{
-			m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+			m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
 		}
 		
 		if ( m_hCosmetic[i] )
@@ -3203,7 +3239,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 			m_hShieldEffect->Release();
 		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
 		{
-			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0 );
+			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
 			if ( m_hShieldEffect )
 			{
 				int iVisibleTeam = GetTeamNumber();
@@ -3418,6 +3454,17 @@ void C_TFPlayer::ClientThink()
 	m_hHealer = NULL;
 
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && pLocalPlayer->GetTeamNumber() == GetTeamNumber() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
+	{
+		m_bGlowEnabled = true;
+		UpdateGlowEffect();
+	}
+	else
+	{
+		m_bGlowEnabled = false;
+		DestroyGlowEffect();
+	}
 
 	// Ugh, this check is getting ugly
 
@@ -4625,10 +4672,6 @@ int C_TFPlayer::GetSkin()
 			break;
 		}
 	}
-	else if ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() )
-	{
-		nSkin += 6 + ( ( m_Shared.GetDisguiseClass() - TF_FIRST_NORMAL_CLASS ) * 2 );
-	}
 
 	return nSkin;
 }
@@ -5062,11 +5105,6 @@ void C_TFPlayer::ValidateModelIndex( void )
 			else
 				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
 		}
-	}
-
-	if ( m_iSpyMaskBodygroup > -1 && GetModelPtr() != NULL )
-	{
-		SetBodygroup( m_iSpyMaskBodygroup, ( m_Shared.InCond( TF_COND_DISGUISED ) && !IsEnemyPlayer() ) );
 	}
 
 	BaseClass::ValidateModelIndex();

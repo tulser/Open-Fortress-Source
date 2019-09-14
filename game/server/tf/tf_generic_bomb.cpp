@@ -107,8 +107,6 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 {
 	SetSolid( SOLID_NONE ); 
 
-	CPVSFilter filter( GetAbsOrigin() );
-
 	// grenade_ar2.cpp
 	trace_t	tr;
 	Vector vecForward = GetAbsVelocity();
@@ -117,8 +115,10 @@ void CTFGenericBomb::Event_Killed( const CTakeDamageInfo &info )
 		this, COLLISION_GROUP_NONE, &tr);
 
 	if ( STRING( m_strExplodeParticleName ) )
-		// 	CPVSFilter filter( GetAbsOrigin() );
+	{
+		CPVSFilter filter( GetAbsOrigin() );
 		TE_TFParticleEffect( filter, 0.0f, STRING( m_strExplodeParticleName ), GetAbsOrigin(), GetAbsAngles(), NULL, PATTACH_CUSTOMORIGIN );
+	}
 
 	if ( STRING( m_strExplodeSoundName ) )
 		EmitSound( STRING( m_strExplodeSoundName ) );
@@ -156,8 +156,6 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 {
 	SetSolid( SOLID_NONE ); 
 
-	CPVSFilter filter( GetAbsOrigin() );
-
 	// grenade_ar2.cpp
 	trace_t	tr;
 	Vector vecForward = GetAbsVelocity();
@@ -166,8 +164,10 @@ void CTFGenericBomb::InputDetonate( inputdata_t &inputdata )
 		this, COLLISION_GROUP_NONE, &tr);
 
 	if ( STRING( m_strExplodeParticleName ) )
-		// 	CPVSFilter filter( GetAbsOrigin() );
+	{
+		CPVSFilter filter( GetAbsOrigin() );
 		TE_TFParticleEffect( filter, 0.0f, STRING( m_strExplodeParticleName ), GetAbsOrigin(), GetAbsAngles(), NULL, PATTACH_CUSTOMORIGIN );
+	}
 
 	if ( STRING( m_strExplodeSoundName ) )
 		EmitSound( STRING( m_strExplodeSoundName ) );
@@ -269,14 +269,14 @@ void CTFPumpkinBomb::Event_Killed( const CTakeDamageInfo &info )
 {
 	SetSolid( SOLID_NONE ); 
 
-	CPVSFilter filter( GetAbsOrigin() );
-
 	// grenade_ar2.cpp
 	trace_t	tr;
 	Vector vecForward = GetAbsVelocity();
 	VectorNormalize( vecForward );
 	UTIL_TraceLine ( WorldSpaceCenter(), WorldSpaceCenter() + 60*vecForward , MASK_SHOT, 
 		this, COLLISION_GROUP_NONE, &tr);
+
+	CPVSFilter filter( GetAbsOrigin() );
 
 	TE_TFParticleEffect( filter, 0.0f, "pumpkin_explode", GetAbsOrigin(), GetAbsAngles(), NULL, PATTACH_CUSTOMORIGIN );
 

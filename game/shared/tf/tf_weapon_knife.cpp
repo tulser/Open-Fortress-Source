@@ -20,11 +20,17 @@
 
 //=============================================================================
 //
-// Weapon Knife tables.
+// Weapon Bottle tables.
 //
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFKnife, DT_TFWeaponKnife )
 
 BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
+#if defined( CLIENT_DLL )
+	RecvPropBool( RECVINFO( m_bReady ) )
+#else
+	SendPropBool( SENDINFO( m_bReady ) )
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFKnife )
@@ -58,6 +64,31 @@ CTFKnife::CTFKnife()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFKnife::Deploy( void )
+{
+	if ( BaseClass::Deploy() )
+	{
+		m_bReady = false;
+
+		return true;
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFKnife::ItemPostFrame( void )
+{
+	KnifeThink();
+
+	BaseClass::ItemPostFrame();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Set stealth attack bool
 //-----------------------------------------------------------------------------
 void CTFKnife::PrimaryAttack( void )
@@ -79,7 +110,7 @@ void CTFKnife::PrimaryAttack( void )
 	if ( DoSwingTrace( trace ) == true )
 	{
 		// we will hit something with the attack
-		if (trace.m_pEnt && (trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC())) // npcs too!
+		if ( trace.m_pEnt && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) ) // npcs too!
 		{
 			CBaseCombatCharacter *pTarget = trace.m_pEnt->MyCombatCharacterPointer();
 
@@ -109,6 +140,8 @@ void CTFKnife::PrimaryAttack( void )
 			}
 		}
 	}
+
+	m_bReady = false;
 
 #ifndef CLIENT_DLL
 	pPlayer->RemoveInvisibility();
@@ -174,7 +207,7 @@ bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 
 	// Get the forward view vector of the target, ignore Z
 	Vector vecVictimForward;
-	// fuck
+
 	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
 	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, 0, 0 );
 	AngleVectors(pTarget->EyeAngles(), &vecVictimForward);
@@ -189,7 +222,7 @@ bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 
 	//float flDot = DotProduct( vecVictimForward, vecToTarget );
 
-	// it seems that despite adding lag compensation you can still somehow facestab (???)
+	// it seems that despite adding lag compensation you can still somehow facestab=
 	// checking if the attacker is facing the victim as a bandaid solution
 	Vector vecOwnerForward;
 
@@ -207,12 +240,80 @@ bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
 	if (flDotOwner > 0.5)
 		// test
 		//return (flDotVictim > 0.1);
-		// devmsg(i am having a bruh moment);
+
 		return (flDotVictim > -0.1);
 		
 	return false;
 
 	//	return ( flDot > -0.1 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFKnife::SendWeaponAnim( int iActivity )
+{
+	if ( iActivity == ACT_VM_IDLE && m_bReady )
+	{
+		// sniff
+		return BaseClass::SendWeaponAnim( ACT_BACKSTAB_VM_IDLE );
+	}
+
+	return BaseClass::SendWeaponAnim( iActivity );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFKnife::KnifeThink( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if ( !pPlayer )
+		return;
+
+	if ( GetActivity() == ACT_VM_IDLE || GetActivity() == ACT_BACKSTAB_VM_IDLE )
+	{
+		trace_t trace;
+		if ( DoSwingTrace( trace ) == true )
+		{
+			// we will hit something with the attack
+			if ( trace.m_pEnt && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) ) // npcs too!
+			{
+				CBaseCombatCharacter *pTarget = trace.m_pEnt->MyCombatCharacterPointer();
+
+				if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
+				{
+					// Deal extra damage to players when stabbing them from behind
+					if ( IsBehindTarget( trace.m_pEnt ) && !m_bReady )
+					{
+						m_bReady = true;
+
+						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+					}
+				}
+				else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+				{
+					// Deal extra damage to players when stabbing them from behind
+					if ( IsBehindTarget( trace.m_pEnt ) && !m_bReady )
+					{
+						m_bReady = true;
+
+						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+					}		
+				}
+				else
+				{
+					if ( m_bReady )
+					{
+						m_bReady = false;
+
+						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+					}		
+				}
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

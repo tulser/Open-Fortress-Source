@@ -159,6 +159,8 @@ public:
 	void CreateSaveMeEffect( void );
 	void CreateChattingEffect(void);
 
+	CGlowObject		   *m_pGlowEffect;
+
 	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
 
 	virtual bool	IsOverridingViewmodel( void );
@@ -284,6 +286,7 @@ public:
 	
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );
+	void UpdateSpyMask( void );
 	void UpdateWearables( void );
 	void UpdateGameplayAttachments( void );
 	
@@ -391,10 +394,11 @@ public:
 
 	int GetNumActivePipebombs( void );
 
-	int				m_iSpyMaskBodygroup;
+	//int				m_iSpyMaskBodygroup;
 
 	bool			m_bUpdatePlayerAttachments;
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
+	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
 	CHandle<C_PlayerAttachedModel>	m_hCosmetic[TF_WEARABLE_LAST];
 	

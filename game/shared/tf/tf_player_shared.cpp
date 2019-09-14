@@ -991,6 +991,7 @@ void CTFPlayerShared::OnAddDisguised( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::OnDisguiseChanged( void )
 {
+	m_pOuter->UpdateSpyMask();
 	// recalc disguise model index
 	RecalcDisguiseWeapon();
 }
@@ -1828,6 +1829,7 @@ bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
 		return true;
 	}
+
 	return false;
 	
 }

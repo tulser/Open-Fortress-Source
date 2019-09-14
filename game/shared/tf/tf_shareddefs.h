@@ -246,6 +246,7 @@ enum
 	TF_WPN_TYPE_BUILDING,
 	TF_WPN_TYPE_PDA,
 	TF_WPN_TYPE_WEARABLE,
+	TF_WPN_TYPE_MELEE_ALLCLASS,
 };
 
 extern const char *g_aAmmoNames[];

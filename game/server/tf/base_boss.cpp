@@ -68,13 +68,16 @@ void CTFBaseBoss::Spawn()
 
 	SetBloodColor( DONT_BLEED );
 
-	m_flFieldOfView		= 0.5; // indicates the width of this NPC's forward view cone ( as a dotproduct result )
+	m_flFieldOfView		= 0.0f; // indicates the width of this NPC's forward view cone ( as a dotproduct result )
 	m_NPCState			= NPC_STATE_SCRIPT;
 	
 	SetHullType( HULL_HUMAN );
 	SetHullSizeNormal();
 
 	NPCInit();
+
+	SetThink( NULL );
+	SetNextThink( -1 );
 
 	if ( m_startDisabled )
 	{

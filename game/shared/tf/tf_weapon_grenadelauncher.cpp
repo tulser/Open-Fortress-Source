@@ -61,8 +61,6 @@ BEGIN_DATADESC( CTFGrenadeLauncher )
 END_DATADESC()
 #endif
 
-#define TF_GRENADE_LAUNCER_MIN_VEL 1200
-
 //=============================================================================
 //
 // Weapon Grenade Launcher functions.

@@ -368,6 +368,13 @@ public:
 	int GetBodygroupCount( int iGroup );
 	int GetNumBodyGroups( void );
 
+#ifdef GLOWS_ENABLE
+	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
+	bool				m_bGlowEnabled;				// networked value
+	bool				m_bOldGlowEnabled;
+	CGlowObject			*m_pGlowEffect;
+#endif // GLOWS_ENABLE
+
 	class CBoneCache				*GetBoneCache( CStudioHdr *pStudioHdr );
 	void							SetHitboxSet( int setnum );
 	void							SetHitboxSetByName( const char *setname );
@@ -497,13 +504,6 @@ private:
 	void							UpdateRelevantInterpolatedVars();
 	void							AddBaseAnimatingInterpolatedVars();
 	void							RemoveBaseAnimatingInterpolatedVars();
-
-#ifdef GLOWS_ENABLE
-	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
-	bool				m_bGlowEnabled;				// networked value
-	bool				m_bOldGlowEnabled;
-	CGlowObject			*m_pGlowEffect;
-#endif // GLOWS_ENABLE
 
 public:
 	CRagdoll						*m_pRagdoll;
