@@ -1151,11 +1151,25 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 
 		if ( pWeapon == NULL )
 		{
-			if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+			if( !((CTFPlayer*)pBuilder)->IsRetroModeOn() )
 			{
-				DevMsg( "Tried to build something without a Construction PDA.\n" );
-				StopPlacement();
-				return false;
+				if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+				{
+
+					DevMsg( "Tried to build something without a Construction PDA.\n" );
+					StopPlacement();
+					return false;
+				}
+			}
+			else
+			{
+				if ( pData->m_aTFCBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+				{
+
+					DevMsg( "Tried to build something without a Construction PDA.\n" );
+					StopPlacement();
+					return false;
+				}				
 			}
 		}
 

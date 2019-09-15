@@ -260,7 +260,7 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 	
-	virtual const Vector &GetItemTintColor( void ) { return m_vecPlayerColor; }
+	virtual Vector GetItemTintColor( void ) { return m_vecPlayerColor; }
 
 protected:
 

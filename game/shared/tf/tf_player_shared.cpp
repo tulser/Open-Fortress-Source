@@ -130,6 +130,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCond ) ),
 	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
+	RecvPropBool( RECVINFO( m_bIsTopThree ) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
@@ -154,6 +155,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerCosmetics, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bGrapple, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -178,6 +180,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCosmetics ), TF_WEARABLE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -211,6 +214,7 @@ CTFPlayerShared::CTFPlayerShared()
 {
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
+	m_bIsTopThree = false,
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
 	m_bGrapple = false;
@@ -814,7 +818,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	{
 		bool bRemoveInvul = false;
 
-		if ( ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN ) && ( TFGameRules()->GetWinningTeam() != m_pOuter->GetTeamNumber() ) )
+		if ( ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN ) && ( TFGameRules()->GetWinningTeam() != m_pOuter->GetTeamNumber()  || ( ( TFGameRules()->GetWinningTeam() == TF_TEAM_MERCENARY && !IsTopThree() ) ) ) )
 		{
 			bRemoveInvul = true;
 		}
@@ -1831,7 +1835,6 @@ bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 	}
 
 	return false;
-	
 }
 
 #endif
@@ -2051,6 +2054,15 @@ bool CTFPlayerShared::IsLoser( void )
 	{
 		int iWinner = TFGameRules()->GetWinningTeam();
 
+		if ( iWinner == TF_TEAM_MERCENARY )
+		{
+			if( IsTopThree() )
+				return false;
+			else
+				return true;
+		}
+		
+		
 		//if ( iWinner == GetTeamNumber() )
 		if ( iWinner != TEAM_UNASSIGNED && iWinner != m_pOuter->GetTeamNumber() )
 		{
@@ -2062,6 +2074,16 @@ bool CTFPlayerShared::IsLoser( void )
 		}
 	}
 	return false;
+}
+
+bool CTFPlayerShared::IsTopThree( void )
+{
+	return m_bIsTopThree;
+}
+
+void CTFPlayerShared::SetTopThree( bool bTop3 )
+{
+	m_bIsTopThree = bTop3;
 }
 
 //-----------------------------------------------------------------------------
@@ -2590,7 +2612,14 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		
 		if ( iWinner != TEAM_UNASSIGNED )
 		{
-			if ( iWinner == GetTeamNumber() )
+			if ( iWinner == TF_TEAM_MERCENARY )
+			{
+				if ( m_Shared.IsTopThree() )
+					maxfbspeed *= 1.1f;
+				else
+					maxfbspeed *= 0.9f;
+			}
+			else if ( iWinner == GetTeamNumber() )
 			{
 				maxfbspeed *= 1.1f;
 			}
@@ -2659,10 +2688,12 @@ int CTFPlayer::CanBuild( int iObjectType )
 
 #ifndef CLIENT_DLL
 	CTFPlayerClass *pCls = GetPlayerClass();
-
-	if ( pCls && pCls->CanBuildObject( iObjectType ) == false )
+	if ( pCls )
 	{
-		return CB_CANNOT_BUILD;
+		if( !IsRetroModeOn() && pCls->CanBuildObject( iObjectType ) == false )
+			return CB_CANNOT_BUILD;
+		else if ( IsRetroModeOn() && pCls->CanBuildTFCObject( iObjectType ) == false )
+			return CB_CANNOT_BUILD;
 	}
 #endif
 

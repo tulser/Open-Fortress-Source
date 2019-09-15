@@ -43,6 +43,8 @@ extern color32 g_aTeamColors[TF_TEAM_COUNT];
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 #define CONTENTS_MERCENARYTEAM	CONTENTS_TEAM0
 
+const char *GetRPCMapImage( char m_szLatchedMapname[MAX_MAP_NAME], const char *pMapIcon );
+
 // Team roles
 enum 
 {

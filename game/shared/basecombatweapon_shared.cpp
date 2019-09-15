@@ -256,9 +256,14 @@ void CBaseCombatWeapon::Precache( void )
 #endif
 	m_iPrimaryAmmoType = m_iSecondaryAmmoType = -1;
 
+	ParseWeaponScript( false );
+}
+
+void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
+{
 	// Add this weapon to the weapon registry, and get our index into it
 	// Get weapon data from script file
-	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
+	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey(), bReParse ) )
 	{
 		// Get the ammo indexes for the ammo's specified in the data file
 		if ( GetWpnData().szAmmo1[0] )
@@ -317,7 +322,7 @@ void CBaseCombatWeapon::Precache( void )
 		// Couldn't read data file, remove myself
 		Warning( "Error reading weapon data file for: %s\n", GetClassname() );
 	//	Remove( );	//don't remove, this gets released soon!
-	}
+	}	
 }
 
 //-----------------------------------------------------------------------------

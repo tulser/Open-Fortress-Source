@@ -173,8 +173,11 @@ public:
 	void	StopHealing( CTFPlayer *pPlayer );
 	void	RecalculateInvuln( bool bInstantRemove = false );
 	int		FindHealerIndex( CTFPlayer *pPlayer );
+	
 	EHANDLE	GetFirstHealer();
 #endif
+	bool	IsTopThree();
+	virtual void SetTopThree( bool bTop3 );
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
 	void	Burn( CTFPlayer *pPlayer );
@@ -295,6 +298,8 @@ private:
 
 	CNetworkVar( int, m_nNumHealers );
 	CNetworkVar( int, m_iRespawnEffect );
+	
+	CNetworkVar( bool, m_bIsTopThree );
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 

@@ -267,7 +267,7 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameW
 //			false - if data load fails
 //-----------------------------------------------------------------------------
 
-bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )
+bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey, bool bReParse )
 {
 	if ( !phandle )
 	{
@@ -279,7 +279,7 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
 
-	if ( pFileInfo->bParsedScript )
+	if ( pFileInfo->bParsedScript && !bReParse )
 		return true;
 
 	char sz[128];

@@ -8,6 +8,8 @@
 #include "mp_shareddefs.h"
 #include "teamplayroundbased_gamerules.h"
 
+#include "tf_gamestats_shared.h"
+
 #ifdef CLIENT_DLL
 	#include "iclientmode.h"
 	#include <vgui_controls/AnimationController.h>
@@ -25,6 +27,7 @@
 	#include "team_control_point_master.h"
 	#include "team_train_watcher.h"
 	#include "serverbenchmark_base.h"
+	#include "tf_gamestats.h"
 
 #if defined( REPLAY_ENABLED )	
 	#include "replay/ireplaysystem.h"
@@ -2338,8 +2341,56 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
 			if ( !pPlayer )
 				continue;
-			if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
-				pPlayer->m_Shared.InCondCrit();
+			pPlayer->m_Shared.SetTopThree( false );
+			if ( m_iWinningTeam == TF_TEAM_MERCENARY && TFGameRules() )
+			{
+				// determine the 3 players on winning team who scored the most points this round
+
+				// build a vector of players & round scores
+				CUtlVector<PlayerRoundScore_t> vecPlayerScore;
+				int iPlayerIndex;
+				for( iPlayerIndex = 1 ; iPlayerIndex <= MAX_PLAYERS; iPlayerIndex++ )
+				{
+					CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( iPlayerIndex ) );
+					if ( !pTFPlayer || !pTFPlayer->IsConnected() )
+						continue;
+					// filter out spectators and, if not stalemate, all players not on winning team
+					int iPlayerTeam = pTFPlayer->GetTeamNumber();
+					if ( ( iPlayerTeam < FIRST_GAME_TEAM ) || ( m_iWinningTeam != TEAM_UNASSIGNED && ( m_iWinningTeam != iPlayerTeam ) ) )
+						continue;
+
+					int iRoundScore = 0, iTotalScore = 0;
+					PlayerStats_t *pStats = CTF_GameStats.FindPlayerStats( pTFPlayer );
+					if ( pStats )
+					{
+						iRoundScore = TFGameRules()->CalcPlayerScore( &pStats->statsCurrentRound );
+						iTotalScore = TFGameRules()->CalcPlayerScore( &pStats->statsAccumulated );
+					}
+					PlayerRoundScore_t &playerRoundScore = vecPlayerScore[vecPlayerScore.AddToTail()];
+					playerRoundScore.iPlayerIndex = iPlayerIndex;
+					playerRoundScore.iRoundScore = iRoundScore;
+					playerRoundScore.iTotalScore = iTotalScore;
+				}
+				// sort the players by round score
+				vecPlayerScore.Sort( TFGameRules()->PlayerRoundScoreSortFunc );
+
+				// set the top (up to) 3 players by round score in the event data
+				int numPlayers = min( 3, vecPlayerScore.Count() );
+				for ( int i = 0; i < numPlayers; i++ )
+				{
+					// only include players who have non-zero points this round; if we get to a player with 0 round points, stop
+					if ( 0 == vecPlayerScore[i].iRoundScore )
+						break;
+					CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( vecPlayerScore[i].iPlayerIndex ) );
+					if ( pPlayer )
+					{
+						pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED);
+						pPlayer->m_Shared.SetTopThree( true );
+					}						
+				}
+			}
+			else if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
+				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED);
 		}
 	}
 
@@ -2832,6 +2883,8 @@ void CTeamplayRoundBasedRules::RoundRespawn( void )
 		if ( pPlayer )
 		{
 			pPlayer->ResetPerRoundStats();
+			if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTDMGamemode() )
+				pPlayer->ResetFragCount();
 		}
 	}
 }
@@ -3315,6 +3368,13 @@ void CTeamplayRoundBasedRules::PlayStalemateSong( void )
 	{
 		BroadcastSound( i, GetStalemateSong( i ) );
 	}
+}
+const char* CTeamplayRoundBasedRules::WinSongName( int nTeam )
+{ 
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		return "Game.DMEnd"; 
+	else
+		return "Game.YourTeamWon"; 
 }
 
 bool CTeamplayRoundBasedRules::PlayThrottledAlert( int iTeam, const char *sound, float fDelayBeforeNext )

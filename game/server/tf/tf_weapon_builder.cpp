@@ -182,8 +182,8 @@ void CTFWeaponBuilder::ItemPostFrame( void )
 
 	// If we're building, and our team has lost, stop placing the object
 	if ( m_hObjectBeingBuilt.Get() && 
-		TFGameRules()->State_Get() == GR_STATE_TEAM_WIN && 
-		pOwner->GetTeamNumber() != TFGameRules()->GetWinningTeam() )
+		TFGameRules()->State_Get() == GR_STATE_TEAM_WIN && (
+		pOwner->GetTeamNumber() != TFGameRules()->GetWinningTeam() || ( ( TFGameRules()->GetWinningTeam() == TF_TEAM_MERCENARY && !pOwner->m_Shared.IsTopThree() ) ) ) )
 	{
 		StopPlacement();
 		return;

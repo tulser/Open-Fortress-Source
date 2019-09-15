@@ -32,7 +32,8 @@
 	#include "shareddefs.h"
 #endif
 
-ConVar	tf_maxspeed( "tf_maxspeed", "400", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar	tf_maxspeed( "tf_maxspeed", "720", FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar	mp_maxairspeed( "mp_maxairspeed", "30", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar	tf_showspeed( "tf_showspeed", "0", FCVAR_REPLICATED  );
 ConVar	tf_avoidteammates( "tf_avoidteammates", "1", FCVAR_REPLICATED | FCVAR_CHEAT  );
 ConVar  tf_solidobjects( "tf_solidobjects", "1", FCVAR_REPLICATED | FCVAR_CHEAT  );
@@ -45,6 +46,7 @@ ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCV
 #if defined (CLIENT_DLL)
 ConVar 	ofd_jumpsound( "ofd_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Hough", true, 0, true, 2 );
 #endif
+
 #define TF_MAX_SPEED   720
 
 #define TF_WATERJUMP_FORWARD  30
@@ -991,9 +993,9 @@ void CTFGameMovement::AirMove( void )
 
 float CTFGameMovement::GetAirSpeedCap( void )
 {
-	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) && mp_maxairspeed.GetFloat() < 720.0f)
 		return 750.0f;
-	return 30.0f;
+	return mp_maxairspeed.GetFloat();
 }
 
 extern void TracePlayerBBoxForGround( const Vector& start, const Vector& end, const Vector& minsSrc,

@@ -475,7 +475,7 @@ protected:
 	void PlaySuddenDeathSong( void );
 
 	virtual const char* GetStalemateSong( int nTeam ) { return "Game.Stalemate"; }
-	virtual const char* WinSongName( int nTeam ) { return "Game.YourTeamWon"; }
+	virtual const char* WinSongName( int nTeam );
 	virtual const char* LoseSongName( int nTeam ) { return "Game.YourTeamLost"; }
 	
 	virtual void RespawnTeam( int iTeam ) { RespawnPlayers( false, true, iTeam ); }

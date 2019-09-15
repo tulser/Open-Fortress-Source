@@ -245,7 +245,8 @@ public:
 	virtual bool	HasPassedMinRespawnTime( CBasePlayer *pPlayer );
 
 	bool			ShouldScorePerRound( void );
-
+	
+	static int		PlayerRoundScoreSortFunc( const PlayerRoundScore_t *pRoundScore1, const PlayerRoundScore_t *pRoundScore2 );
 protected:
 	virtual void	InitTeams( void );
 
@@ -253,7 +254,6 @@ protected:
 
 	virtual void	InternalHandleTeamWin( int iWinningTeam );
 	
-	static int		PlayerRoundScoreSortFunc( const PlayerRoundScore_t *pRoundScore1, const PlayerRoundScore_t *pRoundScore2 );
 
 	virtual void FillOutTeamplayRoundWinEvent( IGameEvent *event );
 

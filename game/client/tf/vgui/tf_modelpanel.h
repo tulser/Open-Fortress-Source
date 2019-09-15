@@ -27,9 +27,14 @@ class CModelPanelModel : public C_BaseFlex
 public:
 	CModelPanelModel(){}
 	DECLARE_CLASS( CModelPanelModel, C_BaseFlex );
-	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
-	virtual const Vector	&GetItemTintColor( void ) { return color; }	
+	virtual const Vector	&GetItemTintColor( void ) 
+	{ 
+		return m_vecModelColor; 
+	}	
+	virtual void SetModelColor( const Vector &vecColor ) { m_vecModelColor = vecColor; DevMsg("Colored TFModel\n"); }
 	virtual bool IsMenuModel() const{ return true; }
+private:
+	Vector m_vecModelColor;
 };
 
 //-----------------------------------------------------------------------------
@@ -94,9 +99,6 @@ public:
 			m_pszModelName = NULL;
 		}
 	}
-	
-	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
-	virtual const Vector	&GetItemTintColor( void ) { return color; }		
 
 public:
 	const char	*m_pszModelName;
@@ -142,8 +144,6 @@ public:
 		m_Animations.PurgeAndDeleteElements();
 		m_AttachedModelsInfo.PurgeAndDeleteElements();
 	}
-	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
-	virtual const Vector	&GetItemTintColor( void ) { return color; }	
 public:
 	const char	*m_pszModelName;
 	const char	*m_pszModelName_HWM;
@@ -180,8 +180,6 @@ public:
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
 
 	void	SetDefaultAnimation( const char *pszName );
-	Vector 	color = ( ofd_color_r.GetFloat(),ofd_color_g.GetFloat(),ofd_color_b.GetFloat() );
-	virtual const Vector	&GetItemTintColor( void ) { return color; }	
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event );
 protected:

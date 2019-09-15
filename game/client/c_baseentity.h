@@ -1692,7 +1692,7 @@ protected:
 	CThreadFastMutex m_CalcAbsoluteVelocityMutex;
 	
 public:
-	virtual const Vector	&GetItemTintColor( void ) { return vec3_origin; }
+	virtual Vector GetItemTintColor( void ) { return vec3_origin; }
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwnerEntity(); }
 	
 #ifdef TF_CLIENT_DLL

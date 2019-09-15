@@ -53,6 +53,7 @@ struct TFPlayerClassData_t
 	char		m_szTFCModelName[TF_NAME_LENGTH];
 	char		m_szTFCArmModelName[TF_NAME_LENGTH];
 	int			m_aTFCWeapons[TF_PLAYER_WEAPON_COUNT];
+	int			m_aTFCBuildable[TF_PLAYER_BUILDABLE_COUNT];
 
 	int			m_nCapNumber;
 	int			m_nMaxAirDashCount;
@@ -152,6 +153,7 @@ public:
 
 	// If needed, put this into playerclass scripts
 	bool CanBuildObject( int iObjectType );
+	bool CanBuildTFCObject( int iObjectType );
 
 protected:
 

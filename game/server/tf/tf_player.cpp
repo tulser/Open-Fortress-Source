@@ -703,7 +703,7 @@ void CTFPlayer::PostThink()
 
 	// check if our guy is chatting for the particle
 	m_bChatting = (m_nButtons & IN_TYPING) != 0;
-
+	
 	ProcessSceneEvents();
 
 	QAngle angles = GetLocalAngles();
@@ -1377,7 +1377,7 @@ void CTFPlayer::GiveDefaultItems()
 	{
 		case TF_CLASS_ENGINEER:
 		case TF_CLASS_SPY:
-			ManageBuilderWeapons( pData );
+			IsRetroModeOn() ? ManageTFCBuilderWeapons( pData ) : ManageBuilderWeapons( pData );
 			break;
 	}
 }
@@ -1521,16 +1521,27 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch )
 	    if ( pData->m_aBuildable[0] != OBJ_LAST )
 	    {
 	    	CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
+			// Give the player a new builder weapon when they switch between engy and spy
+			if ( IsRetroModeOn() )
+			{
+				if ( pBuilder && !GetPlayerClass()->CanBuildTFCObject( pBuilder->GetSubType() ) && bSwitch )
+				{
+					Weapon_Detach( pBuilder );
+					UTIL_Remove( pBuilder );
         
-	    	// Give the player a new builder weapon when they switch between engy and spy
-	    	if ( pBuilder && !GetPlayerClass()->CanBuildObject( pBuilder->GetSubType() ) && bSwitch )
-	    	{
-	    		Weapon_Detach( pBuilder );
-	    		UTIL_Remove( pBuilder );
+					pBuilder = NULL;
+				}				
+			}
+			else
+			{
+				if ( pBuilder && !GetPlayerClass()->CanBuildObject( pBuilder->GetSubType() ) && bSwitch )
+				{
+					Weapon_Detach( pBuilder );
+					UTIL_Remove( pBuilder );
         
-	    		pBuilder = NULL;
+					pBuilder = NULL;
+				}
 	    	}
-	    	
 	    	if ( pBuilder )
 	    	{
 	    		pBuilder->GiveDefaultAmmo();
@@ -1577,6 +1588,95 @@ void CTFPlayer::ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch )
 		}
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageTFCBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch )
+{
+	if ( m_hActiveWeapon )
+	{
+	    int active = m_hActiveWeapon.Get()->GetSlot();
+	    int last = m_hActiveWeapon.Get()->GetSlot();
+	    if (GetLastWeapon())
+		{
+			CTFWeaponBase *pLastWeapon = (CTFWeaponBase *)GetLastWeapon();
+			if ( pLastWeapon && pLastWeapon->GetWeaponID() == TF_WEAPON_INVIS )
+				last = 1;
+			else
+				last = GetLastWeapon()->GetSlot();
+		}
+	    if ( pData->m_aTFCBuildable[0] != OBJ_LAST )
+	    {
+	    	CTFWeaponBase *pBuilder = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
+			// Give the player a new builder weapon when they switch between engy and spy
+			if ( IsRetroModeOn() )
+			{
+				if ( pBuilder && !GetPlayerClass()->CanBuildTFCObject( pBuilder->GetSubType() ) && bSwitch )
+				{
+					Weapon_Detach( pBuilder );
+					UTIL_Remove( pBuilder );
+        
+					pBuilder = NULL;
+				}				
+			}
+			else
+			{
+				if ( pBuilder && !GetPlayerClass()->CanBuildObject( pBuilder->GetSubType() ) && bSwitch )
+				{
+					Weapon_Detach( pBuilder );
+					UTIL_Remove( pBuilder );
+        
+					pBuilder = NULL;
+				}
+	    	}
+	    	if ( pBuilder )
+	    	{
+	    		pBuilder->GiveDefaultAmmo();
+	    		pBuilder->ChangeTeam( GetTeamNumber() );
+        
+	    		if ( m_bRegenerating == false )
+	    		{
+	    			pBuilder->WeaponReset();
+	    		}
+	    	}
+	    	else
+	    	{
+	    		pBuilder = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_builder" );
+        
+	    		if ( pBuilder )
+	    		{
+	    			pBuilder->SetSubType( pData->m_aTFCBuildable[0] );
+	    			pBuilder->DefaultTouch( this );
+	    			if ( pData->m_aTFCBuildable[0] == OBJ_ATTACHMENT_SAPPER)
+	    				last = 1;
+	    		}
+	    	}
+        
+	    	if ( pBuilder )
+	    	{
+	    		pBuilder->m_nSkin = GetTeamNumber() - 2;	// color the w_model to the team
+	    	}
+	    }
+	    else
+	    {
+	    	//Not supposed to be holding a builder, nuke it from orbit
+	    	CTFWeaponBase *pWpn = Weapon_OwnsThisID( TF_WEAPON_BUILDER );
+        
+	    	if ( pWpn == NULL )
+	    		return;
+        
+	    	Weapon_Detach( pWpn );
+	    	UTIL_Remove( pWpn );
+	    }
+		if ( bSwitch )
+		{
+			Weapon_Switch( Weapon_GetSlot( active ) );
+			Weapon_SetLast( Weapon_GetSlot( last ) );
+		}
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -2139,7 +2239,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 									CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
 									ent->TakeDamage( info );
 								}
-							}	
+							}
 						}
 					}
 
@@ -2285,7 +2385,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
 						ent->TakeDamage( info );
 					}
-				}	
+			}	
 			}
 		}
 
@@ -2680,7 +2780,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 			do
 			{
 				// Don't let them be the same class twice in a row
-				iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+				iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL-1 );
 				} while( iClass == GetPlayerClass()->GetClassIndex() ||  // don't select the same class
 				( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
 				|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off
@@ -2776,7 +2876,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		// The player has selected Random class...so let's pick one for them.
 		do{
 			// Don't let them be the same class twice in a row
-			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL-1 );
 		} while( iClass == GetPlayerClass()->GetClassIndex() ||  // don't select the same class
 		( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
 		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off
@@ -3480,16 +3580,17 @@ void CTFPlayer::StartBuildingObjectOfType( int iType )
 	TFPlayerClassData_t *pData = ( (CTFPlayer* )pTargetPlayer )->GetPlayerClass()->GetData();
 
 	CTFWeaponBase *pWeapon = ( (CTFPlayer*)pTargetPlayer )->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
-
+	
+	int Buildable = IsRetroModeOn() ? pData->m_aTFCBuildable[0] : pData->m_aBuildable[0];
 	if ( pWeapon == NULL )
 	{
-		if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
+		if ( Buildable != OBJ_ATTACHMENT_SAPPER )
 		{
 			DevMsg( "Tried to build something without a Construction PDA.\n" );
 			StopPlacement();
 			return;
 		}
-		else if ( pData->m_aBuildable[0] == OBJ_ATTACHMENT_SAPPER && iType != 3 )
+		else if ( Buildable == OBJ_ATTACHMENT_SAPPER && iType != 3 )
 		{
 			DevMsg( "Tried to build something without a Construction PDA.\n" );
 			StopPlacement();
@@ -4366,7 +4467,7 @@ void CTFPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= fals
 
 	// Don't suicide during the "bonus time" if we're not on the winning team
 	if ( !bForce && TFGameRules()->State_Get() == GR_STATE_TEAM_WIN && 
-		 GetTeamNumber() != TFGameRules()->GetWinningTeam() )
+		( ( GetTeamNumber() != TFGameRules()->GetWinningTeam() ) || ( TFGameRules()->GetWinningTeam() == TF_TEAM_MERCENARY && !m_Shared.IsTopThree() ) ) )
 	{
 		return;
 	}
@@ -5285,6 +5386,19 @@ void CC_DropWeapon( void )
 }
 static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
 
+void ReParseActiveWeapon( void )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+	if ( !pPlayer )
+		return;
+	
+	if( !pPlayer->m_Shared.GetActiveTFWeapon() )
+		return;
+		
+	pPlayer->m_Shared.GetActiveTFWeapon()->ParseWeaponScript( true );
+}
+static ConCommand schema_reload_active_weapon( "schema_reload_active_weapon", ReParseActiveWeapon, "Re-Parses Your current weapon", FCVAR_CHEAT );
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 CON_COMMAND( buy, "Buy weapon.\n\tArguments: <item_name>" )
@@ -5608,8 +5722,6 @@ void CTFPlayer::UpdateModel( void )
 		SetModel( GetPlayerClass()->GetTFCModelName() );
 	else
 		SetModel( GetPlayerClass()->GetModelName() );
-
-	m_PlayerAnimState->OnNewModel();
 }
 
 

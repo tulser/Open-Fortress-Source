@@ -168,7 +168,7 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 		// We do this check so that the bots dont spawn as classes they Shouldnt
 		do{
 			// Don't let them be the same class twice in a row
-			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
+			iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL-1 );
 		} while( ( iClass == TF_CLASS_CIVILIAN && TFGameRules() && TFGameRules()->IsESCGamemode() && !of_allow_special_classes.GetBool() ) // Dont select the civ if its Escort and special classes are off
 		|| ( GetPlayerClassData( iClass )->m_bSpecialClass == 1 && !of_allow_special_classes.GetBool() ) ); // Dont allow special classes if they're off		
 
@@ -354,8 +354,6 @@ CON_COMMAND_F( bot_taunt, "Force specified bot(s) to taunt", FCVAR_CHEAT )
 			pTFPlayer->Taunt();
 	}
 }
-
-
 
 
 //-----------------------------------------------------------------------------
@@ -996,7 +994,7 @@ CON_COMMAND_F( bot_whack, "Deliver lethal damage from player to specified bot", 
 			CTakeDamageInfo info( pPlayer, pTFPlayer, 1000, DMG_BULLET );
 			info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
 			pPlayer->TakeDamage( info );	
-		}
+		}	
 	}
 
 }

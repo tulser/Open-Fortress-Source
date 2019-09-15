@@ -18,9 +18,8 @@
 #include "KeyValues.h"
 
 class C_SceneEntity;
-extern ConVar ofd_color_r;
-extern ConVar ofd_color_g;
-extern ConVar ofd_color_b;
+
+extern ConVar ColorTest;
 
 class CModelPanelModel : public C_BaseFlex
 {
@@ -30,17 +29,18 @@ public:
 
 	virtual bool IsMenuModel() const{ return true; }
 	
-	Vector 	bruh;
-	virtual const Vector	&GetItemTintColor( void ) 
-	{ 
-		bruh.x = ofd_color_r.GetFloat()/255.0f ;
-		bruh.y = ofd_color_g.GetFloat()/255.0f;
-		bruh.z = ofd_color_b.GetFloat()/255.0f;
-		return bruh; 
+	float red, green, blue;
+	
+	virtual Vector GetItemTintColor( void ) 
+	{
+		Vector m_vecModelColor;
+		m_vecModelColor.x = red;
+		m_vecModelColor.y = green;
+		m_vecModelColor.z = blue;	
+		return m_vecModelColor; 
 	}	
-	void SetModelColor( const Vector &vecColor ) { m_vecModelColor = vecColor; }
-private:
-	Vector m_vecModelColor;
+	virtual void SetModelColor( Vector vecColor ) { red = vecColor.x; green = vecColor.y; blue = vecColor.z; }
+	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return this; }
 };
 
 //-----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ public:
 	CModelPanelAttachedModelInfo()
 	{
 		m_pszModelName = NULL;
-		m_nSkin = 0;
+		m_nSkin = -1;
 	}
 
 	~CModelPanelAttachedModelInfo()
@@ -199,7 +199,7 @@ public:
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
 
 	void	SetDefaultAnimation( const char *pszName );
-	void	SwapModel( const char *pszName, const char *pszAttached = NULL );
+	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
 
 	virtual void ParseModelInfo( KeyValues *inResourceData );
 
@@ -209,6 +209,8 @@ public:
 	void		ZoomToFrameDistance( void );
 
 	void		UpdateModel();
+	virtual void		SetModelColor( Vector vecColor );
+	Vector ModelColor;
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event );
 

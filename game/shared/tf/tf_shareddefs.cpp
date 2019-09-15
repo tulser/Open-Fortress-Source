@@ -9,9 +9,31 @@
 #include "KeyValues.h"
 #include "takedamageinfo.h"
 #include "tf_gamerules.h"
-
+#ifdef CLIENT_DLL
+#include "c_tf_player.h"
+#include "filesystem.h"
+#endif
 extern ConVar of_infiniteammo;
 ConVar sv_unlockedchapters( "sv_unlockedchapters", "99" );
+
+#ifdef CLIENT_DLL
+const char *GetRPCMapImage( char m_szLatchedMapname[MAX_MAP_NAME], const char *pMapIcon )
+{
+	KeyValues* pDiscordRPC = new KeyValues( "Discord" );
+	pDiscordRPC->LoadFromFile( filesystem, "scripts/discord_rpc.txt" );
+	if ( pDiscordRPC )
+	{				
+		KeyValues *pMaps = pDiscordRPC->FindKey( "Maps" );
+		if( pMaps )
+		{
+				return pMaps->GetString( m_szLatchedMapname, pMapIcon );
+		}
+		pMaps->deleteThis();
+		pDiscordRPC->deleteThis();
+	}
+	return "missing";
+}
+#endif
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------

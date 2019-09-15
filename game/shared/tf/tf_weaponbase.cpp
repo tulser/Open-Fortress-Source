@@ -755,10 +755,6 @@ void CTFWeaponBase::CalcIsAttackCritical( void )
 	if ( pPlayer->m_Shared.InCond( TF_COND_CRITBOOSTED ) )
 	{
 		m_bCurrentAttackIsCrit = true;
-	}	
-	else if ( ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN ) && ( TFGameRules()->GetWinningTeam() == pPlayer->GetTeamNumber() ) )
-	{
-		m_bCurrentAttackIsCrit = true;
 	}
 	else
 	{
@@ -1295,6 +1291,9 @@ void CTFWeaponBase::ItemPostFrame( void )
 	if ( m_bLowered )
 		return;
 
+	if ( pOwner->m_Shared.IsLoser() )
+		Lower();
+	
 	// Call the base item post frame.
 
 	//Track the duration of the fire

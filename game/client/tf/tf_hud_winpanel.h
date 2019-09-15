@@ -16,6 +16,7 @@
 #include <vgui/IScheme.h>
 #include "hud.h"
 #include "hudelement.h"
+#include "basemodelpanel.h"
 
 using namespace vgui;
 
@@ -51,6 +52,41 @@ private:
 	int		m_iMercenaryTeamScore;
 
 	bool	m_bShouldBeVisible;
+};
+
+class CTFWinPanelDM : public EditablePanel, public CHudElement
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFWinPanelDM, EditablePanel );
+
+public:
+	CTFWinPanelDM( const char *pElementName );
+
+	virtual void Reset();
+	virtual void Init();
+	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
+	virtual void ApplySettings( KeyValues *inResourceData );
+	virtual void FireGameEvent( IGameEvent * event );
+	virtual void OnThink();
+	virtual bool ShouldDraw( void );
+	virtual void SetVisible( bool state );
+	virtual void OnCommand( const char *command );
+
+	virtual int GetRenderGroupPriority() { return 70; }
+
+private:
+	EditablePanel *m_pTeamScorePanel;
+
+	float	m_flTimeUpdateTeamScore;
+	int		m_iBlueTeamScore;
+	int		m_iRedTeamScore;
+	int		m_iMercenaryTeamScore;
+
+	bool	m_bShouldBeVisible;
+	
+	CModelPanel *m_pPlayer1Model;
+	CModelPanel *m_pPlayer2Model;
+	CModelPanel *m_pPlayer3Model;
 };
 
 #endif //TFWINPANEL_H

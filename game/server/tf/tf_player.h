@@ -434,6 +434,7 @@ public:
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
+	void				ManageTFCBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.

@@ -57,6 +57,7 @@
 	#include "pathtrack.h"
 	#include "entitylist.h"
 	#include "trigger_area_capture.h"
+	
 	#include "ai_basenpc.h"
 	#include "ai_dynamiclink.h"
 	#include "nav_mesh.h"
@@ -2334,9 +2335,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					else
 					{
 						// check if any player is over the frag limit
-						// and creates a game event for achivement shit because why not
-						//i allready want to die
-						//-Nbc66
 						for (int i = 1; i <= gpGlobals->maxClients; i++)
 						{
 							CBasePlayer *pPlayer = UTIL_PlayerByIndex(i);
@@ -2350,26 +2348,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 							}					
 							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
 							{
-								IGameEvent *mEvent = gameeventmanager->CreateEvent( "teamplay_round_win" );						
-								IGameEvent *event = gameeventmanager->CreateEvent( "death_match_end" );
-
-								//check if the event has been triggerd
-								if( event )
-								{
-									//sets the team to team mercenary
-									mEvent->SetString("team", pPlayer->GetTeam()->GetName());
-									FillOutTeamplayRoundWinEvent( event );
-									gameeventmanager->FireEvent( event );
-#ifdef _DEBUG
-									DevMsg("TRIGGERD EVENT\n");
-#endif
-								}
-								//fire the event and go straight to Intermission
-								//-Nbc66
-								gameeventmanager->FireEvent(mEvent);
 //								SendTeamScoresEvent();
-//								SetWinningTeam( TEAM_UNASSIGNED, WINREASON_POINTLIMIT, true );
-								GoToIntermission();
+								SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+//								GoToIntermission();
 							}
 						}
 					}
@@ -3504,7 +3485,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	if ( strncmp( killer_weapon_name, "tf_projectile_", proj ) == 0 )
 	{
 		CTFGrenadePipebombProjectile *pGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>(pInflictor);
-		if ( pGrenade )
+		if ( pGrenade ) 
 		{
 			if ( pGrenade->GetLauncher() )
 				killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
@@ -3530,7 +3511,6 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = "obj_sentrygun";
 	}
-	DevMsg("%s \n", killer_weapon_name);
 	return killer_weapon_name;
 }
 
@@ -4454,6 +4434,8 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 					( pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT ) +
 					( pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN ) +
 					( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE );
+	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		iScore = ( pRoundStats->m_iStat[TFSTAT_KILLS] * TF_SCORE_KILL );
 	return max( iScore, 0 );
 }
 

@@ -114,6 +114,11 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	{
 		m_aTFCWeapons[iTFCWeapon] = TF_WEAPON_NONE;
 	}
+	
+	for (int iTFCBuildable = 0; iTFCBuildable < TF_PLAYER_BUILDABLE_COUNT; ++iTFCBuildable)
+	{
+		m_aTFCBuildable[iTFCBuildable] = OBJ_LAST;
+	}	
 
 	m_bParsed = false;
 }
@@ -258,6 +263,13 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 		Q_snprintf( bup, sizeof(bup), "tfc_weapon%d", j+1 );
 		m_aTFCWeapons[j] = GetWeaponId( pKeyValuesData->GetString( bup ) );
 	}
+	
+	// Buildables
+	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
+	{
+		Q_snprintf( buf, sizeof(buf), "tfc_buildable%d", i+1 );		
+		m_aTFCBuildable[i] = GetBuildableId( pKeyValuesData->GetString( buf ) );		
+	}	
 	
 	m_flTFCMaxSpeed = pKeyValuesData->GetFloat( "tfc_speed_max" );
 	m_nTFCMaxHealth = pKeyValuesData->GetInt( "tfc_health_max" );
@@ -406,6 +418,26 @@ bool CTFPlayerClassShared::CanBuildObject( int iObjectType )
 	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
 	{
 		if ( iObjectType == pData->m_aBuildable[i] )
+		{
+			bFound = true;
+			break;
+		}
+	}
+
+	return bFound;
+}
+
+// If needed, put this into playerclass scripts
+bool CTFPlayerClassShared::CanBuildTFCObject( int iObjectType )
+{
+	bool bFound = false;
+
+	TFPlayerClassData_t  *pData = GetData();
+
+	int i;
+	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
+	{
+		if ( iObjectType == pData->m_aTFCBuildable[i] )
 		{
 			bFound = true;
 			break;

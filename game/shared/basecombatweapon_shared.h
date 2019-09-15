@@ -194,6 +194,7 @@ public:
 
 	virtual void			Spawn( void );
 	virtual void			Precache( void );
+	virtual void			ParseWeaponScript( bool bReParse );
 
 	void					MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 

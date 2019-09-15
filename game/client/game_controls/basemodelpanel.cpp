@@ -39,6 +39,8 @@ using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CModelPanel );
 
+ConVar ColorTest ("ColorTest", "0", FCVAR_ARCHIVE );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -133,7 +135,6 @@ void CModelPanel::ParseModelInfo( KeyValues *inResourceData )
 			{
 				pAttachedModelInfo->m_pszModelName = ReadAndAllocStringValue( pData, "modelname" );
 				pAttachedModelInfo->m_nSkin = pData->GetInt( "skin", -1 );
-
 				m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
 			}
 		}
@@ -215,7 +216,7 @@ void CModelPanel::SetDefaultAnimation( const char *pszName )
 //-----------------------------------------------------------------------------
 // Purpose: Replaces the current model with a new one, without changing the camera settings
 //-----------------------------------------------------------------------------
-void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
+void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const char *pszVCD )
 {
 	if ( !m_pModelInfo || !pszName || !pszName[0] )
 		return;
@@ -225,7 +226,15 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
 	Assert( pAlloced );
 	Q_strncpy( pAlloced, pszName, len );
 	m_pModelInfo->m_pszModelName = pAlloced;
-
+	
+	if ( pszVCD )
+	{
+		len = Q_strlen( pszVCD ) + 1;
+		pAlloced = new char[ len ];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszVCD, len );
+		m_pModelInfo->m_pszVCD = pAlloced;
+	}
 	ClearAttachedModelInfos();
 
 	if ( pszAttached )
@@ -238,7 +247,7 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
 			Assert( pAlloced );
 			Q_strncpy( pAlloced, pszAttached, len );
 			pAttachedModelInfo->m_pszModelName = pAlloced;
-			pAttachedModelInfo->m_nSkin = 0;
+			pAttachedModelInfo->m_nSkin = -1;
 
 			m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
 		}
@@ -287,7 +296,8 @@ void CModelPanel::SetupVCD( void )
 	m_hScene = pEnt;
 
 	// setup the scene
-	pEnt->SetupClientOnlyScene( m_pModelInfo->m_pszVCD, m_hModel, true );
+	if ( m_pModelInfo->m_pszVCD )
+		pEnt->SetupClientOnlyScene( m_pModelInfo->m_pszVCD, m_hModel, true );
 }
 
 //-----------------------------------------------------------------------------
@@ -384,7 +394,7 @@ void CModelPanel::SetupModel( void )
 
 	pEnt->DontRecordInTools();
 	pEnt->AddEffects( EF_NODRAW ); // don't let the renderer draw the model normally
-
+	pEnt->SetModelColor( ModelColor );
 	if ( m_pModelInfo->m_nSkin >= 0 )
 	{
 		pEnt->m_nSkin = m_pModelInfo->m_nSkin;
@@ -442,13 +452,20 @@ void CModelPanel::SetupModel( void )
 			pTemp->DontRecordInTools();
 			pTemp->AddEffects( EF_NODRAW ); // don't let the renderer draw the model normally
 			pTemp->FollowEntity( m_hModel.Get() ); // attach to parent model
-
+			pTemp->SetOwnerEntity( m_hModel.Get() );
 			if ( pInfo->m_nSkin >= 0 )
 			{
 				pTemp->m_nSkin = pInfo->m_nSkin;
 			}
-
+			else
+			{
+				if ( m_pModelInfo->m_nSkin > 2 )
+					pTemp->m_nSkin = m_pModelInfo->m_nSkin -2;
+				else
+					pTemp->m_nSkin = m_pModelInfo->m_nSkin;
+			}
 			pTemp->m_flAnimTime = gpGlobals->curtime;
+				
 			m_AttachedModels.AddToTail( pTemp );
 		}
 	}
@@ -487,17 +504,22 @@ void CModelPanel::UpdateModel()
 		InitCubeMaps();
 
 		SetupModel();
-
+		
 		// are we trying to play a VCD?
 		if ( Q_strlen( m_pModelInfo->m_pszVCD ) > 0 )
 		{
 			SetupVCD();
 		}
-
 		m_bPanelDirty = false;
 	}
 }
 
+void CModelPanel::SetModelColor( Vector vecColor )
+{
+	ModelColor = vecColor;
+	if ( m_hModel )
+		m_hModel->SetModelColor( ModelColor );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

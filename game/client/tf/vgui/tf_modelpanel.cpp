@@ -4,7 +4,7 @@
 //
 //=============================================================================//
 
-
+/*
 #include "cbase.h"
 #include <KeyValues.h>
 #include <vgui/IScheme.h>
@@ -605,3 +605,4 @@ void CModelPanel::OnSetAnimation( KeyValues *data )
 		SetSequence( pszAnimation );
 	}
 }
+*/

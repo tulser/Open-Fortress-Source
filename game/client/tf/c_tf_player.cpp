@@ -5236,7 +5236,7 @@ bool C_TFPlayer::IsWeaponLowered( void )
 	CTFGameRules *pRules = TFGameRules();
 
 	// Lower losing team's weapons in bonus round
-	if ( ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() ) )
+	if ( ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() || ( pRules->GetWinningTeam() == TF_TEAM_MERCENARY && !m_Shared.IsTopThree() ) ) )
 		return true;
 
 	// Hide all view models after the game is over

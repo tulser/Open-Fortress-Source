@@ -14,6 +14,7 @@
 #include "GameEventListener.h"
 
 class CTFPlayer;
+class CBaseObject;
 
 //=============================================================================
 //

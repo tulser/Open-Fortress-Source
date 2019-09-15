@@ -17,6 +17,8 @@
 #include "discord_rpc.h"
 #include "discord_register.h"
 #include "tf_gamerules.h"
+#include "tf_shareddefs.h"
+#include "KeyValues.h"
 #include <ctime>
 #include "steam/isteammatchmaking.h"
 #include "steam/isteamgameserver.h"
@@ -36,9 +38,6 @@ ConVar of_enable_rpc("of_enable_rpc", "1", FCVAR_ARCHIVE, "Enables/Disables Disc
 
 // update once every 10 seconds. discord has an internal rate limiter of 15 seconds as well
 #define DISCORD_UPDATE_RATE 10.0f
-
-// placeholder code SUCKS i go to BED.
-#define MAP_COUNT 64
 
 // TODO give these better fitting names and move them to .h
 const char *g_aClassImage[] =
@@ -70,76 +69,6 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Arena",
 	"Payload",
 	"King of the Hill"
-};
-
-const char *g_aMapList[] =
-{
-	"dm_2fort",
-	"dm_aerowalk",
-	"dm_backfort",
-	"dm_blockfort",
-	"dm_bloodrun",
-	"dm_boxy",
-	"dm_bricks",
-	"dm_chthon",
-	"dm_congo",
-	"dm_corpseyard",
-	"dm_cs16_mansion",
-	"dm_darkzone",
-	"dm_deadsimple",
-	"dm_degrootkeep",
-	"dm_dmc_dm2",
-	"dm_entryway",
-	"dm_framework",
-	"dm_greenback",
-	"dm_hangar",
-	"dm_hardcore",
-	"dm_harvest",
-	"dm_hl2dm_runoff",
-	"dm_johnny",
-	"dm_junkyard",
-	"dm_longestyard",
-	"dm_lumberyard",
-	"dm_minecraft",
-	"dm_office",
-	"dm_skate",
-	"dm_thebadplace",
-	"dm_tvland",
-	"dm_watergate",
-	"dm_wiseau",
-	"dm_wiseau_classic",
-	"esc_tfc_hunted_test",
-	"mctf_johnny",
-	"mctf_longestyard",
-	"mctf_redplanet",
-	"mctf_greenback",
-	"mctf_backfort",
-	"mctf_congo",
-	"dm_offblast",
-	"dm_grain",
-	"dm_sawdust",
-	"dm_legacy",
-	"dm_moonbase",
-	"dm_cargo",
-	"dm_bailey",
-	"mctf_splashdown",
-	"dm_dev_itemtest",
-	"dm_deadlock_a1",
-	"dm_pandora",
-	"dm_knoxx",
-	"dm_lobstershore",
-	"dm_watchtower",
-	"mctf_xpress3",
-    "mctf_2fort",
-    "mctf_turbine",
-    "dm_overkill",
-    "dm_coaltown",
-	"ctf_push",
-	"dm_bloodcovenant",
-	"dm_badworks",
-	"ctf_xpress3",
-    "dm_shipment",
-    "dm_chestnut"
 };
 
 CTFDiscordRPC g_discordrpc;
@@ -256,6 +185,9 @@ void CTFDiscordRPC::SetLogo( void )
 	{
 		if (pszImageLarge != m_szLatchedMapname)
 		{
+			pMapIcon = GetRPCMapImage( m_szLatchedMapname, pMapIcon );
+			
+/*	
 			for (int i=0; i<MAP_COUNT; i++)
 			{
 				if ( V_strcmp( g_aMapList[i], m_szLatchedMapname ) == 0 )
@@ -264,6 +196,7 @@ void CTFDiscordRPC::SetLogo( void )
 					break;
 				}
 			}
+*/
 		}
 		//steam rpc setts the steam status display to show what map you are playing on
 		steamapicontext->SteamFriends()->SetRichPresence("steam_display", m_szLatchedMapname);
