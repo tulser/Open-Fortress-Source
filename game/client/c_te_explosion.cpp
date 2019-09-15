@@ -14,6 +14,7 @@
 #include "engine/ivdebugoverlay.h"
 #include "tier1/KeyValues.h"
 #include "toolframework_client.h"
+#include "c_tf_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -42,7 +43,17 @@ IterationRetval_t CRagdollExplosionEnumerator::EnumElement( IHandleEntity *pHand
 	// If the ragdoll was created on this tick, then the forces were already applied on the server
 	if ( pModel == NULL || WasRagdollCreatedOnCurrentTick( pEnt ) )
 		return ITERATION_CONTINUE;
-	
+
+	// don't affect gibs
+	if ( pModel->m_pRagdoll )
+	{
+		// inverting the if statement doesn't work, so I have to do it like this!
+	}
+	else
+	{
+		return ITERATION_CONTINUE;
+	}
+
 	m_Entities.AddToTail( pEnt );
 
 	return ITERATION_CONTINUE;
@@ -72,12 +83,22 @@ CRagdollExplosionEnumerator::~CRagdollExplosionEnumerator()
 		if ( tr.fraction < 1.0f && tr.m_pEnt != pModel )
 			continue;	
 
+		// don't affect gibs
+		if ( pModel->m_pRagdoll )
+		{
+			// inverting the if statement doesn't work, so I have to do it like this!
+		}
+		else
+		{
+			continue;
+		}
+
 		dir *= force; // scale force
 
 		// tricky, adjust tr.start so end-start->= force
 		tr.startpos = tr.endpos - dir;
-		// move expolsion center a bit down, so things fly higher 
-		tr.startpos.z -= 32.0f;
+		// move explosion center a bit down, so things fly higher 
+		tr.startpos.z -= 64.0f;
 
 		pModel->ImpactTrace( &tr, DMG_BLAST, NULL );
 	}

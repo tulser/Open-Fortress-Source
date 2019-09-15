@@ -618,98 +618,6 @@ ConVar cl_ragdoll_fade_time( "cl_ragdoll_fade_time", "15", FCVAR_CLIENTDLL );
 ConVar cl_ragdoll_forcefade( "cl_ragdoll_forcefade", "0", FCVAR_CLIENTDLL );
 ConVar cl_ragdoll_pronecheck_distance( "cl_ragdoll_pronecheck_distance", "64", FCVAR_GAMEDLL );
 
-class C_TFRagdoll : public C_BaseFlex
-{
-public:
-
-	DECLARE_CLASS( C_TFRagdoll, C_BaseFlex );
-	DECLARE_CLIENTCLASS();
-	
-	C_TFRagdoll();
-	~C_TFRagdoll();
-
-	virtual void OnDataChanged( DataUpdateType_t type );
-
-	IRagdoll* GetIRagdoll() const;
-
-	void ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
-
-	void ClientThink( void );
-	void StartFadeOut( float fDelay );
-	void EndFadeOut();
-
-	EHANDLE GetPlayerHandle( void ) 	
-	{
-		if ( m_iPlayerIndex == TF_PLAYER_INDEX_NONE )
-			return NULL;
-		return cl_entitylist->GetNetworkableHandle( m_iPlayerIndex );
-	}
-
-	bool IsRagdollVisible();
-	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
-
-	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
-
-	// c_baseanimating functions
-	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
-
-	// GORE
-	void ScaleGoreBones( void );
-	void InitDismember( void );
-
-	void DismemberHead( );
-	void DismemberLeftArm( bool bLevel );
-	void DismemberRightArm( bool bLevel );
-	void DismemberLeftLeg( bool bLevel );
-	void DismemberRightLeg( bool bLevel );
-
-	virtual float FrameAdvance( float flInterval = 0.0f );
-
-	virtual C_BaseEntity *GetItemTintColorOwner( void )
-	{
-		EHANDLE hPlayer = GetPlayerHandle();
-		return hPlayer.Get();
-	}
-
-	int m_HeadBodygroup;
-	int	m_LeftArmBodygroup;
-	int	m_RightArmBodygroup;
-	int	m_LeftLegBodygroup;
-	int	m_RightLegBodygroup;
-	
-private:
-	
-	C_TFRagdoll( const C_TFRagdoll & ) {}
-	void Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity );
-
-	void CreateTFRagdoll( void );
-	void CreateTFGibs( void );
-private:
-
-	CNetworkVector( m_vecRagdollVelocity );
-	CNetworkVector( m_vecRagdollOrigin );
-	int	  m_iPlayerIndex;
-	float m_fDeathTime;
-	bool  m_bFadingOut;
-	bool  m_bGib;
-	bool  m_bBurning;
-	int	  m_iTeam;
-	int	  m_iClass;
-	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
-	float m_flDeathAnimationTime; // start time of burning, or 0 if not burning
-
-	// gore stuff
-	CNetworkVar( unsigned short, m_iGoreHead );
-	CNetworkVar( unsigned short, m_iGoreLeftArm );
-	CNetworkVar( unsigned short, m_iGoreRightArm );
-	CNetworkVar( unsigned short, m_iGoreLeftLeg );
-	CNetworkVar( unsigned short, m_iGoreRightLeg );
-
-	// takedamageinfo.h
-	//int				m_bitsDamageType;
-	int				m_iDamageCustom;
-};
-
 IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropVector( RECVINFO(m_vecRagdollOrigin) ),
 	RecvPropInt( RECVINFO( m_iPlayerIndex ) ),
@@ -1175,6 +1083,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 	{
 		return;
 	}
+
 	Vector vecDir;
 
 	VectorSubtract( pTrace->endpos, pTrace->startpos, vecDir );
@@ -1275,9 +1184,16 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 
 	if ( iDamageType == DMG_BLAST )
 	{
-		// Adjust the impact strength and apply the force at the center of mass.
-		vecDir *= 4000;
-		pPhysicsObject->ApplyForceCenter( vecDir );
+		// don't affect gibs
+		if ( m_pRagdoll )
+		{
+			// Adjust the impact strength and apply the force at the center of mass.
+			if ( iDamageType == DMG_CRITICAL )
+				vecDir *= 3499999;
+			else
+				vecDir *= 1999999;
+			pPhysicsObject->ApplyForceCenter( vecDir );
+		}
 	}
 	else
 	{
@@ -1287,7 +1203,18 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		VectorNormalize( vecDir );
 
 		// Adjust the impact strength and apply the force at the impact point..
-		vecDir *= 4000;
+		if (  m_pRagdoll )
+		{
+			if ( iDamageType == DMG_CRITICAL )
+				vecDir *= 20000;
+			else
+				vecDir *= 5000;
+		}
+		else
+		{
+			vecDir *= 1000;
+		}
+
 		pPhysicsObject->ApplyForceOffset( vecDir, vecHitPos );	
 
 		// make ragdolls emit blood decals
@@ -4299,23 +4226,23 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 		if (cl_fp_ragdoll.GetBool() && m_hRagdoll.Get())
 		{
 			// pointer to the ragdoll
-			C_TFRagdoll *pRagdoll = (C_TFRagdoll*)m_hRagdoll.Get();
+			C_TFRagdoll *pRagdoll = ( C_TFRagdoll* )m_hRagdoll.Get();
 
 			// gets its origin and angles
-			int iAttachment = pRagdoll->LookupAttachment("eyes");
+			int iAttachment = pRagdoll->LookupAttachment( "eyes" );
 
 			// if no eyes attachment is found, fallback to head attachment
 			if (iAttachment <= 0)
 			{
-				pRagdoll->GetAttachment(pRagdoll->LookupAttachment("head"), eyeOrigin, eyeAngles);
+				pRagdoll->GetAttachment(pRagdoll->LookupAttachment( "head" ), eyeOrigin, eyeAngles );
 			}
 			else
 			{
-				pRagdoll->GetAttachment(pRagdoll->LookupAttachment("eyes"), eyeOrigin, eyeAngles);
+				pRagdoll->GetAttachment(pRagdoll->LookupAttachment( "eyes" ), eyeOrigin, eyeAngles );
 			}
 
 			Vector vForward;
-			AngleVectors(eyeAngles, &vForward);
+			AngleVectors( eyeAngles, &vForward );
 
 				return;
 		}

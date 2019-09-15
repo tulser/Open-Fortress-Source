@@ -298,8 +298,8 @@ void CTFHudDeathNotice::Paint()
 			// Draw a + between the names
 			Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(msg.Assister.iPlayerID) : GetTeamColor( msg.Assister.iTeam );
 
-			DrawText(x, yText, m_hTextFont, GetInfoTextColor( i, msg.bLocalPlayerInvolved ), L" +  ");
-			x += 20;
+			DrawText(x, yText, m_hTextFont, GetInfoTextColor( i, msg.bLocalPlayerInvolved ), L" + ");
+			x += iAssisterTextWide;
 
 			// Draw assister's name
 			DrawText( x, yText, m_hTextFont, clr, assister );
@@ -674,6 +674,9 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 
 		// if there was an assister, put both the killer's and assister's names in the death message
 		int iAssisterID = engine->GetPlayerForUserID( event->GetInt( "assister" ) );
+
+		m_DeathNotices[iDeathNoticeMsg].Assister.iPlayerID = iAssisterID;
+
 		const char *assister_name = ( iAssisterID > 0 ? g_PR->GetPlayerName( iAssisterID ) : NULL );
 		if ( assister_name )
 		{

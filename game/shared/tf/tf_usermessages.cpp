@@ -56,6 +56,12 @@ void RegisterUserMessages()
 
 	usermessages->Register( "PlayerStatsUpdate", -1 );
 		
+	usermessages->Register( "CallVoteFailed", -1 );
+	usermessages->Register( "VoteStart", -1 );
+	usermessages->Register( "VotePass", -1 );
+	usermessages->Register( "VoteFailed", 2 );
+	usermessages->Register( "VoteSetup", -1 );
+
 	RegisterHapticMessages();
 }
 

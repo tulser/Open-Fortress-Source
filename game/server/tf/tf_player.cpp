@@ -2058,8 +2058,21 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 
 	if ( !pSpot )
 	{
-		Warning( "Player Spawn: no valid spawn point was found!\n" );
-		pSpot = CBaseEntity::Instance( INDEXENT(0) );
+		pSpawnPointName = "info_player_teamspawn";
+		// There's a rare chance if there is too many players then the DM spawning will fail, so fallback to normal spawning
+		if ( SelectSpawnSpot( pSpawnPointName, pSpot ) )
+		{
+			g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
+
+			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
+		}
+
+		// still nothing? then just spawn at the centre of the map
+		if ( !pSpot )
+		{
+			Warning( "Player Spawn: no valid spawn point was found!\n" );
+			pSpot = CBaseEntity::Instance( INDEXENT(0) );
+		}
 	}
 
 	return pSpot;
@@ -2105,6 +2118,27 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 					{
 						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 						continue;
+					}
+
+					// this is here because the DM spawning system may fall back to the normal spawning system if the player count overflows the spawnpoints
+					if ( TFGameRules()->IsDMGamemode() )
+					{
+						if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+						{
+							// telefragging
+							CBaseEntity *ent = NULL;
+
+							for ( CEntitySphereQuery sphere( pSpot->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+							{
+								// don't telefrag ourselves
+								if ( ent->IsPlayer() && ent != this )
+								{
+									// special damage type to bypass uber or spawn protection in DM
+									CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+									ent->TakeDamage( info );
+								}
+							}	
+						}
 					}
 
 					// Found a valid spawn point.
@@ -2249,7 +2283,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
 						ent->TakeDamage( info );
 					}
-			}	
+				}	
 			}
 		}
 
@@ -2678,7 +2712,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 	if ( GetTeamNumber() <= LAST_SHARED_TEAM )
 		return;
 
-	if (TFGameRules()->IsDMGamemode() && ofd_forceclass.GetBool()== 1 )
+	if ( TFGameRules()->IsDMGamemode() && ofd_forceclass.GetBool() )
 		return;
 	
 	// In case we don't get the class menu message before the spawn timer
@@ -7888,7 +7922,7 @@ IResponseSystem *CTFPlayer::GetResponseSystem()
 		iClass = m_Shared.GetDisguiseClass();
 	}
 
-	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass <= TF_CLASS_COUNT_ALL );
+	bool bValidClass = ( iClass >= TF_CLASS_SCOUT && iClass < TF_CLASS_COUNT_ALL );
 	bool bValidConcept = ( m_iCurrentConcept >= 0 && m_iCurrentConcept < MP_TF_CONCEPT_COUNT );
 	Assert( bValidClass );
 	Assert( bValidConcept );
@@ -9015,4 +9049,35 @@ surfacedata_t *CTFPlayer::GetLadderSurface( const Vector &origin )
 
 	}
 	return BaseClass::GetLadderSurface(origin);
+}
+
+// Required for HL2 ents!
+
+//---------------------------------------------------------
+//---------------------------------------------------------
+Vector CTFPlayer::EyeDirection2D( void )
+{
+	Vector vecReturn = EyeDirection3D();
+	vecReturn.z = 0;
+	vecReturn.AsVector2D().NormalizeInPlace();
+
+	return vecReturn;
+}
+
+//---------------------------------------------------------
+//---------------------------------------------------------
+Vector CTFPlayer::EyeDirection3D( void )
+{
+	Vector vecForward;
+
+	// Return the vehicle angles if we request them
+	if ( GetVehicle() != NULL )
+	{
+		CacheVehicleView();
+		EyeVectors( &vecForward );
+		return vecForward;
+	}
+	
+	AngleVectors( EyeAngles(), &vecForward );
+	return vecForward;
 }

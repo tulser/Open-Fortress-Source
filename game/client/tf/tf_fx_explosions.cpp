@@ -10,6 +10,7 @@
 #include "tf_shareddefs.h"
 #include "engine/IEngineSound.h"
 #include "tf_weapon_parse.h"
+#include "ragdollexplosionenumerator.h"
 #include "tf_weapon_rocketlauncher.h"
 #include "c_basetempentity.h"
 #include "tier0/vprof.h"
@@ -154,7 +155,7 @@ public:
 	virtual void	PostDataUpdate( DataUpdateType_t updateType );
 
 public:
-
+	void			AffectRagdolls( void );
 	Vector		m_vecOrigin;
 	Vector		m_vecNormal;
 	int			m_iWeaponID;
@@ -177,9 +178,21 @@ C_TETFExplosion::C_TETFExplosion( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void C_TETFExplosion::AffectRagdolls( void )
+{
+	CRagdollExplosionEnumerator	ragdollEnum( m_vecOrigin, 125, 300 );
+	partition->EnumerateElementsInSphere( PARTITION_CLIENT_RESPONSIVE_EDICTS, m_vecOrigin, 125, false, &ragdollEnum );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void C_TETFExplosion::PostDataUpdate( DataUpdateType_t updateType )
 {
 	VPROF( "C_TETFExplosion::PostDataUpdate" );
+
+	AffectRagdolls();
 
 	TFExplosionCallback( m_vecOrigin, m_vecNormal, m_iWeaponID, m_hEntity, m_hLauncher );
 }

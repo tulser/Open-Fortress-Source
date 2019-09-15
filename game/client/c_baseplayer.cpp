@@ -1424,6 +1424,15 @@ int C_BasePlayer::DrawModel( int flags )
 //-----------------------------------------------------------------------------
 Vector C_BasePlayer::GetChaseCamViewOffset( CBaseEntity *target )
 {
+	// this fixes the camera being off in base_boss entity (and npcs too)
+	if ( target-IsNPC() )
+	{
+		if ( target->IsAlive() )
+			return Vector( 0, 0, 75 );
+		else
+			return VEC_DEAD_VIEWHEIGHT;
+	}
+
 	C_BasePlayer *player = ToBasePlayer( target );
 	
 	if ( player )
@@ -1635,6 +1644,10 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 		// Look at their chest, not their head
 		Vector maxs = pTarget->GetBaseAnimating() ? VEC_HULL_MAX_SCALED( pTarget->GetBaseAnimating() ) : VEC_HULL_MAX;
 		vecCamTarget.z -= (maxs.z * 0.5);
+
+		// don't do this for base_boss / npcs
+		if ( pTarget->IsNPC() )
+			maxs = pTarget->WorldAlignMaxs();
 	}
 	else
 	{
@@ -1787,6 +1800,14 @@ void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 	if ( pKiller && pKiller->IsPlayer() && (pKiller != this) ) 
 	{														
 		Vector vKiller = pKiller->EyePosition() - origin;
+		QAngle aKiller; VectorAngles( vKiller, aKiller );
+		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );
+	};
+
+	// eyeposition fails on base_boss / npcs
+	if ( pKiller && pKiller->IsNPC() && (pKiller != this) ) 
+	{
+		Vector vKiller = pKiller->WorldSpaceCenter() - origin;
 		QAngle aKiller; VectorAngles( vKiller, aKiller );
 		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );
 	};

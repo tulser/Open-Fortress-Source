@@ -436,6 +436,99 @@ public:
 	CNetworkVar( bool, m_bRetroMode );
 };
 
+class C_TFRagdoll : public C_BaseFlex
+{
+public:
+
+	DECLARE_CLASS( C_TFRagdoll, C_BaseFlex );
+	DECLARE_CLIENTCLASS();
+	
+	C_TFRagdoll();
+	~C_TFRagdoll();
+
+	virtual void OnDataChanged( DataUpdateType_t type );
+
+	IRagdoll* GetIRagdoll() const;
+
+	void ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
+
+	void ClientThink( void );
+	void StartFadeOut( float fDelay );
+	void EndFadeOut();
+
+	EHANDLE GetPlayerHandle( void ) 	
+	{
+		if ( m_iPlayerIndex == TF_PLAYER_INDEX_NONE )
+			return NULL;
+		return cl_entitylist->GetNetworkableHandle( m_iPlayerIndex );
+	}
+
+	bool IsRagdollVisible();
+	bool  m_bGib;
+	bool  IsGib() { return m_bGib; }
+	float GetBurnStartTime() { return m_flBurnEffectStartTime; }
+
+	virtual void SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightCount, float *pFlexWeights, float *pFlexDelayedWeights );
+
+	// c_baseanimating functions
+	virtual void BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
+
+	// GORE
+	void ScaleGoreBones( void );
+	void InitDismember( void );
+
+	void DismemberHead( );
+	void DismemberLeftArm( bool bLevel );
+	void DismemberRightArm( bool bLevel );
+	void DismemberLeftLeg( bool bLevel );
+	void DismemberRightLeg( bool bLevel );
+
+	virtual float FrameAdvance( float flInterval = 0.0f );
+
+	virtual C_BaseEntity *GetItemTintColorOwner( void )
+	{
+		EHANDLE hPlayer = GetPlayerHandle();
+		return hPlayer.Get();
+	}
+
+	int m_HeadBodygroup;
+	int	m_LeftArmBodygroup;
+	int	m_RightArmBodygroup;
+	int	m_LeftLegBodygroup;
+	int	m_RightLegBodygroup;
+	
+private:
+	
+	C_TFRagdoll( const C_TFRagdoll & ) {}
+	void Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity );
+
+	void CreateTFRagdoll( void );
+	void CreateTFGibs( void );
+private:
+
+	CNetworkVector( m_vecRagdollVelocity );
+	CNetworkVector( m_vecRagdollOrigin );
+	int	  m_iPlayerIndex;
+	float m_fDeathTime;
+	bool  m_bFadingOut;
+	bool  m_bBurning;
+	int	  m_iTeam;
+	int	  m_iClass;
+	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
+	float m_flDeathAnimationTime; // start time of burning, or 0 if not burning
+
+	// gore stuff
+	CNetworkVar( unsigned short, m_iGoreHead );
+	CNetworkVar( unsigned short, m_iGoreLeftArm );
+	CNetworkVar( unsigned short, m_iGoreRightArm );
+	CNetworkVar( unsigned short, m_iGoreLeftLeg );
+	CNetworkVar( unsigned short, m_iGoreRightLeg );
+
+	// takedamageinfo.h
+	//int				m_bitsDamageType;
+	int				m_iDamageCustom;
+};
+
 inline C_TFPlayer* ToTFPlayer( C_BaseEntity *pEntity )
 {
 	if ( !pEntity || !pEntity->IsPlayer() )

@@ -32,6 +32,10 @@ public:
 
 	int RegisterGlowObject( C_BaseEntity *pEntity, const Vector &vGlowColor, float flGlowAlpha, bool bRenderWhenOccluded, bool bRenderWhenUnoccluded, int nSplitScreenSlot )
 	{
+		// early out if no entity is actually registered
+		if ( !pEntity )
+			return NULL;
+
 		int nIndex;
 		if ( m_nFirstFreeSlot == GlowObjectDefinition_t::END_OF_FREE_LIST )
 		{

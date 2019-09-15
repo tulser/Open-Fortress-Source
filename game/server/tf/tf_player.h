@@ -359,6 +359,10 @@ public:
 	virtual void		ExitLadder();
 	virtual surfacedata_t *GetLadderSurface( const Vector &origin );	
 
+	// HL2 uses these for NPC checks
+	virtual Vector		EyeDirection2D( void );
+	virtual Vector		EyeDirection3D( void );
+
 	void	UpdateExpression( void );
 	void	ClearExpression( void );
 

@@ -12,10 +12,8 @@
 #include "gameinterface.h"
 #include "fmtstr.h"
 
-#ifdef TF_DLL
 #include "tf/tf_gamerules.h"
 #include "tf/tf_voteissues.h"
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -232,7 +230,8 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 
 	if ( g_voteController->IsVoteActive() )
 	{
-		ClientPrint( pVoteCaller, HUD_PRINTCENTER, "#GameUI_vote_failed_vote_in_progress" );
+		ClientPrint( pVoteCaller, HUD_PRINTCONSOLE, "#GameUI_vote_failed_vote_in_progress" );
+
 		return;
 	}
 
@@ -987,7 +986,6 @@ void CVoteController::AddPlayerToNameLockedList( CSteamID steamID, float flDurat
 //-----------------------------------------------------------------------------
 bool CVoteController::IsPlayerBeingKicked( CBasePlayer *pPlayer )
 {
-#ifdef TF_DLL
 	if ( pPlayer && m_iActiveIssueIndex != INVALID_ISSUE )
 	{
 		CKickIssue *pKickIssue = dynamic_cast< CKickIssue* >( m_potentialIssues[m_iActiveIssueIndex] );
@@ -996,7 +994,6 @@ bool CVoteController::IsPlayerBeingKicked( CBasePlayer *pPlayer )
 			return pKickIssue->m_hPlayerTarget == pPlayer;
 		}
 	}
-#endif // TF_DLL
 
 	return false;
 }

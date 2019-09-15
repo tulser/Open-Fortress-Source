@@ -119,8 +119,10 @@ void C_TFDroppedWeapon::UpdateGlowEffect( void )
 	
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	
-	if ( m_bShouldGlow && ofd_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+	if ( TFGameRules() && m_bShouldGlow && ofd_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+	{
 		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
+	}
 }
 
 void C_TFDroppedWeapon::DestroyGlowEffect(void)
