@@ -704,6 +704,8 @@ void CTFPlayer::PostThink()
 	// check if our guy is chatting for the particle
 	m_bChatting = (m_nButtons & IN_TYPING) != 0;
 
+	ProcessSceneEvents();
+
 	QAngle angles = GetLocalAngles();
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
@@ -5606,6 +5608,8 @@ void CTFPlayer::UpdateModel( void )
 		SetModel( GetPlayerClass()->GetTFCModelName() );
 	else
 		SetModel( GetPlayerClass()->GetModelName() );
+
+	m_PlayerAnimState->OnNewModel();
 }
 
 

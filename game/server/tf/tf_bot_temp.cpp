@@ -249,7 +249,7 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 }
 
 // Handler for the bot_kick command
-CON_COMMAND_F( bot_kick, "Kick the specified bot(s).", 0 )
+CON_COMMAND_F( bot_kick, "Kick the specified bot(s).", FCVAR_CHEAT )
 {
 	CBasePlayer *pPlayer = NULL;
 
@@ -295,10 +295,67 @@ CON_COMMAND_F( bot_kick, "Kick the specified bot(s).", 0 )
 
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
-		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pTFPlayer->GetUserID() ) );
-		pTFPlayer->m_flLastAction = gpGlobals->curtime;
+		if ( pTFPlayer && ( pTFPlayer->GetFlags() & FL_FAKECLIENT ) )
+		{
+			engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", pTFPlayer->GetUserID() ) );
+			pTFPlayer->m_flLastAction = gpGlobals->curtime;
+		}
 	}
 }
+
+// Handler for the bot_taunt command
+CON_COMMAND_F( bot_taunt, "Force specified bot(s) to taunt", FCVAR_CHEAT )
+{
+	CBasePlayer *pPlayer = NULL;
+
+	// get all bots if these parameters are specified or team specific ones
+	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = UTIL_PlayerByIndex( i );
+
+			if ( !pPlayer )
+				continue;
+
+			if ( pPlayer && ( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+			{				
+				if ( args.FindArg( "red" ) && pPlayer->GetTeamNumber() != TF_TEAM_RED )
+					continue;
+
+				if ( args.FindArg( "blue" ) && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+					continue;
+
+				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
+					continue;
+
+				CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+				if ( pTFPlayer )
+					pTFPlayer->Taunt();
+					
+			}
+		}
+	}
+	else
+	{
+		// get the bot's player object
+		pPlayer = UTIL_PlayerByName( args[1] );
+
+		if ( !pPlayer )
+		{
+			Msg( "No bot with name %s\n", args[1] );
+			return;
+		}
+
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+		if ( pTFPlayer && ( pTFPlayer->GetFlags() & FL_FAKECLIENT ) )
+			pTFPlayer->Taunt();
+	}
+}
+
+
 
 
 //-----------------------------------------------------------------------------
@@ -788,9 +845,8 @@ void cc_bot_sendcommand( const CCommand &args )
 			return;
 		}	
 
-		// send the command
-		TFGameRules()->ClientCommand( pPlayer, command );
-
+		if ( pPlayer->GetFlags() & FL_FAKECLIENT )
+			TFGameRules()->ClientCommand( pPlayer, command );
 	}
 }
 static ConCommand bot_sendcommand( "bot_command", cc_bot_sendcommand, "<bot id> <command string...>.  Sends specified command on behalf of specified bot", FCVAR_CHEAT );
@@ -839,7 +895,8 @@ void cc_bot_kill( const CCommand &args )
 			return;
 		}
 
-		pPlayer->CommitSuicide();
+		if ( pPlayer->GetFlags() & FL_FAKECLIENT )
+			pPlayer->CommitSuicide();
 	}
 }
 
@@ -934,9 +991,12 @@ CON_COMMAND_F( bot_whack, "Deliver lethal damage from player to specified bot", 
 			return;
 		}
 
-		CTakeDamageInfo info( pPlayer, pTFPlayer, 1000, DMG_BULLET );
-		info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
-		pPlayer->TakeDamage( info );	
+		if ( pPlayer->GetFlags() & FL_FAKECLIENT )
+		{ 
+			CTakeDamageInfo info( pPlayer, pTFPlayer, 1000, DMG_BULLET );
+			info.SetInflictor( pTFPlayer->GetActiveTFWeapon() );
+			pPlayer->TakeDamage( info );	
+		}
 	}
 
 }
@@ -990,8 +1050,11 @@ CON_COMMAND_F( bot_teleport, "Teleport the specified bot to the specified positi
 			return;
 		}
 
-		Vector vecPos( atof(args[2]), atof(args[3]), atof(args[4]) );
-		QAngle vecAng( atof(args[5]), atof(args[6]), atof(args[7]) );
-		pPlayer->Teleport( &vecPos, &vecAng, NULL );
+		if ( pPlayer->GetFlags() & FL_FAKECLIENT )
+		{ 
+			Vector vecPos( atof(args[2]), atof(args[3]), atof(args[4]) );
+			QAngle vecAng( atof(args[5]), atof(args[6]), atof(args[7]) );
+			pPlayer->Teleport( &vecPos, &vecAng, NULL );
+		}
 	}
 }
