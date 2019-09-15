@@ -80,6 +80,9 @@
 
 #include "tf_weaponbase.h"
 
+#include "tf_player.h"
+#include "tf_gamerules.h"
+
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
@@ -6426,6 +6429,14 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( stricmp( cmd, "spectate" ) == 0 ) // join spectator team & start observer mode
 	{
+		CTFPlayer *pTFPlayer = ToTFPlayer( this );
+
+		// civ can't change teams
+		if ( pTFPlayer && TFGameRules() && TFGameRules()->IsESCGamemode() && pTFPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
+		{
+			return true;
+		}
+
 		if ( GetTeamNumber() == TEAM_SPECTATOR )
 			return true;
 

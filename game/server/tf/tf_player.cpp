@@ -2325,7 +2325,13 @@ int CTFPlayer::GetAutoTeam( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName )
 {
-	if ( TFGameRules()->IsDMGamemode() && stricmp(pTeamName, "spectate") != 0 )
+	// civ can't change teams
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
+	{
+		return;
+	}
+
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && stricmp(pTeamName, "spectate") != 0 )
 	{
 		if ( TFGameRules()->IsTeamplay() ) 
 		{
@@ -4316,6 +4322,10 @@ void CTFPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= fals
 {
 	// Don't suicide if we haven't picked a class for the first time, or we're not in active state
 	if ( IsPlayerClass( TF_CLASS_UNDEFINED ) || !m_Shared.InState( TF_STATE_ACTIVE ) )
+		return;
+
+	// Civilian can't suicide in escort to prevent griefing
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN )  )
 		return;
 
 	// Don't suicide during the "bonus time" if we're not on the winning team

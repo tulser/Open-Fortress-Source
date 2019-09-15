@@ -3498,11 +3498,12 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	if ( strncmp( killer_weapon_name, "tf_projectile_", proj ) == 0 )
 	{
 		CTFGrenadePipebombProjectile *pGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>(pInflictor);
-		if ( pGrenade ) 
+		if ( pGrenade )
 		{
-			
-			killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
-			DevMsg("%s", killer_weapon_name);
+			if ( pGrenade->GetLauncher() )
+				killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
+			else 
+				killer_weapon_name = pGrenade->GetClassname();
 		}
 	}	
 	// strip certain prefixes from inflictor's classname

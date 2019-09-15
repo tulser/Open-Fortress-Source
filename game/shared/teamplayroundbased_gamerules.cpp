@@ -2340,8 +2340,6 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 				continue;
 			if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
 				pPlayer->m_Shared.InCondCrit();
-
-			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_GAME_OVER_COMP );
 		}
 	}
 
