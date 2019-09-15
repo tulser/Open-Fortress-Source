@@ -299,7 +299,7 @@ void CTFHudDeathNotice::Paint()
 			Color clr = TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ? tf_PR->GetPlayerColor(msg.Assister.iPlayerID) : GetTeamColor( msg.Assister.iTeam );
 
 			DrawText(x, yText, m_hTextFont, GetInfoTextColor( i, msg.bLocalPlayerInvolved ), L" + ");
-			x += iAssisterTextWide;
+			x += 24;
 
 			// Draw assister's name
 			DrawText( x, yText, m_hTextFont, clr, assister );

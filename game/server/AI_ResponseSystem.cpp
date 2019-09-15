@@ -1962,7 +1962,7 @@ void CResponseSystem::LoadFromBuffer( const char *scriptfile, const char *buffer
 		{
 			int byteoffset = m_ScriptStack[ 0 ].currenttoken - (const char *)m_ScriptStack[ 0 ].buffer;
 
-			Error( "CResponseSystem::LoadFromBuffer:  Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n", 
+			Error( "Error loading respone rules!\nIf you are getting this error, your game likely didn't download or update properly. Go to the open_fortress/scripts/talker/ folder and delete the response_rules.txt, and cleanup & update the SVN again.\n\nTechnical Information:\nCResponseSystem::LoadFromBuffer: Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n", 
 				token, scriptfile, byteoffset );
 			break;
 		}
