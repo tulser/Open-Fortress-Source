@@ -23,7 +23,7 @@
 	#include "tf_projectile_rocket.h"
 	#include "tf_weapon_grenade_pipebomb.h"
 	#include "te.h"
-	#include "ofd_projectile_tripmine.h"
+	#include "of_projectile_tripmine.h"
 
 #else	// Client specific.
 

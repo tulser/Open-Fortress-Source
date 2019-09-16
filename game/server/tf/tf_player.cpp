@@ -52,7 +52,7 @@
 #include "cdll_int.h"
 #include "tf_weaponbase.h"
 #include "tf_playerclass_shared.h"
-#include "ofd_weapon_physcannon.h"
+#include "of_weapon_physcannon.h"
 #include "tf_powerup.h"
 #include "ai_basenpc.h"
 #include "AI_Criteria.h"

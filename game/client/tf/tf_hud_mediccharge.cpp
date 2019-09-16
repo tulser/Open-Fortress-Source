@@ -17,7 +17,7 @@
 #include <vgui_controls/EditablePanel.h>
 #include <vgui_controls/ProgressBar.h>
 #include "tf_weapon_medigun.h"
-#include "ofd_weapon_lightning.h"
+#include "of_weapon_lightning.h"
 #include <vgui_controls/AnimationController.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
