@@ -1,38 +1,23 @@
 //========= Copyright © 1996-2006, Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose: Kill counter for DM mode
 //
 //=============================================================================//
 
 #include "cbase.h"
 #include "hud.h"
 #include "hudelement.h"
-#include "hud_macros.h"
-#include "hud_numericdisplay.h"
-#include <KeyValues.h>
 #include <vgui/IScheme.h>
 #include <vgui/ILocalize.h>
-#include <vgui/ISurface.h>
-#include <vgui/ISystem.h>
-#include <vgui_controls/AnimationController.h>
 #include "iclientmode.h"
-#include "tf_shareddefs.h"
-#include <vgui_controls/EditablePanel.h>
-#include <vgui_controls/ImagePanel.h>
-#include <vgui/ISurface.h>
-#include <vgui/IImage.h>
 #include <vgui_controls/Label.h>
 
 #include "tf_controls.h"
-#include "in_buttons.h"
 #include "tf_imagepanel.h"
-#include "c_team.h"
 #include "c_tf_player.h"
-#include "ihudlcd.h"
-#include "of_hud_kills.h"
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
-#include "multiplay_gamerules.h"
+#include "of_hud_kills.h"
 
 using namespace vgui;
 
@@ -54,8 +39,6 @@ CTFHudKills::CTFHudKills( const char *pElementName ) : CHudElement( pElementName
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
-
-	hudlcd->SetGlobalStat( "(kills)", "0" );
 
 	m_nKills	= 0;
 	m_flNextThink = 0.0f;
@@ -125,20 +108,18 @@ void CTFHudKills::UpdateKillLabel( bool bKills )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Get ammo info from the weapon and update the displays.
+// Purpose: Get the local player's kills and display them
 //-----------------------------------------------------------------------------
 void CTFHudKills::OnThink()
 {
-	// Get the player and active weapon.
+	// Get the player
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
 	if ( m_flNextThink < gpGlobals->curtime )
 	{
 		if ( !pPlayer )
 		{
-			hudlcd->SetGlobalStat( "(kills)", "n/a" );
-
-			// turn off our ammo counts
+			// turn off our kill counts
 			UpdateKillLabel( false );
 
 			m_nKills = 0;
@@ -150,7 +131,6 @@ void CTFHudKills::OnThink()
 			int nKills = tf_PR->GetPlayerScore( iIndex );
 			int nGGLevel = tf_PR->GetGGLevel( iIndex );
 			
-			hudlcd->SetGlobalStat( "(kills)", VarArgs( "%d", nKills ) );
 			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 				m_nKills = nGGLevel;
 			else
