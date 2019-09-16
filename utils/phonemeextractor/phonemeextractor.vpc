@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro OUTBINDIR	"$SRCDIR\..\game\bin\phonemeextractors"
+$Macro OUTBINDIR	"$SRCDIR\!Compiled\bin\phonemeextractors"
 
 $Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
 
