@@ -2054,13 +2054,6 @@ public:
 	{
 		Assert( m_pResult );
 
-		if ( !pC_BaseEntity )
-			return;
-
-		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
-		if ( !pEntity )
-			return;
-
 		// stop stuff from going black
 		m_pResult->SetVecValue( 1.0f, 1.0f, 1.0f );
 	}
