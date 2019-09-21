@@ -114,6 +114,7 @@ namespace BaseModUI
 		WT_JUKEBOX,
 		WT_MYUGC,
 		WT_MYUGCPOPUP,
+		WT_LOADOUT,
 		WT_WINDOW_COUNT // WT_WINDOW_COUNT must be last in the list!
 	};
 

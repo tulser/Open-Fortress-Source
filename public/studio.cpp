@@ -1647,7 +1647,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 	for ( int i = 0 ; i < NumSeq ; ++i )
 	{
 		const mstudioseqdesc_t &seqdesc = pstudiohdr->pSeqdesc( i );
-#if defined(SERVER_DLL) || defined(CLIENT_DLL) || defined(GAME_DLL)
+#if ( defined(SERVER_DLL) || defined(CLIENT_DLL) || defined(GAME_DLL) ) && !defined(GAMEUI_DLL)
 		if (!(seqdesc.flags & STUDIO_ACTIVITY))
 		{
 			// AssertMsg2( false, "Sequence %d on studiohdr %s didn't have its activity initialized!", i, pstudiohdr->pszName() );

@@ -248,6 +248,10 @@ void MainMenu::OnCommand( const char *command )
 			CBaseModPanel::GetSingleton().OpenWindow(WT_VIDEO, this, true );
 		}
 	}
+	else if ( !Q_strcmp( command, "Loadout" ) )
+	{
+		CBaseModPanel::GetSingleton().OpenWindow( WT_LOADOUT, this, true );
+	}
 	else if (!Q_strcmp(command, "Brightness"))
 	{
 		if ( ui_old_options_menu.GetBool() )

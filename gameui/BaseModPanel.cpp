@@ -64,6 +64,7 @@
 //#include "vjukebox.h"
 //#include "vleaderboard.h"
 #include "vmyugc.h"
+#include "vloadout.h"
 #include "gameconsole.h"
 
 #include "vgui/ISystem.h"
@@ -765,6 +766,10 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 
 		case WT_VIDEO:
 			m_Frames[wt] = new Video(this, "Video");
+			break;
+
+		case WT_LOADOUT:
+			m_Frames[wt] = new Loadout( this, "Loadout" );
 			break;
 
 		default:
