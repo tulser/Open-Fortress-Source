@@ -198,7 +198,7 @@ void Loadout::PerformLayout()
 	vecCameraOffset.x = 0.0f;
 
 	m_pMercPanel->SetCameraOffset( Vector( 0.0f, -vecCameraOffset.x, -vecCameraOffset.y ) );
-	m_pMercPanel->SetCameraPositionAndAngles( Vector( -15, 0, -20 ), QAngle( 0, 0, 0 ) );
+	m_pMercPanel->SetCameraPositionAndAngles( Vector( -25, 0, -20 ), QAngle( 0, 0, 0 ) );
 	m_pMercPanel->UpdateCameraTransform();
 	m_pMercPanel->SetLockView( true );
 }
