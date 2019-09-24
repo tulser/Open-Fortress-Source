@@ -433,12 +433,10 @@ int	CTFBaseProjectile::GetCustomDamageType()
 { 
 	if ( m_bCritical >= 2)
 	{
-		DevMsg("Projectile Has Crit Powerup flag\n");
 		return TF_DMG_CRIT_POWERUP;
 	}
 	else
 	{
-		DevMsg("Projectile is normal\n");
 		return TF_DMG_CUSTOM_NONE;
 	}
 }

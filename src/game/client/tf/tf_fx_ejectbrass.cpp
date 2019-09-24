@@ -58,12 +58,9 @@ void TF_EjectBrassCallback( const CEffectData &data )
 	pTemp->m_vecTempEntAngVelocity[0] = random->RandomFloat(-512,511);
 	pTemp->m_vecTempEntAngVelocity[1] = random->RandomFloat(-255,255);
 	pTemp->m_vecTempEntAngVelocity[2] = random->RandomFloat(-255,255);
-//	string_t shotgun = MAKE_STRING( "models/weapons/shells/shell_shotgun.mdl" );
 	model_t *pShotgunShell = (model_t *)engine->LoadModel( "models/weapons/shells/shell_shotgun.mdl" );
 	if ( pModel == pShotgunShell )
 	{
-		//STOP FUCKING DOING THIS SHIT JESUS CHRIST I WILL LITERALLY RIP YOUR SPINE OUT OF YOUR ASS IF I SEE SHIT LIKE THIS AGAIN
-		//DevMsg("eh");
 		pTemp->hitSound = BOUNCE_SHOTSHELL;
 	}
 	else

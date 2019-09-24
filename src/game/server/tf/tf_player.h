@@ -10,6 +10,7 @@
 #include "tf_playeranimstate.h"
 #include "tf_shareddefs.h"
 #include "tf_player_shared.h"
+#include "tf_weaponbase.h"
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
 #include "hl2_playerlocaldata.h"
@@ -481,6 +482,8 @@ public:
 	unsigned short m_iGoreRightArm;
 	unsigned short m_iGoreLeftLeg;
 	unsigned short m_iGoreRightLeg;
+	
+	CUtlVector< SuperWeaponHandle >		m_hSuperWeapons;
 
 private:
 

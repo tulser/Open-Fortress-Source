@@ -1717,12 +1717,10 @@ void CTFGameRules::DisableSpawns( int iTeamNumber )
 {
 	const char *pEntClassName = "info_player_teamspawn";
 	CBaseEntity *pSpot;
-	DevMsg("Start Checking Team Spawns for team %d\n", iTeamNumber );
 	// Get an initial spawn point.
 	pSpot = gEntList.FindEntityByClassname( NULL, pEntClassName );
 	if ( !pSpot )
 	{
-		DevMsg("First Ent was NULL\n");
 		// Sometimes the first spot can be NULL????
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 	}
@@ -1754,7 +1752,6 @@ void CTFGameRules::DisableSpawns( int iTeamNumber )
 						}
 						if ( bKill )
 						{
-							DevMsg("Spot Deleted\n");
 							// Found a valid spawn point.
 							pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 							bSpotCreated = true;
@@ -1998,16 +1995,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flAdjustedDamage = flDistanceToEntity * falloff;
 			flAdjustedDamage = info.GetDamage() - flAdjustedDamage;
 		}
-		/*
-		if ( pEntity->GetClassname() )
-			DevMsg( "Traced entity class is %d\n",pEntity->GetClassname() );
-		if ( info.GetAttacker()->GetClassname() )
-			DevMsg( "Attacker class is %d\n",info.GetAttacker()->GetClassname() );
-		*/
 		// Take a little less damage from yourself
 		if ( pEntity == info.GetAttacker() )
 		{
-			// DevMsg("Damaged yourself.");
 			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
 			CTFPlayer *pSelf = ToTFPlayer(pEntity);
 			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
@@ -2077,7 +2067,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 		else
 		{
-			// DevMsg("Damage force exists\n");
 			// Assume the force passed in is the maximum force. Decay it based on falloff.
 			float flForce = adjustedInfo.GetDamageForce().Length() * falloff;
 			adjustedInfo.SetDamageForce(dir * flForce);
@@ -2089,7 +2078,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt)
 		{
-			// DevMsg("Stickybombs \n");
 			ClearMultiDamage( );
 			pEntity->DispatchTraceAttack( adjustedInfo, dir, &tr );
 			if ( flNonSelfDamage )
@@ -3467,7 +3455,6 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		// special-case burning damage, since persistent burning damage may happen after attacker has switched weapons
 		killer_weapon_name = "tf_weapon_flamethrower";
-		DevMsg("%s \n ", killer_weapon_name);
 	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{

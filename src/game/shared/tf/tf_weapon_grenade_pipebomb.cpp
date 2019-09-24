@@ -424,7 +424,7 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			{
 				s_PipebombModel = NULL;
 			}
-			if ( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact != 0 )
+			if ( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact )
 			{
 				pGrenade->SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 			}
@@ -460,12 +460,18 @@ void CTFGrenadePipebombProjectile::Spawn()
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Set this to max, so effectively they do not self-implode.
+	if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+	{		
 		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
+	}
 		SetDetonateTimerLength( FLT_MAX );
 	}
 	else
 	{
+	if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+	{		
 		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+	}
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 #ifdef CLIENT_DLL
@@ -475,7 +481,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 		}
 #endif
 	}
-	if ( s_PipebombModel )
+	if ( s_PipebombModel && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
 	{
 		PrecacheModel( s_PipebombModel );
 		SetModel( s_PipebombModel );
@@ -629,15 +635,13 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 {
 	BaseClass::VPhysicsCollision( index, pEvent );
 
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
-	
 	int otherIndex = !index;
 	CBaseEntity *pHitEntity = pEvent->pEntities[otherIndex];
 
 	if ( !pHitEntity )
 		return;
 
-	if ( pTFWeapon && pTFWeapon->GetTFWpnData().m_bExplodeOnImpact != 0 )
+	if ( ExplodeOnImpact() )
 	{
 		SetThink( &CTFGrenadePipebombProjectile::Detonate );
 		SetNextThink( gpGlobals->curtime );
@@ -684,6 +688,15 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 		pEvent->pInternalData->GetSurfaceNormal( m_vecImpactNormal );
 		m_vecImpactNormal.Negate();
 	}
+}
+
+bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
+{
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	if ( pTFWeapon && ( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact || ( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact ) ) )
+		return true;
+	else
+		return false;
 }
 
 ConVar tf_grenade_forcefrom_bullet( "tf_grenade_forcefrom_bullet", "0.8", FCVAR_CHEAT );

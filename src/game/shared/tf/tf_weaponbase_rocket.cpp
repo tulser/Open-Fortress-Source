@@ -15,6 +15,7 @@
 #include "te_effect_dispatch.h"
 #include "tf_fx.h"
 #include "iscorer.h"
+#include "tf_projectile_bomblet.h"
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 extern void SendProxy_Angles( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 #endif
@@ -116,8 +117,8 @@ void CTFBaseRocket::Spawn( void )
 // Server specific.
 #else
 
-	//Derived classes must have set model.
-	Assert( GetModel() );
+	//Derived classes must have set model, Things Like the BFG dont, and similar example may occur later
+//	Assert( GetModel() );
 
 	SetSolid( SOLID_BBOX );
 	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
@@ -225,9 +226,21 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	{
 		pRocket->m_hWeaponID = pWeapon->GetWeaponID();
 		pRocket->SetLauncher(pWeapon);
+		if ( pWeapon->GetTFWpnData().m_flDamageRadius >= 0 )
+			pRocket->SetDamageRadius( pWeapon->GetTFWpnData().m_flDamageRadius );
 	}
 	// Spawn.
 	pRocket->Spawn();
+	
+	if ( pWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
+	{
+		const char *s_PipebombModel = pWeapon->GetTFWpnData().m_nProjectileModel;	
+		if ( s_PipebombModel )
+		{
+			PrecacheModel( s_PipebombModel );
+			pRocket->SetModel( s_PipebombModel );
+		}				
+	}
 
 	// Setup the initial velocity.
 	Vector vecForward, vecRight, vecUp;
@@ -365,8 +378,6 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 	CTakeDamageInfo info( this, GetOwnerEntity(), vec3_origin, vecOrigin, GetDamage(), bitsDamageType, 0, &vecReported );
 
 	float flRadius = GetRadius();
-	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
-		flRadius *= 0.75;
 
 	if ( tf_rocket_show_radius.GetBool() )
 	{
@@ -444,6 +455,43 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		UTIL_DecalTrace( pTrace, "Scorch" );
 	}
 
+// Get the Weapon info
+	CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( m_hWeaponID ) );
+	if ( pWeapon )
+	{
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+		Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
+		
+#ifdef GAME_DLL
+		// Create the bomblets.
+		if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+		{
+			for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
+			{
+				Vector vecSrc = pTrace->endpos + Vector( 0, 0, 1.0f ); 
+				Vector vecVelocity( random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
+								random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
+								random->RandomFloat( 30.0f, 70.0f ) * 5.0f );
+				Vector vecZero( 0,0,0 );
+				CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );	
+		
+				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo );
+				PrecacheModel ( pWeaponInfo->m_szBombletModel );
+				pBomb->SetModel( pWeaponInfo->m_szBombletModel );
+				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
+				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
+				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
+				pBomb->SetCritical( m_bCritical );
+				pBomb->WeaponID = m_hWeaponID;				
+
+			}		
+		}
+#endif
+		UTIL_Remove( pWeapon );
+	}	
+	
 	// Remove the rocket.
 	UTIL_Remove( this );
 }

@@ -33,13 +33,18 @@ public:
 	void	SetWeaponModel( void );
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
-	string_t m_iszWeaponName=MAKE_STRING( "tf_weapon_scattergun" );
-	string_t m_iszWeaponModel=MAKE_STRING( "" );
-	string_t m_iszWeaponModelOLD=MAKE_STRING( "" );
-	string_t m_iszPickupSound=MAKE_STRING( "AmmoPack.Touch" );
+	string_t szWeaponName;
+	string_t szWeaponModel;
+	string_t szWeaponModelOLD;
+	string_t szPickupSound;
+	char m_iszWeaponName[128];
+	char m_iszWeaponModel[128];
+	char m_iszWeaponModelOLD[128];
+	char m_iszPickupSound[128];
 
 	CNetworkVar( bool, m_bDisableSpin );
 	CNetworkVar( bool, m_bDisableShowOutline );
+	CNetworkVar( int,  m_iIndex );
 private:
 	CNetworkVar( float, m_flRespawnTick );
 };

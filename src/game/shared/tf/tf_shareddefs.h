@@ -12,6 +12,9 @@
 #include "shareddefs.h"
 #include "mp_shareddefs.h"
 
+#include "KeyValues.h"
+#include "filesystem.h"
+
 // Using MAP_DEBUG mode?
 #ifdef MAP_DEBUG
 	#define MDEBUG(x) x
@@ -348,6 +351,7 @@ enum TFWeaponIDs
 	TF_WEAPON_LIGHTNING_GUN,
 	TF_WEAPON_GRAPPLE,
 	TF_WEAPON_FLAREGUN,
+	TF_WEAPON_GIB,
 	TFC_WEAPON_SHOTGUN_SB,
 	TFC_WEAPON_SHOTGUN_DB,
 	TFC_WEAPON_CROWBAR,
@@ -456,6 +460,7 @@ enum
 	TF_PROJECTILE_INCENDROCKET,
 	TF_PROJECTILE_PIPEBOMB_DM,
 	TF_PROJECTILE_TRANQ,
+	TF_PROJECTILE_COOM,
 
 	TF_NUM_PROJECTILES
 };
@@ -529,6 +534,8 @@ enum
 	
 	TF_WEARABLE_LAST
 };
+
+int GetWearableCount( void );
 
 //-----------------------------------------------------------------------------
 // TF Player State.

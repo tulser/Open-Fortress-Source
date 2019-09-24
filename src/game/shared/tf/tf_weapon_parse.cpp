@@ -27,7 +27,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_WeaponData[1].Init();
 
 	m_bGrenade = false;
-	m_flDamageRadius = 0.0f;
+	m_flDamageRadius = -1.0f;
 	m_flPrimerTime = 0.0f;
 	m_bSuppressGrenTimer = false;
 	m_bLowerWeapon = false;
@@ -43,6 +43,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	
 	m_bLoadsManualy = false;
 	m_bNoSniperCharge = false;
+	m_bAlwaysDrop = false;
 	
 	szScoutViewModel[0] = 0;
 	szSoldierViewModel[0] = 0;
@@ -56,6 +57,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	szMercenaryViewModel[0] = 0;
 	szCivilianViewModel[0] = 0;
 	szJuggernautViewModel[0] = 0;
+	m_szBombletModel[0] = 0;
+	m_szBombletTrailParticle[0] = 0;
 	
 	m_nProjectileModel[0] = 0;
 
@@ -80,6 +83,10 @@ CTFWeaponInfo::CTFWeaponInfo()
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
 	m_iCost = 0;
+	
+	m_flWindupTime = 0.0f;
+	
+	m_flFuseTime = 0.0f;
 
 	m_flMinViewmodelOffsetX = 0.0f;
 	m_flMinViewmodelOffsetY = 0.0f;
@@ -109,12 +116,13 @@ CTFWeaponInfo::~CTFWeaponInfo()
 //-----------------------------------------------------------------------------
 void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 {
+	BaseClass::Parse( pKeyValuesData, szWeaponName );
+
 	int i;
 	m_bDropsMag = pKeyValuesData->GetBool("DropsMag");
 	Q_strncpy(m_szMagModel, pKeyValuesData->GetString("MagModel"), sizeof(m_szMagModel));
 	m_iMagBodygroup = pKeyValuesData->GetInt("magazine");
-
-	BaseClass::Parse( pKeyValuesData, szWeaponName );
+	
 	
 	Q_strncpy( m_nProjectileModel, pKeyValuesData->GetString( "ProjectileModel" ), MAX_WEAPON_STRING );
 	// Primary fire mode.
@@ -228,13 +236,21 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );
-	m_flDamageRadius		= pKeyValuesData->GetFloat( "DamageRadius", 0.0f );
+	m_flDamageRadius		= pKeyValuesData->GetFloat( "DamageRadius", -1.0f );
 	m_flPrimerTime			= pKeyValuesData->GetFloat( "PrimerTime", 0.0f );
 	m_bSuppressGrenTimer	= ( pKeyValuesData->GetInt( "PlayGrenTimer", 1 ) <= 0 );
-	m_iBombletAmount		= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
-	m_flBombletTimer		= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
-	m_flBombletMultiplier		= pKeyValuesData->GetFloat( "BombletDamageMultiplier", 0.0f );
-	m_iBombletLevel		= pKeyValuesData->GetInt( "BombletLevel", 1 );
+	
+	m_flFuseTime			= pKeyValuesData->GetFloat( "FuseTime", 0.0f );
+	
+	m_iBombletAmount				= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
+	m_flBombletTimer				= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
+	m_flBombletDamage				= pKeyValuesData->GetFloat( "BombletDamage", 0.0f );
+	m_flBombletDamageRadius			= pKeyValuesData->GetFloat( "BombletDamageRadius", 0.0f );
+	m_bBombletImpact				= pKeyValuesData->GetBool( "BombletImpact", 0.0f );
+	m_bBombletEffectTeamColored		= pKeyValuesData->GetBool( "BombletEffectTeamColored", 0.0f );
+	
+	Q_strncpy( m_szBombletModel, pKeyValuesData->GetString( "BombletModel" ), MAX_WEAPON_STRING );
+	Q_strncpy( m_szBombletTrailParticle, pKeyValuesData->GetString( "BombletParticleTrail" ), MAX_WEAPON_STRING );
 	
 	m_iCost		= pKeyValuesData->GetInt( "Cost", -1 );
 	
@@ -254,6 +270,9 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
 	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
 	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
+	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
+	
+	m_flWindupTime = pKeyValuesData->GetFloat( "WindupTime", 0.0f );
 	
 	m_flCenteredViewmodelOffsetX = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_X", 0.0f );
 	m_flCenteredViewmodelOffsetY = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_Y", 0.0f );

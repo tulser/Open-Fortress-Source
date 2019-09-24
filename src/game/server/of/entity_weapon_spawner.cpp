@@ -15,6 +15,8 @@
 #include "engine/IEngineSound.h"
 #include "entity_weapon_spawner.h"
 #include "tf_weapon_parse.h"
+#include "KeyValues.h"
+#include "filesystem.h"
 
 #include "tier0/memdbgon.h"
 
@@ -35,12 +37,13 @@ ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_NOTIFY, "Weapons dont disappea
 BEGIN_DATADESC(CWeaponSpawner)
 
 // Inputs.
-DEFINE_KEYFIELD(m_iszWeaponName, FIELD_STRING, "weaponname"),
-DEFINE_KEYFIELD(m_iszWeaponModel, FIELD_STRING, "model"),
-DEFINE_KEYFIELD(m_iszWeaponModelOLD, FIELD_STRING, "powerup_model"),
-DEFINE_KEYFIELD(m_iszPickupSound, FIELD_STRING, "pickup_sound"),
+DEFINE_KEYFIELD(szWeaponName, FIELD_STRING, "weaponname"),
+DEFINE_KEYFIELD(szWeaponModel, FIELD_STRING, "model"),
+DEFINE_KEYFIELD(szWeaponModelOLD, FIELD_STRING, "powerup_model"),
+DEFINE_KEYFIELD(szPickupSound, FIELD_STRING, "pickup_sound"),
 DEFINE_KEYFIELD(m_bDisableSpin, FIELD_BOOLEAN, "disable_spin"),
 DEFINE_KEYFIELD(m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow"),
+DEFINE_KEYFIELD(m_iIndex, FIELD_INTEGER, "Index"),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
@@ -55,6 +58,18 @@ END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 
+CWeaponSpawner::CWeaponSpawner()
+{
+	m_flRespawnTick = 0.0f;
+	szWeaponName = MAKE_STRING( "tf_weapon_shotgun_mercenary" );
+	szWeaponModel = MAKE_STRING("");
+	szWeaponModelOLD = MAKE_STRING("");
+	m_iszWeaponModel[0] = 0;
+	m_iszWeaponModelOLD[0] = 0;
+	szPickupSound = MAKE_STRING( "Player.PickupWeapon" );
+	ResetSequence( LookupSequence("spin") );
+}
+
 void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
@@ -63,6 +78,39 @@ void CWeaponSpawner::Spawn( void )
 		TFGameRules() && 
 		!TFGameRules()->IsGGGamemode())
 	{
+		Q_strncpy( m_iszWeaponName, STRING(szWeaponName), sizeof( m_iszWeaponName ) );
+		if ( szWeaponModel != MAKE_STRING("") )
+		Q_strncpy( m_iszWeaponModel, STRING(szWeaponModel) , sizeof( m_iszWeaponModel ) );
+		if ( szWeaponModelOLD != MAKE_STRING("") )
+		Q_strncpy( m_iszWeaponModelOLD, STRING(szWeaponModelOLD) , sizeof( m_iszWeaponModelOLD ) );
+		Q_strncpy( m_iszPickupSound, STRING(szPickupSound), sizeof( m_iszPickupSound ) );
+		if ( filesystem )
+		{
+		
+			char szMapName[128];
+			Q_snprintf( szMapName, sizeof(szMapName), "maps/%s_mapdata.txt" , STRING(gpGlobals->mapname) );
+			if ( filesystem->FileExists( szMapName, "MOD" ) )
+			{
+				KeyValues* pMapData = new KeyValues( "MapData" );
+				pMapData->LoadFromFile( filesystem, szMapName );
+				if ( pMapData )
+				{
+					KeyValues* pWeaponSpawners = pMapData->FindKey( "WeaponSpawners" );
+					if ( pWeaponSpawners )
+					{
+						char pTemp[256];
+						Q_snprintf( pTemp, sizeof(pTemp), "%d", m_iIndex );					
+						KeyValues* pWeaponSpawner = pWeaponSpawners->FindKey( pTemp );
+						if ( pWeaponSpawner )
+						{
+							Q_strncpy( m_iszWeaponName, pWeaponSpawner->GetString("Weapon", m_iszWeaponName), sizeof( m_iszWeaponName ) );
+							Q_strncpy( m_iszWeaponModel, pWeaponSpawner->GetString("Model", m_iszWeaponModel) , sizeof( m_iszWeaponModel ) );
+							Q_strncpy( m_iszPickupSound,  pWeaponSpawner->GetString("PickupSound", m_iszPickupSound), sizeof( m_iszPickupSound ) );						
+						}
+					}
+				}
+			}
+		}
 		Precache();
 		SetWeaponModel();
 		BaseClass::Spawn();
@@ -72,23 +120,27 @@ void CWeaponSpawner::Spawn( void )
 
 void CWeaponSpawner::SetWeaponModel( void )
 {
-	if ( m_iszWeaponModel == MAKE_STRING( "" ) )       // If we dont use a weapon model
+	
+	if ( m_iszWeaponModel[0] == 0 )       // If we dont use a weapon model
 	{
-		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) ) // If the backwards compatible model isnt set either
+		DevMsg("Doesnt have a model \n");
+		if( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
 		{
-			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( STRING(m_iszWeaponName) );     //Firstly create the weapon
+			DevMsg("Doesnt have a old model either \n");
+			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( m_iszWeaponName );     //Firstly create the weapon
+			if ( !pWeapon )
+				return;
 			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );			  //Get the weapon info
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
-			Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 			if ( pWeapon && pWeaponInfo )                //If both the weapon and weapon info exist
 				SetModel( pWeaponInfo->szWorldModel );	 //Get its model
 			return;
 		}
 		else
-			m_iszWeaponModel = m_iszWeaponModelOLD;      //If we do have the old model set, set the model value to the old model value
+			Q_strncpy( m_iszWeaponModel, m_iszWeaponModelOLD, sizeof( m_iszWeaponModel ) ); //If we do have the old model set, set the model value to the old model value
 	}
-	SetModel( STRING(m_iszWeaponModel) );     //Set the model
+	SetModel( m_iszWeaponModel );     //Set the model
 }
 
 //-----------------------------------------------------------------------------
@@ -96,27 +148,25 @@ void CWeaponSpawner::SetWeaponModel( void )
 //-----------------------------------------------------------------------------
 void CWeaponSpawner::Precache( void )
 {
-	PrecacheScriptSound( STRING( m_iszPickupSound) );
-	if ( m_iszWeaponModel == MAKE_STRING( "" ) )
+	PrecacheScriptSound( m_iszPickupSound );
+	if ( m_iszWeaponModel )
 	{
-		if( m_iszWeaponModelOLD == MAKE_STRING( "" ) )
+		if( m_iszWeaponModelOLD )
 		{
-			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( STRING(m_iszWeaponName) );  //Ditto for the Model Function, just precache instead
+			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( m_iszWeaponName );  //Ditto for the Model Function, just precache instead
+			if ( !pWeapon )
+				return;
 			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-			Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 			if ( pWeapon && pWeaponInfo )
-			{
-				DevMsg("Guess the model is %s \n", pWeaponInfo->szWorldModel );
 				PrecacheModel( pWeaponInfo->szWorldModel );
-			}
 			return;
 		}
 		else
-			m_iszWeaponModel = m_iszWeaponModelOLD;
+			Q_strncpy( m_iszWeaponModel, m_iszWeaponModelOLD, sizeof( m_iszWeaponModel ) );
 	}
-	PrecacheModel( STRING(m_iszWeaponModel) );
+	PrecacheModel( m_iszWeaponModel );
 }
 
 //-----------------------------------------------------------------------------
@@ -133,7 +183,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			return false;
 	
 		bSuccess = true;
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( STRING(m_iszWeaponName) );  //Get the specified weapon
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  //Get the specified weapon
 		
 		for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
 		{		
@@ -154,12 +204,10 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( pTFPlayer->RestockAmmo(0.5f) ) // Restock your ammo by half ( same as medium ammo pack )
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );				// Filter the sound to the player that picked this up
-					EmitSound( filter, entindex(), STRING(m_iszPickupSound) );  // Play the pickup sound
+					EmitSound( filter, entindex(), m_iszPickupSound );  // Play the pickup sound
 					if ( mp_weaponstay.GetBool() )								// If weaponstay is on, dont dissapear
-					{
 						bSuccess = false;
-					}
-					else														// Dissapear
+					else														// Disapear
 					{
 						bSuccess = true;
 						m_nRenderFX = kRenderFxDistort;							// and get the Distortion effect
@@ -175,7 +223,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( pTFPlayer->RestockCloak( 0.5f ) )							// Restock cloak
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );				// Ditto from above
-					EmitSound( filter, entindex(), STRING(m_iszPickupSound) );
+					EmitSound( filter, entindex(), m_iszPickupSound );
 					if ( mp_weaponstay.GetBool() )
 					{
 						bSuccess = false;
@@ -197,7 +245,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( pTFPlayer->GiveAmmo( ceil(iMaxMetal * PackRatios[GetPowerupSize()]), TF_AMMO_METAL, true ) )	
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );
-					EmitSound( filter, entindex(), STRING(m_iszPickupSound) );
+					EmitSound( filter, entindex(), m_iszPickupSound );
 					if ( mp_weaponstay.GetBool() )
 					{
 						bSuccess = false;
@@ -229,10 +277,8 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		{
 			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() )
 			{
-				if ( pTFPlayer->m_nButtons & IN_USE ) // Dont ask, for some reason if !pTFPlayer->m_nButtons & IN_USE doesnt work
-				{}
-				else
-				{
+				if ( !(pTFPlayer->m_nButtons & IN_USE) )
+				{				
 					if ( pWeapon )								// Remove the weapon if we're not pressing use
 					{
 						pTFPlayer->Weapon_Detach( pWeapon );
@@ -243,9 +289,9 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				}
 			}
 			CSingleUserRecipientFilter filter( pTFPlayer );					// Filter the sound to the player who picked this up
-			EmitSound( filter, entindex(), STRING(m_iszPickupSound) );		// Play the sound
+			EmitSound( filter, entindex(), m_iszPickupSound );		// Play the sound
 			
-			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( STRING(m_iszWeaponName) );  // Create the specified weapon
+			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
 			pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
 			if ( mp_weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
 			{
@@ -265,12 +311,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 	}
 	
 	return bSuccess;
-}
-
-CWeaponSpawner::CWeaponSpawner()
-{
-	m_flRespawnTick = 0.0f;
-	ResetSequence( LookupSequence("spin") );
 }
 
 CBaseEntity* CWeaponSpawner::Respawn( void )

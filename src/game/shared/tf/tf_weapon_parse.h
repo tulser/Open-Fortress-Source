@@ -12,6 +12,7 @@
 #include "weapon_parse.h"
 #include "networkvar.h"
 #include "tf_shareddefs.h"
+#include "KeyValues.h"
 
 //=============================================================================
 //
@@ -95,6 +96,8 @@ public:
 	bool 	m_bExplodeOnImpact;
 	char 	m_nProjectileModel[MAX_WEAPON_STRING];  // Will be adapted to work in rockets once we need that
 	
+	float	m_flFuseTime;
+	
 	// Skins
 	bool	m_bHasTeamSkins_Viewmodel;
 	bool	m_bHasTeamSkins_Worldmodel;
@@ -107,9 +110,14 @@ public:
 	// Bomblet functions for the dynamite pack, may be used in the BFG later
 	bool 	m_bDropBomblets;
 	int 	m_iBombletAmount;
+	
 	float	m_flBombletTimer;
-	float	m_flBombletMultiplier;
-	int 	m_iBombletLevel;	
+	float	m_flBombletDamage;
+	float 	m_flBombletDamageRadius;	
+	bool 	m_bBombletImpact;
+	bool 	m_bBombletEffectTeamColored;
+	char	m_szBombletModel[MAX_WEAPON_STRING];
+	char	m_szBombletTrailParticle[MAX_WEAPON_STRING];
 	// Misc
 	bool 	m_bAllowDrop;
 	float	m_flPickupMultiplier;
@@ -119,6 +127,7 @@ public:
 	bool	m_bBuyable;
 	bool	m_bLoadsManualy;
 	bool	m_bNoSniperCharge;
+	bool	m_bAlwaysDrop;
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
@@ -166,6 +175,8 @@ public:
 	char	m_szExplosionWaterEffectClassic[128];	
 	
 	bool	m_bDontDrop;
+	
+	float	m_flWindupTime;
 
 	float	m_flMinViewmodelOffsetX;
 	float	m_flMinViewmodelOffsetY;

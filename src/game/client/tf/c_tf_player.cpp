@@ -99,7 +99,7 @@ ConVar ofd_color_g( "ofd_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets me
 ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
 ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
-ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
+ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
 ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats\n");
 
 ConVar tf_hud_no_crosshair_on_scope_zoom("tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun.");
@@ -3132,26 +3132,58 @@ void C_TFPlayer::UpdateSpyMask( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateWearables( void )
 {
-
-	for( int i = 1; i < TF_WEARABLE_LAST; i++ )
+	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
 	{
 		if ( m_hCosmetic[i] )
-			m_hCosmetic[i]->Release();
-		
-		if ( !of_disable_cosmetics.GetBool() && m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) )  )
+			m_hCosmetic[i].Get()->Release();
+	}	
+	m_hCosmetic.Purge();
+	int iSlot = 0;
+	if(  of_disable_cosmetics.GetBool() )
+		return;
+	for( int i = 1; i < GetWearableCount(); i++ )
+	{
+		bool bEquipped = false;
+		if ( m_Shared.WearsHat( i ) && ( !IsLocalPlayer() || ( IsLocalPlayer() && ::input->CAM_IsThirdPerson() ) ) )
 		{
-			m_hCosmetic[i] = C_PlayerAttachedModel::Create( TF_WEARABLE_MODEL[i], this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
+			KeyValues* pItemsGame = new KeyValues( "items_game" );
+			pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+			if ( pItemsGame )
+			{
+				KeyValues* pCosmetics = pItemsGame->FindKey( "Cosmetics" );
+				if ( pCosmetics )
+				{
+					char pTemp[256];
+					Q_snprintf( pTemp, sizeof(pTemp), "%d", i );					
+					KeyValues* pCosmetic = pCosmetics->FindKey( pTemp );
+					if ( pCosmetic )
+					{
+						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );	
+						if ( m_hCosmetic.Count() )
+						{
+							m_hCosmetic[iSlot].Set( handle );
+						}
+						else
+						{
+							bEquipped = true;
+							m_hCosmetic.AddToTail( handle );
+						}
+					}
+				}
+			}
 		}
 		
-		if ( m_hCosmetic[i] )
+		if ( m_hCosmetic.Count() && m_hCosmetic[iSlot] )
 		{
 			int iVisibleTeam = GetTeamNumber();
 			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
 			{
 				iVisibleTeam = m_Shared.GetDisguiseTeam();
 			}
-			m_hCosmetic[i]->m_nSkin = iVisibleTeam - 2;
+			m_hCosmetic[iSlot].Get()->m_nSkin = iVisibleTeam - 2;
 		}
+		if ( bEquipped )
+			iSlot++;
 	}
 }
 
@@ -3164,7 +3196,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 	{
 		if ( m_hShieldEffect )
 			m_hShieldEffect->Release();
-		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
+		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() && ::input->CAM_IsThirdPerson() ) ) )
 		{
 			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
 			if ( m_hShieldEffect )
@@ -3188,7 +3220,7 @@ bool C_TFPlayer::IsEnemyPlayer( void )
 
 	if ( !pLocalPlayer )
 		return false;
-
+	
 	switch( pLocalPlayer->GetTeamNumber() )
 	{
 	case TF_TEAM_RED:
@@ -3196,7 +3228,7 @@ bool C_TFPlayer::IsEnemyPlayer( void )
 	case TF_TEAM_BLUE:
 		return ( GetTeamNumber() == TF_TEAM_RED );
 	case TF_TEAM_MERCENARY:
-		return ( GetTeamNumber() == TF_TEAM_MERCENARY );
+		return ( GetTeamNumber() == TF_TEAM_MERCENARY && !IsLocalPlayer() );
 	default:
 		break;
 	}

@@ -107,6 +107,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	CTFWeaponBase();
 
 	virtual void Spawn();
+	virtual void Equip( CBaseCombatCharacter *pOwner );
 	virtual void Precache();
 	virtual bool IsPredicted() const			{ return true; }
 	virtual void FallInit( void );
@@ -224,6 +225,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual const char *GetMuzzleFlashModel( void );
 	virtual float	GetMuzzleFlashModelLifetime( void );
 	virtual const char *GetMuzzleFlashParticleEffect( void );
+	
+	virtual float GetWindupTime( void );
 
 	virtual const char	*GetTracerType( void );
 
@@ -273,7 +276,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	CHandle<C_MuzzleFlashModel>		m_hMuzzleFlashModel[2];
 
 #endif
-
+public:
+	CNetworkVar( bool, m_bWindingUp );
+	CNetworkVar( float, m_flWindTick );
+	
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
@@ -324,6 +330,10 @@ protected:
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };
+
+#ifdef GAME_DLL
+typedef CHandle<CTFWeaponBase> SuperWeaponHandle;
+#endif
 
 #define WEAPON_RANDOM_RANGE 10000
 

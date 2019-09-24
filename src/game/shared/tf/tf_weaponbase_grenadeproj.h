@@ -164,23 +164,6 @@ private:
 	bool			m_bPlayedLeadIn;
 };
 
-class CTFGrenadeMirvBomb : public CTFWeaponBaseGrenadeProj
-{
-public:
-
-	DECLARE_CLASS( CTFGrenadeMirvBomb, CTFWeaponBaseGrenadeProj );
-
-	// Creation.
-	static CTFGrenadeMirvBomb *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, float timer );
-
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRENADE_MIRVBOMB; }
-
-	virtual void	Spawn();
-	virtual void	Precache();
-	virtual void	BounceSound( void );
-};
-
 #endif
 
 #endif // TF_WEAPONBASE_GRENADEPROJ_H

@@ -107,7 +107,6 @@ void C_TFDroppedPowerup::ClientThink( void )
 	{
 		iTeamNum = pPlayer->GetTeamNumber();
 		UpdateGlowEffect();
-		DevMsg("Updated glow effect on powerup spawner \n");
 	}
 
 	bool bShouldGlow = !m_bRespawning;
@@ -117,7 +116,6 @@ void C_TFDroppedPowerup::ClientThink( void )
 	{
 		m_bShouldGlow = bShouldGlow;
 		UpdateGlowEffect();
-		DevMsg("Updated glow effect on powerup spawner \n");
 	}
 
 	SetNextClientThink(CLIENT_THINK_ALWAYS);

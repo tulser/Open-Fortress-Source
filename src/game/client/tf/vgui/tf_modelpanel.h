@@ -31,7 +31,7 @@ public:
 	{ 
 		return m_vecModelColor; 
 	}	
-	virtual void SetModelColor( const Vector &vecColor ) { m_vecModelColor = vecColor; DevMsg("Colored TFModel\n"); }
+	virtual void SetModelColor( const Vector &vecColor ) { m_vecModelColor = vecColor; }
 	virtual bool IsMenuModel() const{ return true; }
 private:
 	Vector m_vecModelColor;

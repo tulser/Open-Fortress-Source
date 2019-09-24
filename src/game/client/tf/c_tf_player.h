@@ -400,7 +400,8 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
-	CHandle<C_PlayerAttachedModel>	m_hCosmetic[TF_WEARABLE_LAST];
+	typedef CHandle<C_PlayerAttachedModel>	CosmeticHandle;
+	CUtlVector<CosmeticHandle>		m_hCosmetic;
 	
 	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
 	virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);

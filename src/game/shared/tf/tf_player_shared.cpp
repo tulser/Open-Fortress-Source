@@ -178,7 +178,7 @@ END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_nPlayerCosmetics ), TF_WEARABLE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 32, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -278,7 +278,7 @@ bool CTFPlayerShared::InCond( int nCond )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::WearsHat( int nHat )
 {
-	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+	Assert( nHat >= 0 && nHat < GetWearableCount() );
 
 	return ( ( m_nPlayerCosmetics & (1<<nHat) ) != 0 );
 
@@ -289,7 +289,7 @@ bool CTFPlayerShared::WearsHat( int nHat )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::WearHat( int nHat )
 {
-	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+	Assert( nHat >= 0 && nHat < GetWearableCount() );
 	m_nPlayerCosmetics |= (1<<nHat);
 }
 
@@ -298,7 +298,7 @@ void CTFPlayerShared::WearHat( int nHat )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::RemoveHat( int nHat )
 {
-	Assert( nHat >= 0 && nHat < TF_WEARABLE_LAST );
+	Assert( nHat >= 0 && nHat < GetWearableCount() );
 
 	m_nPlayerCosmetics &= ~(1<<nHat);
 }

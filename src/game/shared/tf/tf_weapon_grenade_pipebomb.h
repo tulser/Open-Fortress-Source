@@ -80,6 +80,7 @@ public:
 	
 	virtual void	PipebombTouch( CBaseEntity *pOther );
 	virtual void	VPhysicsCollision( int index, gamevcollisionevent_t *pEvent );
+	virtual bool	ExplodeOnImpact( void );
 
 	virtual CBaseEntity		*GetEnemy(void)			{ return m_hEnemy; }
 

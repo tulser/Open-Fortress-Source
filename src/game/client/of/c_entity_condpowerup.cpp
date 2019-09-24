@@ -96,7 +96,6 @@ void C_CondPowerup::ClientThink( void )
 	{
 		iTeamNum = pPlayer->GetTeamNumber();
 		UpdateGlowEffect();
-		DevMsg("Updated glow effect on powerup spawner \n");
 	}
 
 	bool bShouldGlow = !m_bRespawning;
@@ -106,7 +105,6 @@ void C_CondPowerup::ClientThink( void )
 	{
 		m_bShouldGlow = bShouldGlow;
 		UpdateGlowEffect();
-		DevMsg("Updated glow effect on powerup spawner \n");
 	}
 	
 	if ( building_cubemaps.GetBool() )

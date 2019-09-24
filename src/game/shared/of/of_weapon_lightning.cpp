@@ -491,7 +491,6 @@ void CTFLightningGun::RestartParticleEffect( void )
 		
 	// Start the effect on the viewmodel if our owner is the local player
 	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-	DevMsg("Particle creation started \n");
 	if ( pLocalPlayer && pLocalPlayer == GetOwner() )
 	{	
 		if ( pLocalPlayer->GetViewModel() )
@@ -503,7 +502,6 @@ void CTFLightningGun::RestartParticleEffect( void )
 	}
 	else
 	{		
-		DevMsg("Third person Lightning particle created \n ");
 		ParticleProp()->StopEmission( pOwner->m_pLightningParticle_tp );
 		pOwner->m_pLightningParticle_tp = NULL;
 		pOwner->m_pLightningParticle_tp = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );

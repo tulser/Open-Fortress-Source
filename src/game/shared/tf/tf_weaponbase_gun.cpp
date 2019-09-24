@@ -12,6 +12,7 @@
 #include "tf_projectile_nail.h"
 #include "in_buttons.h"
 #include "tf_gamerules.h"
+#include "of_projectile_bfg.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -151,6 +152,21 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		}
 		return;
 	}
+	if ( GetWindupTime() > 0.0f )
+	{
+		if ( m_bWindingUp )
+		{
+			if ( gpGlobals->curtime < m_flWindTick )
+				return;
+		}
+		else
+		{
+			m_bWindingUp = true;
+			m_flWindTick = gpGlobals->curtime + GetWindupTime();
+			SendWeaponAnim( ACT_VM_CHARGEUP );
+			return;
+		}
+	}	
 	if ( !FiresInBursts() && !LoadsManualy() )
 	{
 		// Are we capable of firing again?
@@ -160,7 +176,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	else if ( ( FiresInBursts() && m_iShotsDue == 0 ) || ( LoadsManualy() && !InBarrage() ) )
 		return;
 	if ( LoadsManualy() )
-		DevMsg("En-Bloc Clip \n");
 	if ( !CanAttack() )
 		return;
 
@@ -218,6 +233,9 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	{
 		SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 	}
+	
+	if ( !InBarrage() && !InBurst() )
+		m_bWindingUp = false;	
 
 	// Check the reload mode and behave appropriately.
 	if ( m_bReloadsSingly )
@@ -240,7 +258,6 @@ void CTFWeaponBaseGun::ItemPostFrame( void )
 	if ( InBarrage() )
 	{
         // If it's firing the clip don't let them repress attack to reload
-		DevMsg("In a Barrage, cant press reload nor attack\n");
         pOwner->m_nButtons &= ~IN_ATTACK;
 		pOwner->m_nButtons &= ~IN_RELOAD;
 		AbortReload();
@@ -257,7 +274,6 @@ void CTFWeaponBaseGun::ItemPostFrame( void )
 			{
 				// Convert the attack key into the reload key
 				pOwner->m_nButtons |= IN_RELOAD;
-				DevMsg("Start Reloading\n");
 			}
 
 			// Don't allow attack button if we're not attacking
@@ -373,7 +389,10 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireNail( pPlayer, iProjectile );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
-
+	case TF_PROJECTILE_COOM:
+		pProjectile = FireCoom( pPlayer );
+		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+		break;
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -521,6 +540,54 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	{
 		VectorAngles( endPos - *vecSrc, *angForward );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire a BFG Projectile
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+
+	int iQuakeCvar = 0;
+	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
+	Vector vecSrc;
+	QAngle angForward;
+	Vector vecOffset( 23.5f, 12.0f, -3.0f );	
+
+	if ( bCenter || iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		if ( bCenter || iQuakeCvar )
+			vecOffset.z = 0.0f;
+		else
+			vecOffset.z = 8.0f;
+	}
+	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
+
+	CTFBFGProjectile *pProjectile = CTFBFGProjectile::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	if ( pProjectile )
+	{
+		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetDamage( GetProjectileDamage() );
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -850,8 +917,11 @@ bool CTFWeaponBaseGun::Holster( CBaseCombatWeapon *pSwitchingTo )
 // Server specific.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	
-	if ( ( InBurst() || InBarrage() ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK ) )
+	if ( ( InBurst() || InBarrage() || m_bWindingUp ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
 		return false;
+	
+	m_bWindingUp = false;
+	
 #if !defined( CLIENT_DLL )
 
 	// Make sure to zoom out before we holster the weapon.

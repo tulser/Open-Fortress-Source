@@ -66,6 +66,7 @@
 #include "player_pickup.h"
 #include "eventqueue.h"
 #include "ammodef.h"
+#include "saverestore_utlvector.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -307,7 +308,7 @@ BEGIN_DATADESC( CTFPlayer )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddMoney", AddMoney ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoney", SetMoney ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "StripWeapons", InputStripWeapons ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "SpeakResponseConcept", InputSpeakResponseConcept )
+	DEFINE_INPUTFUNC( FIELD_STRING, "SpeakResponseConcept", InputSpeakResponseConcept ),
 END_DATADESC()
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
@@ -827,10 +828,22 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 	}
 	PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
-	for( int i = 0; i < TF_WEARABLE_LAST; i++ )
-	{	
-		PrecacheModel( TF_WEARABLE_MODEL[i] );
-	}
+	
+	KeyValues* pItemsGame = new KeyValues( "items_game" );
+	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+	if ( pItemsGame )
+	{
+		KeyValues* pCosmetics = pItemsGame->FindKey( "Cosmetics" );
+		if ( pCosmetics )
+		{
+			for ( KeyValues *pCosmetic = pCosmetics->GetFirstSubKey(); pCosmetic; pCosmetic = pCosmetic->GetNextKey() )
+			{
+				if ( pCosmetic )
+					PrecacheModel( pCosmetic->GetString( "Model" ) );
+			}
+		}
+	}	
+	
 //	const char *pszArmModel = GetPlayerClassData(i)->m_szArmModelName;
 //	if ( pszArmModel && pszArmModel[0] )
 //	{
@@ -941,6 +954,9 @@ void CTFPlayer::Spawn()
 	UpdateModel();
 
 	SetMoveType( MOVETYPE_WALK );
+	
+	m_hSuperWeapons.Purge();
+	
 	BaseClass::Spawn();
 	
 //	DestroyViewModels();
@@ -1084,11 +1100,13 @@ void CTFPlayer::Spawn()
 	{
 		UpdatePlayerColor();
 	}
-	for( int i = 0; i < TF_WEARABLE_LAST; i++)
+	for( int i = 0; i < GetWearableCount(); i++)
 		m_Shared.RemoveHat(i);
 	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
 		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
+		if ( GetFlags() & FL_FAKECLIENT )
+			iCosmetic = random->RandomInt( 0, GetWearableCount() );
 		m_Shared.WearHat(iCosmetic);
 	}
 
@@ -3872,7 +3890,6 @@ bool CTFPlayer::DropCurrentWeapon( void )
 	int Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
-	DevMsg("You dropped %s with %d Clip and %d Reserve ammo", m_Shared.GetActiveTFWeapon()->GetClassname(), Clip, ReserveAmmo );
 	if ( m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -4426,7 +4443,8 @@ bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 				return false;
 			break;
 		case TF_TEAM_MERCENARY:
-				return true;
+			if ( !( contentsMask & CONTENTS_BLUETEAM ) && !( contentsMask & CONTENTS_REDTEAM ) && !( contentsMask & CONTENTS_MERCENARYTEAM ) )
+				return false;
 			break;
 		}
 	}
@@ -4896,6 +4914,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	DropAmmoPack();
 	int Clip = -1;
 	int Reserve = -1;
+	
 	if ( !ofd_fullammo.GetBool() )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
@@ -4908,8 +4927,28 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
 		pTFPistol = NULL;
 	}
-	else
+	else if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
 		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );
+	
+	Clip = -1;
+	Reserve = -1;
+	for ( int i = 0; i < m_hSuperWeapons.Count(); i++ )
+	{
+		if ( m_hSuperWeapons[i] )
+		{
+			CTFWeaponBase *pSuperWeapon = m_hSuperWeapons[i].Get();
+			if ( pSuperWeapon )
+			{
+				if ( !ofd_fullammo.GetBool() )
+				{
+					Clip = pSuperWeapon->m_iClip1;
+					Reserve = pSuperWeapon->m_iReserveAmmo;
+				}
+				DropWeapon( pSuperWeapon, false, false ,Clip, Reserve );
+			}
+		}
+	}	
+	m_hSuperWeapons.Purge();
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )
@@ -5365,7 +5404,6 @@ void CC_DropWeapon( void )
 	int Clip = pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
-	DevMsg("You dropped %s with %d Clip and %d Reserve ammo", pPlayer->m_Shared.GetActiveTFWeapon()->GetClassname(), Clip, ReserveAmmo );
 	if ( pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -5422,7 +5460,6 @@ CON_COMMAND( buy, "Buy weapon.\n\tArguments: <item_name>" )
 		{
 			int WeaponID = AliasToWeaponID( item_to_give );
 			int WeaponCost = pWeaponInfo->m_iCost;
-			DevMsg( "The Gun Costs %d\n And the player has %d money \n", WeaponCost, pPlayer->m_iAccount );
 			if( !pPlayer->OwnsWeaponID( WeaponID ) && WeaponCost <= pPlayer->m_iAccount )
 			{
 				CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( STRING(iszItem) );  // Create the specified weapon 
@@ -5488,6 +5525,7 @@ bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *p
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve, int Clip, int Reserve )
 {
+	
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;

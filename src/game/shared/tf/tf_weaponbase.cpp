@@ -126,6 +126,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bResetParity ) ), 
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropBool( RECVINFO( m_bInBarrage ) ),
+	RecvPropBool( RECVINFO( m_bWindingUp ) ),
+	RecvPropTime( RECVINFO( m_flWindTick ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bLowered ) ),
@@ -133,6 +135,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropInt( SENDINFO( m_iReloadMode ), 4, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropBool( SENDINFO( m_bInBarrage ) ),
+	SendPropBool( SENDINFO( m_bWindingUp ) ),
+	SendPropTime( SENDINFO( m_flWindTick ) ),
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
@@ -153,12 +157,15 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_iReloadMode, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bInBarrage, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bWindingUp, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 #if defined( CLIENT_DLL )
 	DEFINE_PRED_FIELD( m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_flNextShotTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
+	DEFINE_PRED_FIELD_TOL( m_flWindTick, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_flWindTick, FIELD_FLOAT ),
 #endif
 END_PREDICTION_DATA()
 
@@ -169,6 +176,7 @@ LINK_ENTITY_TO_CLASS( tf_weapon_base, CTFWeaponBase );
 
 BEGIN_DATADESC( CTFWeaponBase )
 DEFINE_FIELD( m_flNextShotTime, FIELD_TIME ),
+DEFINE_FIELD( m_flWindTick, FIELD_TIME ),
 DEFINE_FIELD( m_iShotsDue, FIELD_INTEGER ),
 DEFINE_FUNCTION( FallThink )
 END_DATADESC()
@@ -218,6 +226,8 @@ CTFWeaponBase::CTFWeaponBase()
 	m_bNeverStrip = false;
 
 	m_bQuakeRLHack = false;
+	
+	m_bWindingUp = false;
 }
 
 // -----------------------------------------------------------------------------
@@ -251,6 +261,25 @@ void CTFWeaponBase::Spawn()
 #endif
 	m_bNeverStrip = GetTFWpnData().m_bNeverStrip;
 	m_szTracerName[0] = '\0';
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Become a child of the owner (MOVETYPE_FOLLOW)
+//			disables collisions, touch functions, thinking
+// Input  : *pOwner - new owner/operator
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
+{
+	BaseClass::Equip( pOwner );
+#ifdef GAME_DLL
+	CTFPlayer *pTFOwner = ToTFPlayer( pOwner );
+	if ( GetTFWpnData().m_bAlwaysDrop )
+	{
+		SuperWeaponHandle hHandle;
+		hHandle = this;	
+		pTFOwner->m_hSuperWeapons.AddToTail( hHandle );
+	}
+#endif
 }
 
 int unequipable[10] =
@@ -710,10 +739,14 @@ void CTFWeaponBase::PrimaryAttack( void )
 
 	BaseClass::PrimaryAttack();
 
+	if ( !InBarrage() && !InBurst() )
+		m_bWindingUp = false;
+	
 	if ( m_bReloadsSingly )
 	{
 		m_iReloadMode.Set( TF_RELOAD_START );
 	}
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -1275,7 +1308,18 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		return;
 	}
+	if ( GetTFWpnData().m_bDropOnNoAmmo && m_iClip1 <= 0 && m_iReserveAmmo<= 0 )
+	{
+#ifdef GAME_DLL 
+		pOwner->DropWeapon( this, false, true );
+		pOwner->SwitchToNextBestWeapon( this );
+		UTIL_Remove ( this );
+#endif
+	}	
 
+	if ( m_bWindingUp && gpGlobals->curtime >= m_flWindTick )
+		PrimaryAttack();
+	
 	// debounce InAttack flags
 	if ( m_bInAttack && !( pOwner->m_nButtons & IN_ATTACK ) )
 	{
@@ -1650,6 +1694,14 @@ const char *CTFWeaponBase::GetMuzzleFlashParticleEffect( void )
 float CTFWeaponBase::GetMuzzleFlashModelLifetime( void )
 { 
 	return GetTFWpnData().m_flMuzzleFlashModelDuration;
+}
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+float CTFWeaponBase::GetWindupTime( void )
+{ 
+	return GetTFWpnData().m_flWindupTime;
 }
 
 //-----------------------------------------------------------------------------

@@ -117,6 +117,8 @@ public:
 	
 	
 	int 	m_hWeaponID;
+	
+	CNetworkVar( int,	m_bCritical );
 
 protected:
 

@@ -45,7 +45,7 @@ void C_TFProjectile_Rocket::OnDataChanged(DataUpdateType_t updateType)
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		CreateRocketTrails();		
+		CreateRocketTrails();	
 	}
 }
 
@@ -66,6 +66,8 @@ void C_TFProjectile_Rocket::CreateRocketTrails(void)
 		ParticleProp()->Create(GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail");
 	}
 	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if ( !pPlayer )
+		return;
 	if (m_bCritical)
 	{
 		switch (GetTeamNumber())

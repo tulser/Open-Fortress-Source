@@ -23,6 +23,7 @@
 #include "func_nogrenades.h"
 #include "Sprite.h"
 #include "tf_fx.h"
+#include "tf_projectile_bomblet.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -116,12 +117,10 @@ int	CTFWeaponBaseGrenadeProj::GetCustomDamageType()
 { 
 	if ( m_bCritical >= 2)
 	{
-		DevMsg("Projectile Has Crit Powerup flag\n");
 		return TF_DMG_CRIT_POWERUP;
 	}
 	else
 	{
-		DevMsg("Projectile is normal\n");
 		return TF_DMG_CUSTOM_NONE;
 	}
 }
@@ -369,42 +368,41 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 	{
 		UTIL_DecalTrace( pTrace, "Scorch" );
 	}
-//#################
-// Get the Weapon info
+
+	// Get the Weapon info
 	CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( WeaponID ) );
 	if ( pWeapon )
 	{
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
-	Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
-	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-	Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
+		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+		Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 
-//
-//#################
-	
+
+		
 #ifdef GAME_DLL
-	// Create the bomblets.
-	if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
-	{
-		for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
+		// Create the bomblets.
+		if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
 		{
+			for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
+			{
 				Vector vecSrc = pTrace->endpos + Vector( 0, 0, 1.0f ); 
 				Vector vecVelocity( random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
 								random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
 								random->RandomFloat( 30.0f, 70.0f ) * 5.0f );
 				Vector vecZero( 0,0,0 );
 				CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
-				float flTime = pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f );
 
-				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, flTime );
-				pBomb->SetDamage( GetDamage() * pWeaponInfo->m_flBombletMultiplier );
-				pBomb->SetDamageRadius( GetDamageRadius() );
+				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo );
+				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
+				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
+				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
 				pBomb->SetCritical( m_bCritical );
 				pBomb->WeaponID = WeaponID;
-		}		
-	}
+			}		
+		}
 #endif
-	UTIL_Remove( pWeapon );
+		UTIL_Remove( pWeapon );
 	}
 	SetThink( &CBaseGrenade::SUB_Remove );
 	SetTouch( NULL );
@@ -808,84 +806,6 @@ void CTFWeaponBaseGrenadeProj::DrawRadius( float flRadius )
 
 		lastEdge = edge;
 	}
-}
-
-
-//=============================================================================
-//
-// TF Mirv Bomb functions (Server specific).
-//
-
-#define GRENADE_MODEL_BOMBLET "models/weapons/w_models/w_grenade_bomblet.mdl"
-
-#define TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY		0.5f
-#define TF_WEAPON_GRENADE_MIRV_BOMB_FRICTION	0.8f
-#define TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY	0.45f
-
-LINK_ENTITY_TO_CLASS( tf_weapon_grenade_mirv_bomb, CTFGrenadeMirvBomb );
-PRECACHE_WEAPON_REGISTER( tf_weapon_grenade_mirv_bomb );
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-							                    const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, float timer )
-{
-	CTFGrenadeMirvBomb *pBomb = static_cast<CTFGrenadeMirvBomb*>( CBaseEntity::Create( "tf_weapon_grenade_mirv_bomb", position, angles, pOwner ) );
-	if ( pBomb )
-	{
-		pBomb->SetDetonateTimerLength( timer );
-		pBomb->SetupInitialTransmittedGrenadeVelocity( velocity );
-		pBomb->SetThrower( pOwner ); 
-		pBomb->SetOwnerEntity( NULL );
-
-		pBomb->SetGravity( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
-		pBomb->SetFriction( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
-		pBomb->SetElasticity( TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY );
-
-		pBomb->m_flDamage = 180.0f;
-		pBomb->m_DmgRadius = 198.0f;
-
-		pBomb->ChangeTeam( pOwner->GetTeamNumber() );
-
-		pBomb->SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
-
-		IPhysicsObject *pPhysicsObject = pBomb->VPhysicsGetObject();
-		if ( pPhysicsObject )
-		{
-			pPhysicsObject->AddVelocity( &velocity, &angVelocity );
-		}
-	}
-
-	return pBomb;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeMirvBomb::Spawn()
-{
-	SetModel( GRENADE_MODEL_BOMBLET );
-
-	BaseClass::Spawn();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeMirvBomb::Precache()
-{
-	PrecacheModel( GRENADE_MODEL_BOMBLET );
-
-	BaseClass::Precache();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CTFGrenadeMirvBomb::BounceSound( void )
-{
-	EmitSound( "Weapon_Grenade_MirvBomb.Bounce" );
 }
 
 #endif

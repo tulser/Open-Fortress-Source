@@ -34,6 +34,28 @@ const char *GetRPCMapImage( char m_szLatchedMapname[MAX_MAP_NAME], const char *p
 	return "missing";
 }
 #endif
+int GetWearableCount( void )
+{
+	int i = 0;
+
+	if ( !filesystem )
+		return 0;
+	KeyValues* pItemsGame = new KeyValues( "items_game" );
+	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+	if ( pItemsGame )
+	{
+		KeyValues* pCosmetics = pItemsGame->FindKey( "Cosmetics" );
+		if ( pCosmetics )
+		{
+			for ( KeyValues *pCosmetic = pCosmetics->GetFirstSubKey(); pCosmetic; pCosmetic = pCosmetic->GetNextKey() )
+			{
+				if ( pCosmetic )
+					i++;
+			}
+		}
+	}
+	return i;
+}
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------
@@ -45,19 +67,6 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Blue",
 	"Mercenary" //add team
 };
-
-const char *TF_WEARABLE_MODEL[] =
-{
-	"models/empty.mdl",
-	"models/player/items/mercenary/camocapmerc/camocapmerc.mdl",
-	"models/player/items/mercenary/helmerc/helmerc.mdl",
-	"models/player/items/mercenary/western_hat/western_hat.mdl",
-	"models/player/items/mercenary/boomer_bucket/boomer_bucket.mdl",
-	"models/player/items/mercenary/headset/headset.mdl",
-	"models/player/items/mercenary/merc_mask/merc_mask.mdl",
-};
-
-int TF_WEARABLE_COUNT = ARRAYSIZE( TF_WEARABLE_MODEL );
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
 {
@@ -210,6 +219,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_LIGHTNING_GUN",
 	"TF_WEAPON_GRAPPLE",
 	"TF_WEAPON_FLAREGUN",
+	"TF_WEAPON_GIB",
 
 	"TFC_WEAPON_SHOTGUN_SB",
 	"TFC_WEAPON_SHOTGUN_DB",
@@ -341,6 +351,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_LIGHTNING_GUN,
 	DMG_GENERIC,		// TF_WEAPON_GRAPPLE,
 	DMG_IGNITE,			// TF_WEAPON_FLAREGUN
+	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GIB,
 	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_DB
@@ -410,6 +421,7 @@ const char *g_szProjectileNames[] =
 	"projectile_incendrocket",
 	"projectile_pipe_dm",
 	"projectile_tranq",
+	"projectile_coom",
 };
 
 //NOTENOTE: This has been reworked, above char list not related anymore
