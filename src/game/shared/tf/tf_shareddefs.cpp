@@ -34,12 +34,22 @@ const char *GetRPCMapImage( char m_szLatchedMapname[MAX_MAP_NAME], const char *p
 	return "missing";
 }
 #endif
+
 int GetWearableCount( void )
 {
+	if ( !TFGameRules() )
+		return 0;
+	
+	if ( TFGameRules()->m_iCosmeticCount > 0 )
+		return TFGameRules()->m_iCosmeticCount;
+	
 	int i = 0;
-
+	
 	if ( !filesystem )
 		return 0;
+	
+	if ( !filesystem->FileExists( "scripts/items/items_game.txt" , "MOD" ) )
+			Error( "Error! items_games.txt is missing. Your game likely didn't download or update properly.\nGo to the open_fortress/scripts/items/ folder and delete the items_games.txt file, and cleanup & update the SVN again." );
 	KeyValues* pItemsGame = new KeyValues( "items_game" );
 	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
 	if ( pItemsGame )
@@ -54,6 +64,8 @@ int GetWearableCount( void )
 			}
 		}
 	}
+	if ( i > 0 )
+		TFGameRules()->m_iCosmeticCount = i;
 	return i;
 }
 //-----------------------------------------------------------------------------

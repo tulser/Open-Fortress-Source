@@ -293,6 +293,7 @@ REGISTER_GAMERULES_CLASS( CTFGameRules );
 BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_nGameType ) ),
+	RecvPropInt( RECVINFO( m_iCosmeticCount ) ),
 	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
 	RecvPropInt( RECVINFO( m_nHuntedCount_red ) ),
 	RecvPropInt( RECVINFO( m_nMaxHunted_red ) ),
@@ -316,6 +317,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iCosmeticCount ) ),
 	SendPropInt( SENDINFO( m_nHuntedCount_red ) ),
 	SendPropInt( SENDINFO( m_nMaxHunted_red ) ),
 	SendPropInt( SENDINFO( m_nHuntedCount_blu ) ),

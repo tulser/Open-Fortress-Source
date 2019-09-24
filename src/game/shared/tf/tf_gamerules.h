@@ -291,6 +291,7 @@ public:
 
 	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; }
 
+	CNetworkVar( int, m_iCosmeticCount ); 
 #ifdef CLIENT_DLL
 
 	DECLARE_CLIENTCLASS_NOBASE(); // This makes data tables able to access our private vars.
@@ -373,6 +374,7 @@ public:
 	void	SendHudNotification( IRecipientFilter &filter, HudNotification_t iType );
 	void	SendHudNotification( IRecipientFilter &filter, const char *pszText, const char *pszIcon, int iTeam = TEAM_UNASSIGNED );
 
+	
 private:
 
 	int DefaultFOV( void ) { return 75; }
@@ -398,6 +400,7 @@ private:
 	float m_flTimerMayExpireAt;
 	
 #endif
+
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkVar( bool, m_bKOTH ); // is the gamemode KOTH right now?
