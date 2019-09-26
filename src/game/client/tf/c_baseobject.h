@@ -45,6 +45,7 @@ public:
 	virtual bool	IsAnUpgrade(void ) const { return false; }
 
 	virtual void	SetType( int iObjectType );
+	virtual void	SetAltMode( int iAltMode );
 
 	virtual void	AddEntity();
 	virtual void	Select( void );
@@ -96,6 +97,7 @@ public:
 	virtual void	RecalculateIDString( void );
 
 	int GetType() const { return m_iObjectType; }
+	int GetAltMode() const { return m_iAltMode; }
 	bool IsOwnedByLocalPlayer() const;
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return (C_BaseEntity *)GetOwner(); }
 	C_TFPlayer *GetOwner();
@@ -108,11 +110,17 @@ public:
 
 	bool			IsPlacing( void ) const { return m_bPlacing; }
 	bool			IsBuilding( void ) const { return m_bBuilding; }
-	virtual bool	IsUpgrading( void ) const { return false; }
+	bool			IsUpgrading( void ) const { return m_bUpgrading; }
+	bool			IsHauling( void ) const { return m_bHauling; }
+
+	int				GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
+	int				GetUpgradeMetal( void ) { return m_iUpgradeMetal; }
+	int				GetUpgradeMetalRequired( void ) { return m_iUpgradeMetalRequired; }
 
 	virtual void	FinishedBuilding( void ) { return; }
 
 	virtual const char* GetStatusName() const;
+	virtual const char* GetModeName() const;
 	virtual void	GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
 
 	// Object Previews
@@ -185,6 +193,16 @@ public:
 
 	virtual bool TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, trace_t& tr );
 
+
+	bool			m_bWasBuilding;
+	bool			m_bBuilding;
+	bool			m_bUpgrading;
+	bool			m_bHauling;
+	bool			m_bWasPlacing;
+	bool			m_bPlacing;
+	bool			m_bDisabled;
+	bool			m_bOldDisabled;
+
 // ITargetIDProvidesHint
 public:
 	virtual void		DisplayHintTo( C_BasePlayer *pPlayer );
@@ -224,14 +242,9 @@ private:
 	bool			m_bHasSapper;
 	bool			m_bOldSapper;
 	int				m_iObjectType;
+	int				m_iAltMode;
 	int				m_iHealth;
 	int				m_iMaxHealth;
-	bool			m_bWasBuilding;
-	bool			m_bBuilding;
-	bool			m_bWasPlacing;
-	bool			m_bPlacing;
-	bool			m_bDisabled;
-	bool			m_bOldDisabled;
 	float			m_flPercentageConstructed;
 	EHANDLE			m_hBuiltOnEntity;
 
@@ -246,6 +259,14 @@ private:
 	CNetworkVar( bool, m_bServerOverridePlacement );
 
 	int m_nObjectOldSequence;
+
+public:
+
+	int m_iUpgradeMetal;
+	int m_iUpgradeMetalRequired;
+
+	int m_iUpgradeLevel;
+	int	m_iOldUpgradeLevel;
 
 
 private:

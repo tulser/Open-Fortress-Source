@@ -25,6 +25,12 @@
 #include "tf_hud_building_status.h"
 #include "cl_animevent.h"
 #include "eventlist.h"
+// for spy material proxy
+#include "proxyentity.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imaterialvar.h"
+#include "c_tf_team.h"
+#include "c_entitydissolve.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -42,8 +48,11 @@ IMPLEMENT_CLIENTCLASS_DT(C_BaseObject, DT_BaseObject, CBaseObject)
 	RecvPropInt(RECVINFO(m_iMaxHealth)),
 	RecvPropInt(RECVINFO(m_bHasSapper)),
 	RecvPropInt(RECVINFO(m_iObjectType)),
+	RecvPropInt(RECVINFO(m_iAltMode)),
 	RecvPropInt(RECVINFO(m_bBuilding)),
 	RecvPropInt(RECVINFO(m_bPlacing)),
+	RecvPropInt(RECVINFO(m_bUpgrading)),
+	RecvPropInt(RECVINFO(m_bHauling)),
 	RecvPropFloat(RECVINFO(m_flPercentageConstructed)),
 	RecvPropInt(RECVINFO(m_fObjectFlags)),
 	RecvPropEHandle(RECVINFO(m_hBuiltOnEntity)),
@@ -53,9 +62,12 @@ IMPLEMENT_CLIENTCLASS_DT(C_BaseObject, DT_BaseObject, CBaseObject)
 	RecvPropVector( RECVINFO( m_vecBuildMins ) ),
 	RecvPropInt( RECVINFO( m_iDesiredBuildRotations ) ),
 	RecvPropInt( RECVINFO( m_bServerOverridePlacement ) ),
+	RecvPropInt( RECVINFO( m_iUpgradeLevel ) ),
+	RecvPropInt( RECVINFO( m_iUpgradeMetal ) ),
+	RecvPropInt( RECVINFO( m_iUpgradeMetalRequired ) ),
 END_RECV_TABLE()
 
-ConVar cl_obj_test_building_damage( "cl_obj_test_building_damage", "-1", FCVAR_CHEAT, "debug building damage", true, -1, true, BUILDING_DAMAGE_LEVEL_CRITICAL );
+ConVar cl_obj_test_building_damage( "cl_obj_test_building_damage", "-1", FCVAR_CHEAT, "Debug building damage", true, -1, true, BUILDING_DAMAGE_LEVEL_CRITICAL );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -67,6 +79,8 @@ C_BaseObject::C_BaseObject(  )
 	m_bPlacing = false;
 	m_flPercentageConstructed = 0;
 	m_fObjectFlags = 0;
+
+	m_iOldUpgradeLevel = 0;
 
 	m_flCurrentBuildRotation = 0;
 
@@ -185,6 +199,7 @@ void C_BaseObject::OnDataChanged( DataUpdateType_t updateType )
 		if ( event )
 		{
 			event->SetInt( "building_type", GetType() );
+			event->SetInt( "object_mode", GetAltMode() );
 			gameeventmanager->FireEventClientSide( event );
 		}
 	}
@@ -277,6 +292,16 @@ void C_BaseObject::FireEvent( const Vector& origin, const QAngle& angles, int ev
 const char* C_BaseObject::GetStatusName() const
 {
 	return GetObjectInfo( GetType() )->m_pStatusName;
+}
+
+const char* C_BaseObject::GetModeName() const
+{
+	if ( GetAltMode() == 0 )
+		return GetObjectInfo( GetType() )->m_pModeName0;
+	else if ( GetAltMode() == 1 )
+		return GetObjectInfo( GetType() )->m_pModeName1;
+	else
+		return NULL;
 }
 
 void C_BaseObject::GetStatusText( wchar_t *pStatus, int iMaxStatusLen )
@@ -943,3 +968,120 @@ CBasicControlPanel::CBasicControlPanel( vgui::Panel *parent, const char *panelNa
 	: BaseClass( parent, "CBasicControlPanel" ) 
 {
 }
+
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Used to SHUT THE GAME UP
+//-----------------------------------------------------------------------------
+class CBuildingInvisProxy : public CEntityMaterialProxy
+{
+public:
+						CBuildingInvisProxy( void );
+	virtual				~CBuildingInvisProxy( void );
+	virtual bool		Init( IMaterial *pMaterial, KeyValues* pKeyValues );
+	virtual void		OnBind( C_BaseEntity *pC_BaseEntity );
+	virtual IMaterial *	GetMaterial();
+
+private:
+
+	IMaterialVar		*m_pPercentInvisible;
+	IMaterialVar		*m_pCloakColorTint;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CBuildingInvisProxy::CBuildingInvisProxy( void )
+{
+	m_pPercentInvisible = NULL;
+	m_pCloakColorTint = NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CBuildingInvisProxy::~CBuildingInvisProxy( void )
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get pointer to the color value
+// Input  : *pMaterial - 
+//-----------------------------------------------------------------------------
+bool CBuildingInvisProxy::Init( IMaterial *pMaterial, KeyValues* pKeyValues )
+{
+	Assert( pMaterial );
+
+	// Need to get the material var
+	bool bInvis;
+	m_pPercentInvisible = pMaterial->FindVar( "$cloakfactor", &bInvis );
+
+	bool bTint;
+	m_pCloakColorTint = pMaterial->FindVar( "$cloakColorTint", &bTint );
+
+	return ( bInvis && bTint );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  :
+//-----------------------------------------------------------------------------
+void CBuildingInvisProxy::OnBind( C_BaseEntity *pEnt )
+{
+	if( !m_pPercentInvisible || !m_pCloakColorTint )
+		return;
+
+	if ( !pEnt )
+		return;
+
+	C_TFPlayer *pPlayer = ToTFPlayer( pEnt->GetMoveParent() ); // For when ficool inevidably parents shit to the player again
+
+	if ( pPlayer )
+	{
+		m_pPercentInvisible->SetFloatValue( pPlayer->GetEffectiveInvisibilityLevel() );
+	}
+	else
+	{
+		m_pPercentInvisible->SetFloatValue( 0.0 );
+		return;
+	}
+
+	float r, g, b;	
+	
+	switch( pPlayer->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			r = 1.0; g = 0.5; b = 0.4;
+			break;
+
+		case TF_TEAM_BLUE:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+		case TF_TEAM_MERCENARY:
+				{
+					Vector Color = pPlayer->m_vecPlayerColor;				
+					r = Color.x; 
+					g = Color.y; 
+					b = Color.z; 
+				}
+			break;
+		default:
+			r = 0.4; g = 0.5; b = 1.0;
+			break;
+	}
+
+	m_pCloakColorTint->SetVecValue( r, g, b );
+	return;
+
+}
+
+IMaterial *CBuildingInvisProxy::GetMaterial()
+{
+	if ( !m_pPercentInvisible )
+		return NULL;
+
+	return m_pPercentInvisible->GetOwningMaterial();
+}
+
+EXPOSE_INTERFACE( CBuildingInvisProxy, IMaterialProxy, "building_invis" IMATERIAL_PROXY_INTERFACE_VERSION );

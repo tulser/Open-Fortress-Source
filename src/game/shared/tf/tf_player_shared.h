@@ -218,6 +218,8 @@ public:
 
 	// loser state
 	bool	IsLoser( void );
+	// hauling state
+	bool	IsHauling( void );
 
 	void	DebugPrintConditions( void );
 

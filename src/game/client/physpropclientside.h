@@ -164,4 +164,25 @@ private:
 	CUtlVector<clientsideproprespawn_t> m_PropList;
 };
 
+class C_FadingPhysPropClientside : public C_PhysPropClientside
+{
+public:
+	DECLARE_CLASS(C_FadingPhysPropClientside, C_PhysPropClientside);
+
+	// if we wake, extend fade time
+
+	virtual void ImpactTrace(trace_t *pTrace, int iDamageType, char *pCustomImpactName)
+	{
+		// If we haven't started fading
+		if (GetRenderColor().a >= 255)
+		{
+			// delay the fade
+			StartFadeOut(10.0);
+
+			// register the impact
+			BaseClass::ImpactTrace(pTrace, iDamageType, pCustomImpactName);
+		}
+	}
+};
+
 #endif // PHYSPROPCLIENTSIDE_H

@@ -26,6 +26,8 @@ public:
 	virtual void OnDataChanged( DataUpdateType_t updateType );
 
 	virtual void GetStatusText( wchar_t *pStatus, int iMaxStatusLen );
+
+	virtual void GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes );
 	virtual void GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes );
 
 	virtual void ClientThink( void );

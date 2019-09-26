@@ -136,6 +136,7 @@ class CTFFlameEntity : public CBaseEntity
 {
 	DECLARE_CLASS( CTFFlameEntity, CBaseEntity );
 public:
+
 	virtual void Spawn( void );
 
 public:

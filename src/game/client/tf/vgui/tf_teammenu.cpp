@@ -37,7 +37,7 @@ extern ConVar	ofd_allowteams;
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFTeamButton::CTFTeamButton( vgui::Panel *parent, const char *panelName ) : CTFButton( parent, panelName, "" )
+CTFTeamButton::CTFTeamButton( vgui::Panel *parent, const char *panelName ) : CExButton( parent, panelName, "" )
 {
 	m_szModelPanel[0] = '\0';
 	m_iTeam = TEAM_UNASSIGNED;
@@ -257,12 +257,12 @@ CTFTeamMenu::CTFTeamMenu( IViewPort *pViewPort ) : CTeamMenu( pViewPort )
 	m_pMercenaryTeamButton = new CTFTeamButton( this, "teambutton4" );
 	m_pAutoTeamButton = new CTFTeamButton( this, "teambutton2" );
 	m_pSpecTeamButton = new CTFTeamButton( this, "teambutton3" );
-	m_pSpecLabel = new CTFLabel( this, "TeamMenuSpectate", "" );
+	m_pSpecLabel = new CExLabel( this, "TeamMenuSpectate", "" );
 
 #ifdef _X360
 	m_pFooter = new CTFFooter( this, "Footer" );
 #else
-	m_pCancelButton = new CTFButton( this, "CancelButton", "#TF_Cancel" );
+	m_pCancelButton = new CExButton( this, "CancelButton", "#TF_Cancel" );
 #endif
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
@@ -704,8 +704,8 @@ CTFDMTeamMenu::CTFDMTeamMenu(IViewPort *pViewPort) : CTeamMenu(pViewPort)
 
 	m_pAutoTeamButton = new CTFTeamButton(this, "teambutton2");
 	m_pSpecTeamButton = new CTFTeamButton(this, "teambutton3");
-	m_pSpecLabel = new CTFLabel(this, "TeamMenuSpectate", "");
-	m_pCancelButton = new CTFLabel(this, "CancelButton", "#TF_Cancel");
+	m_pSpecLabel = new CExLabel(this, "TeamMenuSpectate", "");
+	m_pCancelButton = new CExLabel(this, "CancelButton", "#TF_Cancel");
 
 	vgui::ivgui()->AddTickSignal(GetVPanel());
 	LoadControlSettings("Resource/UI/DMTeamMenu.res");

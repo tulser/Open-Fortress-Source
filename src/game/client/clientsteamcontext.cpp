@@ -65,7 +65,7 @@ void CClientSteamContext::Activate()
 	Init(); // Steam API context init
 	
 	UpdateLoggedOnState();
-	Msg( "CClientSteamContext logged on = %d\n", m_bLoggedOn );
+	DevMsg( "CClientSteamContext logged on = %d\n", m_bLoggedOn );
 #endif
 }
 
@@ -96,19 +96,19 @@ void CClientSteamContext::UpdateLoggedOnState()
 void CClientSteamContext::OnSteamServersDisconnected( SteamServersDisconnected_t *pDisconnected )
 {
 	UpdateLoggedOnState();
-	Msg( "CClientSteamContext OnSteamServersDisconnected logged on = %d\n", m_bLoggedOn );
+	DevMsg( "CClientSteamContext OnSteamServersDisconnected logged on = %d\n", m_bLoggedOn );
 }
 
 void CClientSteamContext::OnSteamServerConnectFailure( SteamServerConnectFailure_t *pConnectFailure )
 {
 	UpdateLoggedOnState();
-	Msg( "CClientSteamContext OnSteamServerConnectFailure logged on = %d\n", m_bLoggedOn );
+	DevMsg( "CClientSteamContext OnSteamServerConnectFailure logged on = %d\n", m_bLoggedOn );
 }
 
 void CClientSteamContext::OnSteamServersConnected( SteamServersConnected_t *pConnected )
 {
 	UpdateLoggedOnState();
-	Msg( "CClientSteamContext OnSteamServersConnected logged on = %d\n", m_bLoggedOn );
+	DevMsg( "CClientSteamContext OnSteamServersConnected logged on = %d\n", m_bLoggedOn );
 }
 #endif // !defined(NO_STEAM)
 

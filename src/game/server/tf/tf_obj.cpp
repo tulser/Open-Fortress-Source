@@ -40,6 +40,7 @@
 #include "tf_obj_sapper.h"
 #include "particle_parse.h"
 #include "tf_fx.h"
+#include "tf_obj_teleporter.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -76,6 +77,7 @@ ConVar  object_deterioration_time( "object_deterioration_time", "30", 0, "Time i
 #define MAX_DROP_TIME_AFTER_DAMAGE			5
 
 #define OBJ_BASE_THINK_CONTEXT				"BaseObjectThink"
+#define OBJ_BASE_HAULING_THINK_CONTEXT		"BaseObjectHaulingThink"
 
 BEGIN_DATADESC( CBaseObject )
 	// keys 
@@ -88,10 +90,11 @@ BEGIN_DATADESC( CBaseObject )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetSolidToPlayer", InputSetSolidToPlayer ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "Show", InputShow ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "Hide", InputHide ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "Enable", InputEnable ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "Disable", InputDisable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "SetBuilder", InputSetBuilder ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Show", InputShow ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Hide", InputHide ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
 
 	// Outputs
 	DEFINE_OUTPUT( m_OnDestroyed, "OnDestroyed" ),
@@ -108,8 +111,11 @@ IMPLEMENT_SERVERCLASS_ST(CBaseObject, DT_BaseObject)
 	SendPropInt(SENDINFO(m_iMaxHealth), 13 ),
 	SendPropBool(SENDINFO(m_bHasSapper) ),
 	SendPropInt(SENDINFO(m_iObjectType), Q_log2( OBJ_LAST ) + 1, SPROP_UNSIGNED ),
+	SendPropInt(SENDINFO(m_iAltMode), 2, SPROP_UNSIGNED ),
 	SendPropBool(SENDINFO(m_bBuilding) ),
 	SendPropBool(SENDINFO(m_bPlacing) ),
+	SendPropBool(SENDINFO(m_bUpgrading) ),
+	SendPropBool(SENDINFO(m_bHauling) ),
 	SendPropFloat(SENDINFO(m_flPercentageConstructed), 8, 0, 0.0, 1.0f ),
 	SendPropInt(SENDINFO(m_fObjectFlags), OF_BIT_COUNT, SPROP_UNSIGNED ),
 	SendPropEHandle(SENDINFO(m_hBuiltOnEntity)),
@@ -119,6 +125,9 @@ IMPLEMENT_SERVERCLASS_ST(CBaseObject, DT_BaseObject)
 	SendPropVector( SENDINFO( m_vecBuildMins ), -1, SPROP_COORD ),
 	SendPropInt( SENDINFO( m_iDesiredBuildRotations ), 2, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bServerOverridePlacement ) ),
+	SendPropInt( SENDINFO(m_iUpgradeLevel), 3 ),
+	SendPropInt( SENDINFO(m_iUpgradeMetal), 10 ),
+	SendPropInt( SENDINFO(m_iUpgradeMetalRequired), 10 ),
 END_SEND_TABLE();
 
 bool PlayerIndexLessFunc( const int &lhs, const int &rhs )	
@@ -176,11 +185,17 @@ CBaseObject::CBaseObject()
 	m_flPercentageConstructed = 0;
 	m_bPlacing = false;
 	m_bBuilding = false;
+	m_bHauling = false;
 	m_Activity = ACT_INVALID;
 	m_bDisabled = false;
 	m_SolidToPlayers = SOLID_TO_PLAYER_USE_DEFAULT;
 	m_bPlacementOK = false;
 	m_aGibs.Purge();
+
+	m_iUpgradeLevel = 1;
+	m_iUpgradeMetal = 0;
+	m_iUpgradeMetalRequired = GetObjectInfo( ObjectType() )->m_UpgradeCost;
+	m_flUpgradeDuration = GetObjectInfo( ObjectType() )->m_flUpgradeDuration;
 }
 
 //-----------------------------------------------------------------------------
@@ -268,6 +283,7 @@ void CBaseObject::Precache()
 	PrecacheMaterial( SCREEN_OVERLAY_MATERIAL );
 
 	PrecacheScriptSound( GetObjectInfo( ObjectType() )->m_pExplodeSound );
+	PrecacheScriptSound( GetObjectInfo( ObjectType() )->m_pUpgradeSound );
 
 	const char *pEffect = GetObjectInfo( ObjectType() )->m_pExplosionParticleEffect;
 
@@ -289,9 +305,10 @@ void CBaseObject::Spawn( void )
 	SetSolidToPlayers( m_SolidToPlayers, true );
 
 	m_bHasSapper = false;
-	m_takedamage = DAMAGE_YES;
+	m_takedamage = DAMAGE_AIM;
 	m_flHealth = m_iMaxHealth = m_iHealth;
 	m_iKills = 0;
+	m_iAssists = 0;
 
 	SetContextThink( &CBaseObject::BaseObjectThink, gpGlobals->curtime + 0.1, OBJ_BASE_THINK_CONTEXT );
 
@@ -485,6 +502,26 @@ void CBaseObject::BaseObjectThink( void )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseObject::BaseObjectHaulingThink( void )
+{
+	// Play hauling voicelines for our Engi
+	if ( IsHauling() )
+	{
+		CTFPlayer *pPlayer = GetOwner();
+
+		if ( pPlayer && pPlayer->m_bHauling )
+		{
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_CARRYING_BUILDING );
+			SetContextThink( NULL, gpGlobals->curtime, OBJ_BASE_HAULING_THINK_CONTEXT );
+		}
+	}
+	else
+		SetContextThink( NULL, gpGlobals->curtime, OBJ_BASE_HAULING_THINK_CONTEXT );
+}
+
 bool CBaseObject::UpdateAttachmentPlacement( void )
 {
 	// See if we should snap to a build position
@@ -598,8 +635,10 @@ void CBaseObject::DeterminePlaybackRate( void )
 {
 	if ( IsBuilding() )
 	{
-		// Default half rate, author build anim as if one player is building
-		SetPlaybackRate( GetRepairMultiplier() * 0.5 );	
+		if ( m_bHauling )
+			SetPlaybackRate( GetRepairMultiplier() );	
+		else
+			SetPlaybackRate( GetRepairMultiplier() * 0.5 );	 		// Default half rate, author build anim as if one player is building
 	}
 	else
 	{
@@ -654,6 +693,14 @@ void CBaseObject::SetBuilder( CTFPlayer *pBuilder )
 int	CBaseObject::ObjectType( ) const
 {
 	return m_iObjectType;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CBaseObject::AltMode( ) const
+{
+	return m_iAltMode;
 }
 
 //-----------------------------------------------------------------------------
@@ -715,25 +762,23 @@ float CBaseObject::GetTotalTime( void )
 //-----------------------------------------------------------------------------
 void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 {
-	bool m_bOwned = ( ( CTFPlayer* ) pPlayer)->PlayerOwnsThisObject( m_iObjectType );
-
-	if ( m_bOwned )
-	{
-		// Player already owns this object, abort!
-		DevMsg( "Tried to place an object that's already built.\n" );
-		StopPlacement();
-		return;
-	}
+	if ( m_bHauling )
+		SetDisabled( true );
 
 	AddSolidFlags( FSOLID_NOT_SOLID );
 
 	m_bPlacing = true;
 	m_bBuilding = false;
+
 	if ( pPlayer )
 	{
 		SetBuilder( pPlayer );
 		ChangeTeam( pPlayer->GetTeamNumber() );
+
+		if ( m_bHauling )
+			pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PICKUP_BUILDING );
 	}
+
 
 	// needed?
 	m_nRenderMode = kRenderNormal;
@@ -749,6 +794,19 @@ void CBaseObject::StartPlacement( CTFPlayer *pPlayer )
 	if( GetTeamNumber() == TF_TEAM_RED ) m_nSkin = 0;
 	else if( GetTeamNumber() == TF_TEAM_BLUE ) m_nSkin = 1;
 	else m_nSkin = 2;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Start placing the object (from a haul)
+//-----------------------------------------------------------------------------
+void CBaseObject::StartHauling( void )
+{
+	SetContextThink( &CBaseObject::BaseObjectHaulingThink, gpGlobals->curtime + random->RandomFloat( 3, 5 ), OBJ_BASE_HAULING_THINK_CONTEXT );
+
+	m_iOldUpgradeLevel = m_iUpgradeLevel;
+	m_iUpgradeLevel = 1;
+
+	m_takedamage = DAMAGE_NO;
 }
 
 //-----------------------------------------------------------------------------
@@ -1071,8 +1129,7 @@ const char *CBaseObject::GetResponseRulesModifier( void )
 	switch ( GetType() )
 	{
 	case OBJ_DISPENSER: return "objtype:dispenser"; break;
-	case OBJ_TELEPORTER_ENTRANCE: return "objtype:teleporter_entrance"; break;
-	case OBJ_TELEPORTER_EXIT: return "objtype:teleporter_exit"; break;
+	case OBJ_TELEPORTER: return "objtype:teleporter"; break;
 	case OBJ_SENTRYGUN: return "objtype:sentrygun"; break;
 	case OBJ_ATTACHMENT_SAPPER: return "objtype:sapper"; break;
 	default:
@@ -1086,7 +1143,6 @@ const char *CBaseObject::GetResponseRulesModifier( void )
 //-----------------------------------------------------------------------------
 bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 {
-
 	/*
 	// find any tf_ammo_boxes that we are colliding with and destroy them ?
 	// enable if we need to do this
@@ -1110,11 +1166,16 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 	}
 	*/
 
+	CTFPlayer *pTFBuilder = NULL;
+
+	if ( pBuilder )
+		pTFBuilder = ToTFPlayer( pBuilder );
+
 	// Need to add the object to the team now...
 	CTFTeam *pTFTeam = ( CTFTeam * )GetGlobalTeam( GetTeamNumber() );
 
 	// Deduct the cost from the player
-	if ( pBuilder && pBuilder->IsPlayer() )
+	if ( pTFBuilder && pTFBuilder->IsPlayer() && !m_bHauling )
 	{
 		/*
 		if ( ((CTFPlayer*)pBuilder)->IsPlayerClass( TF_CLASS_ENGINEER ) )
@@ -1123,17 +1184,7 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 		}
 		*/
 
-		bool m_bOwned = ( ( CTFPlayer* ) pBuilder)->PlayerOwnsThisObject( m_iObjectType );
-
-		if ( m_bOwned )
-		{
-			// Player already owns this object, abort!
-			DevMsg( "Tried to build an object that's already built.\n" );
-			StopPlacement();
-			return false;
-		}
-
-		int iAmountPlayerPaidForMe = ((CTFPlayer*)pBuilder)->StartedBuildingObject( m_iObjectType );
+		int iAmountPlayerPaidForMe = pTFBuilder->StartedBuildingObject( m_iObjectType );
 		if ( of_infiniteammo.GetBool() ) iAmountPlayerPaidForMe = 1;
 		if ( !iAmountPlayerPaidForMe )
 		{
@@ -1145,13 +1196,13 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 
 		// if the player has no build PDA, abort the building
 		// if the player is a spy though, allow him to build a sapper but don't allow the building of anything else unless he has a engineer pda too
-		TFPlayerClassData_t *pData = ((CTFPlayer*)pBuilder)->GetPlayerClass()->GetData();
+		TFPlayerClassData_t *pData = pTFBuilder->GetPlayerClass()->GetData();
 
-		CTFWeaponBase *pWeapon = ( (CTFPlayer*)pBuilder )->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
+		CTFWeaponBase *pWeapon = pTFBuilder->Weapon_OwnsThisID(TF_WEAPON_PDA_ENGINEER_BUILD);
 
 		if ( pWeapon == NULL )
 		{
-			if( !((CTFPlayer*)pBuilder)->IsRetroModeOn() )
+			if ( !pTFBuilder->IsRetroModeOn() )
 			{
 				if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
 				{
@@ -1173,23 +1224,33 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 			}
 		}
 
-		((CTFPlayer*)pBuilder)->SpeakConceptIfAllowed( MP_CONCEPT_BUILDING_OBJECT, GetResponseRulesModifier() );
+		pTFBuilder->SpeakConceptIfAllowed( MP_CONCEPT_BUILDING_OBJECT, GetResponseRulesModifier() );
 	}
 	
 	// Add this object to the team's list (because we couldn't add it during
 	// placement mode)
-	if ( pTFTeam && !pTFTeam->IsObjectOnTeam( this ) )
+	if ( pTFTeam && !pTFTeam->IsObjectOnTeam( this ) && !m_bHauling )
 	{
 		pTFTeam->AddObject( this );
 	}
 
+	if ( pTFBuilder && pTFBuilder->IsPlayer() && m_bHauling )
+	{
+		pTFBuilder->SetHauling( false );
+		pTFBuilder->SpeakConceptIfAllowed( MP_CONCEPT_REDEPLOY_BUILDING );
+	}
+
 	m_bPlacing = false;
 	m_bBuilding = true;
-	SetHealth( OBJECT_CONSTRUCTION_STARTINGHEALTH );
+
+	if ( !m_bHauling )
+		SetHealth( OBJECT_CONSTRUCTION_STARTINGHEALTH );
+
 	m_flPercentageConstructed = 0;
 
 	m_nRenderMode = kRenderNormal; 
 	RemoveSolidFlags( FSOLID_NOT_SOLID );
+	m_takedamage = DAMAGE_AIM;
 
 	// NOTE: We must spawn the control panels now, instead of during
 	// Spawn, because until placement is started, we don't actually know
@@ -1210,10 +1271,10 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 	// Start the build animations
 	m_flTotalConstructionTime = m_flConstructionTimeLeft = GetTotalTime();
 
-	if ( pBuilder && pBuilder->IsPlayer() )
+	if ( pTFBuilder && pTFBuilder->IsPlayer() && !m_bHauling )
 	{
-		CTFPlayer *pTFBuilder = ToTFPlayer( pBuilder );
 		pTFBuilder->FinishedObject( this );
+
 		IGameEvent * event = gameeventmanager->CreateEvent( "player_builtobject" );
 		if ( event )
 		{
@@ -1242,7 +1303,6 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 //-----------------------------------------------------------------------------
 void CBaseObject::BuildingThink( void )
 {
-	// Continue construction
 	Repair( (GetMaxHealth() - OBJECT_CONSTRUCTION_STARTINGHEALTH) / m_flTotalConstructionTime * OBJECT_CONSTRUCTION_INTERVAL );
 }
 
@@ -1266,6 +1326,9 @@ void CBaseObject::SetControlPanelsActive( bool bState )
 //-----------------------------------------------------------------------------
 void CBaseObject::FinishedBuilding( void )
 {
+	if ( m_bHauling )
+		SetDisabled( false );
+
 	SetControlPanelsActive( true );
 
 	// Only make a shadow if the object doesn't use vphysics
@@ -1278,11 +1341,29 @@ void CBaseObject::FinishedBuilding( void )
 
 	AttemptToGoActive();
 
-	// We're done building, add in the stat...
-	////TFStats()->IncrementStat( (TFStatId_t)(TF_STAT_FIRST_OBJECT_BUILT + ObjectType()), 1 );
-
 	// Spawn any objects on this one
 	SpawnObjectPoints();
+
+	if ( m_iUpgradeLevel < m_iOldUpgradeLevel )
+		StartUpgrading();
+	else
+		m_bHauling = false;
+}
+
+//-----------------------------------------------------------------------------
+// Base upgrade
+//-----------------------------------------------------------------------------
+void CBaseObject::StartUpgrading( void )
+{
+}
+
+void CBaseObject::FinishUpgrading( void )
+{
+}
+
+bool CBaseObject::CanBeUpgraded( CTFPlayer *pPlayer )
+{
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1669,13 +1750,16 @@ bool CBaseObject::Repair( float flHealth )
 	{
 		// Reduce the construction time by the correct amount for the health passed in
 		float flConstructionTime = flHealth / ((GetMaxHealth() - OBJECT_CONSTRUCTION_STARTINGHEALTH) / m_flTotalConstructionTime);
+		if ( m_bHauling )
+			flConstructionTime = flConstructionTime * 2;
 		m_flConstructionTimeLeft = max( 0, m_flConstructionTimeLeft - flConstructionTime);
 		m_flConstructionTimeLeft = clamp( m_flConstructionTimeLeft, 0.0f, m_flTotalConstructionTime );
 		m_flPercentageConstructed = 1 - (m_flConstructionTimeLeft / m_flTotalConstructionTime);
 		m_flPercentageConstructed = clamp( m_flPercentageConstructed, 0.0f, 1.0f );
 
 		// Increase health.
-		SetHealth( min( GetMaxHealth(), m_flHealth + flHealth ) );
+		if ( !m_bHauling )
+			SetHealth( min( GetMaxHealth(), m_flHealth + flHealth ) );
 
 		// Return true if we're constructed now
 		if ( m_flConstructionTimeLeft <= 0.0f )
@@ -1894,6 +1978,7 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 			event->SetInt( "priority", 6 );		// HLTV event priority, not transmitted
 			event->SetInt( "objecttype", GetType() );
 			event->SetInt( "index", entindex() );	// object entity index
+			event->SetBool( "was_building", m_bHauling );	// hauling
 
 			gameeventmanager->FireEvent( event );
 		}
@@ -1927,6 +2012,14 @@ Class_T	CBaseObject::Classify( void )
 int	CBaseObject::GetType()
 {
 	return m_iObjectType;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get the type of this object
+//-----------------------------------------------------------------------------
+int	CBaseObject::GetAltMode()
+{
+	return m_iAltMode;
 }
 
 //-----------------------------------------------------------------------------
@@ -2030,6 +2123,69 @@ bool CBaseObject::ShowVGUIScreen( int panelIndex, bool bShow )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Hauling
+//-----------------------------------------------------------------------------
+bool CBaseObject::CanBeHauled( CTFPlayer *pPlayer )
+{
+	if ( IsPlacing() )
+	{
+		DevMsg( 2, "CBaseObject: Can't haul this as its being placed.\n");
+		return false;
+	}
+
+	if ( IsBuilding() )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as its constructing.\n");
+		return false;
+	}
+	if ( IsUpgrading() )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as its upgrading.\n");
+		return false;
+	}
+
+	if ( IsHauling() )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as its... already being hauled.\n");
+		return false;
+	}
+
+	if ( m_bHasSapper )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as its being sapped.\n");
+		return false;
+	}
+
+	// spectator exploit
+	if ( !pPlayer->IsAlive() )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as player is not alive.\n");
+		return false;
+	}
+
+	// this shouldn't happen but checking it anyway
+	if ( pPlayer->IsHauling() )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as player is already hauling.\n");
+		return false;
+	}
+
+	if ( TFGameRules() && TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as the round is currently in winning state.\n");
+		return false;
+	}
+
+	if ( pPlayer == GetOwner() )
+		return true;
+	else
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as player doesn't own this.\n");
+		return false;
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Set the health of the object
 //-----------------------------------------------------------------------------
 void CBaseObject::InputSetHealth( inputdata_t &inputdata )
@@ -2116,6 +2272,18 @@ void CBaseObject::InputDisable( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Remove health from the object
+//-----------------------------------------------------------------------------
+void CBaseObject::InputSetBuilder( inputdata_t &inputdata )
+{
+	CTFPlayer *pTFBuilder = ToTFPlayer( inputdata.pActivator );
+
+	if ( pTFBuilder )
+		SetBuilder( pTFBuilder );
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : 
 // Output : did this wrench hit do any work on the object?
@@ -2193,7 +2361,7 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 	int iAmountToHeal = min( 100, GetMaxHealth() - GetHealth() );
 
 	// repair the building
-	int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.2f );
+	int iRepairCost = ceil( (float)( iAmountToHeal ) * 0.8f );
 
 	TRACE_OBJECT( UTIL_VarArgs( "%0.2f CObjectDispenser::Command_Repair ( %d / %d ) - cost = %d\n", gpGlobals->curtime, 
 		GetHealth(),
@@ -2209,10 +2377,46 @@ bool CBaseObject::Command_Repair( CTFPlayer *pActivator )
 
 		pActivator->RemoveBuildResources( iRepairCost );
 
-		float flNewHealth = min( GetMaxHealth(), m_flHealth + ( iRepairCost * 5 ) );
+		float flNewHealth = min( GetMaxHealth(), m_flHealth + ( iRepairCost * 1.25 ) );
 		SetHealth( flNewHealth );
 
 		return ( iRepairCost > 0 );
+	}
+
+	// For teleporters: repair the other end if possible!
+
+	CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( this );
+
+	if ( pTeleporter )
+	{
+		CObjectTeleporter *pDest = pTeleporter->GetMatchingTeleporter();
+
+		if ( pDest && !pDest->m_bBuilding )
+		{
+			int iAmountToHeal2 = min( 100, pDest->GetMaxHealth() - pDest->GetHealth() );
+
+			// repair the building
+			int iRepairCost2 = ceil( (float)( iAmountToHeal2 ) * 0.5f );
+
+			if ( iRepairCost == 0 )
+			{
+				if ( iRepairCost2 > pActivator->GetBuildResources() )
+				{
+					iRepairCost2 = pActivator->GetBuildResources();
+				}
+
+				pActivator->RemoveBuildResources( iRepairCost2 );
+
+			}
+
+			float flNewHealth2 = min( pDest->GetMaxHealth(), pDest->m_flHealth + ( iRepairCost2 * 2 ) );
+			pDest->SetHealth( flNewHealth2 );
+
+			if ( iRepairCost2 > 0 )
+				return true;
+			else
+				return false;
+		}
 	}
 
 	return false;

@@ -39,17 +39,18 @@ int GetWearableCount( void )
 {
 	if ( !TFGameRules() )
 		return 0;
-	
+
 	if ( TFGameRules()->m_iCosmeticCount > 0 )
 		return TFGameRules()->m_iCosmeticCount;
-	
+
 	int i = 0;
-	
+
 	if ( !filesystem )
 		return 0;
-	
+
 	if ( !filesystem->FileExists( "scripts/items/items_game.txt" , "MOD" ) )
 			Error( "Error! items_games.txt is missing. Your game likely didn't download or update properly.\nGo to the open_fortress/scripts/items/ folder and delete the items_games.txt file, and cleanup & update the SVN again." );
+
 	KeyValues* pItemsGame = new KeyValues( "items_game" );
 	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
 	if ( pItemsGame )
@@ -66,8 +67,10 @@ int GetWearableCount( void )
 	}
 	if ( i > 0 )
 		TFGameRules()->m_iCosmeticCount = i;
+
 	return i;
 }
+
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------
@@ -134,14 +137,22 @@ const char *g_aGameTypeNames[] =
 	"Undefined",
 	"#Gametype_CTF",
 	"#Gametype_CP",
+	"#Gametype_PAYLOAD",
+	"#Gametype_ARENA",
+	"#Gametype_KOTH",
+	"#Gametype_MVM",
+	"#Gametype_RD",
+	"#Gametype_PASSTIME",
+	"#Gametype_PD",
+	"#Gametype_ESC",
 	"#Gametype_DM",
 	"#Gametype_TDM",
-	"#Gametype_ESC",
-	"#Gametype_ZS",
+	"#Gametype_DOM",
 	"#Gametype_GG",
-	"#Gametype_ARENA",
-	"#Gametype_PAYLOAD",
-	"#Gametype_KOTH"
+	"#Gametype_3WAVE",
+	"#Gametype_ZS",
+	"#Gametype_COOP",
+	"#Gametype_RDM"
 };
 
 //-----------------------------------------------------------------------------
@@ -617,6 +628,7 @@ CObjectInfo::CObjectInfo( char *pObjectName )
 	m_Cost = -9999;
 	m_CostMultiplierPerInstance = -999;
 	m_UpgradeCost = -9999;
+	m_flUpgradeDuration = -9999;
 	m_MaxUpgradeLevel = -9999;
 	m_pBuilderWeaponName = NULL;
 	m_pBuilderPlacementString = NULL;
@@ -630,6 +642,7 @@ CObjectInfo::CObjectInfo( char *pObjectName )
 	m_iDisplayPriority = 0;
 	m_bVisibleInWeaponSelection = true;
 	m_pExplodeSound = NULL;
+	m_pUpgradeSound = NULL;
 	m_pExplosionParticleEffect = NULL;
 	m_bAutoSwitchTo = false;
 }
@@ -639,6 +652,8 @@ CObjectInfo::~CObjectInfo()
 {
 	delete [] m_pClassName;
 	delete [] m_pStatusName;
+	delete [] m_pModeName0;
+	delete [] m_pModeName1;
 	delete [] m_pBuilderWeaponName;
 	delete [] m_pBuilderPlacementString;
 	delete [] m_pIconActive;
@@ -646,14 +661,14 @@ CObjectInfo::~CObjectInfo()
 	delete [] m_pViewModel;
 	delete [] m_pPlayerModel;
 	delete [] m_pExplodeSound;
+	delete [] m_pUpgradeSound;
 	delete [] m_pExplosionParticleEffect;
 }
 
 CObjectInfo g_ObjectInfos[OBJ_LAST] =
 {
 	CObjectInfo( "OBJ_DISPENSER" ),
-	CObjectInfo( "OBJ_TELEPORTER_ENTRANCE" ),
-	CObjectInfo( "OBJ_TELEPORTER_EXIT" ),
+	CObjectInfo( "OBJ_TELEPORTER" ),
 	CObjectInfo( "OBJ_SENTRYGUN" ),
 	CObjectInfo( "OBJ_ATTACHMENT_SAPPER" ),
 };
@@ -712,6 +727,7 @@ void LoadObjectInfos( IBaseFileSystem *pFileSystem )
 			(pInfo->m_Cost = pSub->GetInt( "Cost", -999 )) == -999 ||
 			(pInfo->m_CostMultiplierPerInstance = pSub->GetFloat( "CostMultiplier", -999 )) == -999 ||
 			(pInfo->m_UpgradeCost = pSub->GetInt( "UpgradeCost", -999 )) == -999 ||
+			(pInfo->m_flUpgradeDuration = pSub->GetFloat("UpgradeDuration", -999)) == -999 ||
 			(pInfo->m_MaxUpgradeLevel = pSub->GetInt( "MaxUpgradeLevel", -999 )) == -999 ||
 			(pInfo->m_SelectionSlot = pSub->GetInt( "SelectionSlot", -999 )) == -999 ||
 			(pInfo->m_SelectionPosition = pSub->GetInt( "SelectionPosition", -999 )) == -999 )
@@ -734,10 +750,24 @@ void LoadObjectInfos( IBaseFileSystem *pFileSystem )
 		pInfo->m_pHudStatusIcon = ReadAndAllocStringValue( pSub, "HudStatusIcon", pFilename );
 		pInfo->m_bVisibleInWeaponSelection = ( pSub->GetInt( "VisibleInWeaponSelection", 1 ) > 0 );
 		pInfo->m_pExplodeSound = ReadAndAllocStringValue( pSub, "ExplodeSound", pFilename );
+		pInfo->m_pUpgradeSound = ReadAndAllocStringValue( pSub, "UpgradeSound", pFilename );
 		pInfo->m_pExplosionParticleEffect = ReadAndAllocStringValue( pSub, "ExplodeEffect", pFilename );
 		pInfo->m_bAutoSwitchTo = ( pSub->GetInt( "autoswitchto", 0 ) > 0 );
 
 		pInfo->m_iMetalToDropInGibs = pSub->GetInt( "MetalToDropInGibs", 0 );
+
+		KeyValues *pSub1 = pSub->FindKey( "AltModes" );
+		if ( pSub1 )
+		{
+			KeyValues *pSub2 = pSub1->FindKey( "AltMode0" );
+
+			if ( pSub2 )
+				pInfo->m_pModeName0 = ReadAndAllocStringValue( pSub2, "ModeName", pFilename );
+
+			KeyValues *pSub3 = pSub1->FindKey( "AltMode1" );
+			if ( pSub3 )
+				pInfo->m_pModeName1 = ReadAndAllocStringValue( pSub3, "ModeName", pFilename );
+		}	
 	}
 
 	pValues->deleteThis();
@@ -792,27 +822,4 @@ int	CalculateObjectUpgrade( int iObjectType, int iObjectLevel )
 	}
 
 	return iCost;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Return true if the specified class is allowed to build the specified object type
-//-----------------------------------------------------------------------------
-bool ClassCanBuild( int iClass, int iObjectType )
-{
-	/*
-	for ( int i = 0; i < OBJ_LAST; i++ )
-	{
-		// Hit the end?
-		if ( g_TFClassInfos[iClass].m_pClassObjects[i] == OBJ_LAST )
-			return false;
-
-		// Found it?
-		if ( g_TFClassInfos[iClass].m_pClassObjects[i] == iObjectType )
-			return true;
-	}
-
-	return false;
-	*/
-
-	return (( iClass == TF_CLASS_ENGINEER ) || ( TFGameRules()->IsZSGamemode()));
 }

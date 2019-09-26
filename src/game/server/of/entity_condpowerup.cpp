@@ -90,7 +90,7 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 				m_bCondition = TF_COND_CRIT_POWERUP;
 				break;
 			case TF_COND_INVIS_POWERUP:
-				m_bCondition = TF_COND_STEALTHED;
+				m_bCondition = TF_COND_INVIS_POWERUP;
 				break;
 			case TF_COND_CRIT_POWERUP:
 				m_bCondition = TF_COND_CRITBOOSTED;

@@ -3554,7 +3554,7 @@ void C_BaseAnimating::DoAnimationEvents( CStudioHdr *pStudioHdr )
 	if ( nSeqNum >= nStudioNumSeq )
 	{
 		// This can happen e.g. while reloading Heavy's shotgun, switch to the minigun.
-		Warning( "%s[%d]: Playing sequence %d but there's only %d in total?\n", GetDebugName(), entindex(), nSeqNum, nStudioNumSeq );
+		DevMsg( "%s[%d]: Playing sequence %d but there's only %d in total?\n", GetDebugName(), entindex(), nSeqNum, nStudioNumSeq );
 		return;
 	}
 
@@ -3843,27 +3843,6 @@ void MaterialFootstepSound( C_BaseAnimating *pEnt, bool bLeftFoot, float flVolum
 //			attachments[] - 
 //-----------------------------------------------------------------------------
 
-class C_FadingPhysPropClientside : public C_PhysPropClientside
-{
-public:
-	DECLARE_CLASS(C_FadingPhysPropClientside, C_PhysPropClientside);
-
-	// if we wake, extend fade time
-
-	virtual void ImpactTrace(trace_t *pTrace, int iDamageType, char *pCustomImpactName)
-	{
-		// If we haven't started fading
-		if (GetRenderColor().a >= 255)
-		{
-			// delay the fade
-			StartFadeOut(10.0);
-
-			// register the impact
-			BaseClass::ImpactTrace(pTrace, iDamageType, pCustomImpactName);
-		}
-	}
-};
-
 void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
 	Vector attachOrigin;
@@ -3958,8 +3937,38 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						return;
 					}
 
-					// todo: add spam checks 
-					pEntity->StartFadeOut( 5.0 );
+					pEntity->StartFadeOut( 5.0f );
+
+					/*
+					if ( !pOwner )
+						return;
+
+					pOwner->g_Mags.AddToTail( pEntity );
+
+					// Calculate the surplus
+					// maximum mag count per player is 2
+					int surplus = pOwner->g_Mags.Count() - 2;
+
+					if ( surplus <= 0 )
+						return;
+
+					int i;
+
+					C_FadingPhysPropClientside *pCandidate;
+					for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
+					{
+						pCandidate = pOwner->g_Mags[i];
+						Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+
+						pOwner->g_Mags.Remove( i );
+
+						pCandidate->AddEffects( EF_NORECEIVESHADOW );
+
+						pCandidate->StartFadeOut( 0.1 );
+
+						surplus--;
+					}
+					*/
 				}
 				if ( event == AE_CL_MAG_EJECT2 )
 				{
@@ -4028,8 +4037,34 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 						return;
 					}
 
-					// todo: add spam checks 
-					pEntity->StartFadeOut( 5.0 );
+					if ( !pOwner )
+						return;
+
+					pOwner->g_Mags.AddToTail( pEntity );
+
+					// Calculate the surplus
+					// maximum mag count per player is 2
+					int surplus = pOwner->g_Mags.Count() - 2;
+
+					if ( surplus <= 0 )
+						return;
+
+					int i;
+
+					C_FadingPhysPropClientside *pCandidate;
+					for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
+					{
+						pCandidate = pOwner->g_Mags[i];
+						Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+
+						pOwner->g_Mags.Remove( i );
+
+						pCandidate->AddEffects( EF_NORECEIVESHADOW );
+
+						pCandidate->StartFadeOut( 0.1 );
+
+						surplus--;
+					}
 				}
 			}
 		}

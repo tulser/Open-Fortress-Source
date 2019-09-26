@@ -42,7 +42,7 @@ BEGIN_DATADESC( CObjectTeleporter )
 	DEFINE_ENTITYFUNC( TeleporterTouch ),
 END_DATADESC()
 
-PRECACHE_REGISTER( obj_teleporter_entrance );
+PRECACHE_REGISTER( obj_teleporter );
 
 #define TELEPORTER_MAX_HEALTH	150
 
@@ -62,30 +62,25 @@ PRECACHE_REGISTER( obj_teleporter_entrance );
 ConVar tf_teleporter_fov_start( "tf_teleporter_fov_start", "120", FCVAR_CHEAT, "Starting FOV for teleporter zoom.", true, 1, false, 0 );
 ConVar tf_teleporter_fov_time( "tf_teleporter_fov_time", "0.5", FCVAR_CHEAT, "How quickly to restore FOV after teleport.", true, 0.0, false, 0 );
 
-LINK_ENTITY_TO_CLASS( obj_teleporter_entrance,	CObjectTeleporter_Entrance );
-LINK_ENTITY_TO_CLASS( obj_teleporter_exit,		CObjectTeleporter_Exit );
+LINK_ENTITY_TO_CLASS( obj_teleporter,	CObjectTeleporter );
+
+extern ConVar tf_sentrygun_upgrade_per_hit;
+extern ConVar tf_cheapobjects;
+extern ConVar of_infiniteammo;
+
 
 //-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-CObjectTeleporter_Entrance::CObjectTeleporter_Entrance()
-{
-	SetType( OBJ_TELEPORTER_ENTRANCE );
-}
+
+// AltMode 0  = Entrance
+// AltMode 1  = Exit
 
 //-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CObjectTeleporter_Entrance::Spawn()
-{
-	SetModel( TELEPORTER_MODEL_ENTRANCE_PLACEMENT );
-	BaseClass::Spawn();
-}
+
 
 //-----------------------------------------------------------------------------
 // Teleport the passed player to our destination
 //-----------------------------------------------------------------------------
-void CObjectTeleporter_Entrance::TeleporterSend( CTFPlayer *pPlayer )
+void CObjectTeleporter::TeleporterSend( CTFPlayer *pPlayer )
 {
 	if ( !pPlayer )
 		return;
@@ -123,26 +118,9 @@ void CObjectTeleporter_Entrance::TeleporterSend( CTFPlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-CObjectTeleporter_Exit::CObjectTeleporter_Exit()
-{
-	SetType( OBJ_TELEPORTER_EXIT );
-}
-
-//-----------------------------------------------------------------------------
-// 
-//-----------------------------------------------------------------------------
-void CObjectTeleporter_Exit::Spawn()
-{
-	SetModel( TELEPORTER_MODEL_EXIT_PLACEMENT );
-	BaseClass::Spawn();
-}
-
-//-----------------------------------------------------------------------------
 // Receive a teleporting player 
 //-----------------------------------------------------------------------------
-void CObjectTeleporter_Exit::TeleporterReceive( CTFPlayer *pPlayer, float flDelay )
+void CObjectTeleporter::TeleporterReceive( CTFPlayer *pPlayer, float flDelay )
 {
 	if ( !pPlayer )
 		return;
@@ -181,9 +159,11 @@ void CObjectTeleporter_Exit::TeleporterReceive( CTFPlayer *pPlayer, float flDela
 //-----------------------------------------------------------------------------
 CObjectTeleporter::CObjectTeleporter()
 {
+	SetType( OBJ_TELEPORTER );
 	SetMaxHealth( TELEPORTER_MAX_HEALTH );
 	m_iHealth = TELEPORTER_MAX_HEALTH;
 	UseClientSideAnimation();
+	m_bHadTeleporter = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -191,6 +171,11 @@ CObjectTeleporter::CObjectTeleporter()
 //-----------------------------------------------------------------------------
 void CObjectTeleporter::Spawn()
 {
+	if ( GetAltMode() == 1 )
+		SetModel( TELEPORTER_MODEL_EXIT_PLACEMENT );
+	else
+		SetModel( TELEPORTER_MODEL_ENTRANCE_PLACEMENT );
+
 	SetSolid( SOLID_BBOX );
 	
 	m_takedamage = DAMAGE_NO;
@@ -202,6 +187,18 @@ void CObjectTeleporter::Spawn()
 	m_flYawToExit = 0;
 
 	BaseClass::Spawn();
+}
+
+void CObjectTeleporter::StartHauling( void )
+{
+	BaseClass::StartHauling();
+
+	SetState( TELEPORTER_STATE_BUILDING );
+
+	if ( GetAltMode() == 1 )
+		SetModel( TELEPORTER_MODEL_EXIT_PLACEMENT );
+	else
+		SetModel( TELEPORTER_MODEL_ENTRANCE_PLACEMENT );
 }
 
 //-----------------------------------------------------------------------------
@@ -267,18 +264,12 @@ bool CObjectTeleporter::IsPlacementPosValid( void )
 //-----------------------------------------------------------------------------
 void CObjectTeleporter::OnGoActive( void )
 {
-	CTFPlayer *pBuilder = GetBuilder();
-
-	Assert( pBuilder );
-
-	if ( !pBuilder )
-		return;
-
 	SetModel( TELEPORTER_MODEL_LIGHT );
 	SetActivity( ACT_OBJ_IDLE );
 
+	m_bHauling = false;
+
 	SetContextThink( &CObjectTeleporter::TeleporterThink, gpGlobals->curtime + 0.1, TELEPORTER_THINK_CONTEXT );
-	DevMsg("Set touch \n");
 	SetTouch( &CObjectTeleporter::TeleporterTouch );
 
 	SetState( TELEPORTER_STATE_IDLE );
@@ -312,7 +303,9 @@ void CObjectTeleporter::Precache()
 	PrecacheScriptSound( "Building_Teleporter.Ready" );
 	PrecacheScriptSound( "Building_Teleporter.Send" );
 	PrecacheScriptSound( "Building_Teleporter.Receive" );
-	PrecacheScriptSound( "Building_Teleporter.Spin" );
+	PrecacheScriptSound( "Building_Teleporter.SpinLevel1" );
+	PrecacheScriptSound( "Building_Teleporter.SpinLevel2" );
+	PrecacheScriptSound( "Building_Teleporter.SpinLevel3" );
 
 	PrecacheParticleSystem( "teleporter_red_charged" );
 	PrecacheParticleSystem( "teleporter_blue_charged" );
@@ -347,7 +340,6 @@ void CObjectTeleporter::Precache()
 //-----------------------------------------------------------------------------
 void CObjectTeleporter::TeleporterTouch( CBaseEntity *pOther )
 {
-	DevMsg("Teleporter Touch Start \n");
 	if ( IsDisabled() )
 	{
 		return;
@@ -367,20 +359,19 @@ void CObjectTeleporter::TeleporterTouch( CBaseEntity *pOther )
 	{
 		return;
 	}
-	DevMsg("Before team Number \n");
 	// if its not a teammate of the builder, notify the builder
-	if ( pBuilder->GetTeamNumber() != pOther->GetTeamNumber() )
+	// allow spies to use this though
+	if ( ( pBuilder->GetTeamNumber() != pPlayer->GetTeamNumber() ) && !pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		// Don't teleport enemies
 		return;
 	}
-	DevMsg("Passed team number \n");
+
 	// is this an entrance and do we have an exit?
-	if ( GetType() == OBJ_TELEPORTER_ENTRANCE )
+	if ( GetAltMode() == 0 )
 	{		
 		if ( ( m_iState == TELEPORTER_STATE_READY ) )
 		{
-				DevMsg("Ready \n");
 			// are we able to teleport?
 			if ( pPlayer->HasTheFlag() )
 			{
@@ -395,32 +386,6 @@ void CObjectTeleporter::TeleporterTouch( CBaseEntity *pOther )
 			{
 				CObjectTeleporter *pDest = GetMatchingTeleporter();
 		
-				if ( pDest )
-				{
-					DevMsg("Teleporting \n");
-					TeleporterSend( pPlayer );
-				}
-			}
-		}
-	}
-	else if ( GetType() == OBJ_TELEPORTER_EXIT )
-	{		
-		if ( ( m_iState == TELEPORTER_STATE_READY ) )
-		{
-			// are we able to teleport?
-			if ( pPlayer->HasTheFlag() )
-			{
-				// If they have the flag, print a warning that you can't tele with the flag
-				CSingleUserRecipientFilter filter( pPlayer );
-				TFGameRules()->SendHudNotification( filter, HUD_NOTIFY_NO_TELE_WITH_FLAG );
-				return;
-			}
-
-			// get the velocity of the player touching the teleporter
-			if ( pPlayer->GetAbsVelocity().Length() < 5.0 )
-			{
-				CObjectTeleporter *pDest = GetMatchingTeleporter();
-
 				if ( pDest )
 				{
 					TeleporterSend( pPlayer );
@@ -461,8 +426,10 @@ void CObjectTeleporter::DeterminePlaybackRate( void )
 
 	if ( IsBuilding() )
 	{
-		// Default half rate, author build anim as if one player is building
-		SetPlaybackRate( GetRepairMultiplier() * 0.5 );	
+		if ( m_bHauling )
+			SetPlaybackRate( GetRepairMultiplier() );	
+		else
+			SetPlaybackRate( GetRepairMultiplier() * 0.5 );	 		// Default half rate, author build anim as if one player is building
 	}
 	else if ( IsPlacing() )
 	{
@@ -559,8 +526,16 @@ void CObjectTeleporter::TeleporterThink( void )
 	SetContextThink( &CObjectTeleporter::TeleporterThink, gpGlobals->curtime + BUILD_TELEPORTER_NEXT_THINK, TELEPORTER_THINK_CONTEXT );
 
 	// At any point, if our match is not ready, revert to IDLE
-	if ( IsDisabled() || IsMatchingTeleporterReady() == false )
+	if ( ( IsDisabled() || IsMatchingTeleporterReady() == false ) && !m_bUpgrading )
 	{
+		if ( m_hMatchingTeleporter == NULL && m_bHadTeleporter )
+		{
+			m_bHadTeleporter = false;
+			m_iUpgradeLevel = 1;
+			m_iUpgradeMetal = 0;
+			ShowDirectionArrow( false );
+		}
+
 		if ( GetState() != TELEPORTER_STATE_IDLE )
 		{
 			SetState( TELEPORTER_STATE_IDLE );
@@ -578,10 +553,15 @@ void CObjectTeleporter::TeleporterThink( void )
 	Assert( pMatch );
 	Assert( pMatch->m_iState != TELEPORTER_STATE_BUILDING );
 
+	if ( !m_bUpgrading && ( GetUpgradeLevel() < pMatch->GetUpgradeLevel() ) )
+		StartUpgrading();
+
 	switch ( m_iState )
 	{
 	// Teleporter is not yet active, do nothing
 	case TELEPORTER_STATE_BUILDING:
+		if ( m_bUpgrading )
+			UpgradeThink();
 		break;
 
 	default:
@@ -592,11 +572,13 @@ void CObjectTeleporter::TeleporterThink( void )
 			SetState( TELEPORTER_STATE_READY );
 			EmitSound( "Building_Teleporter.Ready" );
 
-			if ( GetType() == OBJ_TELEPORTER_ENTRANCE )
+			if ( GetAltMode() == 0 )
 			{
 				ShowDirectionArrow( true );
 			}
 		}
+		else
+			ShowDirectionArrow( false );
 		break;
 
 	case TELEPORTER_STATE_READY:
@@ -606,7 +588,16 @@ void CObjectTeleporter::TeleporterThink( void )
 		{
 			pMatch->TeleporterReceive( m_hTeleportingPlayer, 1.0 );
 
-			m_flRechargeTime = gpGlobals->curtime + ( BUILD_TELEPORTER_FADEOUT_TIME + BUILD_TELEPORTER_FADEIN_TIME + TELEPORTER_RECHARGE_TIME );
+			float rechargetime;
+
+			if ( GetUpgradeLevel() == 1 )
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME;
+			else if ( GetUpgradeLevel() == 2 )
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME / 2;
+			else
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME / 4;
+
+			m_flRechargeTime = gpGlobals->curtime + ( BUILD_TELEPORTER_FADEOUT_TIME + BUILD_TELEPORTER_FADEIN_TIME + rechargetime );
 		
 			// change state to recharging...
 			SetState( TELEPORTER_STATE_RECHARGING );
@@ -721,7 +712,9 @@ void CObjectTeleporter::TeleporterThink( void )
 				pTeleportingPlayer->m_Shared.RemoveCond( TF_COND_SELECTED_TO_TELEPORT );
 				CTF_GameStats.Event_PlayerUsedTeleport( GetBuilder(), pTeleportingPlayer );
 
-				pTeleportingPlayer->SpeakConceptIfAllowed( MP_CONCEPT_TELEPORTED );
+				// don't thank for our own buildings
+				if ( pTeleportingPlayer != GetBuilder() )
+					pTeleportingPlayer->SpeakConceptIfAllowed( MP_CONCEPT_TELEPORTED );
 			}
 
 			// reset the pointers to the player now that we're done teleporting
@@ -730,7 +723,16 @@ void CObjectTeleporter::TeleporterThink( void )
 
 			SetState( TELEPORTER_STATE_RECHARGING );
 
-			m_flMyNextThink = gpGlobals->curtime + ( TELEPORTER_RECHARGE_TIME );
+			float rechargetime;
+
+			if ( GetUpgradeLevel() == 1 )
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME;
+			else if ( GetUpgradeLevel() == 2 )
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME / 2;
+			else
+				rechargetime = (float)TELEPORTER_RECHARGE_TIME / 4;
+
+			m_flMyNextThink = gpGlobals->curtime + ( rechargetime );
 		}
 		break;
 
@@ -746,14 +748,217 @@ void CObjectTeleporter::TeleporterThink( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+//
 //-----------------------------------------------------------------------------
-void CObjectTeleporter::FinishedBuilding( void )
+bool CObjectTeleporter::CanBeUpgraded( CTFPlayer *pPlayer )
 {
-	BaseClass::FinishedBuilding();
+	// Already upgrading
+	if ( m_bUpgrading )
+		return false;
+
+	// can't upgrade while in a hauling state
+	if ( m_bHauling )
+		return false;
+
+	// only people who have a pda can upgrade (always engineers)
+	CTFWeaponBase *pWeapon = NULL;
+
+	if ( pPlayer )
+		pWeapon = pPlayer->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
+
+	if ( pPlayer && !pWeapon )
+	{
+		return false;	
+	}
+
+	// max upgraded
+	if ( m_iUpgradeLevel >= 3 )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// Raises the Dispenser one level
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::StartUpgrading( void )
+{
+	// safety measure to stop the game from crashing if the upgrade level somehow attempts to go over 3
+	if ( m_iUpgradeLevel >= 3 && !( m_iDefaultUpgrade > 3 ) )
+	{
+		m_bUpgrading = false;
+		return;
+	}
+
+	m_bUpgrading = true;
+
+	// Increase level
+	m_iUpgradeLevel++;
+
+	// more health
+	if ( !m_bHauling )
+	{
+		int iMaxHealth = GetMaxHealth();
+		SetMaxHealth( iMaxHealth * 1.2 );
+		SetHealth( iMaxHealth * 1.2 );
+	}
+
+	EmitSound( "Building_Sentrygun.Built" );
+
+	m_iState.Set( TELEPORTER_STATE_BUILDING );
+
+	m_flUpgradeCompleteTime = gpGlobals->curtime + m_flUpgradeDuration;
+}
+
+void CObjectTeleporter::FinishUpgrading( void )
+{
+	if ( m_iUpgradeLevel < m_iOldUpgradeLevel )
+	{
+		StartUpgrading();
+		return;
+	}
+
+	m_bUpgrading = false;
+
+	EmitSound( "Building_Sentrygun.Built" );
+
+	SetModel( TELEPORTER_MODEL_LIGHT );
+
+	SetState( TELEPORTER_STATE_IDLE );
 
 	SetActivity( ACT_OBJ_RUNNING );
 	SetPlaybackRate( 0.0f );
+}
+
+//-----------------------------------------------------------------------------
+// Playing the upgrade animation
+//-----------------------------------------------------------------------------
+void CObjectTeleporter::UpgradeThink( void )
+{
+	if ( gpGlobals->curtime > m_flUpgradeCompleteTime )
+	{
+		FinishUpgrading();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool CObjectTeleporter::IsUpgrading( void ) const
+{
+	return ( m_bUpgrading );
+}
+
+
+//-----------------------------------------------------------------------------
+// Hit by a friendly engineer's wrench
+//-----------------------------------------------------------------------------
+bool CObjectTeleporter::OnWrenchHit( CTFPlayer *pPlayer )
+{
+	bool bDidWork = false;
+
+	// If the player repairs it at all, we're done
+	if ( GetHealth() < GetMaxHealth() )
+	{
+		if ( Command_Repair( pPlayer ) )
+		{
+			bDidWork = true;
+		}
+	}
+
+	// Don't put in upgrade metal until the teleporter is fully healed
+	if ( !bDidWork && CanBeUpgraded( pPlayer ) )
+	{
+		int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
+		int iAmountToAdd = min( tf_sentrygun_upgrade_per_hit.GetInt(), iPlayerMetal );
+
+		if ( iAmountToAdd > ( m_iUpgradeMetalRequired - m_iUpgradeMetal ) )
+			iAmountToAdd = ( m_iUpgradeMetalRequired - m_iUpgradeMetal );
+
+		if ( tf_cheapobjects.GetBool() == false )
+		{
+			if ( of_infiniteammo.GetBool() != 1 )
+				pPlayer->RemoveAmmo( iAmountToAdd, TF_AMMO_METAL );
+		}
+
+		m_iUpgradeMetal += iAmountToAdd;
+
+		if ( iAmountToAdd > 0 )
+		{
+			bDidWork = true;
+		}
+
+		if ( m_iUpgradeMetal >= m_iUpgradeMetalRequired )
+		{
+			StartUpgrading();
+			m_iUpgradeMetal = 0;
+		}
+
+		CObjectTeleporter *pDest = GetMatchingTeleporter();
+
+		if ( pDest )
+		{
+			int iAmountToAdd2 = min( tf_sentrygun_upgrade_per_hit.GetInt(), iPlayerMetal );
+
+			if (iAmountToAdd2 > ( pDest->m_iUpgradeMetalRequired - pDest->m_iUpgradeMetal))
+				iAmountToAdd2 = ( pDest->m_iUpgradeMetalRequired - pDest->m_iUpgradeMetal );
+
+			pDest->m_iUpgradeMetal += iAmountToAdd2;
+
+			if ( iAmountToAdd2 > 0 )
+			{
+				bDidWork = true;
+			}
+
+			if ( pDest->m_iUpgradeMetal >= pDest->m_iUpgradeMetalRequired )
+			{
+				pDest->StartUpgrading();
+				pDest->m_iUpgradeMetal = 0;
+			}
+		}
+	}
+
+	return bDidWork;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+// don't refer to baseclass here!
+void CObjectTeleporter::FinishedBuilding( void )
+{
+	if ( m_bHauling )
+		SetDisabled( false );
+
+	m_bHauling = false;
+
+	// Only make a shadow if the object doesn't use vphysics
+	if ( !VPhysicsGetObject() )
+	{
+		VPhysicsInitStatic();
+	}
+
+	m_bBuilding = false;
+
+	AttemptToGoActive();
+
+	// Spawn any objects on this one
+	SpawnObjectPoints();
+
+	SetActivity( ACT_OBJ_RUNNING );
+	SetPlaybackRate( 0.0f );
+
+	if ( !m_bUpgrading )
+	{
+		if ( m_iUpgradeLevel < m_iOldUpgradeLevel )
+		{
+			StartUpgrading();
+			return;
+		}
+	}
 }
 
 void CObjectTeleporter::SetState( int state )
@@ -822,6 +1027,10 @@ int CObjectTeleporter::DrawDebugTextOverlays(void)
 			EntityText(text_offset,tempstr,0);
 			text_offset++;
 		}
+
+		Q_snprintf( tempstr, sizeof( tempstr ), "Upgrade metal %d", m_iUpgradeMetal.Get() );
+		EntityText(text_offset,tempstr,0);
+		text_offset++;
 	}
 	return text_offset;
 }
@@ -829,8 +1038,8 @@ int CObjectTeleporter::DrawDebugTextOverlays(void)
 
 CObjectTeleporter* CObjectTeleporter::FindMatch( void )
 {
-	int iObjType = GetType();
-	int iOppositeType = ( iObjType == OBJ_TELEPORTER_ENTRANCE ) ? OBJ_TELEPORTER_EXIT : OBJ_TELEPORTER_ENTRANCE;
+	int iObjType = GetAltMode();
+	int iOppositeType = ( iObjType == 0 ) ? 1 : 0;
 
 	CObjectTeleporter *pMatch = NULL;
 
@@ -849,9 +1058,10 @@ CObjectTeleporter* CObjectTeleporter::FindMatch( void )
 	{
 		CBaseObject *pObj = pBuilder->GetObject(i);
 
-		if ( pObj && pObj->GetType() == iOppositeType && !pObj->IsDisabled() )
+		if ( pObj && pObj->GetType() == OBJ_TELEPORTER && pObj->GetAltMode() == iOppositeType && !pObj->IsDisabled() )
 		{
 			pMatch = ( CObjectTeleporter * )pObj;
+			m_bHadTeleporter = true;
 			break;
 		}
 	}

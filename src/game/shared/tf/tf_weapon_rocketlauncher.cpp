@@ -291,7 +291,7 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 	else if ( m_flLastPingSoundTime <= gpGlobals->curtime )
 	{
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+		if ( pLocalPlayer && pLocalPlayer == GetOwner() && pLocalPlayer->GetViewModel()->ParticleProp() )
 			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission(); 
 	}
 #endif

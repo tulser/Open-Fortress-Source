@@ -27,9 +27,11 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFKnife, DT_TFWeaponKnife )
 
 BEGIN_NETWORK_TABLE( CTFKnife, DT_TFWeaponKnife )
 #if defined( CLIENT_DLL )
-	RecvPropBool( RECVINFO( m_bReady ) )
+	RecvPropBool( RECVINFO( m_bReady ) ),
+	RecvPropBool( RECVINFO( m_bBlood ) ),
 #else
-	SendPropBool( SENDINFO( m_bReady ) )
+	SendPropBool( SENDINFO( m_bReady ) ),
+	SendPropBool( SENDINFO( m_bBlood ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -185,6 +187,9 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 
 			// Declare a backstab.
 			iCustomDamage = TF_DMG_CUSTOM_BACKSTAB;
+
+			m_bBlood = true;
+			SwitchBodyGroups();
 		}
 		/*
 		else
@@ -272,10 +277,16 @@ void CTFKnife::KnifeThink( void )
 	if ( !pPlayer )
 		return;
 
+	if ( pPlayer->GetWaterLevel() == WL_Eyes )
+	{
+		m_bBlood = false;
+		SwitchBodyGroups();
+	}
+
 	if ( GetActivity() == ACT_VM_IDLE || GetActivity() == ACT_BACKSTAB_VM_IDLE )
 	{
 		trace_t trace;
-		if ( DoSwingTrace( trace ) == true )
+		if ( DoSwingTrace( trace ) )
 		{
 			// we will hit something with the attack
 			if ( trace.m_pEnt && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) ) // npcs too!
@@ -287,9 +298,9 @@ void CTFKnife::KnifeThink( void )
 					// Deal extra damage to players when stabbing them from behind
 					if ( IsBehindTarget( trace.m_pEnt ) && !m_bReady )
 					{
-						m_bReady = true;
+							m_bReady = true;
 
-						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+							SendWeaponAnim( ACT_BACKSTAB_VM_UP );
 					}
 				}
 				else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
@@ -308,10 +319,28 @@ void CTFKnife::KnifeThink( void )
 					{
 						m_bReady = false;
 
-						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
+						SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
 					}		
 				}
 			}
+			else
+			{
+				if ( m_bReady )
+				{
+					m_bReady = false;
+
+					SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
+				}		
+			}
+		}
+		else
+		{
+			if ( m_bReady )
+			{
+				m_bReady = false;
+
+				SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
+			}		
 		}
 	}
 }
@@ -338,5 +367,59 @@ void CTFKnife::SendPlayerAnimEvent( CTFPlayer *pPlayer )
 	else
 	{
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+	}
+}
+
+
+// blooood
+void CTFKnife::WeaponReset( void )
+{
+	BaseClass::WeaponReset();
+
+	m_bBlood = false;
+}
+
+bool CTFKnife::DefaultDeploy( char *szViewModel, char *szWeaponModel, int iActivity, char *szAnimExt )
+{
+	bool bRet = BaseClass::DefaultDeploy( szViewModel, szWeaponModel, iActivity, szAnimExt );
+
+	if ( bRet )
+	{
+		SwitchBodyGroups();
+	}
+
+	return bRet;
+}
+
+void CTFKnife::SwitchBodyGroups( void )
+{
+	int iState = 0;
+
+	if ( m_bBlood == true )
+	{
+		iState = 1;
+	}
+
+	SetBodygroup( 0, iState );
+
+	CTFPlayer *pTFPlayer = ToTFPlayer( GetOwner() );
+
+	if ( pTFPlayer && pTFPlayer->GetActiveWeapon() == this )
+	{
+		if ( pTFPlayer->GetViewModel() )
+		{
+			pTFPlayer->GetViewModel()->SetBodygroup( 0, iState );
+		}
+	}
+}
+
+void CTFKnife::Smack( void )
+{
+	BaseClass::Smack();
+
+	if ( ConnectedHit() && IsCurrentAttackACritical() )
+	{
+		m_bBlood = true;
+		SwitchBodyGroups();
 	}
 }

@@ -24,16 +24,20 @@ EXTERN_SEND_TABLE(DT_BaseCombatWeapon)
 
 BEGIN_NETWORK_TABLE_NOBASE( CTFWeaponBuilder, DT_BuilderLocalData )
 	SendPropInt( SENDINFO( m_iObjectType ), BUILDER_OBJECT_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iAltMode ), BUILDER_OBJECT_BITS, SPROP_UNSIGNED ),
 	SendPropEHandle( SENDINFO( m_hObjectBeingBuilt ) ),
 END_NETWORK_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST(CTFWeaponBuilder, DT_TFWeaponBuilder)
 	SendPropInt( SENDINFO( m_iBuildState ), 4, SPROP_UNSIGNED ),
+	SendPropTime( SENDINFO( m_flSecondaryTimeout ) ),
 	SendPropDataTable( "BuilderLocalData", 0, &REFERENCE_SEND_TABLE( DT_BuilderLocalData ), SendProxy_SendLocalWeaponDataTable ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_builder, CTFWeaponBuilder );
 PRECACHE_WEAPON_REGISTER( tf_weapon_builder );
+
+extern ConVar tf_debug_bullets;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -41,6 +45,8 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_builder );
 CTFWeaponBuilder::CTFWeaponBuilder()
 {
 	m_iObjectType.Set( BUILDER_INVALID_OBJECT );
+	m_iAltMode.Set( 0 );
+	m_flSecondaryTimeout = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -54,9 +60,10 @@ CTFWeaponBuilder::~CTFWeaponBuilder()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFWeaponBuilder::SetSubType( int iSubType )
+void CTFWeaponBuilder::SetSubType( int iSubType, int iAltMode )
 {
 	m_iObjectType = iSubType;
+	m_iAltMode = iAltMode;
 
 	BaseClass::SetSubType( iSubType );
 }
@@ -94,10 +101,11 @@ void CTFWeaponBuilder::Precache( void )
 bool CTFWeaponBuilder::CanDeploy( void )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if (!pPlayer)
+
+	if ( !pPlayer )
 		return false;
 
-	if ( pPlayer->CanBuild( m_iObjectType ) != CB_CAN_BUILD )
+	if ( !pPlayer->IsHauling() && pPlayer->CanBuild( m_iObjectType, m_iAltMode ) != CB_CAN_BUILD )
 	{
 		return false;
 	}
@@ -118,11 +126,13 @@ bool CTFWeaponBuilder::Deploy( void )
 	if ( bDeploy )
 	{
 		SetCurrentState( BS_PLACING );
+
 		StartPlacement(); 
 		m_flNextPrimaryAttack = gpGlobals->curtime + 0.35f;
 		m_flNextSecondaryAttack = gpGlobals->curtime;		// asap
 
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+
 		if (!pPlayer)
 			return false;
 
@@ -160,12 +170,37 @@ Activity CTFWeaponBuilder::GetDrawActivity( void )
 //-----------------------------------------------------------------------------
 // Purpose: Stop placement when holstering
 //-----------------------------------------------------------------------------
+bool CTFWeaponBuilder::CanHolster( CBaseCombatWeapon *pSwitchingTo )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	// can't holster while hauling
+	if ( pOwner && pOwner->IsHauling() && m_hObjectBeingBuilt.Get() )
+	{	
+		return false;
+	}
+
+	return BaseClass::CanHolster();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Stop placement when holstering
+//-----------------------------------------------------------------------------
 bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	// can't holster while hauling
+	if ( pOwner && pOwner->IsHauling() && m_hObjectBeingBuilt.Get() )
+	{
+		return false;
+	}
+
 	if ( m_iBuildState == BS_PLACING || m_iBuildState == BS_PLACING_INVALID )
 	{
 		SetCurrentState( BS_IDLE );
 	}
+
 	StopPlacement();
 
 	return BaseClass::Holster(pSwitchingTo);
@@ -176,6 +211,9 @@ bool CTFWeaponBuilder::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 void CTFWeaponBuilder::ItemPostFrame( void )
 {
+	if ( gpGlobals->curtime < m_flSecondaryTimeout )
+		return;
+
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
@@ -185,12 +223,21 @@ void CTFWeaponBuilder::ItemPostFrame( void )
 		TFGameRules()->State_Get() == GR_STATE_TEAM_WIN && (
 		pOwner->GetTeamNumber() != TFGameRules()->GetWinningTeam() || ( ( TFGameRules()->GetWinningTeam() == TF_TEAM_MERCENARY && !pOwner->m_Shared.IsTopThree() ) ) ) )
 	{
-		StopPlacement();
+		if ( pOwner->IsHauling() )
+		{
+			m_hObjectBeingBuilt.Get()->DetonateObject();
+			StopPlacement();
+		}
+		else
+		{
+			StopPlacement();
+		}
+
 		return;
 	}
 
 	// Check that I still have enough resources to build this item
-	if ( pOwner->CanBuild( m_iObjectType ) != CB_CAN_BUILD )
+	if ( pOwner->CanBuild( m_iObjectType, m_iAltMode ) != CB_CAN_BUILD )
 	{
 		SwitchOwnersWeaponToLast();
 	}
@@ -267,6 +314,8 @@ void CTFWeaponBuilder::PrimaryAttack( void )
 
 				StartBuilding();
 
+				pOwner->TeamFortress_SetSpeed();
+
 				// Should we switch away?
 				if ( iFlags & OF_ALLOW_REPEAT_PLACEMENT )
 				{
@@ -310,11 +359,7 @@ void CTFWeaponBuilder::SecondaryAttack( void )
 	if ( !pOwner )
 		return;
 
-	if ( pOwner->DoClassSpecialSkill() )
-	{
-		// intentionally blank
-	}
-	else if ( m_iBuildState == BS_PLACING )
+	if ( m_iBuildState == BS_PLACING )
 	{
 		if ( m_hObjectBeingBuilt )
 		{
@@ -324,6 +369,57 @@ void CTFWeaponBuilder::SecondaryAttack( void )
 	}
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.2f;
+}
+
+void CTFWeaponBuilder::HaulingAttack( void )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( m_iBuildState != BS_PLACING )
+	{
+		trace_t	tr;	
+		Vector forward;
+		pOwner->EyeVectors( &forward );
+
+		AngleVectors( GetAbsAngles(), &forward );
+		UTIL_TraceLine ( pOwner->EyePosition(), pOwner->EyePosition() + forward * 128, 
+			MASK_SOLID, pOwner, COLLISION_GROUP_NONE, & tr);
+
+		if ( tr.m_pEnt )
+		{
+			CBaseObject *pObject = NULL;
+
+			pObject = dynamic_cast<CBaseObject *>( tr.m_pEnt );
+
+			if ( !pObject )
+				DevMsg( 2, "CTFBuilder: This isn't an object. Classname: %s\n", tr.m_pEnt->GetClassname() );
+
+			if ( pObject && pObject->CanBeHauled( pOwner ) )
+			{
+				m_flSecondaryTimeout = gpGlobals->curtime + 0.5f;
+				pObject->SetHauling( true );
+				pOwner->SetHauling( true );
+
+				SetSubType( pObject->GetType(), pObject->GetAltMode() );
+
+				if ( pOwner->GetActiveTFWeapon() == this )
+					pOwner->SetActiveWeapon( NULL );
+
+				SetCurrentState( BS_PLACING );
+
+				// try to switch to this weapon
+				pOwner->Weapon_Switch( this );
+
+				m_hObjectBeingBuilt = pObject;
+				pObject->StartHauling();
+				pObject->StartPlacement( pOwner );;
+
+				pOwner->TeamFortress_SetSpeed();
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -431,12 +527,18 @@ void CTFWeaponBuilder::WeaponIdle( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBuilder::StartPlacement( void )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+
+	if ( pOwner && pOwner->IsHauling() )
+		return;
+
 	StopPlacement();
 
 	// Create the slab
 	m_hObjectBeingBuilt = (CBaseObject*)CreateEntityByName( GetObjectInfo( m_iObjectType )->m_pClassName );
 	if ( m_hObjectBeingBuilt )
 	{
+		m_hObjectBeingBuilt->SetAltMode( m_iAltMode );
 		m_hObjectBeingBuilt->Spawn();
 		m_hObjectBeingBuilt->StartPlacement( ToTFPlayer( GetOwner() ) );
 
@@ -450,7 +552,7 @@ void CTFWeaponBuilder::StartPlacement( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBuilder::StopPlacement( void )
 {
-	if ( m_hObjectBeingBuilt )
+	if ( m_hObjectBeingBuilt && !m_hObjectBeingBuilt->IsHauling() )
 	{
 		m_hObjectBeingBuilt->StopPlacement();
 		m_hObjectBeingBuilt = NULL;
@@ -585,4 +687,50 @@ bool CTFWeaponBuilder::AllowsAutoSwitchTo( void ) const
 {
 	// ask the object we're building
 	return GetObjectInfo( m_iObjectType )->m_bAutoSwitchTo;
+}
+
+acttable_t CTFWeaponBuilder::m_acttableBuildingDeployed[] =
+{
+	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_RUN,				ACT_MP_RUN_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_WALK,				ACT_MP_WALK_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_CROUCHWALK,		ACT_MP_CROUCHWALK_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP,				ACT_MP_JUMP_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_JUMP_START,		ACT_MP_JUMP_START_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP_FLOAT,		ACT_MP_JUMP_FLOAT_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP_LAND,			ACT_MP_JUMP_LAND_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_SWIM,				ACT_MP_SWIM_BUILDING_DEPLOYED,			false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MP_ATTACK_STAND_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MP_ATTACK_CROUCH_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MP_ATTACK_SWIM_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_AIRWALK_PRIMARYFIRE,	ACT_MP_ATTACK_AIRWALK_BUILDING_DEPLOYED,	false },
+
+	{ ACT_MP_ATTACK_STAND_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_CROUCH_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_SWIM_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_AIRWALK_GRENADE,	ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+
+	{ ACT_MP_GESTURE_VC_HANDMOUTH,	ACT_MP_GESTURE_VC_HANDMOUTH_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_FINGERPOINT,	ACT_MP_GESTURE_VC_FINGERPOINT_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_FISTPUMP,	ACT_MP_GESTURE_VC_FISTPUMP_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_THUMBSUP,	ACT_MP_GESTURE_VC_THUMBSUP_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_NODYES,	ACT_MP_GESTURE_VC_NODYES_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_BUILDING,	false },
+};
+
+//Act table remapping
+acttable_t *CTFWeaponBuilder::ActivityList( int &iActivityCount )
+{
+	if ( GetTFPlayerOwner()->m_bHauling )
+	{
+		iActivityCount = ARRAYSIZE( m_acttableBuildingDeployed );
+		return m_acttableBuildingDeployed;
+	}
+	else
+	{
+		return BaseClass::ActivityList( iActivityCount );
+	}
 }

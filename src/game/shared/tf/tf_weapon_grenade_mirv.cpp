@@ -235,6 +235,7 @@ CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QA
 		pBomb->ChangeTeam( pOwner->GetTeamNumber() );
 
 		pBomb->SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
+
 		IPhysicsObject *pPhysicsObject = pBomb->VPhysicsGetObject();
 		if ( pPhysicsObject )
 		{

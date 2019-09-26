@@ -35,6 +35,11 @@ public:
 	virtual bool		SendWeaponAnim( int iActivity );
 	virtual void		KnifeThink( void );
 
+	virtual void		Smack( void );
+	void				SwitchBodyGroups( void );
+	virtual bool		DefaultDeploy( char *szViewModel, char *szWeaponModel, int iActivity, char *szAnimExt );
+	virtual void		WeaponReset( void );
+
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_KNIFE; }
 
 	virtual float		GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
@@ -50,6 +55,7 @@ private:
 
 	CTFKnife( const CTFKnife & ) {}
 	CNetworkVar( bool, m_bReady );
+	CNetworkVar( bool, m_bBlood );
 };
 
 class CTFCKnife : public CTFKnife

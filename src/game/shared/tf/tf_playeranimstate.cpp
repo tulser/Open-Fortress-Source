@@ -62,7 +62,6 @@ acttable_t m_acttableLoserState[] =
 	{ ACT_MP_DOUBLEJUMP_CROUCH, ACT_MP_DOUBLEJUMP_CROUCH_LOSERSTATE, false },
 };
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pPlayer - 
@@ -167,7 +166,7 @@ Activity CTFPlayerAnimState::TranslateActivity( Activity actDesired )
 	}
 	*/
 
-	// loser stuff (also done with no weapon)
+	// loser stuff
 	// copied from CBaseCombatWeapon
 	if ( GetTFPlayer()->m_Shared.IsLoser() )
 	{
@@ -180,14 +179,10 @@ Activity CTFPlayerAnimState::TranslateActivity( Activity actDesired )
 			//const acttable_t& act = pTable[i];
 			const acttable_t& act = m_acttableLoserState[i];
 			//if ( baseAct == act.baseAct )
-			if ( actDesired == act.baseAct)
-			{
-				//return (Activity)act.weaponAct;
+			if ( actDesired == act.baseAct )
 				return ( Activity )act.weaponAct;
-			}
 		}
 	}
-	
 
 	if ( GetTFPlayer()->GetActiveWeapon() )
 	{
@@ -598,7 +593,7 @@ bool CTFPlayerAnimState::HandleDucking( Activity &idealActivity )
 				idealActivity = ACT_MP_CROUCH_DEPLOYED_IDLE;
 			}
 		}
-		else
+		else if ( !m_pTFPlayer->m_Shared.IsLoser() )
 		{
 			idealActivity = ACT_MP_CROUCHWALK;		
 

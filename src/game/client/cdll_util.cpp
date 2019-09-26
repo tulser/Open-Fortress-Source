@@ -36,11 +36,8 @@ ConVar localplayer_visionflags( "localplayer_visionflags", "0", FCVAR_CHEAT );
 //-----------------------------------------------------------------------------
 // ConVars
 //-----------------------------------------------------------------------------
-#ifdef _DEBUG
+ConVar r_FadeProps( "r_FadeProps", "1", FCVAR_ARCHIVE, "Enable prop fading. Disabling improves prop visuals but slightly degrades performance" );
 
-ConVar r_FadeProps( "r_FadeProps", "1" );
-
-#endif
 bool g_MakingDevShots = false;
 extern ConVar cl_leveloverview;
 
@@ -1109,9 +1106,7 @@ unsigned char UTIL_ComputeEntityFade( C_BaseEntity *pEntity, float flMinDist, fl
 	if ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 )
 		return 255;
 
-#ifdef _DEBUG
 	if ( r_FadeProps.GetBool() )
-#endif
 	{
 		nAlpha = ComputeDistanceFade( pEntity, flMinDist, flMaxDist );
 

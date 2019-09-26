@@ -178,7 +178,7 @@ public:
 
 	// Team.
 	void				ForceChangeTeam( int iTeamNum );
-	virtual void		ChangeTeam( int iTeamNum );
+	virtual void		ChangeTeam( int iTeamNum, bool bNoKill );
 
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
@@ -273,13 +273,12 @@ public:
 	void AddBuildResources( int iAmount );
 
 	bool IsBuilding( void );
-	int CanBuild( int iObjectType );
+	int CanBuild( int iObjectType, int iAltMode );
 
 	CBaseObject	*GetObject( int index );
 	int	GetObjectCount( void );
-	int GetNumObjects( int iObjectType );
+	int GetNumObjects( int iObjectType, int iAltMode );
 	void RemoveAllObjects( void );
-	void StopPlacement( void );
 	int	StartedBuildingObject( int iObjectType );
 	void StoppedBuilding( int iObjectType );
 	void FinishedObject( CBaseObject *pObject );
@@ -287,9 +286,8 @@ public:
 	void OwnedObjectDestroyed( CBaseObject *pObject );
 	void RemoveObject( CBaseObject *pObject );
 	bool PlayerOwnsObject( CBaseObject *pObject );
-	bool PlayerOwnsThisObject( int iType );
-	void DetonateOwnedObjectsOfType( int iType );
-	void StartBuildingObjectOfType( int iType );
+	void DetonateOwnedObjectsOfType( int iType, int iAltMode );
+	void StartBuildingObjectOfType( int iType, int iAltMode );
 	virtual CBaseEntity	*GetHeldObject(void);
 
 	CTFTeam *GetTFTeam( void );
@@ -474,6 +472,11 @@ public:
 	int				RestockCloak( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
 
+	CNetworkVar( bool, m_bHauling );
+
+	bool				IsHauling( void ) { return m_bHauling; }
+	void				SetHauling( bool bHauling ) { m_bHauling = bHauling; }
+
 	float				m_flLastAction;
 
 	// Gore
@@ -512,7 +515,7 @@ private:
 	bool				m_bInitTaunt;
 
 	// Client commands.
-	void				HandleCommand_JoinTeam( const char *pTeamName );
+	void				HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill = false );
 public:
 	void				HandleCommand_JoinClass( const char *pClassName, bool bForced = false );
 private:
@@ -648,6 +651,7 @@ public:
 	bool				Weapon_CanUse( void ) { return true; }
 	bool				Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon ) { return false; }
 	void				GiveAllItems();
+	void				RefillHealthAmmo();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 	bool				IsRetroModeOn();
 	CNetworkVar( bool, m_bRetroMode );
@@ -676,7 +680,8 @@ public:
 	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
 	virtual void		StopLoopingSounds(void);
 	
-	bool	m_bTransition;
+	// this is true if the player who died results in a victory (payload override gamemode)
+	bool	m_bWinDeath;
 
 	// Commander Mode for controller NPCs
 	enum CommanderCommand_t

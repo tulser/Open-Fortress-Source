@@ -29,14 +29,13 @@ END_NETWORK_TABLE()
 
 BEGIN_NETWORK_TABLE_NOBASE( C_ObjectSentrygun, DT_SentrygunLocalData )
 	RecvPropInt( RECVINFO(m_iKills) ),
+	RecvPropInt( RECVINFO(m_iAssists) ),
 END_NETWORK_TABLE()
 
 IMPLEMENT_CLIENTCLASS_DT(C_ObjectSentrygun, DT_ObjectSentrygun, CObjectSentrygun)
-	RecvPropInt( RECVINFO(m_iUpgradeLevel) ),
 	RecvPropInt( RECVINFO(m_iAmmoShells) ),
 	RecvPropInt( RECVINFO(m_iAmmoRockets) ),
 	RecvPropInt( RECVINFO(m_iState) ),
-	RecvPropInt( RECVINFO(m_iUpgradeMetal) ),
 	RecvPropDataTable( "SentrygunLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_SentrygunLocalData ) ),
 END_RECV_TABLE()
 
@@ -46,7 +45,6 @@ END_RECV_TABLE()
 C_ObjectSentrygun::C_ObjectSentrygun()
 {
 	m_pDamageEffects = NULL;
-	m_iOldUpgradeLevel = 0;
 	m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_1;
 }
 
@@ -270,7 +268,7 @@ void C_ObjectSentrygun::GetTargetIDString( wchar_t *sIDString, int iMaxLenInByte
 		if ( m_iUpgradeLevel < 3 )
 		{
 			// level 1 and 2 show upgrade progress
-			_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, SENTRYGUN_UPGRADE_METAL );
+			_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired );
 			wszUpgradeProgress[ ARRAYSIZE(wszUpgradeProgress)-1 ] = '\0';
 
 			const char *printFormatString = "#TF_playerid_object_upgrading";
@@ -327,7 +325,7 @@ void C_ObjectSentrygun::GetTargetIDDataString( wchar_t *sDataString, int iMaxLen
 	}
 
 	// level 1 and 2 show upgrade progress
-	_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, SENTRYGUN_UPGRADE_METAL );
+	_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired );
 	wszUpgradeProgress[ ARRAYSIZE(wszUpgradeProgress)-1 ] = '\0';
 
 	const char *printFormatString = "#TF_playerid_object_upgrading";

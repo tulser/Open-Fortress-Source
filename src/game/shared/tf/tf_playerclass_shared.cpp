@@ -12,7 +12,7 @@
 bool UseHWMorphModels();
 #endif
 
-ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_CHEAT | FCVAR_NOTIFY );
+ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 extern ConVar of_retromode;
 
@@ -181,10 +181,6 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szClassName, pKeyValuesData->GetString( "name" ), TF_NAME_LENGTH );
 
 	// Load the high res model or the lower res model.
-	if ( !IsX360() )
-	{
-		Q_strncpy( m_szHWMModelName, pKeyValuesData->GetString( "model_hwm" ), TF_NAME_LENGTH );
-	}
 	Q_strncpy( m_szArmModelName, pKeyValuesData->GetString( "arm_model" ), TF_NAME_LENGTH );
 	Q_strncpy( m_szModelName, pKeyValuesData->GetString( "model" ), TF_NAME_LENGTH );
 	Q_strncpy( m_szLocalizableName, pKeyValuesData->GetString( "localize_name" ), TF_NAME_LENGTH );

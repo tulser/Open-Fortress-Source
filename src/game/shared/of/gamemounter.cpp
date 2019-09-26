@@ -45,7 +45,7 @@ void MountPathLocal( KeyValues* pGame )
 
 	if ( ccFolder > 0 )
 	{
-		Msg( "Mounting %s (local)\n", szGameName );
+		ConColorMsg( Color( 90, 240, 90, 255 ), "Mounting %s (local)\n", szGameName );
 
 		KeyValues *pPaths = pGame->FindKey( "paths" );
 
@@ -64,7 +64,7 @@ void MountPathLocal( KeyValues* pGame )
 			V_strncat( szTempPath, pPath->GetString(), ARRAYSIZE( szTempPath ) );
 
 			g_pFullFileSystem->AddSearchPath( szTempPath, "GAME" );
-			Msg( "\tAdding path: %s\n", pPath->GetString() );
+			ConColorMsg( Color( 144, 238, 144, 255 ), "\tAdding path: %s\n", pPath->GetString() );
 		}
 	}
 	else if ( bRequired )
@@ -73,7 +73,7 @@ void MountPathLocal( KeyValues* pGame )
 	}
 	else
 	{
-		Msg( "%s not found on system. Skipping.\n", szGameName );
+		Warning( "%s not found on system. Skipping.\n", szGameName );
 	}
 }
 

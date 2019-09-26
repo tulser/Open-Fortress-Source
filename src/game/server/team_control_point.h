@@ -80,6 +80,8 @@ public:
 	int			GetHudOverlayIndexForTeam( int iGameTeam );
 	int			GetPreviousPointForTeam( int iGameTeam, int iPrevPoint );
 
+	int			GetDomScoreAmount( void ) { return m_iDomScoreAmount; }
+
 	void		SetCappersRequiredForTeam( int iGameTeam, int iCappers );
 
 	void		CaptureBlocked( CBaseMultiplayerPlayer *pPlayer, CBaseMultiplayerPlayer *pVictim );
@@ -106,6 +108,8 @@ public:
 	virtual void StopLoopingSounds( void );
 
 	bool		IsLocked( void ){ return m_bLocked; }
+	void		SetLocked( bool bLock );
+	void		SetUnlockTime( float fTime );
 
 	void EXPORT UnlockThink( void );
 
@@ -124,6 +128,7 @@ private:
 	bool		m_bRandomOwnerOnRestart;	// Do we want to randomize the owner after a restart?
 	bool		m_bLocked;
 	float		m_flUnlockTime;				// Time to unlock
+	int			m_iDomScoreAmount;
 
 	// We store a copy of this data for each team, +1 for the un-owned state.
 	struct perteamdata_t

@@ -255,6 +255,9 @@ private:
 	int				m_prevblinktoggle;
 
 	int				m_iBlink;
+
+	int				m_iBlinkL;
+	int				m_iBlinkR;
 	LocalFlexController_t				m_iEyeUpdown;
 	LocalFlexController_t				m_iEyeRightleft;
 	bool			m_bSearchedForEyeFlexes;

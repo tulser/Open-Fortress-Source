@@ -58,6 +58,7 @@ enum
 	UNHOLY_TRINITY = 4,
 	ROCKET_ARENA = 5,
 	GUN_GAME = 6,
+	RANDOMIZER = 7,
 };
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
@@ -107,7 +108,7 @@ class CTFLogicDM : public CBaseEntity
 {
 public:
 	DECLARE_CLASS(CTFLogicDM, CBaseEntity);
-	void	Spawn(void);
+	virtual void	Spawn( void );
 	
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
@@ -121,7 +122,9 @@ class CTFLogicGG : public CBaseEntity
 public:
 	DECLARE_CLASS(CTFLogicGG, CBaseEntity);
 	CTFLogicGG();
-	void	Spawn(void);
+
+	virtual void	Spawn(void);
+
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
 	string_t	m_iszWeaponName[50];
@@ -135,14 +138,51 @@ class CTFLogicESC : public CBaseEntity
 {
 public:
 	DECLARE_CLASS(CTFLogicESC,	CBaseEntity);
-	void	Spawn(void);
+	virtual void	Spawn(void);
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
 	int m_nMaxHunted_red;
 	int m_nMaxHunted_blu;
+	int m_nHuntedScoreAdd_red;
+	int m_nHuntedScoreAdd_blue;
 
 	COutputEvent m_OnHuntedDeath;
+#endif
+};
+
+class CTFLogicDOM : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CTFLogicDOM,	CBaseEntity );
+
+	virtual void	Spawn (void );
+
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+
+	void	DOMThink(void);
+
+	int m_nDomScore_limit;
+	int m_nDomScore_time;
+	bool m_bDomScoreOnKill;
+	bool m_bDomWinOnLimit;
+
+	void	AddDomScore_red( int amount );
+	void	AddDomScore_blue( int amount );
+	void	SetDomScore_red( int amount );
+	void	SetDomScore_blue( int amount );
+	void	SetDomScoreLimit( int amount );
+
+	void	InputAddDomScore_red( inputdata_t &inputdata );
+	void	InputAddDomScore_blue( inputdata_t &inputdata );
+	void	InputSetDomScore_red( inputdata_t &inputdata );
+	void	InputSetDomScore_blue( inputdata_t &inputdata );
+	void	InputSetDomScoreLimit( inputdata_t &inputdata );
+
+	COutputEvent m_OnDomScoreHit_any;
+	COutputEvent m_OnDomScoreHit_red;
+	COutputEvent m_OnDomScoreHit_blue;
 #endif
 };
 
@@ -292,6 +332,7 @@ public:
 	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; }
 
 	CNetworkVar( int, m_iCosmeticCount ); 
+
 #ifdef CLIENT_DLL
 
 	DECLARE_CLIENTCLASS_NOBASE(); // This makes data tables able to access our private vars.
@@ -317,6 +358,7 @@ public:
 	bool CheckTimeLimit();
 	bool CheckWinLimit();
 	bool CheckCapsPerRound();
+	void CheckDOMScores( int dom_score_red_old, int dom_score_blue_old );
 
 	virtual bool FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker, const CTakeDamageInfo &info );
 
@@ -374,7 +416,6 @@ public:
 	void	SendHudNotification( IRecipientFilter &filter, HudNotification_t iType );
 	void	SendHudNotification( IRecipientFilter &filter, const char *pszText, const char *pszIcon, int iTeam = TEAM_UNASSIGNED );
 
-	
 private:
 
 	int DefaultFOV( void ) { return 75; }
@@ -400,7 +441,6 @@ private:
 	float m_flTimerMayExpireAt;
 	
 #endif
-
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkVar( bool, m_bKOTH ); // is the gamemode KOTH right now?
@@ -418,6 +458,10 @@ public:
 	CNetworkVar( int, m_nMaxHunted_red );
 	CNetworkVar( int, m_nHuntedCount_blu );
 	CNetworkVar( int, m_nMaxHunted_blu );
+	CNetworkVar( int, m_nDomScore_limit );
+	CNetworkVar( int, m_nDomScore_blue );
+	CNetworkVar( int, m_nDomScore_red );
+
 #ifdef GAME_DLL
 	// List of active pipebombs
 	typedef CHandle<CPathTrack>	TrackHandle;
@@ -440,6 +484,7 @@ public:
 	
 	virtual bool	IsDMGamemode(void);
 	virtual bool	IsTDMGamemode(void);
+	virtual bool	IsDOMGamemode(void);
 	virtual void	CheckTDM(void);
 	virtual bool	IsTeamplay(void);
 	virtual bool 	DontCountKills( void );
@@ -449,12 +494,21 @@ public:
 	virtual bool	IsESCGamemode(void);
 	virtual bool	IsZSGamemode(void);
 	virtual bool	IsCoopGamemode(void);
+	virtual bool	IsRDMGamemode(void);
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void);
 	virtual bool	UsesDMBuckets( void );
 	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
-	
+
+	// Domination gamemode
+	int m_nDomScore_time;
+	bool m_bDomWinOnLimit;
+	bool m_bDomRedThreshold;
+	bool m_bDomBlueThreshold;
+	bool m_bDomRedLeadThreshold;
+	bool m_bDomBlueLeadThreshold;
+
 	bool InGametype( int nGametype );
 	void AddGametype( int nGametype );	
 	void RemoveGametype( int nGametype );	

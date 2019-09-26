@@ -69,7 +69,7 @@ private:
 	int m_nWeaponType;        
 	string_t m_pzsFireSound;
 	string_t m_pzsFireParticles;
-	const char *m_pzsModelOverride;                                 
+	string_t m_pzsModelOverride;                                 
 	float m_flModelScale;                                            
 	float m_flSpeedMin;                                             
 	float m_flSpeedMax;                                             

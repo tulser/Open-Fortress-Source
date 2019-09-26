@@ -167,21 +167,29 @@ enum
 //-----------------------------------------------------------------------------
 enum
 {
+	// Live TF2 order first, then our custom ones
 	TF_GAMETYPE_UNDEFINED = 0,
-	TF_GAMETYPE_DM,
-	TF_GAMETYPE_TDM,
-	TF_GAMETYPE_CTF,
-	TF_GAMETYPE_CP,
-	TF_GAMETYPE_ESC,
-	TF_GAMETYPE_ZS,
-	TF_GAMETYPE_GG,
-	TF_GAMETYPE_3WAVE,
-	TF_GAMETYPE_ARENA,
-	TF_GAMETYPE_PAYLOAD,
-	TF_GAMETYPE_KOTH,
-	TF_GAMETYPE_COOP,
+	TF_GAMETYPE_CTF, // Capture the Flag
+	TF_GAMETYPE_CP, // Control Point
+	TF_GAMETYPE_PAYLOAD, // Payload. NOTE: Live TF2 refers to this as ESCORT, but we use PAYLOAD instead as ESCORT is a different gamemode
+	TF_GAMETYPE_ARENA, // Arena
+	TF_GAMETYPE_KOTH, // King of the Hill
+	TF_GAMETYPE_MVM, // Mann vs Machine
+	TF_GAMETYPE_RD, // Robot Destruction
+	TF_GAMETYPE_PASSTIME, // Passtime
+	TF_GAMETYPE_PD, // Player Destruction
+	TF_GAMETYPE_ESC, // Escort
+	TF_GAMETYPE_DM, // Deathmatch
+	TF_GAMETYPE_TDM, // Team Deathmatch
+	TF_GAMETYPE_DOM, // Domination, also used with Escort
+	TF_GAMETYPE_GG, // Gun Game
+	TF_GAMETYPE_3WAVE, // 3 Wave
+	TF_GAMETYPE_ZS, // Zombie Survival (not implemented yet)
+	TF_GAMETYPE_COOP, // Co-op (same as ZS for now)
+	TF_GAMETYPE_RDM, // Randomizer
 	TF_GAMETYPE_LAST
 };
+
 extern const char *g_aGameTypeNames[];	// localized gametype names
 
 //-----------------------------------------------------------------------------
@@ -191,8 +199,7 @@ enum
 {
 	TF_BUILDING_SENTRY				= (1<<0),
 	TF_BUILDING_DISPENSER			= (1<<1),
-	TF_BUILDING_TELEPORT_ENTRY		= (1<<2),
-	TF_BUILDING_TELEPORT_EXIT		= (1<<3),
+	TF_BUILDING_TELEPORT			= (1<<2),
 };
 
 //-----------------------------------------------------------------------------
@@ -814,14 +821,18 @@ enum
 #define DISPENSER_MAX_METAL_AMMO		400
 #define	MAX_DISPENSER_HEALING_TARGETS	32
 
+#define TELEPORTER_TYPE_ENTRANCE	0
+#define TELEPORTER_TYPE_EXIT		1
+
+#define TELEPORTER_RECHARGE_TIME				10		// seconds to recharge
+
 //--------------------------------------------------------------------------
 // OBJECTS
 //--------------------------------------------------------------------------
 enum
 {
 	OBJ_DISPENSER=0,
-	OBJ_TELEPORTER_ENTRANCE,
-	OBJ_TELEPORTER_EXIT,
+	OBJ_TELEPORTER,
 	OBJ_SENTRYGUN,
 
 	// Attachment Objects
@@ -875,25 +886,6 @@ typedef enum
 #define TF_SCORE_HEAL_HEALTHUNITS_PER_POINT		600
 
 //-------------------------
-// Shared Teleporter State
-//-------------------------
-enum
-{
-	TELEPORTER_STATE_BUILDING = 0,				// Building, not active yet
-	TELEPORTER_STATE_IDLE,						// Does not have a matching teleporter yet
-	TELEPORTER_STATE_READY,						// Found match, charged and ready
-	TELEPORTER_STATE_SENDING,					// Teleporting a player away
-	TELEPORTER_STATE_RECEIVING,					
-	TELEPORTER_STATE_RECEIVING_RELEASE,
-	TELEPORTER_STATE_RECHARGING,				// Waiting for recharge
-};
-
-#define TELEPORTER_TYPE_ENTRANCE	0
-#define TELEPORTER_TYPE_EXIT		1
-
-#define TELEPORTER_RECHARGE_TIME				10		// seconds to recharge
-
-//-------------------------
 // Shared Sentry State
 //-------------------------
 enum
@@ -904,6 +896,34 @@ enum
 	SENTRY_STATE_UPGRADING,
 
 	SENTRY_NUM_STATES,
+};
+
+//-------------------------
+// Shared Dispenser State
+//-------------------------
+enum
+{
+	DISPENSER_STATE_DEFAULT = 0,
+	DISPENSER_STATE_UPGRADING,
+
+	DISPENSER_NUM_STATES,
+};
+
+//-------------------------
+// Shared Teleporter State
+//-------------------------
+enum
+{
+	TELEPORTER_STATE_BUILDING = 0,				// Building, not active yet
+	TELEPORTER_STATE_IDLE,						// Does not have a matching teleporter yet
+	TELEPORTER_STATE_READY,						// Found match, charged and ready
+	TELEPORTER_STATE_SENDING,					// Teleporting a player away
+	TELEPORTER_STATE_RECEIVING,
+	TELEPORTER_STATE_RECEIVING_RELEASE,
+	TELEPORTER_STATE_RECHARGING,				// Waiting for recharge
+	TELEPORTER_STATE_UPGRADING,					// Upgrading
+
+	TELEPORTER_NUM_STATES,
 };
 
 //--------------------------------------------------------------------------
@@ -925,7 +945,7 @@ enum
 	BS_IDLE = 0,
 	BS_SELECTING,
 	BS_PLACING,
-	BS_PLACING_INVALID
+	BS_PLACING_INVALID,
 };
 
 
@@ -1013,11 +1033,14 @@ public:
 	// This stuff all comes from objects.txt
 	char	*m_pClassName;					// Code classname (in LINK_ENTITY_TO_CLASS).
 	char	*m_pStatusName;					// Shows up when crosshairs are on the object.
+	char	*m_pModeName0;					// Teleporter only. Shows up when crosshairs are on the object.
+	char	*m_pModeName1;					// Teleporter only. Shows up when crosshairs are on the object.
 	float	m_flBuildTime;
 	int		m_nMaxObjects;					// Maximum number of objects per player
 	int		m_Cost;							// Base object resource cost
 	float	m_CostMultiplierPerInstance;	// Cost multiplier
 	int		m_UpgradeCost;					// Base object resource cost for upgrading
+	float	m_flUpgradeDuration;			// How long it takes for this object to upgrade
 	int		m_MaxUpgradeLevel;				// Max object upgrade level
 	char	*m_pBuilderWeaponName;			// Names shown for each object onscreen when using the builder weapon
 	char	*m_pBuilderPlacementString;		// String shown to player during placement of this object
@@ -1029,6 +1052,7 @@ public:
 	int		m_iDisplayPriority;				// Priority for ordering in the hud display ( higher is closer to top )
 	bool	m_bVisibleInWeaponSelection;	// should show up and be selectable via the weapon selection?
 	char	*m_pExplodeSound;				// gamesound to play when object explodes
+	char	*m_pUpgradeSound;				// gamesound to play when object upgrades
 	char	*m_pExplosionParticleEffect;	// particle effect to play when object explodes
 	bool	m_bAutoSwitchTo;				// should we let players switch back to the builder weapon representing this?
 
@@ -1051,7 +1075,6 @@ void LoadObjectInfos( IBaseFileSystem *pFileSystem );
 const CObjectInfo* GetObjectInfo( int iObject );
 
 // Object utility funcs
-bool	ClassCanBuild( int iClass, int iObjectType );
 int		CalculateObjectCost( int iObjectType /*, int iNumberOfObjects, int iTeam, bool bLast = false*/ );
 int		CalculateObjectUpgrade( int iObjectType, int iObjectLevel );
 

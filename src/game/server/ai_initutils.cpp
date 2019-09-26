@@ -216,8 +216,9 @@ int CNodeEnt::Spawn( const char *pMapData )
 		}
 		else
 		{
-			Warning("info_hint (HammerID: %d, position (%.2f, %.2f, %.2f)) with no hint type.\n", m_NodeData.nWCNodeID, m_NodeData.vecPosition.x, m_NodeData.vecPosition.y, m_NodeData.vecPosition.z );
+			DevMsg("info_hint (HammerID: %d, position (%.2f, %.2f, %.2f)) with no hint type.\n", m_NodeData.nWCNodeID, m_NodeData.vecPosition.x, m_NodeData.vecPosition.y, m_NodeData.vecPosition.z );
 		}
+		
 		UTIL_RemoveImmediate( this );
 		return -1;
 	}

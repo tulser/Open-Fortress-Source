@@ -1263,7 +1263,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		{
 			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 			{
-				Msg( "Using map cycle file '%s'.\n", pszResult );
+				ConColorMsg( Color( 255, 239, 213, 255 ), "Using map cycle file '%s'.\n", pszResult );
 				V_strcpy_safe( szLastResult, pszResult );
 			}
 			return;
@@ -1275,7 +1275,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		{
 			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 			{
-				Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+				ConColorMsg( Color( 255, 228, 181, 255 ), "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
 				V_strcpy_safe( szLastResult, pszResult );
 			}
 			return;
@@ -1289,7 +1289,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			{
 				if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 				{
-					Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+					ConColorMsg( Color( 255, 218, 185, 255 ), "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
 					V_strcpy_safe( szLastResult, pszResult );
 				}
 				return;

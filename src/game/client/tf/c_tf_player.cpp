@@ -765,7 +765,6 @@ float C_TFRagdoll::FrameAdvance( float flInterval )
 //-----------------------------------------------------------------------------
 // Purpose: Scale the bones that need to be scaled for gore
 //-----------------------------------------------------------------------------
-
 void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )
 {
 	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
@@ -832,14 +831,7 @@ void C_TFRagdoll::DismemberHead( )
 
 	// this isn't actually attached to the head attachment
 	// it goes to the bone, but an attachment is needed here to shut the particle system up
-	// for some reason blood_decap does not work here so each effect needs to be created individually
-	ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "blood_decap_fountain", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "blood_decap_streaks", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_HEAD, "head" );
-	ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_HEAD, "head" );
+	ParticleProp()->Create( "blood_decap", PATTACH_GORE_HEAD, "head" );
 
 	Vector	vecSpot;
 	trace_t	tr;
@@ -1188,7 +1180,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		if ( m_pRagdoll )
 		{
 			// Adjust the impact strength and apply the force at the center of mass.
-			if ( iDamageType == DMG_CRITICAL )
+			if ( iDamageType & DMG_CRITICAL )
 				vecDir *= 3499999;
 			else
 				vecDir *= 1999999;
@@ -1205,7 +1197,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		// Adjust the impact strength and apply the force at the impact point..
 		if (  m_pRagdoll )
 		{
-			if ( iDamageType == DMG_CRITICAL )
+			if ( iDamageType & DMG_CRITICAL )
 				vecDir *= 20000;
 			else
 				vecDir *= 5000;
@@ -1285,7 +1277,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 		else if ( m_iTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			if ( ofd_tennisball.GetBool() )
+			if ( ofd_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
 				m_nSkin = 6;
 			else
 				m_nSkin = 4;
@@ -1787,9 +1779,6 @@ void CSpyInvisProxy::OnBind( C_BaseEntity *pEnt )
 		m_pPercentInvisible->SetFloatValue( 0.0 );
 		return;
 	}
-
-	if ( !pPlayer )
-		return;	
 	
 	float r, g, b;	
 	
@@ -2316,6 +2305,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	// stuff when writing a chat message
 	RecvPropBool(RECVINFO(m_bChatting)),
 	RecvPropBool(RECVINFO(m_bRetroMode)),
+	RecvPropBool(RECVINFO(m_bHauling)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
 	RecvPropInt( RECVINFO( m_nWaterLevel ) ),
@@ -2404,6 +2394,8 @@ C_TFPlayer::C_TFPlayer() :
 
 	//LoadMapMusic(::filesystem);
 
+	m_blinkTimer.Invalidate();
+
 }
 
 C_TFPlayer::~C_TFPlayer()
@@ -2452,6 +2444,29 @@ void C_TFPlayer::UpdateOnRemove( void )
 		CTFStatPanel *pStatPanel = GetStatPanel();
 		pStatPanel->OnLocalPlayerRemove( this );
 	}
+
+	/*
+	int surplus = g_Mags.Count() - 2;
+
+	if (surplus <= 0)
+		return;
+
+	// clear out any magazines
+	int i;
+
+	C_FadingPhysPropClientside *pCandidate;
+	for ( i = 0; i < g_Mags.Count(); i++ )
+	{
+		pCandidate = g_Mags[i];
+		Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+
+		g_Mags.FastRemove( i );
+
+		pCandidate->AddEffects( EF_NORECEIVESHADOW );
+
+		pCandidate->StartFadeOut( 0.1 );
+	}
+	*/
 
 	BaseClass::UpdateOnRemove();
 }
@@ -2963,6 +2978,24 @@ void C_TFPlayer::OnPlayerClassChange( void )
 	// Init the anim movement vars
 	m_PlayerAnimState->SetRunSpeed( GetPlayerClass()->GetMaxSpeed() );
 	m_PlayerAnimState->SetWalkSpeed( GetPlayerClass()->GetMaxSpeed() * 0.5 );
+
+	/*
+	// clear out any magazines
+	int i;
+
+	C_FadingPhysPropClientside *pCandidate;
+	for ( i = 0; i < g_Mags.Count(); i++ )
+	{
+		pCandidate = g_Mags[i];
+		Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+
+		g_Mags.FastRemove( i );
+
+		pCandidate->AddEffects( EF_NORECEIVESHADOW );
+
+		pCandidate->StartFadeOut( 0.1 );
+	}
+	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -3196,7 +3229,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 	{
 		if ( m_hShieldEffect )
 			m_hShieldEffect->Release();
-		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() && ::input->CAM_IsThirdPerson() ) ) )
+		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
 		{
 			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
 			if ( m_hShieldEffect )
@@ -3220,7 +3253,7 @@ bool C_TFPlayer::IsEnemyPlayer( void )
 
 	if ( !pLocalPlayer )
 		return false;
-	
+
 	switch( pLocalPlayer->GetTeamNumber() )
 	{
 	case TF_TEAM_RED:
@@ -3541,7 +3574,7 @@ CNewParticleEffect *C_TFPlayer::SetParticleEnd( CNewParticleEffect *pParticle )
 	
 	if ( tr.fraction < 1.0 )
 	{
-		if ( pParticle )
+		if ( pParticle && pParticle->m_pDef->ReadsControlPoint( 1 ) )
 		{
 			pParticle->SetControlPoint( 1, tr.endpos );
 			return pParticle;
@@ -3601,14 +3634,14 @@ void C_TFPlayer::UpdateLookAt( void )
 	// orient eyes
 	m_viewtarget = vecLookAtTarget;
 
-	/*
+	
 	// blinking
-	if (m_blinkTimer.IsElapsed())
+	if (m_blinkTimer.IsElapsed() )
 	{
 		m_blinktoggle = !m_blinktoggle;
 		m_blinkTimer.Start( RandomFloat( 1.5f, 4.0f ) );
 	}
-	*/
+	
 
 	/*
 	// Figure out where we want to look in world space.
@@ -4510,7 +4543,7 @@ C_BaseObject *C_TFPlayer::GetObject( int index )
 //-----------------------------------------------------------------------------
 // Purpose: Get a specific buildable that this player owns
 //-----------------------------------------------------------------------------
-C_BaseObject *C_TFPlayer::GetObjectOfType( int iObjectType )
+C_BaseObject *C_TFPlayer::GetObjectOfType( int iObjectType, int iAltMode )
 {
 	int iCount = m_aObjects.Count();
 
@@ -4524,7 +4557,7 @@ C_BaseObject *C_TFPlayer::GetObjectOfType( int iObjectType )
 		if ( pObj->IsDormant() || pObj->IsMarkedForDeletion() )
 			continue;
 
-		if ( pObj->GetType() == iObjectType )
+		if ( pObj->GetType() == iObjectType && pObj->GetAltMode() == iAltMode )
 		{
 			return pObj;
 		}
@@ -4598,7 +4631,7 @@ int C_TFPlayer::GetSkin()
 		nSkin = 1;
 		break;
 	case TF_TEAM_MERCENARY:
-		if ( ofd_tennisball.GetBool() )
+		if ( ofd_tennisball.GetBool() && IsPlayerClass( TF_CLASS_MERCENARY ) )
 			nSkin = 6;
 		else
 			nSkin = 4;

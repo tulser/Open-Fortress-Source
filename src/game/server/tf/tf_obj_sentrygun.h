@@ -22,9 +22,7 @@ class CTFPlayer;
 enum
 {
 	SENTRY_LEVEL_1 = 0,
-	// SENTRY_LEVEL_1_UPGRADING,
 	SENTRY_LEVEL_2,
-	// SENTRY_LEVEL_2_UPGRADING,
 	SENTRY_LEVEL_3,
 };
 
@@ -52,6 +50,7 @@ public:
 
 	virtual bool	StartBuilding( CBaseEntity *pBuilder );
 	virtual void	StartPlacement( CTFPlayer *pPlayer );
+	virtual void	StartHauling( void );
 
 	// Engineer hit me with a wrench
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );
@@ -64,17 +63,15 @@ public:
 	void			UpgradeThink( void );
 	virtual bool	IsUpgrading( void ) const;
 
-	int				GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
+	// If the players hit us with a wrench, should we upgrade
+	virtual bool CanBeUpgraded( CTFPlayer *pPlayer );
+	virtual void StartUpgrading( void );
+	virtual void FinishUpgrading( void );
 
 private:
 
 	// Main think
 	void SentryThink( void );
-
-	// If the players hit us with a wrench, should we upgrade
-	bool CanBeUpgraded( CTFPlayer *pPlayer );
-	void StartUpgrading( void );
-	void FinishUpgrading( void );
 
 	// Target acquisition
 	bool FindTarget( void );
@@ -102,9 +99,6 @@ private:
 
 	float m_flNextAttack;
 
-	// Upgrade Level ( 1, 2, 3 )
-	CNetworkVar( int, m_iUpgradeLevel );
-
 	// Rotation
 	int m_iRightBound;
 	int m_iLeftBound;
@@ -115,12 +109,6 @@ private:
 	QAngle m_vecGoalAngles;
 
 	float m_flTurnRate;
-
-	// Time when the upgrade animation will complete
-	float m_flUpgradeCompleteTime;
-
-	CNetworkVar( int, m_iUpgradeMetal );
-	CNetworkVar( int, m_iUpgradeMetalRequired );
 
 	// Ammo
 	CNetworkVar( int, m_iAmmoShells );

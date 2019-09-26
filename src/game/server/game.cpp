@@ -30,9 +30,9 @@ ConVar  servercfgfile( "servercfgfile","server.cfg" );
 ConVar  lservercfgfile( "lservercfgfile","listenserver.cfg" );
 
 // multiplayer server rules
-ConVar	teamplay( "mp_teamplay","-1", FCVAR_NOTIFY );
+ConVar	teamplay( "mp_teamplay","-1", FCVAR_NOTIFY, "Toggles Team Deathmatch." );
 ConVar	falldamage( "mp_falldamage","0", FCVAR_NOTIFY );
-ConVar	weaponstay( "mp_weaponstay","0", FCVAR_NOTIFY );
+ConVar	weaponstay( "mp_weaponstay","0", FCVAR_NOTIFY, "Weapons dont disappear.");
 ConVar	forcerespawn( "mp_forcerespawn","1", FCVAR_NOTIFY );
 ConVar	footsteps( "mp_footsteps","1", FCVAR_NOTIFY );
 #ifdef CSTRIKE

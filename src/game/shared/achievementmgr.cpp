@@ -901,7 +901,7 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 
 	if ( !pAchievement->AlwaysEnabled() && !CheckAchievementsEnabled() )
 	{
-		Msg( "Achievements disabled, ignoring achievement unlock for %s\n", pAchievement->GetName() );
+		DevMsg( "Achievements disabled, ignoring achievement unlock for %s\n", pAchievement->GetName() );
 		return;
 	}
 
@@ -909,7 +909,7 @@ void CAchievementMgr::AwardAchievement( int iAchievementID )
 	{
 		if ( cc_achievement_debug.GetInt() > 0 )
 		{
-			Msg( "Achievement award called but already achieved: %s\n", pAchievement->GetName() );
+			DevMsg( "Achievement award called but already achieved: %s\n", pAchievement->GetName() );
 		}
 		return;
 	}
@@ -986,7 +986,7 @@ void CAchievementMgr::UpdateAchievement( int iAchievementID, int nData )
 
 	if ( !pAchievement->AlwaysEnabled() && !CheckAchievementsEnabled() )
 	{
-		Msg( "Achievements disabled, ignoring achievement update for %s\n", pAchievement->GetName() );
+		DevMsg( "Achievements disabled, ignoring achievement update for %s\n", pAchievement->GetName() );
 		return;
 	}
 
@@ -994,7 +994,7 @@ void CAchievementMgr::UpdateAchievement( int iAchievementID, int nData )
 	{
 		if ( cc_achievement_debug.GetInt() > 0 )
 		{
-			Msg( "Achievement update called but already achieved: %s\n", pAchievement->GetName() );
+			DevMsg( "Achievement update called but already achieved: %s\n", pAchievement->GetName() );
 		}
 		return;
 	}
@@ -1036,7 +1036,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	// if PC, Steam must be running and user logged in
 	if ( IsPC() && !LoggedIntoSteam() )
 	{
-		Msg( "Achievements disabled: Steam not running.\n" );
+		DevMsg( "Achievements disabled: Steam not running.\n" );
 		return false;
 	}
 
@@ -1044,7 +1044,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	uint state = XUserGetSigninState( XBX_GetPrimaryUserId() );
 	if ( state == eXUserSigninState_NotSignedIn )
 	{
-		Msg( "Achievements disabled: not signed in to XBox user account.\n" );
+		DevMsg( "Achievements disabled: not signed in to XBox user account.\n" );
 		return false;
 	}
 #endif
@@ -1052,7 +1052,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	// can't be in commentary mode, user is invincible
 	if ( IsInCommentaryMode() )
 	{
-		Msg( "Achievements disabled: in commentary mode.\n" );
+		DevMsg( "Achievements disabled: in commentary mode.\n" );
 		return false;
 	}
 
@@ -1060,7 +1060,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 	// achievements disabled if playing demo
 	if ( engine->IsPlayingDemo() )
 	{
-		Msg( "Achievements disabled: demo playing.\n" );
+		DevMsg( "Achievements disabled: demo playing.\n" );
 		return false;
 	}
 #endif // CLIENT_DLL
@@ -1077,7 +1077,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 		static float fNextNotification = 0.0f;
 		if (gpGlobals->curtime >= fNextNotification)
 		{
-			Msg( "Achievements and stats disabled: sv_nostats is set.\n" );
+			DevMsg( "Achievements and stats disabled: sv_nostats is set.\n" );
 			fNextNotification = gpGlobals->curtime + fNotificationCooldown;
 		}
 
@@ -1117,7 +1117,7 @@ bool CAchievementMgr::CheckAchievementsEnabled()
 			// on Steam public
 			if ( developer.GetInt() == 0 || !steamapicontext->SteamUtils() || (k_EUniversePublic == steamapicontext->SteamUtils()->GetConnectedUniverse()) )
 			{
-				Msg( "Achievements disabled: cheats turned on in this app session.\n" );
+				DevMsg( "Achievements disabled: cheats turned on in this app session.\n" );
 				return false;
 			}
 #endif
@@ -1329,7 +1329,7 @@ void CAchievementMgr::ResetAchievements()
 
 	if ( !LoggedIntoSteam() )
 	{
-		Msg( "Steam not running, achievements disabled. Cannot reset achievements.\n" );
+		DevMsg( "Steam not running, achievements disabled. Cannot reset achievements.\n" );
 		return;
 	}
 
@@ -1347,7 +1347,7 @@ void CAchievementMgr::ResetAchievements()
 #endif
 	if ( cc_achievement_debug.GetInt() > 0 )
 	{
-		Msg( "All achievements reset.\n" );
+		DevMsg( "All achievements reset.\n" );
 	}
 }
 
@@ -1361,7 +1361,7 @@ void CAchievementMgr::ResetAchievement( int iAchievementID )
 
 	if ( !LoggedIntoSteam() )
 	{
-		Msg( "Steam not running, achievements disabled. Cannot reset achievements.\n" );
+		DevMsg( "Steam not running, achievements disabled. Cannot reset achievements.\n" );
 		return;
 	}
 
@@ -1378,7 +1378,7 @@ void CAchievementMgr::ResetAchievement( int iAchievementID )
 #endif
 		if ( cc_achievement_debug.GetInt() > 0 )
 		{
-			Msg( "Achievement %s reset.\n", pAchievement->GetName() );
+			DevMsg( "Achievement %s reset.\n", pAchievement->GetName() );
 		}
 	}
 }
@@ -1390,41 +1390,41 @@ void CAchievementMgr::PrintAchievementStatus()
 {
 	if ( IsPC() && !LoggedIntoSteam() )
 	{
-		Msg( "Steam not running, achievements disabled. Cannot view or unlock achievements.\n" );
+		DevMsg( "Steam not running, achievements disabled. Cannot view or unlock achievements.\n" );
 		return;
 	}
 
-	Msg( "%42s %-20s %s\n", "Name:", "Status:", "Point value:" );
+	DevMsg( "%42s %-20s %s\n", "Name:", "Status:", "Point value:" );
 	int iTotalAchievements = 0, iTotalPoints = 0;
 	FOR_EACH_MAP( m_mapAchievement, i )
 	{
 		CBaseAchievement *pAchievement = m_mapAchievement[i];
 
-		Msg( "%42s ", pAchievement->GetName() );	
+		DevMsg( "%42s ", pAchievement->GetName() );	
 
 		CFailableAchievement *pFailableAchievement = dynamic_cast<CFailableAchievement *>( pAchievement );
 		if ( pAchievement->IsAchieved() )
 		{
-			Msg( "%-20s", "ACHIEVED" );
+			DevMsg( "%-20s", "ACHIEVED" );
 		}
 		else if ( pFailableAchievement && pFailableAchievement->IsFailed() )
 		{
-			Msg( "%-20s", "FAILED" );
+			DevMsg( "%-20s", "FAILED" );
 		}
 		else 
 		{
 			char szBuf[255];
 			Q_snprintf( szBuf, ARRAYSIZE( szBuf ), "(%d/%d)%s", pAchievement->GetCount(), pAchievement->GetGoal(),
 				pAchievement->IsActive() ? "" : " (inactive)" );
-			Msg( "%-20s", szBuf );
+			DevMsg( "%-20s", szBuf );
 		}
-		Msg( " %d   ", pAchievement->GetPointValue() );
+		DevMsg( " %d   ", pAchievement->GetPointValue() );
 		pAchievement->PrintAdditionalStatus();
-		Msg( "\n" );
+		DevMsg( "\n" );
 		iTotalAchievements++;
 		iTotalPoints += pAchievement->GetPointValue();
 	}
-	Msg( "Total achievements: %d  Total possible points: %d\n", iTotalAchievements, iTotalPoints );
+	DevMsg( "Total achievements: %d  Total possible points: %d\n", iTotalAchievements, iTotalPoints );
 }
 
 //-----------------------------------------------------------------------------
@@ -1683,7 +1683,7 @@ void CAchievementMgr::Steam_OnUserStatsReceived( UserStatsReceived_t *pUserStats
 
 	if ( cc_achievement_debug.GetInt() > 0 )
 	{
-		Msg( "CAchievementMgr::Steam_OnUserStatsReceived: result = %i\n", pUserStatsReceived->m_eResult );
+		DevMsg( "CAchievementMgr::Steam_OnUserStatsReceived: result = %i\n", pUserStatsReceived->m_eResult );
 	}
 
 	if ( pUserStatsReceived->m_eResult != k_EResultOK )
@@ -1702,7 +1702,7 @@ void CAchievementMgr::Steam_OnUserStatsStored( UserStatsStored_t *pUserStatsStor
 {
 	if ( cc_achievement_debug.GetInt() > 0 )
 	{
-		Msg( "CAchievementMgr::Steam_OnUserStatsStored: result = %i\n", pUserStatsStored->m_eResult );
+		DevMsg( "CAchievementMgr::Steam_OnUserStatsStored: result = %i\n", pUserStatsStored->m_eResult );
 	}
 
 	if ( k_EResultOK != pUserStatsStored->m_eResult && k_EResultInvalidParam != pUserStatsStored->m_eResult )
@@ -1927,13 +1927,13 @@ CON_COMMAND_F( achievement_reset, "<internal name> Clears specified achievement"
 
 	if ( 2 != args.ArgC() )
 	{
-		Msg( "Usage: achievement_reset <internal name>\n" );
+		DevMsg( "Usage: achievement_reset <internal name>\n" );
 		return;
 	}
 	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
 	if ( !pAchievement )
 	{
-		Msg( "Achievement %s not found\n", args[1] );
+		DevMsg( "Achievement %s not found\n", args[1] );
 		return;
 	}
 	pAchievementMgr->ResetAchievement( pAchievement->GetAchievementID() );
@@ -1956,13 +1956,13 @@ CON_COMMAND_F( achievement_unlock, "<internal name> Unlocks achievement", FCVAR_
 
 	if ( 2 != args.ArgC() )
 	{
-		Msg( "Usage: achievement_unlock <internal name>\n" );
+		DevMsg( "Usage: achievement_unlock <internal name>\n" );
 		return;
 	}
 	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
 	if ( !pAchievement )
 	{
-		Msg( "Achievement %s not found\n", args[1] );
+		DevMsg( "Achievement %s not found\n", args[1] );
 		return;
 	}
 	pAchievementMgr->AwardAchievement( pAchievement->GetAchievementID() );
@@ -1993,20 +1993,20 @@ CON_COMMAND_F( achievement_evaluate, "<internal name> Causes failable achievemen
 
 	if ( 2 != args.ArgC() )
 	{
-		Msg( "Usage: achievement_evaluate <internal name>\n" );
+		DevMsg( "Usage: achievement_evaluate <internal name>\n" );
 		return;
 	}
 	CBaseAchievement *pAchievement = pAchievementMgr->GetAchievementByName( args[1] );
 	if ( !pAchievement )
 	{
-		Msg( "Achievement %s not found\n", args[1] );
+		DevMsg( "Achievement %s not found\n", args[1] );
 		return;
 	}
 
 	CFailableAchievement *pFailableAchievement = dynamic_cast<CFailableAchievement *>( pAchievement );
 	if ( !pFailableAchievement )
 	{
-		Msg( "Achievement %s is not failable\n", args[1] );
+		DevMsg( "Achievement %s is not failable\n", args[1] );
 		return;
 	}
 
@@ -2020,12 +2020,12 @@ CON_COMMAND_F( achievement_test_friend_count, "Counts the # of teammates on loca
 		return;
 	if ( 2 != args.ArgC() )
 	{
-		Msg( "Usage: achievement_test_friend_count <min # of teammates>\n" );
+		DevMsg( "Usage: achievement_test_friend_count <min # of teammates>\n" );
 		return;
 	}
 	int iMinFriends = atoi( args[1] );
 	bool bRet = CalcPlayersOnFriendsList( iMinFriends );
-	Msg( "You %s have at least %d friends in the game.\n", bRet ? "do" : "do not", iMinFriends );
+	DevMsg( "You %s have at least %d friends in the game.\n", bRet ? "do" : "do not", iMinFriends );
 }
 
 CON_COMMAND_F( achievement_test_clan_count, "Determines if specified # of teammates belong to same clan w/local player", FCVAR_CHEAT )
@@ -2036,12 +2036,12 @@ CON_COMMAND_F( achievement_test_clan_count, "Determines if specified # of teamma
 
 	if ( 2 != args.ArgC() )
 	{
-		Msg( "Usage: achievement_test_clan_count <# of clan teammates>\n" );
+		DevMsg( "Usage: achievement_test_clan_count <# of clan teammates>\n" );
 		return;
 	}
 	int iClanPlayers = atoi( args[1] );
 	bool bRet = CalcHasNumClanPlayers( iClanPlayers );
-	Msg( "There %s %d players who you're in a Steam group with.\n", bRet ? "are" : "are not", iClanPlayers );
+	DevMsg( "There %s %d players who you're in a Steam group with.\n", bRet ? "are" : "are not", iClanPlayers );
 }
 
 CON_COMMAND_F( achievement_mark_dirty, "Mark achievement data as dirty", FCVAR_CHEAT )

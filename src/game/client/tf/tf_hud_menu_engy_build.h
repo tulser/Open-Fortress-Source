@@ -40,6 +40,7 @@ public:
 
 private:
 	int GetBuildingIDFromSlot( int iSlot );
+	int GetAltModeFromSlot( int iSlot );
 
 	void SendBuildMessage( int iSlot );
 	bool SendDestroyMessage( int iSlot );
@@ -58,11 +59,11 @@ private:
 
 	int m_iSelectedItem;
 
-	CTFLabel *m_pBuildLabelBright;
-	CTFLabel *m_pBuildLabelDim;
+	CExLabel *m_pBuildLabelBright;
+	CExLabel *m_pBuildLabelDim;
 
-	CTFLabel *m_pDestroyLabelBright;
-	CTFLabel *m_pDestroyLabelDim;
+	CExLabel *m_pDestroyLabelBright;
+	CExLabel *m_pDestroyLabelDim;
 
 	bool m_bInConsoleMode;
 };

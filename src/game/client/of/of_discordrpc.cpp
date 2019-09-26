@@ -59,16 +59,22 @@ const char *g_aClassImage[] =
 const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 {
 	"Undefined",
-	"Deathmatch",
-	"Team Deathmatch",
 	"Capture the Flag",
 	"Control Point",
-	"Escort",
-	"Zombie Survival",
-	"Gun Game",
-	"Arena",
 	"Payload",
-	"King of the Hill"
+	"Arena",
+	"King of the Hill",
+	"Mann vs Machine",
+	"Robot Destruction",
+	"Passtime",
+	"Escort",
+	"Deathmatch",
+	"Team Deathmatch",
+	"Domination",
+	"Gun Game",
+	"3 Wave",
+	"Zombie Survival",
+	"Coop"
 };
 
 CTFDiscordRPC g_discordrpc;

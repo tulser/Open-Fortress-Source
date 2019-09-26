@@ -44,8 +44,8 @@ private:
 	CHandle<C_BaseCombatWeapon>		m_hCurrentActiveWeapon;
 	int								m_nMoney;
 
-	CTFLabel						*m_pMoney;
-	CTFLabel						*m_pMoneyShadow;
+	CExLabel						*m_pMoney;
+	CExLabel						*m_pMoneyShadow;
 };
 
 #endif	// TF_HUD_MONEY_H

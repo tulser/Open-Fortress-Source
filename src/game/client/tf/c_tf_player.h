@@ -21,6 +21,7 @@
 #include "hintsystem.h"
 #include "c_playerattachedmodel.h"
 #include "iinput.h"
+#include "physpropclientside.h"
 
 #include "hl_movedata.h"
 
@@ -133,8 +134,8 @@ public:
 
 	int	GetObjectCount( void );
 	C_BaseObject *GetObject( int index );
-	C_BaseObject *GetObjectOfType( int iObjectType );
-	int GetNumObjects( int iObjectType );
+	C_BaseObject *GetObjectOfType( int iObjectType, int iAltMode );
+	int GetNumObjects( int iObjectType, int iAltMode );
 
 	virtual bool ShouldCollide( int collisionGroup, int contentsMask ) const;
 
@@ -189,6 +190,9 @@ public:
 
 	CUtlVector<EHANDLE>		*GetSpawnedGibs( void ) { return &m_hSpawnedGibs; }
 
+	// mag count
+	CUtlVector<C_FadingPhysPropClientside *> g_Mags;
+
 	Vector 	GetClassEyeHeight( void );
 
 	// HL2 ladder related methods
@@ -202,6 +206,10 @@ public:
 	bool			ShouldAutoRezoom( void ){ return cl_autorezoom.GetBool(); }
 	bool			ShouldAutoReload( void ){ return of_autoreload.GetBool(); }
 	bool			ShouldAutoSwitchWeapons( void ){ return of_autoswitchweapons.GetBool(); }
+
+	CNetworkVar(bool, m_bHauling);
+	bool			IsHauling( void ) { return m_bHauling; }
+	void			SetHauling( bool bHauling ) { m_bHauling = bHauling; }
 
 public:
 	// Shared functions
@@ -241,7 +249,7 @@ public:
 	Vector m_vecRagdollVelocity;
 
 	// Objects
-	int CanBuild( int iObjectType );
+	int CanBuild( int iObjectType, int iAltMode );
 	CUtlVector< CHandle<C_BaseObject> > m_aObjects;
 
 	virtual CStudioHdr *OnNewModel( void );
@@ -298,6 +306,8 @@ private:
 	// ID Target
 	int					m_iIDEntIndex;
 	int					m_iForcedIDTarget;
+
+	CountdownTimer m_blinkTimer;
 
 	CNewParticleEffect	*m_pTeleporterEffect;
 	CNewParticleEffect	*m_pCritEffect;

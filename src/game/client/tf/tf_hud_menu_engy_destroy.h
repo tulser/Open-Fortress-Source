@@ -52,6 +52,7 @@ public:
 	void ErrorSound( void );
 
 	int MapIndexToObjectID( int index );
+	int MapIndexToAltMode( int index );
 
 	virtual int GetRenderGroupPriority() { return 50; }
 

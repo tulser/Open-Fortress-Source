@@ -36,6 +36,7 @@ void C_ObjectSapper::ClientThink( void )
 	if ( event )
 	{
 		event->SetInt( "building_type", OBJ_ATTACHMENT_SAPPER );
+		event->SetInt( "object_mode", 0 );
 		gameeventmanager->FireEventClientSide( event );
 	}
 }

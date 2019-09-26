@@ -65,17 +65,24 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_BUILDER; }
 
 	int GetObjectType( void ) { return m_iObjectType; }
+	int GetAltMode( void ) { return m_iAltMode; }
 
 	virtual Activity GetDrawActivity( void );
 
 	virtual CStudioHdr *OnNewModel( void );
 
+	virtual acttable_t *ActivityList( int &iActivityCount );
+	static acttable_t m_acttableBuildingDeployed[];
+
 public:
 	// Builder Data
 	int			m_iBuildState;
 	unsigned int m_iObjectType;
+	unsigned int m_iAltMode;
 	float		m_flStartTime;
 	float		m_flTotalTime;
+
+	float m_flSecondaryTimeout;
 
 	CHudTexture *m_pSelectionTextureActive;
 	CHudTexture *m_pSelectionTextureInactive;

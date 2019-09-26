@@ -99,7 +99,7 @@ CTFPointWeaponMimic::CTFPointWeaponMimic()
 	m_nWeaponType = 0;
 	m_pzsFireParticles = NULL_STRING;
 	m_pzsFireSound = NULL_STRING;
-	m_pzsModelOverride = NULL;
+	m_pzsModelOverride = NULL_STRING;
 	m_flModelScale = 1;
 	m_flSpeedMin = 1000;
 	m_flSpeedMax = 1000;
@@ -126,7 +126,7 @@ void CTFPointWeaponMimic::Spawn()
 		pRocketInfo = GetTFWeaponInfo( TF_WEAPON_ROCKETLAUNCHER );
 		if ( !pRocketInfo )
 		{
-			Warning( "tf_point_weapon_mimic: Missing Rocket weapon info, removed!\n" );
+			Warning( "tf_point_weapon_mimic at %.0f %.0f %0.f missing Rocket weapon info, removed\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 			UTIL_Remove( this );
 		}
 		break;
@@ -134,7 +134,14 @@ void CTFPointWeaponMimic::Spawn()
 		pGrenadeInfo = GetTFWeaponInfo( TF_WEAPON_PIPEBOMBLAUNCHER );
 		if ( !pGrenadeInfo )
 		{
-			Warning( "tf_point_weapon_mimic: Missing Grenade weapon info, removed!\n" );
+			Warning( "tf_point_weapon_mimic at %.0f %.0f %0.f missing Grenade weapon info, removed\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+			UTIL_Remove( this );
+		}
+		break;
+	case 2:		
+		// 2 does not exist as we dont have arrows
+		{
+			Warning( "tf_point_weapon_mimic at %.0f %.0f %0.f is using Arrow weapon type. This is not supported yet, removed\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 			UTIL_Remove( this );
 		}
 		break;
@@ -143,23 +150,28 @@ void CTFPointWeaponMimic::Spawn()
 		pStickyBombInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER );
 		if ( !pStickyBombInfo )
 		{
-			Warning( "tf_point_weapon_mimic: Missing Stickybomb weapon info, removed!\n" );
+			Warning( "tf_point_weapon_mimic at %.0f %.0f %0.f missing Stickybomb weapon info, removed\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+			UTIL_Remove( this );
+		}
+		break;
+	default:
+		{
+			Warning( "tf_point_weapon_mimic at %.0f %.0f %0.f is using Unknown weapon type, removed\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 			UTIL_Remove( this );
 		}
 		break;
 	}
 
-	char *szModel = (char *) m_pzsModelOverride;
+	char *szModel = (char *)STRING( m_pzsModelOverride );
 
 	if ( !szModel || !*szModel )
 	{
 		m_bHasOverridenModel = false;
-		Warning( "tf_point_weapon_mimic: Missing model override \n" );
 	}
 	else
 	{
 		m_bHasOverridenModel = true;
-		PrecacheModel( m_pzsModelOverride );
+		PrecacheModel( STRING( m_pzsModelOverride ) );
 	}
 
 	if ( m_pzsFireSound != NULL_STRING )
@@ -179,9 +191,14 @@ float CTFPointWeaponMimic::GetSpeed()
 
 Vector CTFPointWeaponMimic::GetFiringOrigin()
 {
-	Vector vecForward;
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( GetAbsAngles(), &vecForward, &vecRight, &vecUp );
+
 	Vector vecSrc = GetAbsOrigin();
-	Vector vecVelocity = ( vecForward * GetSpeed() );
+	vecSrc +=  vecForward * 16.0f + vecRight + vecUp * -6.0f;
+	
+	Vector vecVelocity = ( vecForward * GetSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
 
 	return vecVelocity;
 }
@@ -236,13 +253,12 @@ void CTFPointWeaponMimic::FireRocket()
 	{
 		if ( m_bHasOverridenModel )
 		{
-			pProjectile->SetModel( m_pzsModelOverride );
+			pProjectile->SetModel( STRING( m_pzsModelOverride ) );
 		}
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
 		pProjectile->SetDamageRadius( m_flSplashRadius );
 		pProjectile->SetModelScale( m_flModelScale );
-
 	}
 }
 
@@ -256,7 +272,7 @@ void CTFPointWeaponMimic::FireGrenade()
 	{
 		if ( m_bHasOverridenModel )
 		{
-			pProjectile->SetModel( m_pzsModelOverride );
+			pProjectile->SetModel( STRING( m_pzsModelOverride ) );
 		}
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );
@@ -278,7 +294,7 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 
 		if ( m_bHasOverridenModel )
 		{
-			pProjectile->SetModel( m_pzsModelOverride );
+			pProjectile->SetModel( STRING( m_pzsModelOverride ) );
 		}
 		pProjectile->SetCritical( m_bCrits );
 		pProjectile->SetDamage( m_flDamage );

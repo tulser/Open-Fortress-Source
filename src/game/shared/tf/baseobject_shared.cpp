@@ -333,7 +333,7 @@ bool CBaseObject::TestHitboxes( const Ray_t &ray, unsigned int fContentsMask, tr
 bool CBaseObject::ShouldBeActive( void )
 {
 	// Placing and/or constructing objects shouldn't be active
-	if ( IsPlacing() || IsBuilding() )
+	if ( IsPlacing() || IsBuilding() || IsHauling() )
 		return false;
 
 	return true;
@@ -345,6 +345,14 @@ bool CBaseObject::ShouldBeActive( void )
 void CBaseObject::SetType( int iObjectType )
 {
 	m_iObjectType = iObjectType;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Set the object's alt mode
+//-----------------------------------------------------------------------------
+void CBaseObject::SetAltMode( int iAltMode )
+{
+	m_iAltMode = iAltMode;
 }
 
 //-----------------------------------------------------------------------------

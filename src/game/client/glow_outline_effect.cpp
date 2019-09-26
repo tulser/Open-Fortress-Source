@@ -285,7 +285,7 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		IMaterial *pMatHaloAddToScreen = materials->FindMaterial( "dev/halo_add_to_screen", TEXTURE_GROUP_OTHER, true );
 
 		// Do not fade the glows out at all (weight = 1.0)
-		IMaterialVar *pDimVar = pMatHaloAddToScreen->FindVar( "$C0_X", NULL );
+		IMaterialVar *pDimVar = pMatHaloAddToScreen->FindVar( "$C0_X", false );
 		pDimVar->SetFloatValue( 1.0f );
 
 		// Set stencil state

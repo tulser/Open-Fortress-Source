@@ -1,3 +1,10 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Base VoteController.  Handles holding and voting on issues.
+//
+// $NoKeywords: $
+//=============================================================================//
+
 #ifndef TF_VOTEISSUES_H
 #define TF_VOTEISSUES_H
 #ifdef _WIN32

@@ -83,7 +83,7 @@ void CTFGenericBomb::Spawn()
 
 	if (!szModel || !*szModel )
 	{
-		Warning( "tf_generic_bomb missing modelname" );
+		Warning( "tf_generic_bomb at %.0f %.0f %0.f missing modelname\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		szModel = "models/props_halloween/pumpkin_explode.mdl";
 		SetModelName( AllocPooledString( szModel ) );
 	}

@@ -114,7 +114,7 @@ void CTFClassMenu::PerformLayout()
 	BaseClass::PerformLayout();
 
 
-	m_pCountLabel = dynamic_cast< CTFLabel * >( FindChildByName( "CountLabel" ) );
+	m_pCountLabel = dynamic_cast< CExLabel * >( FindChildByName( "CountLabel" ) );
 
 	if ( m_pCountLabel )
 	{
@@ -285,7 +285,7 @@ void CTFClassMenu::OnKeyCodePressed( KeyCode code )
 		// Scroll class info text up
 		if ( g_lastPanel )
 		{
-			CTFRichText *pRichText = dynamic_cast< CTFRichText * >( g_lastPanel->FindChildByName( "classInfo" ) );
+			CExRichText *pRichText = dynamic_cast< CExRichText * >( g_lastPanel->FindChildByName( "classInfo" ) );
 
 			if ( pRichText )
 			{
@@ -298,7 +298,7 @@ void CTFClassMenu::OnKeyCodePressed( KeyCode code )
 		// Scroll class info text up
 		if ( g_lastPanel )
 		{
-			CTFRichText *pRichText = dynamic_cast< CTFRichText * >( g_lastPanel->FindChildByName( "classInfo" ) );
+			CExRichText *pRichText = dynamic_cast< CExRichText * >( g_lastPanel->FindChildByName( "classInfo" ) );
 
 			if ( pRichText )
 			{

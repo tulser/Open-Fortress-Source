@@ -79,8 +79,8 @@ void CTFHudKills::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudKills.res" );
 
-	m_pKills = dynamic_cast<CTFLabel *>( FindChildByName( "Kills" ) );
-	m_pKillsShadow = dynamic_cast<CTFLabel *>( FindChildByName( "KillsShadow" ) );
+	m_pKills = dynamic_cast<CExLabel *>( FindChildByName( "Kills" ) );
+	m_pKillsShadow = dynamic_cast<CExLabel *>( FindChildByName( "KillsShadow" ) );
 
 	m_nKills	= -1;
 	m_flNextThink = 0.0f;

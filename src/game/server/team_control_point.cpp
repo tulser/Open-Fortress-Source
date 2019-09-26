@@ -35,6 +35,8 @@ BEGIN_DATADESC(CTeamControlPoint)
 	DEFINE_KEYFIELD( m_bRandomOwnerOnRestart,	FIELD_BOOLEAN,	"random_owner_on_restart" ),
 	DEFINE_KEYFIELD( m_bLocked,					FIELD_BOOLEAN,	"point_start_locked" ),
 
+	DEFINE_KEYFIELD( m_iDomScoreAmount,			FIELD_INTEGER,	"point_dom_score_amount" ),
+
 	DEFINE_FUNCTION( UnlockThink ),
 
 //	DEFINE_FIELD( m_iTeam, FIELD_INTEGER ),
@@ -81,6 +83,8 @@ CTeamControlPoint::CTeamControlPoint()
 
 	m_bLocked = false;
 	m_flUnlockTime = -1;
+
+	m_iDomScoreAmount = 1;
 
 	UseClientSideAnimation();
 }
@@ -236,7 +240,7 @@ void CTeamControlPoint::Precache( void )
 
 		if ( !m_TeamData[i].iIcon )
 		{
-			Warning( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
+			DevMsg( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
 		}
 
 		if ( m_TeamData[i].iszOverlay != NULL_STRING )
@@ -247,7 +251,7 @@ void CTeamControlPoint::Precache( void )
 
 			if ( !m_TeamData[i].iOverlay )
 			{
-				Warning( "Invalid hud overlay material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
+				DevMsg( "Invalid hud overlay material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
 			}
 		}
 	}
@@ -332,7 +336,7 @@ void CTeamControlPoint::InputSetOwner( inputdata_t &input )
 	if ( GetOwner() == iCapTeam )
 		return;
 
-	if ( TeamplayGameRules()->PointsMayBeCaptured() )
+	if ( TFGameRules()->PointsMayBeCaptured() )
 	{
 		// must be done before setting the owner
 		HandleScoring( iCapTeam );
@@ -430,7 +434,7 @@ void CTeamControlPoint::ForceOwner( int iTeam )
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::SetOwner( int iCapTeam, bool bMakeSound, int iNumCappers, int *pCappingPlayers )
 {
-	if ( TeamplayGameRules()->PointsMayBeCaptured() )
+	if ( TFGameRules()->PointsMayBeCaptured() )
 	{
 		// must be done before setting the owner
 		HandleScoring( iCapTeam );
@@ -982,12 +986,16 @@ void CTeamControlPoint::InputRoundActivate( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTeamControlPoint::SetLocked( bool bLock )
+{
+	InternalSetLocked( bLock );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTeamControlPoint::InputSetLocked( inputdata_t &inputdata )
 {
-	// never lock/unlock the point if we're in waiting for players
-	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
-		return;
-
 	bool bLocked = inputdata.value.Int() > 0;
 	InternalSetLocked( bLocked );
 }
@@ -1041,12 +1049,29 @@ void CTeamControlPoint::InternalSetLocked( bool bLocked )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CTeamControlPoint::SetUnlockTime( float fTime )
+{
+	if ( fTime <= 0 )
+	{
+		InternalSetLocked( false );
+		return;
+	}
+
+	m_flUnlockTime = gpGlobals->curtime + fTime;
+
+	if ( ObjectiveResource() )
+	{
+		ObjectiveResource()->SetCPUnlockTime( GetPointIndex(), m_flUnlockTime );
+	}
+
+	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1f, CONTROL_POINT_UNLOCK_THINK );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CTeamControlPoint::InputSetUnlockTime( inputdata_t &inputdata )
 {
-	// never lock/unlock the point if we're in waiting for players
-	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
-		return;
-
 	int nTime = inputdata.value.Int();
 
 	if ( nTime <= 0 )
@@ -1062,7 +1087,7 @@ void CTeamControlPoint::InputSetUnlockTime( inputdata_t &inputdata )
 		ObjectiveResource()->SetCPUnlockTime( GetPointIndex(), m_flUnlockTime );
 	}
 
-	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1, CONTROL_POINT_UNLOCK_THINK );
+	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1f, CONTROL_POINT_UNLOCK_THINK );
 }
 
 //-----------------------------------------------------------------------------
@@ -1075,8 +1100,9 @@ void CTeamControlPoint::UnlockThink( void )
 		 ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() == GR_STATE_RND_RUNNING ) )
 	{
 		InternalSetLocked( false );
+
 		return;
 	}
 
-	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1, CONTROL_POINT_UNLOCK_THINK );
+	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1f, CONTROL_POINT_UNLOCK_THINK );
 }

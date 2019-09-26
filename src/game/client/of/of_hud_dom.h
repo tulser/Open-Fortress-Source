@@ -5,8 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef TF_HUD_TDM_H
-#define TF_HUD_TDM_H
+#ifndef TF_HUD_DOM_H
+#define TF_HUD_DOM_H
 #ifdef _WIN32
 #pragma once
 #endif
@@ -23,12 +23,12 @@
 //-----------------------------------------------------------------------------
 // Purpose:  Clips the frag image to the appropriate percentage
 //-----------------------------------------------------------------------------
-class CTFKillsProgressBlu : public CTFImagePanel
+class CTFScoreProgressBlu : public CTFImagePanel
 {
 public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgressBlu, CTFImagePanel );
+	DECLARE_CLASS_SIMPLE( CTFScoreProgressBlu, CTFImagePanel );
 
-	CTFKillsProgressBlu( vgui::Panel *parent, const char *name );
+	CTFScoreProgressBlu( vgui::Panel *parent, const char *name );
 	virtual void Paint();
 	void SetProgress( float flProgress ){ m_flProgress = ( flProgress <= 1.0 ) ? flProgress : 1.0f; }
 
@@ -40,12 +40,12 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose:  Clips the frag meter to the appropriate percentage
 //-----------------------------------------------------------------------------
-class CTFKillsProgressRed : public CTFImagePanel
+class CTFScoreProgressRed : public CTFImagePanel
 {
 public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgressRed, CTFImagePanel );
+	DECLARE_CLASS_SIMPLE( CTFScoreProgressRed, CTFImagePanel );
 
-	CTFKillsProgressRed( vgui::Panel *parent, const char *name );
+	CTFScoreProgressRed( vgui::Panel *parent, const char *name );
 	virtual void Paint();
 	void SetProgress(float flProgress){ m_flProgress = (flProgress <= 1.0) ? flProgress : 1.0f; }
 
@@ -57,13 +57,13 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose:  Displays weapon ammo data
 //-----------------------------------------------------------------------------
-class CTFHudTDM : public CHudElement, public vgui::EditablePanel
+class CTFHudDOM : public CHudElement, public vgui::EditablePanel
 {
-	DECLARE_CLASS_SIMPLE( CTFHudTDM, vgui::EditablePanel );
+	DECLARE_CLASS_SIMPLE( CTFHudDOM, vgui::EditablePanel );
 
 public:
 
-	CTFHudTDM( const char *pElementName );
+	CTFHudDOM( const char *pElementName );
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void Reset();
@@ -76,21 +76,20 @@ protected:
 
 private:
 	
-	void UpdateKillLabel( bool bKills );
+	void UpdateDOMLabel( bool bScore );
 
 private:
 
 	float							m_flNextThink;
 
-	CHandle<C_BaseCombatWeapon>		m_hCurrentActiveWeapon;
-	int								m_nKills;
+	int								m_nScore;
 
-	CExLabel						*m_pKills;
-	CExLabel						*m_pKillsShadow;
-	CTFKillsProgressRed 			*m_pRedKills;
-	CTFKillsProgressBlu				*m_pBluKills;
+	CExLabel						*m_pScore;
+	CExLabel						*m_pScoreShadow;
+	CTFScoreProgressRed 			*m_pRedScore;
+	CTFScoreProgressBlu				*m_pBluScore;
 };
 
 
 
-#endif	// TF_HUD_TDM_H
+#endif	// TF_HUD_DOM_H

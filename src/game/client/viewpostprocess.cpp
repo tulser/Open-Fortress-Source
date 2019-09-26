@@ -85,8 +85,6 @@ ConVar mat_tonemap_percent_bright_pixels( "mat_tonemap_percent_bright_pixels", "
 ConVar mat_tonemap_min_avglum( "mat_tonemap_min_avglum", "3.0", FCVAR_CHEAT );
 ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
 
-extern ConVar localplayer_visionflags;
-
 enum PostProcessingCondition {
 	PPP_ALWAYS,
 	PPP_IF_COND_VAR,
@@ -427,11 +425,13 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 	float flTestRangeMax = ( m_max_lum == 1.0f ) ? 10000.0f : m_max_lum; // Count all pixels >1.0 as 1.0
 
 	// First, set stencil bits where the colors match
-	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, true );
-	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", NULL );
+	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, false );
+	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", false );
 	pMinVar->SetFloatValue( flTestRangeMin );
-	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", NULL );
+	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", false );
 	pMaxVar->SetFloatValue( flTestRangeMax );
+
+
 	int scrx_min = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_minx );
 	int scrx_max = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_maxx );
 	int scry_min = FLerp( yl, ( yl + dest_height - 1 ), 0, 1, m_miny );
@@ -459,7 +459,7 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 	{
 		tscale = pRenderContext->GetToneMappingScaleLinear().x;
 	}
-	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", NULL );
+	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", false );
 	use_t_scale->SetFloatValue( tscale );
 
 	m_npixels = ( 1 + scrx_max - scrx_min ) * ( 1 + scry_max - scry_min );
@@ -1546,8 +1546,8 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 		IMaterial *downsample_mat = materials->FindMaterial( "dev/downsample_non_hdr", TEXTURE_GROUP_OTHER, true);
 	#endif
 
-	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, true );
-	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, true );
+	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, false );
+	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, false );
 	ITexture *dest_rt0 = materials->FindTexture( "_rt_SmallFB0", TEXTURE_GROUP_RENDER_TARGET );
 	ITexture *dest_rt1 = materials->FindTexture( "_rt_SmallFB1", TEXTURE_GROUP_RENDER_TARGET );
 
@@ -1590,7 +1590,7 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 
 	// Gaussian blur y rt1 to rt0
 	SetRenderTargetAndViewPort( dest_rt0 );
-	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", NULL );
+	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", false );
 	pBloomAmountVar->SetFloatValue( flBloomScale );
 	pRenderContext->DrawScreenSpaceRectangle(	yblur_mat, 0, 0, nSrcWidth / 4, nSrcHeight / 4,
 												0, 0, nSrcWidth / 4 - 1, nSrcHeight / 4 - 1,
@@ -1710,7 +1710,7 @@ typedef struct SPyroSide
 static TPyroSide	PyroSides[ MAX_PYRO_SIDES ];
 
 ConVar pyro_vignette( "pyro_vignette", "2", FCVAR_ARCHIVE );
-ConVar pyro_vignette_distortion( "pyro_vignette_distortion", "1", FCVAR_ARCHIVE );
+ConVar pyro_vignette_distortion( "pyro_vignette_distortion", "0", FCVAR_ARCHIVE );
 ConVar pyro_min_intensity( "pyro_min_intensity", "0.1", FCVAR_ARCHIVE );
 ConVar pyro_max_intensity( "pyro_max_intensity", "0.35", FCVAR_ARCHIVE );
 ConVar pyro_min_rate( "pyro_min_rate", "0.05", FCVAR_ARCHIVE );
@@ -1719,6 +1719,8 @@ ConVar pyro_min_side_length( "pyro_min_side_length", "0.3", FCVAR_ARCHIVE );
 ConVar pyro_max_side_length( "pyro_max_side_length", "0.55", FCVAR_ARCHIVE );
 ConVar pyro_min_side_width( "pyro_min_side_width", "0.65", FCVAR_ARCHIVE );
 ConVar pyro_max_side_width( "pyro_max_side_width", "0.95", FCVAR_ARCHIVE );
+
+ConVar of_vignette( "of_vignette", "0", FCVAR_ARCHIVE, "Enables a vignette effect" );
 
 static void CreatePyroSide( int nSide, Vector2D &vMaxSize )
 {
@@ -1892,7 +1894,7 @@ static void DrawPyroVignette( int nDestX, int nDestY, int nWidth, int nHeight,	/
 	pRenderContext->GetRenderTargetDimensions( nScreenWidth, nScreenHeight );
 	pRenderContext->DrawScreenSpaceRectangle( pVignetteBorder, 0, 0, nScreenWidth, nScreenHeight, 0, 0, nScreenWidth - 1, nScreenHeight - 1, nScreenWidth, nScreenHeight, pClientRenderable );
 
-	if ( pyro_vignette.GetInt() > 1 )
+	if ( of_vignette.GetInt() > 1 )
 	{
 		float flPyroSegments = 2.0f / NUM_PYRO_SEGMENTS;
 		Vector2D vMaxSize( flPyroSegments, flPyroSegments );
@@ -2520,9 +2522,8 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 						}
 					}
 
-					bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
 
-					if ( bVisionOverride && g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() && pyro_vignette.GetInt() > 0 )
+					if ( g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() && of_vignette.GetInt() > 0 )
 					{
 						if ( bFBUpdated )
 						{
@@ -2584,7 +2585,7 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			
 			IMaterial *pBloomMaterial;
 			pBloomMaterial = materials->FindMaterial( "dev/floattoscreen_combine", "" );
-			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", NULL );
+			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", false );
 			pBloomAmountVar->SetFloatValue( flBloomScale );
 			
 			PostProcessingPass* selectedHDR;

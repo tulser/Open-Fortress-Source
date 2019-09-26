@@ -96,6 +96,7 @@ public:
 		{
 			if ( bLastTrigger )
 			{
+				pPlayer->m_bWinDeath = true;
 				CTriggerMultiple *pCaptureTrigger =dynamic_cast<CTriggerMultiple*>( gEntList.FindEntityByName( NULL, "cap_c_capturetrigger" ) );
 				if ( pCaptureTrigger )
 				{

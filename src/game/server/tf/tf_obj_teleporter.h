@@ -30,21 +30,21 @@ public:
 	virtual void	Spawn();
 	virtual void	Precache();
 	virtual bool	StartBuilding( CBaseEntity *pBuilder );
+	virtual void	FinishedBuilding( void );
+	virtual void	StartHauling( void );
 	virtual void	OnGoActive( void );
 	virtual int		DrawDebugTextOverlays(void) ;
 	virtual bool	IsPlacementPosValid( void );
 	virtual void	SetModel( const char *pModel );
 
-	virtual void	FinishedBuilding( void );
-
 	void SetState( int state );
 	virtual void	DeterminePlaybackRate( void );
 
+	virtual void TeleporterSend( CTFPlayer *pPlayer );
+	virtual void TeleporterReceive( CTFPlayer *pPlayer, float flDelay );
+
 	void TeleporterThink( void );
 	void TeleporterTouch( CBaseEntity *pOther );
-
-	virtual void TeleporterSend( CTFPlayer *pPlayer ) { Assert(0); }
-	virtual void TeleporterReceive( CTFPlayer *pPlayer, float flDelay ) { Assert(0); }
 
 	CObjectTeleporter *GetMatchingTeleporter( void );
 	CObjectTeleporter *FindMatch( void );	// Find the teleport partner to this object
@@ -57,6 +57,19 @@ public:
 	{
 		m_hTeleportingPlayer = pPlayer;
 	}
+
+	// If the players hit us with a wrench, should we upgrade
+	virtual bool CanBeUpgraded( CTFPlayer *pPlayer );
+	virtual void StartUpgrading( void );
+	virtual void FinishUpgrading( void );
+
+	void			UpgradeThink( void );
+	virtual bool	IsUpgrading( void ) const;
+
+	// Engineer hit me with a wrench
+	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );
+
+	bool		m_bHadTeleporter;
 
 protected:
 	CNetworkVar( int, m_iState );
@@ -84,27 +97,4 @@ protected:
 private:
 	DECLARE_DATADESC();
 };
-
-class CObjectTeleporter_Entrance : public CObjectTeleporter
-{
-public:
-	DECLARE_CLASS( CObjectTeleporter_Entrance, CObjectTeleporter );
-
-	CObjectTeleporter_Entrance();
-
-	virtual void Spawn();
-	virtual void TeleporterSend( CTFPlayer *pPlayer );
-};
-
-class CObjectTeleporter_Exit : public CObjectTeleporter
-{
-public:
-	DECLARE_CLASS( CObjectTeleporter_Exit, CObjectTeleporter );
-
-	CObjectTeleporter_Exit();
-
-	virtual void Spawn();
-	virtual void TeleporterReceive( CTFPlayer *pPlayer, float flDelay );
-};
-
 #endif // TF_OBJ_TELEPORTER_H

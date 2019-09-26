@@ -73,7 +73,10 @@ C_TFGlow::C_TFGlow()
 C_TFGlow::~C_TFGlow()
 {
 	if ( m_pGlowEffect )
-		m_pGlowEffect->Destroy();
+	{
+		delete m_pGlowEffect;
+		m_pGlowEffect = NULL;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -148,13 +151,15 @@ void C_TFGlow::OnDataChanged(DataUpdateType_t updateType)
 	}
 	else if ( !m_bDisabled && m_pGlowEffect )
 	{
-		m_pGlowEffect->Destroy();
+		delete m_pGlowEffect;
+		m_pGlowEffect = NULL;
 		m_pGlowEffect = new CGlowObject( m_hglowEntity, GetGlowColor(), GetGlowAlpha(), GetGlowOccluded(), GetGlowUnoccluded() );
 	}
 
 	if ( m_bDisabled && m_pGlowEffect )
 	{
-		m_pGlowEffect->Destroy();
+		delete m_pGlowEffect;
+		m_pGlowEffect = NULL;
 	}
 
 }

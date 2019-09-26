@@ -2005,7 +2005,8 @@ void CSceneEntity::DispatchStartPermitResponses( CChoreoScene *scene, CBaseFlex 
 //-----------------------------------------------------------------------------
 void CSceneEntity::DispatchEndPermitResponses( CChoreoScene *scene, CBaseFlex *actor, CChoreoEvent *event )
 {
-	actor->SetPermitResponse( 0 );
+	if ( actor )
+		actor->SetPermitResponse( 0 );
 }
 
 //-----------------------------------------------------------------------------

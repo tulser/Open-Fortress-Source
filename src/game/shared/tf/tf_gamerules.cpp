@@ -15,6 +15,7 @@
 #include <vgui/ILocalize.h>
 #include "tier3/tier3.h"
 #include "tf_weapon_grenade_pipebomb.h"
+#include "gameeventdefs.h"
 
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
@@ -132,6 +133,7 @@ extern ConVar of_knockback_all;
 extern ConVar of_knockback_bullets;
 extern ConVar of_knockback_melee;
 extern ConVar of_knockback_explosives;
+extern ConVar teamplay;
 
 ConVar tf_caplinear						( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime		( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
@@ -139,7 +141,6 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
 ConVar of_gamemode_dm				( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
-ConVar mp_teamplay					( "mp_teamplay", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Team Deathmatch." );
 ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
@@ -153,7 +154,7 @@ ConVar ofe_payload_override			( "ofe_payload_override", "0", FCVAR_NOTIFY | FCVA
 // ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
 ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
-							true, 0, true, 6 );
+							true, 0, true, 7 );
 
 /*	List of mutators:
 	0: Disabled
@@ -163,6 +164,7 @@ ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	4: Unholy Trinity
 	5: Rocket Arena
 	6: Gun Game
+	7: Randomizer
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
@@ -203,17 +205,6 @@ class CMyListener : public IGameEventListener2
 	//this is the event checker
 	void FireGameEvent(IGameEvent* mEvent)
 	{
-		// check event type and print message
-		// check if the event has been triggerd
-		if (!strcmp("teamplay_round_win", mEvent->GetName()))
-		{
-			//prints a DevMsg of what team won its allways going to be merc
-			//thats why we only print this Msg if we are in developer mode and debug
-			//-Nbc66
-#ifdef _DEBUG
-			DevMsg("TEAM WON %i\n", mEvent->GetInt("team"));
-#endif
-		}
 	}
 };
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
@@ -299,6 +290,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nMaxHunted_red ) ),
 	RecvPropInt( RECVINFO( m_nHuntedCount_blu ) ),
 	RecvPropInt( RECVINFO( m_nMaxHunted_blu ) ),	
+	RecvPropInt( RECVINFO( m_nDomScore_limit ) ),	
+	RecvPropInt( RECVINFO( m_nDomScore_blue ) ),	
+	RecvPropInt( RECVINFO( m_nDomScore_red ) ),	
 	RecvPropString( RECVINFO( m_pszTeamGoalStringRed ) ),
 	RecvPropString( RECVINFO( m_pszTeamGoalStringBlue ) ),
 	RecvPropString( RECVINFO(m_pszTeamGoalStringMercenary)),
@@ -310,18 +304,21 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
 	RecvPropBool( RECVINFO( m_bUsesMoney ) ),
+	RecvPropBool( RECVINFO( m_bKOTH ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
-	RecvPropBool( RECVINFO( m_bKOTH ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iCosmeticCount ) ),
-	SendPropInt( SENDINFO( m_nHuntedCount_red ) ),
-	SendPropInt( SENDINFO( m_nMaxHunted_red ) ),
-	SendPropInt( SENDINFO( m_nHuntedCount_blu ) ),
-	SendPropInt( SENDINFO( m_nMaxHunted_blu ) ),	
+	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nHuntedCount_red ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nMaxHunted_red ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nHuntedCount_blu ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nMaxHunted_blu ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nDomScore_limit ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nDomScore_blue ), 7, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nDomScore_red ), 7, SPROP_UNSIGNED ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringRed ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringBlue ) ),
 	SendPropString( SENDINFO( m_pszTeamGoalStringMercenary ) ),
@@ -540,11 +537,12 @@ void CTFGameRulesProxy::Activate()
 	BaseClass::Activate();
 }
 
-
-LINK_ENTITY_TO_CLASS(of_logic_dm, CTFLogicDM);
 //-----------------------------------------------------------------------------
 // DM Logic 
 //-----------------------------------------------------------------------------
+
+LINK_ENTITY_TO_CLASS(of_logic_dm, CTFLogicDM);
+
 BEGIN_DATADESC( CTFLogicDM )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bIsTeamplay, FIELD_BOOLEAN, "IsTeamplay"),
@@ -558,11 +556,12 @@ void CTFLogicDM::Spawn(void)
 	BaseClass::Spawn();
 }
 
-
-LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
 //-----------------------------------------------------------------------------
 // GG Logic 
 //-----------------------------------------------------------------------------
+
+LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
+
 BEGIN_DATADESC( CTFLogicGG )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bListOnly, FIELD_BOOLEAN, "ListOnly"),
@@ -624,65 +623,278 @@ CTFLogicGG::CTFLogicGG()
 {
 	for ( int i = 0; i < 50; i++ )
 	{
-		m_iszWeaponName[i] = MAKE_STRING("NULL");
-		TFGameRules()->m_iszWeaponName[i] = MAKE_STRING("");
+		m_iszWeaponName[i] = MAKE_STRING( "NULL" );
+		TFGameRules()->m_iszWeaponName[i] = MAKE_STRING( "" );
 	}
 }
 
-void CTFLogicGG::Spawn(void)
+void CTFLogicGG::Spawn( void )
 {
 	int y = 0;
 	m_iMaxLevel = 0;
 	for ( int i = 0; i < 50; i++ )
 	{
-		if ( m_iszWeaponName[i] != MAKE_STRING("NULL") )
+		if ( m_iszWeaponName[i] != MAKE_STRING( "NULL" ) )
 		{
 			m_iMaxLevel++;
 			TFGameRules()->m_iszWeaponName[y] = m_iszWeaponName[i];
 			y++;
 		}
 	}
+
 	TFGameRules()->m_iMaxLevel = m_iMaxLevel;
 	TFGameRules()->m_bListOnly = m_bListOnly;
 	TFGameRules()->m_iRequiredKills = m_iRequiredKills;
+
 	BaseClass::Spawn();
 }
 
+//-----------------------------------------------------------------------------
+// TDM Logic 
+//-----------------------------------------------------------------------------
 class CTFLogicTDM : public CBaseEntity
 {
 public:
-	DECLARE_CLASS(CTFLogicTDM, CBaseEntity);
-	void	Spawn(void);
+	DECLARE_CLASS( CTFLogicTDM, CBaseEntity );
+	void	Spawn( void );
 };
 
-LINK_ENTITY_TO_CLASS(of_logic_tdm, CTFLogicTDM);
-
-void CTFLogicTDM::Spawn(void)
+void CTFLogicTDM::Spawn( void )
 {
 	BaseClass::Spawn();
 }
 
-LINK_ENTITY_TO_CLASS(of_logic_esc, CTFLogicESC);
+LINK_ENTITY_TO_CLASS( of_logic_tdm, CTFLogicTDM);
 
 //-----------------------------------------------------------------------------
-// GG Logic 
+// Civ Escort Logic 
 //-----------------------------------------------------------------------------
+LINK_ENTITY_TO_CLASS( of_logic_esc, CTFLogicESC );
+
 BEGIN_DATADESC( CTFLogicESC )
 	//Keyfields
-	DEFINE_KEYFIELD( m_nMaxHunted_red, FIELD_INTEGER, "MaxRedHunted"),
-	DEFINE_KEYFIELD( m_nMaxHunted_blu, FIELD_INTEGER, "MaxBluHunted"),
+	DEFINE_KEYFIELD( m_nMaxHunted_red, FIELD_INTEGER, "MaxRedHunted" ),
+	DEFINE_KEYFIELD( m_nMaxHunted_blu, FIELD_INTEGER, "MaxBluHunted" ),
 
 	DEFINE_OUTPUT( m_OnHuntedDeath, "OnHuntedDeath" ),
 END_DATADESC()
 
 void CTFLogicESC::Spawn(void)
 {
-
-	TFGameRules()->m_nMaxHunted_red = m_nMaxHunted_red;
-	TFGameRules()->m_nMaxHunted_blu = m_nMaxHunted_blu;
+	if ( TFGameRules() )
+	{
+		TFGameRules()->m_nMaxHunted_red = m_nMaxHunted_red;
+		TFGameRules()->m_nMaxHunted_blu = m_nMaxHunted_blu;
+	}	
 
 	BaseClass::Spawn();
 }
+
+//-----------------------------------------------------------------------------
+// Domination Logic (this can be combined with escort)
+//-----------------------------------------------------------------------------
+LINK_ENTITY_TO_CLASS( of_logic_dom, CTFLogicDOM );
+
+BEGIN_DATADESC( CTFLogicDOM )
+	//Keyfields
+	DEFINE_KEYFIELD( m_nDomScore_limit, FIELD_INTEGER, "DomScoreLimit" ),
+	DEFINE_KEYFIELD( m_nDomScore_time, FIELD_INTEGER, "DomScoreTime" ),
+	DEFINE_KEYFIELD( m_bDomWinOnLimit, FIELD_BOOLEAN, "DomWinOnLimit" ),
+
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddDomScoreRed", InputAddDomScore_red ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddDomScoreBlue", InputAddDomScore_blue ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetDomScoreRed", InputSetDomScore_red ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetDomScoreBlue", InputSetDomScore_blue ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetDomScoreLimit", InputSetDomScoreLimit ),
+
+	DEFINE_OUTPUT( m_OnDomScoreHit_any, "OnScoreLimitHitAny" ),
+	DEFINE_OUTPUT( m_OnDomScoreHit_red, "OnScoreLimitHitRed" ),
+	DEFINE_OUTPUT( m_OnDomScoreHit_blue, "OnScoreLimitHitBlue" ),
+
+	DEFINE_THINKFUNC( DOMThink ),
+END_DATADESC()
+
+void CTFLogicDOM::Spawn( void )
+{
+	if ( TFGameRules() )
+	{
+		TFGameRules()->m_nDomScore_limit = m_nDomScore_limit;
+		TFGameRules()->m_nDomScore_time = m_nDomScore_time;
+		TFGameRules()->m_bDomWinOnLimit = m_bDomWinOnLimit;
+	}
+
+	BaseClass::Spawn();
+
+	SetThink( &CTFLogicDOM::DOMThink );
+	SetNextThink( gpGlobals->curtime );
+}
+
+void CTFLogicDOM::DOMThink( void )
+{
+	if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() )
+	{
+		SetNextThink( gpGlobals->curtime + m_nDomScore_time );
+		return;
+	}
+
+	int nOwnedRed = 0;
+	int nOwnedBlue = 0;
+
+	// this sucks!
+	CTeamControlPoint *pTeamControlPoint = (CTeamControlPoint *)gEntList.FindEntityByClassname( NULL, "team_control_point" );
+
+	// find the score value of each of team-owned control points (usually just 1)
+	while ( pTeamControlPoint )
+	{
+		if ( pTeamControlPoint->GetTeamNumber() == TF_TEAM_RED )
+		{
+			nOwnedRed = nOwnedRed + pTeamControlPoint->GetDomScoreAmount();
+		}
+		else if ( pTeamControlPoint->GetTeamNumber() == TF_TEAM_BLUE )
+		{
+			nOwnedBlue = nOwnedBlue + pTeamControlPoint->GetDomScoreAmount();
+		}
+
+		pTeamControlPoint = (CTeamControlPoint *)gEntList.FindEntityByClassname( pTeamControlPoint, "team_control_point" );
+	}
+
+	// add the total score we got from all counted and owned control points
+	AddDomScore_red( nOwnedRed );
+	AddDomScore_blue( nOwnedBlue );
+
+	SetNextThink( gpGlobals->curtime + m_nDomScore_time );
+}
+
+void CTFLogicDOM::AddDomScore_red( int amount )
+{
+	if ( amount == 0 )
+		return;
+
+	int dom_score_red_old = TFGameRules()->m_nDomScore_red;
+	int dom_score_blue_old = TFGameRules()->m_nDomScore_blue;
+
+	// is the resulting score gonna be over the limit? clamp it
+	if ( ( dom_score_red_old + amount ) > TFGameRules()->m_nDomScore_limit )
+		TFGameRules()->m_nDomScore_red = TFGameRules()->m_nDomScore_limit;
+	else
+		TFGameRules()->m_nDomScore_red = TFGameRules()->m_nDomScore_red + amount;
+
+	TFGameRules()->CheckDOMScores( dom_score_red_old, dom_score_blue_old );
+}
+
+void CTFLogicDOM::AddDomScore_blue( int amount )
+{
+	if ( amount == 0 )
+		return;
+
+	int dom_score_red_old = TFGameRules()->m_nDomScore_red;
+	int dom_score_blue_old = TFGameRules()->m_nDomScore_blue;
+
+	// is the resulting score gonna be over the limit? clamp it
+	if ( ( dom_score_blue_old + amount ) > TFGameRules()->m_nDomScore_limit )
+		TFGameRules()->m_nDomScore_blue = TFGameRules()->m_nDomScore_limit;
+	else
+		TFGameRules()->m_nDomScore_blue = TFGameRules()->m_nDomScore_blue + amount;
+
+	TFGameRules()->CheckDOMScores( dom_score_red_old, dom_score_blue_old );
+}
+
+void CTFLogicDOM::SetDomScore_red( int amount )
+{
+	if ( amount == TFGameRules()->m_nDomScore_red )
+		return;
+
+	int dom_score_red_old = TFGameRules()->m_nDomScore_red;
+	int dom_score_blue_old = TFGameRules()->m_nDomScore_blue;
+
+	// is the resulting score gonna be over the limit? clamp it
+	if ( amount > TFGameRules()->m_nDomScore_limit )
+		TFGameRules()->m_nDomScore_red = TFGameRules()->m_nDomScore_limit;
+	else
+		TFGameRules()->m_nDomScore_red = amount;
+
+	TFGameRules()->CheckDOMScores( dom_score_red_old, dom_score_blue_old );
+}
+
+void CTFLogicDOM::SetDomScore_blue( int amount )
+{
+	if ( amount == TFGameRules()->m_nDomScore_blue )
+		return;
+
+	int dom_score_red_old = TFGameRules()->m_nDomScore_red;
+	int dom_score_blue_old = TFGameRules()->m_nDomScore_blue;
+
+	// is the resulting score gonna be over the limit? clamp it
+	if ( amount > TFGameRules()->m_nDomScore_limit )
+		TFGameRules()->m_nDomScore_blue = TFGameRules()->m_nDomScore_limit;
+	else
+		TFGameRules()->m_nDomScore_blue = amount;
+
+	TFGameRules()->CheckDOMScores( dom_score_red_old, dom_score_blue_old );
+}
+
+void CTFLogicDOM::SetDomScoreLimit( int amount )
+{
+	if ( amount == 0 )
+		return;
+
+	int dom_score_red_old = TFGameRules()->m_nDomScore_red;
+	int dom_score_blue_old = TFGameRules()->m_nDomScore_blue;
+
+	// clamp any scores if the limit becomes lower
+	if ( TFGameRules()->m_nDomScore_red > amount )
+		TFGameRules()->m_nDomScore_red = amount;
+	else if ( TFGameRules()->m_nDomScore_blue > amount )
+		TFGameRules()->m_nDomScore_blue = amount;
+
+	TFGameRules()->m_nDomScore_limit = amount;
+
+	TFGameRules()->CheckDOMScores( dom_score_red_old, dom_score_blue_old );
+}
+
+void CTFLogicDOM::InputAddDomScore_red( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		AddDomScore_red( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicDOM::InputAddDomScore_blue( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		AddDomScore_blue( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicDOM::InputSetDomScore_red( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		SetDomScore_red( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicDOM::InputSetDomScore_blue( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		SetDomScore_blue( inputdata.value.Int() );
+	}
+}
+
+void CTFLogicDOM::InputSetDomScoreLimit( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		SetDomScoreLimit( inputdata.value.Int() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Coop Logic 
+//-----------------------------------------------------------------------------
 
 class CTFLogicCoop : public CBaseEntity
 {
@@ -698,33 +910,88 @@ void CTFLogicCoop::Spawn(void)
 	BaseClass::Spawn();
 }
 
-class CTFLogicArena : public CBaseEntity
+//-----------------------------------------------------------------------------
+// Arena Logic 
+//-----------------------------------------------------------------------------
+
+// inheriting from pointentity, not baseentity as the event inputs are required
+class CTFLogicArena : public CPointEntity
 {
 public:
-	DECLARE_CLASS(CTFLogicArena, CBaseEntity);
-	void	Spawn(void);
-
-	float			m_iCapEnableDelay;
-
 	DECLARE_DATADESC();
+	DECLARE_CLASS( CTFLogicArena, CPointEntity );
+
+	void	Spawn( void );
+
+	CTFLogicArena();
+
+	float		m_iCapEnableDelay;
+
+	bool	m_bCapUnlocked;
+	void	OnCapEnabled( void );
+
+	//awful
+	virtual void	InputRoundActivate( inputdata_t &inputdata );
+
 	COutputEvent m_ArenaRoundStart;
 	COutputEvent m_OnCapEnabled;
-	
 };
 
 BEGIN_DATADESC( CTFLogicArena )
 	DEFINE_KEYFIELD( m_iCapEnableDelay, FIELD_FLOAT, "CapEnableDelay" ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "RoundActivate", InputRoundActivate ),
+
 	DEFINE_OUTPUT( m_ArenaRoundStart, "OnArenaRoundStart" ),
 	DEFINE_OUTPUT( m_OnCapEnabled, "OnCapEnabled" ),
 END_DATADESC()
 
-
 LINK_ENTITY_TO_CLASS(tf_logic_arena, CTFLogicArena);
+
+CTFLogicArena::CTFLogicArena()
+{
+	m_iCapEnableDelay = 60;
+
+	m_bCapUnlocked = false;
+}
 
 void CTFLogicArena::Spawn(void)
 {
 	BaseClass::Spawn();
+
+	if ( m_iCapEnableDelay == 0 )
+		m_bCapUnlocked = true;
 }
+
+void CTFLogicArena::OnCapEnabled( void )
+{
+	if ( !m_bCapUnlocked )
+	{
+		m_bCapUnlocked = true; 
+		// activator??
+		m_OnCapEnabled.FireOutput( this, this );
+	}
+}
+
+void CTFLogicArena::InputRoundActivate( inputdata_t &inputdata )
+{
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+	if ( !pMaster )
+		return;
+
+	for ( int i = 0; i < pMaster->GetNumPoints(); i++ )
+	{
+		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+
+		// lock control point
+		pPoint->SetLocked( true );
+		pPoint->SetUnlockTime( m_iCapEnableDelay );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// KOTH Logic 
+//-----------------------------------------------------------------------------
 
 // https://raw.githubusercontent.com/powerlord/tf2-data/master/datamaps.txt
 /*
@@ -857,6 +1124,10 @@ void CTFLogicKOTH::InputSetRedTimer( inputdata_t &inputdata )
 }
 
 #endif
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
 
 // (We clamp ammo ourselves elsewhere).
 ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
@@ -1052,11 +1323,20 @@ CTFGameRules::CTFGameRules()
 //		g_Teams.AddToTail( pTeam );
 //	}
 
+	// Reset Domination stuff
+	m_nDomScore_red = 0;
+	m_nDomScore_blue = 0;
+	m_bDomRedThreshold = false;
+	m_bDomBlueThreshold = false;
+	m_bDomRedLeadThreshold = false;
+	m_bDomBlueLeadThreshold = false;
+
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
 
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_capture_blocked" );	
+	ListenForGameEvent( "teamplay_point_unlocked" );
 	ListenForGameEvent( "teamplay_round_win" );
 	ListenForGameEvent( "teamplay_flag_event" );
 
@@ -1278,7 +1558,7 @@ void CTFGameRules::Activate()
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
-		if ( ((( mp_teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm")) && m_bIsTeamplay ) || mp_teamplay.GetInt() > 0 )  )
+		if ( ((( teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm")) && m_bIsTeamplay ) || teamplay.GetInt() > 0 )  )
 		{
 			AddGametype(TF_GAMETYPE_TDM);
 			ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server TDM gamemode config file\n");
@@ -1298,6 +1578,14 @@ void CTFGameRules::Activate()
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server GG gamemode config file\n");
 		engine->ServerCommand("exec config_default_gg.cfg \n");
+		engine->ServerExecute();
+	}	
+
+	if ( ofd_mutators.GetInt() == RANDOMIZER )
+	{
+		AddGametype(TF_GAMETYPE_RDM);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Randomizer gamemode config file\n");
+		engine->ServerCommand("exec config_default_rdm.cfg \n");
 		engine->ServerExecute();
 	}	
 	
@@ -1320,6 +1608,17 @@ void CTFGameRules::Activate()
 		{
 			m_bEscortOverride = true;
 		}
+	}
+
+	if (gEntList.FindEntityByClassname(NULL, "of_logic_dom") || !Q_strncmp(STRING(gpGlobals->mapname), "dom_", 4) )
+	{
+		// no Domination gamemode is set in Escort
+		if ( !IsESCGamemode() )
+			AddGametype(TF_GAMETYPE_DOM);
+
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Domination gamemode config file\n");
+		engine->ServerCommand("exec config_default_dom.cfg \n");
+		engine->ServerExecute();
 	}
 	
 	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
@@ -1389,6 +1688,11 @@ bool CTFGameRules::IsTDMGamemode( void )
 	return m_bIsTDM;
 }
 
+bool CTFGameRules::IsDOMGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_DOM ); 
+}
+
 bool CTFGameRules::IsTeamplay( void )
 { 
 	return InGametype( TF_GAMETYPE_TDM );
@@ -1427,6 +1731,11 @@ bool CTFGameRules::IsZSGamemode( void )
 bool CTFGameRules::IsCoopGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_COOP );
+}
+
+bool CTFGameRules::IsRDMGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_RDM );
 }
 
 bool CTFGameRules::UsesMoney( void )
@@ -1671,6 +1980,16 @@ void CTFGameRules::SetupOnRoundStart( void )
 
 		SetRoundOverlayDetails();
 	}
+
+	m_nDomScore_limit = 100;
+	m_nDomScore_time = 3;
+	m_nDomScore_red = 0;
+	m_nDomScore_blue = 0;
+	m_bDomWinOnLimit = true;
+	m_bDomRedThreshold = false;
+	m_bDomBlueThreshold = false;
+	m_bDomRedLeadThreshold = false;
+	m_bDomBlueLeadThreshold = false;
 	
 	if ( IsArenaGamemode() )
 	{
@@ -1784,13 +2103,14 @@ void CTFGameRules::DisableSpawns( int iTeamNumber )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundRunning( void )
 {
-	CTFLogicArena *pArena = dynamic_cast<CTFLogicArena*> (gEntList.FindEntityByClassname(NULL, "tf_logic_arena"));
+	CTFLogicArena *pArena = dynamic_cast< CTFLogicArena* > ( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
+
 	if ( pArena )
-		pArena->m_ArenaRoundStart.FireOutput(NULL,pArena);
+		pArena->m_ArenaRoundStart.FireOutput( NULL, pArena );
+
 	if ( IsArenaGamemode() )
-	{
 		m_flStalemateStartTime = gpGlobals->curtime - tf_stalematechangeclasstime.GetFloat();
-	}
+
 	// Let out control point masters know that the round has started
 	for ( int i = 0; i < g_hControlPointMasters.Count(); i++ )
 	{
@@ -1846,6 +2166,30 @@ void CTFGameRules::SetupOnStalemateStart( void )
 
 	// Respawn all the players
 	RespawnPlayers( true );
+
+	// exception for arena
+	if ( InGametype( TF_GAMETYPE_ARENA ) )
+	{
+		CTFLogicArena *pArena = dynamic_cast<CTFLogicArena *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
+		if ( pArena )
+		{
+			pArena->m_ArenaRoundStart.FireOutput( NULL, pArena );
+
+			IGameEvent *event = gameeventmanager->CreateEvent( "arena_round_start" );
+
+			if ( event )
+				gameeventmanager->FireEvent( event );
+
+			// all teams
+			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+			{
+				BroadcastSound( i, "Ambient.Siren" );
+				BroadcastSound( i, "Announcer.AM_RoundStartRandom" );
+			}
+
+			m_flStalemateStartTime = gpGlobals->curtime;
+		}
+	}
 
 	// Disable all the active health packs in the world
 	m_hDisabledHealthKits.Purge();
@@ -1997,6 +2341,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flAdjustedDamage = flDistanceToEntity * falloff;
 			flAdjustedDamage = info.GetDamage() - flAdjustedDamage;
 		}
+
 		// Take a little less damage from yourself
 		if ( pEntity == info.GetAttacker() )
 		{
@@ -2179,13 +2524,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 	bool CTFGameRules::ClientCommand( CBaseEntity *pEdict, const CCommand &args )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( pEdict );
-		
-		//loads event file which has information for our event
-		//must be allways loaded first to be abel to acces it's information
-		//-Nbc66
-		//plus
-		//loads mod event file which has the event named "teamplay_round_win" allready defined inside of it
-		//fuck the event manager -Nbc66
+
 		gameeventmanager->LoadEventsFromFile("resource/ModEvents.res");
 		const char *pcmd = args[0];
 		if ( FStrEq( pcmd, "objcmd" ) )
@@ -2350,9 +2689,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			if ( IsGGGamemode() && CountActivePlayers() > 0 )
 			{
 						// check if any player is over the frag limit
-						// and creates a game event for achivement shit because why not
-						//i allready want to die
-						//-Nbc66
+						// and creates a game event for achievement
 						for (int i = 1; i <= gpGlobals->maxClients; i++)
 						{
 							CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
@@ -2595,6 +2932,203 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 
 		return false;
+	}
+
+	// ran everytime the score in DOM is changed
+	void CTFGameRules::CheckDOMScores( int dom_score_red_old, int dom_score_blue_old )
+	{
+		// is red team's score higher than the score limit?
+		if ( m_nDomScore_red >= m_nDomScore_limit )
+		{
+			// yes? send appropiate outputs to dom logic entity
+			CTFLogicDOM *pDom = dynamic_cast< CTFLogicDOM* > ( gEntList.FindEntityByClassname( NULL, "of_logic_dom" ) );
+			if ( pDom )
+			{
+				pDom->m_OnDomScoreHit_any.FireOutput( NULL, pDom );
+				pDom->m_OnDomScoreHit_red.FireOutput( NULL, pDom );
+			}
+
+			// if win on score limit is enabled in the dom logic entity, set our winner
+			if ( m_bDomWinOnLimit )
+			{
+				SetWinningTeam( TF_TEAM_RED, 0, true, true );
+			}
+			
+			return;
+		}
+		// is blue team's score higher than the score limit?
+		else if ( m_nDomScore_blue >= m_nDomScore_limit )
+		{
+			// yes? send appropiate outputs to dom logic entity
+			CTFLogicDOM *pDom = dynamic_cast< CTFLogicDOM* > ( gEntList.FindEntityByClassname( NULL, "of_logic_dom" ) );
+			if ( pDom )
+			{
+				pDom->m_OnDomScoreHit_any.FireOutput( NULL, pDom );
+				pDom->m_OnDomScoreHit_blue.FireOutput( NULL, pDom );
+			}
+
+			// if win on score limit is enabled in the dom logic entity, set our winner
+			if ( m_bDomWinOnLimit )
+			{
+				SetWinningTeam( TF_TEAM_BLUE, 0, true, true );
+			}
+
+			return;
+		}
+
+		//
+		// announcer dialog
+		//
+
+		// don't create announcer dialog in Escort if domination is enabled there too
+		if ( IsESCGamemode() )
+			return;
+
+		// if red's score is 90% or more of the score limit, then play appropiate dialog
+		// however we don't want this dialog to play everytime! therefore the threshold bool is checked
+		// if we somehow end up with *less* score than last time and its less than 90%, then we want to allow the dialog to play again
+		if ( ( m_nDomScore_red >= ( m_nDomScore_limit * 90 / 100 ) ) && !m_bDomRedThreshold )
+		{
+			m_bDomRedThreshold = true;
+
+			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_FriendlyClose" );
+			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_EnemyClose" );
+
+			return;
+		}
+		else if ( ( ( m_nDomScore_red < dom_score_red_old ) && m_nDomScore_red < ( m_nDomScore_limit * 90 / 100 ) ) && m_bDomRedThreshold )
+		{
+			m_bDomRedThreshold = false;
+		}
+
+		// if blue's score is 90% or more of the score limit, then play appropiate dialog
+		// however we don't want this dialog to play everytime! therefore the threshold bool is checked
+		// if we somehow end up with *less* score than last time and its less than 90%, then we want to allow the dialog to play again
+		if ( ( m_nDomScore_blue >= ( m_nDomScore_limit * 90 / 100 ) ) && !m_bDomBlueThreshold )
+		{
+			m_bDomBlueThreshold = true;
+
+			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_FriendlyClose" );
+			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_EnemyClose" );
+
+			return;
+		}
+		else if ( ( ( m_nDomScore_blue < dom_score_blue_old ) && m_nDomScore_blue < ( m_nDomScore_limit * 90 / 100 ) ) && m_bDomBlueThreshold )
+		{
+			m_bDomBlueThreshold = false;
+		}
+
+		// is red's score higher than blue's old score? we are in the lead, play announcer!
+		// however we don't want this dialog to play everytime! therefore the threshold bool is checked
+		if ( ( m_nDomScore_red > dom_score_blue_old ) && !m_bDomRedLeadThreshold )
+		{
+			m_bDomBlueLeadThreshold = false;
+			m_bDomRedLeadThreshold = true;
+
+			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_FriendlyLead" );
+			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_EnemyLead" );
+
+			return;
+		}
+
+		// is blue's score higher than blue's old score? we are in the lead, play announcer!
+		// however we don't want this dialog to play everytime! therefore the threshold bool is checked
+		if ( ( m_nDomScore_blue > dom_score_red_old ) && !m_bDomBlueLeadThreshold )
+		{
+			m_bDomRedLeadThreshold = false;
+			m_bDomBlueLeadThreshold = true;
+
+			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_FriendlyLead" );
+			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_EnemyLead" );
+
+			return;
+		}
+
+		// play countdown dialog if we are within 10 points of reaching the limit
+		if ( m_nDomScore_red > dom_score_red_old )
+		{
+			int counter;
+
+			counter = m_nDomScore_limit - m_nDomScore_red;
+
+			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+			{
+				switch ( counter )
+				{
+				case 1:
+					BroadcastSound( i, "Announcer.RoundEnds1seconds" );
+					break;
+				case 2:
+					BroadcastSound( i, "Announcer.RoundEnds2seconds" );
+					break;
+				case 3:
+					BroadcastSound( i, "Announcer.RoundEnds3seconds" );
+					break;
+				case 4:
+					BroadcastSound( i, "Announcer.RoundEnds4seconds" );
+					break;
+				case 5:
+					BroadcastSound( i, "Announcer.RoundEnds5seconds" );
+					break;
+				case 6:
+					BroadcastSound( i, "Announcer.RoundEnds6seconds" );
+					break;
+				case 7:
+					BroadcastSound( i, "Announcer.RoundEnds7seconds" );
+					break;
+				case 8:
+					BroadcastSound( i, "Announcer.RoundEnds8seconds" );
+					break;
+				case 9:
+					BroadcastSound( i, "Announcer.RoundEnds9seconds" );
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		else if ( m_nDomScore_blue > dom_score_blue_old )
+		{
+			int counter;
+
+			counter = m_nDomScore_limit - m_nDomScore_blue;
+
+			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+			{
+				switch ( counter )
+				{
+				case 1:
+					BroadcastSound( i, "Announcer.RoundEnds1seconds" );
+					break;
+				case 2:
+					BroadcastSound( i, "Announcer.RoundEnds2seconds" );
+					break;
+				case 3:
+					BroadcastSound( i, "Announcer.RoundEnds3seconds" );
+					break;
+				case 4:
+					BroadcastSound( i, "Announcer.RoundEnds4seconds" );
+					break;
+				case 5:
+					BroadcastSound( i, "Announcer.RoundEnds5seconds" );
+					break;
+				case 6:
+					BroadcastSound( i, "Announcer.RoundEnds6seconds" );
+					break;
+				case 7:
+					BroadcastSound( i, "Announcer.RoundEnds7seconds" );
+					break;
+				case 8:
+					BroadcastSound( i, "Announcer.RoundEnds8seconds" );
+					break;
+				case 9:
+					BroadcastSound( i, "Announcer.RoundEnds9seconds" );
+					break;
+				default:
+					break;
+				}
+			}
+		}
 	}
 
 	bool CTFGameRules::CheckWinLimit()
@@ -3291,7 +3825,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pKiller = info.GetAttacker();
 	CBaseMultiplayerPlayer *pScorer = ToBaseMultiplayerPlayer( GetDeathScorer( pKiller, pInflictor, pVictim ) );
-	CTFPlayer *pAssister = NULL;
+	CBaseEntity *pAssister = NULL;
 	CBaseObject *pObject = NULL;
 
 	// if inflictor or killer is a base object, tell them that they got a kill
@@ -3348,7 +3882,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	// if not killed by  suicide or killed by world, see if the scorer had an assister, and if so give the assister credit
 	if ( ( pVictim != pScorer ) && pKiller )
 	{
-		pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
+		pAssister = GetAssister( pVictim, pScorer, pInflictor );
 	}	
 
 	//find the area the player is in and see if his death causes a block
@@ -3361,6 +3895,8 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 		pArea = dynamic_cast<CTriggerAreaCapture *>( gEntList.FindEntityByClassname( pArea, "trigger_capture_area" ) );
 	}
 
+	CTFPlayer *pTFPlayerAssister = ToTFPlayer( pAssister );
+
 	// determine if this kill affected a nemesis relationship
 	int iDeathFlags = 0;
 	CTFPlayer *pTFPlayerVictim = ToTFPlayer( pVictim );
@@ -3368,9 +3904,10 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	if ( pScorer )
 	{	
 		CalcDominationAndRevenge( pTFPlayerScorer, pTFPlayerVictim, false, &iDeathFlags );
-		if ( pAssister )
+
+		if ( pTFPlayerAssister )
 		{
-			CalcDominationAndRevenge( pAssister, pTFPlayerVictim, true, &iDeathFlags );
+			CalcDominationAndRevenge( pTFPlayerAssister, pTFPlayerVictim, true, &iDeathFlags );
 		}
 
 		if ( IsTeamplay() && IsTDMGamemode() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() )
@@ -3380,9 +3917,16 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	}
 	pTFPlayerVictim->SetDeathFlags( iDeathFlags );	
 
-	if ( pAssister )
+	if ( pTFPlayerAssister )
 	{
-		CTF_GameStats.Event_AssistKill( ToTFPlayer( pAssister ), pVictim );
+		CTF_GameStats.Event_AssistKill( pTFPlayerAssister, pVictim );
+	}
+
+	CBaseObject *pObjectAssister = dynamic_cast<CBaseObject *>( pInflictor );
+
+	if ( pTFPlayerAssister && pObjectAssister )
+	{
+		pObjectAssister->IncrementAssists();
 	}
 
 	BaseClass::PlayerKilled( pVictim, info );
@@ -4302,7 +4846,16 @@ int CTFGameRules::GetFarthestOwnedControlPoint( int iTeam, bool bWithSpawnpoints
 //-----------------------------------------------------------------------------
 bool CTFGameRules::TeamMayCapturePoint( int iTeam, int iPointIndex ) 
 { 
-	if ( !tf_caplinear.GetBool() )
+	// point capturing allowed?
+	if ( !PointsMayBeCaptured() )
+		return false;
+
+	// locked?
+	if ( ObjectiveResource()->GetCPLocked( iPointIndex ) )
+		return false;
+
+	// don't run further logic in domination
+	if ( !tf_caplinear.GetBool() || IsDOMGamemode() )
 		return true; 
 
 	// Any previous points necessary?
@@ -4702,6 +5255,16 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 		CTF_GameStats.Event_RoundEnd( iWinningTeam, bFullRound, flRoundTime, bWasSuddenDeath );
 #endif
 	}
+	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
+	{
+#ifdef GAME_DLL
+		// if this is an unlock event and we're in arena, fire OnCapEnabled		
+		CTFLogicArena *pArena = dynamic_cast<CTFLogicArena *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
+
+		if ( pArena )
+			pArena->m_OnCapEnabled.FireOutput( NULL, pArena );
+#endif
+	}
 	else if ( !Q_strcmp( eventName, "teamplay_flag_event" ) )
 	{
 #ifdef GAME_DLL
@@ -4713,6 +5276,15 @@ void CTFGameRules::FireGameEvent( IGameEvent *event )
 			m_szMostRecentCappers[0] = iPlayerIndex;
 			m_szMostRecentCappers[1] = 0;
 		}
+#endif
+	}
+	else if ( !Q_strcmp( eventName, "teamplay_point_unlocked" ) )
+	{
+#ifdef GAME_DLL
+		// unlock my point	
+		CTFLogicArena *pArena = dynamic_cast< CTFLogicArena * >(gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
+		if ( pArena )
+			pArena->OnCapEnabled();
 #endif
 	}
 #ifdef CLIENT_DLL
@@ -4870,7 +5442,7 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 	if ( InGametype( TF_GAMETYPE_CP ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
 	if ( InGametype( TF_GAMETYPE_CTF ) )
-		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CTF]);
 	if ( InGametype( TF_GAMETYPE_ARENA ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
 	if ( InGametype( TF_GAMETYPE_ESC ) )
@@ -4879,6 +5451,10 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_PAYLOAD]);
 	if ( InGametype( TF_GAMETYPE_COOP) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
+	if ( InGametype( TF_GAMETYPE_DOM) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DOM]);
+	if ( InGametype( TF_GAMETYPE_RDM) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_RDM]);
 	return GameType;
 }
 

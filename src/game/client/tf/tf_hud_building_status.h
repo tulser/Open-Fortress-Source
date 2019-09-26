@@ -90,7 +90,7 @@ class CBuildingStatusItem : public vgui::EditablePanel
 public:
 
 	// actual panel constructor
-	CBuildingStatusItem( Panel *parent, const char *szLayout, int iObjectType );
+	CBuildingStatusItem( Panel *parent, const char *szLayout, int iObjectType, int iAltMode );
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void Paint( void );
@@ -106,6 +106,8 @@ public:
 
 	int GetRepresentativeObjectType();
 	C_BaseObject *GetRepresentativeObject();
+
+	int GetRepresentativeAltMode();
 
 	virtual int GetObjectPriority();
 
@@ -124,6 +126,11 @@ public:
 
 	bool IsActive( void ) { return m_bActive; }
 
+	CIconPanel *m_pUpgradeIcons[3];
+	CIconPanel *m_pUpgradeLabel;
+	vgui::ContinuousProgressBar *m_pUpgradeProgress;
+	int m_iUpgradeLevel;
+
 private:
 
 	bool bPositioned;		// false if we have not yet faded in and been positioned
@@ -131,6 +138,7 @@ private:
 	char m_szLayout[128];
 
 	int m_iObjectType;
+	int m_iAltMode;
 	bool m_bActive;
 
 	// Two main subpanels
@@ -180,15 +188,13 @@ private:
 
 	CIconPanel *m_pSentryIcons[3];
 
-	CTFLabel *m_pRocketsLabel;
-	CTFLabel *m_pUpgradeLabel;
-	CTFLabel *m_pKillsLabel;
+	vgui::ImagePanel *m_pRocketsLabel;
+	vgui::ImagePanel *m_pShellLabel;
+
+	CExLabel *m_pKillsLabel;
 
 	vgui::ContinuousProgressBar *m_pShellsProgress;
 	vgui::ContinuousProgressBar *m_pRocketsProgress;
-	vgui::ContinuousProgressBar *m_pUpgradeProgress;
-
-	int m_iUpgradeLevel;
 
 	// Kills
 	int m_iKills;
@@ -233,7 +239,6 @@ public:
 	virtual void PerformLayout( void );
 
 private:
-
 	// 2 subpanels
 	vgui::EditablePanel *m_pChargingPanel;
 	vgui::EditablePanel *m_pFullyChargedPanel;
@@ -255,6 +260,8 @@ class CBuildingStatusItem_TeleporterExit : public CBuildingStatusItem
 
 public:
 	CBuildingStatusItem_TeleporterExit( Panel *parent );
+
+	virtual void PerformLayout( void );
 };
 
 //-----------------------------------------------------------------------------
@@ -295,11 +302,11 @@ public:
 
 	virtual void LevelInit( void );
 
-	void AddBuildingPanel( int iBuildingType );
-	CBuildingStatusItem *CreateItemPanel( int iObjectType );
+	void AddBuildingPanel( int iBuildingType, int iAltMode );
+	CBuildingStatusItem *CreateItemPanel( int iObjectType, int iAltMode );
 
 	void UpdateAllBuildings( void );
-	void OnBuildingChanged( int iBuildingType, bool bBuildingIsDead );
+	void OnBuildingChanged( int iBuildingType, bool bBuildingIsDead, int iAltMode );
 
 	void RepositionObjectPanels();
 

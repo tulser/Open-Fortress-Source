@@ -216,8 +216,21 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 	}
 
 	CBasePlayer *pVoteCaller = UTIL_GetCommandClient();
+
 	if ( !pVoteCaller )
 		return;
+
+	edict_t *pClient = NULL;
+
+	pClient = pVoteCaller->edict();
+
+	if ( pClient)
+	{
+		// close main menu when this get called, needs to be called twice
+		// THIS IS HORRENDOUS
+		engine->ClientCommand( pClient, "escape" );
+		engine->ClientCommand( pClient, "escape" );
+	}
 
 	if ( !sv_vote_allow_spectators.GetBool() )
 	{
@@ -550,7 +563,7 @@ void CVoteController::SendVoteFailedToPassMessage( vote_create_failed_t nReason 
 {
 	Assert( m_potentialIssues[m_iActiveIssueIndex] );
 
-	UTIL_LogPrintf( "Vote failed \"%s %s\" with code %i\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString(), (int)nReason );
+	DevMsg( "Vote failed \"%s %s\" with code %i\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString(), (int)nReason );
 
 	CBroadcastRecipientFilter filter;
 	filter.MakeReliable();
@@ -731,7 +744,7 @@ void CVoteController::VoteControllerThink( void )
 			m_executeCommandTimer.Start( flDelay );
 			m_resetVoteTimer.Start( 5.f );
 
-			UTIL_LogPrintf( "Vote succeeded \"%s %s\"\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString() );
+			DevMsg( "Vote succeeded \"%s %s\"\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString() );
 
 			CBroadcastRecipientFilter filter;
 			filter.MakeReliable();
@@ -1133,13 +1146,11 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 		return false;
 	}
 
-#ifdef TF_DLL
-	if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() && !TFGameRules()->IsInTournamentMode() )
+	if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() )
 	{
 		nFailCode = VOTE_FAILED_WAITINGFORPLAYERS;
 		return false;
 	}
-#endif // TF_DLL
 
 	CBaseEntity *pVoteCaller = UTIL_EntityByIndex( iEntIndex );
 	if ( pVoteCaller && !CanTeamCallVote( GetVoterTeam( pVoteCaller ) ) )

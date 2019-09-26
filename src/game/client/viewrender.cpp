@@ -111,11 +111,7 @@ static ConVar r_drawopaqueworld( "r_drawopaqueworld", "1", FCVAR_CHEAT );
 static ConVar r_drawtranslucentworld( "r_drawtranslucentworld", "1", FCVAR_CHEAT );
 static ConVar r_3dsky( "r_3dsky","1", 0, "Enable the rendering of 3d sky boxes" );
 static ConVar r_skybox( "r_skybox","1", FCVAR_CHEAT, "Enable the rendering of sky boxes" );
-#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_ARCHIVE );
-#else
-ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_CHEAT );
-#endif
 static ConVar r_drawtranslucentrenderables( "r_drawtranslucentrenderables", "1", FCVAR_CHEAT );
 static ConVar r_drawopaquerenderables( "r_drawopaquerenderables", "1", FCVAR_CHEAT );
 static ConVar r_threaded_renderables( "r_threaded_renderables", "0" );
@@ -162,16 +158,12 @@ static ConVar mat_clipz( "mat_clipz", "1" );
 //-----------------------------------------------------------------------------
 static ConVar r_screenfademinsize( "r_screenfademinsize", "0" );
 static ConVar r_screenfademaxsize( "r_screenfademaxsize", "0" );
-static ConVar cl_drawmonitors( "cl_drawmonitors", "1" );
+static ConVar cl_drawmonitors( "cl_drawmonitors", "1", FCVAR_CHEAT );
 static ConVar r_eyewaterepsilon( "r_eyewaterepsilon", "10.0f", FCVAR_CHEAT );
 
-#ifdef TF_CLIENT_DLL
-static ConVar pyro_dof( "pyro_dof", "1", FCVAR_ARCHIVE );
-#endif
+static ConVar of_dof( "of_dof", "0", FCVAR_ARCHIVE, "Enables depth of field effect." );
 
 extern ConVar cl_leveloverview;
-
-extern ConVar localplayer_visionflags;
 
 //-----------------------------------------------------------------------------
 // Globals
@@ -768,11 +760,9 @@ static void SetClearColorToFogColor()
 // Precache of necessary materials
 //-----------------------------------------------------------------------------
 
-#ifdef HL2_CLIENT_DLL
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheViewRender )
 	CLIENTEFFECT_MATERIAL( "scripted/intro_screenspaceeffect" )
 CLIENTEFFECT_REGISTER_END()
-#endif
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffects )
 	CLIENTEFFECT_MATERIAL( "dev/blurfiltery_and_add_nohdr" )
@@ -796,14 +786,12 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffects )
 	CLIENTEFFECT_MATERIAL( "dev/motion_blur" )
 	CLIENTEFFECT_MATERIAL( "dev/upscale" )
 
-#ifdef TF_CLIENT_DLL
 	CLIENTEFFECT_MATERIAL( "dev/pyro_blur_filter_y" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_blur_filter_x" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_dof" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_vignette_border" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_vignette" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_post" )
-#endif
 
 CLIENTEFFECT_REGISTER_END_CONDITIONAL( engine->GetDXSupportLevel() >= 90 )
 
@@ -1919,23 +1907,6 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 	C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, true );
 	VPROF( "CViewRender::RenderView" );
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
-
-	// Don't want TF2 running less than DX 8
-	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
-	{
-		// We know they were running at least 8.0 when the game started...we check the 
-		// value in ClientDLL_Init()...so they must be messing with their DirectX settings.
-		if ( ( Q_stricmp( COM_GetModDirectory(), "tf" ) == 0 ) || ( Q_stricmp( COM_GetModDirectory(), "tf_beta" ) == 0 ) )
-		{
-			static bool bFirstTime = true;
-			if ( bFirstTime )
-			{
-				bFirstTime = false;
-				Msg( "This game has a minimum requirement of DirectX 8.0 to run properly.\n" );
-			}
-			return;
-		}
-	}
 
 	CMatRenderContextPtr pRenderContext( materials );
 	ITexture *saveRenderTarget = pRenderContext->GetRenderTarget();
@@ -4019,6 +3990,8 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 			C_BaseEntity *pEntity = itEntity->m_pRenderable ? itEntity->m_pRenderable->GetIClientUnknown()->GetBaseEntity() : NULL;
 			if ( pEntity )
 			{
+				// disabled! causes issues with some post processing effects like DOF
+				/*
 				if ( pEntity->IsNPC() )
 				{
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
@@ -4030,7 +4003,7 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 					
 					continue;
 				}
-				else if ( pEntity->GetBaseAnimating() )
+				else*/	if ( pEntity->GetBaseAnimating() )
 				{
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
 					arrBoneSetupNpcsLast[ numNonNpcsAnimating ++ ] = pba;
@@ -4040,7 +4013,7 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 		}
 	}
 
-	if ( 0 && r_threaded_renderables.GetBool() )
+	if ( r_threaded_renderables.GetBool() )
 	{
 		ParallelProcess( "BoneSetupNpcsLast", arrBoneSetupNpcsLast.Base() + numOpaqueEnts - numNpcs, numNpcs, &SetupBonesOnBaseAnimating );
 		ParallelProcess( "BoneSetupNpcsLast NonNPCs", arrBoneSetupNpcsLast.Base(), numNonNpcsAnimating, &SetupBonesOnBaseAnimating );
@@ -5313,14 +5286,10 @@ void CBaseWorldView::DrawSetup( float waterHeight, int nSetupFlags, float waterZ
 		render->PopView( GetFrustum() );
 	}
 
-#ifdef TF_CLIENT_DLL
-	bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
-
-	if ( savedViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() )
+	if ( savedViewID == VIEW_MAIN && of_dof.GetBool() )
 	{
 		SSAO_DepthPass();
 	}
-#endif
 
 	g_CurrentViewID = savedViewID;
 }
@@ -5399,14 +5368,12 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 		DrawWorld( waterZAdjust );
 		DrawOpaqueRenderables( DepthMode );
 
-#ifdef TF_CLIENT_DLL
-		bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
 
-		if ( g_CurrentViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() ) // Pyro-vision Goggles
+		if ( g_CurrentViewID == VIEW_MAIN && of_dof.GetBool() )
 		{
 			DrawDepthOfField();
 		}
-#endif
+
 		DrawTranslucentRenderables( false, false );
 		DrawNoZBufferTranslucentRenderables();
 	}
@@ -5414,14 +5381,11 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 	{
 		DrawWorld( waterZAdjust );
 
-#ifdef TF_CLIENT_DLL
-		bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
-
-		if ( g_CurrentViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() ) // Pyro-vision Goggles
+		if ( g_CurrentViewID == VIEW_MAIN && of_dof.GetBool() )
 		{
 			DrawDepthOfField();
 		}
-#endif
+
 		// Draw translucent world brushes only, no entities
 		DrawTranslucentWorldInLeaves( false );
 	}
@@ -5501,13 +5465,10 @@ void CBaseWorldView::SSAO_DepthPass()
 		DrawOpaqueRenderables( DEPTH_MODE_SSA0 );
 	}
 
-#if 0
-	if ( m_bRenderFlashlightDepthTranslucents || r_flashlightdepth_drawtranslucents.GetBool() )
 	{
 		VPROF_BUDGET( "DrawTranslucentRenderables", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING );
 		DrawTranslucentRenderables( false, true );
 	}
-#endif
 
 	modelrender->ForcedMaterialOverride( 0 );
 
@@ -5986,7 +5947,7 @@ void CUnderWaterView::Setup( const CViewSetup &view, bool bDrawSkybox, const Vis
 	CalcWaterEyeAdjustments( fogInfo, m_waterHeight, m_waterZAdjust, m_bSoftwareUserClipPlane );
 
 	IMaterial *pWaterMaterial = fogInfo.m_pFogVolumeMaterial;
-	if (engine->GetDXSupportLevel() >= 90 )					// screen voerlays underwater are a dx9 feature
+	if ( engine->GetDXSupportLevel() >= 90 )					// screen overlays underwater are a dx9 feature
 	{
 		IMaterialVar *pScreenOverlayVar = pWaterMaterial->FindVar( "$underwateroverlay", NULL, false );
 		if ( pScreenOverlayVar && ( pScreenOverlayVar->IsDefined() ) )

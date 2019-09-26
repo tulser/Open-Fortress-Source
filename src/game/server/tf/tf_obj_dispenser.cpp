@@ -20,8 +20,13 @@
 
 // Ground placed version
 #define DISPENSER_MODEL_PLACEMENT	"models/buildables/dispenser_blueprint.mdl"
-#define DISPENSER_MODEL_BUILDING	"models/buildables/dispenser.mdl"
-#define DISPENSER_MODEL				"models/buildables/dispenser_light.mdl"
+
+#define DISPENSER_MODEL_LEVEL_1			"models/buildables/dispenser_light.mdl"
+#define DISPENSER_MODEL_LEVEL_1_UPGRADE	"models/buildables/dispenser.mdl"
+#define DISPENSER_MODEL_LEVEL_2			"models/buildables/dispenser_lvl2_light.mdl"
+#define DISPENSER_MODEL_LEVEL_2_UPGRADE	"models/buildables/dispenser_lvl2.mdl"
+#define DISPENSER_MODEL_LEVEL_3			"models/buildables/dispenser_lvl3_light.mdl"
+#define DISPENSER_MODEL_LEVEL_3_UPGRADE	"models/buildables/dispenser_lvl3.mdl"
 
 #define DISPENSER_MINS			Vector( -20, -20, 0)
 #define DISPENSER_MAXS			Vector( 20, 20, 55)	// tweak me
@@ -31,6 +36,10 @@
 
 #define REFILL_CONTEXT			"RefillContext"
 #define DISPENSE_CONTEXT		"DispenseContext"
+
+extern ConVar tf_sentrygun_upgrade_per_hit;
+extern ConVar tf_cheapobjects;
+extern ConVar of_infiniteammo;
 
 //-----------------------------------------------------------------------------
 // Purpose: SendProxy that converts the Healing list UtlVector to entindices
@@ -56,6 +65,7 @@ int SendProxyArrayLength_HealingArray( const void *pStruct, int objectID )
 
 IMPLEMENT_SERVERCLASS_ST( CObjectDispenser, DT_ObjectDispenser )
 	SendPropInt( SENDINFO( m_iAmmoMetal ), 10 ),
+	SendPropInt( SENDINFO(m_iState), Q_log2( DISPENSER_NUM_STATES ) + 1, SPROP_UNSIGNED ),
 
 	SendPropArray2( 
 		SendProxyArrayLength_HealingArray,
@@ -82,11 +92,7 @@ PRECACHE_REGISTER(obj_dispenser);
 #define DISPENSER_REFILL_METAL_AMMO			40
 
 // How much ammo is given our per use
-#define DISPENSER_DROP_PRIMARY		40
-#define DISPENSER_DROP_SECONDARY	40
-#define DISPENSER_DROP_METAL		40
-
-ConVar obj_dispenser_heal_rate( "obj_dispenser_heal_rate", "10.0", FCVAR_CHEAT );
+#define DISPENSER_DROP		40
 
 class CDispenserTouchTrigger : public CBaseTrigger
 {
@@ -134,7 +140,6 @@ CObjectDispenser::CObjectDispenser()
 {
 	SetMaxHealth( DISPENSER_MAX_HEALTH );
 	m_iHealth = DISPENSER_MAX_HEALTH;
-	UseClientSideAnimation();
 
 	m_hTouchingEntities.Purge();
 
@@ -167,12 +172,23 @@ void CObjectDispenser::Spawn()
 	SetModel( DISPENSER_MODEL_PLACEMENT );
 	SetSolid( SOLID_BBOX );
 
-	UTIL_SetSize(this, DISPENSER_MINS, DISPENSER_MAXS);
-	m_takedamage = DAMAGE_YES;
+	UTIL_SetSize( this, DISPENSER_MINS, DISPENSER_MAXS );
+	m_takedamage = DAMAGE_NO;
 
 	m_iAmmoMetal = 0;
 
+	m_iState.Set( DISPENSER_STATE_DEFAULT );
+
 	BaseClass::Spawn();
+}
+
+void CObjectDispenser::StartHauling( void )
+{
+	BaseClass::StartHauling();
+
+	SetModel( DISPENSER_MODEL_PLACEMENT );
+
+	SetControlPanelsActive( false );
 }
 
 //-----------------------------------------------------------------------------
@@ -180,17 +196,32 @@ void CObjectDispenser::Spawn()
 //-----------------------------------------------------------------------------
 bool CObjectDispenser::StartBuilding( CBaseEntity *pBuilder )
 {
-	SetModel( DISPENSER_MODEL_BUILDING );
+	SetControlPanelsActive( false );
+
+	SetModel( DISPENSER_MODEL_LEVEL_1_UPGRADE );
+
+	ResetSequenceInfo();
+
+	// hack!
+	SetActivity( ACT_OBJ_ASSEMBLING );
 
 	CreateBuildPoints();
 
 	return BaseClass::StartBuilding( pBuilder );
 }
 
-void CObjectDispenser::SetModel( const char *pModel )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectDispenser::FinishedBuilding( void )
 {
-	BaseClass::SetModel( pModel );
-	UTIL_SetSize(this, DISPENSER_MINS, DISPENSER_MAXS);
+	BaseClass::FinishedBuilding();
+
+	// hack!
+	if ( !m_bUpgrading )
+	{
+		SetModel( DISPENSER_MODEL_LEVEL_1 );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -198,10 +229,12 @@ void CObjectDispenser::SetModel( const char *pModel )
 //-----------------------------------------------------------------------------
 void CObjectDispenser::OnGoActive( void )
 {
-	SetModel( DISPENSER_MODEL );
+	SetModel( DISPENSER_MODEL_LEVEL_1 );
 
-	// Put some ammo in the Dispenser
-	m_iAmmoMetal = 25;
+	SetControlPanelsActive( true );
+
+	if ( !m_bHauling )
+		m_iAmmoMetal = 40; 	// Put some ammo in the Dispenser
 
 	// Begin thinking
 	SetContextThink( &CObjectDispenser::RefillThink, gpGlobals->curtime + 3, REFILL_CONTEXT );
@@ -214,6 +247,18 @@ void CObjectDispenser::OnGoActive( void )
 	BaseClass::OnGoActive();
 
 	EmitSound( "Building_Dispenser.Idle" );
+
+	// this is for the defaultupgrade keyvalue useable in hammer
+	// if the keyvalue has a number more than 0 it will change the building to this level
+    // you can use levels higher than 3 with this to cause havoc
+	if ( m_iDefaultUpgrade > 0 )
+	{
+		for ( int i = 0; i < m_iDefaultUpgrade; i++ )
+		{
+			StartUpgrading();
+			FinishUpgrading();
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -255,10 +300,22 @@ void CObjectDispenser::Precache()
 
 	PrecacheModel( DISPENSER_MODEL_PLACEMENT );
 
-	iModelIndex = PrecacheModel( DISPENSER_MODEL_BUILDING );
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_1_UPGRADE );
 	PrecacheGibsForModel( iModelIndex );
 
-	iModelIndex = PrecacheModel( DISPENSER_MODEL );
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_1 );
+	PrecacheGibsForModel( iModelIndex );
+
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_2_UPGRADE );
+	PrecacheGibsForModel( iModelIndex );
+
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_2 );
+	PrecacheGibsForModel( iModelIndex );
+
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_3_UPGRADE );
+	PrecacheGibsForModel( iModelIndex );
+
+	iModelIndex = PrecacheModel( DISPENSER_MODEL_LEVEL_3 );
 	PrecacheGibsForModel( iModelIndex );
 
 	PrecacheVGuiScreen( "screen_obj_dispenser_blue" );
@@ -273,6 +330,204 @@ void CObjectDispenser::Precache()
 	PrecacheParticleSystem( "dispenser_heal_blue" );
 	PrecacheParticleSystem( "dispenser_heal_mercenary" );
 }
+
+//-----------------------------------------------------------------------------
+//
+//-----------------------------------------------------------------------------
+bool CObjectDispenser::CanBeUpgraded( CTFPlayer *pPlayer )
+{
+	// Already upgrading
+	if ( m_iState == DISPENSER_STATE_UPGRADING )
+	{
+		return false;
+	}
+
+	// can't upgrade while in a hauling state
+	if ( m_bHauling )
+		return false;
+
+	// only people who have a pda can upgrade (always engineers)
+	CTFWeaponBase *pWeapon = NULL;
+
+	if ( pPlayer )
+		pWeapon = pPlayer->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
+
+	if ( pPlayer && !pWeapon )
+	{
+		return false;	
+	}
+
+	// max upgraded
+	if ( m_iUpgradeLevel >= 3 )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------
+// Raises the Dispenser one level
+//-----------------------------------------------------------------------------
+void CObjectDispenser::StartUpgrading( void )
+{
+	// safety measure to stop the game from crashing if the upgrade level somehow attempts to go over 3
+	if ( m_iUpgradeLevel >= 3 && !( m_iDefaultUpgrade > 3 ) )
+		return;
+
+	m_bUpgrading = true;
+	// Increase level
+	m_iUpgradeLevel++;
+
+	SetControlPanelsActive( true );
+
+	// more health
+	if ( !m_bHauling )
+	{
+		int iMaxHealth = GetMaxHealth();
+		SetMaxHealth( iMaxHealth * 1.2 );
+		SetHealth( iMaxHealth * 1.2 );
+	}
+
+	EmitSound( "Building_Sentrygun.Built" );
+		
+	switch( m_iUpgradeLevel )
+	{
+	case 2:
+		SetModel( DISPENSER_MODEL_LEVEL_2_UPGRADE );
+		break;
+	case 3:
+		SetModel( DISPENSER_MODEL_LEVEL_3_UPGRADE );
+		break;
+	default:
+		Assert(0);
+		break;
+	}
+
+	m_iState.Set( DISPENSER_STATE_UPGRADING );
+
+	SetActivity( ACT_OBJ_UPGRADING );
+
+	m_flUpgradeCompleteTime = gpGlobals->curtime + m_flUpgradeDuration;
+
+	RemoveAllGestures();
+}
+
+void CObjectDispenser::FinishUpgrading( void )
+{
+	if ( m_iUpgradeLevel < m_iOldUpgradeLevel )
+	{
+		StartUpgrading();
+		return;
+	}
+
+	m_bUpgrading = false;
+	m_bHauling = false;
+
+	m_iState.Set( DISPENSER_STATE_DEFAULT );
+
+	switch( m_iUpgradeLevel )
+	{
+	case 2:
+		SetModel( DISPENSER_MODEL_LEVEL_2 );
+		break;
+	case 3:
+		SetModel( DISPENSER_MODEL_LEVEL_3 );
+		break;
+	default:
+		Assert(0);
+		break;
+	}
+
+	EmitSound( "Building_Sentrygun.Built" );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectDispenser::SetModel( const char *pModel )
+{
+	BaseClass::SetModel( pModel );
+
+	UTIL_SetSize( this, DISPENSER_MINS, DISPENSER_MAXS );
+
+	CreateBuildPoints();
+
+	ReattachChildren();
+
+	ResetSequenceInfo();
+}
+
+//-----------------------------------------------------------------------------
+// Hit by a friendly engineer's wrench
+//-----------------------------------------------------------------------------
+bool CObjectDispenser::OnWrenchHit( CTFPlayer *pPlayer )
+{
+	bool bDidWork = false;
+
+	// If the player repairs it at all, we're done
+	if ( GetHealth() < GetMaxHealth() )
+	{
+		if ( Command_Repair( pPlayer ) )
+		{
+			bDidWork = true;
+		}
+	}
+
+	// Don't put in upgrade metal until the dispenser is fully healed
+	if ( !bDidWork && CanBeUpgraded( pPlayer ) )
+	{
+		int iPlayerMetal = pPlayer->GetAmmoCount( TF_AMMO_METAL );
+		int iAmountToAdd = min( tf_sentrygun_upgrade_per_hit.GetInt(), iPlayerMetal );
+
+		if ( iAmountToAdd > ( m_iUpgradeMetalRequired - m_iUpgradeMetal ) )
+			iAmountToAdd = ( m_iUpgradeMetalRequired - m_iUpgradeMetal );
+
+		if ( tf_cheapobjects.GetBool() == false )
+		{
+			if ( of_infiniteammo.GetBool() != 1 )
+				pPlayer->RemoveAmmo( iAmountToAdd, TF_AMMO_METAL );
+		
+		}
+		m_iUpgradeMetal += iAmountToAdd;
+
+		if ( iAmountToAdd > 0 )
+		{
+			bDidWork = true;
+		}
+
+		if ( m_iUpgradeMetal >= m_iUpgradeMetalRequired )
+		{
+			StartUpgrading();
+			m_iUpgradeMetal = 0;
+		}
+	}
+
+	return bDidWork;
+}
+
+
+//-----------------------------------------------------------------------------
+// Playing the upgrade animation
+//-----------------------------------------------------------------------------
+void CObjectDispenser::UpgradeThink( void )
+{
+	if ( gpGlobals->curtime > m_flUpgradeCompleteTime )
+	{
+		FinishUpgrading();
+	}
+}
+
+//-----------------------------------------------------------------------------
+// 
+//-----------------------------------------------------------------------------
+bool CObjectDispenser::IsUpgrading( void ) const
+{
+	return ( m_iState == DISPENSER_STATE_UPGRADING );
+}
+
 
 //-----------------------------------------------------------------------------
 // If detonated, do some damage
@@ -331,12 +586,19 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 {
 	int iTotalPickedUp = 0;
 
+	int iAmount = DISPENSER_DROP;
+
+	if ( m_iUpgradeLevel == 2 )
+		iAmount = iAmount + 10;
+	else if ( m_iUpgradeLevel >= 3 )
+		iAmount = iAmount + 20;
+
 	// primary
-	int Primary = pPlayer->RestockAmmo( DISPENSER_DROP_PRIMARY );
+	int Primary = pPlayer->RestockAmmo( iAmount );
 	iTotalPickedUp += Primary;
 
 	// metal
-	int iMetal = pPlayer->GiveAmmo( min( m_iAmmoMetal, DISPENSER_DROP_METAL ), TF_AMMO_METAL );
+	int iMetal = pPlayer->GiveAmmo( min( m_iAmmoMetal, iAmount ), TF_AMMO_METAL );
 	m_iAmmoMetal -= iMetal;
 	iTotalPickedUp += iMetal;
 
@@ -359,10 +621,17 @@ void CObjectDispenser::RefillThink( void )
 		return;
 	}
 
+	float iAmount = 40;
+
+	if ( m_iUpgradeLevel == 2 )
+		iAmount = iAmount + 10;
+	else if ( m_iUpgradeLevel >= 3 )
+		iAmount = iAmount + 20;
+
 	// Auto-refill half the amount as tfc, but twice as often
-	if ( m_iAmmoMetal < DISPENSER_MAX_METAL_AMMO )
+	if ( m_iAmmoMetal < (float)DISPENSER_MAX_METAL_AMMO )
 	{
-		m_iAmmoMetal = min( m_iAmmoMetal + DISPENSER_MAX_METAL_AMMO * 0.1, DISPENSER_MAX_METAL_AMMO );
+		m_iAmmoMetal = min( m_iAmmoMetal + iAmount, (float)DISPENSER_MAX_METAL_AMMO );
 		EmitSound( "Building_Dispenser.GenerateMetal" );
 	}
 }
@@ -372,6 +641,20 @@ void CObjectDispenser::RefillThink( void )
 //-----------------------------------------------------------------------------
 void CObjectDispenser::DispenseThink( void )
 {
+	switch( m_iState )
+	{
+	case DISPENSER_STATE_DEFAULT:
+		break;
+
+	case DISPENSER_STATE_UPGRADING:
+		UpgradeThink();
+		break;
+
+	default:
+		Assert( 0 );
+		break;
+	}
+
 	if ( IsDisabled() )
 	{
 		// Don't heal or dispense ammo
@@ -487,7 +770,13 @@ void CObjectDispenser::StartHealing( CBaseEntity *pOther )
 
 	if ( pPlayer )
 	{
-		pPlayer->m_Shared.Heal( GetOwner(), obj_dispenser_heal_rate.GetFloat(), true );
+		int iHealAmount = 10;
+		if ( m_iUpgradeLevel == 2 )
+			iHealAmount = iHealAmount + 10;
+		else if ( m_iUpgradeLevel >= 3 )
+			iHealAmount = iHealAmount + 20;
+
+		pPlayer->m_Shared.Heal( GetOwner(), iHealAmount, true );
 	}
 }
 
@@ -583,9 +872,14 @@ int CObjectDispenser::DrawDebugTextOverlays(void)
 	if (m_debugOverlays & OVERLAY_TEXT_BIT) 
 	{
 		char tempstr[512];
-		Q_snprintf( tempstr, sizeof( tempstr ),"Metal: %d", m_iAmmoMetal.Get() );
+		Q_snprintf( tempstr, sizeof( tempstr ), "Metal: %d", m_iAmmoMetal.Get() );
+		EntityText(text_offset,tempstr,0);
+		text_offset++;
+
+		Q_snprintf( tempstr, sizeof( tempstr ), "Upgrade metal %d", m_iUpgradeMetal.Get() );
 		EntityText(text_offset,tempstr,0);
 		text_offset++;
 	}
+
 	return text_offset;
 }

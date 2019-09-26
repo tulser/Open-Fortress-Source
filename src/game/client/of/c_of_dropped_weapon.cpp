@@ -54,8 +54,6 @@ private:
 
 };
 
-static ConVar tf_debug_weapontrail( "tf_debug_weapontrail", "0", FCVAR_CHEAT );
-
 // Network table.
 IMPLEMENT_CLIENTCLASS_DT( C_TFDroppedWeapon, DT_DroppedWeapon, CTFDroppedWeapon )
 	RecvPropVector( RECVINFO( m_vecInitialVelocity ) ),
@@ -141,13 +139,6 @@ void C_TFDroppedWeapon::DestroyGlowEffect(void)
 //-----------------------------------------------------------------------------
 int C_TFDroppedWeapon::DrawModel( int flags )
 {
-	// Debug!
-	if ( tf_debug_weapontrail.GetBool() )
-	{
-		Msg( "Ammo Pack:: Position: (%f %f %f), Velocity (%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z, GetAbsVelocity().x, GetAbsVelocity().y, GetAbsVelocity().z );
-		debugoverlay->AddBoxOverlay( GetAbsOrigin(), Vector( -2, -2, -2 ), Vector( 2, 2, 2 ), QAngle( 0, 0, 0 ), 255, 255, 0, 32, 5.0 );
-	}
-
 	return BaseClass::DrawModel( flags );
 }
 
@@ -159,19 +150,8 @@ void C_TFDroppedWeapon::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
 
-	// Debug!
-	if ( tf_debug_weapontrail.GetBool() )
-	{
-		Msg( "AbsOrigin (%f %f %f), LocalOrigin(%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z, GetLocalOrigin().x, GetLocalOrigin().y, GetLocalOrigin().z );
-	}
-
 	if ( updateType == DATA_UPDATE_CREATED )
 	{ 
-		// Debug!
-		if ( tf_debug_weapontrail.GetBool() )
-		{
-			Msg( "Origin (%f %f %f)\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
-		}
 
 		float flChangeTime = GetLastChangeTime( LATCH_SIMULATION_VAR );
 		Vector vecCurOrigin = GetLocalOrigin();

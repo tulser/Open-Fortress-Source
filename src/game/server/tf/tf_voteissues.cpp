@@ -1,6 +1,24 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+// Purpose: Base VoteController.  Handles holding and voting on issues.
+//
+// $NoKeywords: $
+//=============================================================================//
+
 #include "cbase.h"
+#include "shareddefs.h"
+#include "eiface.h"
+#include "team.h"
+#include "gameinterface.h"
+#include "fmtstr.h"
+
 #include "tf_shareddefs.h"
 #include "tf_voteissues.h"
+#include "tf_player.h"
+#include "tf_gamerules.h"
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 extern ConVar sv_vote_timer_duration;
 
@@ -49,18 +67,32 @@ bool CKickIssue::IsEnabled()
 
 const char * CKickIssue::GetDetailsString()
 {
-	if (m_iPlayerID > 0 && UTIL_PlayerByIndex(m_iPlayerID - 1))
+	int name = atoi( m_szDetailsString );
+
+	if ( name > 0 )
 	{
-		return m_pzPlayerName;
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( name );
+
+		if ( pPlayer )
+		{
+			return pPlayer->GetPlayerName();
+		}
+
+		return "Invalid Player";
 	}
-	else
-	{
-		return "Unnamed";
-	}
+
+	return "Unnamed";
 }
 
 void CKickIssue::OnVoteStarted()
 {
+	int id = atoi( m_szDetailsString );
+
+	if ( id > 0 )
+		m_iPlayerID = id;
+	else
+		return;
+
 	const char *pDetails = CBaseIssue::GetDetailsString();
 	const char * pch;
 	pch = strrchr(pDetails, ' ');
@@ -74,8 +106,8 @@ void CKickIssue::OnVoteStarted()
 	char m_PlayerID[64];
 	Q_snprintf(m_PlayerID, i, pDetails);
 
-	m_iPlayerID = atoi(m_PlayerID);
-	CBasePlayer *pVoteCaller = UTIL_PlayerByIndex(m_iPlayerID - 1);
+	//m_iPlayerID = atoi(m_PlayerID);
+	CBasePlayer *pVoteCaller = UTIL_PlayerByIndex(m_iPlayerID);
 	if (!pVoteCaller)
 		return;
 
@@ -120,6 +152,12 @@ int CKickIssue::CanCallVote(int a1, char *s, int a2, int a3)
 
 void CKickIssue::ExecuteCommand()
 {
+	if ( m_iPlayerID > 0 )
+	//engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", m_hPlayerTarget->GetUserID() ) );
+		engine->ServerCommand( CFmtStr( "kickid %d %s;", m_iPlayerID, "Kicked by server." ) );
+	else
+		DevMsg("CKickIssue has no player target for executecommand \n");
+	
 }
 
 bool CKickIssue::IsTeamRestrictedVote()

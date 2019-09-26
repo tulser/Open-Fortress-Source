@@ -79,8 +79,7 @@ struct DeathNoticeItem
 const char *szLocalizedObjectNames[OBJ_LAST] =
 {
 	"#TF_Object_Dispenser",
-	"#TF_Object_Tele_Entrance",
-	"#TF_Object_Tele_Exit",
+	"#TF_Object_Tele",
 	"#TF_Object_Sentry",
 	"#TF_object_sapper"
 };
@@ -725,6 +724,7 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 		{
 			// if this is an object destroyed message, set the victim name to "<object type> (<owner>)"
 			int iObjectType = event->GetInt( "objecttype" );
+			int bWasBuilding = event->GetBool( "was_building" );
 			if ( iObjectType >= 0 && iObjectType < OBJ_LAST )
 			{
 				// get the localized name for the object
@@ -752,7 +752,12 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				{
 					Q_strncpy( msg.Victim.szName, szLocalizedObjectName, ARRAYSIZE( msg.Victim.szName ) );
 				}
-				
+
+				if ( bWasBuilding )
+				{
+					Q_strncpy( msg.szIcon, "d_building_carried_destroyed", ARRAYSIZE( msg.szIcon ) );
+					msg.wzInfoText[0] = 0;
+				}
 			}
 			else
 			{
@@ -786,17 +791,14 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				break;
 			}
 		case TF_DMG_TAUNT_HADUKEN:
-			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
 			Q_strncpy( msg.szIcon, "d_taunt_pyro", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
 		case TF_DMG_TAUNT_POW:
-			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
 			Q_strncpy( msg.szIcon, "d_taunt_heavy", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
 		case TF_DMG_TAUNT_FENCING:
-			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
 			Q_strncpy( msg.szIcon, "d_taunt_spy", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
@@ -967,11 +969,11 @@ Color CTFHudDeathNotice::GetTeamColor( int iTeamNumber )
 		return m_clrMercenaryText;
 		break;
 	case TEAM_UNASSIGNED:
-		return Color( 255, 255, 255, 255 );
+		return Color( 0, 0, 0, 255 );
 		break;
 	default:
 		AssertOnce( false );	// invalid team
-		return Color( 255, 255, 255, 255 );
+		return Color( 0, 0, 0, 255 );
 		break;
 	}
 }

@@ -44,8 +44,8 @@ private:
 	CHandle<C_BaseCombatWeapon>		m_hCurrentActiveWeapon;
 	int								m_nKills;
 
-	CTFLabel						*m_pKills;
-	CTFLabel						*m_pKillsShadow;
+	CExLabel						*m_pKills;
+	CExLabel						*m_pKillsShadow;
 };
 
 #endif	// TF_HUD_KILLS_H

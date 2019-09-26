@@ -34,12 +34,14 @@ void RecvProxy_ObjectType( const CRecvProxyData *pData, void *pStruct, void *pOu
 
 BEGIN_NETWORK_TABLE_NOBASE( C_TFWeaponBuilder, DT_BuilderLocalData )
 	RecvPropInt( RECVINFO(m_iObjectType), 0, RecvProxy_ObjectType ),
+	RecvPropInt( RECVINFO(m_iAltMode), 0, RecvProxy_ObjectType ),
 	RecvPropEHandle( RECVINFO(m_hObjectBeingBuilt) ),
 END_NETWORK_TABLE()
 
 
 IMPLEMENT_CLIENTCLASS_DT(C_TFWeaponBuilder, DT_TFWeaponBuilder, CTFWeaponBuilder)
 	RecvPropInt( RECVINFO(m_iBuildState) ),
+	RecvPropTime( RECVINFO( m_flSecondaryTimeout ) ),
 	RecvPropDataTable( "BuilderLocalData", 0, 0, &REFERENCE_RECV_TABLE( DT_BuilderLocalData ) ),
 END_RECV_TABLE()
 
@@ -50,6 +52,7 @@ C_TFWeaponBuilder::C_TFWeaponBuilder()
 {
 	m_iBuildState = 0;
 	m_iObjectType = BUILDER_INVALID_OBJECT;
+	m_iAltMode = 0;
 	m_pSelectionTextureActive = NULL;
 	m_pSelectionTextureInactive = NULL;
 	m_iValidBuildPoseParam = -1;
@@ -104,6 +107,9 @@ bool C_TFWeaponBuilder::Deploy( void )
 //-----------------------------------------------------------------------------
 void C_TFWeaponBuilder::SecondaryAttack( void )
 {
+	if ( gpGlobals->curtime < m_flSecondaryTimeout )
+		return;
+
 	if ( m_bInAttack2 )
 		return;
 
@@ -114,7 +120,8 @@ void C_TFWeaponBuilder::SecondaryAttack( void )
 	if ( !pOwner )
 		return;
 
-	pOwner->DoClassSpecialSkill();
+	if ( !pOwner->m_bHauling )
+		pOwner->DoClassSpecialSkill();
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.2f;
 }
@@ -203,6 +210,12 @@ int C_TFWeaponBuilder::GetPosition( void ) const
 void C_TFWeaponBuilder::SetupObjectSelectionSprite( void )
 {
 #ifdef CLIENT_DLL
+	// it appears this isnt used for anything and it just causes random crashes, so disabled!
+	m_pSelectionTextureActive = NULL;
+	m_pSelectionTextureInactive = NULL;
+
+	return;
+
 	// Use the sprite details from the text file, with a custom sprite
 	char *iconTexture = GetObjectInfo( m_iObjectType )->m_pIconActive;
 	if ( iconTexture && iconTexture[ 0 ] )
@@ -268,7 +281,7 @@ bool C_TFWeaponBuilder::CanBeSelected( void )
 	if ( !pOwner )
 		return false;
 
-	if ( pOwner->CanBuild( m_iObjectType ) != CB_CAN_BUILD )
+	if ( pOwner->CanBuild( m_iObjectType, m_iAltMode ) != CB_CAN_BUILD )
 		return false;
 
 	return HasAmmo();
@@ -342,5 +355,54 @@ Activity C_TFWeaponBuilder::GetDrawActivity( void )
 	else
 	{
 		return BaseClass::GetDrawActivity();
+	}
+}
+
+
+acttable_t C_TFWeaponBuilder::m_acttableBuildingDeployed[] =
+{
+	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_RUN,				ACT_MP_RUN_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_WALK,				ACT_MP_WALK_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_CROUCHWALK,		ACT_MP_CROUCHWALK_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP,				ACT_MP_JUMP_BUILDING_DEPLOYED,			false },
+	{ ACT_MP_JUMP_START,		ACT_MP_JUMP_START_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP_FLOAT,		ACT_MP_JUMP_FLOAT_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_JUMP_LAND,			ACT_MP_JUMP_LAND_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_SWIM,				ACT_MP_SWIM_BUILDING_DEPLOYED,			false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MP_ATTACK_STAND_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MP_ATTACK_CROUCH_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MP_ATTACK_SWIM_BUILDING_DEPLOYED,		false },
+	{ ACT_MP_ATTACK_AIRWALK_PRIMARYFIRE,	ACT_MP_ATTACK_AIRWALK_BUILDING_DEPLOYED,	false },
+
+	{ ACT_MP_ATTACK_STAND_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_CROUCH_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_SWIM_GRENADE,		ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+	{ ACT_MP_ATTACK_AIRWALK_GRENADE,	ACT_MP_ATTACK_STAND_GRENADE_BUILDING_DEPLOYED,	false },
+
+	{ ACT_MP_GESTURE_VC_HANDMOUTH,	ACT_MP_GESTURE_VC_HANDMOUTH_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_FINGERPOINT,	ACT_MP_GESTURE_VC_FINGERPOINT_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_FISTPUMP,	ACT_MP_GESTURE_VC_FISTPUMP_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_THUMBSUP,	ACT_MP_GESTURE_VC_THUMBSUP_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_NODYES,	ACT_MP_GESTURE_VC_NODYES_BUILDING,	false },
+	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_BUILDING,	false },
+};
+
+//Act table remapping
+acttable_t *C_TFWeaponBuilder::ActivityList( int &iActivityCount )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+
+	if ( pPlayer && pPlayer->m_bHauling )
+	{
+		iActivityCount = ARRAYSIZE( m_acttableBuildingDeployed );
+		return m_acttableBuildingDeployed;
+	}
+	else
+	{
+		return BaseClass::ActivityList( iActivityCount );
 	}
 }

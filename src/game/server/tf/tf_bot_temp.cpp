@@ -826,10 +826,11 @@ void cc_bot_sendcommand( const CCommand &args )
 
 				if ( args.FindArg( "mercenary" ) && pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY )
 					continue;
-			}
 
-			// send the command
-			TFGameRules()->ClientCommand( pPlayer, command );
+				// send the command
+				TFGameRules()->ClientCommand( pPlayer, command );
+
+			}
 		}
 	}
 	else
@@ -912,11 +913,11 @@ CON_COMMAND_F( bot_changeteams, "Make all bots change teams", FCVAR_CHEAT )
 			if ( TF_TEAM_BLUE == iTeam || TF_TEAM_RED == iTeam )
 			{
 				// toggle team between red & blue
-				pPlayer->ChangeTeam( TF_TEAM_BLUE + TF_TEAM_RED - iTeam );
+				pPlayer->ChangeTeam( TF_TEAM_BLUE + TF_TEAM_RED - iTeam, false );
 			}	
 			else if ( iTeam == TEAM_SPECTATOR || iTeam == TEAM_UNASSIGNED )
 			{
-				pPlayer->ChangeTeam( RandomInt( TF_TEAM_RED, TF_TEAM_BLUE ) );
+				pPlayer->ChangeTeam( RandomInt( TF_TEAM_RED, TF_TEAM_BLUE ), false );
 			}
 		}
 	}
@@ -948,7 +949,8 @@ CON_COMMAND_F( bot_whack, "Deliver lethal damage from player to specified bot", 
 	
 	CBasePlayer *pPlayer = NULL;
 
-	CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( 1 ) );
+	CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_GetCommandClient() );
+
 
 	// get all bots if these parameters are specified or team specific ones
 	if ( args.FindArg( "all" ) || args.FindArg( "red" ) || args.FindArg( "blue" ) || args.FindArg( "mercenary" ) )

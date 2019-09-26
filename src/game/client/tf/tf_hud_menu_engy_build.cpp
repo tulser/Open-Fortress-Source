@@ -102,11 +102,11 @@ void CHudMenuEngyBuild::ApplySchemeSettings( IScheme *pScheme )
 
 		m_pActiveSelection = dynamic_cast< CIconPanel * >( FindChildByName( "active_selection_bg" ) );
 
-		m_pBuildLabelBright = dynamic_cast< CTFLabel * >( FindChildByName( "BuildHintLabel_Bright" ) );
-		m_pBuildLabelDim = dynamic_cast< CTFLabel * >( FindChildByName( "BuildHintLabel_Dim" ) );
+		m_pBuildLabelBright = dynamic_cast< CExLabel * >( FindChildByName( "BuildHintLabel_Bright" ) );
+		m_pBuildLabelDim = dynamic_cast< CExLabel * >( FindChildByName( "BuildHintLabel_Dim" ) );
 	
-		m_pDestroyLabelBright = dynamic_cast< CTFLabel * >( FindChildByName( "DestroyHintLabel_Bright" ) );
-		m_pDestroyLabelDim = dynamic_cast< CTFLabel * >( FindChildByName( "DestroyHintLabel_Dim" ) );
+		m_pDestroyLabelBright = dynamic_cast< CExLabel * >( FindChildByName( "DestroyHintLabel_Bright" ) );
+		m_pDestroyLabelDim = dynamic_cast< CExLabel * >( FindChildByName( "DestroyHintLabel_Dim" ) );
 
 		// Reposition the activeselection to the default position
 		m_iSelectedItem = -1;	// force reposition
@@ -193,10 +193,10 @@ int CHudMenuEngyBuild::GetBuildingIDFromSlot( int iSlot )
 		iBuilding = OBJ_DISPENSER;
 		break;
 	case 3:
-		iBuilding = OBJ_TELEPORTER_ENTRANCE;
+		iBuilding = OBJ_TELEPORTER;
 		break;
 	case 4:
-		iBuilding = OBJ_TELEPORTER_EXIT;
+		iBuilding = OBJ_TELEPORTER;
 		break;
 
 	default:
@@ -205,6 +205,35 @@ int CHudMenuEngyBuild::GetBuildingIDFromSlot( int iSlot )
 	}
 
 	return iBuilding;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int CHudMenuEngyBuild::GetAltModeFromSlot( int iSlot )
+{
+	int iAltMode = 0;
+	switch( iSlot )
+	{
+	case 1:
+		iAltMode = 0;
+		break;
+	case 2:
+		iAltMode = 0;
+		break;
+	case 3:
+		iAltMode = 0;
+		break;
+	case 4:
+		iAltMode = 1;
+		break;
+
+	default:
+		Assert( !"What alt mode are we asking for and why?" );
+		break;
+	}
+
+	return iAltMode;
 }
 
 //-----------------------------------------------------------------------------
@@ -341,14 +370,16 @@ void CHudMenuEngyBuild::SendBuildMessage( int iSlot )
 		return;
 
 	int iBuilding = GetBuildingIDFromSlot( iSlot );
+	int iAltMode = GetAltModeFromSlot( iSlot );
 
-	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding );
+	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iAltMode );
+
 	int iCost = GetObjectInfo( iBuilding )->m_Cost;
 
 	if ( pObj == NULL && pLocalPlayer->GetAmmoCount( TF_AMMO_METAL ) >= iCost )
 	{
 		char szCmd[128];
-		Q_snprintf( szCmd, sizeof(szCmd), "build %d", iBuilding );
+		Q_snprintf( szCmd, sizeof(szCmd), "build %d %d", iBuilding, iAltMode );
 		engine->ClientCmd( szCmd );
 	}
 	else
@@ -367,13 +398,14 @@ bool CHudMenuEngyBuild::SendDestroyMessage( int iSlot )
 	bool bSuccess = false;
 
 	int iBuilding = GetBuildingIDFromSlot( iSlot );
+	int iAltMode = GetAltModeFromSlot( iSlot );
 
-	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding );
+	C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iAltMode );
 
 	if ( pObj != NULL )
 	{
 		char szCmd[128];
-		Q_snprintf( szCmd, sizeof(szCmd), "destroy %d", iBuilding );
+		Q_snprintf( szCmd, sizeof(szCmd), "destroy %d %d", iBuilding, iAltMode );
 		engine->ClientCmd( szCmd );
 		bSuccess = true; 
 	}
@@ -397,13 +429,14 @@ void CHudMenuEngyBuild::OnTick( void )
 	for ( int i=0;i<4; i++ )
 	{
 		int iRemappedObjectID = GetBuildingIDFromSlot( i + 1 );
+		int iRemappedAltModeID = GetAltModeFromSlot( i + 1 );
 
 		// update this slot
 		C_BaseObject *pObj = NULL;
 
 		if ( pLocalPlayer )
 		{
-			pObj = pLocalPlayer->GetObjectOfType( iRemappedObjectID );
+			pObj = pLocalPlayer->GetObjectOfType( iRemappedObjectID, iRemappedAltModeID );
 		}			
 
 		m_pAvailableObjects[i]->SetVisible( false );
@@ -466,7 +499,9 @@ void CHudMenuEngyBuild::SetVisible( bool state )
 		for ( iSlot = 1; iSlot <= 4; iSlot++ )
 		{
 			int iBuilding = GetBuildingIDFromSlot( iSlot );
-			C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding );
+			int iAltMode = GetAltModeFromSlot( iSlot );
+
+			C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iAltMode );
 
 			if ( pObj == NULL )
 			{
@@ -519,7 +554,9 @@ void CHudMenuEngyBuild::UpdateHintLabels( void )
 	if ( pLocalPlayer )
 	{
 		int iBuilding = GetBuildingIDFromSlot( m_iSelectedItem );
-		C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding );
+		int iAltMode = GetAltModeFromSlot( m_iSelectedItem );
+
+		C_BaseObject *pObj = pLocalPlayer->GetObjectOfType( iBuilding, iAltMode );
 
 		bool bDestroyLabelBright = false;
 		bool bBuildLabelBright = false;

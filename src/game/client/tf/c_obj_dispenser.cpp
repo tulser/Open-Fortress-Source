@@ -1,6 +1,6 @@
 //========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
 //
-// Purpose: Client's CObjectSentrygun
+// Purpose: Client's CObjectDispenser
 //
 // $NoKeywords: $
 //=============================================================================//
@@ -46,6 +46,7 @@ void RecvProxyArrayLength_HealingArray( void *pStruct, int objectID, int current
 
 IMPLEMENT_CLIENTCLASS_DT(C_ObjectDispenser, DT_ObjectDispenser, CObjectDispenser)
 	RecvPropInt( RECVINFO( m_iAmmoMetal ) ),
+	RecvPropInt( RECVINFO( m_iState ) ),
 
 	RecvPropArray2( 
 		RecvProxyArrayLength_HealingArray,
@@ -83,18 +84,146 @@ void C_ObjectDispenser::GetStatusText( wchar_t *pStatus, int iMaxStatusLen )
 	if ( IsBuilding() )
 	{
 		pszTemplate = g_pVGuiLocalize->Find( "#TF_ObjStatus_Dispenser_Building" );
+
+		if ( pszTemplate )
+		{
+			g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszTemplate,
+				1,
+				wszHealthPercent );
+		}
 	}
 	else
 	{
 		pszTemplate = g_pVGuiLocalize->Find( "#TF_ObjStatus_Dispenser" );
+
+		wchar_t wszLevel[16]; 
+
+		_snwprintf(wszLevel, sizeof(wszLevel)/sizeof(wchar_t) - 1, L"%d", m_iUpgradeLevel );
+
+		if ( pszTemplate )
+		{
+			g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszTemplate,
+				1,
+				wszLevel,
+				wszHealthPercent );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool C_ObjectDispenser::IsUpgrading( void ) const
+{
+	return ( m_iState == DISPENSER_STATE_UPGRADING );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectDispenser::GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes )
+{
+	return BaseClass::GetTargetIDString( sIDString, iMaxLenInBytes );
+
+	sIDString[0] = '\0';
+
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	if ( !pLocalPlayer )
+		return;
+
+	if ( GetTeamNumber() == pLocalPlayer->GetTeamNumber() )
+	{
+		wchar_t wszBuilderName[ MAX_PLAYER_NAME_LENGTH ];
+		wchar_t wszHealthText[ 10 ];
+		wchar_t wszObjectName[ 32 ];
+		wchar_t wszUpgradeProgress[ 32 ];
+
+		g_pVGuiLocalize->ConvertANSIToUnicode( GetStatusName(), wszObjectName, sizeof(wszObjectName) );
+
+		C_BasePlayer *pBuilder = GetOwner();
+
+		if ( pBuilder )
+		{
+			g_pVGuiLocalize->ConvertANSIToUnicode( pBuilder->GetPlayerName(), wszBuilderName, sizeof(wszBuilderName) );
+		}
+		else
+		{
+			wszBuilderName[0] = '\0';
+		}
+
+		// building or live, show health
+		_snwprintf( wszHealthText, ARRAYSIZE(wszHealthText) - 1, L"%.0f%%", ( (float)GetHealth() / (float)GetMaxHealth() ) * 100 );
+		wszHealthText[ ARRAYSIZE(wszHealthText)-1 ] = '\0';
+
+		if ( m_iUpgradeLevel < 3 )
+		{
+			// level 1 and 2 show upgrade progress
+			_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired );
+			wszUpgradeProgress[ ARRAYSIZE(wszUpgradeProgress)-1 ] = '\0';
+
+			const char *printFormatString = "#TF_playerid_object_upgrading";
+
+			g_pVGuiLocalize->ConstructString( sIDString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
+				4,
+				wszObjectName,
+				wszBuilderName,
+				wszHealthText,
+				wszUpgradeProgress );
+		}
+		else
+		{
+			const char *printFormatString = "#TF_playerid_object";
+
+			g_pVGuiLocalize->ConstructString( sIDString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
+				3,
+				wszObjectName,
+				wszBuilderName,
+				wszHealthText );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_ObjectDispenser::GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes )
+{
+	sDataString[0] = '\0';
+
+	if ( m_iUpgradeLevel >= 3 )
+		return;
+
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pLocalPlayer )
+		return;
+
+	wchar_t wszBuilderName[ MAX_PLAYER_NAME_LENGTH ];
+	wchar_t wszObjectName[ 32 ];
+	wchar_t wszUpgradeProgress[ 32 ];
+
+	g_pVGuiLocalize->ConvertANSIToUnicode( GetStatusName(), wszObjectName, sizeof(wszObjectName) );
+
+	C_BasePlayer *pBuilder = GetOwner();
+
+	if ( pBuilder )
+	{
+		g_pVGuiLocalize->ConvertANSIToUnicode( pBuilder->GetPlayerName(), wszBuilderName, sizeof(wszBuilderName) );
+	}
+	else
+	{
+		wszBuilderName[0] = '\0';
 	}
 
-	if ( pszTemplate )
-	{
-		g_pVGuiLocalize->ConstructString( pStatus, iMaxStatusLen, pszTemplate,
-			1,
-			wszHealthPercent );
-	}
+	// level 1 and 2 show upgrade progress
+	_snwprintf( wszUpgradeProgress, ARRAYSIZE(wszUpgradeProgress) - 1, L"%d / %d", m_iUpgradeMetal, m_iUpgradeMetalRequired );
+	wszUpgradeProgress[ ARRAYSIZE(wszUpgradeProgress)-1 ] = '\0';
+
+	const char *printFormatString = "#TF_playerid_object_upgrading";
+
+	g_pVGuiLocalize->ConstructString( sDataString, iMaxLenInBytes, g_pVGuiLocalize->Find(printFormatString),
+		1,
+		wszUpgradeProgress );
 }
 
 //-----------------------------------------------------------------------------

@@ -11,6 +11,7 @@
 #include "tf_obj.h"
 #include "tf_obj_sentrygun.h"
 #include "tf_obj_sapper.h"
+#include "tf_obj_teleporter.h"
 #include "ndebugoverlay.h"
 
 // ------------------------------------------------------------------------ //
@@ -133,6 +134,28 @@ void CObjectSapper::FinishedBuilding( void )
 	if ( GetParentObject() )
 	{
 		GetParentObject()->OnAddSapper();
+
+		// make one at other side too
+		CObjectTeleporter *pTeleporter = dynamic_cast<CObjectTeleporter *>( GetParentObject() );
+
+		if ( pTeleporter )
+		{
+			CObjectTeleporter *pDest = pTeleporter->GetMatchingTeleporter();
+
+			if ( pDest && !pDest->HasSapper() )
+			{
+				CObjectSapper *pSapper = ( CObjectSapper* )CreateEntityByName( "obj_attachment_sapper" );
+
+				Vector vecDummy;
+
+				if ( pSapper )
+					pSapper->AttachObjectToObject( pDest, pDest->m_iBuiltOnPoint, vecDummy );
+
+				// the sapper might be removed in AttachObjectToObject if its invalid, so check it again
+				if ( pSapper )
+					pSapper->Spawn();
+			}
+		}
 	}
 
 	EmitSound( "Weapon_Sapper.Plant" );
@@ -196,8 +219,7 @@ void CObjectSapper::SetupAttachedVersion( void )
 			}
 			break;
 
-		case OBJ_TELEPORTER_ENTRANCE:
-		case OBJ_TELEPORTER_EXIT:
+		case OBJ_TELEPORTER:
 			SetModel( SAPPER_MODEL_TELEPORTER_PLACEMENT );
 			break;
 
@@ -263,8 +285,7 @@ void CObjectSapper::OnGoActive( void )
 		}
 		break;
 
-	case OBJ_TELEPORTER_ENTRANCE:
-	case OBJ_TELEPORTER_EXIT:
+	case OBJ_TELEPORTER:
 		SetModel( SAPPER_MODEL_TELEPORTER );
 		break;
 

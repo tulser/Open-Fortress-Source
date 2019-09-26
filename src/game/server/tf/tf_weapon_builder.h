@@ -27,13 +27,15 @@ public:
 
 	DECLARE_SERVERCLASS();
 
-	virtual void	SetSubType( int iSubType );
+	virtual void	SetSubType( int iSubType, int iAltMode );
 	virtual void	Precache( void );
 	virtual bool	CanDeploy( void );
+	virtual bool    CanHolster( CBaseCombatWeapon *pSwitchingTo );
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	virtual void	ItemPostFrame( void );
 	virtual void	PrimaryAttack( void );
 	virtual void	SecondaryAttack( void );
+	void			HaulingAttack( void );
 	virtual void	WeaponIdle( void );
 	virtual bool	Deploy( void );	
 	virtual Activity GetDrawActivity( void );
@@ -43,6 +45,7 @@ public:
 	virtual bool	AllowsAutoSwitchTo( void ) const;
 
 	virtual int		GetType( void ) { return m_iObjectType; }
+	virtual int		GetAltMode( void ) { return m_iAltMode; }
 
 	void	SetCurrentState( int iState );
 	void	SwitchOwnersWeaponToLast();
@@ -53,9 +56,9 @@ public:
 	void	UpdatePlacementState( void );		// do a check for valid placement
 	bool	IsValidPlacement( void );			// is this a valid placement pos?
 
-
 	// Building
 	void	StartBuilding( void );
+
 
 	// Selection
 	bool	HasAmmo( void );
@@ -67,9 +70,14 @@ public:
 
 	virtual void	WeaponReset( void );
 
+	virtual acttable_t *ActivityList( int &iActivityCount );
+	static acttable_t m_acttableBuildingDeployed[];
+
 public:
 	CNetworkVar( int, m_iBuildState );
 	CNetworkVar( unsigned int, m_iObjectType );
+	CNetworkVar( unsigned int, m_iAltMode );
+	CNetworkVar( float, m_flSecondaryTimeout );
 
 	CNetworkHandle( CBaseObject, m_hObjectBeingBuilt );
 

@@ -15,6 +15,13 @@
 
 class CTFPlayer;
 
+enum
+{
+	DISPENSER_LEVEL_1 = 0,
+	DISPENSER_LEVEL_2,
+	DISPENSER_LEVEL_3,
+};
+
 // ------------------------------------------------------------------------ //
 // Resupply object that's built by the player
 // ------------------------------------------------------------------------ //
@@ -38,8 +45,11 @@ public:
 	virtual void	DetonateObject( void );
 	virtual void	OnGoActive( void );	
 	virtual bool	StartBuilding( CBaseEntity *pBuilder );
+	virtual void	StartHauling( void );
 	virtual int		DrawDebugTextOverlays(void) ;
 	virtual void	SetModel( const char *pModel );
+
+	virtual void	FinishedBuilding( void );
 
 	void RefillThink( void );
 	void DispenseThink( void );
@@ -64,7 +74,19 @@ public:
 
 	CUtlVector< EHANDLE >	m_hHealingTargets;
 
+	// If the players hit us with a wrench, should we upgrade
+	virtual bool CanBeUpgraded( CTFPlayer *pPlayer );
+	virtual void StartUpgrading( void );
+	virtual void FinishUpgrading( void );
+
+	void			UpgradeThink( void );
+	virtual bool	IsUpgrading( void ) const;
+
+	// Engineer hit me with a wrench
+	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );
+
 private:
+	CNetworkVar( int, m_iState );
 
 	//CNetworkArray( EHANDLE, m_hHealingTargets, MAX_DISPENSER_HEALING_TARGETS );
 

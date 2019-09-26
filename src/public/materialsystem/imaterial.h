@@ -481,7 +481,7 @@ public:
 	// This is how game code affects how a material is rendered.
 	// The game code must know about the params that are used by
 	// the shader for the material that it is trying to affect.
-	virtual IMaterialVar *	FindVar( const char *varName, bool *found, bool complain = true ) = 0;
+	virtual IMaterialVar *	FindVar( const char *varName, bool *found, bool complain = false ) = 0;
 
 	// The user never allocates or deallocates materials.  Reference counting is
 	// used instead.  Garbage collection is done upon a call to 

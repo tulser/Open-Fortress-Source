@@ -35,6 +35,7 @@ CLIENTEFFECT_REGISTER_END()
 ConVar cl_muzzleflash_dlight_1st( "cl_muzzleflash_dlight_1st", "1" );
 
 extern ConVar of_muzzlelight;
+extern ConVar of_beta_muzzleflash;
 
 void TE_DynamicLight( IRecipientFilter& filter, float delay,
 	const Vector* org, int r, int g, int b, int exponent, float radius, float time, float decay, int nLightIndex = LIGHT_INDEX_TE_DYNAMIC );
@@ -168,19 +169,24 @@ void TF_3rdPersonMuzzleFlashCallback_SentryGun( const CEffectData &data )
 	if ( pEnt && !pEnt->IsDormant() )
 	{
 		// The created entity kills itself
-		//C_MuzzleFlashModel::CreateMuzzleFlashModel( "models/effects/sentry1_muzzle/sentry1_muzzle.mdl", pEnt, iMuzzleFlashAttachment );
-
-		char *pszMuzzleFlashParticleEffect = NULL;
-		switch( iUpgradeLevel )
+		if ( of_beta_muzzleflash.GetBool() )
+			C_MuzzleFlashModel::CreateMuzzleFlashModel( "models/effects/sentry1_muzzle/sentry1_muzzle.mdl", pEnt, iMuzzleFlashAttachment );
+		else
 		{
-		case 1:
-		default:
-			pszMuzzleFlashParticleEffect = "muzzle_sentry";
-			break;
-		case 2:
-		case 3:
-			pszMuzzleFlashParticleEffect = "muzzle_sentry2";
-			break;
+			char *pszMuzzleFlashParticleEffect = NULL;
+			switch( iUpgradeLevel )
+			{
+			case 1:
+			default:
+				pszMuzzleFlashParticleEffect = "muzzle_sentry";
+				break;
+			case 2:
+			case 3:
+				pszMuzzleFlashParticleEffect = "muzzle_sentry2";
+				break;
+			}
+
+			(pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pEnt, iMuzzleFlashAttachment);
 		}
 
 		// Muzzleflash light
@@ -189,8 +195,6 @@ void TF_3rdPersonMuzzleFlashCallback_SentryGun( const CEffectData &data )
 			CPVSFilter filter(vec3_origin);
 			TE_DynamicLight(filter, 0.0f, &vec3_origin, 255, 192, 64, 5, 70.0f, 0.05f, 70.0f / 0.05f, LIGHT_INDEX_MUZZLEFLASH);
 		}
-
-		DispatchParticleEffect(pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pEnt, iMuzzleFlashAttachment);
 	}
 }
 
@@ -242,6 +246,8 @@ bool C_MuzzleFlashModel::InitializeMuzzleFlash( const char *pszModelName, C_Base
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 	SetCycle( 0 );
+	SetLocalAngles( QAngle(0,0,RandomFloat(0,360)) );
+
 	return true;
 }
 

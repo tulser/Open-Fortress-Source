@@ -11,7 +11,6 @@
 #include "tier0/memdbgon.h"
 
 BEGIN_DATADESC( CEntityCroc )
-	DEFINE_FIELD( m_bSequenceFinished, FIELD_BOOLEAN ),
 	DEFINE_THINKFUNC( Think ),
 END_DATADESC()
 

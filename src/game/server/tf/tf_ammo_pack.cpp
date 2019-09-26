@@ -50,7 +50,7 @@ void CTFAmmoPack::Spawn( void )
 	memset( m_iAmmo, 0, sizeof(m_iAmmo) );
 
 	// Die in 30 seconds
-	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 30, "DieContext" );
+	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + 20, "DieContext" );
 
 	if ( IsX360() )
 	{
@@ -60,6 +60,7 @@ void CTFAmmoPack::Spawn( void )
 
 void CTFAmmoPack::Precache( void )
 {
+	PrecacheScriptSound( "AmmoPack.Touch" );
 }
 
 CTFAmmoPack *CTFAmmoPack::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName )

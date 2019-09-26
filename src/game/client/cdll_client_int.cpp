@@ -154,8 +154,6 @@
 
 extern vgui::IInputInternal *g_InputInternal;
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
-ConVar *mat_picmip = NULL;
-ConVar of_picmip("of_picmip","-1",FCVAR_ARCHIVE,"Overrides mat_picmip value for your client (hacky)");
 
 //=============================================================================
 // HPE_BEGIN
@@ -1000,7 +998,7 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress\\") != 0)
 		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress/") != 0))
 	{
-		Msg( "%s\n", COM_GetModDirectory() );
+		ConColorMsg( Color( 60, 238, 60, 255 ), "%s\n", COM_GetModDirectory() );
 		Error("Error! The game's directory must have the name \"open_fortress\" in order for the mod to work correctly. Please change it.");
 	}
 
@@ -1055,18 +1053,6 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 	if (!ParticleMgr()->Init(MAX_TOTAL_PARTICLES, materials))
 		return false;
-	
-
-	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
-	if( mat_picmip )
-	{
-		mat_picmip->SetDefault( "-1" );
-		mat_picmip->SetValue( of_picmip.GetInt() );
-	}
-	else
-	{
-		Error("CL_DLL: FAILED TO INTIALIZE (MatSystem Grab Fail)\n");
-	}
 
 	if (!VGui_Startup(appSystemFactory))
 		return false;
@@ -1156,6 +1142,9 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	ClientWorldFactoryInit();
 
 	C_BaseAnimating::InitBoneSetupThreadPool();
+
+	if (CommandLine()->FindParm("-nosrgb"))
+		gpGlobals = NULL;
 
 #if defined( WIN32 ) && !defined( _X360 )
 	// NVNT connect haptics sytem

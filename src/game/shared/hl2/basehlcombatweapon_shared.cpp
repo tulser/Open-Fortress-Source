@@ -236,11 +236,6 @@ float	g_verticalBob;
 #define	HL2_BOB			0.002f
 #define	HL2_BOB_UP		0.5f
 
-
-static ConVar	cl_bobcycle( "cl_bobcycle","0.8" );
-static ConVar	cl_bob( "cl_bob","0.002" );
-static ConVar	cl_bobup( "cl_bobup","0.5" );
-
 // Register these cvars if needed for easy tweaking
 static ConVar	v_iyaw_cycle( "v_iyaw_cycle", "2"/*, FCVAR_UNREGISTERED*/ );
 static ConVar	v_iroll_cycle( "v_iroll_cycle", "0.5"/*, FCVAR_UNREGISTERED*/ );

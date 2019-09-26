@@ -23,7 +23,6 @@
 #include "tier0/memdbgon.h"
 
 extern bool IsInCommentaryMode();
-extern ConVar of_infiniteammo;
 
 // Ground placed version
 #define SENTRY_MODEL_PLACEMENT			"models/buildables/sentry1_blueprint.mdl"
@@ -98,14 +97,13 @@ REGISTER_SEND_PROXY_NON_MODIFIED_POINTER( SendProxy_SendLocalObjectDataTable );
 
 BEGIN_NETWORK_TABLE_NOBASE( CObjectSentrygun, DT_SentrygunLocalData )
 	SendPropInt( SENDINFO(m_iKills), 12, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO(m_iAssists), 12, SPROP_CHANGES_OFTEN ),
 END_NETWORK_TABLE()
 
 IMPLEMENT_SERVERCLASS_ST( CObjectSentrygun, DT_ObjectSentrygun )
-	SendPropInt( SENDINFO(m_iUpgradeLevel), 3 ),
 	SendPropInt( SENDINFO(m_iAmmoShells), 9, SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO(m_iAmmoRockets), 6, SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO(m_iState), Q_log2( SENTRY_NUM_STATES ) + 1, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO(m_iUpgradeMetal), 10 ),
 	SendPropDataTable( "SentrygunLocalData", 0, &REFERENCE_SEND_TABLE( DT_SentrygunLocalData ), SendProxy_SendLocalObjectDataTable ),
 END_SEND_TABLE()
 
@@ -124,6 +122,7 @@ ConVar tf_sentrygun_metal_per_rocket( "tf_sentrygun_metal_per_rocket", "2", FCVA
 ConVar tf_sentrygun_notarget( "tf_sentrygun_notarget", "0", FCVAR_CHEAT );
 
 extern ConVar tf_cheapobjects;
+extern ConVar of_infiniteammo;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -145,11 +144,7 @@ void CObjectSentrygun::Spawn()
 
 	SetModel( SENTRY_MODEL_PLACEMENT );
 	
-	m_takedamage = DAMAGE_YES;
-
-	m_iUpgradeLevel = 1;
-	m_iUpgradeMetal = 0;
-	m_iUpgradeMetalRequired = SENTRYGUN_UPGRADE_METAL;
+	m_takedamage = DAMAGE_AIM;
 
 	SetMaxHealth( SENTRYGUN_MAX_HEALTH );
 	SetHealth( SENTRYGUN_MAX_HEALTH );
@@ -170,9 +165,6 @@ void CObjectSentrygun::Spawn()
 
 	// Start searching for enemies
 	m_hEnemy = NULL;
-
-	// Pipes explode when they hit this
-	m_takedamage = DAMAGE_AIM;
 
 	m_flLastAttackedTime = 0;
 
@@ -219,6 +211,19 @@ void CObjectSentrygun::SentryThink( void )
 void CObjectSentrygun::StartPlacement( CTFPlayer *pPlayer )
 {
 	BaseClass::StartPlacement( pPlayer );
+
+	// Set my build size
+	m_vecBuildMins = SENTRYGUN_MINS;
+	m_vecBuildMaxs = SENTRYGUN_MAXS;
+	m_vecBuildMins -= Vector( 4,4,0 );
+	m_vecBuildMaxs += Vector( 4,4,0 );
+}
+
+void CObjectSentrygun::StartHauling( void )
+{
+	BaseClass::StartHauling();
+
+	SetModel( SENTRY_MODEL_PLACEMENT );
 
 	// Set my build size
 	m_vecBuildMins = SENTRYGUN_MINS;
@@ -360,10 +365,19 @@ bool CObjectSentrygun::CanBeUpgraded( CTFPlayer *pPlayer )
 		return false;
 	}
 
-	// only engineers
-	if ( !ClassCanBuild( pPlayer->GetPlayerClass()->GetClassIndex(), GetType() ) )
-	{
+	// can't upgrade while in a hauling state
+	if ( m_bHauling )
 		return false;
+
+	// only people who have a pda can upgrade (always engineers)
+	CTFWeaponBase *pWeapon = NULL;
+
+	if ( pPlayer )
+		pWeapon = pPlayer->Weapon_OwnsThisID( TF_WEAPON_PDA_ENGINEER_BUILD );
+
+	if ( pPlayer && !pWeapon )
+	{
+		return false;	
 	}
 
 	// max upgraded
@@ -375,20 +389,27 @@ bool CObjectSentrygun::CanBeUpgraded( CTFPlayer *pPlayer )
 	return true;
 }
 
-#define SENTRY_UPGRADE_DURATION	1.5f
-
 //-----------------------------------------------------------------------------
 // Raises the Sentrygun one level
 //-----------------------------------------------------------------------------
 void CObjectSentrygun::StartUpgrading( void )
 {
+	// safety measure to stop the game from crashing if the upgrade level somehow attempts to go over 3
+	if ( m_iUpgradeLevel >= 3 && !( m_iDefaultUpgrade > 3 ) )
+		return;
+
+	m_bUpgrading = true;
+
 	// Increase level
 	m_iUpgradeLevel++;
 
 	// more health
-	int iMaxHealth = GetMaxHealth();
-	SetMaxHealth( iMaxHealth * 1.2 );
-	SetHealth( iMaxHealth * 1.2 );
+	if ( !m_bHauling )
+	{
+		int iMaxHealth = GetMaxHealth();
+		SetMaxHealth( iMaxHealth * 1.2 );
+		SetHealth( iMaxHealth * 1.2 );
+	}
 
 	EmitSound( "Building_Sentrygun.Built" );
 		
@@ -398,14 +419,17 @@ void CObjectSentrygun::StartUpgrading( void )
 		SetModel( SENTRY_MODEL_LEVEL_2_UPGRADE );
 		m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_2;
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_2 );
-		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_2;
+		if ( !m_bHauling )
+			m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_2;
 		break;
 	case 3:
 		SetModel( SENTRY_MODEL_LEVEL_3_UPGRADE );
-		m_iAmmoRockets = SENTRYGUN_MAX_ROCKETS;
+		if ( !m_bHauling )
+			m_iAmmoRockets = SENTRYGUN_MAX_ROCKETS;
 		m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_3;
 		SetViewOffset( SENTRYGUN_EYE_OFFSET_LEVEL_3 );
-		m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_3;
+		if ( !m_bHauling )
+			m_iMaxAmmoShells = SENTRYGUN_MAX_SHELLS_3;
 		break;
 	default:
 		Assert(0);
@@ -413,19 +437,29 @@ void CObjectSentrygun::StartUpgrading( void )
 	}
 
 	// more ammo capability
-	m_iAmmoShells = m_iMaxAmmoShells;
+	if ( !m_bHauling )
+		m_iAmmoShells = m_iMaxAmmoShells;
 
 	m_iState.Set( SENTRY_STATE_UPGRADING );
 
 	SetActivity( ACT_OBJ_UPGRADING );
 
-	m_flUpgradeCompleteTime = gpGlobals->curtime + SENTRY_UPGRADE_DURATION;
+	m_flUpgradeCompleteTime = gpGlobals->curtime + m_flUpgradeDuration;
 
 	RemoveAllGestures();
 }
 
 void CObjectSentrygun::FinishUpgrading( void )
 {
+	if ( m_iUpgradeLevel < m_iOldUpgradeLevel )
+	{
+		StartUpgrading();
+		return;
+	}
+
+	m_bUpgrading = false;
+	m_bHauling = false;
+
 	m_iState.Set( SENTRY_STATE_SEARCHING );
 	m_hEnemy = NULL;
 
@@ -665,26 +699,17 @@ bool CObjectSentrygun::FindTarget()
 	// this isn't compatible with hammer-placed sentries
 	//CTFTeam *pTeam = pPlayer->GetOpposingTFTeam();
 
-	//if ( !pTeam )
-	//				return false;
-
 	if ( pPlayer )
-	{
-		// test the team of the engineer who built us first
-			pTeam = pPlayer->GetTFTeam();
-	}
+		pTeam = pPlayer->GetTFTeam(); 		// test the team of the engineer who built us first
 	else
-	{
-		// no builder means spawned manually so get team number of sentry itself instead
-			pTeam = GetTFTeam();
-	}
+		pTeam = GetTFTeam(); // no builder means spawned manually so get team number of sentry itself instead
 
+	// test who we can shoot
+	// if the sentry has no team it can shoot everyone
 	if ( pTeam )
-		        // test who we can shoot
-				// if the sentry has no team it can shoot everyone
-				pTeam->GetOpposingTFTeam( &pTeamTest );
+		pTeam->GetOpposingTFTeam( &pTeamTest );
 	else
-				return false;
+		return false;
 
 	// If we have an enemy get his minimum distance to check against.
 	Vector vecSegment;

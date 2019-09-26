@@ -1529,11 +1529,11 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				if ( inputInfo.GetDamageForce() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
 				}
 				if ( inputInfo.GetDamagePosition() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
 				}
 			}
 		}
@@ -1600,11 +1600,11 @@ int CBaseEntity::TakeSelfDamage( const CTakeDamageInfo &inputInfo, float flTotal
 			{
 				if ( inputInfo.GetDamageForce() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
 				}
 				if ( inputInfo.GetDamagePosition() == vec3_origin )
 				{
-					DevWarning( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
+					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
 				}
 			}
 		}
@@ -3913,14 +3913,14 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 
 	if ( Value.FieldType() == FIELD_INTEGER )
 	{
-		DevMsg( 2, "input: (%s,%d) -> (%s,%s), from (%s)\n", szInputName, Value.Int(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConColorMsg( 2, Color( 93, 210, 255, 255 ), "input: (%s,%d) -> (%s,%s), from (%s)\n", szInputName, Value.Int(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 	}
 	else if ( Value.FieldType() == FIELD_STRING )
 	{
-		DevMsg( 2, "input: (%s,%s) -> (%s,%s), from (%s)\n", szInputName, Value.String(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConColorMsg( 2, Color( 93, 210, 255, 255 ), "input: (%s,%s) -> (%s,%s), from (%s)\n", szInputName, Value.String(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 	}
 	else
-		DevMsg( 2, "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+		ConColorMsg( 2, Color( 93, 210, 255, 255 ), "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -3930,6 +3930,7 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 //------------------------------------------------------------------------------
 void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 {
+	//ConColorMsg( clr, "\"%s\" = \"%s\"", var->GetName(), value );
 	// Print to entity
 	char bigstring[1024];
 	if ( ev->m_flDelay )
@@ -3945,11 +3946,11 @@ void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 	// Now print to the console
 	if ( ev->m_flDelay )
 	{
-		DevMsg( 2, "output: (%s,%s) -> (%s,%s,%.1f)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ev->m_flDelay );
+		ConColorMsg( 2, Color( 80, 185, 240, 255 ), "output: (%s,%s) -> (%s,%s,%.1f)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ev->m_flDelay );
 	}
 	else
 	{
-		DevMsg( 2, "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
+		ConColorMsg( 2, Color( 80, 185, 240, 255 ), "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
 	}
 }
 
@@ -4068,7 +4069,8 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 					{
 						Q_snprintf( szBuffer, sizeof(szBuffer), "(%0.2f) input <NULL>: %s.%s(%s)\n", gpGlobals->curtime, GetDebugName(), szInputName, Value.String() );
 					}
-					DevMsg( 2, "%s", szBuffer );
+					ConColorMsg( 2, Color( 100, 126, 200, 255 ), "%s", szBuffer );
+
 					ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 
 					if (m_debugOverlays & OVERLAY_MESSAGE_BIT)
@@ -4128,7 +4130,7 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 		}
 	}
 
-	DevMsg( 2, "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
+	ConColorMsg( 2, Color( 200, 191, 231, 255 ), "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
 	return false;
 }
 

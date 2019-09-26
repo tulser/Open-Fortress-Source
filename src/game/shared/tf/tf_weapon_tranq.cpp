@@ -45,11 +45,11 @@ void CTFCTranq::Precache()
 	BaseClass::Precache();
 
 #ifndef CLIENT_DLL
-	PrecacheParticleSystem( "nailtrails_super_blue_crit" );
-	PrecacheParticleSystem( "tranq_tracer_teamcolor_blue" );
-	PrecacheParticleSystem( "nailtrails_super_red_crit" );
-	PrecacheParticleSystem( "tranq_tracer_teamcolor_red" );
-	PrecacheParticleSystem( "nailtrails_super_dm_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_blue_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_blue" );
+	PrecacheParticleSystem( "nailtrails_medic_red_crit" );
+	PrecacheParticleSystem( "nailtrails_medic_red" );
+	PrecacheParticleSystem( "tranq_tracer_teamcolor_dm_crit" );
 	PrecacheParticleSystem( "tranq_tracer_teamcolor_dm" );
 #endif
 }

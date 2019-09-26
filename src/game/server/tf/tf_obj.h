@@ -65,6 +65,7 @@ public:
 	virtual bool	IsBaseObject( void ) const { return true; }
 
 	virtual void	BaseObjectThink( void );
+	virtual void	BaseObjectHaulingThink( void );
 	//virtual void	LostPowerThink( void );
 	virtual CTFPlayer *GetOwner( void );
 
@@ -77,13 +78,16 @@ public:
 
 	virtual void	SetBuilder( CTFPlayer *pBuilder );
 	virtual void	SetType( int iObjectType );
+	virtual void	SetAltMode( int iAltMode );
 	int				ObjectType( ) const;
+	int				AltMode( ) const;
 
 	virtual int		BloodColor( void ) { return BLOOD_COLOR_MECH; }
 
 	// Building
 	virtual float	GetTotalTime( void );
 	virtual void	StartPlacement( CTFPlayer *pPlayer );
+	virtual void	StartHauling( void );
 	void			StopPlacement( void );
 	bool			FindNearestBuildPoint( CBaseEntity *pEntity, CBasePlayer *pBuilder, float &flNearestPoint, Vector &vecNearestBuildPoint );
 	bool			VerifyCorner( const Vector &vBottomCenter, float xOffset, float yOffset );
@@ -108,7 +112,8 @@ public:
 	virtual void	FinishedBuilding( void );
 	bool			IsBuilding( void ) { return m_bBuilding; };
 	bool			IsPlacing( void ) { return m_bPlacing; };
-	virtual bool	IsUpgrading( void ) const { return false; }
+	bool			IsUpgrading( void ) { return m_bUpgrading; };
+	bool			IsHauling( void ) { return m_bHauling; };
 	bool			MustBeBuiltOnAttachmentPoint( void ) const;
 
 	// Returns information about the various control panels
@@ -141,6 +146,7 @@ public:
 	// Data
 	virtual Class_T	Classify( void );
 	virtual int		GetType( void );
+	virtual int		GetAltMode( void );
 	virtual CTFPlayer *GetBuilder( void );
 	CTFTeam			*GetTFTeam( void ) { return (CTFTeam*)GetTeam(); };
 	
@@ -153,6 +159,7 @@ public:
 	void			InputAddHealth( inputdata_t &inputdata );
 	void			InputRemoveHealth( inputdata_t &inputdata );
 	void			InputSetSolidToPlayer( inputdata_t &inputdata );
+	void			InputSetBuilder( inputdata_t &inputdata );
 	void			InputShow( inputdata_t &inputdata );
 	void			InputHide( inputdata_t &inputdata );
 	void			InputEnable( inputdata_t &inputdata );
@@ -209,11 +216,33 @@ public:
 
 	void			IncrementKills( void ) { m_iKills++; }
 	int				GetKills() { return m_iKills; }
+	void			IncrementAssists( void ) { m_iAssists++; }
+	int				GetAssists() { return m_iAssists; }
 
 	void			CreateObjectGibs( void );
 	virtual void	SetModel( const char *pModel );
 
 	const char		*GetResponseRulesModifier( void );
+
+	// Upgrade Level ( 1, 2, 3 )
+	CNetworkVar(int, m_iUpgradeLevel);
+
+	// Time when the upgrade animation will complete
+	float m_flUpgradeCompleteTime;
+	float m_flUpgradeDuration;
+
+	CNetworkVar( int, m_iUpgradeMetal );
+	CNetworkVar( int, m_iUpgradeMetalRequired );
+
+	int		GetUpgradeLevel( void ) { return m_iUpgradeLevel; }
+
+	// old upgrade level that is stored from hauling
+	int m_iOldUpgradeLevel;
+
+	// If the players hit us with a wrench, should we upgrade
+	virtual bool CanBeUpgraded( CTFPlayer *pPlayer );
+	virtual void StartUpgrading( void );
+	virtual void FinishUpgrading( void );
 
 public:		
 
@@ -258,6 +287,14 @@ public:
 	virtual int		ShouldTransmit( const CCheckTransmitInfo *pInfo );
 	virtual void	SetTransmit( CCheckTransmitInfo *pInfo, bool bAlways );
 
+// Hauling
+
+	bool CanBeHauled( CTFPlayer *pPlayer );
+	void SetHauling( bool bHaul ) { m_bHauling = bHaul; }
+
+// Sapper
+
+	int				m_iBuiltOnPoint;
 
 protected:
 	// Show/hide vgui screens.
@@ -302,7 +339,6 @@ protected:
 	CNetworkVector( m_vecBuildMaxs );
 	CNetworkVector( m_vecBuildMins );
 	CNetworkHandle( CBaseEntity, m_hBuiltOnEntity );
-	int				m_iBuiltOnPoint;
 
 	bool	m_bDying;
 
@@ -320,6 +356,17 @@ protected:
 	typedef CHandle<CVGuiScreen>	ScreenHandle_t;
 	CUtlVector<ScreenHandle_t>	m_hScreens;
 
+public:
+
+	// Disabled
+	CNetworkVar( bool, m_bDisabled );
+
+	// Building
+	CNetworkVar( bool, m_bPlacing );					// True while the object's being placed
+	CNetworkVar( bool, m_bBuilding );				// True while the object's still constructing itself
+	CNetworkVar( bool, m_bUpgrading );				// True while the object is being upgraded
+	CNetworkVar( bool, m_bHauling );				// True while the object's is being hauled by an Engineer
+
 private:
 	// Make sure we pick up changes to these.
 	IMPLEMENT_NETWORK_VAR_FOR_DERIVED( m_iHealth );
@@ -328,18 +375,12 @@ private:
 	Activity	m_Activity;
 
 	CNetworkVar( int, m_iObjectType );
-
+	CNetworkVar( int, m_iAltMode );
 
 	// True if players shouldn't do collision avoidance, but should just collide exactly with the object.
 	OBJSOLIDTYPE	m_SolidToPlayers;
 	void		SetSolidToPlayers( OBJSOLIDTYPE stp, bool force = false );
 
-	// Disabled
-	CNetworkVar( bool, m_bDisabled );
-
-	// Building
-	CNetworkVar( bool, m_bPlacing );					// True while the object's being placed
-	CNetworkVar( bool, m_bBuilding );				// True while the object's still constructing itself
 	float	m_flConstructionTimeLeft;	// Current time left in construction
 	float	m_flTotalConstructionTime;	// Total construction time (the value of GetTotalTime() at the time construction 
 										// started, ie, incase you teleport out of a construction yard)
@@ -360,6 +401,7 @@ private:
 	bool		m_bPlacementOK;				// last placement state
 
 	CNetworkVar( int, m_iKills );
+	CNetworkVar( int, m_iAssists );
 
 	CNetworkVar( int, m_iDesiredBuildRotations );		// Number of times we've rotated, used to calc final rotation
 	float m_flCurrentBuildRotation;

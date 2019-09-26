@@ -540,11 +540,11 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		{
 			if ( m_DeathNotices[iMsg].bCrit )
 			{
-				Msg( "%s (crit)\n", sDeathMsg );
+				DevMsg( "%s (crit)\n", sDeathMsg );
 			}
 			else
 			{
-				Msg( "%s\n", sDeathMsg );
+				DevMsg( "%s\n", sDeathMsg );
 			}
 		}
 	} 
@@ -587,7 +587,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 		V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( len > 1 ? "#Msg_Captured_Multiple" : "#Msg_Captured" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
 
 		// print a log message
-		Msg( "%s captured %s for team #%d\n", m_DeathNotices[iMsg].Killer.szName, m_DeathNotices[iMsg].Victim.szName, m_DeathNotices[iMsg].Killer.iTeam );
+		ConColorMsg( Color( 135, 206, 235, 255 ), "%s captured %s for team #%d\n", m_DeathNotices[iMsg].Killer.szName, m_DeathNotices[iMsg].Victim.szName, m_DeathNotices[iMsg].Killer.iTeam );
 	} 
 	else if ( FStrEq( "teamplay_capture_blocked", pszEventName ) )
 	{
@@ -602,7 +602,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			m_DeathNotices[iMsg].bLocalPlayerInvolved = true;
 
 		// print a log message
-		Msg( "%s defended %s for team #%d\n", m_DeathNotices[iMsg].Killer.szName, m_DeathNotices[iMsg].Victim.szName, m_DeathNotices[iMsg].Killer.iTeam );
+		ConColorMsg( Color( 135, 206, 235, 255 ), "%s defended %s for team #%d\n", m_DeathNotices[iMsg].Killer.szName, m_DeathNotices[iMsg].Victim.szName, m_DeathNotices[iMsg].Killer.iTeam );
 	}
 	else if ( FStrEq( "teamplay_flag_event", pszEventName ) )
 	{

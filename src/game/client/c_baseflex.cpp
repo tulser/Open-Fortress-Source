@@ -195,6 +195,8 @@ CStudioHdr *C_BaseFlex::OnNewModel()
 	
 	// init to invalid setting
 	m_iBlink = -1;
+	m_iBlinkL = -1;
+	m_iBlinkR = -1;
 	m_iEyeUpdown = LocalFlexController_t(-1);
 	m_iEyeRightleft = LocalFlexController_t(-1);
 	m_bSearchedForEyeFlexes = false;
@@ -1025,6 +1027,10 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 
 	ProcessSceneEvents( false );
 
+	// presume its not alive if its a ragdoll
+	if ( !m_pRagdoll )
+	{
+
 	// check for blinking
 	if (m_blinktoggle != m_prevblinktoggle)
 	{
@@ -1034,7 +1040,16 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 
 	if (m_iBlink == -1)
 		m_iBlink = AddGlobalFlexController( "blink" );
+
+	if (m_iBlinkL == -1)
+		m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
+
+	if (m_iBlinkR == -1)
+		m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
+
 	g_flexweight[m_iBlink] = 0;
+	g_flexweight[m_iBlinkL] = 0;
+	g_flexweight[m_iBlinkR] = 0;
 
 	// FIXME: this needs a better algorithm
 	// blink the eyes
@@ -1048,7 +1063,17 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 			g_flexweight[m_iBlink] = sqrtf( t ) * 2;
 			if (g_flexweight[m_iBlink] > 1)
 				g_flexweight[m_iBlink] = 2.0 - g_flexweight[m_iBlink];
+
+			g_flexweight[m_iBlinkL] = sqrtf( t ) * 2;
+			if (g_flexweight[m_iBlinkL] > 1)
+				g_flexweight[m_iBlinkL] = 2.0 - g_flexweight[m_iBlinkL];
+
+			g_flexweight[m_iBlinkR] = sqrtf( t ) * 2;
+			if (g_flexweight[m_iBlinkR] > 1)
+				g_flexweight[m_iBlinkR] = 2.0 - g_flexweight[m_iBlinkR];
 		}
+	}
+
 	}
 
 	// Drive the mouth from .wav file playback...
@@ -1153,9 +1178,6 @@ void C_BaseFlex::SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightC
 	// hack in an initialization
 	LinkToGlobalFlexControllers( GetModelPtr() );
 
-//  removed to fix blinking
-//	m_iBlink = AddGlobalFlexController( "UH" );
-
 	if ( SetupGlobalWeights( pBoneToWorld, nFlexWeightCount, pFlexWeights, pFlexDelayedWeights ) )
 	{
 		SetupLocalWeights( pBoneToWorld, nFlexWeightCount, pFlexWeights, pFlexDelayedWeights );
@@ -1231,6 +1253,10 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 
 	ProcessSceneEvents( false );
 
+	// presume its not alive if its a ragdoll
+	if ( !m_pRagdoll )
+	{
+
 	// check for blinking
 	if (m_blinktoggle != m_prevblinktoggle)
 	{
@@ -1239,9 +1265,13 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 	}
 
 	if (m_iBlink == -1)
-	{
 		m_iBlink = AddGlobalFlexController( "blink" );
-	}
+
+	if (m_iBlinkL == -1)
+		m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
+
+	if (m_iBlinkR == -1)
+		m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
 
 	// FIXME: this needs a better algorithm
 	// blink the eyes
@@ -1259,8 +1289,12 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 				t = 2.0f - t;
 			t = clamp( t, 0.0f, 1.0f );
 			// add it to whatever the blink track is doing
-			g_flexweight[m_iBlink] = clamp( g_flexweight[m_iBlink] + t, 0.0f, 1.0f );
+			g_flexweight[m_iBlink] = clamp( g_flexweight[m_iBlink] + t, 0.0f, 2.0f );
+			g_flexweight[m_iBlinkL] = clamp( g_flexweight[m_iBlinkL] + t, 0.0f, 2.0f );
+			g_flexweight[m_iBlinkR] = clamp( g_flexweight[m_iBlinkR] + t, 0.0f, 2.0f );
 		}
+	}
+
 	}
 
 	// Drive the mouth from .wav file playback...

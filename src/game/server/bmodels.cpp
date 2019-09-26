@@ -287,7 +287,7 @@ LINK_ENTITY_TO_CLASS( func_conveyor, CFuncConveyor );
 BEGIN_DATADESC( CFuncConveyor )
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "ToggleDirection", InputToggleDirection ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "SetSpeed", InputSetSpeed ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeed", InputSetSpeed ),
 
 	DEFINE_KEYFIELD( m_vecMoveDir, FIELD_VECTOR, "movedir" ),
 	DEFINE_FIELD( m_flConveyorSpeed, FIELD_FLOAT ),
@@ -811,9 +811,7 @@ void CFuncRotating::HurtTouch ( CBaseEntity *pOther )
 	// calculate damage based on rotation speed
 	m_flBlockDamage = GetLocalAngularVelocity().Length() / 10;
 
-#ifdef HL1_DLL
 	if( m_flBlockDamage > 0 )
-#endif
 	{
 		pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 	
@@ -1337,9 +1335,7 @@ void CFuncRotating::InputToggle( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CFuncRotating::Blocked( CBaseEntity *pOther )
 {
-#ifdef HL1_DLL
 	if( m_flBlockDamage > 0 )
-#endif
 		pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 }
 

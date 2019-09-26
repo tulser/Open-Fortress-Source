@@ -61,7 +61,7 @@ CTFClientScoreBoardDialog::CTFClientScoreBoardDialog( IViewPort *pViewPort ) : C
 	m_pPlayerListBlue = new SectionedListPanel( this, "BluePlayerList" );
 	m_pPlayerListRed = new SectionedListPanel( this, "RedPlayerList" );
 	m_pPlayerListMercenary = new SectionedListPanel( this, "MercenaryPlayerList" );
-	m_pLabelPlayerName = new CTFLabel( this, "PlayerNameLabel", "" );
+	m_pLabelPlayerName = new CExLabel( this, "PlayerNameLabel", "" );
 	m_pImagePanelHorizLine = new ImagePanel( this, "HorizontalLine" );
 	m_pClassImage = new CTFClassImage( this, "ClassImage" );
 	m_pClassImageColorless= new CTFClassImage ( this, "ClassImageColorless" );

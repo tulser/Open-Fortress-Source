@@ -182,11 +182,12 @@ int	CHudMenuEngyDestroy::HudElementKeyInput( int down, ButtonCode_t keynum, cons
 	if ( iSlot >= 0 )
 	{
 		int iBuildingID = MapIndexToObjectID( iSlot );
+		int iAltMode = MapIndexToAltMode( iSlot );
 
-		if ( pLocalPlayer->GetObjectOfType( iBuildingID ) != NULL )
+		if ( pLocalPlayer->GetObjectOfType( iBuildingID, iAltMode ) != NULL )
 		{
 			char szCmd[128];
-			Q_snprintf( szCmd, sizeof(szCmd), "destroy %d; lastinv", iBuildingID );
+			Q_snprintf( szCmd, sizeof(szCmd), "destroy %d %d; lastinv", iBuildingID, iAltMode );
 			engine->ExecuteClientCmd( szCmd );
 		}
 		else
@@ -215,8 +216,8 @@ int CHudMenuEngyDestroy::MapIndexToObjectID( int index )
 	{
 		OBJ_SENTRYGUN,
 		OBJ_DISPENSER,
-		OBJ_TELEPORTER_ENTRANCE,
-		OBJ_TELEPORTER_EXIT
+		OBJ_TELEPORTER,
+		OBJ_TELEPORTER
 	};
 
 	Assert( index >= 0 && index <= 3 );
@@ -232,6 +233,27 @@ int CHudMenuEngyDestroy::MapIndexToObjectID( int index )
 	}
 }
 
+int CHudMenuEngyDestroy::MapIndexToAltMode( int index )
+{
+	static int iRemapIndexToObjectID[4] = 
+	{
+		0,
+		0,
+		0,	
+		1
+	};
+
+	if ( index >= 0 && index <= 3 )
+	{
+		return iRemapIndexToObjectID[index];
+	}
+	else
+	{
+		Assert( !"Bad param to CHudMenuEngyBuild::MMapIndexToObjectID" );
+		return 0;
+	}
+}
+
 void CHudMenuEngyDestroy::OnTick( void )
 {
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -241,13 +263,14 @@ void CHudMenuEngyDestroy::OnTick( void )
 	for ( i=0;i<4; i++ )
 	{
 		int iRemappedObjectID = MapIndexToObjectID( i );
+		int iAltMode = MapIndexToAltMode( i );
 
 		// update this slot
 		C_BaseObject *pObj = NULL;
 
 		if ( pLocalPlayer )
 		{
-			pObj = pLocalPlayer->GetObjectOfType( iRemappedObjectID );
+			pObj = pLocalPlayer->GetObjectOfType( iRemappedObjectID, iAltMode );
 		}			
 
 		m_pActiveItems[i]->SetVisible( false );

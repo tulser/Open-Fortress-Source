@@ -38,7 +38,13 @@ public:
 
 	bool m_bUpdateHealingTargets;
 
+	virtual void GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes );
+	virtual void GetTargetIDDataString( wchar_t *sDataString, int iMaxLenInBytes );
+
+	virtual bool	IsUpgrading( void ) const;
+
 private:
+	int m_iState;
 	int m_iAmmoMetal;
 
 	bool m_bPlayingSound;

@@ -29,7 +29,7 @@
 #include "c_team.h"
 #include "c_tf_player.h"
 #include "ihudlcd.h"
-#include "of_hud_tdm.h"
+#include "of_hud_dom.h"
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #include "multiplay_gamerules.h"
@@ -40,35 +40,31 @@
 
 using namespace vgui;
 
-extern ConVar fraglimit;
-extern ConVar of_arena;
-extern ConVar ofd_disablekillcount;
-
-DECLARE_HUDELEMENT( CTFHudTDM );
+DECLARE_HUDELEMENT( CTFHudDOM );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFHudTDM::CTFHudTDM( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudTDM" ) 
+CTFHudDOM::CTFHudDOM( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudDOM" ) 
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 
-	SetHiddenBits( HIDEHUD_HEALTH );
+	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
 
-	hudlcd->SetGlobalStat( "(kills)", "0" );
+	hudlcd->SetGlobalStat( "(score)", "0" );
 
-	m_pRedKills = new CTFKillsProgressRed( this, "RedKills" );
-	m_pBluKills = new CTFKillsProgressBlu( this, "BluKills" );
+	m_pRedScore = new CTFScoreProgressRed( this, "RedScore" );
+	m_pBluScore = new CTFScoreProgressBlu( this, "BluScore" );
 	
-	m_nKills	= 0;
+	m_nScore	= 0;
 	m_flNextThink = 0.0f;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHudTDM::Reset()
+void CTFHudDOM::Reset()
 {
 	m_flNextThink = gpGlobals->curtime + 0.05f;
 }
@@ -76,37 +72,35 @@ void CTFHudTDM::Reset()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHudTDM::ApplySchemeSettings( IScheme *pScheme )
+void CTFHudDOM::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	// load control settings...
-	LoadControlSettings( "resource/UI/HudTDM.res" );
+	LoadControlSettings( "resource/UI/HudDOM.res" );
 
-	m_pKills = dynamic_cast<CExLabel *>( FindChildByName( "Kills" ) );
-	m_pKillsShadow = dynamic_cast<CExLabel *>( FindChildByName( "KillsShadow" ) );
+	m_pScore = dynamic_cast<CExLabel *>( FindChildByName( "Score" ) );
+	m_pScoreShadow = dynamic_cast<CExLabel *>( FindChildByName( "ScoreShadow" ) );
 
-	m_nKills	= -1;
+	m_nScore	= -1;
 	m_flNextThink = 0.0f;
 
-	UpdateKillLabel( false );
+	UpdateDOMLabel( false );
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFHudTDM::ShouldDraw( void )
+bool CTFHudDOM::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ofd_disablekillcount.GetBool() )
+	if ( !pPlayer )
 	{
 		return false;
 	}
 	
-	if (TFGameRules() &&
-		TFGameRules()->IsTDMGamemode() &&
-		!TFGameRules()->DontCountKills() )
+	if ( TFGameRules() && ( TFGameRules()->IsDOMGamemode() || TFGameRules()->IsESCGamemode() ) )
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -115,22 +109,22 @@ bool CTFHudTDM::ShouldDraw( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHudTDM::UpdateKillLabel( bool bKills )
+void CTFHudDOM::UpdateDOMLabel( bool bScore )
 {
-	if ( m_pKills && m_pKillsShadow )
+	if ( m_pScore && m_pScoreShadow )
 	{
-		if ( m_pKills->IsVisible() != bKills )
+		if ( m_pScore->IsVisible() != bScore )
 		{
-			m_pKills->SetVisible( bKills );
-			m_pKillsShadow->SetVisible( bKills );
+			m_pScore->SetVisible( bScore );
+			m_pScoreShadow->SetVisible( bScore );
 		}
 	}
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Update the team frag meter in TDM
+// Purpose: Update the team frag meter in DOM
 //-----------------------------------------------------------------------------
-void CTFHudTDM::OnThink()
+void CTFHudDOM::OnThink()
 {
 	// Get the player and active weapon.
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
@@ -140,74 +134,46 @@ void CTFHudTDM::OnThink()
 	{
 		if ( !pPlayer )
 		{
-			hudlcd->SetGlobalStat( "(kills)", "n/a" );
+			hudlcd->SetGlobalStat( "(score)", "n/a" );
 
 			// turn off our ammo counts
-			UpdateKillLabel( false );
+			UpdateDOMLabel( false );
 
-			m_nKills = 0;
+			m_nScore = 0;
 		}
 		else
 		{
 			// Get the ammo in our clip.
 			int iIndex = GetLocalPlayerIndex();
-			int nKills = tf_PR->GetPlayerScore( iIndex );
-			int nGGLevel = tf_PR->GetGGLevel( iIndex );
+			int nScore = tf_PR->GetPlayerScore( iIndex );
 			
-			hudlcd->SetGlobalStat( "(kills)", VarArgs( "%d", nKills ) );
-			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
-				m_nKills = nGGLevel;
-			else
-				m_nKills = nKills;
+			hudlcd->SetGlobalStat( "(score)", VarArgs( "%d", nScore ) );
+
+			m_nScore = nScore;
 			
-			UpdateKillLabel( true );
+			UpdateDOMLabel( true );
 			wchar_t string1[1024];
 
-			C_Team *pRedTeam = GetGlobalTeam( TF_TEAM_RED );
-			C_Team *pBluTeam = GetGlobalTeam( TF_TEAM_BLUE );
+			m_pRedScore->SetProgress( (float)(TFGameRules()->m_nDomScore_red) / (float)(TFGameRules()->m_nDomScore_limit) );
+			m_pBluScore->SetProgress( (float)(TFGameRules()->m_nDomScore_blue) / (float)(TFGameRules()->m_nDomScore_limit) );
 
-			m_pRedKills->SetProgress( (float)(pRedTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
-			m_pBluKills->SetProgress( (float)(pBluTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+			SetDialogVariable( "RedScore", TFGameRules()->m_nDomScore_red );
+			SetDialogVariable( "BluScore", TFGameRules()->m_nDomScore_blue );
 
-			SetDialogVariable( "RedKills", pRedTeam->Get_Score() );
-			SetDialogVariable( "BluKills", pBluTeam->Get_Score() );
+			SetDialogVariable( "FragLimit", TFGameRules()->m_nDomScore_limit );
+			g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Score" ), 1, 1 );
 
-			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
-			{
-				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel  );
-				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_GGLevel" ), 1, 1 );
-			}
-			else
-			{
-				SetDialogVariable( "FragLimit", fraglimit.GetInt()  );
-				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Kills" ), 1, 1 );
-			}
-			SetDialogVariable( "killslabel", string1 );
+			SetDialogVariable( "scorelabel", string1 );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.1f;
 	}
 }
 
-ConVar uv1_1_x( "uv1_1_x", "1", FCVAR_CHEAT );
-ConVar uv2_1_x( "uv2_1_x", "1", FCVAR_CHEAT );
-ConVar uv2_2_x( "uv2_2_x", "1", FCVAR_CHEAT );
-ConVar uv1_2_x( "uv1_2_x", "1", FCVAR_CHEAT );
-
-ConVar uv1_1_y( "uv1_1_y", "1", FCVAR_CHEAT );
-ConVar uv2_1_y( "uv2_1_y", "1", FCVAR_CHEAT );
-ConVar uv2_2_y( "uv2_2_y", "1", FCVAR_CHEAT );
-ConVar uv1_2_y( "uv1_2_y", "1", FCVAR_CHEAT );
-
-ConVar vert0_x( "vert0_x", "1", FCVAR_CHEAT );
-ConVar vert1_x( "vert1_x", "1", FCVAR_CHEAT );
-ConVar vert2_x( "vert2_x", "1", FCVAR_CHEAT );
-ConVar vert3_x( "vert3_x", "1", FCVAR_CHEAT );
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFKillsProgressBlu::Paint()
+void CTFScoreProgressBlu::Paint()
 {
 	BaseClass::Paint();
 
@@ -243,7 +209,7 @@ void CTFKillsProgressBlu::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFKillsProgressRed::Paint()
+void CTFScoreProgressRed::Paint()
 {
 	BaseClass::Paint();
 
@@ -279,7 +245,7 @@ void CTFKillsProgressRed::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFKillsProgressBlu::CTFKillsProgressBlu(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
+CTFScoreProgressBlu::CTFScoreProgressBlu(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
 {
 	m_flProgress = 1.0f;
 	
@@ -295,7 +261,7 @@ CTFKillsProgressBlu::CTFKillsProgressBlu(Panel *parent, const char *panelName) :
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFKillsProgressRed::CTFKillsProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
+CTFScoreProgressRed::CTFScoreProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
 {
 	m_flProgress = 1.0f;
 

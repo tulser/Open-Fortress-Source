@@ -38,6 +38,7 @@
 #include "tf_team.h"
 #include "tf_gamestats.h"
 #include "tf_playerclass.h"
+#include "tf_weapon_builder.h"
 #endif
 
 ConVar tf_spy_invis_time( "tf_spy_invis_time", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
@@ -178,7 +179,7 @@ END_SEND_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCond ), TF_COND_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 32, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -805,13 +806,10 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	}
 
 	// Stops the drain hack.
-	if ( m_pOuter->IsPlayerClass( TF_CLASS_MEDIC ) )
+	CWeaponMedigun *pWeapon = ( CWeaponMedigun* )m_pOuter->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
+	if ( pWeapon && pWeapon->IsReleasingCharge() )
 	{
-		CWeaponMedigun *pWeapon = ( CWeaponMedigun* )m_pOuter->Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
-		if ( pWeapon && pWeapon->IsReleasingCharge() )
-		{
-			pWeapon->DrainCharge();
-		}
+		pWeapon->DrainCharge();
 	}
 
 	if ( InCondUber()  )
@@ -1887,9 +1885,6 @@ void CTFPlayerShared::StopHealing( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::IsProvidingInvuln( CTFPlayer *pPlayer )
 {
-	if ( !pPlayer->IsPlayerClass(TF_CLASS_MEDIC) )
-		return false;
-
 	CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
 	if ( !pWpn )
 		return false;
@@ -2073,6 +2068,17 @@ bool CTFPlayerShared::IsLoser( void )
 			return true;
 		}
 	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Engineer hauling check
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsHauling( void )
+{
+	if ( m_pOuter->m_bHauling )
+		return true;
+	
 	return false;
 }
 
@@ -2602,7 +2608,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			maxfbspeed = tf_spy_max_cloaked_speed.GetFloat();
 	}
 	
-	if (m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
+	if ( m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 			maxfbspeed = 750.0f;
 
 	// if we're in bonus time because a team has won, give the winners 110% speed and the losers 90% speed
@@ -2629,6 +2635,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			}
 		}
 	}
+
+	// hauling engineers move slower
+	if ( m_bHauling )
+		maxfbspeed *= 0.9f;
 
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );
@@ -2681,9 +2691,15 @@ bool CTFPlayer::HasTheFlag( void )
 //-----------------------------------------------------------------------------
 // Purpose: Return true if this player's allowed to build another one of the specified object
 //-----------------------------------------------------------------------------
-int CTFPlayer::CanBuild( int iObjectType )
+int CTFPlayer::CanBuild( int iObjectType, int iAltMode )
 {
 	if ( iObjectType < 0 || iObjectType >= OBJ_LAST )
+		return CB_UNKNOWN_OBJECT;
+
+	if ( iObjectType != OBJ_TELEPORTER && iAltMode > 0 )
+		return CB_UNKNOWN_OBJECT;
+
+	if ( iObjectType == OBJ_TELEPORTER && iAltMode > 1 )
 		return CB_UNKNOWN_OBJECT;
 
 #ifndef CLIENT_DLL
@@ -2697,10 +2713,11 @@ int CTFPlayer::CanBuild( int iObjectType )
 	}
 #endif
 
-	int iObjectCount = GetNumObjects( iObjectType );
+	int iObjectCount = GetNumObjects( iObjectType, iAltMode );
 
 	// Make sure we haven't hit maximum number
-	if ( iObjectCount >= GetObjectInfo( iObjectType )->m_nMaxObjects && GetObjectInfo( iObjectType )->m_nMaxObjects != -1 )
+	if ( iObjectCount >= GetObjectInfo( iObjectType )->m_nMaxObjects && 
+		GetObjectInfo( iObjectType )->m_nMaxObjects != -1 )
 	{
 		return CB_LIMIT_REACHED;
 	}
@@ -2710,7 +2727,7 @@ int CTFPlayer::CanBuild( int iObjectType )
 	// Make sure we have enough resources
 	if ( GetBuildResources() < iCost && of_infiniteammo.GetBool() == 0 )
 	{
-			return CB_NEED_RESOURCES;
+		return CB_NEED_RESOURCES;
 	}
 
 	return CB_CAN_BUILD;
@@ -2719,7 +2736,7 @@ int CTFPlayer::CanBuild( int iObjectType )
 //-----------------------------------------------------------------------------
 // Purpose: Get the number of objects of the specified type that this player has
 //-----------------------------------------------------------------------------
-int CTFPlayer::GetNumObjects( int iObjectType )
+int CTFPlayer::GetNumObjects( int iObjectType, int iAltMode )
 {
 	int iCount = 0;
 	for (int i = 0; i < GetObjectCount(); i++)
@@ -2727,7 +2744,7 @@ int CTFPlayer::GetNumObjects( int iObjectType )
 		if ( !GetObject(i) )
 			continue;
 
-		if ( GetObject(i)->GetType() == iObjectType )
+		if ( GetObject(i)->GetType() == iObjectType && GetObject(i)->GetAltMode() == iAltMode )
 		{
 			iCount++;
 		}
@@ -2895,44 +2912,43 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 {
 	bool bDoSkill = false;
 
-	switch( GetPlayerClass()->GetClassIndex() )
+	if ( GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY )
 	{
-	case TF_CLASS_SPY:
+		if ( m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime )
 		{
-			if ( m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime )
+			// Toggle invisibility
+			if ( m_Shared.InCond( TF_COND_STEALTHED ) )
 			{
-				// Toggle invisibility
-				if ( m_Shared.InCond( TF_COND_STEALTHED ) )
-				{
-					m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-					bDoSkill = true;
-				}
-				else if ( CanGoInvisible() && ( m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
-				{
-					m_Shared.AddCond( TF_COND_STEALTHED );
-					bDoSkill = true;
-				}
-
-				if ( bDoSkill )
-					m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
+				m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
+				bDoSkill = true;
 			}
-		}
-		break;
-
-	case TF_CLASS_DEMOMAN:
-		{
-			CTFPipebombLauncher *pPipebombLauncher = static_cast<CTFPipebombLauncher*>( Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) );
-
-			if ( pPipebombLauncher )
+			else if ( CanGoInvisible() && ( m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
 			{
-				pPipebombLauncher->SecondaryAttack();
+				m_Shared.AddCond( TF_COND_STEALTHED );
+				bDoSkill = true;
 			}
+
+			if ( bDoSkill )
+				m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
 		}
+	}
+
+#ifdef GAME_DLL
+	if ( GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER )
+	{
+		CTFWeaponBuilder *pBuilder = static_cast<CTFWeaponBuilder*>( Weapon_OwnsThisID( TF_WEAPON_BUILDER ) );
+
+		if ( pBuilder )
+			pBuilder->HaulingAttack();
+	}
+#endif
+
+	CTFPipebombLauncher *pPipebombLauncher = static_cast<CTFPipebombLauncher*>( Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) );
+
+	if ( pPipebombLauncher )
+	{
+		pPipebombLauncher->SecondaryAttack();
 		bDoSkill = true;
-		break;
-
-	default:
-		break;
 	}
 
 	return bDoSkill;

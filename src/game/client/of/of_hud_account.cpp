@@ -78,8 +78,8 @@ void CTFHudMoney::ApplySchemeSettings( IScheme *pScheme )
 	// load control settings...
 	LoadControlSettings( "resource/UI/HudMoney.res" );
 
-	m_pMoney = dynamic_cast<CTFLabel *>( FindChildByName( "Money" ) );
-	m_pMoneyShadow = dynamic_cast<CTFLabel *>( FindChildByName( "MoneyShadow" ) );
+	m_pMoney = dynamic_cast<CExLabel *>( FindChildByName( "Money" ) );
+	m_pMoneyShadow = dynamic_cast<CExLabel *>( FindChildByName( "MoneyShadow" ) );
 
 	m_nMoney	= -1;
 	m_flNextThink = 0.0f;

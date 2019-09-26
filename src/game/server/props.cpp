@@ -238,7 +238,7 @@ void CBaseProp::Precache( void )
 {
 	if ( GetModelName() == NULL_STRING )
 	{
-		Msg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		DevMsg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		SetModelName( AllocPooledString( "models/error.mdl" ) );
 	}
 
@@ -2529,7 +2529,7 @@ void CPhysicsProp::Precache( void )
 {
 	if ( GetModelName() == NULL_STRING )
 	{
-		Msg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		DevMsg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 	}
 	else
 	{
@@ -3426,7 +3426,7 @@ int PropBreakablePrecacheAll( string_t modelName )
 
 	if ( modelName == NULL_STRING )
 	{
-		Msg("Trying to precache breakable prop, but has no model name\n");
+		DevMsg("Trying to precache breakable prop, but has no model name\n");
 		return iBreakables;
 	}
 

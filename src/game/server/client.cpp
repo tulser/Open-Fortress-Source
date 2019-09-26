@@ -707,6 +707,7 @@ static ConCommand drawcross("drawcross", CC_DrawCross, "Draws a cross at the giv
 //------------------------------------------------------------------------------
 void kill_helper( const CCommand &args, bool bExplode )
 {
+	/*
 	if ( args.ArgC() > 1 && sv_cheats->GetBool() )
 	{
 		// Find the matching netname
@@ -724,12 +725,13 @@ void kill_helper( const CCommand &args, bool bExplode )
 	}
 	else
 	{
+	*/
 		CBasePlayer *pPlayer = UTIL_GetCommandClient();
 		if ( pPlayer )
 		{
 			pPlayer->CommitSuicide( bExplode );
 		}
-	}
+	//}
 }
 
 //------------------------------------------------------------------------------
@@ -1177,7 +1179,8 @@ void EnableNoClip( CBasePlayer *pPlayer )
 	// Disengage from hierarchy
 	pPlayer->SetParent( NULL );
 	pPlayer->SetMoveType( MOVETYPE_NOCLIP );
-	ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip ON\n");
+	//ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip ON\n");
+	ConColorMsg( Color( 238, 103, 256, 255 ), "noclip ON\n" );
 	pPlayer->AddEFlags( EFL_NOCLIP_ACTIVE );
 }
 
@@ -1203,7 +1206,8 @@ void CC_Player_NoClip( void )
 	pPlayer->SetMoveType( MOVETYPE_WALK );
 
 	Vector oldorigin = pPlayer->GetAbsOrigin();
-	ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip OFF\n");
+	//ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip OFF\n");
+	ConColorMsg( Color( 238, 103, 256, 255 ), "noclip OFF\n" );
 	if ( !TestEntityPosition( pPlayer ) )
 	{
 		Vector forward, right, up;
@@ -1223,7 +1227,7 @@ void CC_Player_NoClip( void )
 						{
 							if ( !FindPassableSpace( pPlayer, forward, -1, oldorigin ) )	// back
 							{
-								Msg( "Can't find the world\n" );
+								ConColorMsg( Color( 238, 163, 230, 255 ), "Can't find the world\n" );
 							}
 						}
 					}
@@ -1408,9 +1412,7 @@ CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitc
 	pPlayer->Teleport( NULL, &newang, NULL );
 	pPlayer->SnapEyeAngles( newang );
 
-#ifdef TF_DLL
 	static_cast<CTFPlayer*>( pPlayer )->DoAnimationEvent( PLAYERANIMEVENT_SNAP_YAW );
-#endif
 }
 
 
@@ -1456,7 +1458,7 @@ void CC_HurtMe_f(const CCommand &args)
 		iDamage = atoi( args[ 1 ] );
 	}
 
-	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_PREVENT_PHYSICS_FORCE ) );
+	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_GENERIC ) );
 }
 
 static ConCommand hurtme("hurtme", CC_HurtMe_f, "Hurts the player.\n\tArguments: <health to lose>", FCVAR_CHEAT);
