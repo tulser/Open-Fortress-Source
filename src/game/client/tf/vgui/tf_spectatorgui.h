@@ -52,6 +52,7 @@ public:
 	virtual bool ShouldShowPlayerLabel( int specmode ) { return false; }
 	void		 UpdateReinforcements( void );
 	virtual void ShowPanel(bool bShow);
+	virtual bool IsVisible(void);
 	virtual Color GetBlackBarColor( void ) { return Color(52,48,45, 255); }
 
 	void		UpdateKeyLabels( void );

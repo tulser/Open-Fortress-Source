@@ -26,6 +26,7 @@
 using namespace vgui;
 
 extern ConVar _cl_classmenuopen;
+extern ConVar cl_drawhud;
 
 const char *GetMapDisplayName( const char *mapName );
 
@@ -350,6 +351,13 @@ void CTFSpectatorGUI::UpdateKeyLabels( void )
 
 		m_pMapLabel->SetText( wLabel ); 
 	}
+}
+
+bool CTFSpectatorGUI::IsVisible(void)
+{
+	if ( !cl_drawhud.GetBool() )
+		return false;
+	return BaseClass::IsVisible();
 }
 
 //-----------------------------------------------------------------------------

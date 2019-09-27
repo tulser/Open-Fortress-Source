@@ -261,7 +261,7 @@ void CTFSniperRifle::HandleZooms( void )
 	}
 	int HoldToZoom = 0;
 #ifdef GAME_DLL
-		HoldToZoom = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
+		HoldToZoom = pPlayer->IsFakeClient() ? 0 : V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
 #else
 		HoldToZoom = V_atoi(of_holdtozoom.GetString());
 #endif	

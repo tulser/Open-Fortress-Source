@@ -262,8 +262,11 @@ CBasePlayer *CTFBFGProjectile::GetScorer( void )
 
 void CTFBFGProjectile::OnDataChanged(DataUpdateType_t updateType)
 {
-	CreateRocketTrails();
 	BaseClass::OnDataChanged(updateType);
+	if ( updateType == DATA_UPDATE_CREATED )
+	{
+		CreateRocketTrails();	
+	}
 }
 
 const char *CTFBFGProjectile::GetTrailParticleName(void)

@@ -62,6 +62,7 @@ public:
 
 	CNetworkVarForDerived( bool, m_bRespawning );
 
+	COutputEvent m_OnRespawn;
 private:
 	bool			m_bDisabled;
 	bool			m_bHide = 1;

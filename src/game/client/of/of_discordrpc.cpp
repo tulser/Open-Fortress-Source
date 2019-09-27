@@ -67,6 +67,7 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Mann vs Machine",
 	"Robot Destruction",
 	"Passtime",
+	"Player Destruction",
 	"Escort",
 	"Deathmatch",
 	"Team Deathmatch",
@@ -74,7 +75,8 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Gun Game",
 	"3 Wave",
 	"Zombie Survival",
-	"Coop"
+	"Coop",
+	"Randomizer"
 };
 
 CTFDiscordRPC g_discordrpc;
@@ -232,7 +234,7 @@ void CTFDiscordRPC::SetLogo( void )
 	{
 		for ( int i = 0; i < TF_GAMETYPE_LAST; i++ )
 		{
-			if ( TFGameRules( )->InGametype(i) )
+			if ( TFGameRules()->InGametype(i) )
 			{
 				pszGameType = g_aGameTypeNames_NonLocalized[i];
 			}

@@ -42,6 +42,8 @@ DEFINE_INPUTFUNC( FIELD_VOID, "Toggle", InputToggle ),
 
 // Outputs.
 
+DEFINE_OUTPUT( m_OnRespawn, "OnRespawn" ),
+
 END_DATADESC();
 
 //=============================================================================
@@ -108,6 +110,7 @@ CBaseEntity* CTFPowerup::Respawn( void )
 		SetNextThink( gpGlobals->curtime + GetRespawnDelay() );
 	else
 		SetNextThink( gpGlobals->curtime + fl_RespawnTime );
+	
 	return pReturn;
 }
 
@@ -126,6 +129,7 @@ void CTFPowerup::Materialize( void )
 		m_nRenderFX = kRenderFxNone;
 		RemoveEffects( EF_NODRAW );
 	}
+	m_OnRespawn.FireOutput( this, this );
 	EmitSound( STRING( m_iszSpawnSound ) );
 	m_bRespawning = false;
 	bInitialDelay = false;

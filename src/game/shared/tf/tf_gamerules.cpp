@@ -5430,7 +5430,7 @@ const char *CTFGameRules::GetTeamGoalString( int iTeam )
 const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 {
 	wchar_t *GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_UNDEFINED]);
-	if ( InGametype( TF_GAMETYPE_GG ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_GG ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_GG]);
 	else if ( InGametype( TF_GAMETYPE_DM ) )
 	{
@@ -5439,21 +5439,21 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		else
 			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DM]);
 	}
-	if ( InGametype( TF_GAMETYPE_CP ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
-	if ( InGametype( TF_GAMETYPE_CTF ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CTF]);
-	if ( InGametype( TF_GAMETYPE_ARENA ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ARENA ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
-	if ( InGametype( TF_GAMETYPE_ESC ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
-	if (InGametype(TF_GAMETYPE_PAYLOAD) && !m_bEscortOverride )
+	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !m_bEscortOverride )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_PAYLOAD]);
-	if ( InGametype( TF_GAMETYPE_COOP) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
-	if ( InGametype( TF_GAMETYPE_DOM) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_DOM) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DOM]);
-	if ( InGametype( TF_GAMETYPE_RDM) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_RDM) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_RDM]);
 	return GameType;
 }
