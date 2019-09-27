@@ -489,7 +489,7 @@ void C_SoundscapeSystem::DevReportSoundscapeName( int index )
 	{
 		pName = m_soundscapes[index]->GetName();
 	}
-	ConColorMsg( 1, Color( 255, 255, 175, 255 ), "Soundscape: %s\n", pName  );
+	ConColorMsg( 2, Color( 255, 255, 175, 255 ), "Soundscape: %s\n", pName  );
 }
 
 
