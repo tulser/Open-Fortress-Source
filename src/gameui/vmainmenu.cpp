@@ -1,18 +1,18 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VMainMenu.h"
+#include "vmainmenu.h"
 #include "UI_Shared.h"
-#include "EngineInterface.h"
-#include "VFooterPanel.h"
-#include "VHybridButton.h"
-#include "VFlyoutMenu.h"
-#include "vGenericConfirmation.h"
-#include "VAddons.h"
+#include "engineinterface.h"
+#include "vfooterpanel.h"
+#include "vhybridbutton.h"
+#include "vflyoutmenu.h"
+#include "vgenericconfirmation.h"
+#include "vaddons.h"
 //#include "VQuickJoin.h"
 //#include "basemodpanel.h"
 //#include "UIGameData.h"
@@ -21,10 +21,10 @@
 #include "vaddonassociation.h"
 
 //#include "VSignInDialog.h"
-#include "VGuiSystemModuleLoader.h"
+#include "vguisystemmoduleloader.h"
 //#include "VAttractScreen.h"
 #include "gamemodes.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #include "vgui/ILocalize.h"
 #include "vgui_controls/Label.h"

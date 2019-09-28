@@ -1,16 +1,16 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VFooterPanel.h"
+#include "vfooterpanel.h"
 #include "vgui/IPanel.h"
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/Controls.h"
 #include "vgui/ISurface.h"
-#include "vgui/ilocalize.h"
+#include "vgui/ILocalize.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -6,14 +6,14 @@
 //
 //=============================================================================//
 
-#if !defined( _X360 )
+#if defined(_WIN32) && !defined(_X360)
 #include <windows.h>
 #endif
 #include <stdio.h>
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include <vgui/VGUI.h>
 #include <vgui_controls/Controls.h>
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"

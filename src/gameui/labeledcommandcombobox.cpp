@@ -1,12 +1,12 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 // $NoKeywords: $
 //=============================================================================//
 
-#include "LabeledCommandComboBox.h"
-#include "EngineInterface.h"
+#include "labeledcommandcombobox.h"
+#include "engineinterface.h"
 #include <KeyValues.h>
 #include <vgui/ILocalize.h>
 

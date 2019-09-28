@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,8 +7,8 @@
 #include "cbase.h"
 #include <tier0/platform.h>
 #include "vgetlegacydata.h"
-#include "VGenericConfirmation.h"
-#include "EngineInterface.h"
+#include "vgenericconfirmation.h"
+#include "engineinterface.h"
 #include "vgui_controls/Label.h"
 #include "vgui/ISurface.h"
 

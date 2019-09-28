@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,7 +7,7 @@
 #ifndef __VGETLEGACYDATA_H__
 #define __VGETLEGACYDATA_H__
 
-#include "vgui_controls/CvarToggleCheckButton.h"
+#include "vgui_controls/cvartogglecheckbutton.h"
 #include "gameui_util.h"
 
 #include "basemodui.h"

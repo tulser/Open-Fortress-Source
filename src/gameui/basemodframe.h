@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -12,7 +12,7 @@
 #include "vgui_controls/Frame.h"
 #include "tier1/utllinkedlist.h"
 
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 
 namespace BaseModUI {
 

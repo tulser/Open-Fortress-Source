@@ -1,18 +1,18 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VAudioVideo.h"
-#include "VFooterPanel.h"
-#include "VDropDownMenu.h"
-#include "VSliderControl.h"
-#include "EngineInterface.h"
+#include "vaudiovideo.h"
+#include "vfooterpanel.h"
+#include "vdropdownmenu.h"
+#include "vslidercontrol.h"
+#include "engineinterface.h"
 #include "gameui_util.h"
 #include "vgui/ISurface.h"
-#include "VGenericConfirmation.h"
+#include "vgenericconfirmation.h"
 
 #ifdef _X360
 #include "xbox/xbox_launch.h"

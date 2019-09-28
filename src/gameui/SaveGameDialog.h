@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -11,7 +11,7 @@
 #pragma once
 #endif
 
-#include "BaseSaveGameDialog.h"
+#include "basesavegamedialog.h"
 #include "SaveGameBrowserDialog.h"
 #include "vgui_controls/KeyRepeat.h"
 
@@ -40,6 +40,8 @@ protected:
 //
 //
 
+/* No need for this class. Breaks Linux compatibililty
+
 class CSaveGameDialogXbox : public CSaveGameBrowserDialog
 {
 	DECLARE_CLASS_SIMPLE( CSaveGameDialogXbox, CSaveGameBrowserDialog );
@@ -61,5 +63,7 @@ private:
 	bool					m_bNewSaveAvailable;
 	SaveGameDescription_t	m_NewSaveDesc;
 };
+
+*/
 
 #endif // SAVEGAMEDIALOG_H

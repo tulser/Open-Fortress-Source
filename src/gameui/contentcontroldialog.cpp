@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,13 +8,13 @@
 
 #include <stdio.h>
 #include <memory.h>
-#if !defined( _X360 )
+#if defined(_WIN32) && !defined(_X360)
 #include <windows.h>
 #endif
 
-#include "ContentControlDialog.h"
+#include "contentcontroldialog.h"
 #include "checksum_md5.h"
-#include "EngineInterface.h"
+#include "engineinterface.h"
 
 #include <vgui/IInput.h>
 #include <vgui/ISystem.h>
@@ -98,7 +98,7 @@ void CContentControlDialog::Activate()
 void CContentControlDialog::ResetPassword()
 {
 	// Set initial value
-#ifndef _XBOX
+#if defined(_WIN32) && !defined(_X360)
 	HKEY key;
 	if ( ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Valve\\Half-Life\\Settings", 0, KEY_READ, &key))
 	{
@@ -207,7 +207,7 @@ void CContentControlDialog::OnClose()
 void CContentControlDialog::WriteToken( const char *str )
 {
 	// Set initial value
-#ifndef _XBOX
+#if defined(_WIN32) && !defined(_X360)
 	HKEY key;
 	if ( ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Valve\\Half-Life\\Settings", 0, KEY_WRITE, &key))
 	{
@@ -234,7 +234,7 @@ void CContentControlDialog::HashPassword(const char *newPW, char *hashBuffer, in
 	MD5Context_t ctx;
 
 	MD5Init( &ctx );
-	MD5Update( &ctx, (unsigned char const *)(LPCSTR)newPW, strlen( newPW ) );
+	MD5Update( &ctx, (unsigned char const *)newPW, strlen( newPW ) );
 	MD5Final( md5_hash, &ctx );
 
 	char hex[ 128 ];

@@ -1,46 +1,50 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Implements all the functions exported by the GameUI dll
 //
 // $NoKeywords: $
 //===========================================================================//
 
-#if !defined( _X360 )
-#include <windows.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#if !defined(_WIN32) && !defined(_X360)
+#include <sys/io.h>
+#include <sys/time.h>
+#include <unistd.h>
+#else
+#include <windows.h>
 #include <io.h>
-#include <tier0/dbg.h>
 #include <direct.h>
+#endif
+#include <tier0/dbg.h>
 
 #ifdef SendMessage
 #undef SendMessage
 #endif
 																
-#include "FileSystem.h"
-#include "GameUI_Interface.h"
-#include "Sys_Utils.h"
+#include "filesystem.h"
+#include "gameui_interface.h"
+#include "sys_utils.h"
 #include "string.h"
 #include "tier0/icommandline.h"
 
 // interface to engine
-#include "EngineInterface.h"
+#include "engineinterface.h"
 
-#include "VGuiSystemModuleLoader.h"
-#include "bitmap/TGALoader.h"
+#include "vguisystemmoduleloader.h"
+#include "bitmap/tgaloader.h"
 
-#include "GameConsole.h"
-#include "LoadingDialog.h"
-#include "CDKeyEntryDialog.h"
-#include "ModInfo.h"
+#include "gameconsole.h"
+#include "loadingdialog.h"
+#include "cdkeyentrydialog.h"
+#include "modinfo.h"
 #include "game/client/IGameClientExports.h"
 #include "materialsystem/imaterialsystem.h"
 #include "ixboxsystem.h"
 #include "iachievementmgr.h"
 #include "IGameUIFuncs.h"
-#include "IEngineVGUI.h"
+#include "ienginevgui.h"
 #include "video/ivideoservices.h"
 
 // vgui2 interface
@@ -62,7 +66,7 @@
 #include "game/server/iplayerinfo.h"
 #include "avi/iavi.h"
 
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "basemodui.h"
 typedef BaseModUI::CBaseModPanel UI_BASEMOD_PANEL_CLASS;
 inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() { return UI_BASEMOD_PANEL_CLASS::GetSingleton(); }
@@ -352,9 +356,12 @@ void CGameUI::PlayGameStartupSound()
 	// did we find any?
 	if ( fileNames.Count() > 0 )
 	{
+		int index;
+		#if defined(_WIN32) 
 		SYSTEMTIME SystemTime;
 		GetSystemTime( &SystemTime );
-		int index = SystemTime.wMilliseconds % fileNames.Count();
+		index = SystemTime.wMilliseconds % fileNames.Count();
+		#endif
 
 		if ( fileNames.IsValidIndex( index ) && fileNames[index] )
 		{
@@ -463,8 +470,7 @@ bool CGameUI::FindPlatformDirectory(char *platformDir, int bufferSize)
 	if ( platformDir[0] == '\0' )
 	{
 		// we're not under steam, so setup using path relative to game
-		if ( IsPC() )
-		{
+		#if defined(_WIN32) 
 			if ( ::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), platformDir, bufferSize ) )
 			{
 				char *lastslash = strrchr(platformDir, '\\'); // this should be just before the filename
@@ -475,19 +481,17 @@ bool CGameUI::FindPlatformDirectory(char *platformDir, int bufferSize)
 					return true;
 				}
 			}
-		}
-		else
-		{
-			// xbox fetches the platform path from exisiting platform search path
-			// path to executeable is not correct for xbox remote configuration
+		#else
+			// used previously with xbox, no idea if this will work on linux.
+			// we don't really compile to xbox anymore so whatever
 			if ( g_pFullFileSystem->GetSearchPath( "PLATFORM", false, platformDir, bufferSize ) )
 			{
-				char *pSeperator = strchr( platformDir, ';' );
+				char *pSeperator = strrchr( platformDir, '//' );
 				if ( pSeperator )
 					*pSeperator = '\0';
 				return true;
 			}
-		}
+		#endif
 
 		Warning( "Unable to determine platform directory\n" );
 		return false;

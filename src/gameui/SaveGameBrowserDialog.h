@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,7 +19,7 @@
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/KeyRepeat.h"
 
-#include "BasePanel.h"
+#include "basepanel.h"
 
 class CSaveGameBrowserDialog;
 

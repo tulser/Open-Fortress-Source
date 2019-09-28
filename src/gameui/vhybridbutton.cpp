@@ -1,22 +1,22 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "basemodpanel.h"
-#include "VFooterPanel.h"
-#include "VFlyoutMenu.h"
-#include "EngineInterface.h"
+#include "vfooterpanel.h"
+#include "vflyoutmenu.h"
+#include "engineinterface.h"
 #include "vgui/ISurface.h"
 #include "vgui_controls/Tooltip.h"
-#include "vgui/IVgui.h"
+#include "vgui/IVGui.h"
 #include "tier1/KeyValues.h"
-#include "vgui/ilocalize.h"
-#include "VDropDownMenu.h"
-#include "VSliderControl.h"
+#include "vgui/ILocalize.h"
+#include "vdropdownmenu.h"
+#include "vslidercontrol.h"
 #include "gamemodes.h"
 
 #ifndef _X360

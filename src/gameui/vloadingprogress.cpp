@@ -1,11 +1,11 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 #include "cbase.h"
-#include "VLoadingProgress.h"
-#include "EngineInterface.h"
+#include "vloadingprogress.h"
+#include "engineinterface.h"
 #include "vgui_controls/Label.h"
 #include "vgui_controls/ProgressBar.h"
 #include "vgui/ISurface.h"
@@ -15,8 +15,8 @@
 #include "gameui_util.h"
 #include "KeyValues.h"
 #include "fmtstr.h"
-#include "FileSystem.h"
-#include "GameUI_Interface.h"
+#include "filesystem.h"
+#include "gameui_interface.h"
 #include "loadingtippanel.h"
 #include "tf_tips.h"
 

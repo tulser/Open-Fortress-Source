@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,12 +7,12 @@
 
 #undef fopen
 
-#if !defined( _X360 )
+#if defined(_WIN32) && !defined(_X360)
 #include <windows.h> // SRC only!!
 #endif
 
-#include "OptionsSubMultiplayer.h"
-#include "MultiplayerAdvancedDialog.h"
+#include "optionssubmultiplayer.h"
+#include "multiplayeradvanceddialog.h"
 #include <stdio.h>
 
 #include <vgui_controls/Button.h>
@@ -27,25 +27,25 @@
 #include <vgui_controls/ImagePanel.h>
 #include <vgui_controls/FileOpenDialog.h>
 #include <vgui_controls/MessageBox.h>
-#include <vgui/IVgui.h>
+#include <vgui/IVGui.h>
 #include <vgui/ILocalize.h>
 #include <vgui/IPanel.h>
 #include <vgui_controls/MessageBox.h>
 
-#include "CvarTextEntry.h"
-#include "CvarToggleCheckButton.h"
-#include "CvarSlider.h"
-#include "LabeledCommandComboBox.h"
-#include "FileSystem.h"
-#include "EngineInterface.h"
-#include "BitmapImagePanel.h"
-#include "UtlBuffer.h"
-#include "ModInfo.h"
+#include "cvartextentry.h"
+#include "cvartogglecheckbutton.h"
+#include "cvarslider.h"
+#include "labeledcommandcombobox.h"
+#include "filesystem.h"
+#include "engineinterface.h"
+#include "bitmapimagepanel.h"
+#include "utlbuffer.h"
+#include "modinfo.h"
 #include "tier1/convar.h"
 
 
-#include "materialsystem/IMaterial.h"
-#include "materialsystem/IMesh.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imesh.h"
 #include "materialsystem/imaterialvar.h"
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.  For Spray Import.

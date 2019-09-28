@@ -1,12 +1,12 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 
-#include "BaseSaveGameDialog.h"
-#include "FileSystem.h"
+#include "basesavegamedialog.h"
+#include "filesystem.h"
 #include "savegame_version.h"
 #include "vgui_controls/PanelListPanel.h"
 #include "vgui_controls/Label.h"
@@ -16,9 +16,8 @@
 #include "tier1/utlbuffer.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "FileSystem.h"
 
-#include "MouseMessageForwardingPanel.h"
+#include "mousemessageforwardingpanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

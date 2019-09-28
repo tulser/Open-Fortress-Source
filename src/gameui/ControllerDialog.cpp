@@ -1,11 +1,11 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=============================================================================//
 
 #include "cbase.h"
-#include "BasePanel.h"
+#include "basepanel.h"
 #include "ControllerDialog.h"
 
 using namespace vgui;

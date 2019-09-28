@@ -1,18 +1,18 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VAttractScreen.h"
+#include "vattractscreen.h"
 //#include "VSignInDialog.h"
-#include "EngineInterface.h"
+#include "engineinterface.h"
 #include "inputsystem/iinputsystem.h"
 #include "vgui_controls/Label.h"
-#include "vgui_controls/imagepanel.h"
-#include "VGenericConfirmation.h"
-#include "VFooterPanel.h"
+#include "vgui_controls/ImagePanel.h"
+#include "vgenericconfirmation.h"
+#include "vfooterpanel.h"
 #include "vgui/ISurface.h"
 #include "gameui_util.h"
 #include "tier0/icommandline.h"

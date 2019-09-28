@@ -48,6 +48,10 @@ ipch
 *.xcodeproj
 .DS_Store
 *.project
+*.workspace
+*.json
+compile_flags.txt
+.codelite/
 *.vsp
 
 # diff stuff
@@ -75,6 +79,7 @@ ipch
 /src/game/server/Release_open_fortress/*
 /src/gameui/Debug_open_fortress/*
 /src/gameui/Release_open_fortress/*
+/src/gameui/obj_gameui_linux32/*
 /src/mathlib/Debug/*
 /src/mathlib/Release/*
 /src/mathlib/obj_mathlib_osx32/*

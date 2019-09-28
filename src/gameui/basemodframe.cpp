@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,11 +7,11 @@
 #include "cbase.h"
 #include <ctype.h>
 #include "basemodframe.h"
-#include "basemodpanel.h"
-#include "EngineInterface.h"
+#include "BaseModPanel.h"
+#include "engineinterface.h"
 
-#include "VFooterPanel.h"
-#include "VGenericConfirmation.h"
+#include "vfooterpanel.h"
+#include "vgenericconfirmation.h"
 //#include "VFlyoutMenu.h"
 #include "IGameUIFuncs.h"
 
@@ -21,12 +21,12 @@
 #include "vgui/IInput.h"
 #include "vgui_controls/Tooltip.h"
 #include "vgui_controls/ImagePanel.h"
-#include "vgui/ilocalize.h"
+#include "vgui/ILocalize.h"
 
 #include "filesystem.h"
 #include "fmtstr.h"
 #include "cdll_util.h"
-#include "materialsystem\itexture.h"
+#include "materialsystem/itexture.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

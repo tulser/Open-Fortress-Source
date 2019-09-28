@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -6,10 +6,10 @@
 
 #include "cbase.h"
 #include "CommentaryExplanationDialog.h"
-#include "BasePanel.h"
+#include "basepanel.h"
 #include "convar.h"
-#include "EngineInterface.h"
-#include "GameUI_Interface.h"
+#include "engineinterface.h"
+#include "gameui_interface.h"
 #include "vgui/ISurface.h"
 #include "vgui/IInput.h"
 

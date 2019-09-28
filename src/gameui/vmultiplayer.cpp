@@ -1,22 +1,22 @@
-//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VMultiplayer.h"
-#include "VFooterPanel.h"
-#include "VDropDownMenu.h"
-#include "VSliderControl.h"
-#include "VHybridButton.h"
+#include "vmultiplayer.h"
+#include "vfooterpanel.h"
+#include "vdropdownmenu.h"
+#include "vslidercontrol.h"
+#include "vhybridbutton.h"
 #include "vgui_controls/fileopendialog.h"
 #include "vgui_controls/textentry.h"
 #include "vgui_controls/combobox.h"
 #include "vgui_controls/imagepanel.h"
 #include "gameui_util.h"
 #include "vgui/ISurface.h"
-#include "EngineInterface.h"
+#include "engineinterface.h"
 #include "filesystem.h"
 #include "fmtstr.h"
 #include "cdll_util.h"
