@@ -29,6 +29,7 @@ protected:
 
 private:
 	CMDLPanel *m_pMercPanel;
+	MESSAGE_FUNC_PTR( OnControlModified, "ControlModified", panel );
 };
 
 };

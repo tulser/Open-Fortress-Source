@@ -1,5 +1,6 @@
 #include "cbase.h"
 #include "vloadout.h"
+#include "cvarslider.h"
 
 using namespace vgui;
 using namespace BaseModUI;
@@ -61,7 +62,10 @@ void Loadout::PaintBackground()
 
 	int x, y, wide, tall;
 	pPanel->GetBounds( x, y, wide, tall );
-	DrawBlackBackground( x, y, wide, tall );
+	if ( engine->IsConnected() )
+		DrawSmearBackground( x, y, wide, tall );
+	else
+		DrawBlackBackground( x, y, wide, tall );
 }
 
 void Loadout::PerformLayout()
@@ -209,4 +213,12 @@ void Loadout::OnCommand( const char* command )
 	{
 		OnKeyCodePressed( KEY_XBUTTON_B );
 	}
+}
+
+void Loadout::OnControlModified( Panel* panel )
+{
+	PostActionSignal( new KeyValues( "ApplyButtonEnable" ) );
+
+	CCvarSlider* pVar = dynamic_cast< CCvarSlider *>( panel);
+	pVar->ApplyChanges();
 }
