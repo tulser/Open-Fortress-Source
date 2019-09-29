@@ -1,3 +1,0 @@
-#!/bin/bash
-
-devtools/bin/vpc /ofd +game /mksln game_linux /f
