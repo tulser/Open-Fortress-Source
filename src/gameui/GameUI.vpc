@@ -266,16 +266,16 @@ $Project "GameUI"
 	
 	$Folder	"Link Libraries" [$WIN32]
 	{
-		$File	"$SRCDIR\lib\public\HLLib.lib"
-		$File	"$SRCDIR\lib\public\bitmap.lib"
-		$File	"$SRCDIR\lib\common\jpeglib.lib"
-		$File	"$SRCDIR\lib\public\mathlib.lib"
-		$File	"$SRCDIR\lib\public\tier2.lib"
-		$File	"$SRCDIR\lib\public\tier3.lib"
-		$File	"$SRCDIR\lib\public\dmxloader.lib"
-		$File	"$SRCDIR\lib\public\vgui_controls.lib"
-		$File	"$SRCDIR\lib\public\matsys_controls.lib"
-		$File	"$SRCDIR\lib\public\vtf.lib"
+		$Lib	"$SRCDIR\lib\public\HLLib.lib"
+		$Lib	"$SRCDIR\lib\public\bitmap.lib"
+		$Lib	"$SRCDIR\lib\common\jpeglib.lib"
+		$Lib	"$SRCDIR\lib\public\mathlib.lib"
+		$Lib	"$SRCDIR\lib\public\tier2.lib"
+		$Lib	"$SRCDIR\lib\public\tier3.lib"
+		$Lib	"$SRCDIR\lib\public\dmxloader.lib"
+		$Lib	"$SRCDIR\lib\public\vgui_controls.lib"
+		$Lib	"$SRCDIR\lib\public\matsys_controls.lib"
+		$Lib	"$SRCDIR\lib\public\vtf.lib"
 		$ImpLib "$SRCDIR\lib\public\steam_api"
 	}
 }
