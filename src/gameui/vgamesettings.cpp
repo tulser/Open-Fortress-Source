@@ -36,8 +36,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar ui_game_allow_create_public( "ui_game_allow_create_public", IsPC() ? "1" : "0", FCVAR_DEVELOPMENTONLY, "When set user can create public lobbies instead of matching" );
-ConVar ui_game_allow_create_random( "ui_game_allow_create_random", "1", FCVAR_DEVELOPMENTONLY, "When set, creating a game will pick a random mission" );
+ConVar ui_game_allow_create_public( "ui_game_allow_create_public", IsPC() ? "1" : "0", FCVAR_CHEAT, "When set user can create public lobbies instead of matching" );
+ConVar ui_game_allow_create_random( "ui_game_allow_create_random", "1", FCVAR_CHEAT, "When set, creating a game will pick a random mission" );
 
 using namespace vgui;
 using namespace BaseModUI;

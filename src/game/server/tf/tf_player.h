@@ -659,7 +659,7 @@ public:
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 
 	// for chat particle bubble
-	CNetworkVar(bool, m_bChatting);
+	CNetworkVar( bool, m_bChatting );
 
 	///==HL2 PORT START==///
 

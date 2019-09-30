@@ -151,9 +151,9 @@ ConVar xbox_install_status( "xbox_install_status", "0", 0, "Show install status"
 #endif
 
 // Use for show demos to force the correct campaign poster
-ConVar demo_campaign_name( "demo_campaign_name", "L4D2C5", FCVAR_DEVELOPMENTONLY, "Short name of campaign (i.e. L4D2C5), used to show correct poster in demo mode." );
+ConVar demo_campaign_name( "demo_campaign_name", "L4D2C5", FCVAR_CHEAT, "Short name of campaign (i.e. L4D2C5), used to show correct poster in demo mode." );
 
-ConVar ui_lobby_noresults_create_msg_time( "ui_lobby_noresults_create_msg_time", "2.5", FCVAR_DEVELOPMENTONLY );
+ConVar ui_lobby_noresults_create_msg_time( "ui_lobby_noresults_create_msg_time", "2.5", FCVAR_CHEAT );
 
 ConVar ui_scaling	( "ui_scaling", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Scales VGUI elements with different screen resolutions." );
 

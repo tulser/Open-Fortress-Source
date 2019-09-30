@@ -367,6 +367,8 @@ public:
 	// True if it has a min/max setting
 	bool						GetMin( float& minVal ) const;
 	bool						GetMax( float& maxVal ) const;
+	void						SetMin( float min );
+    void						SetMax( float max );
 	const char					*GetDefault( void ) const;
 	void						SetDefault( const char *pszDefault );
 
@@ -416,6 +418,23 @@ private:
 	FnChangeCallback_t			m_fnChangeCallback;
 };
 
+//-----------------------------------------------------------------------------
+// Purpose: Set a convar's bound
+//-----------------------------------------------------------------------------
+FORCEINLINE_CVAR void ConVar::SetMin( float min )
+{
+    m_pParent->m_bHasMin = true;
+    m_pParent->m_fMinVal = min;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Set a convar's bound
+//-----------------------------------------------------------------------------
+FORCEINLINE_CVAR void ConVar::SetMax( float max )
+{
+    m_pParent->m_bHasMax = true;
+    m_pParent->m_fMaxVal = max;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Return ConVar value as a float

@@ -790,15 +790,15 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 				}			
 				break;
 			}
-		case TF_DMG_TAUNT_HADUKEN:
+		case TF_DMG_CUSTOM_TAUNTATK_HADOUKEN:
 			Q_strncpy( msg.szIcon, "d_taunt_pyro", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
-		case TF_DMG_TAUNT_POW:
+		case TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON:
 			Q_strncpy( msg.szIcon, "d_taunt_heavy", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
-		case TF_DMG_TAUNT_FENCING:
+		case TF_DMG_CUSTOM_TAUNTATK_FENCING:
 			Q_strncpy( msg.szIcon, "d_taunt_spy", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;

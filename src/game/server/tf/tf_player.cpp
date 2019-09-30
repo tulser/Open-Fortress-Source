@@ -2258,7 +2258,7 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 								if ( ent->IsPlayer() && ent != this )
 								{
 									// special damage type to bypass uber or spawn protection in DM
-									CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+									CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
 									ent->TakeDamage( info );
 								}
 							}
@@ -2404,7 +2404,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 					if ( ent->IsPlayer() && ent != this )
 					{
 						// special damage type to bypass uber or spawn protection in DM
-						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_TELEFRAG );
+						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
 						ent->TakeDamage( info );
 					}
 			}	
@@ -4104,13 +4104,13 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		bool bAllowDamage = false;
 
 		// in deathmatch, ubers need to be destroyed on spawning players
-		if ( info.GetDamageCustom() == TF_DMG_TELEFRAG )
+		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TELEFRAG )
 		{
 			bAllowDamage = true;
 		}
 		
 		// func_croc
-		if ( info.GetDamageCustom() == TF_DMG_CROCODILE )
+		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TELEFRAG )
 		{
 			bAllowDamage = true;
 		}
@@ -4170,7 +4170,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				Warning( "    CRITICAL!\n");
 			}
-			if ( bitsCustomDamage & TF_DMG_CRIT_POWERUP )
+			if ( bitsCustomDamage & TF_DMG_CUSTOM_CRIT_POWERUP )
 				flDamage = info.GetDamage() * ofd_crit_multiplier.GetFloat();
 			else
 				flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
@@ -4862,15 +4862,15 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszCustomDeath = "customdeath:burning";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_POW )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON )
 		{
 			pszCustomDeath = "customdeath:taunt_heavy";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_HADUKEN )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_HADOUKEN )
 		{
 			pszCustomDeath = "customdeath:taunt_pyro";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_FENCING )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_FENCING )
 		{
 			pszCustomDeath = "customdeath:taunt_spy";
 		}
@@ -4926,15 +4926,15 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszCustomDeath = "customdeath:burning";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_POW )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON )
 		{
 			pszCustomDeath = "customdeath:taunt_heavy";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_HADUKEN )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_HADOUKEN )
 		{
 			pszCustomDeath = "customdeath:taunt_pyro";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_TAUNT_FENCING )
+		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TAUNTATK_FENCING )
 		{
 			pszCustomDeath = "customdeath:taunt_spy";
 		}
@@ -7912,7 +7912,7 @@ void CTFPlayer::TauntEffectThink()
 
 					vecDamagePos = tr.endpos;
 
-					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_TAUNT_POW );
+					CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, 500, DMG_BULLET, TF_DMG_CUSTOM_TAUNTATK_HIGH_NOON );
 					pEntity->TakeDamage( info );
 				}
 			}
@@ -7945,7 +7945,7 @@ void CTFPlayer::TauntEffectThink()
 				Vector vecDamagePos = WorldSpaceCenter();
 				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
 
-				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, DMG_IGNITE, TF_DMG_TAUNT_HADUKEN) ;
+				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, DMG_IGNITE, TF_DMG_CUSTOM_TAUNTATK_HADOUKEN) ;
 				pEntity->TakeDamage( info );
 			}
 			m_iTaunt = -1;
@@ -7988,7 +7988,7 @@ void CTFPlayer::TauntEffectThink()
 				Vector vecDamagePos = WorldSpaceCenter();
 				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
 
-				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, DMG_SLASH, TF_DMG_TAUNT_FENCING );
+				CTakeDamageInfo info( this, this, GetActiveTFWeapon(), vecForce, vecDamagePos, flDamage, DMG_SLASH, TF_DMG_CUSTOM_TAUNTATK_FENCING );
 				pEntity->TakeDamage( info );
 			}
 			switch ( m_iTauntLayer )

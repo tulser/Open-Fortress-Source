@@ -101,7 +101,7 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
                                       // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
                                       "always",
 #endif // TF_DLL
-                                      FCVAR_NONE,
+                                      FCVAR_CHEAT,
                                       "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
                                       "  disallow : Always disallow\n"
 #ifdef TF_DLL
@@ -629,13 +629,16 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 	}
 #endif // TF_DLL
 
+	char const *comparename = inputdata.value.String();
+
+	if ( !Q_strncmp( comparename, "rcon", 4 ) || !Q_strncmp( comparename, "admin", 5 ) || !Q_strncmp( comparename, "sm", 2 ) )
+	{
+		return;
+	}
+
 	if ( bAllowed )
 	{
 		engine->ServerCommand( UTIL_VarArgs( "%s\n", inputdata.value.String() ) );
-	}
-	else
-	{
-		Warning( "point_servercommand usage blocked by sv_allow_point_servercommand setting\n" );
 	}
 }
 

@@ -433,7 +433,7 @@ int	CTFBaseProjectile::GetCustomDamageType()
 { 
 	if ( m_bCritical >= 2)
 	{
-		return TF_DMG_CRIT_POWERUP;
+		return TF_DMG_CUSTOM_CRIT_POWERUP;
 	}
 	else
 	{

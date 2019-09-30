@@ -387,6 +387,8 @@ public:
 	// I can't use my current weapon anymore. Switch me to the next best weapon.
 	bool SwitchToNextBestWeapon(CBaseCombatWeapon *pCurrent);
 
+	void	ApplyAirblastImpulse( const Vector &vec );
+
 	// This is a hack to copy the relationship strings used by monstermaker
 	void SetRelationshipString( string_t theString ) { m_RelationshipString = theString; }
 

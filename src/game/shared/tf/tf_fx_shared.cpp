@@ -227,7 +227,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		
 		if ( pWeapon->IsCurrentAttackACrit() >= 2 || bCritical >= 2 )
 		{
-			nCustomDamageType |= TF_DMG_CRIT_POWERUP;
+			nCustomDamageType |= TF_DMG_CUSTOM_CRIT_POWERUP;
 		}		
 	}
 

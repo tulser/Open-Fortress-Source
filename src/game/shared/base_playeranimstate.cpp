@@ -40,16 +40,16 @@
 ConVar mp_feetyawrate( 
 	"mp_feetyawrate", 
 	"720", 
-	FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, 
+	FCVAR_REPLICATED | FCVAR_CHEAT, 
 	"How many degrees per second that we can turn our feet or upper body." );
 
 ConVar mp_facefronttime( 
 	"mp_facefronttime", 
 	"3", 
-	FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, 
+	FCVAR_REPLICATED | FCVAR_CHEAT, 
 	"After this amount of time of standing in place but aiming to one side, go ahead and move feet to face upper body." );
 
-ConVar mp_ik( "mp_ik", "1", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY, "Use IK on in-place turns." );
+ConVar mp_ik( "mp_ik", "1", FCVAR_REPLICATED | FCVAR_CHEAT, "Use IK on in-place turns." );
 
 // Pose parameters stored for debugging.
 float g_flLastBodyPitch, g_flLastBodyYaw, m_flLastMoveYaw;

@@ -342,7 +342,7 @@ void CTFWeaponBaseMelee::Smack( void )
 			iDmgType |= DMG_CRITICAL;
 			if ( IsCurrentAttackACrit() >= 2 )
 
-			iCustomDamage |= TF_DMG_CRIT_POWERUP;
+			iCustomDamage |= TF_DMG_CUSTOM_CRIT_POWERUP;
 		}
 		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );
 		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * tf_meleeattackforcescale.GetFloat() );

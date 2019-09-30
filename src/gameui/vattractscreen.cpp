@@ -100,10 +100,10 @@ static void ChangeGamers();
 
 
 // safe to reset timeout to TCR 003: 120 seconds
-ConVar sys_attract_mode_timeout( "sys_attract_mode_timeout", "120", FCVAR_DEVELOPMENTONLY );
+ConVar sys_attract_mode_timeout( "sys_attract_mode_timeout", "120", FCVAR_CHEAT );
 
 #if defined( _X360 )
-CON_COMMAND_F( ui_force_attract, "", FCVAR_DEVELOPMENTONLY )
+CON_COMMAND_F( ui_force_attract, "", FCVAR_CHEAT )
 {
 	// for development only testing, force the attract mode to beign its timeout
 	CAttractScreen* pAttractScreen = static_cast< CAttractScreen* >( CBaseModPanel::GetSingleton().GetWindow( WT_ATTRACTSCREEN ) );

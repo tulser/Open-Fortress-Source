@@ -369,7 +369,11 @@ void CSoundPatch::Init( IRecipientFilter *pFilter, CBaseEntity *pEnt, int channe
 		pSoundName = params.soundname;
 		m_soundlevel = params.soundlevel;
 
-		m_entityChannel = params.channel;
+		// TERROR: if we say we want CHAN_USER_BASE + N, we mean it!
+		if ( m_entityChannel < CHAN_USER_BASE )
+		{
+			m_entityChannel = params.channel;
+		}
 	}
 	else
 	{

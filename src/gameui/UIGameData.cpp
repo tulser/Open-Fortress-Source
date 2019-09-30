@@ -7,8 +7,8 @@ extern const char *COM_GetModDirectory( void );
 
 ConVar x360_audio_english("x360_audio_english", "0", 0, "Keeps track of whether we're forcing english in a localized language." );
 
-ConVar demo_ui_enable( "demo_ui_enable", "", FCVAR_DEVELOPMENTONLY, "Suffix for the demo UI" );
-ConVar demo_connect_string( "demo_connect_string", "", FCVAR_DEVELOPMENTONLY, "Connect string for demo UI" );
+ConVar demo_ui_enable( "demo_ui_enable", "", FCVAR_CHEAT, "Suffix for the demo UI" );
+ConVar demo_connect_string( "demo_connect_string", "", FCVAR_CHEAT, "Connect string for demo UI" );
 
 ///Asyncronous Operations
 

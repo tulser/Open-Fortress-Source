@@ -145,7 +145,7 @@ ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle
 ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar ofd_allow_allclass_pickups 	( "ofd_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non Merc Classes can pickup weapons.");
-ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
+ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
 ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
 ConVar ofe_payload_override			( "ofe_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
@@ -2297,7 +2297,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		// Check that the explosion can 'see' this entity.
 		vecSpot = pEntity->BodyTarget( vecSrc, false );
-		UTIL_TraceLine( vecSrc, vecSpot, MASK_RADIUS_DAMAGE, info.GetInflictor(), COLLISION_GROUP_PROJECTILE, &tr );
+		CTraceFilterIgnorePlayers filter( info.GetInflictor(), COLLISION_GROUP_PROJECTILE );
+		UTIL_TraceLine( vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 
 		if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
 			continue;
@@ -2319,7 +2320,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			if ( ofd_mutators.GetInt() == ROCKET_ARENA && !TFGameRules()->IsGGGamemode() )
 				bInstantKill = true;
 		}
-		else if ( pEntity->IsPlayer() )
+		else if ( pEntity->IsPlayer() || pEntity->IsNPC() )
 		{
 			// Use whichever is closer, absorigin or worldspacecenter
 			float flToWorldSpaceCenter = ( vecSrc - pEntity->WorldSpaceCenter() ).Length();

@@ -92,6 +92,9 @@ CTFRocketLauncher::CTFRocketLauncher()
 
 CTFSuperRocketLauncher::CTFSuperRocketLauncher()
 {
+#ifdef CLIENT_DLL
+	m_pEffect = NULL;
+#endif
 	m_bReloadsSingly = false;
 	m_flLastPingSoundTime = 0;
 }
@@ -267,6 +270,7 @@ void CTFRocketLauncher::DrawCrosshair( void )
 
 #endif
 
+
 void CTFSuperRocketLauncher::AddRocket( CTFBaseRocket *pRocket )
 {
 	RocketHandle hHandle;
@@ -290,9 +294,11 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 #ifdef CLIENT_DLL
 	else if ( m_flLastPingSoundTime <= gpGlobals->curtime )
 	{
-		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-		if ( pLocalPlayer && pLocalPlayer == GetOwner() && pLocalPlayer->GetViewModel()->ParticleProp() )
-			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission(); 
+		if ( m_pEffect )
+		{
+			ParticleProp()->StopEmission( m_pEffect );
+			m_pEffect = NULL;
+		}
 	}
 #endif
 	BaseClass::ItemPostFrame();
@@ -322,8 +328,14 @@ void CTFSuperRocketLauncher::SecondaryAttack( void )
 			{
 				if ( pLocalPlayer->GetViewModel() )
 				{
-					pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission();
-					pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
+					if ( m_pEffect )
+					{
+						ParticleProp()->StopEmission( m_pEffect );
+						m_pEffect = NULL;
+					}
+
+					if ( !m_pEffect )
+						m_pEffect = pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
 				}
 			}
 #endif

@@ -667,7 +667,7 @@ void CObjectTeleporter::TeleporterThink( void )
 					// Telefrag all enemy players we've found
 					for ( int player = 0; player < hPlayersToKill.Count(); player++ )
 					{
-						hPlayersToKill[player]->TakeDamage(CTakeDamageInfo(pTeleportingPlayer, this, 1000, DMG_ACID | DMG_BLAST | TF_DMG_TELEFRAG ) );
+						hPlayersToKill[player]->TakeDamage(CTakeDamageInfo(pTeleportingPlayer, this, 1000, DMG_ACID | DMG_BLAST | TF_DMG_CUSTOM_TELEFRAG ) );
 					}
 
 					pTeleportingPlayer->Teleport( &newPosition, &(GetAbsAngles()), &vec3_origin );

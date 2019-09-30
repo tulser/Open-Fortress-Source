@@ -54,17 +54,19 @@
 #define TF_FLAMETHROWER_MUZZLEPOS_UP			-12.0f
 
 #define TF_FLAMETHROWER_AMMO_PER_SECOND_PRIMARY_ATTACK		14.0f
-#define TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK	10
+#define TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK	20
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
 
 BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
 	#if defined( CLIENT_DLL )
 		RecvPropInt( RECVINFO( m_iWeaponState ) ),
-		RecvPropInt( RECVINFO( m_bCritFire ) )
+		RecvPropInt( RECVINFO( m_bCritFire ) ),
+		RecvPropBool( RECVINFO( m_bAirblast ) )
 	#else
 		SendPropInt( SENDINFO( m_iWeaponState ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-		SendPropInt( SENDINFO( m_bCritFire ) )
+		SendPropInt( SENDINFO( m_bCritFire ) ),
+		SendPropBool( SENDINFO( m_bAirblast ) )
 	#endif
 END_NETWORK_TABLE()
 
@@ -72,6 +74,7 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFFlameThrower )
 	DEFINE_PRED_FIELD( m_iWeaponState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bCritFire, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bAirblast, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
 
@@ -99,6 +102,20 @@ extern ConVar ofd_mutators;
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
 #endif
+
+void CTFFlameThrower::Precache( void )
+{
+	BaseClass::Precache();
+
+	PrecacheParticleSystem( "pyro_blast" );
+	PrecacheParticleSystem( "deflect_fx" );
+
+	PrecacheScriptSound( "TFPlayer.AirBlastImpact" );
+	PrecacheScriptSound( "TFPlayer.FlameOut" );
+	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttack" );
+	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
+	PrecacheScriptSound( "Weapon_FlameThrower.FireHit" );
+}
 
 // ------------------------------------------------------------------------------------------------ //
 // CTFFlameThrower implementation.
@@ -201,7 +218,7 @@ void CTFFlameThrower::ItemPostFrame()
 
 	int iAmmo = ReserveAmmo();
 
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && iAmmo > 0 )
+	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && iAmmo > 0 && !m_bAirblast )
 	{
 		PrimaryAttack();
 	}
@@ -213,6 +230,7 @@ void CTFFlameThrower::ItemPostFrame()
 		m_bCritFire = false;
 	}
 
+	// TODO: add a delay here
 	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo > TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK )
 	{
 		SecondaryAttack();
@@ -249,6 +267,8 @@ public:
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::PrimaryAttack()
 {
+	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+
 	// Are we capable of firing again?
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return;
@@ -406,7 +426,7 @@ void CTFFlameThrower::PrimaryAttack()
 		}
 		if ( m_bCritFire >= 2 )
 		{
-			iCustomDmgType |= TF_DMG_CRIT_POWERUP;
+			iCustomDmgType |= TF_DMG_CUSTOM_CRIT_POWERUP;
 		}		
 
 #ifdef CLIENT_DLL
@@ -457,8 +477,77 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
-	// Disabled until we know what this will do
+	// remove when the attack actually works
 	return;
+
+	// TODO: you might need to add an additional state named something like FT_STATE_SECONDARYATTACK
+
+	// TODO: primaryattack sound + particles don't play after using secondaryattack
+
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( !CanAttack() )
+	{
+		/*
+#if defined ( CLIENT_DLL )
+		StopFlame();
+#endif
+		*/
+		m_iWeaponState = FT_STATE_IDLE;
+		return;
+	}
+
+	// if you are adding another state then replace this bool	
+	m_bAirblast = true;
+
+	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+#if defined ( CLIENT_DLL )
+		StopFlame();
+#endif
+
+	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
+	WeaponSound( WPN_DOUBLE );
+
+#if !defined ( CLIENT_DLL )
+	// Let the player remember the usercmd he fired a weapon on. Assists in making decisions about lag compensation.
+	pOwner->NoteWeaponFired();
+
+	pOwner->SpeakWeaponFire();
+	CTF_GameStats.Event_PlayerFiredWeapon( pOwner, m_bCritFire );
+
+	// Move other players back to history positions based on local player's lag
+	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
+#endif
+
+	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
+	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;		// fewer than 45 frames!
+
+	//
+	// TODO: Deflect logic here
+	// remember to use DeflectCharacter for players & npcs
+	//
+
+	pOwner->RemoveAmmo( TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK, m_iPrimaryAmmoType );
+
+#if !defined ( CLIENT_DLL )
+	lagcompensation->FinishLagCompensation( pOwner );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFFlameThrower::DeflectCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in )
+{
+	// TODO:
+	// in the airblast, if the target ent is a player or NPC,
+	// call to this function as it applies special velocity depending on if they are on the ground currently or not
+
 }
 
 //-----------------------------------------------------------------------------
@@ -539,7 +628,10 @@ void CTFFlameThrower::OnDataChanged(DataUpdateType_t updateType)
 	{
 		if ( m_iWeaponState > FT_STATE_IDLE )
 		{
-			StartFlame();
+			if ( !m_bAirblast )
+			{
+				StartFlame();
+			}
 		}
 		else
 		{
@@ -588,6 +680,14 @@ void CTFFlameThrower::SetDormant( bool bDormant )
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::StartFlame()
 {
+	if ( m_bAirblast )
+	{
+		C_BaseEntity *pModel = GetWeaponForEffect();
+
+		if ( pModel )
+			pModel->ParticleProp()->Create( "pyro_blast", PATTACH_POINT_FOLLOW, "muzzle" );
+	}
+
 	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
 
 	// normally, crossfade between start sound & firing loop in 3.5 sec

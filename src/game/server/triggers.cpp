@@ -2563,7 +2563,7 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 			// don't telefrag ourselves
 			if ( ent->IsPlayer() && ent != pOther )
 			{
-				CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_TELEFRAG );
+				CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
 				ent->TakeDamage( info );
 			}
 		}
@@ -5319,7 +5319,7 @@ void CFuncCroc::StartTouch( CBaseEntity *pOther )
 		if ( pOther->GetTeamNumber() == TF_TEAM_MERCENARY )
 			m_OnEatMercenary.FireOutput( pOther, this );
 
-	CTakeDamageInfo info( this, pOther, 1000, DMG_ACID | DMG_BLAST | TF_DMG_CROCODILE );
+	CTakeDamageInfo info( this, pOther, 1000, DMG_ACID | DMG_BLAST | TF_DMG_CUSTOM_CROC );
 	pOther->TakeDamage( info );
 
 	CBaseEntity::Create( "entity_croc", pOther->GetAbsOrigin(), pOther->GetAbsAngles(), this );

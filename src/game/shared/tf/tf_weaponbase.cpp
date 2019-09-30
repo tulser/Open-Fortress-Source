@@ -2775,11 +2775,11 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 			const char *p = options;
 
 			// Bodygroup Name
-			p = nexttoken( token, p, ' ' );
+			p = nexttoken( token, p, ' ', sizeof(token) );
 			Q_strncpy( szBodygroupName, token, sizeof( szBodygroupName ) );
 
 			// Get the desired value
-			p = nexttoken( token, p, ' ' );
+			p = nexttoken( token, p, ' ', sizeof(token) );
 			value = token[0] ? atoi( token ) : 0;
 
 			int index = FindBodygroupByName( szBodygroupName );

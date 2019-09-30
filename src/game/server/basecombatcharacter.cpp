@@ -3563,3 +3563,26 @@ float CBaseCombatCharacter::GetTimeSinceLastInjury( int team /*= TEAM_ANY */ ) c
 	return never;
 }
 
+//-----------------------------------------------------------------------------
+// Airblast
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::ApplyAirblastImpulse( const Vector &vec )
+{
+	Vector Vector = vec;
+	
+	// lift the player up if on the ground!
+	bool bOnGround;
+
+	if ( GetFlags() & FL_ONGROUND )
+		bOnGround = true;
+	else
+		bOnGround = false;
+
+	// these values are a guess! as reasonably close as I could get
+	if ( bOnGround && Vector.z < 270.0f ) 
+		Vector.z = 270.0f;
+	
+	RemoveFlag( FL_ONGROUND );
+	
+	ApplyAbsVelocityImpulse( Vector );
+}

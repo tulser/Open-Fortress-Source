@@ -18,9 +18,9 @@
 
 using namespace vgui;
 
-ConVar ui_loading_tip_refresh( "ui_loading_tip_refresh", "5", FCVAR_DEVELOPMENTONLY );
-ConVar ui_loading_tip_f1( "ui_loading_tip_f1", "0.05", FCVAR_DEVELOPMENTONLY );
-ConVar ui_loading_tip_f2( "ui_loading_tip_f2", "0.40", FCVAR_DEVELOPMENTONLY );
+ConVar ui_loading_tip_refresh( "ui_loading_tip_refresh", "5", FCVAR_CHEAT );
+ConVar ui_loading_tip_f1( "ui_loading_tip_f1", "0.05", FCVAR_CHEAT );
+ConVar ui_loading_tip_f2( "ui_loading_tip_f2", "0.40", FCVAR_CHEAT );
 
 //--------------------------------------------------------------------------------------------------------
 CLoadingTipPanel::CLoadingTipPanel( Panel *pParent ) : EditablePanel( pParent, "loadingtippanel" )

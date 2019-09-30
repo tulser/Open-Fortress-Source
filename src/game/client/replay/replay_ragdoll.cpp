@@ -578,8 +578,8 @@ void CReplayRagdollCache::Shutdown()
 	m_bInit = false;
 }
 
-ConVar replay_ragdoll_blending( "replay_ragdoll_blending", "1", FCVAR_DEVELOPMENTONLY );
-ConVar replay_ragdoll_tickoffset( "replay_ragdoll_tickoffset", "0", FCVAR_DEVELOPMENTONLY );
+ConVar replay_ragdoll_blending( "replay_ragdoll_blending", "1", FCVAR_CHEAT );
+ConVar replay_ragdoll_tickoffset( "replay_ragdoll_tickoffset", "0", FCVAR_CHEAT );
 
 bool CReplayRagdollCache::GetFrame( C_BaseAnimating* pEntity, int nTick, bool* pBoneSimulated, CBoneAccessor* pBoneAccessor ) const
 {

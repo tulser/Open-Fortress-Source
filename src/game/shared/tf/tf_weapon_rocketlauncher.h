@@ -101,7 +101,11 @@ public:
 	virtual	bool	DetonateRockets( void );
 	virtual void	ItemPostFrame( void );
 	virtual	void	DeathNotice( CBaseEntity *pVictim );
-	
+
+#ifdef CLIENT_DLL
+	CNewParticleEffect *m_pEffect;
+#endif
+
 	float m_flLastPingSoundTime;
 	
 };

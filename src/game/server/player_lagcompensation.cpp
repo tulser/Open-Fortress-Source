@@ -25,17 +25,17 @@
 #define LC_SIZE_CHANGED		(1<<10)
 #define LC_ANIMATION_CHANGED (1<<11)
 
-static ConVar sv_lagcompensation_teleport_dist( "sv_lagcompensation_teleport_dist", "64", FCVAR_DEVELOPMENTONLY | FCVAR_CHEAT, "How far a player got moved by game code before we can't lag compensate their position back" );
+static ConVar sv_lagcompensation_teleport_dist( "sv_lagcompensation_teleport_dist", "64", FCVAR_CHEAT | FCVAR_CHEAT, "How far a player got moved by game code before we can't lag compensate their position back" );
 #define LAG_COMPENSATION_EPS_SQR ( 0.1f * 0.1f )
 // Allow 4 units of error ( about 1 / 8 bbox width )
 #define LAG_COMPENSATION_ERROR_EPS_SQR ( 4.0f * 4.0f )
 
-ConVar sv_unlag( "sv_unlag", "1", FCVAR_DEVELOPMENTONLY, "Enables player lag compensation" );
-ConVar sv_maxunlag( "sv_maxunlag", "1.0", FCVAR_DEVELOPMENTONLY, "Maximum lag compensation in seconds", true, 0.0f, true, 1.0f );
-ConVar sv_lagflushbonecache( "sv_lagflushbonecache", "1", FCVAR_DEVELOPMENTONLY, "Flushes entity bone cache on lag compensation" );
+ConVar sv_unlag( "sv_unlag", "1", FCVAR_CHEAT, "Enables player lag compensation" );
+ConVar sv_maxunlag( "sv_maxunlag", "1.0", FCVAR_CHEAT, "Maximum lag compensation in seconds", true, 0.0f, true, 1.0f );
+ConVar sv_lagflushbonecache( "sv_lagflushbonecache", "1", FCVAR_CHEAT, "Flushes entity bone cache on lag compensation" );
 ConVar sv_showlagcompensation( "sv_showlagcompensation", "0", FCVAR_CHEAT, "Show lag compensated hitboxes whenever a player is lag compensated." );
 
-ConVar sv_unlag_fixstuck( "sv_unlag_fixstuck", "0", FCVAR_DEVELOPMENTONLY, "Disallow backtracking a player for lag compensation if it will cause them to become stuck" );
+ConVar sv_unlag_fixstuck( "sv_unlag_fixstuck", "0", FCVAR_CHEAT, "Disallow backtracking a player for lag compensation if it will cause them to become stuck" );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -122,7 +122,7 @@ public:
 // If it can't get there, leave the player where he is.
 // 
 
-ConVar sv_unlag_debug( "sv_unlag_debug", "0", FCVAR_GAMEDLL | FCVAR_DEVELOPMENTONLY );
+ConVar sv_unlag_debug( "sv_unlag_debug", "0", FCVAR_GAMEDLL | FCVAR_CHEAT );
 
 float g_flFractionScale = 0.95;
 static void RestorePlayerTo( CBasePlayer *pPlayer, const Vector &vWantedPos )

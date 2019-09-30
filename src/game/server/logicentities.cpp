@@ -1662,6 +1662,171 @@ void CMathCounter::UpdateOutValue(CBaseEntity *pActivator, float fNewValue)
 }
 
 
+//-----------------------------------------------------------------------------
+// Purpose: Generates a random value between 2 bounds
+//-----------------------------------------------------------------------------
+class CLogicRandom : public CLogicalEntity
+{
+	DECLARE_CLASS( CLogicRandom, CLogicalEntity );
+
+private:
+	float m_flMin;		// Minimum rng value
+	float m_flMax;		// Maximum rng value
+
+	bool m_bDisabled;
+
+	void Spawn( void );
+
+	// Inputs
+	void InputGenerateRandomValue( inputdata_t &inputdata );
+	void InputGenerateRandomValueNoFire( inputdata_t &inputdata );
+	void InputSetRandomMax( inputdata_t &inputdata );
+	void InputSetRandomMin( inputdata_t &inputdata );
+	void InputGetRandomValue( inputdata_t &inputdata );
+	void InputEnable( inputdata_t &inputdata );
+	void InputDisable( inputdata_t &inputdata );
+
+	// Outputs
+	COutputFloat m_OutRandomValue;
+	COutputFloat m_OnGetRandomValue;	// Used for polling the counter value.
+
+	DECLARE_DATADESC();
+};
+
+LINK_ENTITY_TO_CLASS( logic_random, CLogicRandom );
+
+
+BEGIN_DATADESC( CLogicRandom )
+
+	// Keys
+	DEFINE_KEYFIELD( m_flMin, FIELD_FLOAT, "min" ),
+	DEFINE_KEYFIELD( m_flMax, FIELD_FLOAT, "max" ),
+
+	DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
+
+	// Inputs
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "GenerateRandomValue", InputGenerateRandomValue ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "GenerateRandomValueNoFire", InputGenerateRandomValueNoFire ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetRandomMax", InputSetRandomMax ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetRandomMin", InputSetRandomMin ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "GetRandomValue", InputGetRandomValue ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
+
+	// Outputs
+	DEFINE_OUTPUT( m_OutRandomValue, "OutRandomValue" ),
+	DEFINE_OUTPUT( m_OnGetRandomValue, "OnGetRandomValue" ),
+
+END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose: Called before spawning, after key values have been set.
+//-----------------------------------------------------------------------------
+void CLogicRandom::Spawn( void )
+{
+	//
+	// Make sure max and min are ordered properly or clamp won't work.
+	//
+	if ( m_flMin > m_flMax )
+	{
+		float flTemp = m_flMax;
+		m_flMax = m_flMin;
+		m_flMin = flTemp;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Change min/max
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputSetRandomMax( inputdata_t &inputdata )
+{
+	if ( m_bDisabled )
+	{
+		DevMsg("Logic Random %s ignoring SETRANDOMMAX because it is disabled\n", GetDebugName() );
+		return;
+	}
+
+	m_flMax = inputdata.value.Float();
+	if ( m_flMax < m_flMin )
+	{
+		m_flMin = m_flMax;
+	}
+}
+
+void CLogicRandom::InputSetRandomMin( inputdata_t &inputdata )
+{
+	if ( m_bDisabled )
+	{
+		DevMsg("Logic Random %s ignoring SETRANDOMMIN because it is disabled\n", GetDebugName() );
+		return;
+	}
+
+	m_flMin = inputdata.value.Float();
+	if ( m_flMax < m_flMin )
+	{
+		m_flMax = m_flMin;
+	}
+}
+
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputGenerateRandomValue( inputdata_t &inputdata )
+{
+	if ( m_bDisabled )
+	{
+		DevMsg("Logic Random %s ignoring GENERATERANDOMVALUE because it is disabled\n", GetDebugName() );
+		return;
+	}
+
+	float flOutValue = random->RandomFloat( m_flMin, m_flMax );
+
+	m_OutRandomValue.Set( flOutValue, inputdata.pActivator, inputdata.pCaller );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputGenerateRandomValueNoFire( inputdata_t &inputdata )
+{
+	if ( m_bDisabled )
+	{
+		DevMsg("Logic Random %s ignoring GENERATERANDOMVALUENOFIRE because it is disabled\n", GetDebugName() );
+		return;
+	}
+
+	float flOutValue = random->RandomFloat( m_flMin, m_flMax );
+
+	m_OutRandomValue.Init( flOutValue );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputGetRandomValue( inputdata_t &inputdata )
+{
+	if ( m_bDisabled )
+	{
+		DevMsg("Logic Random %s ignoring GETRANDOMVALUE because it is disabled\n", GetDebugName() );
+		return;
+	}
+
+	float flOutValue = m_OutRandomValue.Get();
+
+	m_OnGetRandomValue.Set( flOutValue, inputdata.pActivator, inputdata.pCaller );
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputEnable( inputdata_t &inputdata )
+{
+	m_bDisabled = false;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void CLogicRandom::InputDisable( inputdata_t &inputdata )
+{
+	m_bDisabled = true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Compares a single string input to up to 16 case values, firing an

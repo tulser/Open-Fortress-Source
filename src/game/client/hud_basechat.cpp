@@ -1189,59 +1189,45 @@ void CBaseHudChat::Printf( int iFilter, const char *fmt, ... )
 //-----------------------------------------------------------------------------
 void CBaseHudChat::StartMessageMode( int iMessageModeType )
 {
-#ifndef _XBOX
 	m_nMessageMode = iMessageModeType;
 
-	m_pChatInput->ClearEntry();
-
-	const wchar_t *pszPrompt = ( m_nMessageMode == MM_SAY ) ? g_pVGuiLocalize->Find( "#chat_say" ) : g_pVGuiLocalize->Find( "#chat_say_team" ); 
-	if ( pszPrompt )
+	if ( !IsConsole() )
 	{
-		m_pChatInput->SetPrompt( pszPrompt );
-	}
-	else
-	{
-		if ( m_nMessageMode == MM_SAY )
-		{
-			m_pChatInput->SetPrompt( L"Say :" );
-		}
-		else
-		{
-			m_pChatInput->SetPrompt( L"Say (TEAM) :" );
-		}
-	}
+		m_pChatInput->ClearEntry();
 	
-	if ( GetChatHistory() )
-	{
-		GetChatHistory()->SetMouseInputEnabled( true );
-		GetChatHistory()->SetKeyBoardInputEnabled( false );
-		GetChatHistory()->SetVerticalScrollbar( true );
-		GetChatHistory()->ResetAllFades( true );
-		GetChatHistory()->SetPaintBorderEnabled( true );
-		GetChatHistory()->SetVisible( true );
+		if ( GetChatHistory() )
+		{
+			// TERROR: hack to get ChatFont back
+			GetChatHistory()->SetFont( vgui::scheme()->GetIScheme( GetScheme() )->GetFont( "ChatFont", false ) );
+			GetChatHistory()->SetMouseInputEnabled( true );
+			GetChatHistory()->SetKeyBoardInputEnabled( false );
+			GetChatHistory()->SetVerticalScrollbar( true );
+			GetChatHistory()->ResetAllFades( true );
+			GetChatHistory()->SetPaintBorderEnabled( true );
+			GetChatHistory()->SetVisible( true );
+		}
+
+		vgui::SETUP_PANEL( this );
+		SetKeyBoardInputEnabled( true );
+		SetMouseInputEnabled( true );
+		m_pChatInput->SetVisible( true );
+		vgui::surface()->CalculateMouseVisible();
+		m_pChatInput->RequestFocus();
+		m_pChatInput->SetPaintBorderEnabled( true );
+		m_pChatInput->SetMouseInputEnabled( true );
+
+		// Place the mouse cursor near the text so people notice it.
+		int x, y, w, h;
+		GetChatHistory()->GetBounds( x, y, w, h );
+#ifndef INFESTED_DLL
+		vgui::input()->SetCursorPos( x + ( w/2), y + (h/2) );
+#endif
+		m_pFilterPanel->SetVisible( false );
 	}
-
-	vgui::SETUP_PANEL( this );
-	SetKeyBoardInputEnabled( true );
-	SetMouseInputEnabled( true );
-	m_pChatInput->SetVisible( true );
-	vgui::surface()->CalculateMouseVisible();
-	m_pChatInput->RequestFocus();
-	m_pChatInput->SetPaintBorderEnabled( true );
-	m_pChatInput->SetMouseInputEnabled( true );
-
-	//Place the mouse cursor near the text so people notice it.
-	int x, y, w, h;
-	GetChatHistory()->GetBounds( x, y, w, h );
-	vgui::input()->SetCursorPos( x + ( w/2), y + (h/2) );
 
 	m_flHistoryFadeTime = gpGlobals->curtime + CHAT_HISTORY_FADE_TIME;
 
-	m_pFilterPanel->SetVisible( false );
-
 	engine->ClientCmd_Unrestricted( "gameui_preventescapetoshow\n" );
-		
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1266,6 +1252,7 @@ void CBaseHudChat::StopMessageMode( void )
 		GetChatHistory()->SelectNoText();
 	}
 
+	m_nMessageMode = MM_NONE; // TERROR
 	//Clear the entry since we wont need it anymore.
 	m_pChatInput->ClearEntry();
 
@@ -1581,6 +1568,7 @@ void CBaseHudChatLine::Colorize( int alpha )
 			InsertColorChange( color );
 			InsertString( wText );
 
+			// TERROR: color console echo
 			ConColorMsg( color, "%ls", wText );
 
 			CBaseHudChat *pChat = dynamic_cast<CBaseHudChat*>(GetParent() );
@@ -1643,12 +1631,6 @@ This is a very long string that I am going to attempt to paste into the cs hud c
 
 	if( len > 0 )
 	{
-		// Let the game rules at it
-		if ( GameRules() )
-		{
-			GameRules()->ModifySentChat( ansi, ARRAYSIZE(ansi) );
-		}
-
 		char szbuf[144];	// more than 128
 		Q_snprintf( szbuf, sizeof(szbuf), "%s \"%s\"", m_nMessageMode == MM_SAY ? "say" : "say_team", ansi );
 
@@ -1656,6 +1638,7 @@ This is a very long string that I am going to attempt to paste into the cs hud c
 	}
 	
 	m_pChatInput->ClearEntry();
+	m_nMessageMode = MM_NONE;	// TERROR
 #endif
 }
 

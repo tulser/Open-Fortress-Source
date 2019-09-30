@@ -52,6 +52,7 @@ public:
 	~CTFFlameThrower();
 
 	virtual void	Spawn( void );
+	virtual void	Precache( void );
 
 	virtual int		GetWeaponID( void ) const { return TF_WEAPON_FLAMETHROWER; }
 
@@ -63,6 +64,8 @@ public:
 	virtual void	WeaponReset( void );
 
 	virtual void	DestroySounds( void );
+
+	void	DeflectCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in );
 
 	Vector GetVisualMuzzlePos();
 	Vector GetFlameOriginPos();
@@ -88,6 +91,7 @@ private:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
 	CNetworkVar( int, m_bCritFire );
+	CNetworkVar( bool, m_bAirblast );
 
 	float m_flStartFiringTime;
 	float m_flNextPrimaryAttackAnim;
