@@ -4276,8 +4276,12 @@ void CBaseEntity::GetInputDispatchEffectPosition( const char *sInputString, Vect
 //-----------------------------------------------------------------------------
 void CBaseEntity::InputKill( inputdata_t &inputdata )
 {
+	if ( IsPlayer() )
+		return;
+
 	// tell owner ( if any ) that we're dead.This is mostly for NPCMaker functionality.
 	CBaseEntity *pOwner = GetOwnerEntity();
+
 	if ( pOwner )
 	{
 		pOwner->DeathNotice( this );
@@ -4289,6 +4293,9 @@ void CBaseEntity::InputKill( inputdata_t &inputdata )
 
 void CBaseEntity::InputKillHierarchy( inputdata_t &inputdata )
 {
+	if ( IsPlayer() )
+		return;
+
 	CBaseEntity *pChild, *pNext;
 	for ( pChild = FirstMoveChild(); pChild; pChild = pNext )
 	{
@@ -7495,7 +7502,7 @@ void CC_Ent_Create( const CCommand& args )
 	}
 
 	// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-	if ( !Q_stricmp( args[1], "point_servercommand" ) )
+	if ( !Q_stricmp( args[1], "point_servercommand" ) || !Q_stricmp( args[1], "point_clientcommand" ) )
 	{
 		if ( engine->IsDedicatedServer() )
 		{

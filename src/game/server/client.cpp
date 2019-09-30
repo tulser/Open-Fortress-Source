@@ -109,6 +109,8 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
 #endif // TF_DLL
                                       "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
 
+ConVar	sv_allow_all_servercommands( "sv_allow_all_servercommands", "0", FCVAR_NONE, "Allow usage of all commands by a point_servercommand (no blacklist). Can be maliciously abused!" );
+
 void ClientKill( edict_t *pEdict, const Vector &vecForce, bool bExplode = false )
 {
 	CBasePlayer *pPlayer = static_cast<CBasePlayer*>( GetContainingEntity( pEdict ) );
@@ -631,9 +633,12 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 
 	char const *comparename = inputdata.value.String();
 
-	if ( !Q_strncmp( comparename, "rcon", 4 ) || !Q_strncmp( comparename, "admin", 5 ) || !Q_strncmp( comparename, "sm", 2 ) )
+	if ( !sv_allow_all_servercommands.GetBool() )
 	{
-		return;
+		if ( V_strstr( comparename, "rcon" ) || V_strstr( comparename, "admin" ) || V_strstr( comparename, "sm" ) || V_strstr( comparename, "ent_" ) || V_strstr( comparename, "test_" ) || V_strstr( comparename, "alias" ) || V_strstr( comparename, "command" ) || V_strstr( comparename, "ban" ) || V_strstr( comparename, "kick" ) || V_strstr( comparename, "ip" ) || V_strstr( comparename, "exec" ) )
+		{
+			return;
+		}
 	}
 
 	if ( bAllowed )
@@ -869,7 +874,7 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		Q_strlower( item_to_give );
 
 		// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-		if ( !Q_stricmp( item_to_give, "point_servercommand" ) )
+		if ( !Q_stricmp( item_to_give, "point_servercommand" ) || !Q_stricmp( item_to_give, "point_clientcommand" ) )
 		{
 			if ( engine->IsDedicatedServer() )
 			{
@@ -917,7 +922,7 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 		Q_strlower( item_to_give );
 
 		// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-		if ( !Q_stricmp( item_to_give, "point_servercommand" ) )
+		if ( !Q_stricmp( item_to_give, "point_servercommand" ) || !Q_stricmp( item_to_give, "point_clientcommand" ))
 		{
 			if ( engine->IsDedicatedServer() )
 			{
@@ -935,7 +940,7 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 		}
 
 		// Dirty hack to avoid suit playing it's pickup sound
-		if ( !Q_stricmp( item_to_give, "item_suit" ) )
+		if ( !Q_stricmp( item_to_give, "item_suit" ) )	
 		{
 			pPlayer->EquipSuit( false );
 			return;
@@ -1461,7 +1466,7 @@ void CC_HurtMe_f(const CCommand &args)
 		iDamage = atoi( args[ 1 ] );
 	}
 
-	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_GENERIC ) );
+	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_DIRECT ) );
 }
 
 static ConCommand hurtme("hurtme", CC_HurtMe_f, "Hurts the player.\n\tArguments: <health to lose>", FCVAR_CHEAT);

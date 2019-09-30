@@ -2944,8 +2944,14 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 #endif
 
 	CTFPipebombLauncher *pPipebombLauncher = static_cast<CTFPipebombLauncher*>( Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) );
+	CTFCPipebombLauncher *pPipebombLauncherTFC = static_cast<CTFCPipebombLauncher*>( Weapon_OwnsThisID( TFC_WEAPON_PIPEBOMBLAUNCHER ) );
 
 	if ( pPipebombLauncher )
+	{
+		pPipebombLauncher->SecondaryAttack();
+		bDoSkill = true;
+	}
+	else if ( pPipebombLauncherTFC )
 	{
 		pPipebombLauncher->SecondaryAttack();
 		bDoSkill = true;

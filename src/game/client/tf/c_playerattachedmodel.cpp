@@ -198,10 +198,9 @@ int C_PlayerAttachedModel::GetSkin( void )
 	{
 		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 
-		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) )
+		if ( pOwner && pOwner->m_Shared.InCond( TF_COND_DISGUISED ) && !pOwner->IsEnemyPlayer() )
 		{
-			m_nSkin = pOwner->m_Shared.GetDisguiseClass() - 1;
-			return ( m_nSkin );
+			return ( pOwner->m_Shared.GetDisguiseClass() - 1 );
 		}
 
 		return m_nSkin;
