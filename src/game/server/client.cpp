@@ -635,7 +635,7 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 
 	if ( !sv_allow_all_servercommands.GetBool() )
 	{
-		if ( V_strstr( comparename, "rcon" ) || V_strstr( comparename, "admin" ) || V_strstr( comparename, "sm" ) || V_strstr( comparename, "ent_" ) || V_strstr( comparename, "test_" ) || V_strstr( comparename, "alias" ) || V_strstr( comparename, "command" ) || V_strstr( comparename, "ban" ) || V_strstr( comparename, "kick" ) || V_strstr( comparename, "ip" ) || V_strstr( comparename, "exec" ) )
+		if ( V_strstr( comparename, "rcon" ) || V_strstr( comparename, "admin" ) || V_strstr( comparename, "sm" ) || V_strstr( comparename, "ent_" ) || V_strstr( comparename, "test_" ) || V_strstr( comparename, "alias" ) || V_strstr( comparename, "command" ) || V_strstr( comparename, "ban" ) || V_strstr( comparename, "kick" ) || V_strstr( comparename, "ip" ) || V_strstr( comparename, "exec" ) || V_strstr( comparename, "cmd" ) )
 		{
 			return;
 		}

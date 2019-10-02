@@ -145,10 +145,13 @@ bool CKickIssue::CreateVoteDataFromDetails(const char *s)
 	return 0;
 }
 
+// uncomment this when its properly coded
+/*
 int CKickIssue::CanCallVote(int a1, char *s, int a2, int a3)
 {
 	return 0;
 }
+*/
 
 void CKickIssue::ExecuteCommand()
 {

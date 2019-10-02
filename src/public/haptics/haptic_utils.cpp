@@ -35,7 +35,7 @@ ConVar hap_HasDevice	( "hap_HasDevice", "0", FCVAR_USERINFO/*|FCVAR_HIDDEN*/, "f
 // damage scale on a title basis. Convar referenced in the haptic dll.
 #ifdef PORTAL
 #define HAP_DEFAULT_DAMAGE_SCALE_GAME "0.75"
-#elif TF_CLIENT_DLL
+#elif TF_MOD_CLIENT
 #define HAP_DEFAULT_DAMAGE_SCALE_GAME "0.3"
 #else
 #define HAP_DEFAULT_DAMAGE_SCALE_GAME "1.0"

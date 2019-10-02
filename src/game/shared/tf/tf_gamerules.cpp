@@ -3984,7 +3984,9 @@ void CTFGameRules::CreateStandardEntities()
 	CBaseEntity::Create( "vote_controller", vec3_origin, vec3_angle );
 
 	CKickIssue* pIssue = new CKickIssue( "Kick" );
-	pIssue->Init();
+	
+	if ( pIssue )
+		pIssue->Init();
 }
 
 //-----------------------------------------------------------------------------

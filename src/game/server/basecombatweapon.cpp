@@ -177,6 +177,7 @@ void CBaseCombatWeapon::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseComb
 			{
 				WeaponSound( (WeaponSound_t)iSnd );
 			}
+			return;
 		}
 	}
 

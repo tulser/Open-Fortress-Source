@@ -29,7 +29,10 @@ public:
 	int PrintLogData();
 	void OnVoteFailed(int a2);
 	bool CreateVoteDataFromDetails(const char *s);
-	int CanCallVote(int a1, char *s, int a2, int a3); // idb
+
+	// uncomment this when its properly coded
+	//int CanCallVote(int a1, char *s, int a2, int a3); // idb
+
 	void ExecuteCommand();
 	bool IsTeamRestrictedVote();
 

@@ -39,7 +39,10 @@ CVoteController *g_voteController = NULL;
 
 ConVar sv_vote_timer_duration( "sv_vote_timer_duration", "15", FCVAR_NONE, "How long to allow voting on an issue" );
 ConVar sv_vote_command_delay( "sv_vote_command_delay", "2", FCVAR_NONE, "How long after a vote passes until the action happens", false, 0.f, true, 4.5f );
-ConVar sv_allow_votes( "sv_allow_votes", "1", FCVAR_NONE, "Allow voting?" );
+
+// TODO set this to 1 when voting is finished
+ConVar sv_allow_votes( "sv_allow_votes", "0", FCVAR_NONE, "Allow voting?" );
+
 ConVar sv_vote_failure_timer( "sv_vote_failure_timer", "300", FCVAR_NONE, "A vote that fails cannot be re-submitted for this long" );
 #ifdef TF_DLL
 ConVar sv_vote_failure_timer_mvm( "sv_vote_failure_timer_mvm", "120", FCVAR_NONE, "A vote that fails in MvM cannot be re-submitted for this long" );
@@ -224,7 +227,7 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 
 	pClient = pVoteCaller->edict();
 
-	if ( pClient)
+	if ( pClient )
 	{
 		// close main menu when this get called, needs to be called twice
 		// THIS IS HORRENDOUS
