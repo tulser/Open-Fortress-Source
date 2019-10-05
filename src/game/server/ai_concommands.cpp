@@ -475,9 +475,12 @@ void CC_NPC_Create_Aimed( const CCommand &args )
 
 	bool allowPrecache = CBaseEntity::IsPrecacheAllowed();
 	CBaseEntity::SetAllowPrecache( true );
+	
+	CBaseEntity *pEntity = CreateEntityByName(args[1]);
 
 	// Try to create entity
-	CAI_BaseNPC *baseNPC = dynamic_cast< CAI_BaseNPC * >( CreateEntityByName(args[1]) );
+	CAI_BaseNPC *baseNPC = dynamic_cast< CAI_BaseNPC * >( pEntity );
+
 	if (baseNPC)
 	{
 		baseNPC->KeyValue( "additionalequipment", npc_create_equipment.GetString() );
@@ -533,6 +536,12 @@ void CC_NPC_Create_Aimed( const CCommand &args )
 		baseNPC->Activate();
 	}
 	CBaseEntity::SetAllowPrecache( allowPrecache );
+	
+	if ( !baseNPC )	
+	{
+		Msg( "npc_create_aimed: Attempted to spawn something that isn't a NPC\n" );
+		UTIL_Remove( pEntity );
+	}
 }
 static ConCommand npc_create_aimed("npc_create_aimed", CC_NPC_Create_Aimed, "Creates an NPC aimed away from the player of the given type where the player is looking (if the given NPC can actually stand at that location).  Note that this only works for npc classes that are already in the world.  You can not create an entity that doesn't have an instance in the level.\n\tArguments:	{npc_class_name}", FCVAR_CHEAT);
 
