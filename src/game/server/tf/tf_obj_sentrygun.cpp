@@ -489,6 +489,17 @@ void CObjectSentrygun::FinishUpgrading( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CObjectSentrygun::FinishedBuilding( void )
+{
+	if ( m_bHauling )
+		m_iState.Set( SENTRY_STATE_SEARCHING );
+
+	BaseClass::FinishedBuilding();
+}
+
+//-----------------------------------------------------------------------------
 // Playing the upgrade animation
 //-----------------------------------------------------------------------------
 void CObjectSentrygun::UpgradeThink( void )

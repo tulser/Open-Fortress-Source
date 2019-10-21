@@ -4305,8 +4305,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 
 			// Burn sounds are handled in ConditionThink()
-			// and fall damage
-			if ( !(bitsDamage & DMG_BURN ) || !(bitsDamage & DMG_FALL ) )
+			if ( !(bitsDamage & DMG_BURN ) )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
@@ -6976,10 +6975,6 @@ void CTFPlayer::PainSound( const CTakeDamageInfo &info )
 		return;
 
 	if ( m_flNextPainSoundTime > gpGlobals->curtime )
-		return;
-
-	// Don't play falling pain sounds, they have their own system
-	if ( info.GetDamageType() & DMG_FALL )
 		return;
 
 	if ( info.GetDamageType() & DMG_DROWN )

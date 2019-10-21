@@ -52,6 +52,8 @@ public:
 	virtual void	StartPlacement( CTFPlayer *pPlayer );
 	virtual void	StartHauling( void );
 
+	virtual void	FinishedBuilding( void );
+
 	// Engineer hit me with a wrench
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );
 
