@@ -203,7 +203,11 @@ ConVar  player_debug_print_damage( "player_debug_print_damage", "0", FCVAR_CHEAT
 
 void CC_GiveCurrentAmmo( void )
 {
-	CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		CBasePlayer *pPlayer = UTIL_GetCommandClient(); 
+	#else
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 
 	if( pPlayer )
 	{
@@ -742,25 +746,31 @@ int CBasePlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 }
 
 
-bool CBasePlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
+bool CBasePlayer::WantsLagCompensationOnEntity( const CBaseEntity *pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
 	// Team members shouldn't be adjusted unless friendly fire is on.
-	if ( pPlayer->GetTeamNumber() == 77 || pPlayer->GetTeamNumber() == 4 || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+	if ( pEntity->GetTeamNumber() == 77 || pEntity->GetTeamNumber() == 4 || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY )
 		return true;
 	
-	if ( !friendlyfire.GetInt() && pPlayer->GetTeamNumber() == GetTeamNumber() ) 
+	if ( !friendlyfire.GetInt() && pEntity->GetTeamNumber() == GetTeamNumber() ) 
 		return false;
 	
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.
-	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pPlayer->entindex() ) )
+	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pEntity->entindex() ) )
 		return false;
 
 	const Vector &vMyOrigin = GetAbsOrigin();
-	const Vector &vHisOrigin = pPlayer->GetAbsOrigin();
+	const Vector &vHisOrigin = pEntity->GetAbsOrigin();
 
 	// get max distance player could have moved within max lag compensation time, 
 	// multiply by 1.5 to to avoid "dead zones"  (sqrt(2) would be the exact value)
-	float maxDistance = 1.5 * pPlayer->MaxSpeed() * sv_maxunlag.GetFloat();
+	float maxspeed;
+	CBasePlayer *pPlayer = ToBasePlayer((CBaseEntity*)pEntity);
+	if ( pPlayer )
+		maxspeed = pPlayer->MaxSpeed();
+	else
+		maxspeed = 600;
+	float maxDistance = 1.5 * maxspeed * sv_maxunlag.GetFloat();
 
 	// If the player is within this distance, lag compensate them in case they're running past us.
 	if ( vHisOrigin.DistTo( vMyOrigin ) < maxDistance )
@@ -6584,6 +6594,8 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		return true;
 	}
 
+	// this is exploitable!
+	/*
 	else if ( stricmp( cmd, "spec_goto" ) == 0 ) // chase next player
 	{
 		if ( ( GetObserverMode() == OBS_MODE_FIXED ||
@@ -6605,6 +6617,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		
 		return true;
 	}
+	*/
 	else if ( stricmp( cmd, "playerperf" ) == 0 )
 	{
 		int nRecip = entindex();
@@ -7792,6 +7805,12 @@ void CRevertSaved::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 
 void CRevertSaved::InputReload( inputdata_t &inputdata )
 {
+	if ( TFGameRules()->IsCoopGamemode() )
+	{
+		// todo: come back and fix this for zombie survival, and use something else than blue team...
+		TFGameRules()->SetWinningTeam( TF_TEAM_BLUE, WINREASON_COOP_FAIL );
+	}
+
 	UTIL_ScreenFadeAll( m_clrRender, Duration(), HoldTime(), FFADE_OUT );
 
 #ifdef HL1_DLL
@@ -7838,6 +7857,16 @@ void CRevertSaved::LoadThink( void )
 	{
 		engine->ServerCommand("reload\n");
 	}
+#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+//SecobMod__Information: Here we change level to the map we're already on if a vital ally such as Alyx is killed etc etc etc.
+	else
+	{
+		char *szDefaultMapName = new char[32];
+		Q_strncpy( szDefaultMapName, STRING(gpGlobals->mapname), 32 );
+		engine->ChangeLevel( szDefaultMapName, NULL );
+		return;
+	}
+#endif //SecobMod__Enable_Fixed_Multiplayer_AI	
 }
 
 #define SF_SPEED_MOD_SUPPRESS_WEAPONS	(1<<0)	// Take away weapons
@@ -8003,11 +8032,13 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 		SendPropDataTable	( SENDINFO_DT(m_Local), &REFERENCE_SEND_TABLE(DT_Local) ),
 		
 // If HL2_DLL is defined, then baseflex.cpp already sends these.
+
 #ifndef HL2_DLL
 		SendPropFloat		( SENDINFO_VECTORELEM(m_vecViewOffset, 0), 8, SPROP_ROUNDDOWN, -32.0, 32.0f),
 		SendPropFloat		( SENDINFO_VECTORELEM(m_vecViewOffset, 1), 8, SPROP_ROUNDDOWN, -32.0, 32.0f),
 		SendPropFloat		( SENDINFO_VECTORELEM(m_vecViewOffset, 2), 20, SPROP_CHANGES_OFTEN,	0.0f, 256.0f),
 #endif
+
 
 		SendPropFloat		( SENDINFO(m_flFriction),		8,	SPROP_ROUNDDOWN,	0.0f,	4.0f),
 

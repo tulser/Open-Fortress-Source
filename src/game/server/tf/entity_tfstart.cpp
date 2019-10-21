@@ -71,7 +71,7 @@ void CTFTeamSpawn::Spawn( void )
 	BaseClass::Spawn();
 
 	// don't run these checks if the flags don't exist or equal 0
-	if ( !m_spawnflags || m_spawnflags == 0 )
+	if ( !m_spawnflags || m_spawnflags <= 0 )
 	{
 		m_bScout = true;
 		m_bSniper = true;
@@ -85,21 +85,6 @@ void CTFTeamSpawn::Spawn( void )
 		//m_bMercenary = true;
 		m_bCivilian = true;
 		m_bJuggernaut = true;
-	}
-	else if ( m_spawnflags == 511 )
-	{
-		m_bScout = true;
-		m_bSniper = true;
-		m_bSoldier = true;
-		m_bDemoman = true;
-		m_bMedic = true;
-		m_bHeavyweapons = true;
-		m_bPyro = true;
-		m_bSpy = true;
-		m_bEngineer = true;
-
-		// hack to make civilian be able to spawn in normal maps
-		m_bCivilian = true;
 	}
 	else
 	{

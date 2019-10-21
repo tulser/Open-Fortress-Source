@@ -1316,6 +1316,9 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	if ( r_flashlightdepthtexture.GetBool() && (viewID == VIEW_MAIN) )
 	{
 		g_pClientShadowMgr->ComputeShadowDepthTextures( view );
+#ifdef ASW_PROJECTED_TEXTURES
+		CMatRenderContextPtr pRenderContext( materials );
+#endif
 	}
 
 	m_BaseDrawFlags = baseDrawFlags;
@@ -1389,6 +1392,9 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	if ( r_flashlightdepthtexture.GetBool() )
 	{
 		g_pClientShadowMgr->UnlockAllShadowDepthTextures();
+#ifdef ASW_PROJECTED_TEXTURES
+		CMatRenderContextPtr pRenderContext( materials );
+#endif
 	}
 }
 
@@ -1929,7 +1935,6 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 
 	#ifdef USE_MONITORS
 		if ( cl_drawmonitors.GetBool() && 
-			( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 70 ) &&
 			( ( whatToDraw & RENDERVIEW_SUPPRESSMONITORRENDERING ) == 0 ) )
 		{
 			CViewSetup viewMiddle = GetView( STEREO_EYE_MONO );
@@ -1998,7 +2003,7 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		// Image-space motion blur
 		if ( !building_cubemaps.GetBool() && view.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
 		{
-			if ( ( mat_motion_blur_enabled.GetInt() ) && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) )
+			if ( ( mat_motion_blur_enabled.GetInt() ) )
 			{
 				pRenderContext.GetFrom( materials );
 				{
@@ -2394,10 +2399,6 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 
 	// Determine if the water surface is opaque or not
 	info.m_bOpaqueWater = !pWaterMaterial->IsTranslucent();
-
-	// DX level 70 can't handle anything but cheap water
-	if (engine->GetDXSupportLevel() < 80)
-		return;
 
 	bool bForceCheap = false;
 
@@ -4729,6 +4730,16 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	// with this near plane.  If so, move it in a bit.  It's at 2.0 to give us more precision.  That means you 
 	// need to keep the eye position at least 2 * scale away from the geometry in the skybox
 	zNear = 2.0;
+#ifdef MAPBASE
+	// Use the fog's farz if specified
+	if (m_pSky3dParams->fog.farz > 0)
+	{
+		zFar = ( m_pSky3dParams->scale > 0.0f ?
+			m_pSky3dParams->fog.farz / m_pSky3dParams->scale :
+			m_pSky3dParams->fog.farz );
+	}
+	else
+#endif
 	zFar = MAX_TRACE_LENGTH;
 
 	// scale origin by sky scale
@@ -4738,6 +4749,56 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 		VectorScale( origin, scale, origin );
 	}
 	Enable3dSkyboxFog();
+#ifdef MAPBASE
+	// Skybox angle support.
+	// 
+	// If any of the angles aren't 0, do the rotation code.
+	if (m_pSky3dParams->angles.GetX() != 0 ||
+		m_pSky3dParams->angles.GetY() != 0 ||
+		m_pSky3dParams->angles.GetZ() != 0)
+	{
+		// Unfortunately, it's not as simple as "angles += m_pSky3dParams->angles".
+		// This stuff took a long time to figure out. I'm glad I got it working.
+
+		// First, create a matrix for the sky's angles.
+		matrix3x4_t matSkyAngles;
+		AngleMatrix( m_pSky3dParams->angles, matSkyAngles );
+
+		// The code in between the lines below was mostly lifted from projected texture screenspace code and was a huge lifesaver.
+		// The comments are my attempt at explaining the little I understand of what's going on here.
+		// ----------------------------------------------------------------------
+
+		// These are the vectors that would eventually become our final angle directions.
+		Vector vecSkyForward, vecSkyRight, vecSkyUp;
+
+		// Get vectors from our original angles.
+		Vector vPlayerForward, vPlayerRight, vPlayerUp;
+		AngleVectors( angles, &vPlayerForward, &vPlayerRight, &vPlayerUp );
+
+		// Transform them from our sky angles matrix and put the results in those vectors we declared earlier.
+		VectorTransform( vPlayerForward, matSkyAngles, vecSkyForward );
+		VectorTransform( vPlayerRight, matSkyAngles, vecSkyRight );
+		VectorTransform( vPlayerUp, matSkyAngles, vecSkyUp );
+
+		// Normalize them.
+		VectorNormalize( vecSkyForward );
+		VectorNormalize( vecSkyRight );
+		VectorNormalize( vecSkyUp );
+
+		// Now do a bit of quaternion magic and apply that to our original angles.
+		// This works perfectly, so I'm not gonna touch it.
+		Quaternion quat;
+		BasisToQuaternion( vecSkyForward, vecSkyRight, vecSkyUp, quat );
+		QuaternionAngles( quat, angles );
+
+		// End of code mostly lifted from projected texture screenspace stuff
+		// ----------------------------------------------------------------------
+
+		// Now just rotate our origin with that matrix.
+		// We create a copy of the origin since VectorRotate doesn't want in1 to be the same variable as the destination.
+		VectorRotate(Vector(origin), matSkyAngles, origin);
+	}
+#endif
 	VectorAdd( origin, m_pSky3dParams->origin, origin );
 
 	// BUGBUG: Fix this!!!  We shouldn't need to call setup vis for the sky if we're connecting
@@ -5354,10 +5415,8 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 #endif
 
 	ITexture *pSaveFrameBufferCopyTexture = pRenderContext->GetFrameBufferCopyTexture( 0 );
-	if ( engine->GetDXSupportLevel() >= 80 )
-	{
-		pRenderContext->SetFrameBufferCopyTexture( GetPowerOfTwoFrameBufferTexture() );
-	}
+
+	pRenderContext->SetFrameBufferCopyTexture( GetPowerOfTwoFrameBufferTexture() );
 
 	pRenderContext.SafeRelease();
 
@@ -5947,19 +6006,18 @@ void CUnderWaterView::Setup( const CViewSetup &view, bool bDrawSkybox, const Vis
 	CalcWaterEyeAdjustments( fogInfo, m_waterHeight, m_waterZAdjust, m_bSoftwareUserClipPlane );
 
 	IMaterial *pWaterMaterial = fogInfo.m_pFogVolumeMaterial;
-	if ( engine->GetDXSupportLevel() >= 90 )					// screen overlays underwater are a dx9 feature
+
+	IMaterialVar *pScreenOverlayVar = pWaterMaterial->FindVar( "$underwateroverlay", NULL, false );
+	if ( pScreenOverlayVar && ( pScreenOverlayVar->IsDefined() ) )
 	{
-		IMaterialVar *pScreenOverlayVar = pWaterMaterial->FindVar( "$underwateroverlay", NULL, false );
-		if ( pScreenOverlayVar && ( pScreenOverlayVar->IsDefined() ) )
+		char const *pOverlayName = pScreenOverlayVar->GetStringValue();
+		if ( pOverlayName[0] != '0' )						// fixme!!!
 		{
-			char const *pOverlayName = pScreenOverlayVar->GetStringValue();
-			if ( pOverlayName[0] != '0' )						// fixme!!!
-			{
-				IMaterial *pOverlayMaterial = materials->FindMaterial( pOverlayName,  TEXTURE_GROUP_OTHER );
-				m_pMainView->SetWaterOverlayMaterial( pOverlayMaterial );
-			}
+			IMaterial *pOverlayMaterial = materials->FindMaterial( pOverlayName,  TEXTURE_GROUP_OTHER );
+			m_pMainView->SetWaterOverlayMaterial( pOverlayMaterial );
 		}
 	}
+
 	// NOTE: We're not drawing the 2d skybox under water since it's assumed to not be visible.
 
 	// render the world underwater

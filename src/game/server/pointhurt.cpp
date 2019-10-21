@@ -86,10 +86,13 @@ void CPointHurt::Spawn(void)
 		m_flRadius = 128.0f;
 	}
 
+	// negative damage is a thing...
+	/*
 	if ( m_nDamage <= 0 )
 	{
 		m_nDamage = 2;
 	}
+	*/
 
 	if ( m_flDelay <= 0 )
 	{

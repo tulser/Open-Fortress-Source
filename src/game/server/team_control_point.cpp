@@ -305,7 +305,7 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{
-			if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_PAYLOAD )
+			if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD) )
 			{
 				CBroadcastRecipientFilter filter;
 				EmitSound( filter, entindex(), "Hud.EndRoundScored" );

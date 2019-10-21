@@ -1396,11 +1396,10 @@ void CBaseObject::SetHealth( float flHealth )
 //-----------------------------------------------------------------------------
 void CBaseObject::TraceAttack( const CTakeDamageInfo &inputInfo, const Vector &vecDir, trace_t *ptr )
 {
-
 	// Prevent team damage here so blood doesn't appear
 	if ( inputInfo.GetAttacker() )
 	{
-		if ( InSameTeam(inputInfo.GetAttacker()) && ( inputInfo.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || inputInfo.GetAttacker() == GetOwner() ) )
+		if ( InSameTeam(inputInfo.GetAttacker() ) && ( inputInfo.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || inputInfo.GetAttacker() == GetOwner() ) )
 		{
 			// Pass Damage to enemy attachments
 			int iNumObjects = GetNumObjectsOnMe();
@@ -1648,6 +1647,10 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 		if ( InSameTeam(info.GetAttacker()) && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetOwner() ) )
 			return 0;
 	}
+
+	// No damaging our buildings in coop
+    if ( info.GetAttacker()->IsPlayer() && TFGameRules()->IsCoopGamemode() )
+		return 0;
 
 	IHasBuildPoints *pBPInterface = dynamic_cast<IHasBuildPoints*>(this);
 

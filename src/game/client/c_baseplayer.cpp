@@ -179,6 +179,9 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	// 3d skybox data
 	RecvPropInt(RECVINFO(m_skybox3d.scale)),
 	RecvPropVector(RECVINFO(m_skybox3d.origin)),
+#ifdef MAPBASE
+	RecvPropVector(RECVINFO(m_skybox3d.angles)),
+#endif
 	RecvPropInt(RECVINFO(m_skybox3d.area)),
 
 	// 3d skybox fog data

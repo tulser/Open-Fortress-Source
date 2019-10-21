@@ -291,8 +291,15 @@ void CItem_DynamicResupply::InputKill( inputdata_t &data )
 //-----------------------------------------------------------------------------
 void CItem_DynamicResupply::InputCalculateType( inputdata_t &data )
 {
-	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
-	SpawnDynamicItem( pPlayer );
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		// spawn gear for the nearest player 
+		CBasePlayer *pNearest = UTIL_GetNearestPlayer(GetAbsOrigin()); 
+		if ( pNearest != NULL ) 
+			SpawnDynamicItem( pNearest ); 
+	#else
+		CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+		SpawnDynamicItem( pPlayer );
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 }
 
 //-----------------------------------------------------------------------------
@@ -326,11 +333,8 @@ void CItem_DynamicResupply::SpawnFullItem( CItem_DynamicResupply *pMaster, CBase
 	float flTotalProb = 0.0f;
 	for ( i = 0; i < NUM_AMMO_ITEMS; ++i )
 	{
-		/*
 		int iAmmoType = GetAmmoDef()->Index( g_DynamicResupplyAmmoItems[i].sAmmoDef );
 		bool bCanSpawn = pPlayer->Weapon_GetWpnForAmmo( iAmmoType ) != NULL;
-		*/
-		bool bCanSpawn = true;
 
 		if ( bCanSpawn && ( g_DynamicResupplyAmmoItems[i].flFullProbability != 0 ) && ( pMaster->m_flDesiredAmmo[i] != 0.0f ) )
 		{

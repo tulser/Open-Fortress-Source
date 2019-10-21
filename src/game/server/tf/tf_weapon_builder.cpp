@@ -384,7 +384,7 @@ void CTFWeaponBuilder::HaulingAttack( void )
 		pOwner->EyeVectors( &forward );
 
 		AngleVectors( GetAbsAngles(), &forward );
-		UTIL_TraceLine ( pOwner->EyePosition(), pOwner->EyePosition() + forward * 128, 
+		UTIL_TraceLine ( pOwner->EyePosition(), pOwner->EyePosition() + forward * 150, 
 			MASK_SOLID, pOwner, COLLISION_GROUP_NONE, & tr);
 
 		if ( tr.m_pEnt )
@@ -392,9 +392,6 @@ void CTFWeaponBuilder::HaulingAttack( void )
 			CBaseObject *pObject = NULL;
 
 			pObject = dynamic_cast<CBaseObject *>( tr.m_pEnt );
-
-			if ( !pObject )
-				DevMsg( 2, "CTFBuilder: This isn't an object. Classname: %s\n", tr.m_pEnt->GetClassname() );
 
 			if ( pObject && pObject->CanBeHauled( pOwner ) )
 			{

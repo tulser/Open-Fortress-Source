@@ -26,6 +26,9 @@
 #endif
 #define ANIMATION_CYCLE_MINFRAC		(1.0f / (1<<ANIMATION_CYCLE_BITS))
 
+#define SecobMod__MiscFixes //Used when a fix doesn't quite fit in any of the other defined categories. 
+#define SecobMod__Enable_Fixed_Multiplayer_AI //Allow AI in your mod, also fixes numerous crashes to do with AI and 
+
 // Each mod defines these for itself.
 class CViewVectors
 {
@@ -890,7 +893,7 @@ enum
 //-----------------------------------------------------------------------------
 // Commentary Mode
 //-----------------------------------------------------------------------------
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined(TF_MOD) || defined(TF_MOD_CLIENT)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL) /*|| defined(TF_MOD) || defined(TF_MOD_CLIENT)*/
 #define GAME_HAS_NO_USE_KEY
 
 #if defined( SPROP_COORD )

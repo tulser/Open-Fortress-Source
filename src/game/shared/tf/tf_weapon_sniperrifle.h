@@ -104,6 +104,7 @@ public:
 	virtual bool Lower( void );
 	virtual float GetProjectileDamage( void );
 	virtual int	GetDamageType() const;
+	virtual void DoFireEffects( void );
 
 	virtual void WeaponReset( void );
 

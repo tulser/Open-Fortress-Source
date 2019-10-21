@@ -365,6 +365,7 @@ public:
 	// Spawing rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
 	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers );
+	bool IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers );
 
 	virtual float FlItemRespawnTime( CItem *pItem );
 	virtual Vector VecItemRespawnSpot( CItem *pItem );
@@ -492,9 +493,10 @@ public:
 	virtual bool	Is3WaveGamemode(void);
 	virtual bool	IsArenaGamemode(void);
 	virtual bool	IsESCGamemode(void);
-	virtual bool	IsZSGamemode(void);
 	virtual bool	IsCoopGamemode(void);
-	virtual bool	IsRDMGamemode(void);
+	virtual bool	IsZSGamemode(void);
+	virtual bool	IsInfGamemode(void);
+	virtual bool	IsHL2(void);
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void);
 	virtual bool	UsesDMBuckets( void );
@@ -521,6 +523,7 @@ public:
 								   // which would make it fairly unoptimized and the fact that its used in a lot of places
 								   // we decided to make a bool thats set on the start of the round
 								   // should we find a better solution this could get removed
+	CNetworkVar( bool, m_bIsHL2 );
 	
 #ifdef GAME_DLL
 	virtual const char* GetMusicName( bool activeRound );

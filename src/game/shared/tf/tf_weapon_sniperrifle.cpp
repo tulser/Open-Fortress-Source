@@ -349,6 +349,19 @@ void CTFSniperRifle::ItemPostFrame( void )
 	}
 }
 
+
+void CTFSniperRifle::DoFireEffects( void )
+{
+	// Get the owning player.
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+	// No muzzleflash when scoped in
+	if ( !IsZoomed() )
+		pPlayer->DoMuzzleFlash();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

@@ -522,7 +522,7 @@ void MapEntity_PrecacheEntity( const char *pEntData, int &nStringSize )
 	
 	if (!entData.ExtractValue("classname", className))
 	{
-		Error( "classname missing from entity!\n" );
+		Error( "MapEntity_PrecacheEntity: classname missing from entity!\n" );
 	}
 
 	// Construct via the LINK_ENTITY_TO_CLASS factory.
@@ -552,7 +552,7 @@ const char *MapEntity_ParseEntity(CBaseEntity *&pEntity, const char *pEntData, I
 	
 	if (!entData.ExtractValue("classname", className))
 	{
-		Error( "classname missing from entity!\n" );
+		Error( "MapEntity_ParseEntity: classname missing from entity!\n" );
 	}
 
 	pEntity = NULL;

@@ -15,6 +15,12 @@
 #include "engine/imatchmaking.h"
 #include "ixboxsystem.h"
 
+#include "physpropclientside.h"
+#include "c_te_legacytempents.h"
+#include "cdll_client_int.h"
+#include "c_soundscape.h"
+#include <engine/IEngineSound.h>
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -336,6 +342,31 @@ void CTF_Presence::FireGameEvent( IGameEvent *event )
 			}
 		}
 #endif
+
+		// Zombie Master Reborn fix: decals + clientside ragdolls not cleaning up after round restart
+		// not the best place to put this code in, but hey it works
+
+        tempents->Clear();
+
+        C_PhysPropClientside::RecreateAll();
+        
+        enginesound->StopAllSounds( true );
+
+        Soundscape_OnStopAllSounds();
+
+        engine->ClientCmd( "r_cleardecals" );
+
+        C_ClientRagdoll* pRagdoll;
+        for ( C_BaseEntity* pEnt = ClientEntityList().FirstBaseEntity(); pEnt; pEnt = ClientEntityList().NextBaseEntity( pEnt ) )
+        {
+            pRagdoll = dynamic_cast<C_ClientRagdoll*>( pEnt );
+            if ( pRagdoll )
+            {
+                pRagdoll->SUB_Remove();
+            }
+        }
+
+
 	}
 	else if ( !Q_stricmp( "controlpoint_initialized", eventname ) )
 	{

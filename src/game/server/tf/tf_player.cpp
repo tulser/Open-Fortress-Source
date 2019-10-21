@@ -74,6 +74,7 @@
 
 #define DAMAGE_FORCE_SCALE_SELF				9
 
+
 extern bool IsInCommentaryMode( void );
 
 extern ConVar	sk_player_head;
@@ -123,12 +124,14 @@ ConVar ofd_resistance		( "ofd_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTI
 
 ConVar ofd_fullammo("ofd_fullammo", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Weapons have full ammo when dropped.");
 
-ConVar of_knockback_all("of_knockback_all", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for all damage types");
-ConVar of_knockback_bullets("of_knockback_bullets", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for bullets");
-ConVar of_knockback_explosives("of_knockback_explosives", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for explosions");
-ConVar of_knockback_melee("of_knockback_melee", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for melee");
+ConVar of_knockback_all("of_knockback_all", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for all damage types.");
+ConVar of_knockback_bullets("of_knockback_bullets", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for bullets.");
+ConVar of_knockback_explosives("of_knockback_explosives", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for explosions.");
+ConVar of_knockback_melee("of_knockback_melee", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for melee.");
 
-ConVar ofd_startloadout("ofd_startloadout", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Equips players with the normal spawn loadout");
+ConVar ofd_startloadout("ofd_startloadout", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Equips players with the normal spawn loadout.");
+
+ConVar ofd_gravitygun("ofd_gravitygun", "0", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Equips players everytime they spawn with a gravity gun.");
 
 extern ConVar of_grenades;
 extern ConVar of_retromode;
@@ -637,7 +640,7 @@ void CTFPlayer::CheckForIdle( void )
 			flIdleTime = mp_stalemate_timelimit.GetInt() * 0.5f;
 		}
 		
-		if ( (gpGlobals->curtime - m_flLastAction) > flIdleTime  )
+		if ( (gpGlobals->curtime - m_flLastAction) > flIdleTime )
 		{
 			bool bKickPlayer = false;
 
@@ -721,7 +724,6 @@ void CTFPlayer::PostThink()
 	
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
-
     m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
 }
 
@@ -1393,6 +1395,16 @@ void CTFPlayer::GiveDefaultItems()
 	else
 		ManageRegularWeapons( pData );
 
+	// awful
+	if ( ofd_gravitygun.GetBool() )
+	{
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
+
+		pWeapon = (CTFWeaponBase *)GiveNamedItem( "tf_weapon_physcannon" );
+		if ( pWeapon )
+			pWeapon->DefaultTouch( this );
+	}
+
 	// Give a builder weapon for each object the player class is allowed to build
 	switch ( GetPlayerClass()->GetClassIndex() )
 	{
@@ -1985,6 +1997,7 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
+
 	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_railgun");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
@@ -2143,7 +2156,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 				{
 					DevMsg("Player Spawn: no valid info_player_deathmatch found, fallbacking to info_player_start\n");
 
-					if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+					if ( TFGameRules() && TFGameRules()->IsHL2() )
 					{
 						pSpot = FindPlayerStart( "info_player_start" );
 						if ( pSpot )
@@ -4292,7 +4305,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 
 			// Burn sounds are handled in ConditionThink()
-			if ( !(bitsDamage & DMG_BURN ) )
+			// and fall damage
+			if ( !(bitsDamage & DMG_BURN ) || !(bitsDamage & DMG_FALL ) )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 			}
@@ -4479,8 +4493,8 @@ bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{
-		// hl2 maps need to return false
-		if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+		// coop needs to return false
+		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
 		{
 			return false;
 		}
@@ -6288,7 +6302,7 @@ bool CTFPlayer::SetObserverMode(int mode)
 
 	case OBS_MODE_CHASE :
 	case OBS_MODE_IN_EYE :	
-		// udpate FOV and viewmodels
+		// update FOV and viewmodels
 		SetObserverTarget( m_hObserverTarget );	
 		SetMoveType( MOVETYPE_OBSERVER );
 		break;
@@ -7765,11 +7779,16 @@ void CTFPlayer::ValidateCurrentObserverTarget( void )
 		}
 	}
 	// check added for npcs too
-	if ( m_hObserverTarget &&  (m_hObserverTarget->IsBaseObject() || m_hObserverTarget->IsNPC()))
+	if ( m_hObserverTarget && ( m_hObserverTarget->IsBaseObject() || m_hObserverTarget->IsNPC() ) )
 	{
 		if ( m_iObserverMode == OBS_MODE_IN_EYE )
 		{
-			ForceObserverMode( OBS_MODE_CHASE );
+			// ForceObserverMode( OBS_MODE_CHASE );
+			m_iObserverMode = OBS_MODE_CHASE;
+			SetObserverTarget( m_hObserverTarget );
+			SetMoveType( MOVETYPE_OBSERVER );
+
+			CheckObserverSettings();
 		}
 	}
 
@@ -8436,7 +8455,7 @@ void CTFPlayer::NoteSpokeVoiceCommand( const char *pszScenePlayed )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
+bool CTFPlayer::WantsLagCompensationOnEntity( const CBaseEntity *pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
 	bool bIsMedic = false;
 	
@@ -8445,13 +8464,13 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 	{
 		bIsMedic = true;
 
-		if ( pPlayer->GetTeamNumber() == GetTeamNumber()  )
+		if ( pEntity->GetTeamNumber() == GetTeamNumber()  )
 		{
 			CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( GetActiveWeapon() );
 
 			if ( pWeapon && pWeapon->GetHealTarget() )
 			{
-				if ( pWeapon->GetHealTarget() == pPlayer )
+				if ( pWeapon->GetHealTarget() == pEntity )
 					return true;
 				else
 					return false;
@@ -8459,21 +8478,27 @@ bool CTFPlayer::WantsLagCompensationOnEntity( const CBasePlayer *pPlayer, const 
 		}
 	}
 	
-	if ( pPlayer->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && !friendlyfire.GetBool()
+	if ( pEntity->GetTeamNumber() == GetTeamNumber() && bIsMedic == false && !friendlyfire.GetBool()
 	// Deathmatch Specific Lag Comp, If either the shooter or the Victim is on the merc team, dont return false here
-	&& pPlayer->GetTeamNumber() != TF_TEAM_MERCENARY && GetTeamNumber() != TF_TEAM_MERCENARY )
+	&& pEntity->GetTeamNumber() != TF_TEAM_MERCENARY && GetTeamNumber() != TF_TEAM_MERCENARY )
 		return false;
 	
 	// If this entity hasn't been transmitted to us and acked, then don't bother lag compensating it.
-	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pPlayer->entindex() ) )
+	if ( pEntityTransmitBits && !pEntityTransmitBits->Get( pEntity->entindex() ) )
 		return false;
 
 	const Vector &vMyOrigin = GetAbsOrigin();
-	const Vector &vHisOrigin = pPlayer->GetAbsOrigin();
+	const Vector &vHisOrigin = pEntity->GetAbsOrigin();
 
 	// get max distance player could have moved within max lag compensation time, 
 	// multiply by 1.5 to to avoid "dead zones"  (sqrt(2) would be the exact value)
-	float maxDistance = 1.5 * pPlayer->MaxSpeed() * sv_maxunlag.GetFloat();
+	float maxspeed;
+	CBasePlayer *pPlayer = ToBasePlayer((CBaseEntity*)pEntity);
+	if ( pPlayer )
+		maxspeed = pPlayer->MaxSpeed();
+	else
+		maxspeed = 600;
+	float maxDistance = 1.5 * maxspeed * sv_maxunlag.GetFloat();
 
 	// If the player is within this distance, lag compensate them in case they're running past us.
 	if ( vHisOrigin.DistTo( vMyOrigin ) < maxDistance )

@@ -134,6 +134,7 @@ extern ConVar of_knockback_bullets;
 extern ConVar of_knockback_melee;
 extern ConVar of_knockback_explosives;
 extern ConVar teamplay;
+extern ConVar ofd_gravitygun;
 
 ConVar tf_caplinear						( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime		( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
@@ -142,6 +143,7 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 // Open Fortress Convars
 ConVar of_gamemode_dm				( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
+ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
 ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar ofd_allow_allclass_pickups 	( "ofd_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non Merc Classes can pickup weapons.");
@@ -300,6 +302,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bCapsInitialized ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_bIsTDM ) ),
+	RecvPropBool( RECVINFO( m_bIsHL2 ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
@@ -326,6 +329,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bEscortOverride ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_bIsTDM ) ),
+	SendPropBool( SENDINFO( m_bIsHL2 ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
@@ -1334,12 +1338,15 @@ CTFGameRules::CTFGameRules()
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
 
+	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+		m_bIsHL2 = true;
+
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_capture_blocked" );	
 	ListenForGameEvent( "teamplay_point_unlocked" );
 	ListenForGameEvent( "teamplay_round_win" );
 	ListenForGameEvent( "teamplay_flag_event" );
-
+	
 	Q_memset( m_vecPlayerPositions,0, sizeof(m_vecPlayerPositions) );
 
 	m_iPrevRoundState = -1;
@@ -1583,7 +1590,6 @@ void CTFGameRules::Activate()
 
 	if ( ofd_mutators.GetInt() == RANDOMIZER )
 	{
-		AddGametype(TF_GAMETYPE_RDM);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Randomizer gamemode config file\n");
 		engine->ServerCommand("exec config_default_rdm.cfg \n");
 		engine->ServerExecute();
@@ -1646,9 +1652,18 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_default_coop.cfg \n");
 		engine->ServerExecute();
 	}
+
+	// this is for a future zombie survival gamemode
+	if ( of_infection.GetBool() )
+	{
+		AddGametype(TF_GAMETYPE_INF);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Infection gamemode config file\n");
+		engine->ServerCommand("exec config_default_inf.cfg \n");
+		engine->ServerExecute();
+	}
 	
 	// HL2 Deathmatch
-	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+	if ( IsHL2() )
 	{
 		AddGametype(TF_GAMETYPE_COOP);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
@@ -1723,19 +1738,24 @@ bool CTFGameRules::IsESCGamemode( void )
 	return InGametype( TF_GAMETYPE_ESC );
 }
 
-bool CTFGameRules::IsZSGamemode( void )
-{ 
-	return InGametype( TF_GAMETYPE_ZS );
-}
-
 bool CTFGameRules::IsCoopGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_COOP );
 }
 
-bool CTFGameRules::IsRDMGamemode( void )
+bool CTFGameRules::IsZSGamemode( void )
 { 
-	return InGametype( TF_GAMETYPE_RDM );
+	return InGametype( TF_GAMETYPE_ZS );
+}
+
+bool CTFGameRules::IsInfGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_INF );
+}
+
+bool CTFGameRules::IsHL2( void )
+{ 
+	return m_bIsHL2;
 }
 
 bool CTFGameRules::UsesMoney( void )
@@ -2689,21 +2709,21 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			
 			if ( IsGGGamemode() && CountActivePlayers() > 0 )
 			{
-						// check if any player is over the frag limit
-						// and creates a game event for achievement
-						for (int i = 1; i <= gpGlobals->maxClients; i++)
-						{
-							CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
-							if (pPlayer && pPlayer->GGLevel() == m_iMaxLevel )
-							{
-								GoToIntermission();
-							}
-						}
+				// check if any player is over the frag limit
+				// and creates a game event for achievement
+				for (int i = 1; i <= gpGlobals->maxClients; i++)
+				{
+					CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
+					if (pPlayer && pPlayer->GGLevel() == m_iMaxLevel )
+					{
+						GoToIntermission();
+					}
+				}
 			}
 			
 			if ( IsArenaGamemode() )
 			{
-				if( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING  )
+				if ( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING )
 				{
 					int iDeadTeam = TEAM_UNASSIGNED;
 					int iAliveTeam = TEAM_UNASSIGNED;
@@ -3406,7 +3426,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
     // Check the team if not in deathmatch
-	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+	if ( IsHL2() )
 	{
 	}
 	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
@@ -3436,11 +3456,15 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
 			return false;
 
-		/*
+		
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		// check if this spawnpoint allows our class to spawn here
 		if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
+		{
+			// You shouldn't be looking for a spawnpoint when class is undefined
+			Warning( "CTFGameRules::IsSpawnPointValid: Player has undefined class" );
 			return false;
+		}
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SCOUT && !pCTFSpawn->AllowScout() )
 			return false;
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SNIPER && !pCTFSpawn->AllowSniper() )
@@ -3462,10 +3486,105 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		//else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY && !pCTFSpawn->AllowMercenary() )
 		//	return false;
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN && !pCTFSpawn->AllowCivilian() )
-			return false;
+		{
+			// official tf2 maps will have spawnflags missing for Civilian, therefore I do a cheeky solution
+			// get every single spawnpoint and check if any of them has a Civilian spawnflag
+			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
+			// otherwise, force ourselves to spawn here
+			// Find all entities of the correct name and try and sit where they're at
+			CBaseEntity *pEntity = NULL;
+
+			bool bValidSpawn = false;
+
+			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "info_player_teamspawn" ) ) != NULL )
+			{
+				if ( TFGameRules()->IsSpawnPointValidNoClass( pEntity, pPlayer, true ) )
+					continue;
+
+				if ( pEntity->HasSpawnFlags( SF_CLASS_CIVILIAN ) )
+					bValidSpawn = true;
+			}
+
+			if ( bValidSpawn )
+				return false;
+		}
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_JUGGERNAUT && !pCTFSpawn->AllowJuggernaut() )
+		{
+			// official tf2 maps will have spawnflags missing for Juggernaut, therefore I do a cheeky solution
+			// get every single spawnpoint and check if any of them has a Juggernaut spawnflag
+			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
+			// otherwise, force ourselves to spawn here
+			// Find all entities of the correct name and try and sit where they're at
+			CBaseEntity *pEntity = NULL;
+
+			bool bValidSpawn = false;
+
+			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "info_player_teamspawn" ) ) != NULL )
+			{
+				if ( TFGameRules()->IsSpawnPointValidNoClass( pEntity, pPlayer, true ) )
+					continue;
+
+				if ( pEntity->HasSpawnFlags( SF_CLASS_JUGGERNAUT ) )
+					bValidSpawn = true;
+			}
+
+			if ( bValidSpawn )
+				return false;
+		}	
+	}
+
+	Vector mins = GetViewVectors()->m_vHullMin;
+	Vector maxs = GetViewVectors()->m_vHullMax;
+
+	if ( !bIgnorePlayers )
+	{
+		Vector vTestMins = pSpot->GetAbsOrigin() + mins;
+		Vector vTestMaxs = pSpot->GetAbsOrigin() + maxs;
+		return UTIL_IsSpaceEmpty( pPlayer, vTestMins, vTestMaxs );
+	}
+
+	trace_t trace;
+	UTIL_TraceHull( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
+	return ( trace.fraction == 1 && trace.allsolid != 1 && (trace.startsolid != 1) );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Checks to see if the player is on the correct team and whether or
+//          not the spawn point is available.
+//          This time however, without checking if the class spawnflags match
+//-----------------------------------------------------------------------------
+bool CTFGameRules::IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
+{
+    // Check the team if not in deathmatch
+	if ( IsHL2() )
+	{
+	}
+	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
+	{
+		// wow...
+		// some fools assigned teampoints to spectator team so i have to check this too
+		if ( pSpot->GetTeamNumber() == TEAM_UNASSIGNED || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
+		{
+		}
+		else
+		{
 			return false;
-			*/
+		}
+	}
+
+	if ( !pSpot->IsTriggered( pPlayer ) )
+		return false;
+
+	CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
+	if ( pCTFSpawn )
+	{
+		if ( pCTFSpawn->IsDisabled() )
+			return false;
+
+		// live tf2 uses spawnpoints for the comp end screen, which are given the unassigned team (and unassigned spawnpoints are regarded as valid here)
+		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
+		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
+			return false;
 	}
 
 	Vector mins = GetViewVectors()->m_vHullMin;
@@ -5456,8 +5575,8 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_DOM) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DOM]);
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_RDM) )
-		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_RDM]);
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_INF]);
 	return GameType;
 }
 

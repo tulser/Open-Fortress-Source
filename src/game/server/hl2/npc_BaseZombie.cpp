@@ -529,7 +529,6 @@ int CNPC_BaseZombie::MeleeAttack1Conditions ( float flDot, float flDist )
 		// Translate a hit vehicle into its passenger if found
 		if ( GetEnemy() != NULL )
 		{
-#if defined(HL2_DLL) && !defined(HL2MP)
 			// If the player is holding an object, knock it down.
 			if( GetEnemy()->IsPlayer() )
 			{
@@ -553,7 +552,6 @@ int CNPC_BaseZombie::MeleeAttack1Conditions ( float flDot, float flDist )
 						return COND_CAN_MELEE_ATTACK1;
 				}
 			}
-#endif
 		}
 		return COND_TOO_FAR_TO_ATTACK;
 	}

@@ -857,7 +857,7 @@ void UTIL_GetPlayerConnectionInfo( int playerIndex, int& ping, int &packetloss )
 		// then updaterate, what is the case for default settings
 		const char * szCmdRate = engine->GetClientConVarValue( playerIndex, "cl_cmdrate" );
 		
-		int nCmdRate = MAX( 1, Q_atoi( szCmdRate ) );
+		int nCmdRate = MAX( 1, (int)(float)atof( szCmdRate ) );
 		latency -= (0.5f/nCmdRate) + TICKS_TO_TIME( 1.0f ); // correct latency
 
 		// in GoldSrc we had a different, not fixed tickrate. so we have to adjust
@@ -1382,11 +1382,11 @@ static void SetMinMaxSize (CBaseEntity *pEnt, const Vector& mins, const Vector& 
 	{
 		if ( mins[i] > maxs[i] )
 		{
-			Error( "%s: backwards mins/maxs", ( pEnt ) ? pEnt->GetDebugName() : "<NULL>" );
+			Error("%i/%s - %s:  backwards mins/maxs: %s\n\nIf you are getting this error on a dedicated server, your server is likely not mounting Team Fortress 2 correctly.\nMake sure to specify full paths to TF2 in the gameinfo.txt.", pEnt->entindex(),
+				STRING( pEnt->GetEntityName() ),
+				pEnt->GetClassname(), pEnt->GetModelName() );
 		}
 	}
-
-	Assert( pEnt );
 
 	pEnt->SetCollisionBounds( mins, maxs );
 }
@@ -1410,10 +1410,13 @@ void UTIL_SetModel( CBaseEntity *pEntity, const char *pModelName )
 	int i = modelinfo->GetModelIndex( pModelName );
 	if ( i == -1 )	
 	{
-		Warning("%i/%s - %s:  UTIL_SetModel:  not precached: %s\n", pEntity->entindex(),
-			STRING( pEntity->GetEntityName() ),
-			pEntity->GetClassname(), pModelName);
-		return;
+		// Throwing a program-terminating error might be a little too much since we could just precache it here.
+		// If we're not in debug mode, just let it off with a nice warning.
+		if ( int newi = CBaseEntity::PrecacheModel( pModelName ) )
+		{
+			i = newi;
+			Warning( "%s was not precached\n", pModelName );
+		}
 	}
 
 	CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();

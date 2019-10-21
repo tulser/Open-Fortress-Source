@@ -26,6 +26,9 @@ public:
 	DECLARE_DATADESC();
 
 	CPointSpotlight();
+#ifdef MAPBASE
+	~CPointSpotlight();
+#endif
 
 	void	Precache(void);
 	void	Spawn(void);
@@ -68,7 +71,6 @@ private:
 	float	m_flSpotlightCurLength;
 	float	m_flSpotlightGoalWidth;
 	float	m_flHDRColorScale;
-	int		m_nMinDXLevel;
 
 public:
 	COutputEvent m_OnOn, m_OnOff;     ///< output fires when turned on, off
@@ -93,7 +95,6 @@ BEGIN_DATADESC( CPointSpotlight )
 	DEFINE_KEYFIELD( m_flSpotlightMaxLength,FIELD_FLOAT, "SpotlightLength"),
 	DEFINE_KEYFIELD( m_flSpotlightGoalWidth,FIELD_FLOAT, "SpotlightWidth"),
 	DEFINE_KEYFIELD( m_flHDRColorScale, FIELD_FLOAT, "HDRColorScale" ),
-	DEFINE_KEYFIELD( m_nMinDXLevel, FIELD_INTEGER, "mindxlevel" ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID,		"LightOn",		InputLightOn ),
@@ -119,10 +120,15 @@ CPointSpotlight::CPointSpotlight()
 	m_vSpotlightDir.Init();
 #endif
 	m_flHDRColorScale = 1.0f;
-	m_nMinDXLevel = 0;
 	m_bIgnoreSolid = false;
 }
 
+#ifdef MAPBASE
+CPointSpotlight::~CPointSpotlight()
+{
+	SpotlightDestroy();
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -379,7 +385,6 @@ void CPointSpotlight::SpotlightCreate(void)
 	m_hSpotlight->SetBeamFlags( (FBEAM_SHADEOUT|FBEAM_NOTILE) );
 	m_hSpotlight->SetBrightness( 64 );
 	m_hSpotlight->SetNoise( 0 );
-	m_hSpotlight->SetMinDXLevel( m_nMinDXLevel );
 
 	if ( m_bEfficientSpotlight )
 	{

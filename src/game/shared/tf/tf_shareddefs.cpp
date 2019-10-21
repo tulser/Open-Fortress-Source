@@ -150,9 +150,9 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_DOM",
 	"#Gametype_GG",
 	"#Gametype_3WAVE",
-	"#Gametype_ZS",
 	"#Gametype_COOP",
-	"#Gametype_RDM"
+	"#Gametype_ZS",
+	"#Gametype_INF"
 };
 
 //-----------------------------------------------------------------------------

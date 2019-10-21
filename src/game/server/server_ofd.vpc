@@ -20,7 +20,7 @@ $Configuration
 	$Compiler
 	{
 		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;.\of;$SRCDIR\game\shared\of;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
-		$PreprocessorDefinitions		"$BASE;TF_MOD;GLOWS_ENABLE;OPENFORTRESS_DLL;USE_NAV_MESH"
+		$PreprocessorDefinitions		"$BASE;TF_MOD;GLOWS_ENABLE;OPENFORTRESS_DLL;USE_NAV_MESH;ASW_PROJECTED_TEXTURES;MAPBASE"
 	}
 }
 

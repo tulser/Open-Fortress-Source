@@ -361,6 +361,13 @@ private:
 	void InputSetLightingOrigin( inputdata_t &inputdata );
 	void InputSetModelScale( inputdata_t &inputdata );
 
+#ifdef MAPBASE
+	void InputSetModel( inputdata_t &inputdata );
+
+	void InputSetCycle( inputdata_t &inputdata );
+	void InputSetPlaybackRate( inputdata_t &inputdata );
+#endif
+
 	bool CanSkipAnimation( void );
 
 public:

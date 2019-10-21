@@ -363,7 +363,7 @@ bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pA
 		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
 			return false;
 
-		if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+		if ( TFGameRules() && TFGameRules()->IsHL2() )
 			return false;
 
 		if (*GetTeamID(pPlayer) == 77) //82=red // merc 77

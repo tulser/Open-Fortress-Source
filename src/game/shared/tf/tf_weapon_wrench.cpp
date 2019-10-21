@@ -18,6 +18,8 @@
 	#include "variant_t.h"
 #endif
 
+#include "tf_gamerules.h"
+
 //=============================================================================
 //
 // Weapon Wrench tables.
@@ -115,18 +117,16 @@ void CTFWrench::Smack( void )
 	int iPlayerTeam = pPlayer->GetTeamNumber();
 
 	// We hit, setup the smack.
-	if (
-		trace.fraction < 1.0f &&
+	if ( trace.fraction < 1.0f &&
 		trace.m_pEnt &&
 		trace.m_pEnt->IsBaseObject() &&
-		(
-			(
-				iPlayerTeam != TF_TEAM_MERCENARY &&
-				trace.m_pEnt->GetTeamNumber() == iPlayerTeam
-			) ||
-			pPlayer == ((CBaseObject *) trace.m_pEnt)->GetOwner()
+		( 
+			( ( TFGameRules()->IsCoopGamemode() || iPlayerTeam != TF_TEAM_MERCENARY ) &&
+					trace.m_pEnt->GetTeamNumber() == iPlayerTeam ) ||
+				pPlayer == ((CBaseObject *) trace.m_pEnt)->GetOwner()
+			)
 		)
-	){
+	{
 #ifdef GAME_DLL
 		OnFriendlyBuildingHit( dynamic_cast< CBaseObject * >( trace.m_pEnt ), pPlayer );
 #endif

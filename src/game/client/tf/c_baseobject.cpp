@@ -777,9 +777,8 @@ void C_BaseObject::GetTargetIDString( wchar_t *sIDString, int iMaxLenInBytes )
 	if ( !pLocalPlayer )
 		return;
 
-	int iTeamNumber = GetTeamNumber();
-
-	if ( iTeamNumber == pLocalPlayer->GetTeamNumber() )
+	// our own team, spectators and enemy spies can see building health!
+	if ( pLocalPlayer->IsPlayerClass( TF_CLASS_SPY ) || InSameTeam( pLocalPlayer ) || pLocalPlayer->GetTeamNumber() == TEAM_SPECTATOR )
 	{
 		wchar_t wszBuilderName[ MAX_PLAYER_NAME_LENGTH ];
 

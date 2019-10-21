@@ -756,7 +756,11 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 	case TASK_COMBINE_SIGNAL_BEST_SOUND:
 		if( IsInSquad() && GetSquad()->NumMembers() > 1 )
 		{
+		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+			CBasePlayer *pPlayer = UTIL_GetNearestVisiblePlayer(this); 
+		#else
 			CBasePlayer *pPlayer = AI_GetSinglePlayer();
+		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 
 			if( pPlayer && OccupyStrategySlot( SQUAD_SLOT_EXCLUSIVE_HANDSIGN ) && pPlayer->FInViewCone( this ) )
 			{
@@ -998,7 +1002,7 @@ void CNPC_Combine::StartTask( const Task_t *pTask )
 				m_flShotDelay = GetActiveWeapon()->GetFireRate();
 
 				m_flNextAttack = gpGlobals->curtime + m_flShotDelay - 0.1;
-				ResetIdealActivity( ACT_RANGE_ATTACK1 );	
+				ResetIdealActivity( ACT_RANGE_ATTACK1 );
 				m_flLastAttackTime = gpGlobals->curtime;
 			}
 		}

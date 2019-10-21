@@ -69,6 +69,80 @@ class CBaseFilter;
 
 typedef CBitVec<MAX_CONDITIONS> CAI_ScheduleBits;
 
+#define MAX_LAYER_RECORDS (CBaseAnimatingOverlay::MAX_OVERLAYS)
+
+struct LayerRecordNPC
+{
+	int m_sequence;
+	float m_cycle;
+	float m_weight;
+	int m_order;
+
+	LayerRecordNPC()
+	{
+		m_sequence = 0;
+		m_cycle = 0;
+		m_weight = 0;
+		m_order = 0;
+	}
+
+	LayerRecordNPC( const LayerRecordNPC& src )
+	{
+		m_sequence = src.m_sequence;
+		m_cycle = src.m_cycle;
+		m_weight = src.m_weight;
+		m_order = src.m_order;
+	}
+};
+
+struct LagRecordNPC
+{
+public:
+	LagRecordNPC()
+	{
+		m_fFlags = 0;
+		m_vecOrigin.Init();
+		m_vecAngles.Init();
+		m_vecMins.Init();
+		m_vecMaxs.Init();
+		m_flSimulationTime = -1;
+		m_masterSequence = 0;
+		m_masterCycle = 0;
+	}
+
+	LagRecordNPC( const LagRecordNPC& src )
+	{
+		m_fFlags = src.m_fFlags;
+		m_vecOrigin = src.m_vecOrigin;
+		m_vecAngles = src.m_vecAngles;
+		m_vecMins = src.m_vecMins;
+		m_vecMaxs = src.m_vecMaxs;
+		m_flSimulationTime = src.m_flSimulationTime;
+		for( int layerIndex = 0; layerIndex < MAX_LAYER_RECORDS; ++layerIndex )
+		{
+			m_layerRecords[layerIndex] = src.m_layerRecords[layerIndex];
+		}
+		m_masterSequence = src.m_masterSequence;
+		m_masterCycle = src.m_masterCycle;
+	}
+
+	// Did player die this frame
+	int						m_fFlags;
+
+	// Player position, orientation and bbox
+	Vector					m_vecOrigin;
+	QAngle					m_vecAngles;
+	Vector					m_vecMins;
+	Vector					m_vecMaxs;
+
+	float					m_flSimulationTime;	
+	
+	// Player animation details, so we can get the legs in the right spot.
+	LayerRecordNPC			m_layerRecords[MAX_LAYER_RECORDS];
+	int						m_masterSequence;
+	float					m_masterCycle;
+};
+
 // Used to control optimizations mostly dealing with pathfinding for NPCs
 extern ConVar ai_strong_optimizations;
 
@@ -446,6 +520,10 @@ float ChangeDistance( float flInterval, float flGoalDistance, float flGoalVeloci
 //
 //=============================================================================
 
+#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+#define MAX_AIS	256 
+#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+
 class CAI_Manager
 {
 public:
@@ -454,16 +532,22 @@ public:
 	CAI_BaseNPC **	AccessAIs();
 	int				NumAIs();
 	
-	void AddAI( CAI_BaseNPC *pAI );
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		int AddAI( CAI_BaseNPC *pAI ); 
+	#else
+		void AddAI( CAI_BaseNPC *pAI );
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 	void RemoveAI( CAI_BaseNPC *pAI );
 
 	bool FindAI( CAI_BaseNPC *pAI )	{ return ( m_AIs.Find( pAI ) != m_AIs.InvalidIndex() ); }
 	
 private:
+	#ifndef SecobMod__Enable_Fixed_Multiplayer_AI
 	enum
 	{
 		MAX_AIS = 256
 	};
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 	
 	typedef CUtlVector<CAI_BaseNPC *> CAIArray;
 	
@@ -553,6 +637,21 @@ public:
 	void TestPlayerPushing( CBaseEntity *pPlayer );
 	void CascadePlayerPush( const Vector &push, const Vector &pushOrigin );
 	void NotifyPushMove();
+
+public:
+	CUtlFixedLinkedList<LagRecordNPC>* GetLagTrack() { return m_LagTrack; }
+	LagRecordNPC*	GetLagRestoreData() { if ( m_RestoreData != NULL ) return m_RestoreData; else return new LagRecordNPC(); }
+	LagRecordNPC*	GetLagChangeData() { if ( m_ChangeData != NULL ) return m_ChangeData; else return new LagRecordNPC(); }
+	void		SetLagRestoreData(LagRecordNPC* l) { if ( m_RestoreData != NULL ) delete m_RestoreData; m_RestoreData = l; }
+	void		SetLagChangeData(LagRecordNPC* l) { if ( m_ChangeData != NULL ) delete m_ChangeData; m_ChangeData = l; }
+	void		FlagForLagCompensation( bool tempValue ) { m_bFlaggedForLagCompensation = tempValue; }
+	bool		IsLagFlagged() { return m_bFlaggedForLagCompensation; }
+
+private:
+	CUtlFixedLinkedList<LagRecordNPC>* m_LagTrack;
+	LagRecordNPC*	m_RestoreData;
+	LagRecordNPC*	m_ChangeData;
+	bool		m_bFlaggedForLagCompensation;
 
 public:
 	//-----------------------------------------------------
@@ -2136,6 +2235,15 @@ public:
 	void				GetPlayerAvoidBounds( Vector *pMins, Vector *pMaxs );
 
 	void				StartPingEffect( void ) { m_flTimePingEffect = gpGlobals->curtime + 2.0f; DispatchUpdateTransmitState(); }
+
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+	// used by lag compensation to be able to refer to & track specific NPCs, and detect changes in the AI list 
+	void				SetAIIndex(int i) { m_iAIIndex = i; } 
+	int					GetAIIndex() { return m_iAIIndex; } 
+	
+	private: 
+	int					m_iAIIndex; 
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 };
 
 

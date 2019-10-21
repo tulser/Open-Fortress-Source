@@ -2694,6 +2694,11 @@ CON_COMMAND_F_COMPLETION(cc_emit, "Emits a closed caption", 0, EmitCaptionComple
 		Msg("usage:  cc_emit tokenname\n");
 		return;
 	}
+	
+#ifdef MAPBASE // 1upD
+	if ( !closecaption.GetBool() )
+        return;
+#endif
 
 	CHudCloseCaption *hudCloseCaption = GET_HUDELEMENT(CHudCloseCaption);
 	if (hudCloseCaption)

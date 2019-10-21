@@ -86,6 +86,7 @@ bool CTFHudKills::ShouldDraw( void )
 		!TFGameRules()->DontCountKills() &&
 		!TFGameRules()->IsTeamplay() &&
 		!TFGameRules()->IsArenaGamemode() &&
+		!TFGameRules()->IsCoopGamemode() &&
 		(TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode()))
 		return CHudElement::ShouldDraw();
 	else

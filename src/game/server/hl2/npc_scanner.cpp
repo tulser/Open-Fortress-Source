@@ -682,7 +682,12 @@ CBaseEntity* CNPC_CScanner::BestInspectTarget(void)
 
 	if ( m_bOnlyInspectPlayers )
 	{
-		CBasePlayer *pPlayer = AI_GetSinglePlayer();
+#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
+#else
+CBasePlayer *pPlayer = AI_GetSinglePlayer();
+#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+
 		if ( !pPlayer )
 			return NULL;
 
@@ -1988,7 +1993,7 @@ void CNPC_CScanner::BlindFlashTarget( CBaseEntity *pTarget )
 
 		if ( tr.startsolid == false && tr.fraction == 1.0)
 		{
-			color32 white = { 255, 255, 255, (byte)(SCANNER_FLASH_MAX_VALUE * dotPr) };
+			color32 white = { 255, 255, 255, SCANNER_FLASH_MAX_VALUE * dotPr };
 
 			if ( ( g_pMaterialSystemHardwareConfig != NULL ) && ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_NONE ) )
 			{

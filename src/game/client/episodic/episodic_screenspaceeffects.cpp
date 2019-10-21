@@ -98,32 +98,29 @@ void CStunEffect::Render( int x, int y, int w, int h )
 	float viewOffs = ( flEffectPerc * 32.0f ) * ( cos( gpGlobals->curtime * 40.0f ) * sin( gpGlobals->curtime * 17.0f ) );
 	float vX = x + viewOffs;
 
-	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 80 )
+	if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_NONE )
 	{
-		if ( g_pMaterialSystemHardwareConfig->GetHDRType() == HDR_TYPE_NONE )
-		{
-			m_EffectMaterial->ColorModulate( 1.0f, 1.0f, 1.0f );
-		}
-		else
-		{
-			// This is a stupid fix, but I don't have time to do a cleaner implementation. Since
-			// the introblur.vmt material uses unlit generic, it will tone map, so I need to undo the tone mapping
-			// using color modulate.  The proper fix would be to use a different material type that
-			// supports alpha blending but not tone mapping, which I don't think exists. Whatever. This works when
-			// the tone mapping scalar is less than 1.0, which it is in the cases it's used in game.
-			float flUnTonemap = pow( 1.0f / pRenderContext->GetToneMappingScaleLinear().x, 1.0f / 2.2f );
-			m_EffectMaterial->ColorModulate( flUnTonemap, flUnTonemap, flUnTonemap );
-		}
-
-		// Set alpha blend value
-		float flOverlayAlpha = clamp( ( 150.0f / 255.0f ) * flEffectPerc, 0.0f, 1.0f );
-		m_EffectMaterial->AlphaModulate( flOverlayAlpha );
-
-		// Draw full screen alpha-blended quad
-		pRenderContext->DrawScreenSpaceRectangle( m_EffectMaterial, 0, 0, w, h,
-			vX, 0, (m_StunTexture->GetActualWidth()-1)+vX, (m_StunTexture->GetActualHeight()-1), 
-			m_StunTexture->GetActualWidth(), m_StunTexture->GetActualHeight() );
+		m_EffectMaterial->ColorModulate( 1.0f, 1.0f, 1.0f );
 	}
+	else
+	{
+		// This is a stupid fix, but I don't have time to do a cleaner implementation. Since
+		// the introblur.vmt material uses unlit generic, it will tone map, so I need to undo the tone mapping
+		// using color modulate.  The proper fix would be to use a different material type that
+		// supports alpha blending but not tone mapping, which I don't think exists. Whatever. This works when
+		// the tone mapping scalar is less than 1.0, which it is in the cases it's used in game.
+		float flUnTonemap = pow( 1.0f / pRenderContext->GetToneMappingScaleLinear().x, 1.0f / 2.2f );
+		m_EffectMaterial->ColorModulate( flUnTonemap, flUnTonemap, flUnTonemap );
+	}
+
+	// Set alpha blend value
+	float flOverlayAlpha = clamp( ( 150.0f / 255.0f ) * flEffectPerc, 0.0f, 1.0f );
+	m_EffectMaterial->AlphaModulate( flOverlayAlpha );
+
+	// Draw full screen alpha-blended quad
+	pRenderContext->DrawScreenSpaceRectangle( m_EffectMaterial, 0, 0, w, h,
+		vX, 0, (m_StunTexture->GetActualWidth()-1)+vX, (m_StunTexture->GetActualHeight()-1), 
+		m_StunTexture->GetActualWidth(), m_StunTexture->GetActualHeight() );
 
 	// Save off this pass
 	Rect_t srcRect;

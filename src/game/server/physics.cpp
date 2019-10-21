@@ -729,7 +729,8 @@ bool CCollisionEvent::ShouldFreezeContacts( IPhysicsObject **pObjectList, int ob
 #endif
 	}
 	m_lastTickFrictionError = gpGlobals->tickcount;
-	return false;
+	//return false;
+	return true;
 }
 
 // NOTE: these are fully edge triggered events 

@@ -21,6 +21,10 @@ class CRuleEntity : public CBaseEntity
 public:
 	DECLARE_CLASS( CRuleEntity, CBaseEntity );
 
+	// Zombie Master Reborn fix
+	// Make all game_* entities server only and not take up the entity limit
+    CRuleEntity() : CBaseEntity( true ) {}
+
 	void	Spawn( void );
 
 	DECLARE_DATADESC();

@@ -1736,6 +1736,8 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		return;
 	}
 
+	UTIL_Remove( this );
+
 	// in multiplayer spawn break models as clientside temp ents
 	if ( gpGlobals->maxClients > 1 && breakable_multiplayer.GetBool() )
 	{
@@ -1855,6 +1857,8 @@ END_SEND_TABLE()
 //-----------------------------------------------------------------------------
 CDynamicProp::CDynamicProp()
 {
+	m_bDisableBoneFollowers = true;
+
 	m_nPendingSequence = -1;
 	if ( g_pGameRules->IsMultiplayer() )
 	{

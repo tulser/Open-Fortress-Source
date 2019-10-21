@@ -12,6 +12,8 @@
 #include "cbase.h"
 #include "func_areaportalbase.h"
 
+#include "tf_gamerules.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -178,7 +180,16 @@ bool CAreaPortal::KeyValue( const char *szKeyName, const char *szValue )
 
 bool CAreaPortal::UpdateState()
 {
-	engine->SetAreaPortalState( m_portalNumber, m_state );
+	if ( TFGameRules() && TFGameRules()->IsHL2() )
+	{
+		m_state = AREAPORTAL_OPEN;
+		engine->SetAreaPortalState( m_portalNumber, m_state );
+	}
+	else
+	{
+		engine->SetAreaPortalState( m_portalNumber, m_state );
+	}
+
 	return !!m_state;
 }
 

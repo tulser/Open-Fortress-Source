@@ -301,7 +301,7 @@ IRopeManager *RopeManager()
 
 inline bool ShouldUseFakeAA( IMaterial *pBackMaterial )
 {
-	return pBackMaterial && rope_smooth.GetInt() && engine->GetDXSupportLevel() > 70 && !g_pMaterialSystemHardwareConfig->IsAAEnabled();
+	return pBackMaterial && rope_smooth.GetInt() && !g_pMaterialSystemHardwareConfig->IsAAEnabled();
 }
 
 

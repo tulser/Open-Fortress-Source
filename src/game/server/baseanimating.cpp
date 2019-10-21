@@ -213,6 +213,13 @@ BEGIN_DATADESC( CBaseAnimating )
 	DEFINE_KEYFIELD( m_flModelScale, FIELD_FLOAT, "modelscale" ),
 	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetModelScale", InputSetModelScale ),
 
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING,	"SetModel",	InputSetModel ),
+
+	DEFINE_INPUTFUNC( FIELD_FLOAT,	"SetCycle",	InputSetCycle ),
+	DEFINE_INPUTFUNC( FIELD_FLOAT,	"SetPlaybackRate",	InputSetPlaybackRate ),
+#endif
+
 	DEFINE_FIELD( m_fBoneCacheFlags, FIELD_SHORT ),
 
 	END_DATADESC()
@@ -629,6 +636,36 @@ void CBaseAnimating::InputSetModelScale( inputdata_t &inputdata )
 	SetModelScale( vecScale.x, vecScale.y );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Sets our current model
+//-----------------------------------------------------------------------------
+void CBaseAnimating::InputSetModel( inputdata_t &inputdata )
+{
+	const char *szModel = inputdata.value.String();
+	if (PrecacheModel(szModel) != -1)
+	{
+		SetModelName(AllocPooledString(szModel));
+		SetModel(szModel);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our current cycle
+//-----------------------------------------------------------------------------
+void CBaseAnimating::InputSetCycle( inputdata_t &inputdata )
+{
+	SetCycle( inputdata.value.Float() );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our current cycle
+//-----------------------------------------------------------------------------
+void CBaseAnimating::InputSetPlaybackRate( inputdata_t &inputdata )
+{
+	SetPlaybackRate( inputdata.value.Float() );
+}
+#endif
 
 //=========================================================
 // SelectWeightedSequence

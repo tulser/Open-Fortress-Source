@@ -88,15 +88,15 @@ enum
 //-----------------------------------------------------------------------------
 // CVar replacements
 //-----------------------------------------------------------------------------
-#define TF_DAMAGE_CRIT_CHANCE				0.05f
-#define TF_DAMAGE_CRIT_CHANCE_RAPID			0.05f
+#define TF_DAMAGE_CRIT_CHANCE				0.025f // was 0.05f
+#define TF_DAMAGE_CRIT_CHANCE_RAPID			0.02f // was 0.05f
 #define TF_DAMAGE_CRIT_DURATION_RAPID		2.0f
-#define TF_DAMAGE_CRIT_CHANCE_MELEE			0.15f
+#define TF_DAMAGE_CRIT_CHANCE_MELEE			0.1f // was 0.1f
 
 #define TF_DAMAGE_CRITMOD_MAXTIME			20
 #define TF_DAMAGE_CRITMOD_MINTIME			2
 #define TF_DAMAGE_CRITMOD_DAMAGE			800
-#define TF_DAMAGE_CRITMOD_MAXMULT			4
+#define TF_DAMAGE_CRITMOD_MAXMULT			4 // was 6
 
 #define TF_DAMAGE_CRIT_MULTIPLIER			3.0f
 
@@ -206,7 +206,7 @@ enum
 	TF_GAMETYPE_PD, // Player Destruction
 
 	// open fortress
-	TF_GAMETYPE_KOTH, // King of the Hill, yes this doesn't exist in live tf2 but whatever
+	TF_GAMETYPE_KOTH, // King of the Hill, doesn't exist in live tf2 but whatever
 	TF_GAMETYPE_ESC, // Escort
 	TF_GAMETYPE_DM, // Deathmatch
 	TF_GAMETYPE_TDM, // Team Deathmatch
@@ -214,8 +214,8 @@ enum
 	TF_GAMETYPE_GG, // Gun Game
 	TF_GAMETYPE_3WAVE, // 3 Wave
 	TF_GAMETYPE_ZS, // Zombie Survival (not implemented yet)
-	TF_GAMETYPE_COOP, // Co-op (same as ZS for now)
-	TF_GAMETYPE_RDM, // Randomizer
+	TF_GAMETYPE_COOP, // Co-op (ZS inherits from this, and any other future gamemodes)
+	TF_GAMETYPE_INF, // Infection
 	TF_GAMETYPE_LAST
 };
 
@@ -1062,9 +1062,9 @@ enum
 #define SENTRYGUN_EYE_OFFSET_LEVEL_1	Vector( 0, 0, 32 )
 #define SENTRYGUN_EYE_OFFSET_LEVEL_2	Vector( 0, 0, 40 )
 #define SENTRYGUN_EYE_OFFSET_LEVEL_3	Vector( 0, 0, 46 )
-#define SENTRYGUN_MAX_SHELLS_1			100
-#define SENTRYGUN_MAX_SHELLS_2			120
-#define SENTRYGUN_MAX_SHELLS_3			144
+#define SENTRYGUN_MAX_SHELLS_1			150
+#define SENTRYGUN_MAX_SHELLS_2			200
+#define SENTRYGUN_MAX_SHELLS_3			200
 #define SENTRYGUN_MAX_ROCKETS			20
 
 // Dispenser's maximum carrying capability

@@ -754,19 +754,10 @@ void CTriggerWateryDeath::StartTouch(CBaseEntity *pOther)
 		}
 	}
 
-#ifdef HL2_DLL
 	if ( pOther->IsPlayer() )
 	{
 		SpawnLeeches( pOther );
-
-		CHL2_Player *pHL2Player = dynamic_cast<CHL2_Player*>( pOther );
-
-		if ( pHL2Player )
-		{
-			pHL2Player->StartWaterDeathSounds();
-		}
 	}
-#endif
 	
 }
 

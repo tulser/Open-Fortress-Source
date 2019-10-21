@@ -306,7 +306,7 @@ bool CAI_BaseActor::StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene,
 				}
 				else
 				{
-					Warning( "CSceneEntity %s unable to find actor named \"%s\"\n", scene->GetFilename(), event->GetParameters2() );
+					DevMsg( "CSceneEntity %s unable to find actor named \"%s\"\n", scene->GetFilename(), event->GetParameters2() );
 					return false;
 				}
 			}

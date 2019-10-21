@@ -4848,7 +4848,6 @@ int CNPC_Hunter::MeleeAttack1Conditions ( float flDot, float flDist )
 				return MeleeAttack1ConditionsVsEnemyInVehicle( pCCEnemy, flDot );
 			}
 
-#if defined(HL2_DLL) && !defined(HL2MP)
 			// If the player is holding an object, knock it down.
 			if ( GetEnemy()->IsPlayer() )
 			{
@@ -4874,7 +4873,6 @@ int CNPC_Hunter::MeleeAttack1Conditions ( float flDot, float flDist )
 					}
 				}
 			}
-#endif
 		}
 	
 		return COND_TOO_FAR_TO_ATTACK;

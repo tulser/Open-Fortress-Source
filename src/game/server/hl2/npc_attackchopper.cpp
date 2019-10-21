@@ -5321,7 +5321,8 @@ void CGrenadeHelicopter::VPhysicsCollision( int index, gamevcollisionevent_t *pE
 }
 
 
-#if HL2_EPISODIC
+//SecobMod__IFDEF_Fixes
+#ifdef HL2_EPISODIC
 //------------------------------------------------------------------------------
 // double launch velocity for ep2_outland_08
 //------------------------------------------------------------------------------
@@ -5338,7 +5339,7 @@ Vector CGrenadeHelicopter::PhysGunLaunchVelocity( const Vector &forward, float f
 //------------------------------------------------------------------------------
 float CGrenadeHelicopter::GetBombLifetime()
 {
-#if HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	return m_flLifetime;
 #else
 	return BOMB_LIFETIME;
@@ -5564,7 +5565,11 @@ void CGrenadeHelicopter::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t
 bool CGrenadeHelicopter::IsThrownByPlayer()
 {
 	// if player is the owner and we're set to explode on contact, then the player threw this grenade.
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI	
+	return ( m_bExplodeOnContact ); 
+	#else
 	return ( ( GetOwnerEntity() == UTIL_GetLocalPlayer() ) && m_bExplodeOnContact );
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 }
 
 //-----------------------------------------------------------------------------

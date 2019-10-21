@@ -473,6 +473,18 @@ void CAI_ScriptConditions::EvaluationThink()
 
 	int iActorsDone = 0;
 
+#ifdef HL2_DLL
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+	//Do nothing.
+	#else
+		if( AI_GetSinglePlayer()->GetFlags() & FL_NOTARGET )
+		{
+			ScrCondDbgMsg( ("%s WARNING: Player is NOTARGET. This will affect all LOS conditiosn involving the player!\n", GetDebugName()) );
+		}
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+#endif
+
+
 	for ( int i = 0; i < m_ElementList.Count(); )
 	{
 		CAI_ScriptConditionsElement *pConditionElement = &m_ElementList[i];
@@ -727,9 +739,9 @@ bool CAI_ScriptConditions::IsInFOV( CBaseEntity *pViewer, CBaseEntity *pViewed, 
 
 bool CAI_ScriptConditions::PlayerHasLineOfSight( CBaseEntity *pViewer, CBaseEntity *pViewed, bool fNot )
 {
-	// SecobMod__Information: - Null Pointers: Fixing a null on ep2_outland_09 (and some other maps). This however breaks the map.
-	if (!pViewer)
-		return false;
+	////SecobMod__Information: - Null Pointers: Fixing a null on ep2_outland_09. This however breaks the map.
+	if (pViewer == NULL)
+	return false;
 
 	CBaseCombatCharacter *pCombatantViewer = pViewer->MyCombatCharacterPointer();
 

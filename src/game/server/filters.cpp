@@ -383,7 +383,8 @@ protected:
 
 	bool PassesDamageFilterImpl(const CTakeDamageInfo &info)
 	{
-	 	return info.GetDamageType() == m_iDamageType;
+		//Tony; these are bitflags. check them as so.
+		return ((info.GetDamageType() & m_iDamageType) == m_iDamageType);
 	}
 
 	int m_iDamageType;

@@ -1167,13 +1167,10 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 	pOther->DispatchTraceAttack( info, GetAbsVelocity(), &pTrace );
 	ApplyMultiDamage();
 
-	// please please work
 	CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
-	if (pNPC)
-	{
-		// todo figure out how to find attacker with this
-		pNPC->Ignite(TF_BURNING_FLAME_LIFE);
-	}
+
+	if ( pNPC )
+		pNPC->Ignite( TF_BURNING_FLAME_LIFE / 5 ); // much shorter time as otherwise its too overpowered
 }
 
 #endif // GAME_DLL

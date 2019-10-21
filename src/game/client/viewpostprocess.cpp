@@ -1421,10 +1421,6 @@ static void DrawBloomDebugBoxes( IMatRenderContext *pRenderContext )
 
 static float GetBloomAmount( void )
 {
-	// return bloom amount ( 0.0 if disabled or otherwise turned off )
-	if ( engine->GetDXSupportLevel() < 80 )
-		return 0.0;
-
 	HDRType_t hdrType = g_pMaterialSystemHardwareConfig->GetHDRType();
 
 	bool bBloomEnabled = (mat_hdr_level.GetInt() >= 1);
@@ -1672,7 +1668,7 @@ static void DoPreBloomTonemapping( IMatRenderContext *pRenderContext, int nX, in
 
 static void DoPostBloomTonemapping( IMatRenderContext *pRenderContext, int nX, int nY, int nWidth, int nHeight, float flAutoExposureMin, float flAutoExposureMax )
 {
-	if ( mat_show_histogram.GetInt() && ( engine->GetDXSupportLevel() >= 90 ) )
+	if ( mat_show_histogram.GetInt() )
 	{
 		g_HDR_HistogramSystem.DisplayHistogram();
 	}
@@ -2335,10 +2331,9 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			}
 
 			// bloom, software-AA and colour-correction (applied in 1 pass, after generation of the bloom texture)
-			bool  bPerformSoftwareAA	= IsX360() && ( engine->GetDXSupportLevel() >= 90 ) && ( flAAStrength != 0.0f );
-			bool  bPerformBloom			= !bPostVGui && ( flBloomScale > 0.0f ) && ( engine->GetDXSupportLevel() >= 90 );
+			bool  bPerformSoftwareAA	= IsX360() && ( flAAStrength != 0.0f );
+			bool  bPerformBloom			= !bPostVGui && ( flBloomScale > 0.0f );
 			bool  bPerformColCorrect	= !bPostVGui && 
-										  ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90) &&
 										  ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_FLOAT ) &&
 										  g_pColorCorrectionMgr->HasNonZeroColorCorrectionWeights() &&
 										  mat_colorcorrection.GetInt();
@@ -2624,7 +2619,7 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			}
 
 			pRenderContext->SetRenderTarget(NULL);
-			if ( mat_show_histogram.GetInt() && (engine->GetDXSupportLevel()>=90))
+			if ( mat_show_histogram.GetInt() )
 				g_HDR_HistogramSystem.DisplayHistogram();
 			if ( mat_dynamic_tonemapping.GetInt() )
 			{
@@ -2714,7 +2709,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &view, int x, int y, int w, int h 
 #ifdef CSS_PERF_TEST
 	return;
 #endif
-	if ( ( !mat_motion_blur_enabled.GetInt() ) || ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) )
+	if ( ( !mat_motion_blur_enabled.GetInt() ) )
 	{
 		return;
 	}

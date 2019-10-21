@@ -960,6 +960,18 @@ void CFuncRotating::UpdateSpeed( float flNewSpeed )
 		RampPitchVol();
 	}
 
+#ifdef MAPBASE
+	QAngle angNormalizedAngles = GetLocalAngles();
+	if (m_vecMoveAng.x)
+		angNormalizedAngles.x = AngleNormalize( angNormalizedAngles.x );
+	if (m_vecMoveAng.y)
+		angNormalizedAngles.y = AngleNormalize( angNormalizedAngles.y );
+	if (m_vecMoveAng.z)
+		angNormalizedAngles.z = AngleNormalize( angNormalizedAngles.z );
+
+	SetLocalAngles(angNormalizedAngles);
+#endif
+
 	SetLocalAngularVelocity( m_vecMoveAng * m_flSpeed );
 }
 
@@ -1435,6 +1447,12 @@ bool CFuncVPhysicsClip::EntityPassesFilter( CBaseEntity *pOther )
 
 	if ( pFilter )
 		return pFilter->PassesFilter( this, pOther );
+
+#ifdef MAPBASE
+	// I couldn't figure out what else made this crash. The entity shouldn't be NULL.
+	if ( !pOther->VPhysicsGetObject() )
+		return false;
+#endif
 
 	if ( pOther->GetMoveType() == MOVETYPE_VPHYSICS && pOther->VPhysicsGetObject()->IsMoveable() )
 		return true;

@@ -225,6 +225,9 @@ void CObjectSentrygun::StartHauling( void )
 
 	SetModel( SENTRY_MODEL_PLACEMENT );
 
+	m_iState.Set( SENTRY_STATE_INACTIVE );
+	m_hEnemy = NULL;
+
 	// Set my build size
 	m_vecBuildMins = SENTRYGUN_MINS;
 	m_vecBuildMaxs = SENTRYGUN_MAXS;
@@ -727,7 +730,12 @@ bool CObjectSentrygun::FindTarget()
 		int nTeamCount = pTeamTest[i]->GetNumPlayers();
 		for ( int iPlayer = 0; iPlayer < nTeamCount; ++iPlayer )
 		{
+
 			CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeamTest[i]->GetPlayer( iPlayer ) );
+
+			// no attacking players in coop
+			if ( TFGameRules()->IsCoopGamemode() )
+				continue;
 
 			if ( pTargetPlayer == NULL )
 				continue;
@@ -739,7 +747,7 @@ bool CObjectSentrygun::FindTarget()
 			if ( !pTargetPlayer->IsAlive() )
 				continue;
 
-			if (pTargetPlayer->GetFlags() & FL_NOTARGET)
+			if ( pTargetPlayer->GetFlags() & FL_NOTARGET )
 				continue;
 
 			vecTargetCenter = pTargetPlayer->GetAbsOrigin();
@@ -775,6 +783,10 @@ bool CObjectSentrygun::FindTarget()
 				if ( !pTargetObject )
 					continue;
 
+				// no attacking players in coop
+				if ( TFGameRules()->IsCoopGamemode() )
+					continue;
+
 				// don't attack ourselves
 				if (pTargetObject == this)
 					continue;
@@ -804,6 +816,7 @@ bool CObjectSentrygun::FindTarget()
 				}
 			}
 		}
+
 		if ( pTargetCurrent == NULL )
 		{
 			CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
@@ -839,6 +852,7 @@ bool CObjectSentrygun::FindTarget()
 				}
 			}
 		}
+
 		// We have a target.
 		if ( pTargetCurrent )
 		{

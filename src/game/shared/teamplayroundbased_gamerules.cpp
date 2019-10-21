@@ -36,8 +36,9 @@
 #endif // REPLAY_ENABLED
 #endif
 
+#include "tf_gamerules.h"
+
 #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
-	#include "tf_gamerules.h"
 	#include "tf_lobby.h"
 	#ifdef GAME_DLL
 		#include "player_vs_environment/tf_population_manager.h"
@@ -286,12 +287,12 @@ static const char *s_PreserveEnts[] =
 	"env_soundscape",
 	"env_soundscape_proxy",
 	"env_soundscape_triggerable",
-	"env_sprite",
+	//"env_sprite",  causes problems!
 	"env_sun",
 	"env_wind",
 	"env_fog_controller",
-	"func_wall",
-	"func_illusionary",
+	//"func_wall", causes problems!
+	//"func_illusionary", causes problems!
 	"info_node",
 	"info_node_hint",
 	"info_node_air_hint",
@@ -301,7 +302,7 @@ static const char *s_PreserveEnts[] =
 	"soundent",
 	"ai_network",
 	"ai_hint",
-	"point_viewcontrol",
+	//"point_viewcontrol", causes problems!
 	"func_precipitation",
 	"shadow_control",
 	"sky_camera",
@@ -787,7 +788,7 @@ void CTeamplayRoundBasedRules::SetInWaitingForPlayers( bool bWaitingForPlayers  
 	}
 
 	// no waiting for players in a hl2 map
-	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
+	if ( TFGameRules() && TFGameRules()->IsHL2() )
 		return;
 
 	if( m_bInWaitingForPlayers == bWaitingForPlayers  )
@@ -1417,8 +1418,7 @@ void CTeamplayRoundBasedRules::State_Think_STARTGAME()
 	{
 		if ( !IsInTraining() && !IsInItemTestingMode() )
 		{
-			ConVarRef tf_bot_offline_practice( "tf_bot_offline_practice" );
-			if ( mp_waitingforplayers_time.GetFloat() > 0 && tf_bot_offline_practice.GetInt() == 0 )
+			if ( mp_waitingforplayers_time.GetFloat() > 0 )
 			{
 				// go into waitingforplayers, reset at end of it
 				SetInWaitingForPlayers( true );
@@ -1751,7 +1751,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 	CheckReadyRestart();
 
 	// See if we're coming up to the server timelimit, in which case force a stalemate immediately.
-	if ( mp_timelimit.GetInt() > 0 && IsInPreMatch() == false && GetTimeLeft() <= 0 )
+	if ( mp_timelimit.GetInt() > 0 && IsInPreMatch() == false && GetTimeLeft() <= 0 && ( TFGameRules() && !TFGameRules()->IsCoopGamemode() ) )
 	{
 		if ( m_bAllowStalemateAtTimelimit || ( mp_match_end_at_timelimit.GetBool() && !IsValveMap() ) )
 		{
@@ -1798,6 +1798,75 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 			}
 		}
 	}
+
+		// This is for zombie survival and other coop gamemodes
+
+				// If a team is fully killed, the other team has won
+				if ( TFGameRules()->IsCoopGamemode() )
+				{
+					CTeam *pTeam = GetGlobalTeam( TF_TEAM_MERCENARY );
+					Assert( pTeam );
+
+					bool bFoundLiveOne = false;
+
+					int iPlayers = pTeam->GetNumPlayers();
+					if ( iPlayers )
+					{
+						// bool bFoundLiveOne = false;
+						for ( int player = 0; player < iPlayers; player++ )
+						{
+							if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->IsAlive() )
+							{
+								bFoundLiveOne = true;
+								break;
+							}
+						}
+
+						/*
+						if ( bFoundLiveOne )
+						{
+							iAliveTeam = i;
+						}
+						else
+						{
+							iDeadTeam = i;
+						}
+					}
+					else
+					{
+						iDeadTeam = i;*/
+					}
+
+			//		if ( iDeadTeam && iAliveTeam )
+					if ( !bFoundLiveOne )
+					{
+						// The live team has won. 
+						/*
+						bool bMasterHandled = false;
+						if ( !m_bForceMapReset )
+						{
+							// We're not resetting the map, so give the winners control
+							// of all the points that were in play this round.
+							// Find the control point master.
+							CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
+							if ( pMaster )
+							{
+								variant_t sVariant;
+								sVariant.SetInt( TF_TEAM_BLUE );
+								pMaster->AcceptInput( "SetWinnerAndForceCaps", NULL, NULL, sVariant, 0 );
+								bMasterHandled = true;
+							}
+						}
+						*/
+
+						//if ( !bMasterHandled )
+						//{
+							SetWinningTeam( TF_TEAM_BLUE, WINREASON_COOP_FAIL, m_bForceMapReset );
+						//}
+
+						return;
+					}
+				}
 
 	StopWatchModeThink();
 }

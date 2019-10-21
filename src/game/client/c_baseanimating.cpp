@@ -60,6 +60,7 @@
 #include "c_tf_player.h"
 #include "tempent.h"
 #include "physpropclientside.h"
+#include "ai_debug_shared.h"
 
 #include "teamplayroundbased_gamerules.h"
 
@@ -402,26 +403,77 @@ void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char 
 	if( !pPhysicsObject )
 		return;
 
-	Vector dir = pTrace->endpos - pTrace->startpos;
+	Vector vecDir;
+
+	VectorSubtract( pTrace->endpos, pTrace->startpos, vecDir );
 
 	if ( iDamageType == DMG_BLAST )
 	{
-		dir *= 500;  // adjust impact strenght
+		// don't affect gibs
+		if ( m_pRagdoll )
+		{
+			// Adjust the impact strength and apply the force at the center of mass.
+			if ( iDamageType & DMG_CRITICAL )
+				vecDir *= 1500;
+			else
+				vecDir *= 500;
 
-		// apply force at object mass center
-		pPhysicsObject->ApplyForceCenter( dir );
+			pPhysicsObject->ApplyForceCenter( vecDir );
+		}
 	}
 	else
 	{
-		Vector hitpos;  
-	
-		VectorMA( pTrace->startpos, pTrace->fraction, dir, hitpos );
-		VectorNormalize( dir );
+		// Find the apporx. impact point.
+		Vector vecHitPos;  
+		VectorMA( pTrace->startpos, pTrace->fraction, vecDir, vecHitPos );
+		VectorNormalize( vecDir );
 
-		dir *= 4000;  // adjust impact strenght
+		// Adjust the impact strength and apply the force at the impact point..
+		if ( m_pRagdoll )
+		{
+			if ( iDamageType & DMG_CRITICAL )
+				vecDir *= 20000;
+			else
+				vecDir *= 5000;
+		}
+		else
+		{
+			vecDir *= 1000;
+		}
 
-		// apply force where we hit it
-		pPhysicsObject->ApplyForceOffset( dir, hitpos );	
+		pPhysicsObject->ApplyForceOffset( vecDir, vecHitPos );	
+
+		// make ragdolls emit blood decals
+		// not a great way to do it, but it only works if all of it is defined here for some reason
+
+		// make blood decal on the wall!
+		trace_t Bloodtr;
+		Vector vecTraceDir;
+		float flNoise;
+		int i;
+
+		int cCount = 3;
+
+		flNoise = 0.3;
+
+		float flTraceDist = 172;
+
+		for ( i = 0 ; i < cCount ; i++ )
+		{
+			vecTraceDir = vecDir * -1;// trace in the opposite direction the shot came from (the direction the shot is going)
+
+			vecTraceDir.x += random->RandomFloat( -flNoise, flNoise );
+			vecTraceDir.y += random->RandomFloat( -flNoise, flNoise );
+			vecTraceDir.z += random->RandomFloat( -flNoise, flNoise );
+
+			// Don't bleed on grates.
+			AI_TraceLine( pTrace->endpos, pTrace->endpos + vecTraceDir * -flTraceDist, MASK_SOLID_BRUSHONLY & ~CONTENTS_GRATE, this, COLLISION_GROUP_NONE, &Bloodtr);
+
+			if ( Bloodtr.fraction != 1.0 )
+			{
+				UTIL_BloodDecalTrace( &Bloodtr, BLOOD_COLOR_RED );
+			}
+		}
 	}
 
 	m_pRagdoll->ResetRagdollSleepAfterTime();

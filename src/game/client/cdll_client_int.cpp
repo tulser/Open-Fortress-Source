@@ -1031,7 +1031,11 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	if (CommandLine()->FindParm("-textmode"))
 		g_bTextMode = true;
 
-	if (CommandLine()->FindParm("-makedevshots"))
+
+	// Why is -nopropfading here? Prop fading cannot be disabled without engine access,
+	// However the -makedevshots does disable prop fading in the engine
+	// Therefore I added this param to cancel out any -makedevshots behaviour
+	if ( CommandLine()->FindParm("-makedevshots") && !CommandLine()->FindParm("-nopropfading") )
 		g_MakingDevShots = true;
 
 	// Not fatal if the material system stub isn't around.

@@ -1080,9 +1080,6 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 
 	VectorSubtract( pTrace->endpos, pTrace->startpos, vecDir );
 
-	int cCount;
-	cCount = 3;
-
 	// m_iGore<limb> has a level, from 0 to 3
 	// 1 is unused (reserved for normal TF bodygroups like pyro's head)
 	// 2 means the lower limb is marked for removal, 3 means the upper limb is marked for removal, the head is an exception as it only has level 2
@@ -1217,6 +1214,8 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		Vector vecTraceDir;
 		float flNoise;
 		int i;
+
+		int cCount = 3;
 
 		flNoise = 0.3;
 
@@ -2470,6 +2469,7 @@ void C_TFPlayer::UpdateOnRemove( void )
 
 	BaseClass::UpdateOnRemove();
 }
+
 
 //-----------------------------------------------------------------------------
 // Purpose: returns max health for this player
@@ -3992,7 +3992,7 @@ void C_TFPlayer::DoAnimationEvent( PlayerAnimEvent_t event, int nData )
 {
 	if ( IsLocalPlayer() )
 	{
-		if ( !prediction->IsFirstTimePredicted() )
+		if ( ( prediction->InPrediction() && !prediction->IsFirstTimePredicted() ) )
 			return;
 	}
 
@@ -4083,20 +4083,7 @@ int C_TFPlayer::DrawModel( int flags )
 
 	// Don't draw the model at all if we're fully invisible
 	if ( GetEffectiveInvisibilityLevel() >= 1.0f )
-	{
-		if ( m_hPartyHat && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) && !m_hPartyHat->IsEffectActive( EF_NODRAW ) )
-		{
-			m_hPartyHat->SetEffects( EF_NODRAW );
-		}
 		return 0;
-	}
-	else
-	{
-		if ( m_hPartyHat && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) && m_hPartyHat->IsEffectActive( EF_NODRAW ) )
-		{
-			m_hPartyHat->RemoveEffects( EF_NODRAW );
-		}
-	}
 
 	CMatRenderContextPtr pRenderContext( materials );
 	bool bDoEffect = false;
@@ -4573,6 +4560,12 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{
+		// coop needs to return false
+		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
+		{
+			return false;
+		}
+		
 		switch( GetTeamNumber() )
 		{
 		case TF_TEAM_RED:

@@ -292,7 +292,8 @@ private:
 	void InputStopSweeping( inputdata_t &inputdata );
 	void InputProtectTarget( inputdata_t &inputdata );
 
-#if HL2_EPISODIC
+//SecobMod__IFDEF_Fixes
+#ifdef HL2_EPISODIC
 	void InputSetPaintInterval( inputdata_t &inputdata );
 	void InputSetPaintIntervalVariance( inputdata_t &inputdata );
 #endif
@@ -301,6 +302,8 @@ private:
 	void LaserOn( const Vector &vecTarget, const Vector &vecDeviance );
 
 	void PaintTarget( const Vector &vecTarget, float flPaintTime );
+
+	bool IsPlayerAllySniper();
 
 private:
 
@@ -448,7 +451,8 @@ BEGIN_DATADESC( CProtoSniper )
 	DEFINE_INPUTFUNC( FIELD_STRING, "StopSweeping", InputStopSweeping ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "ProtectTarget", InputProtectTarget ),
 
-#if HL2_EPISODIC
+//SecobMod__IFDEF_Fixes
+#ifdef HL2_EPISODIC
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetPaintInterval", InputSetPaintInterval ),
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetPaintIntervalVariance", InputSetPaintIntervalVariance ),
 #endif
@@ -830,6 +834,19 @@ void CProtoSniper::PaintTarget( const Vector &vecTarget, float flPaintTime )
 
 	m_vecPaintCursor = tr.endpos;
 }
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CProtoSniper::IsPlayerAllySniper()
+{
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		CBaseEntity *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
+	#else
+		CBaseEntity *pPlayer = AI_GetSinglePlayer();
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+
+	return IRelationType( pPlayer ) == D_LI;
+}
 			
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1112,8 +1129,8 @@ void CProtoSniper::InputProtectTarget( inputdata_t &inputdata )
 }
 
 
-
-#if HL2_EPISODIC
+//SecobMod__IFDEF_Fixes
+#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void CProtoSniper::InputSetPaintInterval( inputdata_t &inputdata )
@@ -1383,19 +1400,39 @@ int CProtoSniper::SelectSchedule ( void )
 		// Reload is absolute priority.
 		return SCHED_RELOAD;
 	}
-
-	if ( UTIL_GetLocalPlayer() && !UTIL_GetLocalPlayer()->IsAlive() && m_bKilledPlayer )
+//SecobMod__Information: The condition area below when used in mp caused the sniper to fail terribly. Removing it from working with the AI enabled really improves snipers.
+	#ifndef SecobMod__Enable_Fixed_Multiplayer_AI
+	if( !AI_GetSinglePlayer()->IsAlive() && m_bKilledPlayer )
 	{
 		if( HasCondition(COND_IN_PVS) )
 		{
 			return SCHED_PSNIPER_PLAYER_DEAD;
 		}
 	}
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 	
 	if( HasCondition( COND_HEAR_DANGER ) )
 	{
 		// Next priority is to be suppressed!
 		ScopeGlint();
+
+		CSound *pSound = GetBestSound();
+
+		if( pSound && pSound->IsSoundType( SOUND_DANGER ) && BaseClass::FVisible( pSound->GetSoundReactOrigin() ) )
+		{
+			// The sniper will scream if the sound of a grenade about to detonate is heard.
+			// If this COND_HEAR_DANGER is due to the sound really being SOUND_DANGER_SNIPERONLY,
+			// the sniper keeps quiet, because the player's grenade might miss the mark.
+
+			// Make sure the sound is visible, otherwise the sniper will scream at a grenade that
+			// probably won't harm him.
+
+			// Also, don't play the sound effect if we're an ally.
+			if ( IsPlayerAllySniper() == false )
+			{
+				EmitSound( "NPC_Sniper.HearDanger" );
+			}
+		}
 
 		return SCHED_PSNIPER_SUPPRESSED;
 	}
@@ -1931,7 +1968,7 @@ void CProtoSniper::StartTask( const Task_t *pTask )
 	{
 	case TASK_SNIPER_PLAYER_DEAD:
 		{
-			m_hSweepTarget = UTIL_GetLocalPlayer();
+			m_hSweepTarget = AI_GetSinglePlayer();
 			SetWait( 4.0f );
 			LaserOn( m_hSweepTarget->GetAbsOrigin(), vec3_origin );
 		}
@@ -2576,10 +2613,18 @@ Vector CProtoSniper::LeadTarget( CBaseEntity *pTarget )
 CBaseEntity *CProtoSniper::PickDeadPlayerTarget()
 {
 	const int iSearchSize = 32;
-	CBaseEntity *pTarget = UTIL_GetLocalPlayer();
-	CBaseEntity *pEntities[ iSearchSize ];
-
-	int iNumEntities = UTIL_EntitiesInSphere( pEntities, iSearchSize, UTIL_GetLocalPlayer()->GetAbsOrigin(), 180.0f, 0 );
+	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
+		CBaseEntity *pTarget = UTIL_GetNearestVisiblePlayer(this); 
+		CBaseEntity *pEntities[ iSearchSize ];
+	
+		int iNumEntities = UTIL_EntitiesInSphere( pEntities, iSearchSize, pTarget->GetAbsOrigin(), 180.0f, 0 ); 
+	#else
+	CBaseEntity *pTarget = AI_GetSinglePlayer();
+		CBaseEntity *pEntities[ iSearchSize ];
+	
+		int iNumEntities = UTIL_EntitiesInSphere( pEntities, iSearchSize, AI_GetSinglePlayer()->GetAbsOrigin(), 180.0f, 0 );
+	
+	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 
 	// Not very robust, but doesn't need to be. Randomly select a nearby object in the list that isn't an NPC.
 	if( iNumEntities > 0 )

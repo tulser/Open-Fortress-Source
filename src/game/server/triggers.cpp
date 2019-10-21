@@ -2366,7 +2366,6 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 
 	default:
 		{
-#if defined( HL2_DLL )
 			// HACK HACK  HL2 players on ladders will only be disengaged if the sf is set, otherwise no push occurs.
 			if ( pOther->IsPlayer() && 
 				 pOther->GetMoveType() == MOVETYPE_LADDER )
@@ -2377,7 +2376,6 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 					return;
 				}
 			}
-#endif
 
 			Vector vecPush = (m_flPushSpeed * vecAbsDir);
 			if ( ( pOther->GetFlags() & FL_BASEVELOCITY ) && !lagcompensation->IsCurrentlyDoingLagCompensation() )

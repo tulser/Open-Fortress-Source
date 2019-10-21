@@ -609,7 +609,7 @@ const char *C_PhysPropClientside::ParseEntity( const char *pEntData )
 
 	if (!entData.ExtractValue("classname", className))
 	{
-		Error( "classname missing from entity!\n" );
+		Error( "C_PhysPropClientside::ParseEntity: classname missing from entity!\n" );
 	}
 
 	if ( !Q_strcmp( className, "prop_physics_multiplayer" ) )
