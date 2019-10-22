@@ -133,7 +133,7 @@ bool CTFWeaponBuilder::Deploy( void )
 
 		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 
-		if (!pPlayer)
+		if ( !pPlayer )
 			return false;
 
 		pPlayer->SetNextAttack( gpGlobals->curtime );
@@ -385,7 +385,7 @@ void CTFWeaponBuilder::HaulingAttack( void )
 
 		AngleVectors( GetAbsAngles(), &forward );
 		UTIL_TraceLine ( pOwner->EyePosition(), pOwner->EyePosition() + forward * 150, 
-			MASK_SOLID, pOwner, COLLISION_GROUP_NONE, & tr);
+			MASK_SOLID, pOwner, COLLISION_GROUP_NONE, & tr );
 
 		if ( tr.m_pEnt )
 		{
@@ -395,7 +395,8 @@ void CTFWeaponBuilder::HaulingAttack( void )
 
 			if ( pObject && pObject->CanBeHauled( pOwner ) )
 			{
-				m_flSecondaryTimeout = gpGlobals->curtime + 0.5f;
+				m_flSecondaryTimeout = gpGlobals->curtime + 0.4f;
+
 				pObject->SetHauling( true );
 				pOwner->SetHauling( true );
 
@@ -525,8 +526,10 @@ void CTFWeaponBuilder::WeaponIdle( void )
 void CTFWeaponBuilder::StartPlacement( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
 
-	if ( pOwner && pOwner->IsHauling() )
+	if ( pOwner->IsHauling() )
 		return;
 
 	StopPlacement();

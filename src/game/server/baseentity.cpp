@@ -62,6 +62,10 @@
 #include "env_debughistory.h"
 #include "tier1/utlstring.h"
 #include "utlhashtable.h"
+#ifdef MAPBASE
+#include "of/datadesc_mod.h"
+#include "of/matchers.h"
+#endif
 
 #if defined( TF_DLL )
 #include "tf_gamerules.h"
@@ -1985,9 +1989,9 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_KEYFIELD( m_MoveType, FIELD_CHARACTER, "MoveType" ),
 	DEFINE_FIELD( m_MoveCollide, FIELD_CHARACTER ),
-	DEFINE_FIELD( m_hOwnerEntity, FIELD_EHANDLE ),
+	DEFINE_KEYFIELD( m_hOwnerEntity, FIELD_EHANDLE, "OwnerEntity" ),
 	DEFINE_KEYFIELD( m_CollisionGroup, FIELD_INTEGER, "CollisionGroup" ),
-	DEFINE_PHYSPTR( m_pPhysicsObject),
+	DEFINE_PHYSPTR( m_pPhysicsObject ),
 	DEFINE_FIELD( m_flElasticity, FIELD_FLOAT ),
 	DEFINE_KEYFIELD( m_flShadowCastDistance, FIELD_FLOAT, "shadowcastdist" ),
 	DEFINE_FIELD( m_flDesiredShadowCastDistance, FIELD_FLOAT ),
@@ -2036,7 +2040,7 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_KEYFIELD( m_vecViewOffset, FIELD_VECTOR, "view_ofs" ),
 
-	DEFINE_FIELD( m_fFlags, FIELD_INTEGER ),
+	DEFINE_KEYFIELD( m_fFlags, FIELD_INTEGER, "m_fFlags" ),
 #if !defined( NO_ENTITY_PREDICTION )
 //	DEFINE_FIELD( m_bIsPlayerSimulated, FIELD_INTEGER ),
 //	DEFINE_FIELD( m_hPlayerSimulationOwner, FIELD_EHANDLE ),
@@ -2086,6 +2090,10 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_INPUTFUNC( FIELD_STRING, "AddOutput", InputAddOutput ),
 
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING, "ChangeVariable", InputChangeVariable ),
+#endif
+
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser1", InputFireUser1 ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser2", InputFireUser2 ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser3", InputFireUser3 ),
@@ -2095,6 +2103,41 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_OUTPUT( m_OnUser2, "OnUser2" ),
 	DEFINE_OUTPUT( m_OnUser3, "OnUser3" ),
 	DEFINE_OUTPUT( m_OnUser4, "OnUser4" ),
+
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget", InputSetTarget ),
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "SetOwnerEntity", InputSetOwnerEntity ),
+
+	DEFINE_INPUTFUNC( FIELD_STRING, "FireOutput", InputFireOutput ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveOutput", InputRemoveOutput ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "CancelPending", InputCancelPending ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "FreeChildren", InputFreeChildren ),
+
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalOrigin", InputSetLocalOrigin ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngles", InputSetLocalAngles ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalVelocity", InputSetLocalVelocity ),
+	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngularVelocity", InputSetLocalAngularVelocity ),
+
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddSpawnFlags", InputAddSpawnFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSpawnFlags", InputRemoveSpawnFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderMode", InputSetRenderMode ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderFX", InputSetRenderFX ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEffects", InputAddEffects ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEffects", InputRemoveEffects ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableDraw", InputDrawEntity ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableDraw", InputUndrawEntity ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEFlags", InputAddEFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEFlags", InputRemoveEFlags ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoveType", InputSetMoveType ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetCollisionGroup", InputSetCollisionGroup ),
+
+	DEFINE_INPUTFUNC( FIELD_EHANDLE, "Touch", InputTouch ),
+
+	DEFINE_INPUTFUNC( FIELD_STRING, "SetThinkNull", InputSetThinkNull ),
+
+	DEFINE_OUTPUT( m_OnKilled, "OnKilled" ),
+#endif
 
 	// Function Pointers
 	DEFINE_FUNCTION( SUB_Remove ),
@@ -5695,9 +5738,13 @@ private:
 				if ( !( field->flags & FTYPEDESC_INPUT ) )
 					continue;
 
+#ifndef MAPBASE // What did input variables ever do to you?
+
 				// Only want input functions
 				if ( field->flags & FTYPEDESC_SAVE )
 					continue;
+
+#endif
 
 				// See if we've got a partial string for the input name already
 				if ( inputPartial != NULL )
@@ -5813,6 +5860,152 @@ void CC_Ent_Info( const CCommand& args )
 }
 static ConCommand ent_info("ent_info", CC_Ent_Info, "Usage:\n   ent_info <class name>\n", FCVAR_CHEAT);
 
+#ifdef MAPBASE
+//------------------------------------------------------------------------------
+// Purpose : 
+// Input   :
+// Output  :
+//------------------------------------------------------------------------------
+void CC_Ent_Info_Datatable( const CCommand& args )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
+	if (!pPlayer)
+	{
+		return;
+	}
+	
+	if ( args.ArgC() < 2 )
+	{
+		ClientPrint( pPlayer, HUD_PRINTCONSOLE, "Usage:\n   ent_info_datatable <class name>\n" );
+	}
+	else
+	{
+		// Each element corresponds to a specific field type.
+		// Hey, if you've got a better idea, be my guest.
+		static const char *g_FieldStrings[FIELD_TYPECOUNT] = 
+		{
+			"VOID",
+			"FLOAT",
+			"STRING",
+			"VECTOR",
+			"QUATERNION",
+			"INTEGER",
+			"BOOLEAN",
+			"SHORT",
+			"CHARACTER",
+			"COLOR32",
+			"EMBEDDED",
+			"CUSTOM",
+
+			"CLASSPTR",
+			"EHANDLE",
+			"EDICT",
+
+			"POSITION_VECTOR",
+			"TIME",
+			"TICK",
+			"MODELNAME",
+			"SOUNDNAME",
+
+			"INPUT",
+			"FUNCTION",
+			"VMATRIX",
+			"VMATRIX_WORLDSPACE",
+			"MATRIX3X4_WORLDSPACE",
+			"INTERVAL",
+			"MODELINDEX",
+			"MATERIALINDEX",
+
+			"VECTOR2D",
+		};
+
+		// iterate through all the ents printing out their details
+		CBaseEntity *ent = CreateEntityByName( args[1] );
+
+		if ( ent )
+		{
+#define ENT_INFO_BY_HIERARCHY 1
+#ifdef ENT_INFO_BY_HIERARCHY
+			CUtlVector<const char*> dmap_namelist;
+
+			CUtlVector< CUtlVector<const char*> > dmap_fieldlist;
+			CUtlVector< CUtlVector<int> > dmap_fieldtypelist;
+
+			datamap_t *dmap;
+			int dmapnum = 0;
+			for ( dmap = ent->GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
+			{
+				dmap_fieldlist.AddToTail();
+				dmap_fieldtypelist.AddToTail();
+
+				// search through all the actions in the data description, printing out details
+				for ( int i = 0; i < dmap->dataNumFields; i++ )
+				{
+					dmap_fieldlist[dmapnum].AddToTail(dmap->dataDesc[i].fieldName);
+					dmap_fieldtypelist[dmapnum].AddToTail(dmap->dataDesc[i].fieldType);
+				}
+
+				dmapnum++;
+				dmap_namelist.AddToTail(dmap->dataClassName);
+			}
+
+			char offset[64] = { 0 }; // Needed so garbage isn't spewed at the beginning
+			for ( int i = 0; i < dmapnum; i++ )
+			{
+				Q_strncat(offset, "  ", sizeof(offset));
+
+				// Header for each class
+				ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("%s=========| %s |=========\n", offset, dmap_namelist[i]) );
+
+				Q_strncat(offset, " ", sizeof(offset));
+
+				int iFieldCount = dmap_fieldlist[i].Count();
+				for ( int index = 0; index < iFieldCount; index++ )
+				{
+					int iType = dmap_fieldtypelist[i][index];
+					ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("%s%s (%i): %s\n", offset, g_FieldStrings[iType], iType, dmap_fieldlist[i][index]) );
+				}
+
+				// Clean up after ourselves
+				dmap_fieldlist[i].RemoveAll();
+				dmap_fieldtypelist[i].RemoveAll();
+			}
+#else // This sorts by field type instead
+			CUtlVector<const char*> fieldlist[FIELD_TYPECOUNT];
+
+			datamap_t *dmap;
+			for ( dmap = ent->GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
+			{
+				// search through all the actions in the data description, printing out details
+				for ( int i = 0; i < dmap->dataNumFields; i++ )
+				{
+					fieldlist[dmap->dataDesc[i].fieldType].AddToTail(dmap->dataDesc[i].fieldName);
+				}
+			}
+
+			for ( int i = 0; i < FIELD_TYPECOUNT; i++ )
+			{
+				const char *typestring = g_FieldStrings[i];
+				for ( int index = 0; index < fieldlist[i].Count(); index++ )
+				{
+					ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("  %s (%i): %s\n", typestring, i, fieldlist[i][index]) );
+				}
+
+				// Clean up after ourselves
+				fieldlist[i].RemoveAll();
+			}
+#endif
+
+			delete ent;
+		}
+		else
+		{
+			ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("no such entity %s\n", args[1]) );
+		}
+	}
+}
+static ConCommand ent_info_datatable("ent_info_datatable", CC_Ent_Info_Datatable, "Usage:\n   ent_info_datatable <class name>\n", FCVAR_CHEAT);
+#endif
 
 //------------------------------------------------------------------------------
 // Purpose : 
@@ -6235,7 +6428,7 @@ void CBaseEntity::SetLocalOrigin( const Vector& origin )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
 		}
 		Assert( false );
 		return;
@@ -6278,9 +6471,9 @@ void CBaseEntity::SetLocalAngles( const QAngle& angles )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
 		}
-		AssertMsg( false, "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
+		Assert( false );
 		return;
 	}
 
@@ -6325,7 +6518,7 @@ void CBaseEntity::SetLocalAngularVelocity( const QAngle &vecAngVelocity )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
-			Warning( "Bad SetLocalAngularVelocity(%f,%f,%f) on %s\n", vecAngVelocity.x, vecAngVelocity.y, vecAngVelocity.z, GetDebugName() );
+			DevMsg( 2, "Bad SetLocalAngularVelocity(%f,%f,%f) on %s\n", vecAngVelocity.x, vecAngVelocity.y, vecAngVelocity.z, GetDebugName() );
 		}
 		Assert( false );
 		return;
@@ -6698,6 +6891,286 @@ void CBaseEntity::InputFireUser4( inputdata_t& inputdata )
 	m_OnUser4.FireOutput( inputdata.pActivator, this );
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Sets the generic target field.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetTarget( inputdata_t& inputdata )
+{
+	m_target = inputdata.value.StringID();
+	Activate();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our owner entity.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetOwnerEntity( inputdata_t& inputdata )
+{
+	SetOwnerEntity(inputdata.value.Entity());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Forces the named output to fire.
+//			In addition to the output itself, parameter may include !activator, !caller, and what to pass.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputFireOutput( inputdata_t& inputdata )
+{
+	char sParameter[MAX_PATH];
+	Q_strncpy( sParameter, inputdata.value.String(), sizeof(sParameter) );
+	if ( sParameter )
+	{
+		int iter = 0;
+		char *data[5] = {sParameter};
+		char *sToken = strtok( sParameter, ":" );
+		while ( sToken && iter < 5 )
+		{
+			data[iter] = sToken;
+			iter++;
+			sToken = strtok( NULL, ":" );
+		}
+
+		//DevMsg("data[0]: %s\ndata[1]: %s\ndata[2]: %s\ndata[3]: %s\ndata[4]: %s\n", data[0], data[1], data[2], data[3], data[4]);
+
+		// Format: <output name>:<activator>:<caller>:<parameter>:<delay>
+		// 
+		// data[0] = Output Name
+		// data[1] = Activator
+		// data[2] = Caller
+		// data[3] = Parameter
+		// data[4] = Delay
+		// 
+		CBaseEntity *pActivator = inputdata.pActivator;
+		if (data[1])
+			pActivator = gEntList.FindEntityByName(NULL, data[1], this, inputdata.pActivator, inputdata.pCaller);
+
+		CBaseEntity *pCaller = this;
+		if (data[2])
+			pCaller = gEntList.FindEntityByName(NULL, data[2], this, inputdata.pActivator, inputdata.pCaller);
+
+		variant_t parameter;
+		if (data[3])
+		{
+			parameter.SetString(MAKE_STRING(data[3]));
+		}
+
+		float flDelay = 0.0f;
+		if (data[4])
+			flDelay = atof(data[4]);
+
+		FireNamedOutput(data[0], parameter, pActivator, pCaller, flDelay);
+		//Msg("Output Name: %s, Activator: %s, Caller: %s, Data: %s, Delay: %f\n", data[0], pActivator->GetDebugName(), pCaller->GetDebugName(), parameter.String(), flDelay);
+	}
+	else
+	{
+		Warning("FireOutput input fired with bad parameter. Format: <output name>:<activator>:<caller>:<parameter>:<delay>\n");
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes all outputs of the specified name.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputRemoveOutput( inputdata_t& inputdata )
+{
+	const char *szOutput = inputdata.value.String();
+	datamap_t *dmap = GetDataDescMap();
+	while ( dmap )
+	{
+		int fields = dmap->dataNumFields;
+		for ( int i = 0; i < fields; i++ )
+		{
+			typedescription_t *dataDesc = &dmap->dataDesc[i];
+			if ( ( dataDesc->fieldType == FIELD_CUSTOM ) && ( dataDesc->flags & FTYPEDESC_OUTPUT ) )
+			{
+				// If our names match, remove
+				if (Matcher_NamesMatch(szOutput, dataDesc->externalName))
+				{
+					CBaseEntityOutput *pOutput = (CBaseEntityOutput *)((int)this + (int)dataDesc->fieldOffset[0]);
+					pOutput->DeleteAllElements();
+				}
+			}
+		}
+
+		dmap = dmap->baseMap;
+	}
+}
+
+//------------------------------------------------------------------------------
+// Purpose: Cancels any I/O events in the queue that were fired by this entity.
+//------------------------------------------------------------------------------
+void CBaseEntity::InputCancelPending( inputdata_t &inputdata )
+{ 
+	g_EventQueue.CancelEvents( this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Frees all of our children, entities parented to this entity.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputFreeChildren( inputdata_t& inputdata )
+{
+	UnlinkAllChildren( this );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our origin.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetLocalOrigin( inputdata_t& inputdata )
+{
+	Vector vec;
+	inputdata.value.Vector3D(vec);
+	SetLocalOrigin(vec);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our angles.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetLocalAngles( inputdata_t& inputdata )
+{
+	Vector vec;
+	inputdata.value.Vector3D(vec);
+	SetLocalAngles(QAngle(vec.x, vec.y, vec.z));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our velocity.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetLocalVelocity( inputdata_t& inputdata )
+{
+	Vector vec;
+	inputdata.value.Vector3D(vec);
+	SetLocalVelocity(vec);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our angular velocity.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetLocalAngularVelocity( inputdata_t& inputdata )
+{
+	Vector vec;
+	inputdata.value.Vector3D(vec);
+	SetLocalAngularVelocity(QAngle(vec.x, vec.y, vec.z));
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds spawn flags.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputAddSpawnFlags( inputdata_t& inputdata )
+{
+	AddSpawnFlags(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes spawn flags.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputRemoveSpawnFlags( inputdata_t& inputdata )
+{
+	RemoveSpawnFlags(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our render mode.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetRenderMode( inputdata_t& inputdata )
+{
+	SetRenderMode((RenderMode_t)inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets our render FX.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetRenderFX( inputdata_t& inputdata )
+{
+	m_nRenderFX = inputdata.value.Int();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds effects.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputAddEffects( inputdata_t& inputdata )
+{
+	AddEffects(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes effects.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputRemoveEffects( inputdata_t& inputdata )
+{
+	RemoveEffects(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Shortcut for removing nodraw.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputDrawEntity( inputdata_t& inputdata )
+{
+	RemoveEffects(EF_NODRAW);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Shortcut to adding nodraw.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputUndrawEntity( inputdata_t& inputdata )
+{
+	AddEffects(EF_NODRAW);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Adds eflags.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputAddEFlags( inputdata_t& inputdata )
+{
+	AddEFlags(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Removes eflags.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputRemoveEFlags( inputdata_t& inputdata )
+{
+	RemoveEFlags(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the movetype.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetMoveType( inputdata_t& inputdata )
+{
+	SetMoveType((MoveType_t)inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Sets the collision group.
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetCollisionGroup( inputdata_t& inputdata )
+{
+	SetCollisionGroup(inputdata.value.Int());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Touch touch :)
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputTouch( inputdata_t& inputdata )
+{
+	Touch(inputdata.value.Entity());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Stop thinking
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputSetThinkNull( inputdata_t& inputdata )
+{
+	const char *szContext = inputdata.value.String();
+	if (szContext && szContext[0] != '\0')
+	{
+		SetContextThink( NULL, TICK_NEVER_THINK, szContext );
+	}
+	else
+	{
+		SetThink( NULL );
+		SetNextThink( TICK_NEVER_THINK );
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6791,6 +7264,67 @@ void CBaseEntity::InputEnableShadow( inputdata_t &inputdata )
 {
 	RemoveEffects( EF_NOSHADOW );
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : &inputdata - 
+//-----------------------------------------------------------------------------
+void CBaseEntity::InputChangeVariable( inputdata_t &inputdata )
+{
+	const char *szKeyName = NULL;
+	const char *szValue = NULL;
+
+	char sOutputName[MAX_PATH];
+	Q_strncpy( sOutputName, inputdata.value.String(), sizeof(sOutputName) );
+	char *sChar = strchr( sOutputName, ' ' );
+	if ( sChar )
+	{
+		*sChar = '\0';
+		// Now replace all the :'s in the string with ,'s.
+		// Has to be done this way because Hammer doesn't allow ,'s inside parameters.
+		char *sColon = strchr( sChar+1, ':' );
+		while ( sColon )
+		{
+			*sColon = ',';
+			sColon = strchr( sChar+1, ':' );
+		}
+
+		szKeyName = sOutputName;
+		szValue = sChar + 1;
+	}
+	else
+	{
+		Warning("ChangeVariable input fired with bad string. Format: <output name> <targetname>,<inputname>,<parameter>,<delay>,<max times to fire (-1 == infinite)>\n");
+		return;
+	}
+
+	if (szKeyName == NULL)
+		return;
+
+	for ( datamap_t *dmap = GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
+	{
+		// search through all the readable fields in the data description, looking for a match
+		for ( int i = 0; i < dmap->dataNumFields; i++ )
+		{
+			if ( dmap->dataDesc[i].flags & (FTYPEDESC_SAVE | FTYPEDESC_KEY) )
+			{
+				if ( Matcher_NamesMatch(szKeyName, dmap->dataDesc[i].fieldName) )
+				{
+					// Copied from ::ParseKeyvalue...or technically logic_datadesc_accessor...
+					typedescription_t *pField = &dmap->dataDesc[i];
+					char *data = Datadesc_SetFieldString( szValue, this, pField, NULL );
+
+					if (!data)
+					{
+						Warning( "%s cannot set field of type %i.\n", GetDebugName(), dmap->dataDesc[i].fieldType );
+					}
+				}
+			}
+		}
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: An input to add a new connection from this entity

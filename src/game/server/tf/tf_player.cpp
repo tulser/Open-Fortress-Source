@@ -746,6 +746,7 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "TFPlayer.Drown" );
 	PrecacheScriptSound( "TFPlayer.AttackerPain" );
 	PrecacheScriptSound( "TFPlayer.SaveMe" );
+	 PrecacheScriptSound( "TFPlayer.MedicChargedDeath" );
 	PrecacheScriptSound( "Camera.SnapShot" );
 
 	PrecacheScriptSound( "Game.YourTeamLost" );
@@ -759,14 +760,18 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "cig_smoke" );
 	PrecacheParticleSystem( "speech_mediccall" );
 	PrecacheParticleSystem( "speech_typing" );
-	PrecacheParticleSystem( "player_recent_teleport_blue" );
 	PrecacheParticleSystem( "player_recent_teleport_red" );
+	PrecacheParticleSystem( "player_recent_teleport_blue" );
+	PrecacheParticleSystem( "player_recent_teleport_dm" );
 	PrecacheParticleSystem( "particle_nemesis_red" );
 	PrecacheParticleSystem( "particle_nemesis_blue" );
+	PrecacheParticleSystem( "particle_nemesis_dm" );
 	PrecacheParticleSystem( "spy_start_disguise_red" );
 	PrecacheParticleSystem( "spy_start_disguise_blue" );
+	PrecacheParticleSystem( "spy_start_disguise_dm" );
 	PrecacheParticleSystem( "burningplayer_red" );
 	PrecacheParticleSystem( "burningplayer_blue" );
+	PrecacheParticleSystem( "burningplayer_dm" );
 	PrecacheParticleSystem( "blood_spray_red_01" );
 	PrecacheParticleSystem( "blood_spray_red_01_far" );
 	PrecacheParticleSystem( "blood_trail_red_01_boom" );
@@ -775,6 +780,9 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "blood_impact_red_01" );
 	PrecacheParticleSystem( "water_playerdive" );
 	PrecacheParticleSystem( "water_playeremerge" );
+	PrecacheParticleSystem( "electrocuted_gibbed_red" );
+	PrecacheParticleSystem( "electrocuted_gibbed_blue" );
+	PrecacheParticleSystem( "electrocuted_gibbed_dm" );
 
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
@@ -5077,6 +5085,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
+
 	// Remove all items...
 	RemoveAllItems( true );
 
@@ -5183,6 +5192,30 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		// if this was suicide, recalculate attacker to see if we want to award the kill to a recent damager
 		info_modified.SetAttacker( TFGameRules()->GetDeathScorer( info.GetAttacker(), info.GetInflictor(), this ) );
 	}
+
+	// create particles and sounds for a full medic kill
+	if ( IsPlayerClass( TF_CLASS_MEDIC ) && pPlayerAttacker )
+	{
+		CTFWeaponBase *pWpn = ( CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
+
+		if ( pWpn )
+		{
+			CWeaponMedigun *pMedigun = dynamic_cast <CWeaponMedigun*>( pWpn );
+
+			if ( pMedigun && pMedigun->GetChargeLevel() > 0.99f )
+			{
+				if ( GetTeamNumber() == 2 )
+					DispatchParticleEffect( "electrocuted_gibbed_red", GetAbsOrigin(), vec3_angle );
+				else if ( GetTeamNumber() == 3 )
+					DispatchParticleEffect( "electrocuted_gibbed_blue", GetAbsOrigin(), vec3_angle );
+				else
+					DispatchParticleEffect( "electrocuted_gibbed_dm", GetAbsOrigin(), vec3_angle );
+
+				EmitSound( "TFPlayer.MedicChargedDeath" );
+			}
+		}
+	}
+	
 	BaseClass::Event_Killed( info_modified );
 	bool bDissolve = false;
 	if ( info.GetDamageType() & DMG_DISSOLVE )

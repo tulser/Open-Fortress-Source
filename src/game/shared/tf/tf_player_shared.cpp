@@ -2953,7 +2953,7 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 	}
 	else if ( pPipebombLauncherTFC )
 	{
-		pPipebombLauncher->SecondaryAttack();
+		pPipebombLauncherTFC->SecondaryAttack();
 		bDoSkill = true;
 	}
 

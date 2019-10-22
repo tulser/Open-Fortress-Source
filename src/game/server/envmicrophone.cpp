@@ -392,7 +392,7 @@ void CEnvMicrophone::Think(void)
 	{
 		CSound *pCurrentSound = CSoundEnt::SoundPointerForIndex(nSound);
 
-		if (pCurrentSound)
+		if ( pCurrentSound )
 		{
 			if (m_nSoundMask & pCurrentSound->SoundType())
 			{
@@ -403,9 +403,11 @@ void CEnvMicrophone::Think(void)
 					fHearSound = true;
 				}
 			}
-		}
 
-		nSound = pCurrentSound->NextSound();
+			nSound = pCurrentSound->NextSound();
+		}
+		else
+			break;
 	}
 
 	if( fHearSound )

@@ -663,10 +663,46 @@ public:
 	void InputDisableShadow( inputdata_t &inputdata );
 	void InputEnableShadow( inputdata_t &inputdata );
 	void InputAddOutput( inputdata_t &inputdata );
+#ifdef MAPBASE
+	void InputChangeVariable( inputdata_t &inputdata );
+#endif
 	void InputFireUser1( inputdata_t &inputdata );
 	void InputFireUser2( inputdata_t &inputdata );
 	void InputFireUser3( inputdata_t &inputdata );
 	void InputFireUser4( inputdata_t &inputdata );
+
+#ifdef MAPBASE
+	virtual void InputSetTarget( inputdata_t &inputdata );
+	virtual void InputSetOwnerEntity( inputdata_t &inputdata );
+
+	void InputFireOutput( inputdata_t &inputdata );
+	void InputRemoveOutput( inputdata_t &inputdata );
+	virtual void InputCancelPending( inputdata_t &inputdata );
+
+	void InputFreeChildren( inputdata_t &inputdata );
+
+	void InputSetLocalOrigin( inputdata_t &inputdata );
+	void InputSetLocalAngles( inputdata_t &inputdata );
+	void InputSetLocalVelocity( inputdata_t &inputdata );
+	void InputSetLocalAngularVelocity( inputdata_t &inputdata );
+
+	void InputAddSpawnFlags( inputdata_t &inputdata );
+	void InputRemoveSpawnFlags( inputdata_t &inputdata );
+	void InputSetRenderMode( inputdata_t &inputdata );
+	void InputSetRenderFX( inputdata_t &inputdata );
+	void InputAddEffects( inputdata_t &inputdata );
+	void InputRemoveEffects( inputdata_t &inputdata );
+	void InputDrawEntity( inputdata_t &inputdata );
+	void InputUndrawEntity( inputdata_t &inputdata );
+	void InputAddEFlags( inputdata_t &inputdata );
+	void InputRemoveEFlags( inputdata_t &inputdata );
+	void InputSetMoveType( inputdata_t &inputdata );
+	void InputSetCollisionGroup( inputdata_t &inputdata );
+
+	void InputTouch( inputdata_t &inputdata );
+
+	void InputSetThinkNull( inputdata_t &inputdata );
+#endif
 
 	// Returns the origin at which to play an inputted dispatcheffect 
 	virtual void GetInputDispatchEffectPosition( const char *sInputString, Vector &pOrigin, QAngle &pAngles );
@@ -1700,6 +1736,8 @@ private:
 	COutputEvent m_OnUser2;
 	COutputEvent m_OnUser3;
 	COutputEvent m_OnUser4;
+
+	COutputEvent m_OnKilled;
 
 	QAngle			m_angAbsRotation;
 

@@ -2130,9 +2130,15 @@ bool CBaseObject::ShowVGUIScreen( int panelIndex, bool bShow )
 //-----------------------------------------------------------------------------
 bool CBaseObject::CanBeHauled( CTFPlayer *pPlayer )
 {
+	if ( !pPlayer )
+	{
+		DevMsg(2, "CBaseObject: Can't haul this as player does not exist.\n");
+		return false;
+	}
+
 	if ( IsPlacing() )
 	{
-		DevMsg( 2, "CBaseObject: Can't haul this as its being placed.\n");
+		DevMsg(2, "CBaseObject: Can't haul this as its being placed.\n");
 		return false;
 	}
 
