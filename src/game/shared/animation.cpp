@@ -519,7 +519,7 @@ void GetSequenceLinearMotion( CStudioHdr *pstudiohdr, int iSequence, const float
 {
 	if ( !pstudiohdr)
 	{
-		DevMsg( "Bad pstudiohdr in GetSequenceLinearMotion()!\n" );
+		DevMsg( 3, "Bad pstudiohdr in GetSequenceLinearMotion()!\n" );
 		return;
 	}
 

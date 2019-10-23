@@ -114,7 +114,7 @@ ConVar tf_damage_range					( "tf_damage_range", "0.5", FCVAR_CHEAT );
 
 ConVar tf_max_voice_speak_delay			( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLICATED , "Max time delay between a player's voice commands." );
 
-ConVar of_headshots			( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes all hitscan weapons headshot." );
+ConVar of_headshots			( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes all hitscan weapons headshot when set. 2 will force headshots only damage." );
 ConVar of_forcespawnprotect	( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Manually define how long the spawn protection lasts." );
 ConVar of_instantrespawn	( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawning." );
 ConVar of_dropweapons		( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow manual weapon dropping." );
@@ -3721,6 +3721,10 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 	CTakeDamageInfo info_modified = info;
 
+	// headshots only!
+	if ( ptr->hitgroup != HITGROUP_HEAD && of_headshots.GetInt() >= 2 )
+		return;
+
 	if ( info_modified.GetDamageType() & DMG_USE_HITLOCATIONS || of_headshots.GetBool() == 1 )
 	{
 		switch ( ptr->hitgroup )
@@ -6032,8 +6036,8 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
-		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
+		DropWeapon( pTFPistol, false, false, Clip, Reserve );
+		DropWeapon( pTFPistol, false, false, Clip, Reserve );
 		pTFPistol = NULL;
 	}
 	else

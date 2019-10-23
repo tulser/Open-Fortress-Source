@@ -146,7 +146,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pPlayer->GetWeapon( iWeapon );  //Get a weapon from the player's inventory
 		if ( pCarriedWeapon == pWeapon ) // If we already have the weapon, dont pick it up
 		{
-			bSuccess=false;
+			bSuccess = false;
 		}
 		if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() ) // Are we in the 3 slot system?
 		{

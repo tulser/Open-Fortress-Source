@@ -84,6 +84,7 @@ OUTPUTS:
 #include "tier1/strtools.h"
 #include "datacache/imdlcache.h"
 #include "env_debughistory.h"
+#include "game.h"
 
 #include "tier0/vprof.h"
 
@@ -298,7 +299,8 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						ev->m_flDelay,
 						STRING(ev->m_iParameter) );
 
-			ConColorMsg( 2, Color( 140, 146, 210, 255 ), "%s", szBuffer );
+			if ( g_pDeveloper->GetInt() > 1 )
+				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 		else
@@ -317,7 +319,8 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						STRING(ev->m_iTargetInput),
 						STRING(ev->m_iParameter) );
 
-			ConColorMsg( 2, Color( 140, 146, 210, 255 ), "%s", szBuffer );
+			if ( g_pDeveloper->GetInt() > 1 )
+				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 
@@ -338,7 +341,8 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			{
 				char szBuffer[256];
 				Q_snprintf( szBuffer, sizeof(szBuffer), "Removing from action list: (%s,%s) -> (%s,%s)\n", pCaller ? STRING(pCaller->m_iClassname) : "NULL", pCaller ? STRING(pCaller->GetEntityName()) : "NULL", STRING(ev->m_iTarget), STRING(ev->m_iTargetInput));
-				ConColorMsg( 2, Color( 140, 146, 210, 255 ), "%s", szBuffer );
+				if ( g_pDeveloper->GetInt() > 1 )
+					ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
 				ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 				bRemove = true;
 			}
@@ -979,7 +983,8 @@ void CEventQueue::ServiceEvents( void )
 			
 			char szBuffer[256];
 			Q_snprintf( szBuffer, sizeof(szBuffer), "unhandled input: (%s) -> (%s), from (%s,%s); target entity not found\n", STRING(pe->m_iTargetInput), STRING(pe->m_iTarget), pClass, pName );
-			ConColorMsg( 2, Color( 140, 146, 210, 255 ), "%s", szBuffer );
+			if ( g_pDeveloper->GetInt() > 1 )
+				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 

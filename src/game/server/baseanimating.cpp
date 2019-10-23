@@ -984,7 +984,7 @@ float CBaseAnimating::SequenceDuration( CStudioHdr *pStudioHdr, int iSequence )
 {
 	if ( !pStudioHdr )
 	{
-		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		DevWarning( 3, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
 		return 0.1;
 	}
 	if ( !pStudioHdr->SequencesAvailable() )
@@ -993,7 +993,7 @@ float CBaseAnimating::SequenceDuration( CStudioHdr *pStudioHdr, int iSequence )
 	}
 	if (iSequence >= pStudioHdr->GetNumSeq() || iSequence < 0 )
 	{
-		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
+		DevWarning( 3, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
 		return 0.1;
 	}
 
@@ -1019,7 +1019,7 @@ float CBaseAnimating::GetLastVisibleCycle( CStudioHdr *pStudioHdr, int iSequence
 {
 	if ( !pStudioHdr )
 	{
-		DevWarning( 2, "CBaseAnimating::LastVisibleCycle( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		DevWarning( 3, "CBaseAnimating::LastVisibleCycle( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
 		return 1.0;
 	}
 

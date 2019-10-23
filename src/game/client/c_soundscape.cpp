@@ -247,6 +247,8 @@ C_SoundscapeSystem g_SoundscapeSystem;
 ConVar *C_SoundscapeSystem::m_pDSPVolumeVar = NULL;
 ConVar *C_SoundscapeSystem::m_pSoundMixerVar = NULL;
 
+extern ConVar developer;
+
 IGameSystem *ClientSoundscapeSystem()
 {
 	return &g_SoundscapeSystem;
@@ -489,7 +491,9 @@ void C_SoundscapeSystem::DevReportSoundscapeName( int index )
 	{
 		pName = m_soundscapes[index]->GetName();
 	}
-	ConColorMsg( 2, Color( 255, 255, 175, 255 ), "Soundscape: %s\n", pName  );
+	
+	if ( developer.GetInt() > 1 )
+		ConDColorMsg( Color( 255, 255, 175, 255 ), "Soundscape: %s\n", pName  );
 }
 
 

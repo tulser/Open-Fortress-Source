@@ -17,6 +17,7 @@
 #include "tf_weapon_parse.h"
 #include "KeyValues.h"
 #include "filesystem.h"
+#include "game.h"
 
 #include "tier0/memdbgon.h"
 
@@ -27,7 +28,7 @@ extern ConVar ofd_multiweapons;
 extern ConVar ofd_weaponspawners;
 extern ConVar ofd_allow_allclass_pickups;
 
-ConVar mp_weaponstay( "mp_weaponstay", "0", FCVAR_NOTIFY, "Weapons dont disappear.");
+extern ConVar weaponstay;
  
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Weapon Spawner
@@ -205,7 +206,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );				// Filter the sound to the player that picked this up
 					EmitSound( filter, entindex(), m_iszPickupSound );  // Play the pickup sound
-					if ( mp_weaponstay.GetBool() )								// If weaponstay is on, dont dissapear
+					if ( weaponstay.GetBool() )								// If weaponstay is on, dont dissapear
 						bSuccess = false;
 					else														// Disapear
 					{
@@ -224,7 +225,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );				// Ditto from above
 					EmitSound( filter, entindex(), m_iszPickupSound );
-					if ( mp_weaponstay.GetBool() )
+					if ( weaponstay.GetBool() )
 					{
 						bSuccess = false;
 					}
@@ -246,7 +247,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				{
 					CSingleUserRecipientFilter filter( pTFPlayer );
 					EmitSound( filter, entindex(), m_iszPickupSound );
-					if ( mp_weaponstay.GetBool() )
+					if ( weaponstay.GetBool() )
 					{
 						bSuccess = false;
 					}
@@ -293,7 +294,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			
 			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
 			pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
-			if ( mp_weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
+			if ( weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
 			{
 				bSuccess = false;
 			}

@@ -1270,6 +1270,10 @@ void CAI_BaseNPC::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 
 	bool bDebug = showhitlocation.GetBool();
 
+	// headshots only!
+	if ( ptr->hitgroup != HITGROUP_HEAD && of_headshots.GetInt() >= 2 )
+		return;
+
 	switch ( ptr->hitgroup )
 	{
 	case HITGROUP_GENERIC:

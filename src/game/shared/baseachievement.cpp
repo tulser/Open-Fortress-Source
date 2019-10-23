@@ -188,7 +188,7 @@ void CBaseAchievement::Event_EntityKilled( CBaseEntity *pVictim, CBaseEntity *pA
 		return;
 
 	// default implementation is just to increase count when filter criteria pass
-	// DevMsg( "Base achievement incremented on kill event.\n" );
+	// DevMsg(3, "Base achievement incremented on kill event.\n" );
 	IncrementCount();
 }
 
@@ -201,7 +201,7 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 	{
 		if ( !AlwaysEnabled() && !m_pAchievementMgr->CheckAchievementsEnabled() )
 		{
-			DevMsg( "Achievements disabled, ignoring achievement progress for %s\n", GetName() );
+			DevMsg(3, "Achievements disabled, ignoring achievement progress for %s\n", GetName() );
 			return;
 		}
 
@@ -228,7 +228,7 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 
 		if ( cc_achievement_debug.GetInt() )
 		{
-			DevMsg( "Achievement count increased for %s: %d/%d\n", GetName(), m_iCount, m_iGoal );
+			DevMsg(3, "Achievement count increased for %s: %d/%d\n", GetName(), m_iCount, m_iGoal );
 		}
 
 #ifndef NO_STEAM
@@ -241,7 +241,7 @@ void CBaseAchievement::IncrementCount( int iOptIncrement )
 			bool bRet = steamapicontext->SteamUserStats()->SetStat( pszProgressName, m_iCount );
 			if ( !bRet )
 			{
-				DevMsg( "ISteamUserStats::GetStat failed to set progress value in Steam for achievement %s\n", pszProgressName );
+				DevMsg(3, "ISteamUserStats::GetStat failed to set progress value in Steam for achievement %s\n", pszProgressName );
 			}
 
 			m_pAchievementMgr->SetDirty( true );
@@ -421,7 +421,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 	{				
 		if ( !AlwaysEnabled() && !m_pAchievementMgr->CheckAchievementsEnabled() )
 		{
-			DevMsg( "Achievements disabled, ignoring achievement component for %s\n", GetName() );
+			DevMsg(3, "Achievements disabled, ignoring achievement component for %s\n", GetName() );
 			return;
 		}
 
@@ -434,7 +434,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 
 			if ( cc_achievement_debug.GetInt() )
 			{
-				DevMsg( "Component %d for achievement %s found\n", iBitNumber, GetName() );
+				DevMsg(3, "Component %d for achievement %s found\n", iBitNumber, GetName() );
 			}
 
 			ShowProgressNotification();
@@ -444,7 +444,7 @@ void CBaseAchievement::EnsureComponentBitSetAndEvaluate( int iBitNumber )
 	{
 		if ( cc_achievement_debug.GetInt() )
 		{
-			DevMsg( "Component %d for achievement %s found, but already had that component\n", iBitNumber, GetName() );
+			DevMsg(3, "Component %d for achievement %s found, but already had that component\n", iBitNumber, GetName() );
 		}
 	}
 
@@ -689,7 +689,7 @@ void CFailableAchievement::Activate()
 	ListenForEvents();
 	if ( cc_achievement_debug.GetInt() )
 	{
-		DevMsg( "Failable achievement %s now active\n", GetName() );
+		DevMsg(3, "Failable achievement %s now active\n", GetName() );
 	}
 }
 
@@ -706,7 +706,7 @@ void CFailableAchievement::OnEvaluationEvent()
 	
 	if ( cc_achievement_debug.GetInt() )
 	{
-		DevMsg( "Failable achievement %s has been evaluated (%s), now inactive\n", GetName(), m_bFailed ? "FAILED" : "AWARDED" );
+		DevMsg(3, "Failable achievement %s has been evaluated (%s), now inactive\n", GetName(), m_bFailed ? "FAILED" : "AWARDED" );
 	}
 }
 
@@ -722,7 +722,7 @@ void CFailableAchievement::SetFailed()
 
 		if ( cc_achievement_debug.GetInt() )
 		{
-			DevMsg( "Achievement failed: %s (%s)\n", GetName(), GetName() );
+			DevMsg(3, "Achievement failed: %s (%s)\n", GetName(), GetName() );
 		}	
 	}	
 }
