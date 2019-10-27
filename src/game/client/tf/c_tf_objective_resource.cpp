@@ -7,6 +7,7 @@
 #include "cbase.h"
 #include "clientmode_tf.h"
 #include "c_tf_objective_resource.h"
+#include "teamplayroundbased_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -100,8 +101,7 @@ void C_TFObjectiveResource::SetCappingTeam( int index, int team )
 
 			if ( iLocalTeam != team )
 			{
-				CLocalPlayerFilter filter;
-				C_BaseEntity::EmitSound( filter, -1, "Announcer.ControlPointContested" );
+				TeamplayRoundBasedRules()->BroadcastSound( iLocalTeam, "ControlPointContested" ); // Stickynote: Figure out if this plays or not, i think not
 			}
 		}
 	}

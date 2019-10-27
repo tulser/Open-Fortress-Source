@@ -193,6 +193,14 @@ void CModelPanel::FireGameEvent( IGameEvent * event )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CModelPanel::SetSkin( int nSkin )
+{
+	m_pModelInfo->m_nSkin = nSkin;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CModelPanel::SetDefaultAnimation( const char *pszName )
 {
 	if ( m_pModelInfo )

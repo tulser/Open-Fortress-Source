@@ -12,6 +12,7 @@
 #include "tier0/memdbgon.h"
 #include "glow_outline_effect.h"
 #include "tf_gamerules.h"
+#include "teamplayroundbased_gamerules.h"
 
 extern ConVar building_cubemaps;
 
@@ -40,6 +41,7 @@ private:
 		bool	m_bDisableShowOutline;
 		bool	m_bRespawning;
 		bool	bInitialDelay;
+		bool	bWarningTriggered;
 		int		iTeamNum;
 		bool	m_bShouldGlow;
 		float				fl_RespawnTime;
@@ -89,6 +91,18 @@ void C_CondPowerup::Spawn( void )
 //-----------------------------------------------------------------------------
 void C_CondPowerup::ClientThink( void )
 {
+	if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
+	{
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "PowerupsIncoming" );
+		bWarningTriggered = true;
+	}
+	else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
+	{
+		bWarningTriggered = false;
+	}
+	if ( bWarningTriggered && !m_bRespawning )
+		bWarningTriggered = false;
+	
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
 	// If old team does not equal new team then update glow with new glow color

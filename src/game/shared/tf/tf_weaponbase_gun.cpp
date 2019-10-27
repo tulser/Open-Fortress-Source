@@ -212,9 +212,14 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	}
 
 	pPlayer->SetAnimation( PLAYER_ATTACK1 );
-
+#ifdef GAME_DLL
+	int kqly = pPlayer->trickshot;
+#endif
 	FireProjectile( pPlayer );
-
+#ifdef GAME_DLL
+	if ( kqly == pPlayer->trickshot )
+		pPlayer->trickshot = 0;
+#endif
 	// Set next attack times.
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 		m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;

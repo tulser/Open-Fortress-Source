@@ -496,6 +496,45 @@ void CTeamplayRoundBasedRules::AddTeamRespawnWaveTime( int iTeam, float flValue 
 #endif
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTeamplayRoundBasedRules::BroadcastSound( int iTeam, const char *sound, bool bAnnouncer, int iExcludePlayers )
+{
+	for (int i = TEAM_UNASSIGNED; i < TF_TEAM_COUNT; i++)
+	{
+		IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_broadcast_audio" );
+		if ( event )
+		{
+			if ( iTeam != TEAM_UNASSIGNED )
+				i = iTeam;
+			event->SetInt( "team", i );
+			event->SetString( "sound", sound );
+			event->SetInt("additional_flags", iExcludePlayers);
+			event->SetBool( "announcer", bAnnouncer );
+			gameeventmanager->FireEvent( event );
+			if ( iTeam != TEAM_UNASSIGNED )
+				break;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTeamplayRoundBasedRules::BroadcastSoundFFA( int iPlayer, const char *sound, const char *sound_rest, bool bAnnouncer )
+{
+	IGameEvent *event = gameeventmanager->CreateEvent( "ffa_broadcast_audio" );
+	if ( event )
+	{
+		event->SetInt( "player", iPlayer );
+		event->SetString( "sound", sound );
+		event->SetString( "sound_rest", sound_rest );
+		event->SetBool( "announcer", bAnnouncer );
+		gameeventmanager->FireEvent( event );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: don't let us spawn before our freezepanel time would have ended, even if we skip it
 //-----------------------------------------------------------------------------
 float CTeamplayRoundBasedRules::GetNextRespawnWave( int iTeam, CBasePlayer *pPlayer ) 
@@ -1492,6 +1531,9 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 		m_flStateTransitionTime = gpGlobals->curtime + 5 * mp_enableroundwaittime.GetFloat();
 	}
 
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		BroadcastSound( TEAM_UNASSIGNED, "DMRoundPrepare" );	
+	
 	StopWatchModeThink();
 }
 
@@ -1500,6 +1542,8 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::State_Leave_PREROUND( void )
 {
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		BroadcastSound( TEAM_UNASSIGNED, "DMRoundStart" );
 	PreRound_End();
 }
 
@@ -2617,6 +2661,20 @@ void CC_CH_ForceRespawn( void )
 }
 static ConCommand mp_forcerespawnplayers("mp_forcerespawnplayers", CC_CH_ForceRespawn, "Force all players to respawn.", FCVAR_CHEAT );
 
+ConVar *host_timescale = NULL;
+
+void CC_CH_TIMESCALE( const CCommand &args )
+{
+	host_timescale = g_pCVar->FindVar( "host_timescale" );
+	if( host_timescale )
+	{
+		float value = max( Q_atof(args[1]), 0.00000000001 );
+		host_timescale->SetValue( value );
+	}
+}
+static ConCommand sv_timescale("sv_timescale", CC_CH_TIMESCALE, "Changes the Timescale.", FCVAR_CHEAT );
+
+
 static ConVar mp_tournament_allow_non_admin_restart( "mp_tournament_allow_non_admin_restart", "1", FCVAR_NONE, "Allow mp_tournament_restart command to be issued by players other than admin.");
 void CC_CH_TournamentRestart( void )
 {
@@ -3373,7 +3431,7 @@ void CTeamplayRoundBasedRules::PlayStartRoundVoice( void )
 {
 	for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
 	{
-		BroadcastSound( i, UTIL_VarArgs("Game.TeamRoundStart%d", i ) );
+		BroadcastSound( i, UTIL_VarArgs("Game.TeamRoundStart%d", i ), false );
 	}
 }
 
@@ -3456,22 +3514,6 @@ bool CTeamplayRoundBasedRules::PlayThrottledAlert( int iTeam, const char *sound,
 	}
 
 	return false;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTeamplayRoundBasedRules::BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags )
-{
-	//send it to everyone
-	IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_broadcast_audio" );
-	if ( event )
-	{
-		event->SetInt( "team", iTeam );
-		event->SetString( "sound", sound );
-		event->SetInt( "additional_flags", iAdditionalSoundFlags );
-		gameeventmanager->FireEvent( event );
-	}
 }
 
 //-----------------------------------------------------------------------------

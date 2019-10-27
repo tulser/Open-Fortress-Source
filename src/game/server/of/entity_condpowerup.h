@@ -30,6 +30,11 @@ public:
 	virtual CBaseEntity* Respawn( void );
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
+	virtual void Materialize(void);
+	const char* GetPowerupRespawnLine(void);
+	const char* GetPowerupPickupLine(void);
+	const char* GetPowerupPickupLineSelf(void);
+	const char* GetPowerupPickupSound(void);
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 	int m_bCondition=5;

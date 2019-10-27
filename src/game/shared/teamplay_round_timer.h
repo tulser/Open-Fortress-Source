@@ -84,12 +84,14 @@ public:
 
 private:
 	void CalculateOutputMessages( void );
-
+	
+	void CheckTimeWarnings( void );
+	void SendTimeWarning( int nWarning );
+	
 #ifdef CLIENT_DLL
 	virtual void ClientThink();
 	void OnPreDataChanged( DataUpdateType_t updateType );
 	void OnDataChanged( DataUpdateType_t updateType );
-	void SendTimeWarning( int nWarning );
 	const char *GetTimeWarningSound( int nWarning );
 
 #else

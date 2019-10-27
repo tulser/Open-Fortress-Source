@@ -18,6 +18,7 @@
 #include "c_team.h"
 
 #include "tf_gamerules.h"
+#include "teamplayroundbased_gamerules.h"
 #include "tf_shareddefs.h"
 #include "clientmode_tf.h"
 #include "c_tf_player.h"
@@ -645,10 +646,20 @@ void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, i
 		{
 			pszSoundName = "Game.Nemesis";
 		}
+		if ( TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( iKillerIndex, "Dominating" );
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( iVictimIndex, "Dominating" );
+		}
 	}
 	else if ( iType == TF_DEATH_REVENGE )
 	{
 		pszSoundName = "Game.Revenge";
+		if ( TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( iKillerIndex, "Revenge" );
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( iVictimIndex, "Revenge" );
+		}
 	}
 
 	CLocalPlayerFilter filter;

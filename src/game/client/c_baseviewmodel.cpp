@@ -209,6 +209,11 @@ bool C_BaseViewModel::ShouldFlipViewModel()
 
 #if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
 	CBaseCombatWeapon *pWeapon = m_hWeapon.Get();
+	C_BaseViewModel *pWeaponViewmodel = dynamic_cast<C_BaseViewModel*> (GetFollowedEntity());
+	if ( pWeaponViewmodel )
+	{
+		return pWeaponViewmodel->ShouldFlipViewModel();
+	}
 	if ( pWeapon )
 	{
 		return pWeapon->m_bFlipViewModel != cl_flipviewmodels.GetBool();
@@ -355,7 +360,7 @@ int C_BaseViewModel::InternalDrawModel( int flags )
 	CMatRenderContextPtr pRenderContext( materials );
 	if ( ShouldFlipViewModel() )
 		pRenderContext->CullMode( MATERIAL_CULLMODE_CW );
-
+	
 	int ret = BaseClass::InternalDrawModel( flags );
 
 	pRenderContext->CullMode( MATERIAL_CULLMODE_CCW );

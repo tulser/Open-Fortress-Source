@@ -57,7 +57,8 @@ $Configuration
 	
 	$Linker
 	{
-		$GCC_ExtraLinkerFlags			"$BASE -arch x86_64"		[$OSX64]
+		$GCC_ExtraLinkerFlags			"$BASE -arch x86_64"					[$OSX64]
+		$GCC_ExtraLinkerFlags			"$BASE -arch x86_64 -llibfmodex"		[$LINUX]
 	}
 
 }
@@ -71,5 +72,6 @@ $Project
 		$Lib	"$LIBPUBLIC\tier1"		[!$IS_LIB_PROJECT]
 		$ImpLib "$LIBPUBLIC\vstdlib"	[!$IS_LIB_PROJECT]
 	}
+	
 }
 	

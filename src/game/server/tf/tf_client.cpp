@@ -108,12 +108,18 @@ const char *GetGameDescription()
 Returns the descriptive name of this .dll.  E.g., Half-Life, or Team Fortress 2
 ===============
 */
+ConVar kay_is_fucking_testing( "kay_is_fucking_testing" , "0", FCVAR_HIDDEN);
 const char *GetGameDescription()
 {
 	if ( g_pGameRules ) // this function may be called before the world has spawned, and the game rules initialized
 		return g_pGameRules->GetGameDescription();
 	else
-		return "Open Fortress";
+	{
+		if( !kay_is_fucking_testing.GetBool() )
+			return "Open Fortress";
+		else
+			return "Dev server dont fucking join";
+	}
 }
 
 

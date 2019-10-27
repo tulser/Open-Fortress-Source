@@ -45,6 +45,8 @@
 	//ConVar  tf_flame_force( "tf_flame_force", "30" );
 #endif
 
+ConVar of_debug_airblast("of_debug_airblast", "0", FCVAR_CHEAT, "Enable wip Airblast");
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -478,7 +480,8 @@ void CTFFlameThrower::PrimaryAttack()
 void CTFFlameThrower::SecondaryAttack()
 {
 	// remove when the attack actually works
-	return;
+	if ( !of_debug_airblast.GetBool() )
+		return;
 
 	// TODO: you might need to add an additional state named something like FT_STATE_SECONDARYATTACK
 

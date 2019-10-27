@@ -57,6 +57,7 @@
 #include "tf_weapon_parse.h"
 #include "tf_weaponbase.h"
 #include "tf_player_shared.h"
+#include "tf_viewmodel.h"
 #include "c_tf_player.h"
 #include "tempent.h"
 #include "physpropclientside.h"
@@ -3319,7 +3320,12 @@ int C_BaseAnimating::DrawModel( int flags )
 		// Necessary for lighting blending
 		CreateModelInstance();
 
-		if ( !IsFollowingEntity() )
+		// Ok so basicaly, this bitch is for some reason taking the folow entities ::DRAW shit
+		// and viewmodels use Overriden Draw so it just draws it normaly and basicaly this is fucking stupid
+		// so if this entity is following a viewmodel ( Like arms ) it does its own Draw functions
+		// leading to it using Draw Overriden Viewmodel when it needs to
+		CTFViewModel *pMainViewmodel = dynamic_cast<CTFViewModel*> (GetFollowedEntity());
+		if ( !IsFollowingEntity() || pMainViewmodel )
 		{
 			drawn = InternalDrawModel( flags|extraFlags );
 		}

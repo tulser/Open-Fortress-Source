@@ -13,8 +13,12 @@ $Configuration
 {
 	$Compiler
 	{
-				$AdditionalIncludeDirectories	".\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\of;.\of\vgui;$SRCDIR\game\shared\of;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic"
+		$AdditionalIncludeDirectories	".\hl2;.\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\of;.\of\vgui;$SRCDIR\game\shared\of;.\hl2;$SRCDIR\game\shared\hl2;.\episodic;$SRCDIR\game\shared\episodic;$SRCDIR\fmod_studio\api\core\inc"
 		$PreprocessorDefinitions		"$BASE;TF_MOD_CLIENT;GLOWS_ENABLE;OPENFORTRESS_DLL;ASW_PROJECTED_TEXTURES;MAPBASE"
+	}
+	$Linker
+	{
+		$AdditionalLibraryDirectories			"$SRCDIR\fmod\api\lib"
 	}
 }
 
@@ -62,6 +66,11 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\of\gamemounter.h"
 			$File	"of\vgui\of_loadout.cpp"
 			$File	"of\vgui\of_loadout.h"	
+			$File	"of\c_of_music_player.cpp"
+			$File	"of\fmod_manager.cpp"
+			$File	"of\fmod_manager.h"
+			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
+			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
 		}
 		
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"

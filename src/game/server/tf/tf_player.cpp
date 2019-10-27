@@ -68,6 +68,8 @@
 #include "eventqueue.h"
 #include "ammodef.h"
 #include "saverestore_utlvector.h"
+#include "teamplayroundbased_gamerules.h"
+#include "tf_weaponbase_melee.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -746,7 +748,7 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "TFPlayer.Drown" );
 	PrecacheScriptSound( "TFPlayer.AttackerPain" );
 	PrecacheScriptSound( "TFPlayer.SaveMe" );
-	 PrecacheScriptSound( "TFPlayer.MedicChargedDeath" );
+	PrecacheScriptSound( "TFPlayer.MedicChargedDeath" );
 	PrecacheScriptSound( "Camera.SnapShot" );
 
 	PrecacheScriptSound( "Game.YourTeamLost" );
@@ -789,9 +791,6 @@ void CTFPlayer::Precache()
 
 	// needed so the stickybomb launcher charging plays...
 	PrecacheScriptSound( "Weapon_StickyBombLauncher.ChargeUp" );
-
-	PrecacheScriptSound( TFGameRules()->GetMusicName( false ) );
-	PrecacheScriptSound( TFGameRules()->GetMusicName( true ) );
 
 	// needed to suppress console spam about weapon spawners
 	PrecacheMaterial( "VGUI/flagtime_full" );
@@ -1137,24 +1136,6 @@ void CTFPlayer::Spawn()
 	Vector maxs = VEC_HULL_MAX;
 	CollisionProp()->SetSurroundingBoundsType( USE_SPECIFIED_BOUNDS, &mins, &maxs );
 
-	if (TFGameRules()->State_Get() == GR_STATE_PREGAME || TFGameRules()->State_Get() == GR_STATE_INIT)
-	{
-		for (int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++)
-		{
-			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicName( false ));
-		}
-
-		DevMsg("playing round preround music\n");
-	}
-	else
-	{
-		for (int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++)
-		{
-			TFGameRules()->BroadcastSound(i, TFGameRules()->GetMusicName( true ));
-		}
-
-		DevMsg("playing round active music\n");
-	}
 	if( m_bDied )
 	{
 		if(m_bGotKilled)
@@ -4732,6 +4713,29 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
         gameeventmanager->FireEvent( event );
 	}
 	
+	CTFPlayer *pPlayer = ToTFPlayer( pAttacker );
+	CTFWeaponBase *pActiveWeapon = pPlayer ? pPlayer->GetActiveTFWeapon() : NULL;
+	if ( pActiveWeapon && pPlayer )
+	{
+		if ( pActiveWeapon->GetWeaponID() == TF_WEAPON_RAILGUN 
+		|| pActiveWeapon->GetWeaponID() == TF_WEAPON_SNIPERRIFLE )
+		{
+			// FarmZombie_ Be like
+			if ( pPlayer->trickshot == 0 )
+				pPlayer->trickshot++;
+			else
+			{
+				pPlayer->trickshot = 0;
+				if ( TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+					TeamplayRoundBasedRules()->BroadcastSoundFFA( pPlayer->entindex() ,"Impressive");
+			}
+		}
+		else
+		{
+			pPlayer->trickshot = 0;
+		}
+	}
+	
 	if ( pAttacker != this && pAttacker->IsPlayer() )
 	{
 		ToTFPlayer( pAttacker )->RecordDamageEvent( info, (m_iHealth <= 0) );
@@ -4846,10 +4850,11 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
 		CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
-		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pTFVictim != pTFAttacker )
+		
+		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pTFVictim != pTFAttacker ) // If you killed someone and it wasnt yourself
 		{
-			if ( GGLevel() == TFGameRules()->m_iMaxLevel-1 )
-				IncrementLevelProgress(TFGameRules()->m_iRequiredKills);
+			if ( GGLevel() == TFGameRules()->m_iMaxLevel-1 ) 
+				IncrementLevelProgress(TFGameRules()->m_iRequiredKills); 
 			else
 				IncrementLevelProgress(1);
 			if ( GetLevelProgress() >= TFGameRules()->m_iRequiredKills )
@@ -4862,8 +4867,18 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 				}
 			}
 		}
+		
 		if ( pTFVictim != pTFAttacker )
 			pTFVictim->GotKilled();
+		
+		if ( pTFVictim != pTFAttacker && pTFAttacker->last_kill > ( gpGlobals->curtime - 2.0f ) && TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFAttacker->entindex(), "Excellent" ); // 2 kills in 2 seconds
+			pTFAttacker->last_kill = 0; // reset it so that it doesnt play multiple times if we kill for example 3 enemies within 2 seconds
+		}
+		else
+			pTFAttacker->last_kill = gpGlobals->curtime;
+		
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
 		const char *pszDamageType = "damagetype:none";
@@ -4986,6 +5001,13 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	{
 		pPlayerAttacker = ToTFPlayer( info.GetAttacker() );
 	}
+	
+	CTFWeaponBaseMelee *pMelee = dynamic_cast<CTFWeaponBaseMelee*>(info.GetWeapon());
+	if ( pMelee && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+	{
+		TeamplayRoundBasedRules()->BroadcastSoundFFA( info.GetAttacker()->entindex(), "Humiliation" ); 
+		TeamplayRoundBasedRules()->BroadcastSoundFFA( entindex(), "Humiliation" ); 
+	}	
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the ragdoll to burn if the player was burning and was not a pryo (who only burns momentarily)
 	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
@@ -5088,7 +5110,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			CTF_GameStats.Event_PlayerDefendedPoint( pPlayerAttacker );
 		}
 	}
-
 
 	// Remove all items...
 	RemoveAllItems( true );

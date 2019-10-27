@@ -26,23 +26,23 @@
 #include "tf_player.h"
 #endif
 
-#define ROUND_TIMER_60SECS	"Announcer.RoundEnds60seconds"
-#define ROUND_TIMER_30SECS	"Announcer.RoundEnds30seconds"
-#define ROUND_TIMER_10SECS	"Announcer.RoundEnds10seconds"
-#define ROUND_TIMER_5SECS	"Announcer.RoundEnds5seconds"
-#define ROUND_TIMER_4SECS	"Announcer.RoundEnds4seconds"
-#define ROUND_TIMER_3SECS	"Announcer.RoundEnds3seconds"
-#define ROUND_TIMER_2SECS	"Announcer.RoundEnds2seconds"
-#define ROUND_TIMER_1SECS	"Announcer.RoundEnds1seconds"
+#define ROUND_TIMER_60SECS	"RoundEnds60seconds"
+#define ROUND_TIMER_30SECS	"RoundEnds30seconds"
+#define ROUND_TIMER_10SECS	"RoundEnds10seconds"
+#define ROUND_TIMER_5SECS	"RoundEnds5seconds"
+#define ROUND_TIMER_4SECS	"RoundEnds4seconds"
+#define ROUND_TIMER_3SECS	"RoundEnds3seconds"
+#define ROUND_TIMER_2SECS	"RoundEnds2seconds"
+#define ROUND_TIMER_1SECS	"RoundEnds1seconds"
 
-#define ROUND_SETUP_60SECS	"Announcer.RoundBegins60Seconds"
-#define ROUND_SETUP_30SECS	"Announcer.RoundBegins30Seconds"
-#define ROUND_SETUP_10SECS	"Announcer.RoundBegins10Seconds"
-#define ROUND_SETUP_5SECS	"Announcer.RoundBegins5Seconds"
-#define ROUND_SETUP_4SECS	"Announcer.RoundBegins4Seconds"
-#define ROUND_SETUP_3SECS	"Announcer.RoundBegins3Seconds"
-#define ROUND_SETUP_2SECS	"Announcer.RoundBegins2Seconds"
-#define ROUND_SETUP_1SECS	"Announcer.RoundBegins1Seconds"
+#define ROUND_SETUP_60SECS	"RoundBegins60Seconds"
+#define ROUND_SETUP_30SECS	"RoundBegins30Seconds"
+#define ROUND_SETUP_10SECS	"RoundBegins10Seconds"
+#define ROUND_SETUP_5SECS	"RoundBegins5Seconds"
+#define ROUND_SETUP_4SECS	"RoundBegins4Seconds"
+#define ROUND_SETUP_3SECS	"RoundBegins3Seconds"
+#define ROUND_SETUP_2SECS	"RoundBegins2Seconds"
+#define ROUND_SETUP_1SECS	"RoundBegins1Seconds"
 
 #if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
 #define MERASMUS_SETUP_5SECS	"Merasmus.RoundBegins5Seconds"
@@ -54,9 +54,9 @@
 
 #define ROUND_START_BELL	"Ambient.Siren"
 
-#define ROUND_TIMER_TIME_ADDED			"Announcer.TimeAdded"
-#define ROUND_TIMER_TIME_ADDED_LOSER	"Announcer.TimeAddedForEnemy"
-#define ROUND_TIMER_TIME_ADDED_WINNER	"Announcer.TimeAwardedForTeam"
+#define ROUND_TIMER_TIME_ADDED			"TimeAdded"
+#define ROUND_TIMER_TIME_ADDED_LOSER	"TimeAddedForEnemy"
+#define ROUND_TIMER_TIME_ADDED_WINNER	"TimeAwardedForTeam"
 
 enum
 {
@@ -271,36 +271,6 @@ CTeamRoundTimer::~CTeamRoundTimer( void )
 //-----------------------------------------------------------------------------
 void CTeamRoundTimer::Precache( void )
 {
-#if defined( TF_DLL ) || defined( TF_CLIENT_DLL ) || defined( TF_MOD ) || defined( TF_MOD_CLIENT ) 
-	PrecacheScriptSound( ROUND_TIMER_60SECS );
-	PrecacheScriptSound( ROUND_TIMER_30SECS );
-	PrecacheScriptSound( ROUND_TIMER_10SECS );
-	PrecacheScriptSound( ROUND_TIMER_5SECS );
-	PrecacheScriptSound( ROUND_TIMER_4SECS );
-	PrecacheScriptSound( ROUND_TIMER_3SECS );
-	PrecacheScriptSound( ROUND_TIMER_2SECS );
-	PrecacheScriptSound( ROUND_TIMER_1SECS );
-	PrecacheScriptSound( ROUND_SETUP_60SECS );
-	PrecacheScriptSound( ROUND_SETUP_30SECS );
-	PrecacheScriptSound( ROUND_SETUP_10SECS );
-	PrecacheScriptSound( ROUND_SETUP_5SECS );
-	PrecacheScriptSound( ROUND_SETUP_4SECS );
-	PrecacheScriptSound( ROUND_SETUP_3SECS );
-	PrecacheScriptSound( ROUND_SETUP_2SECS );
-	PrecacheScriptSound( ROUND_SETUP_1SECS );
-	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED );
-	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_LOSER );
-	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_WINNER );
-	PrecacheScriptSound( ROUND_START_BELL );
-
-#ifdef TF_CLIENT_DLL
-	PrecacheScriptSound( MERASMUS_SETUP_5SECS );
-	PrecacheScriptSound( MERASMUS_SETUP_4SECS );
-	PrecacheScriptSound( MERASMUS_SETUP_3SECS );
-	PrecacheScriptSound( MERASMUS_SETUP_2SECS );
-	PrecacheScriptSound( MERASMUS_SETUP_1SECS );
-#endif // TF_CLIENT_DLL
-#endif // TF_DLL || TF_CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -592,13 +562,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_5SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
-#ifdef TF_CLIENT_DLL
-			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-			{
-				pszRetVal = MERASMUS_SETUP_5SECS;
-			}
-			else
-#endif
 			{
 				pszRetVal = ROUND_SETUP_5SECS;
 			}
@@ -611,13 +574,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_4SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
-#ifdef TF_CLIENT_DLL
-			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-			{
-				pszRetVal = MERASMUS_SETUP_4SECS;
-			}
-			else
-#endif
 			{
 				pszRetVal = ROUND_SETUP_4SECS;
 			}
@@ -630,13 +586,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_3SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
-#ifdef TF_CLIENT_DLL
-			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-			{
-				pszRetVal = MERASMUS_SETUP_3SECS;
-			}
-			else
-#endif
 			{
 				pszRetVal = ROUND_SETUP_3SECS;
 			}
@@ -649,13 +598,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_2SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
-#ifdef TF_CLIENT_DLL
-			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-			{
-				pszRetVal = MERASMUS_SETUP_2SECS;
-			}
-			else
-#endif
 			{
 				pszRetVal = ROUND_SETUP_2SECS;
 			}
@@ -668,13 +610,6 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_1SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
-#ifdef TF_CLIENT_DLL
-			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-			{
-				pszRetVal = MERASMUS_SETUP_1SECS;
-			}
-			else
-#endif
 			{
 				pszRetVal = ROUND_SETUP_1SECS;
 			}
@@ -771,13 +706,13 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 						bShouldPlaySound = true;
 					}
 				}
-
-#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 				if ( bShouldPlaySound == true )
 				{
-					pPlayer->EmitSound( GetTimeWarningSound( nWarning ) );
+					bool announcer = true;
+					if ( !strcmp(GetTimeWarningSound( nWarning ), ROUND_START_BELL ) )
+						announcer = false;
+					TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetTimeWarningSound( nWarning ), announcer );
 				}
-#endif // TF_CLIENT_DLL
 			}
 		}
 	}
@@ -1298,20 +1233,20 @@ void CTeamRoundTimer::AddTimerSeconds( int iSecondsToAdd, int iTeamResponsible /
 					if ( iTeam == iTeamResponsible )
 					{
 						CTeamRecipientFilter filter( iTeam, true );
-						EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED_WINNER );
+						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_WINNER );
 						
 					}
 					else
 					{
 						CTeamRecipientFilter filter( iTeam, true );
-						EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED_LOSER );
+						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_LOSER );
 					}
 				}
 			}
 			else
 			{
 				CReliableBroadcastRecipientFilter filter;
-				EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED );
+				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, ROUND_TIMER_TIME_ADDED );
 			}
 		}
 

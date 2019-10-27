@@ -13,6 +13,7 @@
 
 #include "tf_controls.h"
 #include <teammenu.h>
+#include "basemodelpanel.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -124,7 +125,8 @@ public:
 	virtual const char *GetName(void) { return PANEL_DMTEAMSELECT; }
 	void Update();
 	void ShowPanel(bool bShow);
-
+	const char *GetGamemodeMessage(void);
+	int	GetGamemodeSkin(void);
 protected:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 	virtual void OnKeyCodePressed(vgui::KeyCode code);
@@ -142,6 +144,8 @@ private:
 	CTFTeamButton	*m_pSpecTeamButton;
 	CExLabel		*m_pSpecLabel;
 	CExLabel		*m_pCancelButton;
+	
+	CModelPanel		*m_pBackgroundModel;
 
 
 private:

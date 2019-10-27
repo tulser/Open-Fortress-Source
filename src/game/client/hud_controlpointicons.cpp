@@ -1847,7 +1847,7 @@ void CControlPointCountdown::OnTick( void )
 		if ( iTimeLeft <= 0 && m_bFire0SecRemain )
 		{
 			m_bFire0SecRemain = false;
-			pLocalPlayer->EmitSound( "Announcer.AM_CapEnabledRandom" );
+			TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "AM_CapEnabledRandom" );
 			m_flUnlockTime = 0.0f;
 		}
 
@@ -1871,27 +1871,27 @@ void CControlPointCountdown::OnTick( void )
 	if ( iTimeLeft <= 5 && m_bFire5SecRemain )
 	{
 		m_bFire5SecRemain = false;
-		pLocalPlayer->EmitSound( "Announcer.RoundBegins5Seconds" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "RoundBegins5Seconds" );
 	}
 	else if ( iTimeLeft <= 4 && m_bFire4SecRemain )
 	{
 		m_bFire4SecRemain = false;
-		pLocalPlayer->EmitSound( "Announcer.RoundBegins4Seconds" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "RoundBegins4Seconds" );
 	}
 	else if ( iTimeLeft <= 3 && m_bFire3SecRemain )
 	{
 		m_bFire3SecRemain = false;
-		pLocalPlayer->EmitSound( "Announcer.RoundBegins3Seconds" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "RoundBegins3Seconds" );
 	}
 	else if ( iTimeLeft <= 2 && m_bFire2SecRemain )
 	{
 		m_bFire2SecRemain = false;
-		pLocalPlayer->EmitSound( "Announcer.RoundBegins2Seconds" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "RoundBegins2Seconds" );
 	}
 	else if ( iTimeLeft <= 1 && m_bFire1SecRemain )
 	{
 		m_bFire1SecRemain = false;
 		m_bFire0SecRemain = true;
-		pLocalPlayer->EmitSound( "Announcer.RoundBegins1Seconds" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "RoundBegins1Seconds" );
 	}
 }

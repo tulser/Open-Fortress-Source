@@ -104,10 +104,66 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		QAngle vecPackAngles;
 		pTFPlayer->m_Shared.AddCond( m_bCondition , m_bCondDuration );
 		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );  // The dropped powerup is spawned here, more explanation in its cpp file but basicaly we do this to preserve custom settings like its model on it
-		EmitSound( STRING( m_iszPickupSound ) );
+		if ( TeamplayRoundBasedRules() )
+		{
+			if ( strcmp( GetPowerupPickupLine(), "None" ) || strcmp( GetPowerupPickupLineSelf(), "None" ) )
+				TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFPlayer->entindex(), GetPowerupPickupLineSelf(), GetPowerupPickupLine() );
+			
+			if ( strcmp( GetPowerupPickupSound(), "None" ) )
+				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupPickupSound(), false );
+			else
+				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, STRING( m_iszPickupSound ), false );
+		}
 		m_nRenderFX = kRenderFxDistort;
 	}
 	return bSuccess;
+}
+
+const char* CCondPowerup::GetPowerupPickupLineSelf( void )
+{
+	switch ( m_bCondition )
+	{
+		case TF_COND_INVULNERABLE:
+		case TF_COND_SHIELD:
+		return "ShieldTakenSelf";
+		break;
+	}
+	return "None";
+}
+
+const char* CCondPowerup::GetPowerupPickupLine( void )
+{
+	switch ( m_bCondition )
+	{
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "CritTaken";
+		break;
+	}
+	return "None";
+}
+
+const char* CCondPowerup::GetPowerupPickupSound( void )
+{
+	switch ( m_bCondition )
+	{
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "Powerup.Crit";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "Powerup.Invis";
+		break;
+		case TF_COND_BERSERK:
+		return "Powerup.Berserk";
+		break;
+		case TF_COND_INVULNERABLE:
+		case TF_COND_SHIELD:
+		return "Powerup.Shield";
+		break;
+	}
+	return "None";
 }
 
 CCondPowerup::CCondPowerup()
@@ -121,4 +177,45 @@ CBaseEntity* CCondPowerup::Respawn( void )
 	m_nRenderFX = kRenderFxDistort;
 	m_flRespawnTick = GetNextThink();
 	return ret;
+}
+
+const char* CCondPowerup::GetPowerupRespawnLine( void )
+{
+	switch ( m_bCondition )
+	{
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "Crits";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "Invisibility";
+		break;
+		case TF_COND_SHIELD:
+		case TF_COND_INVULNERABLE:
+		return "Shield";
+		break;
+	}
+	return "None";
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CCondPowerup::Materialize( void )
+{
+	if ( !IsDisabled() )
+	{
+		// changing from invisible state to visible.
+		m_nRenderFX = kRenderFxNone;
+		RemoveEffects( EF_NODRAW );
+	}
+	m_OnRespawn.FireOutput( this, this );
+	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && strcmp(GetPowerupRespawnLine(), "None" ) )
+		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, GetPowerupRespawnLine() );
+	else if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND )
+		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, STRING ( m_iszSpawnSound ), false );
+	m_bRespawning = false;
+	bInitialDelay = false;
+	SetTouch( &CItem::ItemTouch );
 }

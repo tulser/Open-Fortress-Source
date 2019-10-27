@@ -141,6 +141,7 @@ protected:
 
 private:
 	virtual void	UpdateReplayMessages();
+	virtual const char* GetAnnouncer();
 
 	void			ClearReplayMessageList();
 

@@ -266,9 +266,6 @@ void CTeamControlPoint::Precache( void )
 		PrecacheScriptSound( STRING( m_iszWarnSound ) );
 	}
 
-	PrecacheScriptSound( "Announcer.ControlPointContested" );
-	PrecacheScriptSound( "Announcer.ControlPointContested_Neutral" );
-
 }
 
 //------------------------------------------------------------------------------
@@ -305,7 +302,7 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{
-			if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD) )
+			if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD ) )
 			{
 				CBroadcastRecipientFilter filter;
 				EmitSound( filter, entindex(), "Hud.EndRoundScored" );

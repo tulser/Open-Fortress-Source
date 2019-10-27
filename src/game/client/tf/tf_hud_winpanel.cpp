@@ -383,7 +383,7 @@ void CTFWinPanel::OnThink()
 	}
 }
 
-DECLARE_HUDELEMENT_DEPTH( CTFWinPanelDM, 1 );
+DECLARE_HUDELEMENT_DEPTH( CTFWinPanelDM, 70 );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -398,6 +398,8 @@ CTFWinPanelDM::CTFWinPanelDM( const char *pElementName ) : EditablePanel( NULL, 
 	m_bShouldBeVisible = false;
 	SetAlpha( 0 );
 	SetScheme( "ClientScheme" );
+	
+	m_pClose = new CExButton( this, "Close", "#TF_Close" );
 	m_pTeamScorePanel = new EditablePanel( this, "TeamScoresPanel" );
 	m_flTimeUpdateTeamScore = 0;
 	m_iBlueTeamScore = 0;
@@ -423,6 +425,8 @@ void CTFWinPanelDM::ApplySettings( KeyValues *inResourceData )
 void CTFWinPanelDM::Reset()
 {
 	m_bShouldBeVisible = false;
+	SetKeyBoardInputEnabled( false );
+	SetMouseInputEnabled( false );
 }
 
 //-----------------------------------------------------------------------------
@@ -449,10 +453,14 @@ void CTFWinPanelDM::SetVisible( bool state )
 	if ( state )
 	{
 		HideLowerPriorityHudElementsInGroup( "mid" );
+		SetKeyBoardInputEnabled( true );
+		SetMouseInputEnabled( true );
 	}
 	else
 	{
 		UnhideLowerPriorityHudElementsInGroup( "mid" );
+		SetKeyBoardInputEnabled( true );
+		SetMouseInputEnabled( true );
 	}
 
 	BaseClass::SetVisible( state );
@@ -464,7 +472,7 @@ void CTFWinPanelDM::SetVisible( bool state )
 void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 {
 	const char *pEventName = event->GetName();
-
+	
 	if ( Q_strcmp( "teamplay_round_start", pEventName ) == 0 )
 	{
 		m_bShouldBeVisible = false;
@@ -781,7 +789,11 @@ void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 		MoveToFront();
 		SetKeyBoardInputEnabled( true );
 		SetMouseInputEnabled( true );
-		SetZPos(79);
+		if ( m_pClose )
+		{
+			m_pClose->RequestFocus();
+		}	
+//		SetZPos(79);
 	}
 }
 

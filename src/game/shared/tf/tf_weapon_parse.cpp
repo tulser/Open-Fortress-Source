@@ -86,7 +86,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	
 	m_flWindupTime = 0.0f;
 	
-	m_flFuseTime = 0.0f;
+	m_flFuseTime = -1.0f;
 
 	m_flMinViewmodelOffsetX = 0.0f;
 	m_flMinViewmodelOffsetY = 0.0f;
@@ -240,7 +240,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flPrimerTime			= pKeyValuesData->GetFloat( "PrimerTime", 0.0f );
 	m_bSuppressGrenTimer	= ( pKeyValuesData->GetInt( "PlayGrenTimer", 1 ) <= 0 );
 	
-	m_flFuseTime			= pKeyValuesData->GetFloat( "FuseTime", 0.0f );
+	m_flFuseTime			= pKeyValuesData->GetFloat( "FuseTime", -1.0f );
 	
 	m_iBombletAmount				= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
 	m_flBombletTimer				= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );

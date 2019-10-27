@@ -29,10 +29,12 @@
 #include "tf_gamerules.h"
 #include "c_team.h"
 #include "tf_hud_notification_panel.h"
+#include "teamplayroundbased_gamerules.h"
 
 using namespace vgui;
 
 extern ConVar	ofd_allowteams;
+extern ConVar	ofd_mutators;
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -706,7 +708,9 @@ CTFDMTeamMenu::CTFDMTeamMenu(IViewPort *pViewPort) : CTeamMenu(pViewPort)
 	m_pSpecTeamButton = new CTFTeamButton(this, "teambutton3");
 	m_pSpecLabel = new CExLabel(this, "TeamMenuSpectate", "");
 	m_pCancelButton = new CExLabel(this, "CancelButton", "#TF_Cancel");
-
+	
+	m_pBackgroundModel = new CModelPanel(this, "MenuBG");
+	
 	vgui::ivgui()->AddTickSignal(GetVPanel());
 	LoadControlSettings("Resource/UI/DMTeamMenu.res");
 }
@@ -728,6 +732,35 @@ void CTFDMTeamMenu::ApplySchemeSettings(IScheme *pScheme)
 	LoadControlSettings("Resource/UI/DMTeamMenu.res");
 
 	Update();
+}
+
+const char* CTFDMTeamMenu::GetGamemodeMessage(void)
+{
+	char *GameType = "Deathmatch";
+	if ( !TFGameRules() )
+		return GameType;
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_GG ) )
+		GameType = "GunGame";
+	else if ( TFGameRules()->InGametype( TF_GAMETYPE_DM ) )
+	{
+		if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+			GameType = "Instagib";
+	}
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
+		GameType = "ControlPoint";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
+		GameType = "CTF";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ARENA ) )
+		GameType = "Arena";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
+		GameType = "Escort";
+	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
+		GameType = "Escort";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
+		GameType = "Infection";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
+		GameType = "Infection";
+	return GameType;
 }
 
 //-----------------------------------------------------------------------------
@@ -769,10 +802,14 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 		gViewPortInterface->ShowPanel(PANEL_CLASS_MERCENARY, false);
 
 		engine->CheckPoint("TeamMenu");
-
 		Activate();
 		SetMouseInputEnabled(true);
-
+		
+		if ( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer()->m_Shared.InState( TF_STATE_WELCOME ) && TeamplayRoundBasedRules() )
+		{
+			DevMsg("Message broadcasted\n");
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( C_TFPlayer::GetLocalTFPlayer()->entindex(), GetGamemodeMessage() );
+		}
 		// get key bindings if shown
 		m_iTeamMenuKey = gameuifuncs->GetButtonCodeForBind("changeteam");
 		m_iScoreBoardKey = gameuifuncs->GetButtonCodeForBind("showscores");
@@ -794,6 +831,35 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 	}
 }
 
+int CTFDMTeamMenu::GetGamemodeSkin( void )
+{
+	int GameType = 1;
+	if ( !TFGameRules() )
+		return GameType;
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_GG ) )
+		GameType = 3;
+	else if ( TFGameRules()->InGametype( TF_GAMETYPE_DM ) )
+	{
+		if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+			GameType = 2;
+	}
+//	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
+//		GameType = "ControlPoint";
+//	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
+//		GameType = "CTF";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ARENA ) )
+		GameType = 0;
+//	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
+//		GameType = "Escort";
+//	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
+//		GameType = "Escort";
+//	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
+//		GameType = "Infection";
+//	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
+//		GameType = "Infection";
+	return GameType;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: called to update the menu with new information
 //-----------------------------------------------------------------------------
@@ -801,6 +867,9 @@ void CTFDMTeamMenu::Update(void)
 {
 	BaseClass::Update();
 
+	if ( m_pBackgroundModel )
+		m_pBackgroundModel->SetSkin( GetGamemodeSkin() );
+	
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if (pLocalPlayer && (pLocalPlayer->GetTeamNumber() != TEAM_UNASSIGNED))

@@ -27,6 +27,7 @@
 #include "igamesystem.h"
 #include "KeyValues.h"
 #include "filesystem.h"
+#include "of_music_player.h"
 
 #ifdef PORTAL
 #include "portal_gamerules.h"
@@ -243,7 +244,89 @@ END_DATADESC()
 #define SF_AMBIENT_SOUND_START_SILENT		16
 #define SF_AMBIENT_SOUND_NOT_LOOPING		32
 
+const char *szMusicArray[] =
+{
+	"DeathmatchMusic.AtFortressGate",
+	"DeathmatchMusic.Skate",
+	"DeathmatchMusic.Generic",
+	"DeathmatchMusic.Facility",
+	"DeathmatchMusic.Chase",
+	"DeathmatchMusic.Intermission",
+	"DeathmatchMusic.E2M1",
+	"DeathmatchMusic.Map01",
+	"DeathmatchMusic.Orchestral",
+	"DeathmatchMusic.Stalker",
+	"DeathmatchMusic.TeamFortresque",
+	"DeathmatchMusic.TF2Beat",
+	"DeathmatchMusic.TurbineTurmoil",	
+	"DeathmatchMusic.Overpowered",
+	"DeathmatchMusic.Resonance",
+	"DeathmatchMusic.LastManStanding",
+	"DeathmatchMusic.Healer",
+	"DeathmatchMusic.DMStuff",
+	"DeathmatchMusic.MagnumSmooth",
+	"DeathmatchMusic.Watergate",
+	"DeathmatchMusic.Coaltown_Temp",
+	"DeathmatchMusic.Wiseau",
+	"DeathmatchMusic.Chthon",
+	"DeathmatchMusic.OpenHazards",
+	"DeathmatchMusic.BadWorks",
+	"DeathmatchMusic.GetPsyched",
+	"DeathmatchMusic.E1M1alt"
+};
 
+
+const char *szMusicIntroArray[] =
+{
+	"DeathmatchMusic.AtFortressGateIntro",
+	"DeathmatchMusic.SkateIntro",
+	"DeathmatchMusic.GenericIntro",
+	"DeathmatchMusic.FacilityIntro",
+	"DeathmatchMusic.ChaseIntro",
+	"DeathmatchMusic.IntermissionIntro",
+	"DeathmatchMusic.E2M1Intro",
+	"DeathmatchMusic.Map01Intro",
+	"DeathmatchMusic.OrchestralIntro",
+	"DeathmatchMusic.StalkerIntro",
+	"DeathmatchMusic.TeamFortresqueIntro",
+	"DeathmatchMusic.TF2BeatIntro",
+	"DeathmatchMusic.TurbineTurmoilIntro",	
+	"DeathmatchMusic.OverpoweredIntro",
+	"DeathmatchMusic.ResonanceIntro",
+	"DeathmatchMusic.LastManStandingIntro",
+	"DeathmatchMusic.HealerIntro",
+	"DeathmatchMusic.DMStuffIntro",
+	"DeathmatchMusic.MagnumSmoothIntro",
+	"DeathmatchMusic.WatergateIntro",
+	"DeathmatchMusic.Coaltown_TempIntro",
+	"DeathmatchMusic.WiseauIntro",
+	"DeathmatchMusic.ChthonIntro",
+	"DeathmatchMusic.OpenHazardsIntro",
+	"DeathmatchMusic.BadWorksIntro",
+	"DeathmatchMusic.GetPsychedIntro",
+	"DeathmatchMusic.E1M1altIntro"
+};
+
+const char *szWaitingMusicArray[] =
+{
+	"DeathmatchMusic.Skate_Waiting",
+	"DeathmatchMusic.AtFortressGate_Waiting",
+	"DeathmatchMusic.Generic_Waiting",
+	"DeathmatchMusic.Chase_Waiting",
+	"DeathmatchMusic.Map01_Waiting",
+	"DeathmatchMusic.Mayann",
+	"DeathmatchMusic.Watergate_Waiting"
+};
+const char *szWaitingMusicIntroArray[] =
+{
+	"DeathmatchMusic.Skate_WaitingIntro",
+	"DeathmatchMusic.AtFortressGate_WaitingIntro",
+	"DeathmatchMusic.Generic_WaitingIntro",
+	"DeathmatchMusic.Chase_WaitingIntro",
+	"DeathmatchMusic.Map01_WaitingIntro",
+	"DeathmatchMusic.MayannIntro",
+	"DeathmatchMusic.Watergate_WaitingIntro"
+};
 //-----------------------------------------------------------------------------
 // Spawn
 //-----------------------------------------------------------------------------
@@ -259,7 +342,44 @@ void CAmbientGeneric::Spawn( void )
 		UTIL_Remove(this);
 		return;
 	}
-
+	for ( int i = 0; i < ARRAYSIZE( szWaitingMusicArray ); i++ )
+	{
+		if ( stricmp( szSoundFile, szWaitingMusicArray[i]) == 0 )
+		{
+			DevMsg("Sound file is %s, matches with %s\n",szSoundFile,szWaitingMusicArray[i] );
+			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
+			pMusicPlayer->SetDisabled( true );
+			pMusicPlayer->m_bPlayInWaitingForPlayers = true;
+			char buf[128];
+			Q_snprintf( buf, sizeof(buf), "%sIntro", szSoundFile );			
+//			pMusicPlayer->szIntroSong = MAKE_STRING( buf );
+			pMusicPlayer->szLoopingSong = MAKE_STRING( szWaitingMusicArray[i] );
+			pMusicPlayer->Spawn();
+			pMusicPlayer->SetDisabled( false );
+			UTIL_Remove(this);
+			return;
+			break;
+		}
+	}
+	for ( int i = 0; i < ARRAYSIZE( szMusicArray ); i++ )
+	{
+		if ( stricmp( szSoundFile, szMusicArray[i]) == 0 )
+		{
+			DevMsg("Sound file is %s, matches with %s\n",szSoundFile,szMusicArray[i] );
+			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
+			pMusicPlayer->SetDisabled( true );
+			char buf[128];
+			Q_snprintf( buf, sizeof(buf), "%sIntro", szSoundFile );
+			DevMsg("%s\n", buf);
+			pMusicPlayer->szIntroSong = MAKE_STRING( szMusicIntroArray[i] );
+			pMusicPlayer->szLoopingSong = MAKE_STRING( szMusicArray[i] );
+			pMusicPlayer->Spawn();
+			pMusicPlayer->SetDisabled( false );
+			UTIL_Remove(this);
+			return;
+			break;
+		}
+	}
     SetSolid( SOLID_NONE );
     SetMoveType( MOVETYPE_NONE );
 

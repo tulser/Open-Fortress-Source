@@ -428,6 +428,14 @@ CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector
 			{
 				pGrenade->SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 			}
+			if ( pTFWeapon->GetTFWpnData().m_flFuseTime != -1 )
+			{
+				if ( pTFWeapon->GetTFWpnData().m_flFuseTime < -1 )
+					pGrenade->SetDetonateTimerLength( FLT_MAX );
+				else
+					pGrenade->SetDetonateTimerLength( pTFWeapon->GetTFWpnData().m_flFuseTime );
+			}
+			
 		}
 		pGrenade->SetPipebombMode( bRemoteDetonate );
 		DispatchSpawn( pGrenade );
@@ -460,18 +468,20 @@ void CTFGrenadePipebombProjectile::Spawn()
 	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
 		// Set this to max, so effectively they do not self-implode.
-	if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
-	{		
-		SetModel( TF_WEAPON_PIPEBOMB_MODEL );
-	}
+		if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+		{		
+			SetModel( TF_WEAPON_PIPEBOMB_MODEL );
+		}
+		if ( !GetDetonateTime() )
 		SetDetonateTimerLength( FLT_MAX );
 	}
 	else
 	{
-	if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
-	{		
-		SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
-	}
+		if ( GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
+		{		
+			SetModel( TF_WEAPON_PIPEGRENADE_MODEL );
+		}
+		if ( !GetDetonateTime() )
 		SetDetonateTimerLength( TF_WEAPON_GRENADE_DETONATE_TIME );
 		SetTouch( &CTFGrenadePipebombProjectile::PipebombTouch );
 #ifdef CLIENT_DLL

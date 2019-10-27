@@ -118,6 +118,9 @@
 #include "../engine/audio/public/sound.h"
 #include "tf_shared_content_manager.h"
 #endif
+#if defined( OPENFORTRESS_DLL )
+#include "fmod_manager.h"
+#endif
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
 #include "mouthinfo.h"
@@ -1108,7 +1111,9 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		return false;
 
 	g_pClientMode->Enable();
-
+#ifdef OPENFORTRESS_DLL	
+	FMODManager()->InitFMOD();
+#endif
 	if (!view)
 	{
 		view = (IViewRender *)&g_DefaultViewRender;
@@ -1272,7 +1277,9 @@ void CHLClient::Shutdown( void )
 
 	g_pClientMode->Disable();
 	g_pClientMode->Shutdown();
-
+#ifdef OPENFORTRESS_DLL
+	FMODManager()->ExitFMOD();
+#endif
 	input->Shutdown_All();
 	C_BaseTempEntity::ClearDynamicTempEnts();
 	TermSmokeFogOverlay();
@@ -1592,6 +1599,12 @@ void CHLClient::View_Render( vrect_t *rect )
 		return;
 
 	view->Render( rect );
+	
+	// S:O - Think about fading ambient sounds if necessary
+	FMODManager()->FadeThink();
+	FMODManager()->Think();
+
+	
 	UpdatePerfStats();
 }
 
@@ -1820,6 +1833,8 @@ void CHLClient::LevelShutdown( void )
 
 #ifdef OPENFORTRESS_DLL
 	g_discordrpc.Reset();
+	// S:O - Stop all FMOD sounds when exiting to the main menu
+	FMODManager()->StopAmbientSound( false );	
 #endif
 
 #if !( defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT ) )

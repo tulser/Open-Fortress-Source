@@ -237,7 +237,7 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 
 		if ( !pTFVictim )
 			return;
-
+		
 		// Don't show damage notifications for spies disguised as our team.
 		if ( pTFVictim->m_Shared.InCond( TF_COND_DISGUISED ) && pTFVictim->m_Shared.GetDisguiseTeam() == pPlayer->GetTeamNumber() )
 			return;

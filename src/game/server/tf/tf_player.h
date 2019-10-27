@@ -393,7 +393,8 @@ public:
 								// affecting the player at any time.
 								// GoalItems use it to keep track of their own 
 								// mask to apply to a player's item_list
-
+	int	  trickshot;
+	float last_kill;
 	float invincible_finished;
 	float invisible_finished;
 	float super_damage_finished;

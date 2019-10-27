@@ -91,8 +91,9 @@ enum {
 	WINREASON_WINDIFFLIMIT,
 	WINREASON_RD_REACTOR_CAPTURED,
 	WINREASON_RD_CORES_COLLECTED,
-	WINREASON_POINTLIMIT,
+	WINREASON_RD_REACTOR_RETURNED,
 	// open fortress
+	WINREASON_POINTLIMIT,
 	WINREASON_COOP_FAIL,
 };
 
@@ -268,6 +269,8 @@ public:
 public: // IGameEventListener Interface
 	virtual void FireGameEvent( IGameEvent * event );
 
+	void BroadcastSound( int iTeam, const char *sound, bool bAnnouncer = true, int iExcludePlayers = -1 );
+	void BroadcastSoundFFA( int iPlayer, const char *sound, const char *sound_rest = NULL, bool bAnnouncer = true );
 	//----------------------------------------------------------------------------------
 	// Server specific
 #ifdef GAME_DLL
@@ -379,7 +382,6 @@ public:
 
 	bool PlayThrottledAlert( int iTeam, const char *sound, float fDelayBeforeNext );
 
-	void BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0 );
 	int GetRoundsPlayed( void ) { return m_nRoundsPlayed; }
 
 	virtual void RecalculateControlPointState( void ){ return; }

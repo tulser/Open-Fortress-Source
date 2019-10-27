@@ -17,6 +17,7 @@
 #include "hud.h"
 #include "hudelement.h"
 #include "basemodelpanel.h"
+#include "tf_controls.h"
 
 using namespace vgui;
 
@@ -71,7 +72,7 @@ public:
 	virtual bool ShouldDraw( void );
 	virtual void SetVisible( bool state );
 	virtual void OnCommand( const char *command );
-
+	virtual bool HasInputElements( void ) { return true; }
 	virtual int GetRenderGroupPriority() { return 70; }
 
 private:
@@ -83,6 +84,8 @@ private:
 	int		m_iMercenaryTeamScore;
 
 	bool	m_bShouldBeVisible;
+	
+	CExButton			*m_pClose;
 	
 	CModelPanel *m_pPlayer1Model;
 	CModelPanel *m_pPlayer2Model;

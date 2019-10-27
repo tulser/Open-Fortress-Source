@@ -136,7 +136,9 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 
 	// Swing the weapon.
 	Swing( pPlayer );
-
+#ifdef GAME_DLL
+	pPlayer->trickshot = 0;
+#endif
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
@@ -344,7 +346,7 @@ void CTFWeaponBaseMelee::Smack( void )
 
 			iCustomDamage |= TF_DMG_CUSTOM_CRIT_POWERUP;
 		}
-		CTakeDamageInfo info( pPlayer, pPlayer, flDamage, iDmgType, iCustomDamage );
+		CTakeDamageInfo info( pPlayer, pPlayer, this, flDamage, iDmgType, iCustomDamage );
 		CalculateMeleeDamageForce( &info, vecForward, vecSwingEnd, 1.0f / flDamage * tf_meleeattackforcescale.GetFloat() );
 		trace.m_pEnt->DispatchTraceAttack( info, vecForward, &trace ); 
 		ApplyMultiDamage();

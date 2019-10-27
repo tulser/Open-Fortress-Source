@@ -2203,8 +2203,8 @@ void CTFGameRules::SetupOnStalemateStart( void )
 			// all teams
 			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
-				BroadcastSound( i, "Ambient.Siren" );
-				BroadcastSound( i, "Announcer.AM_RoundStartRandom" );
+				BroadcastSound( i, "Ambient.Siren", false );
+				BroadcastSound( i, "AM_RoundStartRandom" );
 			}
 
 			m_flStalemateStartTime = gpGlobals->curtime;
@@ -2369,7 +2369,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
 			CTFPlayer *pSelf = ToTFPlayer(pEntity);
 			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
-				flNonSelfDamage *= ofd_resistance.GetFloat();
+				flNonSelfDamage /= ( ofd_resistance.GetFloat() * 2.0f );
 			if ( pSelf && pSelf->m_Shared.InCondUber() )
 				flNonSelfDamage = 0;
 			else
@@ -3012,8 +3012,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		{
 			m_bDomRedThreshold = true;
 
-			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_FriendlyClose" );
-			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_EnemyClose" );
+			BroadcastSound( TF_TEAM_RED, "DOM_FriendlyClose" );
+			BroadcastSound( TF_TEAM_BLUE, "DOM_EnemyClose" );
 
 			return;
 		}
@@ -3029,8 +3029,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		{
 			m_bDomBlueThreshold = true;
 
-			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_FriendlyClose" );
-			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_EnemyClose" );
+			BroadcastSound( TF_TEAM_BLUE, "DOM_FriendlyClose" );
+			BroadcastSound( TF_TEAM_RED, "DOM_EnemyClose" );
 
 			return;
 		}
@@ -3046,8 +3046,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			m_bDomBlueLeadThreshold = false;
 			m_bDomRedLeadThreshold = true;
 
-			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_FriendlyLead" );
-			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_EnemyLead" );
+			BroadcastSound( TF_TEAM_RED, "DOM_FriendlyLead" );
+			BroadcastSound( TF_TEAM_BLUE, "DOM_EnemyLead" );
 
 			return;
 		}
@@ -3059,8 +3059,8 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			m_bDomRedLeadThreshold = false;
 			m_bDomBlueLeadThreshold = true;
 
-			BroadcastSound( TF_TEAM_BLUE, "Announcer.DOM_FriendlyLead" );
-			BroadcastSound( TF_TEAM_RED, "Announcer.DOM_EnemyLead" );
+			BroadcastSound( TF_TEAM_BLUE, "DOM_FriendlyLead" );
+			BroadcastSound( TF_TEAM_RED, "DOM_EnemyLead" );
 
 			return;
 		}
@@ -3077,31 +3077,31 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				switch ( counter )
 				{
 				case 1:
-					BroadcastSound( i, "Announcer.RoundEnds1seconds" );
+					BroadcastSound( i, "RoundEnds1seconds" );
 					break;
 				case 2:
-					BroadcastSound( i, "Announcer.RoundEnds2seconds" );
+					BroadcastSound( i, "RoundEnds2seconds" );
 					break;
 				case 3:
-					BroadcastSound( i, "Announcer.RoundEnds3seconds" );
+					BroadcastSound( i, "RoundEnds3seconds" );
 					break;
 				case 4:
-					BroadcastSound( i, "Announcer.RoundEnds4seconds" );
+					BroadcastSound( i, "RoundEnds4seconds" );
 					break;
 				case 5:
-					BroadcastSound( i, "Announcer.RoundEnds5seconds" );
+					BroadcastSound( i, "RoundEnds5seconds" );
 					break;
 				case 6:
-					BroadcastSound( i, "Announcer.RoundEnds6seconds" );
+					BroadcastSound( i, "RoundEnds6seconds" );
 					break;
 				case 7:
-					BroadcastSound( i, "Announcer.RoundEnds7seconds" );
+					BroadcastSound( i, "RoundEnds7seconds" );
 					break;
 				case 8:
-					BroadcastSound( i, "Announcer.RoundEnds8seconds" );
+					BroadcastSound( i, "RoundEnds8seconds" );
 					break;
 				case 9:
-					BroadcastSound( i, "Announcer.RoundEnds9seconds" );
+					BroadcastSound( i, "RoundEnds9seconds" );
 					break;
 				default:
 					break;
@@ -3119,31 +3119,31 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				switch ( counter )
 				{
 				case 1:
-					BroadcastSound( i, "Announcer.RoundEnds1seconds" );
+					BroadcastSound( i, "RoundEnds1seconds" );
 					break;
 				case 2:
-					BroadcastSound( i, "Announcer.RoundEnds2seconds" );
+					BroadcastSound( i, "RoundEnds2seconds" );
 					break;
 				case 3:
-					BroadcastSound( i, "Announcer.RoundEnds3seconds" );
+					BroadcastSound( i, "RoundEnds3seconds" );
 					break;
 				case 4:
-					BroadcastSound( i, "Announcer.RoundEnds4seconds" );
+					BroadcastSound( i, "RoundEnds4seconds" );
 					break;
 				case 5:
-					BroadcastSound( i, "Announcer.RoundEnds5seconds" );
+					BroadcastSound( i, "RoundEnds5seconds" );
 					break;
 				case 6:
-					BroadcastSound( i, "Announcer.RoundEnds6seconds" );
+					BroadcastSound( i, "RoundEnds6seconds" );
 					break;
 				case 7:
-					BroadcastSound( i, "Announcer.RoundEnds7seconds" );
+					BroadcastSound( i, "RoundEnds7seconds" );
 					break;
 				case 8:
-					BroadcastSound( i, "Announcer.RoundEnds8seconds" );
+					BroadcastSound( i, "RoundEnds8seconds" );
 					break;
 				case 9:
-					BroadcastSound( i, "Announcer.RoundEnds9seconds" );
+					BroadcastSound( i, "RoundEnds9seconds" );
 					break;
 				default:
 					break;
@@ -5554,9 +5554,9 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 	wchar_t *GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_UNDEFINED]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_GG ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_GG]);
-	else if ( InGametype( TF_GAMETYPE_DM ) )
+	else if ( TFGameRules()->InGametype( TF_GAMETYPE_DM ) )
 	{
-		if ( InGametype( TF_GAMETYPE_TDM ) )
+		if ( TFGameRules()->InGametype( TF_GAMETYPE_TDM ) )
 			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_TDM]);
 		else
 			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DM]);
@@ -5569,7 +5569,7 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ARENA]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
-	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !m_bEscortOverride )
+	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_PAYLOAD]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
@@ -5892,49 +5892,6 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 
 #ifdef GAME_DLL
 
-ConVar ofd_debug_musicname( "ofd_debug_musicname", "0",  FCVAR_CHEAT );
-const char *CTFGameRules::GetMusicName( bool activeRound )
-{
-	const char *songbase = ( activeRound ? "Music.ActiveRound." : "Music.PreRound.");
-
-	static char result[ MAX_PATH ];
-	V_memset( result, 0, sizeof( result ) ); //Clear memory
-
-	V_strncpy( result, songbase, sizeof( result ) );
-	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ) );
-
-	if ( ofd_debug_musicname.GetBool() )
-		DevMsg( "GetMusicName: Returning %s\n", result );
-
-	return result;
-}
-
-/*
-const char *CTFGameRules::GetMusicNamePreRound(void)
-{
-	const char *songbase = "Music.PreRound.";
-
-	char result[MAX_PATH];
-	V_memset( result, 0, sizeof( result ) ); //Clear memory
-
-	V_strncpy( result, songbase, sizeof( result ));
-	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ));
-
-	return result;
-}
-
-const char *CTFGameRules::GetMusicNameActiveRound(void)
-{
-	const char *songbase = "Music.ActiveRound.";
-
-	char result[ MAX_PATH ];
-	V_memset( result, 0, sizeof( result ) ); //Clear memory
-
-	V_strncpy( result, songbase, sizeof( result ) );
-	V_strncat( result, STRING( gpGlobals->mapname ), sizeof( result ) );
-
-	return result;
-}*/
 
 	//-----------------------------------------------------------------------------
 	// Purpose: Whether or not the NPC should drop a health vial

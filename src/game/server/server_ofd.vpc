@@ -73,6 +73,10 @@ $Project "Server (OFD)"
 			$File	"tf\tf_weapon_grapple.h"		
 			$File	"of\func_bomb_target.cpp"
 			$File	"of\func_bomb_target.h"
+			$File	"of\of_music_player.cpp"
+			$File	"of\of_music_player.h"		
+			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
+			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
 		}
 		
 		$File	"ai_relationship.cpp"

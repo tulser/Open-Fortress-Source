@@ -23,8 +23,8 @@ class CTeamControlPoint;
 #define TEAM_TRAIN_ALERT_DISTANCE	750   // alert is the VO warning
 #define TEAM_TRAIN_ALARM_DISTANCE	200   // alarm is the looping sound played at the control point
 
-#define TEAM_TRAIN_ALERT			"Announcer.Cart.Warning"
-#define TEAM_TRAIN_FINAL_ALERT		"Announcer.Cart.FinalWarning"
+#define TEAM_TRAIN_ALERT			"Cart.Warning"
+#define TEAM_TRAIN_FINAL_ALERT		"Cart.FinalWarning"
 #define TEAM_TRAIN_ALARM			"Cart.Warning"
 #define TEAM_TRAIN_ALARM_SINGLE		"Cart.WarningSingle"
 

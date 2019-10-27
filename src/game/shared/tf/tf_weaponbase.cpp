@@ -48,7 +48,7 @@ ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles random crits." );
-ConVar ofd_crit_multiplier( "ofd_crit_multiplier", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
+ConVar ofd_crit_multiplier( "ofd_crit_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles infinite ammo." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
