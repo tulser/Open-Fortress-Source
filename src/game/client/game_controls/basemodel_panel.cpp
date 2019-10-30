@@ -77,7 +77,6 @@ void CBaseModelPanel::ParseModelResInfo( KeyValues *inResourceData )
 {
 	m_bForcePos = ( inResourceData->GetInt( "force_pos", 0 ) == 1 );
 	m_BMPResData.m_pszModelName = ReadAndAllocStringValue( inResourceData, "modelname" );
-	m_BMPResData.m_pszModelName_HWM = ReadAndAllocStringValue( inResourceData, "modelname_hwm" );
 	m_BMPResData.m_pszVCD = ReadAndAllocStringValue( inResourceData, "vcd" );
 	m_BMPResData.m_angModelPoseRot.Init( inResourceData->GetFloat( "angles_x", 0.0f ), inResourceData->GetFloat( "angles_y", 0.0f ), inResourceData->GetFloat( "angles_z", 0.0f ) );
 	m_BMPResData.m_vecOriginOffset.Init( inResourceData->GetFloat( "origin_x", 110.0 ), inResourceData->GetFloat( "origin_y", 5.0 ), inResourceData->GetFloat( "origin_z", 5.0 ) );

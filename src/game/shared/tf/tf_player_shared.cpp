@@ -52,6 +52,8 @@ ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED, 
 ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_CHEAT, "Time is takes for a full health boost to drain away from a player.", true, 0.1, false, 0 );
 ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_CHEAT, "Visualize bullet traces." );
 ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30",  FCVAR_CHEAT );
+
+ConVar of_zombie_lunge_delay( "of_zombie_lunge_delay", "15", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much delay, in seconds, before a zombie can lunge again." );
 #endif
 
 ConVar tf_useparticletracers( "tf_useparticletracers", "1", FCVAR_CHEAT | FCVAR_REPLICATED, "Use particle tracers instead of old style ones." );
@@ -64,14 +66,13 @@ ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_
 
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
 
-ConVar ofd_forceclass( "ofd_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
-ConVar ofd_allowteams( "ofd_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
-ConVar ofd_berserk_speed( "ofd_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
-ConVar ofd_berserk_speed_factor( "ofd_berserk_speed_factor", "1.33", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode. (factor mode)");
-ConVar ofd_berserk_speed_mode( "ofd_berserk_speed_mode", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "TESTING Switch between strict mode and factor mode");
-ConVar ofd_spawnprotecttime( "ofd_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
+ConVar of_forceclass( "of_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
+ConVar of_allowteams( "of_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
+ConVar of_berserk_speed( "of_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
+ConVar of_berserk_speed_factor( "of_berserk_speed_factor", "1.33", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode. (factor mode)");
+ConVar of_berserk_speed_mode( "of_berserk_speed_mode", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "TESTING Switch between strict mode and factor mode");
+ConVar of_spawnprotecttime( "of_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR_NOTIFY , "How long the spawn protection lasts." );
 
-ConVar ofe_huntedcount( "ofe_huntedcount", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "How many Hunted there is." );
 ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
 
 extern ConVar of_infiniteammo;
@@ -122,6 +123,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	RecvPropInt( RECVINFO( m_nDesiredDisguiseClass ) ),
 	RecvPropTime( RECVINFO( m_flStealthNoAttackExpire ) ),
 	RecvPropTime( RECVINFO( m_flStealthNextChangeTime ) ),
+	RecvPropTime( RECVINFO( m_flNextLungeTime ) ),
 	RecvPropFloat( RECVINFO( m_flCloakMeter) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominatingMe ), RecvPropBool( RECVINFO( m_bPlayerDominatingMe[0] ) ) ),
@@ -132,6 +134,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropBool( RECVINFO( m_bIsTopThree ) ),
+	RecvPropBool( RECVINFO( m_bIsZombie ) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
@@ -157,6 +160,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bGrapple, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -172,6 +176,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	SendPropInt( SENDINFO( m_nDesiredDisguiseClass ), 4, SPROP_UNSIGNED ),
 	SendPropTime( SENDINFO( m_flStealthNoAttackExpire ) ),
 	SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
+	SendPropTime( SENDINFO( m_flNextLungeTime ) ),
 	SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominatingMe ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominatingMe ) ) ),
@@ -182,6 +187,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_bIsZombie ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -216,11 +222,13 @@ CTFPlayerShared::CTFPlayerShared()
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
 	m_bIsTopThree = false,
+	m_bIsZombie = false,
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
 	m_bGrapple = false;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
+	m_flNextLungeTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
 
@@ -1004,32 +1012,65 @@ void CTFPlayerShared::OnAddCritBoosted( void )
 #ifdef CLIENT_DLL
 	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
 	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+
 	if ( pWeapon )
 	{
 		char *pEffect = NULL;
-		switch( pPlayer->GetTeamNumber() )
+
+		if ( pWeapon->ShouldDrawUsingViewModel() )
 		{
-		case TF_TEAM_BLUE:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_RED:
-			pEffect = "critgun_weaponmodel_red";
-			break;
-		case TF_TEAM_MERCENARY:
-			pEffect = "critgun_weaponmodel_dm";
-			break;
-		default:
-			break;
+			C_BaseViewModel *viewmodel = pPlayer->GetViewModel( 0 );
+
+			if ( viewmodel )
+			{
+				// Get the viewmodel and use it instead
+				switch( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_BLUE:
+					pEffect = "critgun_firstperson_weaponmodel_blu";
+					break;
+				case TF_TEAM_RED:
+					pEffect = "critgun_firstperson_weaponmodel_red";
+					break;
+				case TF_TEAM_MERCENARY:
+					pEffect = "critgun_firstperson_weaponmodel_dm";
+					break;
+				default:
+					pEffect = "critgun_firstperson_weaponmodel_dm";
+					break;
+				}
+			}
 		}
-		
-		if ( pEffect && pWeapon  )
+		else
+		{
+			switch( pPlayer->GetTeamNumber() )
+			{
+			case TF_TEAM_BLUE:
+				pEffect = "critgun_weaponmodel_blu";
+				break;
+			case TF_TEAM_RED:
+				pEffect = "critgun_weaponmodel_red";
+				break;
+			case TF_TEAM_MERCENARY:
+				pEffect = "critgun_weaponmodel_dm";
+				break;
+			default:
+				pEffect = "critgun_weaponmodel_dm";
+				break;
+			}
+		}
+
+		if ( pEffect && pWeapon )
 		{
 			if ( pPlayer != C_TFPlayer::GetLocalTFPlayer() )
 				UpdateParticleColor( pWeapon->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+
 			if ( pPlayer == C_TFPlayer::GetLocalTFPlayer() )
 			{
 				C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
-				UpdateParticleColor( vm->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+
+				if ( vm )
+					UpdateParticleColor( vm->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
 			}
 		}
 	}
@@ -1047,29 +1088,53 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
 	
 	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+
 	if ( pWeapon )
 	{
 		char *pEffect = NULL;
-		switch( pPlayer->GetTeamNumber() )
-		{
-		case TF_TEAM_BLUE:
-			pEffect = "critgun_weaponmodel_blu";
-			break;
-		case TF_TEAM_RED:
-			pEffect = "critgun_weaponmodel_red";
-			break;
-		case TF_TEAM_MERCENARY:
-			pEffect = "critgun_weaponmodel_dm";
-			break;
-		default:
-			break;
-		}
-		pWeapon->ParticleProp()->StopParticlesNamed( pEffect );
-		if ( pPlayer )
+
+		if ( pWeapon->ShouldDrawUsingViewModel() )
 		{
 			C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
-			if ( vm ) 
-			vm->ParticleProp()->StopParticlesNamed( pEffect );
+
+			if ( vm )
+			{
+				switch( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_BLUE:
+					pEffect = "critgun_firstperson_weaponmodel_blu";
+					break;
+				case TF_TEAM_RED:
+					pEffect = "critgun_firstperson_weaponmodel_red";
+					break;
+				case TF_TEAM_MERCENARY:
+					pEffect = "critgun_firstperson_weaponmodel_dm";
+					break;
+				default:
+					break;
+				}
+
+				vm->ParticleProp()->StopParticlesNamed( pEffect );
+			}
+		}
+		else
+		{
+			switch( pPlayer->GetTeamNumber() )
+			{
+			case TF_TEAM_BLUE:
+				pEffect = "critgun_weaponmodel_blu";
+				break;
+			case TF_TEAM_RED:
+				pEffect = "critgun_weaponmodel_red";
+				break;
+			case TF_TEAM_MERCENARY:
+				pEffect = "critgun_weaponmodel_dm";
+				break;
+			default:
+				break;
+			}
+
+			pWeapon->ParticleProp()->StopParticlesNamed( pEffect );
 		}
 	}
 #else
@@ -1276,17 +1341,15 @@ void CTFPlayerShared::OnRemoveTaunting( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Burn( CTFPlayer *pAttacker )
+void CTFPlayerShared::Burn( CTFPlayer *pAttacker, float flTime )
 {
-#ifdef CLIENT_DLL
-
-#else
+#ifndef CLIENT_DLL
 	// Don't bother igniting players who have just been killed by the fire damage.
 	if ( !m_pOuter->IsAlive() )
 		return;
 
 	// pyros don't burn persistently or take persistent burning damage, but we show brief burn effect so attacker can tell they hit
-	bool bVictimIsPyro = ( TF_CLASS_PYRO ==  m_pOuter->GetPlayerClass()->GetClassIndex() );
+	bool bVictimIsPyro = ( TF_CLASS_PYRO == m_pOuter->GetPlayerClass()->GetClassIndex() );
 
 	if ( !InCond( TF_COND_BURNING ) )
 	{
@@ -1299,11 +1362,21 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker )
 			pAttacker->OnBurnOther( m_pOuter );
 		}
 	}
-	
-	float flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
-	m_flFlameRemoveTime = gpGlobals->curtime + flFlameLife;
-	m_hBurnAttacker = pAttacker;
 
+	if ( flTime > 0.0f )
+	{
+		if ( bVictimIsPyro )
+			m_flFlameRemoveTime = gpGlobals->curtime + TF_BURNING_FLAME_LIFE_PYRO;
+		else 
+			m_flFlameRemoveTime = gpGlobals->curtime + flTime;
+	}
+	else
+	{
+		float flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
+		m_flFlameRemoveTime = gpGlobals->curtime + flFlameLife;
+	}
+
+	m_hBurnAttacker = pAttacker;
 #endif
 }
 
@@ -2082,6 +2155,10 @@ bool CTFPlayerShared::IsHauling( void )
 	return false;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Top three for DM
+//-----------------------------------------------------------------------------
+
 bool CTFPlayerShared::IsTopThree( void )
 {
 	return m_bIsTopThree;
@@ -2090,6 +2167,20 @@ bool CTFPlayerShared::IsTopThree( void )
 void CTFPlayerShared::SetTopThree( bool bTop3 )
 {
 	m_bIsTopThree = bTop3;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Zombie mode
+//-----------------------------------------------------------------------------
+
+bool CTFPlayerShared::IsZombie( void )
+{
+	return m_bIsZombie;
+}
+
+void CTFPlayerShared::SetZombie( bool bZombie )
+{
+	m_bIsZombie = bZombie;
 }
 
 //-----------------------------------------------------------------------------
@@ -2571,18 +2662,17 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			}
 		}
 	}
-	// if they're a sniper, and they're aiming, their speed must be 80 or less
 	if ( m_Shared.InCond( TF_COND_BERSERK ) )
 	{
-		if (ofd_berserk_speed_mode.GetFloat())
+		if ( of_berserk_speed_mode.GetFloat() )
 		{
-			if ( maxfbspeed < maxfbspeed * ofd_berserk_speed_factor.GetFloat() )
-				maxfbspeed *= ofd_berserk_speed_factor.GetFloat();
+			if ( maxfbspeed < maxfbspeed * of_berserk_speed_factor.GetFloat() )
+				maxfbspeed *= of_berserk_speed_factor.GetFloat();
 		}
 		else
 		{
-			if (maxfbspeed < ofd_berserk_speed.GetFloat())
-				maxfbspeed = ofd_berserk_speed.GetFloat();
+			if ( maxfbspeed < of_berserk_speed.GetFloat() )
+				maxfbspeed = of_berserk_speed.GetFloat();
 		}
 
 	}
@@ -2911,6 +3001,24 @@ bool CTFPlayer::CanAttack( void )
 bool CTFPlayer::DoClassSpecialSkill( void )
 {
 	bool bDoSkill = false;
+
+	if ( m_Shared.IsZombie() )
+	{
+#ifdef GAME_DLL
+		if ( m_Shared.m_flNextLungeTime <= gpGlobals->curtime )
+		{
+			if ( DoZombieLunge() )
+			{
+				m_Shared.m_flNextLungeTime = gpGlobals->curtime + of_zombie_lunge_delay.GetFloat();
+			}
+		}
+		else
+		{
+			CSingleUserRecipientFilter filter( this );
+			EmitSound( filter, entindex(), "Player.DenyWeaponSelection" );
+		}
+#endif
+	}
 
 	if ( GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY )
 	{

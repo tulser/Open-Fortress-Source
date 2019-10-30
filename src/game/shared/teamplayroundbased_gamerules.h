@@ -268,9 +268,10 @@ public:
 
 public: // IGameEventListener Interface
 	virtual void FireGameEvent( IGameEvent * event );
-
+	
 	void BroadcastSound( int iTeam, const char *sound, bool bAnnouncer = true, int iExcludePlayers = -1 );
 	void BroadcastSoundFFA( int iPlayer, const char *sound, const char *sound_rest = NULL, bool bAnnouncer = true );
+
 	//----------------------------------------------------------------------------------
 	// Server specific
 #ifdef GAME_DLL
@@ -381,7 +382,7 @@ public:
 	virtual void PlaySpecialCapSounds( int iCappingTeam, CTeamControlPoint *pPoint ){ return; }
 
 	bool PlayThrottledAlert( int iTeam, const char *sound, float fDelayBeforeNext );
-
+	
 	int GetRoundsPlayed( void ) { return m_nRoundsPlayed; }
 
 	virtual void RecalculateControlPointState( void ){ return; }
@@ -477,7 +478,7 @@ protected:
 
 	virtual const char* GetStalemateSong( int nTeam ) { return "Game.Stalemate"; }
 	virtual const char* WinSongName( int nTeam );
-	virtual const char* LoseSongName( int nTeam ) { return "Game.YourTeamLost"; }
+	virtual const char* LoseSongName( int nTeam );
 	
 	virtual void RespawnTeam( int iTeam ) { RespawnPlayers( false, true, iTeam ); }
 
@@ -500,6 +501,8 @@ protected:
 
 	float						m_flNextPeriodicThink;
 	bool						m_bChangeLevelOnRoundEnd;
+
+	bool						m_bInfectionLastManAlive;
 
 	bool						m_bResetTeamScores;
 	bool						m_bResetPlayerScores;

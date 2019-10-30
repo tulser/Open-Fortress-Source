@@ -396,8 +396,19 @@ bool CFuncRespawnRoomVisualizer::ShouldCollide( int collisionGroup, int contents
 	// Respawn rooms are open in win state
 	if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 		return false;
+	// No visualizers in infection
+	//if ( TFGameRules()->IsInfGamemode() )
+	//	return false;
+
 	if ( GetTeamNumber() == TEAM_UNASSIGNED )
 		return false;
+
+	//Allow red to go into blu spawnroonms upon overtime in escort
+	if  ( ( TFGameRules()->IsESCGamemode() ) && 
+		( TFGameRules()->InOvertime() ) && 
+		( contentsMask & CONTENTS_BLUETEAM ) )
+		return false;
+
 	if ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT )
 	{
 		switch( GetTeamNumber() )

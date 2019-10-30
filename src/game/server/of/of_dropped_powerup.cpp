@@ -131,9 +131,18 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 	if( GetOwnerEntity() == pOther && m_bAllowOwnerPickup == false )
 		return;
 
-	CBasePlayer *pPlayer = ToBasePlayer( pOther ); // Get both the base player
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );  // And the tf player,       Guess we could just use the tf player, no?
-	Assert( pPlayer );
+	CBasePlayer *pPlayer = ToBasePlayer( pOther );
+
+	CTFPlayer *pTFPlayer = NULL;
+
+	if ( pPlayer )
+		pTFPlayer = ToTFPlayer( pPlayer );
+
+	if ( !pTFPlayer )
+		return;
+
+	if ( pTFPlayer->m_Shared.IsZombie() )
+		return;
 
 	bool bSuccess = true;
 	

@@ -30,9 +30,9 @@ using namespace vgui;
 
 #define CLASS_COUNT_IMAGES	11
 
-extern ConVar ofd_color_r;
-extern ConVar ofd_color_g;
-extern ConVar ofd_color_b;
+extern ConVar of_color_r;
+extern ConVar of_color_g;
+extern ConVar of_color_b;
 
 //-----------------------------------------------------------------------------
 // This is the entire info panel for the specific class
@@ -60,9 +60,9 @@ public:
 				pModelPanel->DeleteVCDData();
 			}
 			Vector vLocalColor;
-			vLocalColor.x = ofd_color_r.GetFloat()/255.0f;
-			vLocalColor.y = ofd_color_g.GetFloat()/255.0f;
-			vLocalColor.z = ofd_color_b.GetFloat()/255.0f;
+			vLocalColor.x = of_color_r.GetFloat()/255.0f;
+			vLocalColor.y = of_color_g.GetFloat()/255.0f;
+			vLocalColor.z = of_color_b.GetFloat()/255.0f;
 			pModelPanel->SetModelColor(vLocalColor);
 		}
 

@@ -128,7 +128,6 @@ public:
 	CModelPanelModelInfo()
 	{
 		m_pszModelName = NULL;
-		m_pszModelName_HWM = NULL;
 		m_nSkin = -1;
 		m_vecAbsAngles.Init();
 		m_vecOriginOffset.Init();
@@ -144,12 +143,6 @@ public:
 			m_pszModelName = NULL;
 		}
 
-		if ( m_pszModelName_HWM && m_pszModelName_HWM[0] )
-		{
-			delete [] m_pszModelName_HWM;
-			m_pszModelName_HWM = NULL;
-		}
-
 		if ( m_pszVCD && m_pszVCD[0] )
 		{
 			delete [] m_pszVCD;
@@ -162,7 +155,6 @@ public:
 
 public:
 	const char	*m_pszModelName;
-	const char	*m_pszModelName_HWM;
 	int			m_nSkin;
 	const char	*m_pszVCD;
 	Vector		m_vecAbsAngles;

@@ -32,7 +32,6 @@
 #include "tier0/memdbgon.h"
 
 extern ConVar sv_gravity;
-extern ConVar ofd_mutators;
 
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;

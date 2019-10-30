@@ -67,8 +67,6 @@ PRECACHE_WEAPON_REGISTER( tf_weapon_lightning_gun );
 BEGIN_DATADESC( CTFLightningGun )
 END_DATADESC()
 
-extern ConVar ofd_mutators;
-
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
 #endif
@@ -374,7 +372,7 @@ float CTFLightningGun::GetProjectileDamage( void )
 	// create the flame entity
 	int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE )
+	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 		iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 	float flDamage = (float)iDamagePerSec * flFiringInterval;
 	

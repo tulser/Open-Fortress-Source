@@ -52,6 +52,7 @@ extern ConVar	tf_avoidteammates;
 // Mutator enums
 enum
 {
+	NO_MUTATOR = 0,
 	INSTAGIB = 1,
 	INSTAGIB_NO_MELEE = 2,
 	CLAN_ARENA = 3,
@@ -83,6 +84,10 @@ public:
 	void	InputSetMercenaryTeamRole( inputdata_t &inputdata );
 	void	InputSetRedKothClockActive( inputdata_t &inputdata) ;
 	void	InputSetBlueKothClockActive( inputdata_t &inputdata );
+	void	InputPlayVORed( inputdata_t &inputdata );
+	void	InputPlayVOBlue( inputdata_t &inputdata );
+	void	InputPlayVOMercenary( inputdata_t &inputdata );
+	void	InputPlayVO( inputdata_t &inputdata );
 
 	virtual void Activate();
 	
@@ -216,6 +221,7 @@ public:
 	virtual bool	PlayerMayCapturePoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
 	virtual bool	PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
 
+	CTeamRoundTimer* GetInfectionRoundTimer( void ) { return m_hInfectionTimer.Get(); }
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
 	
@@ -236,6 +242,8 @@ public:
 
 	// Called when a new round is being initialized
 	virtual void	SetupOnRoundStart( void );
+
+	virtual void	SetupMutator( void );
 	
 	virtual void	PassAllTracks( void );
 
@@ -269,6 +277,7 @@ public:
 
 	virtual bool	TimerMayExpire( void );
 
+	void			SetInfectionRoundTimer(CTeamRoundTimer *pTimer) { m_hInfectionTimer.Set( pTimer ); }
 	void			SetRedKothRoundTimer(CTeamRoundTimer *pTimer) { m_hRedKothTimer.Set( pTimer ); }
 	void			SetBlueKothRoundTimer(CTeamRoundTimer *pTimer) { m_hBlueKothTimer.Set( pTimer ); }
 
@@ -309,7 +318,11 @@ public:
 	virtual bool	ShouldCollide( int collisionGroup0, int collisionGroup1 );
 	
 	int GetTimeLeft( void );
-	
+
+	void BeginInfection( void );
+	void SelectInfector( void );
+	void FinishInfection( void );
+
 	virtual int GetMaxHunted( int iTeamNumber );
 	virtual int GetHuntedCount( int iTeamNumber );
 
@@ -440,13 +453,16 @@ private:
 	int m_iCurrentRoundState;
 	int m_iCurrentMiniRoundMask;
 	float m_flTimerMayExpireAt;
+	bool m_bStartedVote;
 	
 #endif
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
+	CNetworkVar( int, m_nMutator ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkVar( bool, m_bKOTH ); // is the gamemode KOTH right now?
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
+	CNetworkVar( CHandle<CTeamRoundTimer>, m_hInfectionTimer );
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );
@@ -496,6 +512,7 @@ public:
 	virtual bool	IsCoopGamemode(void);
 	virtual bool	IsZSGamemode(void);
 	virtual bool	IsInfGamemode(void);
+	virtual bool	IsPayloadOverride(void);
 	virtual bool	IsHL2(void);
 	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	virtual bool	UsesMoney(void);
@@ -514,6 +531,14 @@ public:
 	bool InGametype( int nGametype );
 	void AddGametype( int nGametype );	
 	void RemoveGametype( int nGametype );	
+
+
+	int GetMutator( void );
+	bool IsMutator( int nMutator );
+
+#ifdef GAME_DLL
+	void SetMutator( int nMutator );	
+#endif
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );
 	CNetworkVar( bool, m_bForce3DSkybox );

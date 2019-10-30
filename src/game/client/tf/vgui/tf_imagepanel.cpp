@@ -26,7 +26,7 @@ using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CTFImagePanel );
 
-extern ConVar ofd_coloredhud;
+extern ConVar of_coloredhud;
 
 //-----------------------------------------------------------------------------
 // Purpose: 

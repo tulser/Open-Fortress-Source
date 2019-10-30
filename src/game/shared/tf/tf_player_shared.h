@@ -178,9 +178,13 @@ public:
 #endif
 	bool	IsTopThree();
 	virtual void SetTopThree( bool bTop3 );
+
+	bool	IsZombie();
+	virtual void SetZombie( bool bZombie );
+
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
-	void	Burn( CTFPlayer *pPlayer );
+	void	Burn( CTFPlayer *pPlayer, float flTime );
 
 	// Weapons.
 	CTFWeaponBase *GetActiveTFWeapon() const;
@@ -302,6 +306,7 @@ private:
 	CNetworkVar( int, m_iRespawnEffect );
 	
 	CNetworkVar( bool, m_bIsTopThree );
+	CNetworkVar( bool, m_bIsZombie );
 	// Vars that are not networked.
 	OuterClass			*m_pOuter;					// C_TFPlayer or CTFPlayer (client/server).
 
@@ -346,6 +351,8 @@ private:
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );
+
+	CNetworkVar( float, m_flNextLungeTime );
 
 	CNetworkVar( int, m_iCritMult );
 

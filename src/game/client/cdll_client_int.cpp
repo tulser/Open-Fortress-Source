@@ -154,6 +154,8 @@
 #include "of_discordrpc.h"
 #include <time.h>
 #include "gamemounter.h"
+#include "tf_player_shared.h"
+#include "c_tf_player.h"
 
 extern vgui::IInputInternal *g_InputInternal;
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
@@ -514,6 +516,52 @@ public:
 	}
 };
 static CHLVoiceStatusHelper g_VoiceStatusHelper;
+
+//-----------------------------------------------------------------------------
+// Copied from engine code as the .h files are not available
+//-----------------------------------------------------------------------------
+class CSfxTable;
+struct StartSoundParams_t
+{
+	StartSoundParams_t() :
+		staticsound( false ),
+		userdata( 0 ),
+		soundsource( 0 ), 
+		entchannel( CHAN_AUTO ), 
+		pSfx( 0 ), 
+		bUpdatePositions( true ),
+		fvol( 1.0f ),  
+		soundlevel( SNDLVL_NORM ), 
+		flags( SND_NOFLAGS ), 
+		pitch( PITCH_NORM ), 
+		fromserver( false ),
+		delay( 0.0f ),
+		speakerentity( -1 ),
+		suppressrecording( false ),
+		initialStreamPosition( 0 )
+	{
+		origin.Init();
+		direction.Init();
+	}
+
+	bool			staticsound;
+	int				userdata;
+    int				soundsource;
+	int				entchannel;
+	CSfxTable		*pSfx;
+	Vector			origin; 
+	Vector			direction; 
+	bool			bUpdatePositions;
+	float			fvol;
+	soundlevel_t	soundlevel;
+	int				flags;
+	int				pitch; 
+	bool			fromserver;
+	float			delay;
+	int				speakerentity;
+	bool			suppressrecording;
+	int				initialStreamPosition;
+};
 
 //-----------------------------------------------------------------------------
 // Code to display which entities are having their bones setup each frame.
@@ -1111,9 +1159,11 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		return false;
 
 	g_pClientMode->Enable();
+	
 #ifdef OPENFORTRESS_DLL	
 	FMODManager()->InitFMOD();
 #endif
+
 	if (!view)
 	{
 		view = (IViewRender *)&g_DefaultViewRender;
@@ -1277,9 +1327,11 @@ void CHLClient::Shutdown( void )
 
 	g_pClientMode->Disable();
 	g_pClientMode->Shutdown();
+	
 #ifdef OPENFORTRESS_DLL
 	FMODManager()->ExitFMOD();
 #endif
+
 	input->Shutdown_All();
 	C_BaseTempEntity::ClearDynamicTempEnts();
 	TermSmokeFogOverlay();
@@ -1603,7 +1655,6 @@ void CHLClient::View_Render( vrect_t *rect )
 	// S:O - Think about fading ambient sounds if necessary
 	FMODManager()->FadeThink();
 	FMODManager()->Think();
-
 	
 	UpdatePerfStats();
 }
@@ -1739,6 +1790,9 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 
 #ifdef OPENFORTRESS_DLL
 	g_discordrpc.Reset();
+	
+	// S:O - Stop all FMOD sounds when exiting to the main menu
+	FMODManager()->StopAmbientSound( false );	
 #endif
 
 #if defined( REPLAY_ENABLED )
@@ -1833,8 +1887,6 @@ void CHLClient::LevelShutdown( void )
 
 #ifdef OPENFORTRESS_DLL
 	g_discordrpc.Reset();
-	// S:O - Stop all FMOD sounds when exiting to the main menu
-	FMODManager()->StopAmbientSound( false );	
 #endif
 
 #if !( defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT ) )
@@ -2674,9 +2726,21 @@ void CHLClient::FileReceived( const char * fileName, unsigned int transferID )
 
 void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 {
-#ifdef TF_CLIENT_DLL
 	CBaseEntity *pEntity = ClientEntityList().GetEnt( params.soundsource );
 
+	// A player speaking
+	if ( params.entchannel == CHAN_VOICE && pEntity && pEntity->IsPlayer() )
+	{
+		C_TFPlayer *pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+
+		// Zombies emit lower pitch voicelines
+		if ( pPlayer && pPlayer->m_Shared.IsZombie() )
+		{
+			params.pitch *= 0.8f;
+		}
+	}
+
+#ifdef TF_CLIENT_DLL
 	// A player speaking
 	if ( params.entchannel == CHAN_VOICE && GameRules() && pEntity && pEntity->IsPlayer() )
 	{

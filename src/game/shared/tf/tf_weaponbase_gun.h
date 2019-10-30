@@ -30,9 +30,9 @@
 // Assault Rifle cvars
 //
 //=============================================================================
-extern ConVar ofd_weapon_assaultrifle_burstshots;
-extern ConVar ofd_weapon_assaultrifle_bursttime;
-extern ConVar ofd_weapon_assaultrifle_time_between_bursts;
+extern ConVar of_weapon_assaultrifle_burstshots;
+extern ConVar of_weapon_assaultrifle_bursttime;
+extern ConVar of_weapon_assaultrifle_time_between_bursts;
 
 class CTFWeaponBaseGun : public CTFWeaponBase
 {

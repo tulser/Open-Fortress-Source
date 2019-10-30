@@ -32,9 +32,9 @@ extern ConVar tf_medigun_autoheal;
 extern ConVar of_autoreload;
 extern ConVar of_autoswitchweapons;
 extern ConVar cl_autorezoom;
-extern ConVar ofd_color_r;
-extern ConVar ofd_color_g;
-extern ConVar ofd_color_b;
+extern ConVar of_color_r;
+extern ConVar of_color_g;
+extern ConVar of_color_b;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -527,6 +527,7 @@ private:
 	int	  m_iClass;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flDeathAnimationTime; // start time of burning, or 0 if not burning
+	bool m_bGoreEnabled;
 
 	// gore stuff
 	CNetworkVar( unsigned short, m_iGoreHead );

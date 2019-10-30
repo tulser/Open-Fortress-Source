@@ -28,8 +28,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-extern ConVar ofe_payload_override;
-
 /*
 #define TWM_FIRSTSTAGEOUTCOME01	"Announcer.PLR_FirstStageOutcome01"
 #define TWM_FIRSTSTAGEOUTCOME02	"Announcer.PLR_FirstStageOutcome02"
@@ -1106,7 +1104,7 @@ void CTeamTrainWatcher::WatcherActivate( void )
 
 void CTeamTrainWatcher::CheckPayloadOverride( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() && TFGameRules()->m_bEscortOverride ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
 	{	
 		CPathTrack *pGoalNode = GetGoalNode();
 		SetupTracksToPass();
@@ -1148,7 +1146,7 @@ void CTeamTrainWatcher::CheckPayloadOverride( void )
 
 void CTeamTrainWatcher::SetupTracksToPass( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() && TFGameRules()->m_bEscortOverride ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
+	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
 	{	
 		CPathTrack *pTrack = GetStartNode();
 		CPathTrack *pLastTrack = GetSecondToLastNode();

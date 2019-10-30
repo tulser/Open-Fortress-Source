@@ -122,8 +122,8 @@ extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
 extern ConVar of_crouchjump;
-extern ConVar ofd_forceclass;
-extern ConVar ofd_resistance;
+extern ConVar of_forceclass;
+extern ConVar of_resistance;
 extern ConVar mp_disable_respawn_times;
 extern ConVar fraglimit;
 extern ConVar of_bunnyhop_max_speed_factor;
@@ -134,29 +134,30 @@ extern ConVar of_knockback_bullets;
 extern ConVar of_knockback_melee;
 extern ConVar of_knockback_explosives;
 extern ConVar teamplay;
-extern ConVar ofd_gravitygun;
+extern ConVar of_gravitygun;
 
 ConVar tf_caplinear						( "tf_caplinear", "1", FCVAR_REPLICATED, "If set to 1, teams must capture control points linearly." );
 ConVar tf_stalematechangeclasstime		( "tf_stalematechangeclasstime", "20", FCVAR_REPLICATED, "Amount of time that players are allowed to change class in stalemates." );
 ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 // Open Fortress Convars
-ConVar of_gamemode_dm				( "of_gamemode_dm", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Deathmatch." );
 ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
 ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
-ConVar ofd_threewave				( "ofd_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
-ConVar ofd_allow_allclass_pickups 	( "ofd_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non Merc Classes can pickup weapons.");
+ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
+
+ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
+ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
 ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
 ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
-ConVar ofe_payload_override			( "ofe_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
+ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
 
 // Not implemented.
-// ConVar ofd_ggweaponlist		( "ofd_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
-ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
+// ConVar of_ggweaponlist		( "of_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
+ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
-							true, 0, true, 7 );
+							true, 0, true, 6 );
 
 /*	List of mutators:
 	0: Disabled
@@ -170,21 +171,26 @@ ConVar ofd_mutators			( "ofd_mutators", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
-	ConVar ofd_instagib			( "ofd_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2 );
-	ConVar ofd_clanarena		( "ofd_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena mutators.", true, 0, true, 2 );
-	ConVar ofd_gungame			( "ofd_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
+	ConVar of_instagib			( "of_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2 );
+	ConVar of_clanarena		( "of_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena mutators.", true, 0, true, 2 );
+	ConVar of_gungame			( "of_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
 */
 
 ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
-ConVar ofd_multiweapons		( "ofd_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
-ConVar ofd_weaponspawners	( "ofd_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners." );
-ConVar ofd_powerups			( "ofd_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
+ConVar of_multiweapons		( "of_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
+ConVar of_weaponspawners	( "of_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners." );
+ConVar of_powerups			( "of_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of the convars below.
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMEDLL, "Length in seconds to wait for players." );
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat." );
 ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to hear spectators using text chat." );
+
+// Infection stuff
+ConVar of_infection_preparetime		 ( "of_infection_preparetime", "20", FCVAR_GAMEDLL, "How many seconds survivors have to prepare before the Infection." );
+ConVar of_infection_roundtime		 ( "of_infection_roundtime", "300", FCVAR_GAMEDLL, "How many seconds survivors need to... survive for after the Infection." );
+ConVar of_infection_zombie_threshold ( "of_infection_zombie_threshold", "6", FCVAR_GAMEDLL, "For every n humans, this many zombies are selected when the Infection starts." );
 #endif
 
 ConVar of_retromode ( "of_retromode", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
@@ -286,6 +292,7 @@ REGISTER_GAMERULES_CLASS( CTFGameRules );
 BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_nGameType ) ),
+	RecvPropInt( RECVINFO( m_nMutator ) ),
 	RecvPropInt( RECVINFO( m_iCosmeticCount ) ),
 	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
 	RecvPropInt( RECVINFO( m_nHuntedCount_red ) ),
@@ -310,9 +317,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bKOTH ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
+	RecvPropEHandle( RECVINFO( m_hInfectionTimer ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nMutator ), 3, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCosmeticCount ) ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nHuntedCount_red ), 7, SPROP_UNSIGNED ),
@@ -336,7 +345,8 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bUsesMoney ) ),
 	SendPropBool( SENDINFO( m_bKOTH ) ),
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ), 
-	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) )
+	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
+	SendPropEHandle( SENDINFO( m_hInfectionTimer ) )
 #endif
 END_NETWORK_TABLE()
 
@@ -390,8 +400,15 @@ BEGIN_DATADESC( CTFGameRulesProxy )
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMercenaryTeamRole", InputSetMercenaryTeamRole ),
 // - InputSetRedKothClockActive (Offset 0) (Input)(0 Bytes) - SetRedKothClockActive
 // - InputSetBlueKothClockActive (Offset 0) (Input)(0 Bytes) - SetBlueKothClockActive
+// - InputPlayVORed (Offset 0) (Input)(0 Bytes) - PlayVORed
+// - InputPlayVOBlue (Offset 0) (Input)(0 Bytes) - PlayVOBlue
+// - InputPlayVO (Offset 0) (Input)(0 Bytes) - PlayVO
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetRedKothClockActive", InputSetRedKothClockActive ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetBlueKothClockActive", InputSetBlueKothClockActive ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVORed", InputPlayVORed ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVOBlue", InputPlayVOBlue ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVOMercenary", InputPlayVOMercenary ),
+	DEFINE_INPUTFUNC( FIELD_STRING, "PlayVO", InputPlayVO ),
 	
 	DEFINE_OUTPUT( m_OutputIsCTF,	"IsCTF" ),
 	DEFINE_OUTPUT( m_OutputIsCP,	"IsCP" ),
@@ -403,6 +420,41 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+
+void CTFGameRulesProxy::InputPlayVORed( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+		TFGameRules()->BroadcastSound( TF_TEAM_RED, inputdata.value.String() );
+}
+
+void CTFGameRulesProxy::InputPlayVOBlue( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+		TFGameRules()->BroadcastSound( TF_TEAM_BLUE, inputdata.value.String() );
+}
+
+void CTFGameRulesProxy::InputPlayVOMercenary( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+		TFGameRules()->BroadcastSound( TF_TEAM_MERCENARY, inputdata.value.String() );
+}
+
+void CTFGameRulesProxy::InputPlayVO( inputdata_t &inputdata )
+{
+	if ( TFGameRules() )
+	{
+		TFGameRules()->BroadcastSound( TF_TEAM_RED, inputdata.value.String() );
+		TFGameRules()->BroadcastSound( TF_TEAM_BLUE, inputdata.value.String() );
+		TFGameRules()->BroadcastSound( TF_TEAM_MERCENARY, inputdata.value.String() );
+		TFGameRules()->BroadcastSound( TEAM_SPECTATOR, inputdata.value.String() );
+		TFGameRules()->BroadcastSound( TEAM_UNASSIGNED, inputdata.value.String() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
 void CTFGameRulesProxy::InputSetRedKothClockActive(inputdata_t &inputdata)
 {
 	if ( TFGameRules() && TFGameRules()->GetRedKothRoundTimer() )
@@ -416,9 +468,6 @@ void CTFGameRulesProxy::InputSetRedKothClockActive(inputdata_t &inputdata)
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CTFGameRulesProxy::InputSetBlueKothClockActive(inputdata_t &inputdata)
 {
 	if ( TFGameRules() && TFGameRules()->GetBlueKothRoundTimer() )
@@ -431,8 +480,6 @@ void CTFGameRulesProxy::InputSetBlueKothClockActive(inputdata_t &inputdata)
 		}
 	}
 }
-
-
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -914,6 +961,26 @@ void CTFLogicCoop::Spawn(void)
 	BaseClass::Spawn();
 }
 
+
+//-----------------------------------------------------------------------------
+// Infection Logic 
+//-----------------------------------------------------------------------------
+
+class CTFLogicInf : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicInf, CBaseEntity);
+	void	Spawn(void);
+};
+
+LINK_ENTITY_TO_CLASS(of_logic_inf, CTFLogicInf);
+
+void CTFLogicInf::Spawn(void)
+{
+	BaseClass::Spawn();
+}
+
+
 //-----------------------------------------------------------------------------
 // Arena Logic 
 //-----------------------------------------------------------------------------
@@ -1334,6 +1401,7 @@ CTFGameRules::CTFGameRules()
 	m_bDomBlueThreshold = false;
 	m_bDomRedLeadThreshold = false;
 	m_bDomBlueLeadThreshold = false;
+	m_bStartedVote = false;
 
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
@@ -1418,6 +1486,24 @@ void CTFGameRules::RemoveGametype( int nGametype )
 	Assert( nGametype >= 0 && nGametype < TF_GAMETYPE_LAST );
 	m_nGameType &= ~(1<<nGametype);
 }
+
+bool CTFGameRules::IsMutator( int nMutator )
+{
+	return ( m_nMutator == nMutator );
+}
+
+int CTFGameRules::GetMutator( void )
+{
+	return m_nMutator;
+}
+
+#ifdef GAME_DLL
+void CTFGameRules::SetMutator( int nMutator )
+{
+	m_nMutator = nMutator;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1526,15 +1612,14 @@ static const char *s_PreserveEnts[] =
 //-----------------------------------------------------------------------------
 void CTFGameRules::Activate()
 {
+	SetupMutator();
 
-	of_bunnyhop.SetValue(0);
-	of_crouchjump.SetValue(0);
-	mp_disable_respawn_times.SetValue(0);
-	of_bunnyhop_max_speed_factor.SetValue(1.2f);
-	tf_maxspeed.SetValue(400);
-	sv_airaccelerate.SetValue(10);
+	ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server global gamemode config file\n");
+	engine->ServerCommand("exec config_default_global.cfg\n");
+	engine->ServerExecute();
+
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
-	
+
 	m_nCurrFrags.Set(0);
 	m_bDisableRedSpawns = false;
 	m_bDisableBluSpawns = false;
@@ -1562,6 +1647,23 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
+	{
+		AddGametype(TF_GAMETYPE_ARENA);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Arena gamemode config file\n");
+		engine->ServerCommand("exec config_default_arena.cfg \n");
+		engine->ServerExecute();
+	}
+
+	if (gEntList.FindEntityByClassname(NULL, "tf_logic_koth") || !Q_strncmp(STRING(gpGlobals->mapname), "koth_", 5) )
+	{
+		AddGametype(TF_GAMETYPE_CP);
+		m_bKOTH = true;
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server KOTH gamemode config file\n");
+		engine->ServerCommand("exec config_default_koth.cfg \n");
+		engine->ServerExecute();
+	}
+
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
@@ -1580,22 +1682,15 @@ void CTFGameRules::Activate()
 		}
 	}
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || ofd_mutators.GetInt() == GUN_GAME )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || TFGameRules()->IsMutator( GUN_GAME ) )
 	{
 		AddGametype(TF_GAMETYPE_GG);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server GG gamemode config file\n");
 		engine->ServerCommand("exec config_default_gg.cfg \n");
 		engine->ServerExecute();
 	}	
-
-	if ( ofd_mutators.GetInt() == RANDOMIZER )
-	{
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Randomizer gamemode config file\n");
-		engine->ServerCommand("exec config_default_rdm.cfg \n");
-		engine->ServerExecute();
-	}	
 	
-	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_3wave") && !m_bListOnly ) || ofd_threewave.GetInt() == 1 )
+	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_3wave") && !m_bListOnly ) || of_threewave.GetInt() == 1 )
 	{
 		AddGametype(TF_GAMETYPE_3WAVE);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Threewave gamemode config file\n");
@@ -1603,14 +1698,14 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 	
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( ofe_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
+	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( of_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
 	{
 		AddGametype(TF_GAMETYPE_ESC);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
 		engine->ServerCommand("exec config_default_esc.cfg \n");
 		engine->ServerExecute();
 		
-		if ( ofe_payload_override.GetBool() && !( gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) ) ) // We're replacing payload with Escort
+		if ( of_payload_override.GetBool() && !( gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) ) ) // We're replacing payload with Escort
 		{
 			m_bEscortOverride = true;
 		}
@@ -1620,45 +1715,19 @@ void CTFGameRules::Activate()
 	{
 		// no Domination gamemode is set in Escort
 		if ( !IsESCGamemode() )
-			AddGametype(TF_GAMETYPE_DOM);
+			AddGametype( TF_GAMETYPE_DOM );
 
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Domination gamemode config file\n");
 		engine->ServerCommand("exec config_default_dom.cfg \n");
 		engine->ServerExecute();
 	}
-	
-	if (gEntList.FindEntityByClassname(NULL, "tf_logic_arena") || !Q_strncmp(STRING(gpGlobals->mapname), "arena_", 6) || of_arena.GetBool() )
-	{
-		AddGametype(TF_GAMETYPE_ARENA);
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Arena gamemode config file\n");
-		engine->ServerCommand("exec config_default_arena.cfg \n");
-		engine->ServerExecute();
-	}
-
-	if (gEntList.FindEntityByClassname(NULL, "tf_logic_koth") || !Q_strncmp(STRING(gpGlobals->mapname), "koth_", 5) )
-	{
-		AddGametype(TF_GAMETYPE_CP);
-		m_bKOTH = true;
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server KOTH gamemode config file\n");
-		engine->ServerCommand("exec config_default_koth.cfg \n");
-		engine->ServerExecute();
-	}
 
 	// this is for a future zombie survival gamemode
-	if (gEntList.FindEntityByClassname(NULL, "tf_logic_coop") || !Q_strncmp(STRING(gpGlobals->mapname), "zm_", 3) || of_coop.GetBool() )
+	if (gEntList.FindEntityByClassname(NULL, "of_logic_coop") || !Q_strncmp(STRING(gpGlobals->mapname), "zm_", 3) || of_coop.GetBool() )
 	{
 		AddGametype(TF_GAMETYPE_COOP);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
 		engine->ServerCommand("exec config_default_coop.cfg \n");
-		engine->ServerExecute();
-	}
-
-	// this is for a future zombie survival gamemode
-	if ( of_infection.GetBool() )
-	{
-		AddGametype(TF_GAMETYPE_INF);
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Infection gamemode config file\n");
-		engine->ServerCommand("exec config_default_inf.cfg \n");
 		engine->ServerExecute();
 	}
 	
@@ -1666,11 +1735,40 @@ void CTFGameRules::Activate()
 	if ( IsHL2() )
 	{
 		AddGametype(TF_GAMETYPE_COOP);
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server HL2 gamemode config file\n");
 		engine->ServerCommand("exec config_default_hl2.cfg \n");
 		engine->ServerExecute();
 
 		AddGametype(TF_GAMETYPE_DM);
+	}
+
+	// Infection
+	if ( gEntList.FindEntityByClassname(NULL, "of_logic_inf") || !Q_strncmp(STRING(gpGlobals->mapname), "inf_", 4) || of_infection.GetBool() )
+	{
+		// incompatible gametypes with infection!
+		if ( InGametype( TF_GAMETYPE_CTF ) )
+			RemoveGametype( TF_GAMETYPE_CTF );
+		if ( InGametype( TF_GAMETYPE_CP ) )
+			RemoveGametype( TF_GAMETYPE_CP );
+		if ( InGametype( TF_GAMETYPE_DM ) )
+			RemoveGametype( TF_GAMETYPE_DM );
+		if ( InGametype( TF_GAMETYPE_TDM ) )
+			RemoveGametype( TF_GAMETYPE_TDM );
+		if ( InGametype( TF_GAMETYPE_ESC ) )
+			RemoveGametype( TF_GAMETYPE_ESC );
+		if ( InGametype( TF_GAMETYPE_COOP ) )
+			RemoveGametype( TF_GAMETYPE_COOP );
+		if ( InGametype( TF_GAMETYPE_DOM ) )
+			RemoveGametype( TF_GAMETYPE_DOM );
+		if ( InGametype( TF_GAMETYPE_DOM ) )
+			RemoveGametype( TF_GAMETYPE_DOM );
+		if ( InGametype( TF_GAMETYPE_PAYLOAD ) )
+			RemoveGametype( TF_GAMETYPE_PAYLOAD );
+
+		AddGametype(TF_GAMETYPE_INF);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Infection gamemode config file\n");
+		engine->ServerCommand("exec config_default_inf.cfg \n");
+		engine->ServerExecute();
 	}
 	
 	CheckTDM();
@@ -1751,6 +1849,11 @@ bool CTFGameRules::IsZSGamemode( void )
 bool CTFGameRules::IsInfGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_INF );
+}
+
+bool CTFGameRules::IsPayloadOverride( void )
+{ 
+	return m_bEscortOverride;
 }
 
 bool CTFGameRules::IsHL2( void )
@@ -1943,6 +2046,8 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
+	SetupMutator();
+
 	// fixes a dumb crash, see ai_pathfinder.cpp line 607
 	CAI_DynamicLink::gm_bInitialized = false;
 	CAI_DynamicLink::InitDynamicLinks();
@@ -2018,6 +2123,162 @@ void CTFGameRules::SetupOnRoundStart( void )
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
+
+	if ( TFGameRules()->IsInfGamemode() )
+	{
+		// put everyone into RED again
+		CTFPlayer *pPlayer = NULL;
+		int i;
+
+		for ( i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+
+			if ( pPlayer && pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
+			{
+				pPlayer->m_Shared.SetZombie( false );
+				pPlayer->ChangeTeam( TF_TEAM_RED, true );
+			}
+		}
+
+		// remove the timer
+		if ( GetInfectionRoundTimer() )
+			UTIL_Remove( GetInfectionRoundTimer() );
+
+		// HORRIBLE HORRIBLE HACK TO FIX SPAWN ROOMS ON 2FORT
+		if ( !Q_strncmp( STRING( gpGlobals->mapname), "ctf_2fort", 9 ) )
+		{
+			CBaseEntity *pEntity = NULL;
+			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_door" ) ) != NULL )
+			{
+				UTIL_Remove( pEntity );
+			}
+		}
+
+		// no more visualizers, or respawn rooms, or regenerate lockers
+		CBaseEntity *pEntity = NULL;
+		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_respawnroomvisualizer" ) ) != NULL )
+			UTIL_Remove( pEntity );
+		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_respawnroom" ) ) != NULL )
+			UTIL_Remove( pEntity );
+		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_regenerate" ) ) != NULL )
+			UTIL_Remove( pEntity );
+
+		if ( !IsInWaitingForPlayers() )
+		{
+			// wow
+			variant_t sVariant;
+			sVariant.SetInt( 0 );
+
+			// create the timer
+			TFGameRules()->SetInfectionRoundTimer( ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
+
+			if ( TFGameRules()->GetInfectionRoundTimer() )
+			{
+				TFGameRules()->GetInfectionRoundTimer()->SetName( MAKE_STRING( "zz_infection_timer" ) );
+				TFGameRules()->GetInfectionRoundTimer()->SetInfectionBeginning( true );
+				TFGameRules()->GetInfectionRoundTimer()->SetTimeRemaining( of_infection_preparetime.GetInt() ); 
+				TFGameRules()->GetInfectionRoundTimer()->SetShowInHud( true );
+				TFGameRules()->GetInfectionRoundTimer()->ChangeTeam( TF_TEAM_RED );
+
+				TFGameRules()->GetInfectionRoundTimer()->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
+				TFGameRules()->GetInfectionRoundTimer()->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
+			}
+
+			// all teams
+			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+			{
+				BroadcastSound( i, "InfectionMusic.Warmup", false );
+			}
+		}
+	}
+}
+
+// Ran at the start of every round, simply setups and performs anything necessary for mutators
+void CTFGameRules::SetupMutator( void )
+{
+	SetMutator ( of_mutator.GetInt() );
+
+	if ( TFGameRules()->IsMutator( NO_MUTATOR ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server DISABLED mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_disabled.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( INSTAGIB ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_instagib.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib (no melee) mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_instagibnomelee.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( CLAN_ARENA ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Clan Arena mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_clanarena.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( UNHOLY_TRINITY ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Unholy Trinity mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_unholytrinity.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( ROCKET_ARENA ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Rocket Arena mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_rocketarena.cfg \n");
+		engine->ServerExecute();
+	}	
+	else if ( TFGameRules()->IsMutator( GUN_GAME ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( !InGametype(TF_GAMETYPE_GG) )
+			AddGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Gun Game mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_gungame.cfg \n");
+		engine->ServerExecute();
+	}
+	else if ( TFGameRules()->IsMutator( RANDOMIZER ) )
+	{
+		// gungame shouldnt be a gametype...
+		if ( InGametype(TF_GAMETYPE_GG) )
+			RemoveGametype(TF_GAMETYPE_GG );
+
+		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Randomizer mutator config file\n");
+		engine->ServerCommand("exec config_default_mutator_randomizer.cfg \n");
+		engine->ServerExecute();
+	}
 }
 
 void CTFGameRules::PassAllTracks( void )
@@ -2337,7 +2598,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// Full damage, we hit this entity directly
 			flDistanceToEntity = 0;
 			
-			if ( ofd_mutators.GetInt() == ROCKET_ARENA && !TFGameRules()->IsGGGamemode() )
+			if ( TFGameRules()->IsMutator( ROCKET_ARENA ) && !TFGameRules()->IsGGGamemode() )
 				bInstantKill = true;
 		}
 		else if ( pEntity->IsPlayer() || pEntity->IsNPC() )
@@ -2369,7 +2630,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
 			CTFPlayer *pSelf = ToTFPlayer(pEntity);
 			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
-				flNonSelfDamage /= ( ofd_resistance.GetFloat() * 2.0f );
+				flNonSelfDamage /= ( of_resistance.GetFloat() * 2.0f );
 			if ( pSelf && pSelf->m_Shared.InCondUber() )
 				flNonSelfDamage = 0;
 			else
@@ -2377,7 +2638,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				switch ( of_selfdamage.GetInt() )
 				{
 					case -1:
-						switch ( ofd_mutators.GetInt() )
+						switch ( TFGameRules()->GetMutator() )
 						{	
 						case CLAN_ARENA:
 						case UNHOLY_TRINITY:
@@ -2657,6 +2918,18 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 						return;
 				}
 			}
+
+			// there is less than 60 seconds left of time, start voting for next map
+			if ( !IsDMGamemode() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+			{
+				DevMsg( "VoteController: Timeleft is less than 60 seconds, begin nextlevel voting... \n" );
+				m_bStartedVote = true;
+				//engine->ServerCommand( "callvote nextlevel" );
+				char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+				szEmptyDetails[0] = '\0';
+				g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+			}
+
 			if ( IsDMGamemode() && CountActivePlayers() > 0 && !DontCountKills() )
 			{
 				int iFragLimit = fraglimit.GetInt();
@@ -2681,13 +2954,26 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 							SendTeamScoresEvent();
 							GoToIntermission();
 						}
+						// one of our teams is at 80% of the fragcount, start voting for next map
+						if ( ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
+							( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
+							&& !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+						{
+							DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
+							m_bStartedVote = true;
+							//engine->ServerCommand( "callvote nextlevel" );
+							char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+							szEmptyDetails[0] = '\0';
+							g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+						}
 					}
 					else
 					{
 						// check if any player is over the frag limit
-						for (int i = 1; i <= gpGlobals->maxClients; i++)
+						for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 						{
-							CBasePlayer *pPlayer = UTIL_PlayerByIndex(i);
+							CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
+
 							if ( pPlayer )
 							{
 								if ( m_nCurrFrags < pPlayer->FragCount() )
@@ -2695,13 +2981,23 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 									m_nCurrFrags = pPlayer->FragCount();
 									FireTargets( "game_fragincrease", pPlayer, pPlayer, USE_TOGGLE, 0 );
 								}
+
+								if ( pPlayer->FragCount() >= iFragLimit )
+								{
+									SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+								}
+
+								// one of our players is at 80% of the fragcount, start voting for next map
+								if ( pPlayer->FragCount() >= ( (float)iFragLimit * 0.8 ) && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+								{
+									DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
+									m_bStartedVote = true;
+									//engine->ServerCommand( "callvote nextlevel" );
+									char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+									szEmptyDetails[0] = '\0';
+									g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+								}
 							}					
-							if (pPlayer && pPlayer->FragCount() >= iFragLimit)
-							{
-//								SendTeamScoresEvent();
-								SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
-//								GoToIntermission();
-							}
 						}
 					}
 				}
@@ -3438,7 +3734,13 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		}
 		else
 		{
-			return false;
+			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
+			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
+			if ( ( TFGameRules()->IsInfGamemode() && !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) ) )
+			{
+			}
+			else
+				return false;
 		}
 	}
 
@@ -3453,7 +3755,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 
 		// live tf2 uses spawnpoints for the comp end screen, which are given the unassigned team (and unassigned spawnpoints are regarded as valid here)
 		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
-		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
+		if ( pCTFSpawn->GetMatchSummary() >= 1 )
 			return false;
 
 		
@@ -3491,7 +3793,6 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 			// get every single spawnpoint and check if any of them has a Civilian spawnflag
 			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
 			// otherwise, force ourselves to spawn here
-			// Find all entities of the correct name and try and sit where they're at
 			CBaseEntity *pEntity = NULL;
 
 			bool bValidSpawn = false;
@@ -3568,7 +3869,13 @@ bool CTFGameRules::IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pP
 		}
 		else
 		{
-			return false;
+			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
+			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
+			if ( ( TFGameRules()->IsInfGamemode() && !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) ) )
+			{
+			}
+			else
+				return false;
 		}
 	}
 
@@ -3583,7 +3890,7 @@ bool CTFGameRules::IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pP
 
 		// live tf2 uses spawnpoints for the comp end screen, which are given the unassigned team (and unassigned spawnpoints are regarded as valid here)
 		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
-		if ( pCTFSpawn->GetMatchSummary() == 1 || pCTFSpawn->GetMatchSummary() == 2 )
+		if ( pCTFSpawn->GetMatchSummary() >= 1 )
 			return false;
 	}
 
@@ -3806,31 +4113,31 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 {
 	BaseClass::GetTaggedConVarList( pCvarTagList );
 	
-		// ofd_mutators
-	KeyValues *pKeyValues = new KeyValues( "ofd_mutators" );
-	pKeyValues->SetString( "convar", "ofd_mutators" );
-	pKeyValues->SetString( "tag", "mutators" );
+		// of_mutators
+	KeyValues *pKeyValues = new KeyValues( "of_mutator" );
+	pKeyValues->SetString( "convar", "of_mutator" );
+	pKeyValues->SetString( "tag", "mutator" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 
 	/*
-		// ofd_instagib
-	KeyValues *pKeyValues = new KeyValues( "ofd_instagib" );
-	pKeyValues->SetString( "convar", "ofd_instagib" );
+		// of_instagib
+	KeyValues *pKeyValues = new KeyValues( "of_instagib" );
+	pKeyValues->SetString( "convar", "of_instagib" );
 	pKeyValues->SetString( "tag", "instagib" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 
-		// ofd_clanarena
-	pKeyValues = new KeyValues( "ofd_clanarena" );
-	pKeyValues->SetString( "convar", "ofd_clanarena" );
+		// of_clanarena
+	pKeyValues = new KeyValues( "of_clanarena" );
+	pKeyValues->SetString( "convar", "of_clanarena" );
 	pKeyValues->SetString( "tag", "clanarena" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
 
-		// ofd_gungame
-	pKeyValues = new KeyValues( "ofd_gungame" );
-	pKeyValues->SetString( "convar", "ofd_gungame" );
+		// of_gungame
+	pKeyValues = new KeyValues( "of_gungame" );
+	pKeyValues->SetString( "convar", "of_gungame" );
 	pKeyValues->SetString( "tag", "gungame" );
 
 	pCvarTagList->AddSubKey( pKeyValues );
@@ -3857,9 +4164,9 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 
 	pCvarTagList->AddSubKey( pKeyValues );
 	
-		// ofd_forceclass 
-	pKeyValues = new KeyValues( "ofd_forceclass" );
-	pKeyValues->SetString( "convar", "ofd_forceclass" );
+		// of_forceclass 
+	pKeyValues = new KeyValues( "of_forceclass" );
+	pKeyValues->SetString( "convar", "of_forceclass" );
 	pKeyValues->SetString( "tag", "allclassesallowed" );
 
 	pCvarTagList->AddSubKey( pKeyValues );	
@@ -4096,16 +4403,27 @@ void CTFGameRules::CreateStandardEntities()
 	Assert( g_pObjectiveResource );
 
 	// Create the entity that will send our data to the client.
-	CBaseEntity *pEnt = CBaseEntity::Create( "tf_gamerules", vec3_origin, vec3_angle );
-	Assert( pEnt );
-	pEnt->SetName( AllocPooledString("tf_gamerules" ) );
+	CBaseEntity *pEnt = gEntList.FindEntityByClassname( NULL, "tf_gamerules" );
+
+	if ( !pEnt )
+	{
+		pEnt = CBaseEntity::Create( "tf_gamerules", vec3_origin, vec3_angle );
+		pEnt->SetName( AllocPooledString( "tf_gamerules" ) );
+	}
+
 	
 	CBaseEntity::Create( "vote_controller", vec3_origin, vec3_angle );
 
-	CKickIssue* pIssue = new CKickIssue( "Kick" );
-	
-	if ( pIssue )
-		pIssue->Init();
+	new CKickIssue();
+	CRestartGameIssue *pRestartVote = new CRestartGameIssue();
+	if ( pRestartVote )
+		pRestartVote->Init();
+	new CChangeLevelIssue();
+	new CChangeMutatorIssue();
+	new CNextLevelIssue();
+	CScrambleTeams *pScrambleVote = new CScrambleTeams();
+	if ( pScrambleVote )
+		pScrambleVote->Init();
 }
 
 //-----------------------------------------------------------------------------
@@ -5272,7 +5590,7 @@ int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 
 bool CTFGameRules::UsesDMBuckets()
 {
-	return ( ofd_multiweapons.GetBool() && IsDMGamemode() );
+	return ( of_multiweapons.GetBool() && IsDMGamemode() );
 }
 
 //-----------------------------------------------------------------------------
@@ -5739,9 +6057,9 @@ Vector CTFGameRules::GetTeamGlowColor( int nTeam )
 		break;
 
 	case TF_TEAM_MERCENARY: //The team used in dm should use the color of the player for glow color
-		r = ofd_color_r.GetFloat();
-		g = ofd_color_g.GetFloat();
-		b = ofd_color_b.GetFloat();
+		r = of_color_r.GetFloat();
+		g = of_color_g.GetFloat();
+		b = of_color_b.GetFloat();
 		if ( r < TF_GLOW_COLOR_CLAMP && g < TF_GLOW_COLOR_CLAMP && b < TF_GLOW_COLOR_CLAMP )
 		{
 			float maxi = max(max(r, g), b);
@@ -5892,6 +6210,126 @@ const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
 
 #ifdef GAME_DLL
 
+void CTFGameRules::BeginInfection( void )
+{
+	TFGameRules()->SelectInfector();
+
+	// all teams
+	for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+	{
+		BroadcastSound( i, "InfectionMusic.Begin", false );
+	}
+
+	// remove the timer
+	if ( GetInfectionRoundTimer() )
+		UTIL_Remove( GetInfectionRoundTimer() );
+
+	// wow
+	variant_t sVariant;
+	sVariant.SetInt( 0 );
+
+	// create the timer
+	TFGameRules()->SetInfectionRoundTimer( ( CTeamRoundTimer* )CBaseEntity::Create( "team_round_timer", vec3_origin, vec3_angle ) );
+
+	if ( TFGameRules()->GetInfectionRoundTimer() )
+	{
+		TFGameRules()->GetInfectionRoundTimer()->SetName( MAKE_STRING( "zz_infection_timer" ) );
+		TFGameRules()->GetInfectionRoundTimer()->SetInfectionBeginning( false );
+		TFGameRules()->GetInfectionRoundTimer()->SetTimeRemaining( of_infection_roundtime.GetInt() ); 
+		TFGameRules()->GetInfectionRoundTimer()->SetShowInHud( true );
+		TFGameRules()->GetInfectionRoundTimer()->ChangeTeam( TF_TEAM_RED );
+
+		TFGameRules()->GetInfectionRoundTimer()->AcceptInput( "Enable", NULL, NULL, sVariant, 0 );
+		TFGameRules()->GetInfectionRoundTimer()->AcceptInput( "Resume", NULL, NULL, sVariant, 0 );
+	}
+}
+
+void CTFGameRules::SelectInfector( void )
+{
+	// Find random player(s) to infect
+	// This is based on the amount of players (default ratio: 1 zombie for every 6 humans, rounded up)
+	CBasePlayer *pPlayer = NULL;
+	int i;
+
+	int playercount = 0;
+	int targets = 0;
+	int candidates = 0;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i++ )
+	{
+		pPlayer = UTIL_PlayerByIndex( i );
+
+		if ( pPlayer )
+		{
+			playercount++;
+
+			if ( pPlayer->GetTeamNumber() == TF_TEAM_RED )
+				targets++;
+		}
+	}
+
+	if ( targets <= 0 )
+	{
+		Msg( "TFGameRulesInfection: Infection found no players to zombify!\n" );
+		if ( GetInfectionRoundTimer() )
+			UTIL_Remove( GetInfectionRoundTimer() );
+		TFGameRules()->SetInWaitingForPlayers( true );
+		return;
+	}
+
+	if ( targets > 1 )
+	{
+		int threshold = of_infection_zombie_threshold.GetInt();
+
+		if ( threshold <= 0 )
+			threshold = 6;
+
+		candidates = ceil( (float)targets / threshold );
+
+		if ( candidates <= 0 )
+		{
+			Msg( "TFGameRulesInfection: Candidates for Infection is 0!\n" );
+			if ( GetInfectionRoundTimer() )
+				UTIL_Remove( GetInfectionRoundTimer() );
+			TFGameRules()->SetInWaitingForPlayers( true );
+			return;
+		}
+	}
+	else
+	{
+		Msg( "TFGameRulesInfection: Needs more than 1 player on RED to begin.\n" );
+		if ( GetInfectionRoundTimer() )
+			UTIL_Remove( GetInfectionRoundTimer() );
+		TFGameRules()->SetInWaitingForPlayers( true );
+		return;
+	}
+
+	do
+	{
+		int index = RandomInt( 0, playercount - 1 );
+
+		pPlayer = UTIL_PlayerByIndex( index );
+
+		if ( pPlayer && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+		{
+			candidates--;
+
+			CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+			if ( pTFPlayer )
+			{
+				pTFPlayer->CommitSuicide( true, true );
+				pTFPlayer->ChangeTeam( TF_TEAM_BLUE, false );
+			}
+		}
+	} 
+	while ( candidates > 0 );
+}
+
+void CTFGameRules::FinishInfection( void )
+{
+	SetWinningTeam( TF_TEAM_RED, WINREASON_COOP_FAIL, false );
+}
 
 	//-----------------------------------------------------------------------------
 	// Purpose: Whether or not the NPC should drop a health vial

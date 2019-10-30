@@ -32,9 +32,6 @@
 
 #include "basemodelpanel.h"
 
-bool UseHWMorphModels();
-
-
 using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CModelPanel );
@@ -112,7 +109,6 @@ void CModelPanel::ParseModelInfo( KeyValues *inResourceData )
 		return;
 
 	m_pModelInfo->m_pszModelName = ReadAndAllocStringValue( inResourceData, "modelname" );
-	m_pModelInfo->m_pszModelName_HWM = ReadAndAllocStringValue( inResourceData, "modelname_hwm" );
 	m_pModelInfo->m_nSkin = inResourceData->GetInt( "skin", -1 );
 	m_pModelInfo->m_vecAbsAngles.Init( inResourceData->GetFloat( "angles_x", 0.0 ), inResourceData->GetFloat( "angles_y", 0.0 ), inResourceData->GetFloat( "angles_z", 0.0 ) );
 	m_pModelInfo->m_vecOriginOffset.Init( inResourceData->GetFloat( "origin_x", 110.0 ), inResourceData->GetFloat( "origin_y", 5.0 ), inResourceData->GetFloat( "origin_z", 5.0 ) );
@@ -348,21 +344,6 @@ const char *CModelPanel::GetModelName( void )
 {
 	if ( !m_pModelInfo )
 		return NULL;
-
-	// check to see if we want to use a HWM model
-	if ( UseHWMorphModels() )
-	{
-		// do we have a valid HWM model filename
-		if ( m_pModelInfo->m_pszModelName_HWM && ( Q_strlen( m_pModelInfo->m_pszModelName_HWM  ) > 0 ) )
-		{
-			// does the file exist
-			model_t *pModel = (model_t *)engine->LoadModel( m_pModelInfo->m_pszModelName_HWM );
-			if ( pModel )
-			{
-				return m_pModelInfo->m_pszModelName_HWM;
-			}
-		}
-	}
 
 	return m_pModelInfo->m_pszModelName;
 }

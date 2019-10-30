@@ -90,25 +90,25 @@ ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "Whe
 ConVar of_muzzlelight("of_muzzlelight", "1", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
 ConVar of_beta_muzzleflash("of_beta_muzzleflash", "0", FCVAR_ARCHIVE, "Enable the TF2 beta muzzleflash model when firing.");
 
-ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake.");
+ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake." );
 
-ConVar of_gore("of_gore", "1", FCVAR_ARCHIVE, "Enables or disables dismemberment and gore effects on players. Does not affect gibbing");
+ConVar of_gore( "of_gore", "1", FCVAR_ARCHIVE, "Enables or disables dismemberment and gore effects on players. Does not affect gibbing" );
 
-ConVar ofd_color_r( "ofd_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's red channel value", true, -1, true, 255 );
-ConVar ofd_color_g( "ofd_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
-ConVar ofd_color_b( "ofd_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
+ConVar of_color_r( "of_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's red channel value", true, -1, true, 255 );
+ConVar of_color_g( "of_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
+ConVar of_color_b( "of_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
-ConVar ofd_tennisball("ofd_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF\n");
-ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats\n");
-ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats\n");
+ConVar of_tennisball("of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF" );
+ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats" );
+ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
 
-ConVar tf_hud_no_crosshair_on_scope_zoom("tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun.");
+ConVar tf_hud_no_crosshair_on_scope_zoom("tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
 
-static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls.");
+static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls." );
 
-ConVar ofd_respawn_particle("ofd_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch\n", true, 1, true, 35);
+ConVar of_respawn_particle("of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch", true, 1, true, 35 );
 
-ConVar ofd_critglow_saturation("ofd_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is\n");
+ConVar of_critglow_saturation("of_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is" );
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
@@ -647,6 +647,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
+	m_bGoreEnabled = false;
 	m_flBurnEffectStartTime = 0.0f;
 	m_iTeam = -1;
 	m_iClass = -1;
@@ -771,7 +772,7 @@ void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Qua
 
 	m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
 
-	if ( of_gore.GetBool() )
+	if ( of_gore.GetBool() && m_bGoreEnabled )
 		ScaleGoreBones();
 }
 
@@ -779,45 +780,27 @@ void C_TFRagdoll::ScaleGoreBones()
 {
 	// this is ugly
 	if ( m_iGoreHead == 2 || m_iGoreHead == 3 )
-	{
 		ScaleGoreHead( this );
-	}
 
 	if ( m_iGoreLeftArm == 2 )
-	{
 		ScaleGoreLeftHand( this );
-	}
 	else if ( m_iGoreLeftArm == 3 )
-	{
 		ScaleGoreLeftArm( this );
-	}
 
 	if ( m_iGoreRightArm == 2 )
-	{
 		ScaleGoreRightHand( this );
-	}
 	else if ( m_iGoreRightArm == 3 )
-	{
 		ScaleGoreRightArm( this );
-	}
 
 	if ( m_iGoreLeftLeg == 2 )
-	{
 		ScaleGoreLeftFoot( this );
-	}
 	else if ( m_iGoreLeftLeg == 3 )
-	{
 		ScaleGoreLeftKnee( this );
-	}
 
 	if ( m_iGoreRightLeg == 2 )
-	{
 		ScaleGoreRightFoot( this );
-	}
 	else if ( m_iGoreRightLeg == 3 )
-	{
 		ScaleGoreRightKnee( this );
-	}
 }
 
 void C_TFRagdoll::DismemberHead( )
@@ -999,11 +982,11 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 		// this isn't actually attached to the head attachment
 		// it goes to the bone, but an attachment is needed here to shut the particle system up
 		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_R, "head");
-		ParticleProp()->Create("env_sawblood_mist", PATTACH_GORE_LOWERLEG_R, "head");
-		ParticleProp()->Create("env_sawblood_goop", PATTACH_GORE_LOWERLEG_R, "head");
-		ParticleProp()->Create("env_sawblood_chunk", PATTACH_GORE_LOWERLEG_R, "head");
-		ParticleProp()->Create("blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_R, "head");
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_GORE_LOWERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_GORE_LOWERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_GORE_LOWERLEG_R, "head" );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_GORE_LOWERLEG_R, "head" );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_GORE_LOWERLEG_R, "head" );
 
 	}
 
@@ -1088,7 +1071,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 	// if our current level is at level 0/1, that means we can dismember this limb up to level 2
 	// Dismember<limb> function accepts true or false, true means this limb will be dismembered to level 3, false means dismembered to level 2
 
-	if ( of_gore.GetBool() )
+	if ( of_gore.GetBool() && m_bGoreEnabled )
 	{
 	switch ( pTrace->hitgroup )
 	{
@@ -1178,9 +1161,9 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		{
 			// Adjust the impact strength and apply the force at the center of mass.
 			if ( iDamageType & DMG_CRITICAL )
-				vecDir *= 3499999;
+				vecDir *= 4999999;
 			else
-				vecDir *= 1999999;
+				vecDir *= 2999999;
 			pPhysicsObject->ApplyForceCenter( vecDir );
 		}
 	}
@@ -1260,10 +1243,15 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	if ( pData )
 	{
 		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
-		if ( pPlayer && pPlayer->m_bRetroMode )
+
+		if ( pPlayer && pPlayer->m_Shared.IsZombie() )
+			nModelIndex = modelinfo->GetModelIndex( pData->GetZombieModelName() );
+		else if ( pPlayer && pPlayer->IsRetroModeOn() )
 			nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
+
 		if (  pPlayer && pPlayer->GetPlayerClass()->UsesCustomModel() )
 			nModelIndex = modelinfo->GetModelIndex( pPlayer->GetPlayerClass()->GetSetCustomModel() );
+
 		SetModelIndex( nModelIndex );
 
 		if ( m_iTeam == TF_TEAM_RED )
@@ -1276,7 +1264,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 		else if ( m_iTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			if ( ofd_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
+			if ( of_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
 				m_nSkin = 6;
 			else
 				m_nSkin = 4;
@@ -1432,6 +1420,20 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 	}
 
+	int iBone = LookupBone( "bip_knee_L" );
+
+	// enable dismemberment if we find this knee, as this is likely a TF2 compatible model then
+	// blame the TFC civilian placeholder for needing to do this
+	if ( iBone != -1 )
+	{
+		m_bGoreEnabled = true;
+	}
+	else
+	{
+		m_bGoreEnabled = false;
+		return;
+	}
+
 	if ( m_bBurning )
 	{
 		m_flBurnEffectStartTime = gpGlobals->curtime;
@@ -1528,7 +1530,7 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			{
 				CreateTFRagdoll();
 
-				if ( of_gore.GetBool() )
+				if ( of_gore.GetBool() && m_bGoreEnabled )
 				{
 					InitDismember();
 				}
@@ -2037,7 +2039,7 @@ public:
 				{
 					Vector critColor = pPlayer->m_vecPlayerColor;
 					critColor *= 255;
-					critColor *= ofd_critglow_saturation.GetFloat();
+					critColor *= of_critglow_saturation.GetFloat();
 					vecColor = critColor;
 				}
 					break;
@@ -2058,7 +2060,7 @@ public:
 	{
 		Assert( m_pResult );
 
-		if ( ofd_tennisball.GetBool() )
+		if ( of_tennisball.GetBool() )
 		{	
 			float r = floorf( TennisBall[0] ) / 255.0f;
 			float g = floorf( TennisBall[1] ) / 255.0f;
@@ -2070,9 +2072,9 @@ public:
 		if ( !pC_BaseEntity )
 		{
 
-			float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
-			float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
-			float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
+			float r = floorf( of_color_r.GetFloat() ) / 255.0f;
+			float g = floorf( of_color_g.GetFloat() ) / 255.0f;
+			float b = floorf( of_color_b.GetFloat() ) / 255.0f;
 			m_pResult->SetVecValue( r, g, b );
 			return;
 		
@@ -2108,7 +2110,7 @@ public:
 	{
 		Assert( m_pResult );
 
-		if ( ofd_tennisball.GetBool() )
+		if ( of_tennisball.GetBool() )
 		{	
 			float r = floorf( TennisBall[0] ) / 255.0f;
 			float g = floorf( TennisBall[1] ) / 255.0f;
@@ -2117,9 +2119,9 @@ public:
 			return;
 		}		
 		
-		float r = floorf( ofd_color_r.GetFloat() ) / 255.0f;
-		float g = floorf( ofd_color_g.GetFloat() ) / 255.0f;
-		float b = floorf( ofd_color_b.GetFloat() ) / 255.0f;
+		float r = floorf( of_color_r.GetFloat() ) / 255.0f;
+		float g = floorf( of_color_g.GetFloat() ) / 255.0f;
+		float b = floorf( of_color_b.GetFloat() ) / 255.0f;
 		m_pResult->SetVecValue( r, g, b );
 	}
 };
@@ -4621,7 +4623,7 @@ int C_TFPlayer::GetSkin()
 		nSkin = 1;
 		break;
 	case TF_TEAM_MERCENARY:
-		if ( ofd_tennisball.GetBool() && IsPlayerClass( TF_CLASS_MERCENARY ) )
+		if ( of_tennisball.GetBool() && IsPlayerClass( TF_CLASS_MERCENARY ) )
 			nSkin = 6;
 		else
 			nSkin = 4;
@@ -4644,7 +4646,7 @@ int C_TFPlayer::GetSkin()
 				nSkin = 3;
 				break;
 			case TF_TEAM_MERCENARY:
-				if ( ofd_tennisball.GetBool() )
+				if ( of_tennisball.GetBool() )
 					nSkin = 7;
 				else
 					nSkin = 5;
@@ -5072,7 +5074,9 @@ void C_TFPlayer::ValidateModelIndex( void )
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
 	{
 		TFPlayerClassData_t *pData = GetPlayerClassData( m_Shared.GetDisguiseClass() );
-		if ( m_bRetroMode )
+		if ( m_Shared.IsZombie() )
+			m_nModelIndex = modelinfo->GetModelIndex( pData->GetZombieModelName() );
+		else if ( m_bRetroMode )
 			m_nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
 		else
 			m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
@@ -5082,7 +5086,9 @@ void C_TFPlayer::ValidateModelIndex( void )
 		C_TFPlayerClass *pClass = GetPlayerClass();
 		if ( pClass )
 		{
-			if ( m_bRetroMode )
+			if ( m_Shared.IsZombie() )
+				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetZombieModelName() );
+			else if ( m_bRetroMode )
 				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetTFCModelName() );
 			else
 				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );

@@ -17,7 +17,7 @@
 
 //----------------------------------------------
 
-extern ConVar ofd_allow_allclass_pickups;
+extern ConVar of_allow_allclass_pickups;
 
 // Network table.
 IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
@@ -88,23 +88,36 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 {
 	Assert( pOther );
 
-	if( !pOther->IsPlayer() )
+	if ( !pOther->IsPlayer() )
 		return;
 
-	if( !pOther->IsAlive() )
+	if ( !pOther->IsAlive() )
 		return;	
 
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		return;
+
 	//Don't let the person who threw this ammo pick it up until it hits the ground.
 	//This way we can throw ammo to people, but not touch it as soon as we throw it ourselves
 	if( GetOwnerEntity() == pOther && m_bAllowOwnerPickup == false )
 		return;
 
 	CBasePlayer *pPlayer = ToBasePlayer( pOther );
-	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !ofd_allow_allclass_pickups.GetBool() ) // Dont let non Mercenary classes pick up weapons unless thats turned on
+
+	CTFPlayer *pTFPlayer = NULL;
+
+	if ( pPlayer )
+		pTFPlayer = ToTFPlayer( pPlayer );
+
+	if ( !pTFPlayer )
 		return;
+
+	if ( pTFPlayer->m_Shared.IsZombie() )
+		return;
+
+	if( !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY) && !of_allow_allclass_pickups.GetBool() ) // Dont let non Mercenary classes pick up weapons unless thats turned on
+		return;
+
 	Assert( pPlayer );
 
 	// bail out early if the weaponid somehow doesn't exist

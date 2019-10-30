@@ -53,23 +53,52 @@ LINK_ENTITY_TO_CLASS( filter_activator_tfteam, CFilterTFTeam );
 //-----------------------------------------------------------------------------
 bool CFilterTFTeam::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 {
-	// is the entity we're asking about on the winning 
-	// team during the bonus time? (winners pass all filters)
-	if (  TFGameRules() &&
-		( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN ) && 
-		( TFGameRules()->GetWinningTeam() == pEntity->GetTeamNumber() ) )
+	if ( TFGameRules() )
 	{
-		// this should open all doors for the winners
-		if ( m_bNegated )
+		// is the entity we're asking about on the winning 
+		// team during the bonus time? (winners pass all filters)
+		if  ( ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN ) && 
+			( TFGameRules()->GetWinningTeam() == pEntity->GetTeamNumber() ) )
 		{
-			return false;
+			// this should open all doors for the winners
+			if ( m_bNegated )
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
 		}
-		else
+
+		// allow enemies to go into the enemy spawn during overtime on Escort
+		if  ( ( TFGameRules()->IsESCGamemode() ) && 
+			( TFGameRules()->InOvertime() ) && 
+			( pEntity->GetTeamNumber() == TF_TEAM_BLUE ) )
 		{
-			return true;
+			if ( m_bNegated )
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		// in infection, we can enter any spawn we want
+		if  ( TFGameRules()->IsInfGamemode() )
+		{
+			if ( m_bNegated )
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
 		}
 	}
-
 	return ( pEntity->GetTeamNumber() == GetTeamNumber() );
 }
 

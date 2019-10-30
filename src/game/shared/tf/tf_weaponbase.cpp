@@ -43,17 +43,16 @@ extern ConVar of_beta_muzzleflash;
 #endif
 
 #if defined (CLIENT_DLL)
-ConVar of_autoreload( "of_autoreload", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automatically reload when not firing." );
+ConVar of_autoreload( "of_autoreload", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automatically reload when not firing." );
 ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Toggles autoswitching when picking up new weapons.");
 #endif
 
 ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles random crits." );
-ConVar ofd_crit_multiplier( "ofd_crit_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
+ConVar of_crit_multiplier( "of_crit_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles infinite ammo." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
 extern ConVar tf_useparticletracers;
-extern ConVar ofd_mutators;
-extern ConVar ofd_multiweapons;
+extern ConVar of_multiweapons;
 //=============================================================================
 //
 // Global functions.
@@ -344,7 +343,7 @@ int CTFWeaponBase::GetPosition( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDamage( void ) const
 {
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+		if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 
@@ -2516,8 +2515,8 @@ bool CTFWeaponBase::CanAttack( void )
 
 #if defined( CLIENT_DLL )
 
-static ConVar	cl_bobcycle( "cl_bobcycle","0.8" );
-static ConVar	cl_bobup( "cl_bobup","0.5" );
+static ConVar	cl_bobcycle( "cl_bobcycle","0.8", FCVAR_ARCHIVE );
+static ConVar	cl_bobup( "cl_bobup","0.5", FCVAR_ARCHIVE );
 
 //-----------------------------------------------------------------------------
 // Purpose: Helper function to calculate head bob

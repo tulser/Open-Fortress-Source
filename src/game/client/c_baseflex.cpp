@@ -1027,10 +1027,6 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 
 	ProcessSceneEvents( false );
 
-	// presume its not alive if its a ragdoll
-	if ( !m_pRagdoll )
-	{
-
 	// check for blinking
 	if (m_blinktoggle != m_prevblinktoggle)
 	{
@@ -1072,8 +1068,6 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 			if (g_flexweight[m_iBlinkR] > 1)
 				g_flexweight[m_iBlinkR] = 2.0 - g_flexweight[m_iBlinkR];
 		}
-	}
-
 	}
 
 	// Drive the mouth from .wav file playback...
@@ -1253,10 +1247,6 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 
 	ProcessSceneEvents( false );
 
-	// presume its not alive if its a ragdoll
-	if ( !m_pRagdoll )
-	{
-
 	// check for blinking
 	if (m_blinktoggle != m_prevblinktoggle)
 	{
@@ -1293,8 +1283,6 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 			g_flexweight[m_iBlinkL] = clamp( g_flexweight[m_iBlinkL] + t, 0.0f, 2.0f );
 			g_flexweight[m_iBlinkR] = clamp( g_flexweight[m_iBlinkR] + t, 0.0f, 2.0f );
 		}
-	}
-
 	}
 
 	// Drive the mouth from .wav file playback...

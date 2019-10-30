@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright ? 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -33,8 +33,7 @@
 
 using namespace vgui;
 
-extern ConVar	ofd_allowteams;
-extern ConVar	ofd_mutators;
+extern ConVar	of_allowteams;
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -309,9 +308,9 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 
 	if (bShow)
 	{
-		if (TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !ofd_allowteams.GetBool() )
+		if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !of_allowteams.GetBool() ) || TFGameRules()->IsInfGamemode() )
 		{
-			gViewPortInterface->ShowPanel(PANEL_DMTEAMSELECT, true);
+			gViewPortInterface->ShowPanel( PANEL_DMTEAMSELECT, true );
 		}
 		else
 		{
@@ -388,7 +387,7 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 	}
 	else
 	{
-		if (TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !ofd_allowteams.GetBool() )
+		if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !of_allowteams.GetBool() ) || TFGameRules()->IsInfGamemode() )
 		{
 			gViewPortInterface->ShowPanel(PANEL_DMTEAMSELECT, false);
 		}
@@ -743,7 +742,7 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "GunGame";
 	else if ( TFGameRules()->InGametype( TF_GAMETYPE_DM ) )
 	{
-		if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+		if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 			GameType = "Instagib";
 	}
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
@@ -755,9 +754,9 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
 		GameType = "Escort";
 	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
-		GameType = "Escort";
+		GameType = "Payload";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
-		GameType = "Infection";
+		GameType = "Coop";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
 		GameType = "Infection";
 	return GameType;
@@ -840,7 +839,7 @@ int CTFDMTeamMenu::GetGamemodeSkin( void )
 		GameType = 3;
 	else if ( TFGameRules()->InGametype( TF_GAMETYPE_DM ) )
 	{
-		if ( ofd_mutators.GetInt() == 1 || ofd_mutators.GetInt() == 2 )
+		if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 			GameType = 2;
 	}
 //	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )

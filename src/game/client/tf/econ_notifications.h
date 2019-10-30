@@ -1,3 +1,7 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+//===========================================================================//
+
 #ifndef ECON_NOTIFICATIONS_H
 #define ECON_NOTIFICATIONS_H
 
@@ -16,14 +20,14 @@ public:
 	CEconNotification();
 	~CEconNotification();
 
-	virtual void	SetText(const char *text);
-	virtual void	AddStringToken(const char *a2, const wchar_t *a3);
-	virtual void	SetKeyValues(KeyValues *a2);
-	virtual void	SetLifetime(float a1, float a3 = 0.0f);
+	virtual void	SetText( const char *text );
+	virtual void	AddStringToken( const char *a2, const wchar_t *a3 );
+	virtual void	SetKeyValues( KeyValues *a2 );
+	virtual void	SetLifetime( float a1, float a3 = 0.0f );
 	virtual float	GetExpireTime();
 	virtual float	GetInGameLifeTime();
-	virtual void	SetIsInUse(bool a2);
-	virtual void	SetSteamID(const CSteamID *a2);
+	virtual void	SetIsInUse( bool a2 );
+	virtual void	SetSteamID( const CSteamID *a2 );
 	virtual void	MarkForDeletion();
 	virtual bool	CanBeTriggered();
 	virtual void	Trigger();
@@ -32,17 +36,16 @@ public:
 	virtual void	Decline();
 
 private:
-	char		sText[64];	//1
-							//2
-	float		fLifetime;	//3
-	KeyValues	*bStrings;	//4
-	bool		bInUse;		//4128
-	CSteamID	pSteamID;	//4116
+	char		sText[64];	
+							
+	float		fLifetime;	
+	KeyValues	*bStrings;	
+	bool		bInUse;		
+	CSteamID	pSteamID;	
 };
 
-static int NotificationQueue_Add(CEconNotification *a1)
+static int NotificationQueue_Add( CEconNotification *a1 )
 {
-	DevMsg("Adding notification\n");
 	return 0;
 }
 

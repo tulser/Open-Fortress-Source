@@ -159,6 +159,12 @@ bool CTFPowerup::ValidTouch( CBasePlayer *pPlayer )
 	{
 		return false;
 	}
+
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );  // And the tf player,       Guess we could just use the tf player, no?
+
+	if ( pTFPlayer && pTFPlayer->m_Shared.IsZombie() )
+		return false;
+
 	return true;
 }
 

@@ -14,7 +14,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar ofd_droppedweapons_glow( "ofd_droppedweapons_glow", "1", FCVAR_ARCHIVE, "Enables/Disables outlines on dropped weapons." );
+ConVar of_droppedweapons_glow( "of_droppedweapons_glow", "1", FCVAR_ARCHIVE, "Enables/Disables outlines on dropped weapons." );
 
 class C_TFDroppedWeapon : public C_BaseAnimating, public ITargetIDProvidesHint
 {
@@ -117,7 +117,7 @@ void C_TFDroppedWeapon::UpdateGlowEffect( void )
 	
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	
-	if ( TFGameRules() && m_bShouldGlow && ofd_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+	if ( TFGameRules() && m_bShouldGlow && of_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
 		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
 	}

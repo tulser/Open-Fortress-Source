@@ -74,6 +74,9 @@ public:
 	
 	bool MyTouch(CBasePlayer *pPlayer)
 	{
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );  // And the tf player,       Guess we could just use the tf player, no?
+		if ( pTFPlayer && pTFPlayer->m_Shared.IsZombie() )
+			return false;
 		if (ITEM_GiveTFMegaAmmoHealth(pPlayer, PackRatios[POWERUP_MEGA]))
 		{
 			CSingleUserRecipientFilter filter(pPlayer);

@@ -199,6 +199,14 @@ void CCaptureFlag::OnDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CCaptureFlag::Spawn( void )
 {
+#ifdef GAME_DLL
+	if ( TFGameRules()->IsInfGamemode() )
+	{
+		UTIL_Remove( this );
+		return;
+	}
+#endif
+
 	// Precache the model and sounds.  Set the flag model.
 	Precache();
 #ifdef GAME_DLL

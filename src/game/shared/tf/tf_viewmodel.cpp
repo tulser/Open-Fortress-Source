@@ -73,8 +73,8 @@ CTFViewModel::~CTFViewModel()
 
 #ifdef CLIENT_DLL
 // TODO:  Turning this off by setting interp 0.0 instead of 0.1 for now since we have a timing bug to resolve
-ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.1", FCVAR_CLIENTDLL );
-ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "0.0", FCVAR_CLIENTDLL );
+ConVar cl_wpn_sway_interp( "cl_wpn_sway_interp", "0.1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
+ConVar cl_wpn_sway_scale( "cl_wpn_sway_scale", "0.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 ConVar viewmodel_offset_x( "viewmodel_offset_x", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );
 ConVar viewmodel_offset_y( "viewmodel_offset_y", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );
 ConVar viewmodel_offset_z( "viewmodel_offset_z", "0", FCVAR_ARCHIVE | FCVAR_USERINFO );

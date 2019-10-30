@@ -125,6 +125,9 @@ void C_TFMusicPlayer::Spawn( void )
 
 void C_TFMusicPlayer::ClientThink( void )
 {
+	if ( TFGameRules() && TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
+		return;
+
 	if ( !bParsed )
 	{
 		SetNextClientThink( CLIENT_THINK_ALWAYS );

@@ -323,6 +323,7 @@ public:
 	void PrintTargetWeaponInfo( void );
 
 	bool DoClassSpecialSkill( void );
+	bool DoZombieLunge( void );
 
 	float GetLastDamageTime( void ) { return m_flLastDamageTime; }
 
@@ -393,8 +394,10 @@ public:
 								// affecting the player at any time.
 								// GoalItems use it to keep track of their own 
 								// mask to apply to a player's item_list
+								
 	int	  trickshot;
 	float last_kill;
+
 	float invincible_finished;
 	float invisible_finished;
 	float super_damage_finished;
@@ -436,6 +439,7 @@ public:
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	void				ManageTFCBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
+	void				ManageZombieWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
 	void				Taunt( void );
@@ -509,6 +513,7 @@ private:
 	// Think.
 	void				TFPlayerThink();
 	void				MedicRegenThink();
+	void				ZombieRegenThink();
 	void				UpdateTimers( void );
 
 	// Taunt.
@@ -647,6 +652,8 @@ public:
 	void				SetMoney( inputdata_t &inputdata );
 	void				InputStripWeapons( inputdata_t &inputdata );
 	void				InputSpeakResponseConcept( inputdata_t &inputdata );
+	void				InputIgnitePlayer( inputdata_t &inputdata );
+	void				InputExtinguishPlayer( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;
 	bool				IsAllowedToPickupWeapons( void ) { return true; }
 	bool				Weapon_CanUse( void ) { return true; }

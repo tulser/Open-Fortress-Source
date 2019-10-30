@@ -8,10 +8,6 @@
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "tier2/tier2.h"
 
-#ifdef CLIENT_DLL
-bool UseHWMorphModels();
-#endif
-
 ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 extern ConVar of_retromode;
@@ -56,7 +52,6 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 {
 	m_szClassName[0] = '\0';
 	m_szModelName[0] = '\0';
-	m_szHWMModelName[0] = '\0';
 	m_szArmModelName[0] = '\0';
 	m_szLocalizableName[0] = '\0';
 	m_flMaxSpeed = 0.0f;
@@ -110,6 +105,9 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	m_szTFCModelName[0] = '\0';
 	m_szTFCArmModelName[0] = '\0';
 
+	m_szZombieModelName[0] = '\0';
+	m_szZombieArmModelName[0] = '\0';
+
 	for (int iTFCWeapon = 0; iTFCWeapon < TF_PLAYER_WEAPON_COUNT; ++iTFCWeapon)
 	{
 		m_aTFCWeapons[iTFCWeapon] = TF_WEAPON_NONE;
@@ -155,16 +153,7 @@ void TFPlayerClassData_t::Parse( const char *szName )
 //-----------------------------------------------------------------------------
 const char *TFPlayerClassData_t::GetModelName() const
 {
-#ifdef CLIENT_DLL
-
-	if ( UseHWMorphModels() )
-	{
-		if ( m_szHWMModelName[0] != '\0' )
-		{
-			return m_szHWMModelName;
-		}
-	}
-	
+#ifdef CLIENT_DLL	
 	return m_szModelName;
 	
 #else
@@ -274,6 +263,9 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szTFCArmModelName, pKeyValuesData->GetString( "tfc_arm_model" ), TF_NAME_LENGTH );
 	Q_strncpy( m_szTFCModelName, pKeyValuesData->GetString( "tfc_model" ), TF_NAME_LENGTH );
 
+	Q_strncpy( m_szZombieArmModelName, pKeyValuesData->GetString( "zombie_arm_model" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szZombieModelName, pKeyValuesData->GetString( "zombie_model" ), TF_NAME_LENGTH );
+
 	// The file has been parsed.
 	m_bParsed = true;
 }
@@ -292,7 +284,9 @@ void InitPlayerClasses( void )
 	Q_strncpy( pClassData->m_szLocalizableName, "undefined", TF_NAME_LENGTH );
 	Q_strncpy( pClassData->m_szTFCModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
 	Q_strncpy( pClassData->m_szTFCArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
-	
+	Q_strncpy( pClassData->m_szZombieModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
+	Q_strncpy( pClassData->m_szZombieArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
+
 	Q_strncpy( pClassData->m_szClassSelectImageRed, "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
 	Q_strncpy( pClassData->m_szClassSelectImageBlue, "class_sel_sm_civilian_blu", TF_NAME_LENGTH );
 	Q_strncpy( pClassData->m_szClassSelectImageMercenary, "class_sel_sm_civilian_mercenary", TF_NAME_LENGTH );
@@ -516,6 +510,19 @@ const char	*CTFPlayerClassShared::GetTFCArmModelName( void ) const
 	return modelFilename;
 }
 
+const char	*CTFPlayerClassShared::GetZombieArmModelName( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
+#else
+	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
+#endif
+	static char modelFilename[ 256 ];
+	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetZombieArmModelName(), sizeof( modelFilename ) );
+	
+	return modelFilename;
+}
+
 const char	*CTFPlayerClassShared::GetSetCustomArmModel( void ) const						
 { 
 #ifdef CLIENT_DLL
@@ -544,6 +551,19 @@ const char	*CTFPlayerClassShared::GetTFCModelName( void ) const
 #endif
 	static char modelFilename[ 256 ];
 	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetTFCModelName(), sizeof( modelFilename ) );
+	
+	return modelFilename;
+}
+
+const char	*CTFPlayerClassShared::GetZombieModelName( void ) const						
+{ 
+#ifdef CLIENT_DLL
+	if ( m_iszSetCustomModel[0] ) return m_iszSetCustomModel;
+#else
+	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomModel.Get() ) );
+#endif
+	static char modelFilename[ 256 ];
+	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetZombieModelName(), sizeof( modelFilename ) );
 	
 	return modelFilename;
 }

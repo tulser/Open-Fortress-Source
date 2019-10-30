@@ -103,10 +103,14 @@ void CRegenerateZone::Touch( CBaseEntity *pOther )
 			if ( pPlayer->GetNextRegenTime() > gpGlobals->curtime )
 				return;
 
-			int iTeam = GetTeamNumber();
+			// no regen in infection
+			if ( TFGameRules()->IsInfGamemode() || TFGameRules()->InStalemate() )
+				return;
 
 			if ( TFGameRules()->State_Get() != GR_STATE_TEAM_WIN )
 			{
+				int iTeam = GetTeamNumber();
+
 				if ( iTeam && ( pPlayer->GetTeamNumber() != iTeam ) )
 					return;
 			}
@@ -116,9 +120,6 @@ void CRegenerateZone::Touch( CBaseEntity *pOther )
 				if ( TFGameRules()->GetWinningTeam() != pPlayer->GetTeamNumber() )
 					return;
 			}
-
-			if ( TFGameRules()->InStalemate() )
-				return;
 
 			Regenerate( pPlayer );
 		}

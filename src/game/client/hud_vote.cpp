@@ -490,6 +490,27 @@ void CVoteSetupDialog::OnCommand(const char *command)
 					}
 				}
 			}
+			else if ( !V_stricmp( "ChangeMutator", szIssueRaw ) )
+			{
+				int nSelectedParam = m_pVoteParameterList->GetSelectedItem();
+				if ( nSelectedParam >= 0 )
+				{
+					// Get selected Mutator
+					int iSelectedParam = m_pVoteParameterList->GetSelectedItem();
+					if ( iSelectedParam >= 0 )
+					{
+						KeyValues *pParameterKeyValues = m_pVoteParameterList->GetItemData( iSelectedParam );
+						if ( pParameterKeyValues )
+						{
+							// Which Mutator?
+							int iMutator = pParameterKeyValues->GetInt( "index" );
+							Q_snprintf( szVoteCommand, sizeof( szVoteCommand ), "callvote %s %i\n;", szIssueRaw, iMutator );
+							engine->ClientCmd( szVoteCommand );
+
+						}
+					}
+				}
+			}
 			else if ( !V_stricmp( "Kick", szIssueRaw ) )
 			{
 				// Get selected Player
@@ -627,6 +648,77 @@ void CVoteSetupDialog::OnItemSelected( vgui::Panel *panel )
 					m_pVoteParameterList->AddItem( 0, pKeyValues );
 					pKeyValues->deleteThis();
 				}
+			}
+			// CHANGE MUTATOR
+			else if ( !V_stricmp( "ChangeMutator", pszIssueRaw ) )
+			{
+				// Get all our available mutators
+				if ( m_pVoteParameterList->GetItemCount() == 0 )
+				{
+					KeyValues *pMutator0 = new KeyValues( "Disabled" );
+					pMutator0->SetString( "Name", "#TF_vote_mutator_disabled" );
+					pMutator0->SetInt( "index", 1 );
+					int iMutator0 = m_pVoteParameterList->AddItem( 0, pMutator0 );
+
+					KeyValues *pMutator1 = new KeyValues( "Instagib Railgun and Crowbar" );
+					pMutator1->SetString( "Name", "#TF_vote_mutator_instagibrailguncrowbar" );
+					pMutator1->SetInt( "index", 2 );
+					int iMutator1 = m_pVoteParameterList->AddItem( 0, pMutator1 );
+
+					KeyValues *pMutator2 = new KeyValues( "Instagib Railgun Only" );
+					pMutator2->SetString( "Name", "#TF_vote_mutator_instagibrailgun" );
+					pMutator2->SetInt( "index", 3 );
+					int iMutator2 = m_pVoteParameterList->AddItem( 0, pMutator2 );
+
+					KeyValues *pMutator3 = new KeyValues( "Clan Arena" );
+					pMutator3->SetString( "Name", "#TF_vote_mutator_clanarena" );
+					pMutator3->SetInt( "index", 4 );
+					int iMutator3 = m_pVoteParameterList->AddItem( 0, pMutator3);
+
+					KeyValues *pMutator4 = new KeyValues( "Unholy Trinity" );
+					pMutator4->SetString( "Name", "#TF_vote_mutator_unholytrinity" );
+					pMutator4->SetInt( "index", 5 );
+					int iMutator4 = m_pVoteParameterList->AddItem( 0, pMutator4 );
+
+					KeyValues *pMutator5 = new KeyValues( "Rocket Arena" );
+					pMutator5->SetString( "Name", "#TF_vote_mutator_rocketarena" );
+					pMutator5->SetInt( "index", 6 );
+					int iMutator5 = m_pVoteParameterList->AddItem( 0, pMutator5 );
+
+					KeyValues *pMutator6 = new KeyValues( "Gun Game" );
+					pMutator6->SetString( "Name", "#TF_vote_mutator_gungame" );
+					pMutator6->SetInt( "index", 7 );
+					int iMutator6 = m_pVoteParameterList->AddItem( 0, pMutator6 );
+
+					// TODO: RANDOMIZER
+
+					pMutator0->deleteThis();
+					pMutator1->deleteThis();
+					pMutator2->deleteThis();
+					pMutator3->deleteThis();
+					pMutator4->deleteThis();
+					pMutator5->deleteThis();
+					pMutator6->deleteThis();
+
+					if ( m_hIssueFont != INVALID_FONT )
+					{
+						m_pVoteParameterList->SetItemFont( iMutator0, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator0, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator1, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator1, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator2, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator2, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator3, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator3, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator4, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator4, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator5, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator5, m_IssueFGColor );
+						m_pVoteParameterList->SetItemFont( iMutator6, m_hIssueFont );
+						m_pVoteParameterList->SetItemFgColor( iMutator6, m_IssueFGColor );
+					}
+				}
+
 			}
 			// KICK
 			else if ( !V_stricmp( "Kick", pszIssueRaw ) )

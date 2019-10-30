@@ -37,7 +37,6 @@ struct TFPlayerClassData_t
 	char		m_szClassName[TF_NAME_LENGTH];
 	char		m_szModelName[TF_NAME_LENGTH];
 	char		m_szArmModelName[TF_NAME_LENGTH];
-	char		m_szHWMModelName[TF_NAME_LENGTH];
 	char		m_szLocalizableName[TF_NAME_LENGTH];
 	float		m_flMaxSpeed;
 	int			m_nMaxHealth;
@@ -54,6 +53,9 @@ struct TFPlayerClassData_t
 	char		m_szTFCArmModelName[TF_NAME_LENGTH];
 	int			m_aTFCWeapons[TF_PLAYER_WEAPON_COUNT];
 	int			m_aTFCBuildable[TF_PLAYER_BUILDABLE_COUNT];
+
+	char		m_szZombieModelName[TF_NAME_LENGTH];
+	char		m_szZombieArmModelName[TF_NAME_LENGTH];
 
 	int			m_nCapNumber;
 	int			m_nMaxAirDashCount;
@@ -87,6 +89,8 @@ struct TFPlayerClassData_t
 	const char *GetArmModelName() const { return m_szArmModelName; }
 	const char *GetTFCModelName() const { return m_szTFCModelName; }
 	const char *GetTFCArmModelName() const  { return m_szTFCArmModelName; }
+	const char *GetZombieModelName() const { return m_szZombieModelName; }
+	const char *GetZombieArmModelName() const  { return m_szZombieArmModelName; }
 	const char *GetClassSelectImageRed() const { return m_szClassSelectImageRed; }
 	const char *GetClassSelectImageBlue() const { return m_szClassSelectImageBlue; }
 	const char *GetClassSelectImageMercenary() const { return m_szClassSelectImageMercenary; }
@@ -129,6 +133,7 @@ public:
 #endif	
 	const char	*GetModelName( void ) const;
 	const char	*GetTFCModelName( void ) const;
+	const char	*GetZombieModelName( void ) const;
 	const char 	*GetSetCustomModel ( void ) const;		
 	bool 		UsesCustomModel ( void );	
 	const char 	*GetSetCustomArmModel ( void ) const;		
@@ -136,6 +141,8 @@ public:
 
 	const char	*GetArmModelName( void ) const;
 	const char	*GetTFCArmModelName( void ) const;
+	const char	*GetZombieArmModelName( void ) const;
+
 	float		GetMaxSpeed( void )						{ return GetPlayerClassData( m_iClass )->m_flMaxSpeed; }
 	int			GetMaxHealth( void )					{ return GetPlayerClassData( m_iClass )->m_nMaxHealth; }
 	int			GetMaxArmor( void )						{ return GetPlayerClassData( m_iClass )->m_nMaxArmor; }

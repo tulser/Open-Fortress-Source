@@ -26,7 +26,7 @@ using namespace vgui;
 
 extern ConVar fraglimit;
 
-ConVar ofd_disablekillcount( "ofd_disablekillcount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the HUD kill counter." );
+ConVar of_disablekillcount( "of_disablekillcount", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the HUD kill counter." );
 
 DECLARE_HUDELEMENT( CTFHudKills );
 
@@ -78,7 +78,7 @@ bool CTFHudKills::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ofd_disablekillcount.GetBool() )
+	if ( !pPlayer || of_disablekillcount.GetBool() )
 	{
 		return false;
 	}

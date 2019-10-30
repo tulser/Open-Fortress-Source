@@ -56,9 +56,9 @@ private:
 ConVar hud_powerup_height( "hud_powerup_height", "35", FCVAR_CHEAT );
 
 extern ConVar cl_flag_return_size;
-extern ConVar ofd_color_r;
-extern ConVar ofd_color_g;
-extern ConVar ofd_color_b;
+extern ConVar of_color_r;
+extern ConVar of_color_g;
+extern ConVar of_color_b;
 
 // Inputs.
 LINK_ENTITY_TO_CLASS( dm_powerup_spawner, C_CondPowerup );
@@ -231,9 +231,9 @@ int C_CondPowerup::DrawModel( int flags )
 	unsigned char ubColor[4];
 	ubColor[3] = 255;
 	float r, g, b;
-	r = ofd_color_r.GetFloat();
-	g = ofd_color_g.GetFloat();
-	b = ofd_color_b.GetFloat();
+	r = of_color_r.GetFloat();
+	g = of_color_g.GetFloat();
+	b = of_color_b.GetFloat();
 	if ( r < TF_GLOW_COLOR_CLAMP && g < TF_GLOW_COLOR_CLAMP && b < TF_GLOW_COLOR_CLAMP )
 	{
 		float maxi = max(max(r, g), b);

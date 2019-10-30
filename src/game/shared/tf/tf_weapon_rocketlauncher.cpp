@@ -79,7 +79,7 @@ BEGIN_DATADESC( CTFCIncendiaryCannon )
 END_DATADESC()
 #endif
 
-ConVar ofd_quad_explode_delay( "ofd_quad_explode_delay", "0.2", FCVAR_REPLICATED, "How long the rocket has to be active for before you can detonate it." );
+ConVar of_quad_explode_delay( "of_quad_explode_delay", "0.2", FCVAR_REPLICATED, "How long the rocket has to be active for before you can detonate it." );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -375,7 +375,7 @@ bool CTFSuperRocketLauncher::DetonateRockets()
 		if ( pTemp )
 		{
 			//This guy will die soon enough.
-			if ( pTemp->IsEffectActive( EF_NODRAW ) || pTemp->m_flCreationTime + ofd_quad_explode_delay.GetFloat() > gpGlobals->curtime )
+			if ( pTemp->IsEffectActive( EF_NODRAW ) || pTemp->m_flCreationTime + of_quad_explode_delay.GetFloat() > gpGlobals->curtime )
 				continue;
 #ifdef GAME_DLL
 			pTemp->Detonate();

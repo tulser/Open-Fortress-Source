@@ -19,7 +19,6 @@
 #include "ilagcompensationmanager.h"
 #endif
 
-extern ConVar ofd_mutators;
 ConVar tf_use_fixed_weaponspreads( "tf_use_fixed_weaponspreads", "1", FCVAR_NOTIFY|FCVAR_REPLICATED, "If set to 1, weapons that fire multiple pellets per shot will use a non-random pellet distribution." );
 // Client specific.
 #ifdef CLIENT_DLL
@@ -199,7 +198,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	fireInfo.m_vecSrc = vecOrigin;
 	if ( flDamage < 0.0f )
 	{
-		if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
+		if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
 		else fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nInstagibDamage;
 	}
 	else

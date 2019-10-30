@@ -40,6 +40,8 @@ public:
 	int GetTimerState( void ){ return m_nState; }
 
 	bool IsTimerPaused( void ) { return m_bTimerPaused; }
+
+	bool		 IsInfectionBeginning( void ) { return m_bInfectionBeginning; }
 	
 #ifdef CLIENT_DLL
 
@@ -55,6 +57,7 @@ public:
 	virtual void SetAutoCountdown( bool bAuto ){ m_bAutoCountdown = bAuto; }
 
 	void		 SetShowInHud( bool bShowInHUD ) { m_bShowInHUD = bShowInHUD; }
+	void		 SetInfectionBeginning( bool bInfectionBeginning ) { m_bInfectionBeginning = bInfectionBeginning; }
 
 	int UpdateTransmitState();
 
@@ -87,7 +90,7 @@ private:
 	
 	void CheckTimeWarnings( void );
 	void SendTimeWarning( int nWarning );
-	
+
 #ifdef CLIENT_DLL
 	virtual void ClientThink();
 	void OnPreDataChanged( DataUpdateType_t updateType );
@@ -135,6 +138,7 @@ private:
 	bool			m_bFire2SecRemain;
 	bool			m_bFire1SecRemain;
 
+	CNetworkVar( bool, m_bInfectionBeginning );
 #ifdef CLIENT_DLL 
 
 	int				m_nOldTimerLength;

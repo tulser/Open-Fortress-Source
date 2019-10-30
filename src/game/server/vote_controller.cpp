@@ -40,8 +40,7 @@ CVoteController *g_voteController = NULL;
 ConVar sv_vote_timer_duration( "sv_vote_timer_duration", "15", FCVAR_NONE, "How long to allow voting on an issue" );
 ConVar sv_vote_command_delay( "sv_vote_command_delay", "2", FCVAR_NONE, "How long after a vote passes until the action happens", false, 0.f, true, 4.5f );
 
-// TODO set this to 1 when voting is finished
-ConVar sv_allow_votes( "sv_allow_votes", "0", FCVAR_NONE, "Allow voting?" );
+ConVar sv_allow_votes( "sv_allow_votes", "1", FCVAR_NONE, "Allow voting?" );
 
 ConVar sv_vote_failure_timer( "sv_vote_failure_timer", "300", FCVAR_NONE, "A vote that fails cannot be re-submitted for this long" );
 #ifdef TF_DLL
@@ -51,6 +50,7 @@ ConVar sv_vote_creation_timer( "sv_vote_creation_timer", "150", FCVAR_NONE, "How
 ConVar sv_vote_quorum_ratio( "sv_vote_quorum_ratio", "0.6", FCVAR_NOTIFY, "The minimum ratio of eligible players needed to pass a vote.  Min 0.5, Max 1.0.", true, 0.1f, true, 1.0f );
 ConVar sv_vote_allow_spectators( "sv_vote_allow_spectators", "0", FCVAR_NONE, "Allow spectators to vote?" );
 ConVar sv_vote_ui_hide_disabled_issues( "sv_vote_ui_hide_disabled_issues", "1", FCVAR_NONE, "Suppress listing of disabled issues in the vote setup screen." );
+ConVar sv_vote_allow_bots( "sv_vote_allow_bots", "0", FCVAR_NONE, "Allow bot votes to count, for debugging." );
 
 static const int k_nKickWatchListMaxDuration = 300;
 
@@ -432,7 +432,7 @@ bool CVoteController::SetupVote( int iEntIndex )
 //-----------------------------------------------------------------------------
 bool CVoteController::CreateVote( int iEntIndex, const char *pszTypeString, const char *pszDetailString )
 {
-	// Terrible Hack:  Dedicated servers pass 99 as the EntIndex
+	// Terrible Hack:  Dedicated servers pass 129 as the EntIndex
 	bool bDedicatedServer = ( iEntIndex == DEDICATED_SERVER ) ? true : false;
 
 	if ( !IsVoteSystemEnabled() )
@@ -828,13 +828,14 @@ bool CVoteController::IsValidVoter( CBasePlayer *pWhom )
 			return false;
 	}
 
-#ifndef DEBUG  // Don't want to do this check for debug builds (so we can test with bots)
-	if ( pWhom->IsBot() )
-		return false;
+	if ( !sv_vote_allow_bots.GetBool() )
+	{
+		if ( pWhom->IsBot() )
+			return false;
 
-	if ( pWhom->IsFakeClient() )
-		return false;
-#endif // DEBUG
+		if ( pWhom->IsFakeClient() )
+			return false;
+	}
 
 	if ( pWhom->IsHLTV() )
 		return false;

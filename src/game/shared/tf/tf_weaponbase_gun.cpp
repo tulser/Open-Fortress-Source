@@ -33,8 +33,6 @@
 
 #endif
 
-extern ConVar ofd_mutators;
-
 //=============================================================================
 //
 // TFWeaponBase Gun tables.
@@ -910,7 +908,7 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
-	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
+	if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
 	else return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 }
 

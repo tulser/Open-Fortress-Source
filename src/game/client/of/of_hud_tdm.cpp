@@ -42,7 +42,7 @@ using namespace vgui;
 
 extern ConVar fraglimit;
 extern ConVar of_arena;
-extern ConVar ofd_disablekillcount;
+extern ConVar of_disablekillcount;
 
 DECLARE_HUDELEMENT( CTFHudTDM );
 
@@ -99,7 +99,7 @@ bool CTFHudTDM::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || ofd_disablekillcount.GetBool() )
+	if ( !pPlayer || of_disablekillcount.GetBool() )
 	{
 		return false;
 	}

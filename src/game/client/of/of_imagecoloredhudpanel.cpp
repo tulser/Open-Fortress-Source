@@ -22,7 +22,7 @@ using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CTFImageColoredHudPanel );
 
-extern ConVar ofd_coloredhud;
+extern ConVar of_coloredhud;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -38,7 +38,7 @@ void CTFImageColoredHudPanel::PaintBackground()
 {
 	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
 
-	if ( !tf_PR || !ofd_coloredhud.GetBool() || ( TFGameRules() && !TFGameRules()->IsDMGamemode() ))
+	if ( !tf_PR || !of_coloredhud.GetBool() || ( TFGameRules() && !TFGameRules()->IsDMGamemode() ))
 	{
 		SetDrawColor(Color(0, 0, 0, 0));
 	}

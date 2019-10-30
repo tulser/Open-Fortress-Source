@@ -98,8 +98,7 @@ BEGIN_DATADESC( CTFCFlameThrower )
 END_DATADESC()
 
 
-extern ConVar ofd_instagib;
-extern ConVar ofd_mutators;
+extern ConVar of_instagib;
 
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
@@ -442,7 +441,7 @@ void CTFFlameThrower::PrimaryAttack()
 #ifdef GAME_DLL
 		// create the flame entity
 		int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-		if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ) iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+		if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, iCustomDmgType );
 #endif

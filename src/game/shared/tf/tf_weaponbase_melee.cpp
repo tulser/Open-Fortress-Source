@@ -20,8 +20,6 @@
 #include "c_tf_player.h"
 #endif
 
-extern ConVar ofd_mutators;
-
 //=============================================================================
 //
 // TFWeaponBase Melee tables.
@@ -47,8 +45,45 @@ END_DATADESC()
 ConVar tf_meleeattackforcescale( "tf_meleeattackforcescale", "80.0", FCVAR_CHEAT | FCVAR_GAMEDLL );
 #endif
 
+ConVar of_melee_ignore_teammates( "of_melee_ignore_teammates", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Sets if melee can attack through teammates or not." );
+
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
+extern ConVar friendlyfire;
+
+class CTraceFilterMeleeIgnoreTeammates : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS( CTraceFilterMeleeIgnoreTeammates, CTraceFilterSimple );
+
+	CTraceFilterMeleeIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam, CBaseEntity *pOwner )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam ), m_hOwner( pOwner )
+	{
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
+
+		if ( pEntity->IsPlayer() )
+		{
+			if ( pEntity == m_hOwner )
+				return false;
+
+			if ( !of_melee_ignore_teammates.GetBool() )
+				return true;
+
+			if ( ( pEntity->GetTeamNumber() == m_iIgnoreTeam && !friendlyfire.GetBool() ) )
+				return false;
+		}
+
+		return true;
+	}
+
+	CBaseEntity *m_hOwner;
+	int m_iIgnoreTeam;
+};
 
 //=============================================================================
 //
@@ -136,9 +171,11 @@ void CTFWeaponBaseMelee::PrimaryAttack()
 
 	// Swing the weapon.
 	Swing( pPlayer );
+	
 #ifdef GAME_DLL
 	pPlayer->trickshot = 0;
 #endif
+
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
 	CTF_GameStats.Event_PlayerFiredWeapon( pPlayer, IsCurrentAttackACritical() );
@@ -267,11 +304,17 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 	Vector vecSwingStart = pPlayer->Weapon_ShootPosition();
 	Vector vecSwingEnd = vecSwingStart + vecForward * range;
 
+	int team = pPlayer->GetTeamNumber();
+	if ( team == TF_TEAM_MERCENARY ) 
+		team = 0;		
+
+	CTraceFilterMeleeIgnoreTeammates meleefilter( pPlayer, COLLISION_GROUP_NONE, team, pPlayer );
+
 	// See if we hit anything.
-	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
+	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &meleefilter, &trace );
 	if ( trace.fraction >= 1.0 )
 	{
-		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, pPlayer, COLLISION_GROUP_NONE, &trace );
+		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &meleefilter, &trace );
 		if ( trace.fraction < 1.0 )
 		{
 			// Calculate the point of intersection of the line (or hull) and the object we hit
@@ -375,7 +418,7 @@ void CTFWeaponBaseMelee::Smack( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
-	if ( ofd_mutators.GetInt() == 0 || ofd_mutators.GetInt() > INSTAGIB_NO_MELEE ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
+	if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage );
 	else return static_cast<float>( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage );
 }
 

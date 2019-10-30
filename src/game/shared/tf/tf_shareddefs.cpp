@@ -139,7 +139,6 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_CP",
 	"#Gametype_PAYLOAD",
 	"#Gametype_ARENA",
-	"#Gametype_KOTH",
 	"#Gametype_MVM",
 	"#Gametype_RD",
 	"#Gametype_PASSTIME",
@@ -150,8 +149,8 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_DOM",
 	"#Gametype_GG",
 	"#Gametype_3WAVE",
-	"#Gametype_COOP",
 	"#Gametype_ZS",
+	"#Gametype_COOP",
 	"#Gametype_INF"
 };
 

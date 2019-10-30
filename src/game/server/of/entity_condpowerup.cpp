@@ -14,8 +14,7 @@
 
 #include "tier0/memdbgon.h"
 
-extern ConVar ofd_mutators;
-extern ConVar ofd_powerups;
+extern ConVar of_powerups;
 
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the powerupspawner
@@ -47,8 +46,8 @@ LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
 
 void CCondPowerup::Spawn( void )
 {
-	if ( ofd_mutators.GetInt() == INSTAGIB || ofd_mutators.GetInt() == INSTAGIB_NO_MELEE ||
-		 !ofd_powerups.GetBool() )
+	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) ||
+		 !of_powerups.GetBool() )
 		return;
 	Precache();
 	if (m_iszPowerupModel==MAKE_STRING( "" )) SetModel( STRING(m_iszPowerupModelOLD)  );

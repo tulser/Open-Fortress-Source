@@ -45,7 +45,7 @@ using namespace vgui;
 #define SCOREBOARD_MAX_LIST_ENTRIES 12
 
 extern bool IsInCommentaryMode( void );
-extern ConVar ofd_allowteams;
+extern ConVar of_allowteams;
 extern ConVar fraglimit;
 extern ConVar of_allow_special_teams;
 //-----------------------------------------------------------------------------
@@ -135,7 +135,7 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
     {
         LoadControlSettings("Resource/UI/scoreboarddm.res");
-		if ( ofd_allowteams.GetBool() )
+		if ( of_allowteams.GetBool() )
 		{
 			m_pPlayerListBlue->SetVisible( true );
 			m_pPlayerListRed->SetVisible( true );			
@@ -204,7 +204,7 @@ void CTFClientScoreBoardDialog::Reset()
 	RemovePlayerList( m_pPlayerListMercenary );
 	if ( TFGameRules() )
 	{
-		if ( !TFGameRules()->IsDMGamemode() || ofd_allowteams.GetBool() || TFGameRules()->IsTeamplay() )
+		if ( !TFGameRules()->IsDMGamemode() || of_allowteams.GetBool() || TFGameRules()->IsTeamplay() )
 		{
 			InitPlayerList( m_pPlayerListBlue );
 			InitPlayerList( m_pPlayerListRed );

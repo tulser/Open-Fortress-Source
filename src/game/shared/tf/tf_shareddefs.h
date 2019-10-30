@@ -206,7 +206,6 @@ enum
 	TF_GAMETYPE_PD, // Player Destruction
 
 	// open fortress
-	TF_GAMETYPE_KOTH, // King of the Hill, doesn't exist in live tf2 but whatever
 	TF_GAMETYPE_ESC, // Escort
 	TF_GAMETYPE_DM, // Deathmatch
 	TF_GAMETYPE_TDM, // Team Deathmatch

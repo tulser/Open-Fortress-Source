@@ -84,7 +84,7 @@ ConVar hud_takesshots( "hud_takesshots", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "
 ConVar hud_freezecamhide( "hud_freezecamhide", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Hides the HUD during death cam." );
 ConVar cl_show_num_particle_systems( "cl_show_num_particle_systems", "0", FCVAR_CLIENTDLL, "Display the number of active particle systems." );
 ConVar of_announcer_override("of_announcer_override", "none", FCVAR_CLIENTDLL | FCVAR_ARCHIVE , "Sets your preffered Announcer." );
-ConVar ofd_announcer_events("ofd_announcer_events", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Weather or not to play special event sounds\nie Humiliation, Impressive, Excellent." );
+ConVar of_announcer_events("of_announcer_events", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Weather or not to play special event sounds\nie Humiliation, Impressive, Excellent." );
 
 extern ConVar v_viewmodel_fov;
 extern ConVar voice_modenable;
@@ -682,7 +682,6 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 	}
 	
 	// If we're voting...
-#ifdef VOTING_ENABLED
 	CHudVote *pHudVote = GET_HUDELEMENT( CHudVote );
 	if ( pHudVote && pHudVote->IsVisible() )
 	{
@@ -691,7 +690,6 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 			return 0;
 		}
 	}
-#endif
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -1073,17 +1071,35 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 				wchar_t wszLocalized[100];
 
 				// show a different string in DM rather than <player> joined team Mercenary
-				if ( team == TF_TEAM_MERCENARY )
+				if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
 				{
-					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_dm_team" ), 2, wszPlayerName, wszTeam );
-				}
-				else if ( bAutoTeamed )
-				{
-					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_autoteam" ), 2, wszPlayerName, wszTeam );
+					if ( team == TF_TEAM_BLUE )
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_zombies" ), 1, wszPlayerName );
+					}
+					else if ( team == TF_TEAM_RED )
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_survivors" ), 1, wszPlayerName );
+					}
+					else
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
+					}
 				}
 				else
 				{
-					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
+					if ( team == TF_TEAM_MERCENARY )
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_dm_team" ), 1, wszPlayerName );
+					}
+					else if ( bAutoTeamed && TFGameRules() && !TFGameRules()->IsInfGamemode() )
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_autoteam" ), 2, wszPlayerName, wszTeam );
+					}
+					else
+					{
+						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
+					}
 				}
 
 				char szLocalized[100];
@@ -1177,7 +1193,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 	}
 	else if (Q_strcmp( "ffa_broadcast_audio", eventname ) == 0 )
 	{
-		if ( !ofd_announcer_events.GetBool() 
+		if ( !of_announcer_events.GetBool() 
 		&& (!strcmp( event->GetString("sound"), "Dominating" )
 		|| !strcmp( event->GetString("sound"), "Revenge" ) 
 		|| !strcmp( event->GetString("sound"), "Impressive" )
@@ -1495,7 +1511,7 @@ const char* ClientModeShared::GetAnnouncer()
 			strcpy(szDefaultAnnouncer, AnnouncerEntity()->szAnnouncer);
 		}
 	}
-	if ( strcmp(of_announcer_override.GetString(), "") || strcmp(of_announcer_override.GetString(), "none") )
+	if ( strcmp(of_announcer_override.GetString(), "") && strcmp( of_announcer_override.GetString(), "none" ) )
 	{
 // 		TODO: Try to save the Default Announcer settings somwhere so we dont need to read it all the time
 		KeyValues* pSupport = new KeyValues( "AnnouncerSupport" );

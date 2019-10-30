@@ -150,7 +150,7 @@ void CTFRailgun::ItemPostFrame( void )
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot )
 		{
-			if ( ofd_mutators.GetInt()==1 ) m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_RAILGUN_CHARGE_PER_SEC, TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
+			if ( of_mutators.GetInt() == 1 ) m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_RAILGUN_CHARGE_PER_SEC, TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
 			else m_flChargedDamage = min( m_flChargedDamage + gpGlobals->frametime * TF_WEAPON_RAILGUN_CHARGE_PER_SEC, TF_WEAPON_RAILGUN_DAMAGE_MAX );
 		}
 		else
@@ -212,7 +212,7 @@ void CTFRailgun::SetRezoom( bool bRezoom, float flDelay )
 float CTFRailgun::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	if ( ofd_mutators.GetInt()==1 ) return max( m_flChargedDamage, TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
+	if ( of_mutators.GetInt()==1 ) return max( m_flChargedDamage, TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
 	else return max( m_flChargedDamage, TF_WEAPON_RAILGUN_DAMAGE_MIN );
 }
 
@@ -269,7 +269,7 @@ bool CTFRailgun::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 float CTFRailgun::GetHUDDamagePerc( void )
 {
-	if ( ofd_mutators.GetInt()==1 ) return ( m_flChargedDamage / TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
+	if ( of_mutators.GetInt()==1 ) return ( m_flChargedDamage / TF_WEAPON_RAILGUN_DAMAGE_INSTAGIB );
 	else return ( m_flChargedDamage / TF_WEAPON_RAILGUN_DAMAGE_MAX );
 }
 #endif

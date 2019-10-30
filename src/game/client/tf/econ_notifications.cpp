@@ -1,8 +1,12 @@
+//========= Copyright Valve Corporation, All rights reserved. ============//
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "econ_notifications.h"
 
 //-----------------------------------------------------------------------------
-// Purpose: constructor
+// Purpose:
 //-----------------------------------------------------------------------------
 CEconNotification::CEconNotification()
 {
@@ -15,30 +19,34 @@ CEconNotification::~CEconNotification()
 {
 }
 
-void CEconNotification::SetText(const char *a2)
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+
+void CEconNotification::SetText( const char *a2 )
 {
-	Q_snprintf(sText, sizeof(sText), a2);
+	Q_snprintf( sText, sizeof( sText ), a2 );
 }
 
-void CEconNotification::AddStringToken(const char *a2, const wchar_t *a3)
+void CEconNotification::AddStringToken( const char *a2, const wchar_t *a3 )
 {
-	if (!bStrings)
+	if ( !bStrings )
 	{
-		bStrings = new KeyValues("CEconNotification");
+		bStrings = new KeyValues( "CEconNotification" );
 	}
-	bStrings->SetWString(a2, a3);
+	bStrings->SetWString( a2, a3 );
 }
 
-void CEconNotification::SetKeyValues(KeyValues *a2)
+void CEconNotification::SetKeyValues( KeyValues *a2 )
 {
-	if (bStrings)
+	if ( bStrings )
 	{
 		bStrings->deleteThis();
 	}
-	bStrings->MakeCopy(a2);
+	bStrings->MakeCopy( a2 );
 }
 
-void CEconNotification::SetLifetime(float a1, float a3/* = 0.0f*/)
+void CEconNotification::SetLifetime( float a1, float a3/* = 0.0f*/ )
 {
 	fLifetime = a1 + a3;
 }
@@ -53,12 +61,12 @@ float CEconNotification::GetInGameLifeTime()
 	return fLifetime;
 }
 
-void CEconNotification::SetIsInUse(bool a2)
+void CEconNotification::SetIsInUse( bool a2 )
 {
 	bInUse = a2;
 }
 
-void CEconNotification::SetSteamID(const CSteamID *a2)
+void CEconNotification::SetSteamID( const CSteamID *a2 )
 {
 	pSteamID = *a2;
 }
@@ -75,7 +83,6 @@ bool CEconNotification::CanBeTriggered()
 
 void CEconNotification::Trigger()
 {
-	;
 }
 
 bool CEconNotification::CanBeAcceptedOrDeclined()
@@ -85,10 +92,8 @@ bool CEconNotification::CanBeAcceptedOrDeclined()
 
 void CEconNotification::Accept()
 {
-	;
 }
 
 void CEconNotification::Decline()
 {
-	;
 }

@@ -44,7 +44,7 @@ ConVar 	of_bunnyhop( "of_bunnyhop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allo
 ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables crouch jumping." );
 ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED , "Max Speed achievable with bunnyhoping." );
 #if defined (CLIENT_DLL)
-ConVar 	ofd_jumpsound( "ofd_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Hough", true, 0, true, 2 );
+ConVar 	of_jumpsound( "of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Hough", true, 0, true, 2 );
 #endif
 
 #define TF_MAX_SPEED   720
@@ -470,6 +470,8 @@ bool CTFGameMovement::CheckJumpButton()
 			return false;
 		if ( of_bunnyhop.GetBool() == 0 )
 			return false;
+		if ( m_pTFPlayer->m_Shared.IsZombie() )
+			return false;
 	}
 	// In air, so ignore jumps (unless you are a scout).
 	if ( !bOnGround )
@@ -543,9 +545,9 @@ bool CTFGameMovement::CheckJumpButton()
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
 #ifdef CLIENT_DLL
-	if ( ofd_jumpsound.GetBool() && TFGameRules() && TFGameRules()->IsDMGamemode() )
+	if ( of_jumpsound.GetBool() && TFGameRules() && TFGameRules()->IsDMGamemode() )
 	{
-		if ( m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || ofd_jumpsound.GetInt() == 2 )
+		if ( m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
 			char jmpSound[128];
 			const char *TFClassName = g_aPlayerClassNames_NonLocalized[ m_pTFPlayer->GetPlayerClass()->GetClassIndex() ];

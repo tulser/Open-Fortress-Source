@@ -1465,8 +1465,11 @@ void CC_HurtMe_f(const CCommand &args)
 	{
 		iDamage = atoi( args[ 1 ] );
 	}
+	
+	// The damage will get halved, so multiply it by 2
+	iDamage = iDamage * 2;
 
-	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_DIRECT ) );
+	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_PREVENT_PHYSICS_FORCE) );
 }
 
 static ConCommand hurtme("hurtme", CC_HurtMe_f, "Hurts the player.\n\tArguments: <health to lose>", FCVAR_CHEAT);

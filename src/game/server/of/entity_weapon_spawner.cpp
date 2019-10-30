@@ -23,10 +23,9 @@
 
 //#define TF_WEAPON_PICKUP_SOUND		"AmmoPack.Touch"
 
-extern ConVar ofd_mutators;
-extern ConVar ofd_multiweapons;
-extern ConVar ofd_weaponspawners;
-extern ConVar ofd_allow_allclass_pickups;
+extern ConVar of_multiweapons;
+extern ConVar of_weaponspawners;
+extern ConVar of_allow_allclass_spawners;
 
 extern ConVar weaponstay;
  
@@ -74,8 +73,8 @@ CWeaponSpawner::CWeaponSpawner()
 void CWeaponSpawner::Spawn( void )
 {
 	m_nRenderFX = kRenderFxNone;
-	if (ofd_weaponspawners.GetInt() >= 1 &&
-		ofd_mutators.GetInt() == 0 && 
+	if (of_weaponspawners.GetInt() >= 1 &&
+		TFGameRules()->IsMutator( NO_MUTATOR ) && 
 		TFGameRules() && 
 		!TFGameRules()->IsGGGamemode())
 	{
@@ -182,6 +181,9 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		if ( !pTFPlayer )
 			return false;
+
+		if ( pTFPlayer->m_Shared.IsZombie() )
+			return false;
 	
 		bSuccess = true;
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  //Get the specified weapon
@@ -199,7 +201,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 						pCarriedWeapon = NULL;				
 					}
 			}
-			else if ( pCarriedWeapon == pWeapon || ( !ofd_allow_allclass_pickups.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) )  // If the weapons are the same or you're a class that cant pickup weapons, get ammo
+			else if ( pCarriedWeapon == pWeapon || ( !of_allow_allclass_spawners.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) )  // If the weapons are the same or you're a class that cant pickup weapons, get ammo
 			{
 				bSuccess = false;
 				if ( pTFPlayer->RestockAmmo(0.5f) ) // Restock your ammo by half ( same as medium ammo pack )

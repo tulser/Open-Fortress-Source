@@ -81,7 +81,6 @@ enum
 #include "tier0/memdbgon.h"
 
 extern bool IsInCommentaryMode();
-extern ConVar ofe_payload_override;
 
 #if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( TF_MOD ) )
 ConVar tf_overtime_nag( "tf_overtime_nag", "0", FCVAR_NOTIFY, "Announcer overtime nag." );
@@ -135,6 +134,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamRoundTimer, DT_TeamRoundTimer )
 	RecvPropBool( RECVINFO( m_bInCaptureWatchState ) ),
 	RecvPropBool( RECVINFO( m_bStopWatchTimer ) ),
 	RecvPropTime( RECVINFO( m_flTotalTime ) ),
+	RecvPropBool( RECVINFO( m_bInfectionBeginning ) ),
 
 #else
 
@@ -154,6 +154,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamRoundTimer, DT_TeamRoundTimer )
 	SendPropBool( SENDINFO( m_bStopWatchTimer ) ),
 	SendPropBool( SENDINFO( m_bInCaptureWatchState ) ),
 	SendPropTime( SENDINFO( m_flTotalTime ) ),
+	SendPropBool( SENDINFO( m_bInfectionBeginning ) ),
 
 #endif
 END_NETWORK_TABLE()
@@ -256,6 +257,8 @@ CTeamRoundTimer::CTeamRoundTimer( void )
 	m_flNextOvertimeNag = 0;
 	m_flLastTime = 0.f;
 #endif
+
+	m_bInfectionBeginning = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -562,6 +565,13 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_5SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
+#ifdef TF_CLIENT_DLL
+			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+			{
+				pszRetVal = MERASMUS_SETUP_5SECS;
+			}
+			else
+#endif
 			{
 				pszRetVal = ROUND_SETUP_5SECS;
 			}
@@ -574,6 +584,13 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_4SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
+#ifdef TF_CLIENT_DLL
+			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+			{
+				pszRetVal = MERASMUS_SETUP_4SECS;
+			}
+			else
+#endif
 			{
 				pszRetVal = ROUND_SETUP_4SECS;
 			}
@@ -586,6 +603,13 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_3SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
+#ifdef TF_CLIENT_DLL
+			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+			{
+				pszRetVal = MERASMUS_SETUP_3SECS;
+			}
+			else
+#endif
 			{
 				pszRetVal = ROUND_SETUP_3SECS;
 			}
@@ -598,6 +622,13 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_2SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
+#ifdef TF_CLIENT_DLL
+			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+			{
+				pszRetVal = MERASMUS_SETUP_2SECS;
+			}
+			else
+#endif
 			{
 				pszRetVal = ROUND_SETUP_2SECS;
 			}
@@ -610,6 +641,13 @@ const char *CTeamRoundTimer::GetTimeWarningSound( int nWarning )
 	case RT_WARNING_1SECS:
 		if ( m_nState == RT_STATE_SETUP )
 		{
+#ifdef TF_CLIENT_DLL
+			if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
+			{
+				pszRetVal = MERASMUS_SETUP_1SECS;
+			}
+			else
+#endif
 			{
 				pszRetVal = ROUND_SETUP_1SECS;
 			}
@@ -639,6 +677,9 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 	if ( TFGameRules() && TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_HIGHTOWER ) )
 		return;
 #endif
+
+	if ( m_bInfectionBeginning )
+		return;
 
 	// don't play sounds if the level designer has turned them off or if it's during the WaitingForPlayers time
 	if ( !m_bTimerPaused && m_bAutoCountdown && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
@@ -706,6 +747,8 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 						bShouldPlaySound = true;
 					}
 				}
+
+#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
 				if ( bShouldPlaySound == true )
 				{
 					bool announcer = true;
@@ -713,6 +756,7 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 						announcer = false;
 					TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetTimeWarningSound( nWarning ), announcer );
 				}
+#endif // TF_CLIENT_DLL
 			}
 		}
 	}
@@ -787,7 +831,7 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		inputdata_t data;
 		InputDisable( data );
 		m_OnSetupFinished.FireOutput( this, this );
-		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() )
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() )
 		{
 			TFGameRules()->PassAllTracks();
 		}
@@ -836,7 +880,7 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		{
 			UTIL_LogPrintf( "World triggered \"Round_Setup_End\"\n" );
 		}
-		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && ofe_payload_override.GetBool() )
+		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() )
 		{
 			TFGameRules()->PassAllTracks();
 		}
@@ -968,6 +1012,20 @@ void CTeamRoundTimer::RoundTimerThink( void )
 
 			SetContextThink( &CTeamRoundTimer::RoundTimerThink, gpGlobals->curtime + 0.05, ROUND_TIMER_THINK );
 			return;
+		}
+
+		if ( TFGameRules() && TFGameRules()->IsInfGamemode() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
+		{ 
+			// this is the 10 sec setup during Infection gamemode
+			if ( m_bInfectionBeginning )
+			{
+				TFGameRules()->BeginInfection();
+				m_bInfectionBeginning = false;
+			}
+			else // this is the end of the timelimit for defenders
+			{
+				TFGameRules()->FinishInfection();
+			}
 		}
 
 		// HACK: in payload override we want to put the timer into overtime if the Civilian is still alive and end the round if he dies during overtime 
@@ -1232,20 +1290,16 @@ void CTeamRoundTimer::AddTimerSeconds( int iSecondsToAdd, int iTeamResponsible /
 				{
 					if ( iTeam == iTeamResponsible )
 					{
-						CTeamRecipientFilter filter( iTeam, true );
-						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_WINNER );
-						
+						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_WINNER );	
 					}
 					else
 					{
-						CTeamRecipientFilter filter( iTeam, true );
 						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_LOSER );
 					}
 				}
 			}
 			else
 			{
-				CReliableBroadcastRecipientFilter filter;
 				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, ROUND_TIMER_TIME_ADDED );
 			}
 		}
