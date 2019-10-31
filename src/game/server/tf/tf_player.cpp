@@ -1035,6 +1035,8 @@ void CTFPlayer::Spawn()
 
 	GetViewModel(TF_VIEWMODEL_ARMS)->m_nSkin = GetTeamNumber() - 2;
 	
+	m_Shared.bWatchReady = false; // Ok so fuck the watch, because for some reason it deploys on equip, this is later used for shit in tf_weapon_invis
+	
 	CreateViewModel();
 	
 	// Kind of lame, but CBasePlayer::Spawn resets a lot of the state that we initially want on.
@@ -3793,7 +3795,7 @@ void CTFPlayer::StartBuildingObjectOfType( int iType, int iAltMode )
 	// early out if we can't build this type of object
 	if ( CanBuild( iType, iAltMode ) != CB_CAN_BUILD )
 		return;
-
+	
 	CTFPlayer *pTargetPlayer = this;
 
 	// if the player has no build PDA, abort the building
@@ -7524,7 +7526,7 @@ void CTFPlayer::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarge
 //-----------------------------------------------------------------------------
 void CTFPlayer::RemoveInvisibility( void )
 {
-	if ( !m_Shared.InCondInvis() || TFGameRules()->IsDMGamemode() )
+	if ( !m_Shared.InCond( TF_COND_STEALTHED ) )
 		return;
 
 	// remove quickly

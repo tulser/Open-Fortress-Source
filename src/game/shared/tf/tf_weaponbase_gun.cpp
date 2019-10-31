@@ -137,6 +137,9 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	if ( !pPlayer )
 		return;
 	
+	if ( !CanAttack() )
+		return;	
+	
 	// Check for ammunition.
 	
 	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
@@ -172,9 +175,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 			return;
 	}
 	else if ( ( FiresInBursts() && m_iShotsDue == 0 ) || ( LoadsManualy() && !InBarrage() ) )
-		return;
-	if ( LoadsManualy() )
-	if ( !CanAttack() )
 		return;
 
 	CalcIsAttackCritical();

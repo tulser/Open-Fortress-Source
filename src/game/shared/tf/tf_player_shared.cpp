@@ -134,6 +134,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropBool( RECVINFO( m_bIsTopThree ) ),
+	RecvPropBool( RECVINFO( bWatchReady ) ),
 	RecvPropBool( RECVINFO( m_bIsZombie ) ),
 	RecvPropInt( RECVINFO( m_nNumHealers ) ),
 	RecvPropInt( RECVINFO( m_iCritMult) ),
@@ -160,6 +161,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( bWatchReady, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
@@ -187,6 +189,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( bWatchReady ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsZombie ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -1419,22 +1422,24 @@ void CTFPlayerShared::OnAddStealthed( void )
 
 	m_flInvisChangeCompleteTime = gpGlobals->curtime + tf_spy_invis_time.GetFloat();
 
-	// set our offhand weapon to be the invis weapon
-	int i;
-	for (i = 0; i < m_pOuter->WeaponCount(); i++) 
+	if ( InCond( TF_COND_STEALTHED ) )
 	{
-		CTFWeaponBase *pWpn = ( CTFWeaponBase *)m_pOuter->GetWeapon(i);
-		if ( !pWpn )
-			continue;
+		// set our offhand weapon to be the invis weapon
+		int i;
+		for (i = 0; i < m_pOuter->WeaponCount(); i++) 
+		{
+			CTFWeaponBase *pWpn = ( CTFWeaponBase *)m_pOuter->GetWeapon(i);
+			if ( !pWpn )
+				continue;
 
-		if ( pWpn->GetWeaponID() != TF_WEAPON_INVIS )
-			continue;
+			if ( pWpn->GetWeaponID() != TF_WEAPON_INVIS )
+				continue;
 
-		// try to switch to this weapon
-		m_pOuter->SetOffHandWeapon( pWpn );
-		break;
+			// try to switch to this weapon
+			m_pOuter->SetOffHandWeapon( pWpn );
+			break;
+		}
 	}
-
 	m_pOuter->TeamFortress_SetSpeed();
 }
 
@@ -1647,13 +1652,12 @@ void CTFPlayerShared::OnSpyTouchedByEnemy( void )
 //-----------------------------------------------------------------------------
 void CTFPlayerShared::FadeInvis( float flInvisFadeTime )
 {
+	bool bNoAttack = false;
+	if ( InCond( TF_COND_STEALTHED ) )
+		bNoAttack = true;
 	RemoveCondInvis();
 
-	if ( flInvisFadeTime < 0.15 )
-	{
-		// this was a force respawn, they can attack whenever
-	}
-	else
+	if ( flInvisFadeTime > 0.15 && bNoAttack ) // this was a force respawn, they can attack whenever
 	{
 		// next attack in some time
 		m_flStealthNoAttackExpire = gpGlobals->curtime + tf_spy_cloak_no_attack_time.GetFloat();
@@ -2978,13 +2982,8 @@ bool CTFPlayer::CanAttack( void )
 
 	Assert( pRules );
 
-	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCondInvis() ) )
-	{
-		if ( m_Shared.InCond( TF_COND_INVIS_POWERUP ) )
-			return true;
-		else
-			return false;
-	}
+	if ( m_Shared.GetStealthNoAttackExpireTime() > gpGlobals->curtime || ( m_Shared.InCond( TF_COND_STEALTHED ) ) )
+		return false;
 
 	if ( ( pRules->State_Get() == GR_STATE_TEAM_WIN ) && ( pRules->GetWinningTeam() != GetTeamNumber() ) )
 	{
@@ -3022,22 +3021,25 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 
 	if ( GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY )
 	{
-		if ( m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime )
+		if ( !m_Shared.InCond( TF_COND_INVIS_POWERUP ) )	
 		{
-			// Toggle invisibility
-			if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+			if ( m_Shared.m_flStealthNextChangeTime <= gpGlobals->curtime )
 			{
-				m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
-				bDoSkill = true;
-			}
-			else if ( CanGoInvisible() && ( m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
-			{
-				m_Shared.AddCond( TF_COND_STEALTHED );
-				bDoSkill = true;
-			}
+				// Toggle invisibility
+				if ( m_Shared.InCond( TF_COND_STEALTHED ) )
+				{
+					m_Shared.FadeInvis( tf_spy_invis_unstealth_time.GetFloat() );
+					bDoSkill = true;
+				}
+				else if ( CanGoInvisible() && ( m_Shared.GetSpyCloakMeter() > 8.0f ) )	// must have over 10% cloak to start
+				{
+					m_Shared.AddCond( TF_COND_STEALTHED );
+					bDoSkill = true;
+				}
 
-			if ( bDoSkill )
-				m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
+				if ( bDoSkill )
+					m_Shared.m_flStealthNextChangeTime = gpGlobals->curtime + 0.5;
+			}
 		}
 	}
 

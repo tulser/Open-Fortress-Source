@@ -276,6 +276,8 @@ private:
 	bool  IsProvidingInvuln( CTFPlayer *pPlayer );
 	void  SetInvulnerable( bool bState, bool bInstant = false );
 #endif
+public:
+	CNetworkVar( bool, bWatchReady );
 
 private:
 

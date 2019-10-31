@@ -94,6 +94,14 @@ bool CTFWeaponInvis::Deploy( void )
 
 	SetWeaponIdleTime( gpGlobals->curtime + 1.5 );
 
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner && !pOwner->m_Shared.bWatchReady )
+	{
+		SetWeaponVisible( false );
+		Holster( NULL );
+		pOwner->m_Shared.bWatchReady = true;
+	}
+	
 	return b;
 }
 
