@@ -654,6 +654,7 @@ public:
 	void				InputSpeakResponseConcept( inputdata_t &inputdata );
 	void				InputIgnitePlayer( inputdata_t &inputdata );
 	void				InputExtinguishPlayer( inputdata_t &inputdata );
+	void				InputSetZombie( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;
 	bool				IsAllowedToPickupWeapons( void ) { return true; }
 	bool				Weapon_CanUse( void ) { return true; }

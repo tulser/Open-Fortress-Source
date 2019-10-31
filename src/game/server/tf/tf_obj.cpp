@@ -1656,7 +1656,6 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 
 	float flDamage = info.GetDamage();
 
-	// No damaging our buildings in coop
     if ( info.GetAttacker()->IsPlayer() && TFGameRules()->IsInfGamemode() )
 	{
 		CTFPlayer *pTFPlayer = ToTFPlayer( info.GetAttacker() );

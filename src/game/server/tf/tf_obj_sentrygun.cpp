@@ -1099,7 +1099,10 @@ bool CObjectSentrygun::Fire()
 		CTFProjectile_SentryRocket *pProjectile = CTFProjectile_SentryRocket::Create( vecSrc, angAimDir, this, GetBuilder() );
 		if ( pProjectile )
 		{
-			pProjectile->SetDamage( 100 );
+			if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
+				pProjectile->SetDamage( 20 );
+			else
+				pProjectile->SetDamage( 100 );
 		}
 
 		// Setup next rocket shot
@@ -1175,7 +1178,11 @@ bool CObjectSentrygun::Fire()
 		info.m_vecSpread = vec3_origin;
 		info.m_flDistance = flDistToTarget + 100;
 		info.m_iAmmoType = m_iAmmoType;
-		info.m_flDamage = tf_sentrygun_damage.GetFloat();
+
+		if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
+			info.m_flDamage = tf_sentrygun_damage.GetFloat() * 0.2;
+		else
+			info.m_flDamage = tf_sentrygun_damage.GetFloat();
 
 		FireBullets( info );
 

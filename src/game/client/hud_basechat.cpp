@@ -1629,7 +1629,7 @@ This is a very long string that I am going to attempt to paste into the cs hud c
 		ansi[ len - 1 ] = '\0';
 	}
 
-	if( len > 0 )
+	if ( len > 0 )
 	{
 		char szbuf[144];	// more than 128
 		Q_snprintf( szbuf, sizeof(szbuf), "%s \"%s\"", m_nMessageMode == MM_SAY ? "say" : "say_team", ansi );
@@ -1730,6 +1730,9 @@ void CBaseHudChat::ChatPrintf( int iPlayerIndex, int iFilter, const char *fmt, .
 	{
 		msg[ strlen( msg ) - 1 ] = 0;
 	}
+	 
+	// Strip any trailing whitespace
+	Q_StripPrecedingAndTrailingWhitespace( msg );
 
 	// Strip leading \n characters ( or notify/color signifiers ) for empty string check
 	char *pmsg = msg;

@@ -40,7 +40,7 @@ ConVar  tf_solidobjects( "tf_solidobjects", "1", FCVAR_REPLICATED | FCVAR_CHEAT 
 ConVar	tf_clamp_back_speed( "tf_clamp_back_speed", "0.9", FCVAR_REPLICATED  );
 ConVar  tf_clamp_back_speed_min( "tf_clamp_back_speed_min", "100", FCVAR_REPLICATED  );
 
-ConVar 	of_bunnyhop( "of_bunnyhop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables bunnyhoping." );
+ConVar 	of_bunnyhop( "of_bunnyhop", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED , "Toggle bunnyhoping.\n-1: Mercenary Only\n0: None\n1:All Classes except Zombies\n2:All Classes including Zombies" );
 ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables crouch jumping." );
 ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED , "Max Speed achievable with bunnyhoping." );
 #if defined (CLIENT_DLL)
@@ -468,9 +468,11 @@ bool CTFGameMovement::CheckJumpButton()
 	{
 		if ( !bOnGround )
 			return false;
-		if ( of_bunnyhop.GetBool() == 0 )
+		if ( of_bunnyhop.GetInt() == 0 )
 			return false;
-		if ( m_pTFPlayer->m_Shared.IsZombie() )
+		if ( of_bunnyhop.GetInt() == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY )
+			return false;
+		if ( m_pTFPlayer->m_Shared.IsZombie() && of_bunnyhop.GetInt() != 2 )
 			return false;
 	}
 	// In air, so ignore jumps (unless you are a scout).

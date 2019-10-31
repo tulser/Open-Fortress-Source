@@ -183,10 +183,10 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 		{
 			CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
-			if ( pPlayer->m_Shared.IsZombie() )
+			if ( pPlayer && pPlayer->m_Shared.IsZombie() )
 			{
-				// zombies only deal x2 more damage on backstabs instead of insta killing
-				flBaseDamage = flBaseDamage * 1.5;
+				// zombies only deal x1.25 more damage on backstabs instead of insta killing
+				flBaseDamage = flBaseDamage * 1.25;
 			}
 			else
 			{
@@ -296,51 +296,18 @@ void CTFKnife::KnifeThink( void )
 	if ( GetActivity() == ACT_VM_IDLE || GetActivity() == ACT_BACKSTAB_VM_IDLE )
 	{
 		trace_t trace;
-		if ( DoSwingTrace( trace ) )
+		if ( CanAttack() && DoSwingTrace( trace ) 
+			&& trace.m_pEnt && IsBehindTarget( trace.m_pEnt ) && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) &&
+			( trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 		{
 			// we will hit something with the attack
-			if ( trace.m_pEnt && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) ) // npcs too!
+			// Deal extra damage to players when stabbing them from behind
+			if ( !m_bReady )
 			{
-				CBaseCombatCharacter *pTarget = trace.m_pEnt->MyCombatCharacterPointer();
+				m_bReady = true;
 
-				if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
-				{
-					// Deal extra damage to players when stabbing them from behind
-					if ( IsBehindTarget( trace.m_pEnt ) && !m_bReady )
-					{
-							m_bReady = true;
+				SendWeaponAnim( ACT_BACKSTAB_VM_UP );
 
-							SendWeaponAnim( ACT_BACKSTAB_VM_UP );
-					}
-				}
-				else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
-				{
-					// Deal extra damage to players when stabbing them from behind
-					if ( IsBehindTarget( trace.m_pEnt ) && !m_bReady )
-					{
-						m_bReady = true;
-
-						SendWeaponAnim( ACT_BACKSTAB_VM_UP );
-					}		
-				}
-				else
-				{
-					if ( m_bReady )
-					{
-						m_bReady = false;
-
-						SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
-					}		
-				}
-			}
-			else
-			{
-				if ( m_bReady )
-				{
-					m_bReady = false;
-
-					SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
-				}		
 			}
 		}
 		else
@@ -350,8 +317,8 @@ void CTFKnife::KnifeThink( void )
 				m_bReady = false;
 
 				SendWeaponAnim( ACT_BACKSTAB_VM_DOWN );
-			}		
-		}
+			}
+		}	
 	}
 }
 

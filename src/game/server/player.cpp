@@ -2831,6 +2831,10 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 	if ( pObject->GetMoveType() != MOVETYPE_VPHYSICS )
 		return false;
 
+	// can't pick up dropped weapons or ammo packs from TF2 players
+	if ( FClassnameIs( pObject, "tf_dropped_weapon" ) || FClassnameIs( pObject, "tf_ammo_pack" ) ) 
+		return false;
+
 	IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
 	int count = pObject->VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
 

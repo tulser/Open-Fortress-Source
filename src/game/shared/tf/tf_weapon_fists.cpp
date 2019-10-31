@@ -81,6 +81,11 @@ void CTFFists::SecondaryAttack()
 	if ( !CanAttack() )
 		return;
 
+	// Get the current player.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return;
+
 	// Set the weapon usage mode - primary, secondary.
 	if ( IsX360() )
 	{
@@ -90,6 +95,8 @@ void CTFFists::SecondaryAttack()
 	{
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	}
+
+	pPlayer->DoClassSpecialSkill();
 
 	Punch();
 }

@@ -306,6 +306,31 @@ bool C_BaseFlex::GetSoundSpatialization( SpatializationInfo_t& info )
 				}
 			}
 		}
+		else
+		{
+			m_iMouthAttachment = LookupAttachment( "eyes" );
+			
+			if ((info.info.nChannel == CHAN_VOICE || info.info.nChannel == CHAN_VOICE2) && m_iMouthAttachment > 0)
+			{
+				Vector origin;
+				QAngle angles;
+				
+				C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, false );
+
+				if (GetAttachment( m_iMouthAttachment, origin, angles ))
+				{
+					if (info.pOrigin)
+					{
+						*info.pOrigin = origin;
+					}
+
+					if (info.pAngles)
+					{
+						*info.pAngles = angles;
+					}
+				}
+			}	
+		}
 	}
 
 	return bret;

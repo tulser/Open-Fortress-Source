@@ -406,7 +406,7 @@ protected:
 	bool		 CheckTimeLimit( bool bAllowEnd = true );
 	int			 GetTimeLeft( void );
 	virtual	bool CheckWinLimit( bool bAllowEnd = true );
-	bool		 CheckMaxRounds( bool bAllowEnd = true );
+	virtual bool CheckMaxRounds( bool bAllowEnd = true );
 
 	void		 CheckReadyRestart( void );
 #if defined(TF_CLIENT_DLL) || defined(TF_DLL)

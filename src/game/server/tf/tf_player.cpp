@@ -318,6 +318,7 @@ BEGIN_DATADESC( CTFPlayer )
 	DEFINE_INPUTFUNC( FIELD_STRING, "SpeakResponseConcept", InputSpeakResponseConcept ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"IgnitePlayer",	InputIgnitePlayer ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"ExtinguishPlayer",	InputExtinguishPlayer ),
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetZombie", InputSetZombie ),
 END_DATADESC()
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
@@ -566,12 +567,7 @@ void CTFPlayer::ZombieRegenThink( void )
 			TakeHealth( 4, DMG_GENERIC );
 		else
 		{
-			// Heal faster if we haven't been in combat for a while
-			float flTimeSinceDamage = gpGlobals->curtime - GetLastDamageTime();
-			float flScale = RemapValClamped( flTimeSinceDamage, 5, 10, 1.0, 3.0 );
-
-			int iHealAmount = ceil(TF_MEDIC_REGEN_AMOUNT * flScale);
-			TakeHealth( iHealAmount, DMG_GENERIC );
+			TakeHealth( 1, DMG_GENERIC );
 		}
 	}
 
@@ -1034,7 +1030,7 @@ void CTFPlayer::Spawn()
 		GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 
 	GetViewModel(TF_VIEWMODEL_ARMS)->m_nSkin = GetTeamNumber() - 2;
-	
+
 	m_Shared.bWatchReady = false; // Ok so fuck the watch, because for some reason it deploys on equip, this is later used for shit in tf_weapon_invis
 	
 	CreateViewModel();
@@ -2750,6 +2746,9 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 				ShowViewPortPanel( PANEL_CLASS_RED );
 			}
 
+			if ( GetTeamNumber() == TF_TEAM_RED && of_forceclass.GetBool() == 1 ) 
+				SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
+
 			return;
 		}
 		else
@@ -2773,16 +2772,16 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		}
 		else
 		{
-				if ( iTeam == TF_TEAM_RED ) 
-				{
-					ShowViewPortPanel( PANEL_CLASS_RED );
-				}
-				else if ( iTeam == TF_TEAM_BLUE ) {
-					ShowViewPortPanel( PANEL_CLASS_BLUE );
-				}
-				else if ( iTeam == TF_TEAM_MERCENARY ) {
-					ShowViewPortPanel( PANEL_CLASS_MERCENARY );
-				}
+			if ( iTeam == TF_TEAM_RED ) 
+			{
+				ShowViewPortPanel( PANEL_CLASS_RED );
+			}
+			else if ( iTeam == TF_TEAM_BLUE ) {
+				ShowViewPortPanel( PANEL_CLASS_BLUE );
+			}
+			else if ( iTeam == TF_TEAM_MERCENARY ) {
+				ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+			}
 		}
 	}	
 }
@@ -2965,7 +2964,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		{
 			int i = 0;
 
-			for ( i = TF_CLASS_SCOUT ; i < TF_CLASS_COUNT_ALL ; i++ )
+			for ( i = TF_CLASS_SCOUT ; i < TF_CLASS_COUNT_ALL-1 ; i++ )
 			{							
 				if ( stricmp( pClassName, GetPlayerClassData( i )->m_szClassName ) == 0 )
 				{
@@ -3003,7 +3002,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 			// their mind and reselects their current class.
 			if ( m_bAllowInstantSpawn && !IsAlive() )
 			{
-			ForceRespawn();
+				ForceRespawn();
 			}
 			return;
 		}	
@@ -3015,6 +3014,9 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		return;
 
 	if ( TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() )
+		return;
+
+	if ( TFGameRules()->IsInfGamemode() && of_forceclass.GetBool() && GetTeamNumber() == TF_TEAM_RED )
 		return;
 	
 	// In case we don't get the class menu message before the spawn timer
@@ -3094,6 +3096,10 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		}
 		return;
 	}
+
+	// failsafe incase the class is somehow still undefined
+	if ( iClass == TF_CLASS_UNDEFINED )
+		iClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_ENGINEER );
 
 	SetDesiredPlayerClassIndex( iClass );
 	IGameEvent * event = gameeventmanager->CreateEvent( "player_changeclass" );
@@ -3795,7 +3801,7 @@ void CTFPlayer::StartBuildingObjectOfType( int iType, int iAltMode )
 	// early out if we can't build this type of object
 	if ( CanBuild( iType, iAltMode ) != CB_CAN_BUILD )
 		return;
-	
+
 	CTFPlayer *pTargetPlayer = this;
 
 	// if the player has no build PDA, abort the building
@@ -4254,27 +4260,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
 		info.SetDamage( flDamage );
-	}
-
-	if ( m_Shared.IsZombie() ) 
-	{
-		if ( info.GetAttacker() && info.GetAttacker()->IsBaseObject() )
-		{
-			// sentry bullets deal much less damage to zombies
-			float flDamage = info.GetDamage() * 0.25;
-			info.SetDamage( flDamage );
-		}
-		else
-		{
-			CTFProjectile_SentryRocket *pSentryRocket = dynamic_cast<CTFProjectile_SentryRocket *>( info.GetAttacker() );
-
-			if ( pSentryRocket )
-			{
-				// sentry rockets deal less damage to zombies
-				float flDamage = info.GetDamage() * 0.3;
-				info.SetDamage( flDamage );
-			}
-		}
 	}
 	
 	// Save damage force for ragdolls.
@@ -5647,6 +5632,10 @@ void CTFPlayer::AmmoPackCleanUp( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropAmmoPack( void )
 {
+	// zombies don't drop these for balance
+	if ( m_Shared.IsZombie() )
+		return;
+
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
@@ -7794,6 +7783,10 @@ bool CTFPlayer::IsValidObserverTarget(CBaseEntity * target)
 		CObserverPoint *pObsPoint = dynamic_cast<CObserverPoint *>(target);
 		if ( pObsPoint && !pObsPoint->CanUseObserverPoint( this ) )
 			return false;
+
+		// so zombies can't cheat
+		if ( TFGameRules()->IsInfGamemode() && target->GetTeamNumber() == TF_TEAM_RED )
+			return false;
 		
 		if ( GetTeamNumber() == TEAM_SPECTATOR )
 			return true;
@@ -7801,7 +7794,7 @@ bool CTFPlayer::IsValidObserverTarget(CBaseEntity * target)
 		switch ( mp_forcecamera.GetInt() )	
 		{
 		case OBS_ALLOW_ALL		:	break;
-		case OBS_ALLOW_TEAM		:	if (target->GetTeamNumber() != TEAM_UNASSIGNED && GetTeamNumber() != target->GetTeamNumber())
+		case OBS_ALLOW_TEAM		:	if ( target->GetTeamNumber() != TEAM_UNASSIGNED && GetTeamNumber() != target->GetTeamNumber() )
 										return false;
 									break;
 		case OBS_ALLOW_NONE		:	return false;
@@ -8097,6 +8090,10 @@ enum
 //-----------------------------------------------------------------------------
 void CTFPlayer::Taunt( void )
 {
+	// No taunting for invisible spies
+	if ( m_Shared.InCondInvis() )
+		return;
+
 	// Check to see if we can taunt again!
 	if ( m_Shared.InCond( TF_COND_TAUNTING ) )
 		return;
@@ -8871,16 +8868,13 @@ void CTFPlayer::InputSpeakResponseConcept( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Ignite a player
+// Purpose:
 //-----------------------------------------------------------------------------
 void CTFPlayer::InputIgnitePlayer( inputdata_t &inputdata )
 {
 	m_Shared.Burn( ToTFPlayer( inputdata.pActivator ), inputdata.value.Float() );
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Extinguish a player
-//-----------------------------------------------------------------------------
 void CTFPlayer::InputExtinguishPlayer( inputdata_t &inputdata )
 {
 	if ( m_Shared.InCond( TF_COND_BURNING ) )
@@ -8889,6 +8883,15 @@ void CTFPlayer::InputExtinguishPlayer( inputdata_t &inputdata )
 
 		m_Shared.RemoveCond( TF_COND_BURNING );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Extinguish a player
+//-----------------------------------------------------------------------------
+void CTFPlayer::InputSetZombie( inputdata_t &inputdata )
+{
+	CommitSuicide( true, true );
+	m_Shared.SetZombie( inputdata.value.Bool() );
 }
 
 //-----------------------------------------------------------------------------
@@ -9763,13 +9766,21 @@ bool CTFPlayer::DoZombieLunge( void )
 
 	// must be crouching to lunge
 	if ( !( GetFlags() & FL_DUCKING ) || !( GetFlags() & FL_ONGROUND ) )
+	{
+		// TODO: Replace with a nicer display
+		ClientPrint( this, HUD_PRINTTALK, "#of_zombie_lunge" );
 		return false;
+	}
 
 	QAngle angDir = EyeAngles();
 
 	// must be facing at least 50 degrees up or more to lunge
-	if ( angDir.x > -50 )
+	if ( angDir.x > -45 )
+	{
+		// TODO: Replace with a nicer display
+		ClientPrint( this, HUD_PRINTTALK, "#of_zombie_lunge" );
 		return false;
+	}
 
 	Vector vecForward, vecRight;
 	Vector velocity;

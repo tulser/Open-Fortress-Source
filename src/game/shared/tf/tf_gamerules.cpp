@@ -148,7 +148,7 @@ ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, 
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
-ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
+ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
 ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
 ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
@@ -2138,6 +2138,8 @@ void CTFGameRules::SetupOnRoundStart( void )
 			{
 				pPlayer->m_Shared.SetZombie( false );
 				pPlayer->ChangeTeam( TF_TEAM_RED, true );
+				if ( of_forceclass.GetBool() == 1 ) 
+					pPlayer->SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 			}
 		}
 
@@ -3482,6 +3484,66 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				GoToIntermission();
 				return true;
 			}
+
+			bool bVote = false;
+
+			// 1 win left? allow voting
+			if ( TFTeamMgr()->GetTeam( TF_TEAM_BLUE )->GetScore() == ( mp_winlimit.GetInt() - 1 ) )
+			{
+				bVote = true;
+			}
+			else if ( TFTeamMgr()->GetTeam( TF_TEAM_RED )->GetScore() == ( mp_winlimit.GetInt() - 1 ) )
+			{
+				bVote = true;
+			}
+			else if ( TFTeamMgr()->GetTeam( TF_TEAM_MERCENARY )->GetScore() == ( mp_winlimit.GetInt() - 1 ) )
+			{
+				bVote = true;
+			}
+
+			if ( bVote && !m_bStartedVote )
+			{
+				DevMsg( "VoteController: One round remaining until winlimit, begin nextlevel voting... \n" );
+				m_bStartedVote = true;
+				//engine->ServerCommand( "callvote nextlevel" );
+				char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+				szEmptyDetails[0] = '\0';
+				g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+			}
+		}
+
+		return false;
+	}
+
+	bool CTFGameRules::CheckMaxRounds( bool bAllowEnd /*= true*/ )
+	{
+		if ( mp_maxrounds.GetInt() > 0 && IsInPreMatch() == false )
+		{
+			if ( m_nRoundsPlayed >= mp_maxrounds.GetInt() )
+			{
+				if ( bAllowEnd )
+				{
+					IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_game_over" );
+					if ( event )
+					{
+						event->SetString( "reason", "Reached Round Limit" );
+						gameeventmanager->FireEvent( event );
+					}
+
+					GoToIntermission();
+				}
+				return true;
+			}
+
+			if ( m_nRoundsPlayed == ( mp_maxrounds.GetInt() - 1  ) && !m_bStartedVote )
+			{
+				DevMsg( "VoteController: One round remaining until maxrounds, begin nextlevel voting... \n" );
+				m_bStartedVote = true;
+				//engine->ServerCommand( "callvote nextlevel" );
+				char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+				szEmptyDetails[0] = '\0';
+				g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+			}
 		}
 
 		return false;
@@ -3722,7 +3784,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
     // Check the team if not in deathmatch
-	if ( IsHL2() )
+	if ( IsHL2() || ( TFGameRules()->IsInfGamemode() && pPlayer->GetTeamNumber() == TF_TEAM_BLUE ) )
 	{
 	}
 	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )

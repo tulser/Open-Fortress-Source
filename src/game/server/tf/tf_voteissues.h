@@ -32,13 +32,12 @@ class CKickIssue : public CBaseTFIssue
 {
 public:
 	virtual bool		IsEnabled( void );							// Query the issue to see if it's enabled
-	virtual bool		CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime );
+	virtual bool		CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime ); // Can this guy hold a vote on this issue?
 	virtual bool		IsTeamRestrictedVote() { return true; }
 	virtual const char	*GetDetailsString( void );
 	virtual const char *GetDisplayString( void );					// The string that will be passed to the client for display
 	virtual void		ExecuteCommand( void );						// Where the magic happens.  Do your thing.
 	virtual const char *GetVotePassedString( void );				// Get the string an issue would like to display whenit passes.
-	virtual bool		GetVoteOptions( CUtlVector <const char*> &vecNames );	// We use this to generate options for voting
 	virtual void		SetIssueDetails( const char *pszDetails );
 
 	CKickIssue() : CBaseTFIssue( "Kick" ) { }
@@ -76,6 +75,7 @@ public:
 	virtual const char *GetDisplayString( void );					// The string that will be passed to the client for display
 	virtual void		ExecuteCommand( void );						// Where the magic happens.  Do your thing.
 	virtual const char *GetVotePassedString( void );				// Get the string an issue would like to display whenit passes.
+	virtual bool		CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime ); // Can this guy hold a vote on this issue?
 
 	CChangeLevelIssue() : CBaseTFIssue( "ChangeLevel" ) { }
 };

@@ -110,6 +110,9 @@ ConVar of_respawn_particle("of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USE
 
 ConVar of_critglow_saturation("of_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is" );
 
+ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Should taunts be performed in firstperson? (cl_first_person_uses_world_model 1 recommended)" );
+extern ConVar cl_first_person_uses_world_model;
+
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
 
@@ -3330,6 +3333,9 @@ void C_TFPlayer::TurnOnTauntCam( void )
 	if ( !IsLocalPlayer() )
 		return;
 
+	if ( tf_taunt_first_person.GetBool() )
+		return;
+
 	// Save the old view angles.
 	engine->GetViewAngles( m_angTauntEngViewAngles );
 	prediction->GetViewAngles( m_angTauntPredViewAngles );
@@ -3364,9 +3370,7 @@ void C_TFPlayer::TurnOffTauntCam( void )
 {
 	if ( !IsLocalPlayer() )
 		return;	
-	
-	
-	
+
 	Vector vecOffset = g_ThirdPersonManager.GetCameraOffsetAngles();
 
 	tf_tauntcam_pitch.SetValue( vecOffset[PITCH] - m_angTauntPredViewAngles[PITCH] );
@@ -5610,4 +5614,12 @@ void C_TFPlayer::ExitLadder()
 	SetMoveCollide( MOVECOLLIDE_DEFAULT );
 	// Remove from ladder
 	/*m_HL2Local.*/m_hLadder = NULL;
+}
+
+void C_TFPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )
+{
+	BaseClass::BuildTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed );
+
+	if ( cl_first_person_uses_world_model.GetBool() )
+		BuildFirstPersonMeathookTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed, "bip_head" );
 }

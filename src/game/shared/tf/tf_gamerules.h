@@ -370,6 +370,7 @@ public:
 
 	bool CheckTimeLimit();
 	bool CheckWinLimit();
+	bool CheckMaxRounds( bool bAllowEnd = true );
 	bool CheckCapsPerRound();
 	void CheckDOMScores( int dom_score_red_old, int dom_score_blue_old );
 

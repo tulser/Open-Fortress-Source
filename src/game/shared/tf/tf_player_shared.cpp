@@ -53,7 +53,7 @@ ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_CHEAT, "Time is
 ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_CHEAT, "Visualize bullet traces." );
 ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30",  FCVAR_CHEAT );
 
-ConVar of_zombie_lunge_delay( "of_zombie_lunge_delay", "15", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much delay, in seconds, before a zombie can lunge again." );
+ConVar of_zombie_lunge_delay( "of_zombie_lunge_delay", "10", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much delay, in seconds, before a zombie can lunge again." );
 #endif
 
 ConVar tf_useparticletracers( "tf_useparticletracers", "1", FCVAR_CHEAT | FCVAR_REPLICATED, "Use particle tracers instead of old style ones." );
@@ -225,6 +225,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
 	m_bIsTopThree = false,
+	bWatchReady = false;
 	m_bIsZombie = false,
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
@@ -2734,6 +2735,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_bHauling )
 		maxfbspeed *= 0.9f;
 
+	// zombies move slightly faster
+	if ( m_Shared.IsZombie() )
+		maxfbspeed *= 1.1f;
+
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );
 }
@@ -2993,6 +2998,7 @@ bool CTFPlayer::CanAttack( void )
 	return true;
 }
 
+
 //-----------------------------------------------------------------------------
 // Purpose: Weapons can call this on secondary attack and it will link to the class
 // ability
@@ -3013,6 +3019,9 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 		}
 		else
 		{
+			// TODO: Replace with a nicer display
+			ClientPrint( this, HUD_PRINTTALK, "#of_zombie_lunge_delay" );
+			return false;
 			CSingleUserRecipientFilter filter( this );
 			EmitSound( filter, entindex(), "Player.DenyWeaponSelection" );
 		}

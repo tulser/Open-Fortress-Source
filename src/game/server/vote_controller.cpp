@@ -196,7 +196,6 @@ ConCommand ListIssues("listissues", CommandListIssues, "List all the issues that
 // Purpose: This should eventually ask the player what team they are voting on
 // to take into account different idle / spectator rules.
 //-----------------------------------------------------------------------------
-
 int GetVoterTeam( CBaseEntity *pEntity )
 {
 	if ( !pEntity )
@@ -246,8 +245,7 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 
 	if ( g_voteController->IsVoteActive() )
 	{
-		ClientPrint( pVoteCaller, HUD_PRINTCONSOLE, "#GameUI_vote_failed_vote_in_progress" );
-
+		g_voteController->SendVoteCreationFailedMessage( VOTE_FAILED_VOTE_IN_PROGRESS, pVoteCaller );
 		return;
 	}
 

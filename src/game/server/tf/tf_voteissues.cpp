@@ -90,15 +90,6 @@ const char *CKickIssue::GetVotePassedString()
 	return "#TF_vote_passed_kick_player";
 }
 
-bool CKickIssue::GetVoteOptions( CUtlVector <const char*> &vecNames )
-{
-	// The default vote issue is a Yes/No vote
-	vecNames.AddToHead( "Yes" );
-	vecNames.AddToTail( "No" );
-
-	return true;
-}
-
 bool CKickIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
 {
 	// string -> int
@@ -107,7 +98,28 @@ bool CKickIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create
 	CBasePlayer *pPlayer = UTIL_PlayerByUserId( m_iPlayerID );
 
 	if ( !pPlayer )
+	{
+		nFailCode = VOTE_FAILED_PLAYERNOTFOUND;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
 		return false;
+	}
+
+	if ( engine->IsDedicatedServer() && pPlayer->IsAutoKickDisabled() == true && !( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+	{
+		nFailCode = VOTE_FAILED_CANNOT_KICK_ADMIN;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+	else if ( gpGlobals->maxClients > 1 )
+	{
+		CBasePlayer *pHostPlayer = UTIL_GetListenServerHost();
+		if ( pPlayer != pHostPlayer )
+		{
+			nFailCode = VOTE_FAILED_CANNOT_KICK_ADMIN;
+			nTime = m_flNextCallTime - gpGlobals->curtime;
+			return false;
+		}
+	}
 
 	return CBaseTFIssue::CanCallVote( nEntIndex, pszDetails, nFailCode, nTime );
 }
@@ -251,6 +263,81 @@ bool CChangeLevelIssue::IsEnabled()
 		return false;
 }
 
+bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
+{
+	// Automated server vote - don't bother testing against it
+	if ( !BRecordVoteFailureEventForEntity( iEntIndex ) )
+		return true;
+
+	// Bogus player
+	if ( iEntIndex == -1 )
+		return false;
+
+	if ( pszDetails[ 0 ] == '\0' )
+	{
+		nFailCode = VOTE_FAILED_MAP_NAME_REQUIRED;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+
+	if ( MultiplayRules()->IsMapInMapCycle( pszDetails ) == false )
+	{
+		nFailCode = VOTE_FAILED_MAP_NOT_FOUND;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+
+	// Note: Issue timers reset on level change because the class is created/destroyed during transitions.
+	// It'd be nice to refactor the basic framework of the system to get rid of side-effects like this.
+	if ( m_flNextCallTime != -1.f && gpGlobals->curtime < m_flNextCallTime )
+	{
+		nFailCode = VOTE_FAILED_ON_COOLDOWN;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+
+	if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() )
+	{
+		nFailCode = VOTE_FAILED_WAITINGFORPLAYERS;
+		return false;
+	}
+
+	// Did this fail recently?
+	for ( int iIndex = 0; iIndex < m_FailedVotes.Count(); iIndex++ )
+	{
+		FailedVote *pCurrentFailure = m_FailedVotes[iIndex];
+		int nTimeRemaining = pCurrentFailure->flLockoutTime - gpGlobals->curtime;
+		bool bFailed = false;
+
+		// If this issue requires a parameter, see if we're voting for the same one again (i.e. changelevel ctf_2fort)
+		if ( Q_strlen( pCurrentFailure->szFailedVoteParameter ) > 0 )
+		{
+			if( nTimeRemaining > 1 && FStrEq( pCurrentFailure->szFailedVoteParameter, pszDetails ) )
+			{
+				bFailed = true;
+			}
+		}
+		// Otherwise we have a parameter-less vote, so just check the lockout timer (i.e. restartgame)
+		else
+		{
+			if( nTimeRemaining > 1 )
+			{
+				bFailed = true;
+
+			}
+		}
+
+		if ( bFailed )
+		{
+			nFailCode = VOTE_FAILED_ON_COOLDOWN;
+			nTime = nTimeRemaining;
+			return false;
+		}
+	}
+
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -328,6 +415,13 @@ bool CNextLevelIssue::IsYesNoVote( void )
 
 bool CNextLevelIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
 {
+	if ( MultiplayRules()->IsMapInMapCycle( pszDetails ) == false )
+	{
+		nFailCode = VOTE_FAILED_MAP_NOT_FOUND;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+
 	return CBaseTFIssue::CanCallVote( nEntIndex, pszDetails, nFailCode, nTime );
 }
 
