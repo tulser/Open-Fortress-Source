@@ -407,7 +407,7 @@ PRECACHE_WEAPON_REGISTER( tf_projectile_pipe_dm );
 //-----------------------------------------------------------------------------
 CTFGrenadePipebombProjectile* CTFGrenadePipebombProjectile::Create( const Vector &position, const QAngle &angles, 
 																    const Vector &velocity, const AngularImpulse &angVelocity, 
-																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, CBaseEntity *pWeapon )
+																    CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, CTFWeaponBase *pWeapon )
 {
 	CTFGrenadePipebombProjectile *pGrenade = static_cast<CTFGrenadePipebombProjectile*>( CBaseEntity::CreateNoSpawn( bRemoteDetonate ? "tf_projectile_pipe_remote" : "tf_projectile_pipe", position, angles, pOwner ) );
 	if ( pGrenade )
@@ -506,6 +506,17 @@ void CTFGrenadePipebombProjectile::Spawn()
 	AddSolidFlags( FSOLID_TRIGGER );
 
 	m_flMinSleepTime = 0;
+}
+
+void CTFGrenadePipebombProjectile::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
+{
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	// HACK HACK HACK
+	// Please if you somehow know how to fix m_hLauncher not being able to get pulled in tf_weaponbase_grenadeproj.cpp
+	// PLEASE fix it, idk ill suck your dick or something, i've been trying to get this to work for over 3 days straight - Kay
+	if ( pTFWeapon ) 
+		pFuckThisShit = pTFWeapon;
+	BaseClass::Explode( pTrace, bitsDamageType, bitsCustomDamageType );
 }
 
 //-----------------------------------------------------------------------------

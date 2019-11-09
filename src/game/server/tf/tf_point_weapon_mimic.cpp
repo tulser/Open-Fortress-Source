@@ -266,7 +266,7 @@ void CTFPointWeaponMimic::FireGrenade()
 {
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( GetAbsOrigin(), GetFiringAngles(), GetFiringOrigin(), 
 		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
-		NULL, *pGrenadeInfo, false, this );
+		NULL, *pGrenadeInfo, false, dynamic_cast<CTFWeaponBase*>(this));
 
 	if ( pProjectile )
 	{
@@ -285,7 +285,7 @@ void CTFPointWeaponMimic::FireStickyGrenade()
 {
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( GetAbsOrigin(), GetFiringAngles(), GetFiringOrigin(), 
 		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
-		NULL, *pStickyBombInfo, true, this );
+		NULL, *pStickyBombInfo, true, dynamic_cast<CTFWeaponBase*>(this) );
 
 	if ( pProjectile )
 	{

@@ -52,6 +52,7 @@ public:
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
 
+	virtual void	UpdateOnRemove( void );
 protected:
 
 	// Networked.

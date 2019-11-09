@@ -572,7 +572,7 @@ void CTFLightningGun::SetParticleEnd()
 	{
 		pOwner->m_pLightningParticle_tp->SetControlPoint( 1, tr.endpos );
 	}
-	if ( m_pLightningParticle && m_pLightningParticle->m_pDef->ReadsControlPoint( 1 ) )
+	if ( m_pLightningParticle && m_pLightningParticle->m_pDef && m_pLightningParticle->m_pDef->ReadsControlPoint( 1 ) )
 	{
 		m_pLightningParticle->SetControlPoint( 1, tr.endpos );
 	}

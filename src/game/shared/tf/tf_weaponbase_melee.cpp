@@ -214,13 +214,13 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 #endif
 	CalcIsAttackCritical();
 
-	// Play the melee swing and miss (whoosh) always.
+	// Play the melee swing and miss (r/whoosh) always.
 	SendPlayerAnimEvent( pPlayer );
 
 	DoViewModelAnimation();
-if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
-	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
+		// Set next attack times.
+		m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 
 	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
 	

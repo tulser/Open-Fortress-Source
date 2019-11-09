@@ -193,6 +193,7 @@ void CTFMinigun::SharedAttack()
 	{
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 	}
+	
 	switch ( m_iWeaponState )
 	{
 	default:
@@ -442,7 +443,26 @@ void CTFMinigun::WindDown( void )
 #endif
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  :  - 
+//-----------------------------------------------------------------------------
+void CTFMinigun::ItemPostFrame()
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+	
+	if ( m_iWeaponState > AC_STATE_IDLE && m_flNextPrimaryAttack < gpGlobals->curtime && !( pOwner->m_nButtons & IN_ATTACK ) && !( pOwner->m_nButtons & IN_ATTACK2 ) )
+	{
+		if ( pOwner )
+		{
+			pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_POST );
+		}
+		WindDown();
+	}
+	BaseClass::ItemPostFrame();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose:

@@ -56,7 +56,7 @@ END_NETWORK_TABLE()
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CTFPipebombLauncher )
-	DEFINE_FIELD(  m_flChargeBeginTime, FIELD_FLOAT )
+	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT )
 END_PREDICTION_DATA()
 #endif
 
@@ -231,6 +231,11 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 	if ( !pPlayer )
 		return;
 
+	BaseClass::PrimaryAttack();
+	m_flChargeBeginTime = 0;
+	m_flLastDenySoundTime = gpGlobals->curtime;
+	return;
+	
 	CalcIsAttackCritical();
 
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
@@ -304,7 +309,7 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
 		}
 
 		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
-		pPipebomb->SetLauncher( this );
+//		pPipebomb->SetLauncher( this );
 
 		PipebombHandle hHandle;
 		hHandle = pPipebomb;
@@ -314,6 +319,13 @@ CBaseEntity *CTFPipebombLauncher::FireProjectile( CTFPlayer *pPlayer )
  #endif
 	}
 
+	CTFGrenadePipebombProjectile *pStickybomb = static_cast<CTFGrenadePipebombProjectile*>( pProjectile );
+	if ( pStickybomb )
+	{
+		// Save the charge time to scale the detonation timer.
+		pStickybomb->SetChargeTime( gpGlobals->curtime - m_flChargeBeginTime );
+	}
+	
 	return pProjectile;
 }
 

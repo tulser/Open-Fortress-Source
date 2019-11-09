@@ -148,7 +148,7 @@ ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, 
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
-ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
+ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3.75", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
 ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
 ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
@@ -200,6 +200,12 @@ ConVar of_grenades	( "of_grenades", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Enables grenades.\n-1 = Depends on Retro mode\n 0 = Forced off\n 1 = Forced on (frags only)\n 2 = Forced on (class-based grenades)" );
 
 ConVar of_navmesh_spawns( "of_navmesh_spawns", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Select random spawns using the navigation mesh on Deathmatch mode" );
+
+ConVar of_randomizer ( "of_randomizer", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, \
+					"Turns on Randomizer, use of_randomizer_setting to set what kind of randomizer you use.");
+
+ConVar of_randomizer_setting( "of_randomizer_setting", "TF2", FCVAR_REPLICATED | FCVAR_NOTIFY, \
+					"Sets which Config randomizer pulls its weapons from.");
 
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
@@ -2630,7 +2636,15 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		if ( pEntity == info.GetAttacker() )
 		{
 			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( info.GetWeapon() );
+			if ( pWeapon )
+			{
+				float flMultiplier = pWeapon->GetTFWpnData().m_nBlastJumpDamageForce / pWeapon->GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage;
+				flNonSelfDamage *= flMultiplier;
+			}
+			
 			CTFPlayer *pSelf = ToTFPlayer(pEntity);
+			
 			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
 				flNonSelfDamage /= ( of_resistance.GetFloat() * 2.0f );
 			if ( pSelf && pSelf->m_Shared.InCondUber() )

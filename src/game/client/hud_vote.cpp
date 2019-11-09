@@ -503,7 +503,7 @@ void CVoteSetupDialog::OnCommand(const char *command)
 						if ( pParameterKeyValues )
 						{
 							// Which Mutator?
-							int iMutator = pParameterKeyValues->GetInt( "index" );
+							int iMutator = pParameterKeyValues->GetInt( "index" ) - 1;
 							Q_snprintf( szVoteCommand, sizeof( szVoteCommand ), "callvote %s %i\n;", szIssueRaw, iMutator );
 							engine->ClientCmd( szVoteCommand );
 

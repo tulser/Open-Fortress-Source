@@ -63,7 +63,7 @@ public:
 
 	// Creation.
 	static CTFGrenadePipebombProjectile *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, CBaseEntity *pWeapon );
+		                                         const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, bool bRemoteDetonate, CTFWeaponBase *pWeapon );
 
 	// Overrides.
 	virtual void	Spawn();
@@ -73,7 +73,7 @@ public:
 	virtual void	Detonate();
 	virtual void	Fizzle();
 
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; };
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 	virtual CBaseEntity *GetLauncher( void ) { return m_hLauncher; };
 
 	void			SetPipebombMode( bool bRemoteDetonate );
@@ -86,6 +86,7 @@ public:
 
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
 
+	virtual void	Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
 
 private:
 

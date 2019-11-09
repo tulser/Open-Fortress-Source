@@ -644,8 +644,24 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 			pPlayer->StopHintTimer( m_iAltFireHint );
 		}
 	}
+#else
+	if ( m_hMuzzleFlashModel[1] ) 
+		m_hMuzzleFlashModel[1]->Release();
+	if ( m_hMuzzleFlashModel[0] ) 
+		m_hMuzzleFlashModel[0]->Release();
 #endif
 	AbortReload();
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	
+	if ( pOwner && GetTFWpnData().m_bDropOnNoAmmo && m_iClip1 <= 0 && m_iReserveAmmo<= 0 )
+	{
+#ifdef GAME_DLL 
+		pOwner->DropWeapon( this, false, true );
+		UTIL_Remove ( this );
+#endif
+	}	
+	
 	return BaseClass::Holster( pSwitchingTo );
 }
 
@@ -894,13 +910,6 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	// If we don't have any ammo, switch to the next best weapon
 	if ( !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
 	{
-		if ( GetTFWpnData().m_bDropOnNoAmmo )
-		{
-#ifdef GAME_DLL 
-			pPlayer->DropWeapon( this, false, true );
-			UTIL_Remove ( this );
-#endif
-		}
 		// weapon isn't useable, switch.
 		if ( ( (GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false ) && ( g_pGameRules->SwitchToNextBestWeapon( pOwner, this ) ) )
 		{
@@ -1307,14 +1316,6 @@ void CTFWeaponBase::ItemPostFrame( void )
 	{
 		return;
 	}
-	if ( GetTFWpnData().m_bDropOnNoAmmo && m_iClip1 <= 0 && m_iReserveAmmo<= 0 )
-	{
-#ifdef GAME_DLL 
-		pOwner->DropWeapon( this, false, true );
-		pOwner->SwitchToNextBestWeapon( this );
-		UTIL_Remove ( this );
-#endif
-	}	
 
 	if ( m_bWindingUp && gpGlobals->curtime >= m_flWindTick )
 		PrimaryAttack();

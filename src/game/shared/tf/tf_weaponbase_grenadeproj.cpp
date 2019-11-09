@@ -5,6 +5,7 @@
 //=============================================================================//
 #include "cbase.h"
 #include "tf_weaponbase_grenadeproj.h"
+#include "tf_weapon_grenade_pipebomb.h"
 #include "tf_gamerules.h"
 
 // Client specific.
@@ -159,7 +160,7 @@ void CTFWeaponBaseGrenadeProj::Spawn()
 void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 {
 	BaseClass::OnDataChanged( type );
-
+	
 	if ( type == DATA_UPDATE_CREATED )
 	{
 		// Now stick our initial velocity into the interpolation history 
@@ -189,13 +190,13 @@ void CTFWeaponBaseGrenadeProj::OnDataChanged( DataUpdateType_t type )
 //-----------------------------------------------------------------------------
 CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, const Vector &position, const QAngle &angles, 
 													   const Vector &velocity, const AngularImpulse &angVelocity, 
-													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags, CBaseEntity *pWeapon)
+													   CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags, CTFWeaponBase *pWeapon)
 {
-	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::Create( szName, position, angles, pOwner ) );
+	CTFWeaponBaseGrenadeProj *pGrenade = static_cast<CTFWeaponBaseGrenadeProj*>( CBaseEntity::CreateNoSpawn( szName, position, angles, pOwner ) );
 	if ( pGrenade )
 	{
 		pGrenade->InitGrenade( velocity, angVelocity, pOwner, weaponInfo, pWeapon);
-		pGrenade->SetLauncher( pWeapon );
+		pGrenade->Spawn();
 	}
 
 	return pGrenade;
@@ -205,7 +206,7 @@ CTFWeaponBaseGrenadeProj *CTFWeaponBaseGrenadeProj::Create( const char *szName, 
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, 
-									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, CBaseEntity *pWeapon )
+									CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, CTFWeaponBase *pWeapon )
 {
 	// We can't use OwnerEntity for grenades, because then the owner can't shoot them with his hitscan weapons (due to collide rules)
 	// Thrower is used to store the person who threw the grenade, for damage purposes.
@@ -241,8 +242,10 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	}
 */
 	if ( pTFWeapon )
+	{
 		WeaponID = pTFWeapon->GetWeaponID();
-
+		SetLauncher( pWeapon );
+	}
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
 	{
@@ -350,8 +353,10 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
-
-	CTakeDamageInfo info( this, GetThrower(), GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pFuckThisShit );
+	CTakeDamageInfo info( this, GetThrower(), pTFWeapon , GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	if ( pTFWeapon ) 
+		info.SetWeapon( pTFWeapon );
 	info.SetDamageCustom( bitsCustomDamageType );
 	float flRadius = GetDamageRadius();
 

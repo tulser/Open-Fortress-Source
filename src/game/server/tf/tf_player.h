@@ -440,6 +440,7 @@ public:
 	void				ManageTFCBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
 	void				ManageZombieWeapons( TFPlayerClassData_t *pData );
+	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
 
 	// Taunts.
 	void				Taunt( void );

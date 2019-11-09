@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "c_tf_projectile_rocket.h"
+#include "tf_weaponbase.h"
 #include "particles_new.h"
 #include "tf_gamerules.h"
 #include "tempent.h"
@@ -42,7 +43,7 @@ C_TFProjectile_Rocket::~C_TFProjectile_Rocket( void )
 void C_TFProjectile_Rocket::OnDataChanged(DataUpdateType_t updateType)
 {
 	BaseClass::OnDataChanged(updateType);
-
+	
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
 		CreateRocketTrails();	

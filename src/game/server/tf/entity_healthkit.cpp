@@ -12,6 +12,8 @@
 #include "engine/IEngineSound.h"
 #include "entity_healthkit.h"
 
+ConVar  of_item_debug("of_item_debug", "0", FCVAR_CHEAT, "Visualize Item bounding boxes." );
+
 //=============================================================================
 //
 // CTF HealthKit defines.
@@ -95,6 +97,12 @@ void CHealthKit::Precache( void )
 bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 {
 	bool bSuccess = false;
+	
+	// Render debug visualization
+	if ( of_item_debug.GetBool() )
+	{
+		NDebugOverlay::EntityBounds(this, 0, 100, 255, 0 ,0) ;
+	}	
 
 	if ( ValidTouch( pPlayer ) )
 	{

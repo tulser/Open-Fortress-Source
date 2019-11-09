@@ -96,6 +96,9 @@ extern ConVar	of_allow_special_classes;
 extern ConVar	of_threewave;
 extern ConVar	of_crit_multiplier;
 
+extern ConVar	of_randomizer;
+extern ConVar	of_randomizer_setting;
+
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
 ConVar tf_playerstatetransitions	( "tf_playerstatetransitions", "-2", FCVAR_CHEAT, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
@@ -1422,7 +1425,9 @@ void CTFPlayer::GiveDefaultItems()
 	else
 	{
 		// Give weapons.
-		if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
+		if ( of_randomizer.GetBool() && ManageRandomizerWeapons( pData ) )
+			DevMsg("Successfully Randomized\n");
+		else if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 			ManageGunGameWeapons( pData );
 		else if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 			ManageInstagibWeapons( pData );
@@ -2218,6 +2223,106 @@ void CTFPlayer::ManageZombieWeapons( TFPlayerClassData_t *pData )
 		Weapon_SetLast( Weapon_GetSlot( pWeaponSlot[1] ) );
 	}
 
+}
+
+bool CTFPlayer::ManageRandomizerWeapons( TFPlayerClassData_t *pData )
+{
+	StripWeapons();
+	KeyValues* pRandomizer = new KeyValues( "Randomizer" );
+	pRandomizer->LoadFromFile( filesystem, "cfg/randomizer.cfg" );
+	if ( !pRandomizer )
+		return false;
+	
+	KeyValues *pWeaponPresets = pRandomizer->FindKey( "weapon_presets" );
+	if ( !pWeaponPresets )
+		return false;
+	
+	KeyValues *pSetting = pWeaponPresets->FindKey( of_randomizer_setting.GetString() );
+	if ( !pSetting )
+		return false;
+	
+	bool bPrimary = false;
+	bool bSecondary = false;
+	bool bMelee = false;
+	
+	for( int i = 0; i < 3; i++ )
+	{
+		bool bFound = false;
+		int  iFailsafe = 0;
+		int  iAllWeapons = TF_WEAPON_COUNT;
+		while ( !bFound )
+		{
+			DevMsg("Test\n");
+//			if ( iFailsafe > iAllWeapons )
+//				return false;
+			int iWeaponID = random->RandomInt( 0, iAllWeapons-1 );
+			if ( pSetting->FindKey( g_aWeaponNames[ iWeaponID ] ) )
+			{
+				CTFWeaponBase *pWeapon = (CTFWeaponBase *)GiveNamedItem( g_aWeaponNames[ iWeaponID ] );
+				if ( !pWeapon )
+				{
+					iFailsafe++;
+					continue;
+				}
+				WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+				CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+				if ( pWeaponInfo )
+				{					
+					switch ( pWeaponInfo->iSlot )
+					{
+						case 0:
+							if ( !bPrimary )
+							{
+								bPrimary = true;
+								bFound = true;
+							}
+							break;
+						case 1:
+							if ( !bSecondary )
+							{
+								bSecondary = true;
+								bFound = true;
+							}
+							break;
+						case 2:
+							if ( !bMelee )
+							{
+								bMelee = true;
+								bFound = true;
+							}
+							break;
+						default:
+							if ( !bPrimary )
+							{
+								bPrimary = true;
+								bFound = true;
+							}
+							else if ( !bSecondary )
+							{
+								bSecondary = true;
+								bFound = true;
+							}
+							else
+								bMelee = true;
+								bFound = true;
+							break;
+					}
+				}
+				if ( bFound )
+					pWeapon->DefaultTouch( this );
+				else
+					UTIL_Remove ( pWeapon );
+				iFailsafe++;
+			}
+		}
+	}
+	
+	SetActiveWeapon( NULL );
+	Weapon_Switch( Weapon_GetSlot( 0 ) );
+	Weapon_SetLast( Weapon_GetSlot( 1 ) );	
+	
+	return true;
+	
 }
 
 //-----------------------------------------------------------------------------

@@ -376,7 +376,6 @@ const char *CChangeMutatorIssue::GetVotePassedString()
 void CChangeMutatorIssue::ExecuteCommand()
 {
 	CBaseTFIssue::ExecuteCommand();
-
 	engine->ServerCommand( UTIL_VarArgs( "of_mutator %s\n", m_szDetailsString ) );
 }
 

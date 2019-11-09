@@ -145,6 +145,22 @@ void CTFBaseRocket::Spawn( void )
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBaseRocket::UpdateOnRemove( void )
+{
+	// Tell our launcher that we were removed
+	CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
+
+	if ( pLauncher )
+	{
+		pLauncher->DeathNotice( this );
+	}
+
+	BaseClass::UpdateOnRemove();
+}
+
 //=============================================================================
 //
 // Client specific functions.
@@ -183,7 +199,7 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 
 		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
 		
-		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
+		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( GetLauncher() );
 
 		if ( pLauncher )
 		{
@@ -376,7 +392,8 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 	Vector vecReported = GetOwnerEntity() ? GetOwnerEntity()->GetAbsOrigin() : vec3_origin;
 
 	CTakeDamageInfo info( this, GetOwnerEntity(), vec3_origin, vecOrigin, GetDamage(), bitsDamageType, 0, &vecReported );
-
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetLauncher() );
+	info.SetWeapon( pTFWeapon );
 	float flRadius = GetRadius();
 
 	if ( tf_rocket_show_radius.GetBool() )
@@ -437,10 +454,10 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	}
 
 	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetLauncher() );
+	info.SetWeapon( pTFWeapon );
 	info.SetDamageCustom( GetCustomDamageType() );
 	float flRadius = GetRadius();
-	if ( m_hWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM )
-		flRadius *= 0.75;
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 
 	// Debug!

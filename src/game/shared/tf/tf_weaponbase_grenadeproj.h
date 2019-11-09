@@ -34,7 +34,7 @@ public:
 	virtual void			Spawn();
 	virtual void			Precache();
 
-	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, CBaseEntity *pWeapon );
+	void					InitGrenade( const Vector &velocity, const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, CTFWeaponBase *pWeapon );
 
 	// Unique identifier.
 	virtual int GetWeaponID( void ) const { return TF_WEAPON_NONE; }
@@ -51,11 +51,9 @@ public:
 	
 	virtual int			GetDamageType();
 	virtual int			GetCustomDamageType();
-	
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
-	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
-public:
-		CNetworkHandle( CBaseEntity, m_hLauncher );	
+
+	CNetworkHandle( CBaseEntity, m_hLauncher );
+		
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
@@ -81,7 +79,7 @@ public:
 
 	static CTFWeaponBaseGrenadeProj *Create( const char *szName, const Vector &position, const QAngle &angles, 
 				const Vector &velocity, const AngularImpulse &angVelocity, 
-				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags, CBaseEntity *pWeapon );
+				CBaseCombatCharacter *pOwner, const CTFWeaponInfo &weaponInfo, int iFlags, CTFWeaponBase *pWeapon );
 
 	int						OnTakeDamage( const CTakeDamageInfo &info );
 
@@ -96,15 +94,20 @@ public:
 	void					SetTimer( float time ){ m_flDetonateTime = time; }
 	float					GetDetonateTime( void ){ return m_flDetonateTime; }
 
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
+	virtual CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
+	
 	void					SetDetonateTimerLength( float timer );
 
 	void					VPhysicsUpdate( IPhysicsObject *pPhysics );
 
-	void					Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
+	virtual void			Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
 
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
 
+	CTFWeaponBase *pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
+	
 protected:
 
 	void					DrawRadius( float flRadius );

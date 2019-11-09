@@ -64,7 +64,7 @@ public:
 	virtual void	HandleFireOnEmpty( void );
 	virtual void	WeaponReset( void );
 	
-	
+	virtual void	ItemPostFrame( void );
 	virtual bool	IsChainGun() const { return false; }
 
 #ifdef GAME_DLL

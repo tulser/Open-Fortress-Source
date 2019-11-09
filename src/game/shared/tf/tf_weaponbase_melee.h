@@ -53,7 +53,7 @@ public:
 
 	virtual void	DoViewModelAnimation( void );
 
-	bool DoSwingTrace( trace_t &tr );
+	virtual bool DoSwingTrace( trace_t &tr );
 	virtual void	Smack( void );
 
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );

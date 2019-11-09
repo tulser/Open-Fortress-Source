@@ -13,6 +13,7 @@
 #include "in_buttons.h"
 #include "tf_gamerules.h"
 #include "of_projectile_bfg.h"
+#include "tf_weapon_grenade_pipebomb.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -22,7 +23,6 @@
 	#include "te_effect_dispatch.h"
 
 	#include "tf_projectile_rocket.h"
-	#include "tf_weapon_grenade_pipebomb.h"
 	#include "te.h"
 	#include "of_projectile_tripmine.h"
 
@@ -55,6 +55,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
 #endif
 #if defined( CLIENT_DLL )
 	DEFINE_FIELD(m_bSwapFire, FIELD_INTEGER ),
+	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT )
 #endif
 END_PREDICTION_DATA()
 
@@ -213,15 +214,21 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 #ifdef GAME_DLL
 	int kqly = pPlayer->trickshot;
 #endif
+
 	FireProjectile( pPlayer );
+	
 #ifdef GAME_DLL
 	if ( kqly == pPlayer->trickshot )
 		pPlayer->trickshot = 0;
 #endif
 	// Set next attack times.
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
-		m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-
+	{
+		if( Clip1() <= 0 && ReserveAmmo() <= 0 )
+			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->m_flLastShotDelay;
+		else
+			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	}
 	// Don't push out secondary attack, because our secondary fire
 	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
 	//m_flNextSecondaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
@@ -760,8 +767,8 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + vecRight;
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity,
-		AngularImpulse( 0, 0, 0 ),
-		pPlayer, GetTFWpnData(), bRemoteDetonate, this );
+	AngularImpulse( 0, 0, 0 ),
+	pPlayer, GetTFWpnData(), bRemoteDetonate, this );
 
 	if ( pProjectile )
 	{
@@ -1039,8 +1046,11 @@ void CTFWeaponBaseGun::ZoomOutIn( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::DoViewModelAnimation( void )
 {
-
-	Activity act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_PRIMARYATTACK_CRIT : ACT_VM_PRIMARYATTACK;
+	Activity act;
+	if ( m_pWeaponInfo->m_bLastShotAnim && Clip1() <= 0 && ReserveAmmo() <= 0 )
+		act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_LAST_PRIMARYATTACK_CRIT : ACT_VM_LAST_PRIMARYATTACK;
+	else
+		act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_PRIMARYATTACK_CRIT : ACT_VM_PRIMARYATTACK;
 	SendWeaponAnim( act );
 }
 

@@ -87,6 +87,10 @@ public:
 
 	int		m_iWeaponType;
 	
+	float 	m_nBlastJumpDamageForce;
+	float 	m_flLastShotDelay;
+	bool	m_bLastShotAnim;
+	
 	// Grenade.
 	bool	m_bGrenade;
 	float	m_flDamageRadius;

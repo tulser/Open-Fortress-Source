@@ -93,6 +93,7 @@ public:
 private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );	
+	float	m_flChargeBeginTime;
 	
 public:
 	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }

@@ -139,7 +139,7 @@ CBaseEntity *CTFRocketLauncher::FireProjectile( CTFPlayer *pPlayer )
 	{
 #ifdef GAME_DLL
 		CTFBaseRocket *pRocket = (CTFBaseRocket*)pProjectile;
-		pRocket->SetLauncher( this );
+//		pRocket->SetLauncher( this );
 
 		RocketHandle hHandle;
 		hHandle = pRocket;

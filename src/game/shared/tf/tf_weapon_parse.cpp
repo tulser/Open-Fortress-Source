@@ -234,6 +234,10 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 		m_iWeaponType = TF_WPN_TYPE_PDA;
 	}
 
+	m_nBlastJumpDamageForce	= pKeyValuesData->GetInt( "BlastJumpDamageForce", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage );
+	m_flLastShotDelay = pKeyValuesData->GetFloat( "LastShotTimeFireDelay", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay );
+	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
+	
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );
 	m_flDamageRadius		= pKeyValuesData->GetFloat( "DamageRadius", -1.0f );

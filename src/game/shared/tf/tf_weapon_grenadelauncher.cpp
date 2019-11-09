@@ -137,6 +137,8 @@ int CTFGrenadeLauncher::GetDefaultClip1( void ) const
 //-----------------------------------------------------------------------------
 void CTFGrenadeLauncher::PrimaryAttack( void )
 {
+	BaseClass::PrimaryAttack();
+	return;
 	// Check for ammunition.
 	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
 		return;
@@ -215,8 +217,8 @@ CBaseEntity *CTFGrenadeLauncher::FireProjectile( CTFPlayer *pPlayer )
 #ifdef GAME_DLL
 		// If we've gone over the max pipebomb count, detonate the oldest
 
-		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
-		pPipebomb->SetLauncher( this );
+//		CTFGrenadePipebombProjectile *pPipebomb = (CTFGrenadePipebombProjectile*)pProjectile;
+//		pPipebomb->SetLauncher( this );
  #endif
 	}
 
