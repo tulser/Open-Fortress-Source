@@ -974,7 +974,9 @@ void CBaseHudChat::MsgFunc_VoiceSubtitle( bf_read &msg )
 	if ( !cl_showtextmsg.GetInt() )
 		return;
 
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+	// TODO: when spam checks are added, uncomment this if
+
+	// if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return;
 
 	char szString[2048];

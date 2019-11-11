@@ -225,6 +225,8 @@ public:
 	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }
 	void				InputForceDropPhysObjects( inputdata_t &data );
 
+	void				DropZombieAmmoHealth( void );
+
 	int					BuildObservableEntityList( void );
 	virtual int			GetNextObserverSearchStartPoint( bool bReverse ); // Where we should start looping the player list in a FindNextObserverTarget call
 	virtual CBaseEntity *FindNextObserverTarget(bool bReverse);
@@ -352,6 +354,8 @@ public:
 
 	virtual bool CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
+	virtual bool	IsAirBlast( void ) const { return true; }
+
 	Vector 	GetClassEyeHeight( void );
 
 	// HL2 ladder related methods
@@ -441,7 +445,7 @@ public:
 	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
 	void				ManageZombieWeapons( TFPlayerClassData_t *pData );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
-
+	
 	// Taunts.
 	void				Taunt( void );
 	bool				IsTaunting( void ) { return m_Shared.InCond( TF_COND_TAUNTING ); }

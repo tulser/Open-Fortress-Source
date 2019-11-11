@@ -59,7 +59,6 @@ enum
 	UNHOLY_TRINITY = 4,
 	ROCKET_ARENA = 5,
 	GUN_GAME = 6,
-	RANDOMIZER = 7,
 };
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy

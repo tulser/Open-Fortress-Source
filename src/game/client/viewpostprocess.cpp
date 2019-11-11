@@ -1438,14 +1438,6 @@ static float GetBloomAmount( void )
 		bBloomEnabled = false;
 	}
 
-	// Force HDR on as LDR is not supported
-	ConVarRef pHDRLevel( "mat_hdr_level" );
-	if ( pHDRLevel.GetInt() < 2 )
-	{
-		Warning( "HDR is forced on in Open Fortress. HDR was found disabled, re-enabling HDR...\n" );
-		pHDRLevel.SetValue( 2 );
-	}
-
 	if( !g_pMaterialSystemHardwareConfig->CanDoSRGBReadFromRTs() && g_pMaterialSystemHardwareConfig->FakeSRGBWrite() )
 	{
 		bBloomEnabled = false;		

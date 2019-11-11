@@ -347,6 +347,8 @@ static int64_t startTimestamp = time(0);
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
 #endif
 
+ConVar of_picmip( "of_picmip", "0", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.");
+ConVar of_prop_fading( "of_prop_fading", "1", FCVAR_ARCHIVE, "Enable or disable prop fading. Requires game restart when changed. Enabling this will disable the -makedevshots functions.");
 
 // Physics system
 bool g_bLevelInitialized;
@@ -1066,14 +1068,6 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	{
 		return false;
 	}
-
-	// Force HDR on as LDR is not supported
-	ConVarRef pHDRLevel( "mat_hdr_level" );
-	if ( pHDRLevel.GetInt() < 2 )
-	{
-		Warning( "HDR is forced on in Open Fortress. HDR was found disabled, re-enabling HDR...\n" );
-		pHDRLevel.SetValue( 2 );
-	}
 	
 	AddRequiredSearchPaths();
 
@@ -1081,13 +1075,6 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 	if (CommandLine()->FindParm("-textmode"))
 		g_bTextMode = true;
-
-
-	// Why is -nopropfading here? Prop fading cannot be disabled without engine access,
-	// However the -makedevshots does disable prop fading in the engine
-	// Therefore I added this param to cancel out any -makedevshots behaviour
-	if ( CommandLine()->FindParm("-makedevshots") && !CommandLine()->FindParm("-nopropfading") )
-		g_MakingDevShots = true;
 
 	// Not fatal if the material system stub isn't around.
 	materials_stub = (IMaterialSystemStub*)appSystemFactory(MATERIAL_SYSTEM_STUB_INTERFACE_VERSION, NULL);
@@ -1217,16 +1204,41 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	g_discordrpc.Init();
 #endif
 
-	ConVar *mat_picmip = NULL;
-	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
-	if ( mat_picmip )
+
+	// -------------------------------------------------------
+	// Hijack some engine convars and tweak them to our liking
+	// -------------------------------------------------------
+
+	// Don't allow DXLevel to be changed in game, only from -dxlevel launch parameter
+	// This essentially removes DirectX 8 from existence
+	ConVar *mat_dxlevel = NULL;
+	mat_dxlevel = g_pCVar->FindVar( "mat_dxlevel" );
+	if ( mat_dxlevel )
 	{
-		// HACK! overwrite the engine clamp values of mat_picmip
-		mat_picmip->SetMin( -10.0f );
-		mat_picmip->SetMax( 10.0f );
+		if ( mat_dxlevel->GetInt() > 50 && mat_dxlevel->GetInt() < 90 )
+			Error( "Open Fortress cannot be ran in DirectX 8 or lower.\nPut -dxlevel 95 into the launch parameters of your game, start the game once and then remove this launch parameter afterwards, so it's permanently saved." );
 
-
+		mat_dxlevel->Nuke();
 	}
+
+	// Force HDR to be always on
+	ConVar *mat_hdr_level = NULL;
+	mat_hdr_level = g_pCVar->FindVar( "mat_hdr_level" );
+	if ( mat_hdr_level )
+	{
+		mat_hdr_level->SetValue( 2 );
+		mat_hdr_level->Nuke();
+	}
+
+	// Allow this command to be used without requiring cheats, for fun
+	ConVar *mat_showlowresimage = NULL;
+	mat_showlowresimage = g_pCVar->FindVar( "mat_showlowresimage" );
+	if ( mat_showlowresimage )
+	{
+		mat_showlowresimage->SetFlags( FCVAR_NONE );
+	}
+
+	// mat_picmip is handled in PostInit() instead
 
 	return true;
 }
@@ -1296,6 +1308,48 @@ void CHLClient::PostInit()
 	}
 #endif
 
+	// What is the reasoning for this mess?
+	// The engine clamps mat_picmip to -1 - 2 every rendering frame and we don't have access to change this
+	// Therefore we set the desired picmip from another convar and then immediately nuke it on the same frame
+	// So the engine doesn't have time to clamp, and it will stay at that level permanently
+	if ( of_picmip.GetInt() != 0 ) 
+	{
+		ConVar *mat_picmip = NULL;
+		mat_picmip = g_pCVar->FindVar( "mat_picmip" );
+
+		if ( mat_picmip )
+		{
+			int iPicmip = of_picmip.GetInt();
+
+			if ( iPicmip < -10 )
+				iPicmip = -10;
+			else if ( iPicmip > 10 )
+				iPicmip = 10;
+
+			ConColorMsg( Color( 170, 255, 170, 255 ), "[Engine] Hijacking mat_picmip with a value of %i...\n", iPicmip );
+
+			// hijack the convar's clamp values to use our own range
+			mat_picmip->SetMin( -10.0f );
+			mat_picmip->SetMax( 10.0f );
+			mat_picmip->SetValue( iPicmip );
+
+			// delete the convar
+			mat_picmip->Nuke();
+		}
+	}
+
+	// Why is the of_prop_fading convar here? Prop fading cannot be disabled without engine access,
+	// However the -makedevshots does disable prop fading in the engine
+	// Therefore I added this param to cancel out any -makedevshots behaviour
+	if ( CommandLine()->FindParm("-makedevshots") && of_prop_fading.GetBool() )
+		g_MakingDevShots = true;
+
+	if ( !of_prop_fading.GetBool() )
+	{
+		ConColorMsg( Color( 170, 255, 170, 255 ), "[Engine] Disabling static prop fading because of_prop_fading is set to 0...\n" );
+		CommandLine()->AppendParm( "-makedevshots", NULL ); 
+		CommandLine()->AppendParm( "-usedevshotsfile", "nospf.txt" ); 
+	}
 }
 
 //-----------------------------------------------------------------------------

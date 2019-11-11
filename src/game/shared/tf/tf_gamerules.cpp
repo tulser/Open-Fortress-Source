@@ -167,7 +167,6 @@ ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	4: Unholy Trinity
 	5: Rocket Arena
 	6: Gun Game
-	7: Randomizer
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
@@ -206,6 +205,8 @@ ConVar of_randomizer ( "of_randomizer", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 
 ConVar of_randomizer_setting( "of_randomizer_setting", "TF2", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Sets which Config randomizer pulls its weapons from.");
+
+ConVar of_dominations( "of_dominations", "1", FCVAR_GAMEDLL, "Enable or disable dominations for players." );
 
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
@@ -2162,6 +2163,15 @@ void CTFGameRules::SetupOnRoundStart( void )
 				UTIL_Remove( pEntity );
 			}
 		}
+		// HORRIBLE HORRIBLE HACK AGAIN, THIS TIME FOR HUNTED MAP
+		if ( !Q_strncmp( STRING( gpGlobals->mapname), "esc_", 4 ) )
+		{
+			CBaseEntity *pEntity = NULL;
+			while ( ( pEntity = gEntList.FindEntityByName( pEntity, "winzone" ) ) != NULL )
+			{
+				UTIL_Remove( pEntity );
+			}
+		}
 
 		// no more visualizers, or respawn rooms, or regenerate lockers
 		CBaseEntity *pEntity = NULL;
@@ -2275,16 +2285,6 @@ void CTFGameRules::SetupMutator( void )
 
 		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Gun Game mutator config file\n");
 		engine->ServerCommand("exec config_default_mutator_gungame.cfg \n");
-		engine->ServerExecute();
-	}
-	else if ( TFGameRules()->IsMutator( RANDOMIZER ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Randomizer mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_randomizer.cfg \n");
 		engine->ServerExecute();
 	}
 }
@@ -3834,6 +3834,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		if ( pCTFSpawn->GetMatchSummary() >= 1 )
 			return false;
 
+		DevMsg("Checking this CTFTeamSpawn... \n");
 		
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 		// check if this spawnpoint allows our class to spawn here
@@ -3865,6 +3866,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		//	return false;
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN && !pCTFSpawn->AllowCivilian() )
 		{
+			DevMsg("Found a spawnpoint not allowing civilian to spawn\n");
 			// official tf2 maps will have spawnflags missing for Civilian, therefore I do a cheeky solution
 			// get every single spawnpoint and check if any of them has a Civilian spawnflag
 			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
@@ -3875,15 +3877,24 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 
 			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "info_player_teamspawn" ) ) != NULL )
 			{
+				DevMsg("Looking for another spawnpoint... \n");
+
 				if ( TFGameRules()->IsSpawnPointValidNoClass( pEntity, pPlayer, true ) )
 					continue;
 
-				if ( pEntity->HasSpawnFlags( SF_CLASS_CIVILIAN ) )
+				DevMsg("Found a potentially valid spawnpoint\n");
+
+				CTFTeamSpawn *pCTFSpot = dynamic_cast<CTFTeamSpawn*>( pEntity );
+
+				if ( pCTFSpot && pCTFSpot->AllowCivilian() )
 					bValidSpawn = true;
 			}
 
 			if ( bValidSpawn )
+			{
+				DevMsg("Found a valid spawnpoint with civilian spawnflag! this spawnpoint is now invalid... \n");
 				return false;
+			}
 		}
 		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_JUGGERNAUT && !pCTFSpawn->AllowJuggernaut() )
 		{
@@ -4440,6 +4451,12 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 //-----------------------------------------------------------------------------
 void CTFGameRules::CalcDominationAndRevenge( CTFPlayer *pAttacker, CTFPlayer *pVictim, bool bIsAssist, int *piDeathFlags )
 {
+	if ( !of_dominations.GetBool() )
+		return;
+
+	if ( TFGameRules()->IsInfGamemode() )
+		return;
+
 	PlayerStats_t *pStatsVictim = CTF_GameStats.FindPlayerStats( pVictim );
 
 	// calculate # of unanswered kills between killer & victim - add 1 to include current kill
@@ -6386,7 +6403,7 @@ void CTFGameRules::SelectInfector( void )
 
 		pPlayer = UTIL_PlayerByIndex( index );
 
-		if ( pPlayer && pPlayer->GetTeamNumber() != TF_TEAM_BLUE )
+		if ( pPlayer && pPlayer->GetTeamNumber() == TF_TEAM_RED )
 		{
 			candidates--;
 

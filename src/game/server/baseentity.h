@@ -992,6 +992,9 @@ public:
 	virtual bool	IsWearable( void ) const { return false; }
 	virtual CBaseCombatWeapon *MyCombatWeaponPointer( void ) { return NULL; }
 
+	virtual bool	IsAirBlast( void ) const { return false; }
+	virtual void	AirBlast( const Vector &vec_in ) { }
+
 	// If this is a vehicle, returns the vehicle interface
 	virtual IServerVehicle*			GetServerVehicle() { return NULL; }
 
@@ -1006,6 +1009,7 @@ public:
 	bool			InSameTeam( CBaseEntity *pEntity ) const;	// Returns true if the specified entity is on the same team as this one
 	bool			IsInAnyTeam( void ) const;			// Returns true if this entity is in any team
 	const char		*TeamID( void ) const;				// Returns the name of the team this entity is on.
+
 
 	// Entity events... these are events targetted to a particular entity
 	// Each event defines its own well-defined event data structure

@@ -170,7 +170,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
 
-	if (pTarget->IsPlayer() || pTarget->IsNPC()) // damage npcs too
+	if ( pTarget->IsPlayer() || pTarget->IsNPC() ) // damage npcs too
 	{
 		// This counts as a backstab if:
 		// a ) we are behind the target player
@@ -181,12 +181,12 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 		//	( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ) )
 		if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget )
 		{
-			CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-
-			if ( pPlayer && pPlayer->m_Shared.IsZombie() )
+			if ( TFGameRules()->IsInfGamemode() )
 			{
-				// zombies only deal x1.25 more damage on backstabs instead of insta killing
-				flBaseDamage = flBaseDamage * 1.25;
+				if ( pTarget->GetTeamNumber() == TF_TEAM_BLUE )
+					flBaseDamage = pTarget->GetHealth() * 2;
+				else
+					flBaseDamage = flBaseDamage * 1.25; // zombies only deal x1.25 more damage on backstabs instead of insta killing
 			}
 			else
 			{

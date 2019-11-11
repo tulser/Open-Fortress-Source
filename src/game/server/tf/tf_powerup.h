@@ -62,6 +62,9 @@ public:
 
 	CNetworkVarForDerived( bool, m_bRespawning );
 
+// CTFPowerup::DropSingleInstance(Vector&, CBaseCombatCharacter*, float, float)
+	void			DropSingleInstance( const Vector &Velocity, CBaseCombatCharacter *pBCC, float flLifetime, float flTime );
+
 	COutputEvent m_OnRespawn;
 private:
 	bool			m_bDisabled;

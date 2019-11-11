@@ -214,9 +214,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 #ifdef GAME_DLL
 	int kqly = pPlayer->trickshot;
 #endif
-
 	FireProjectile( pPlayer );
-	
 #ifdef GAME_DLL
 	if ( kqly == pPlayer->trickshot )
 		pPlayer->trickshot = 0;
@@ -229,6 +227,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		else
 			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 	}
+
 	// Don't push out secondary attack, because our secondary fire
 	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
 	//m_flNextSecondaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
@@ -553,6 +552,50 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Return the origin & angles for a projectile fired from the player's gun
+//-----------------------------------------------------------------------------
+void CTFWeaponBaseGun::GetProjectileAirblastSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, bool bHitTeammates /* = true */ )
+{
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
+
+	// Estimate end point
+	Vector endPos = vecShootPos + vecForward * 2000;	
+
+	// Trace forward and find what's in front of us, and aim at that
+	trace_t tr;
+
+	if ( bHitTeammates )
+	{
+		CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
+	}
+	else
+	{
+		int team = pPlayer->GetTeamNumber();
+		if ( team == TF_TEAM_MERCENARY ) team = 0;		
+		CTraceFilterIgnoreTeammates filter( pPlayer, COLLISION_GROUP_NONE, team );
+		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
+	}
+
+	// Find angles that will get us to our desired end point
+	// Only use the trace end if it wasn't too close, which results
+	// in visually bizarre forward angles
+	if ( tr.fraction > 0.1 )
+	{
+		*vecSrc = tr.endpos - vecOffset;
+	}
+	else
+	{
+		*vecSrc = endPos - vecOffset;
+	}
+
+	VectorNormalize( *vecSrc );
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Fire a BFG Projectile
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
@@ -767,8 +810,8 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + vecRight;
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity,
-	AngularImpulse( 0, 0, 0 ),
-	pPlayer, GetTFWpnData(), bRemoteDetonate, this );
+		AngularImpulse( 0, 0, 0 ),
+		pPlayer, GetTFWpnData(), bRemoteDetonate, this );
 
 	if ( pProjectile )
 	{

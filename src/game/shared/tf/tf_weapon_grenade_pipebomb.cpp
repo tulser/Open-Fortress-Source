@@ -801,3 +801,31 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 }
 
 #endif
+
+#ifdef GAME_DLL
+void CTFGrenadePipebombProjectile::AirBlast( const Vector &vec_in )
+{
+	Vector vec = vec_in;
+
+	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
+
+	if ( pPhysicsObject )
+	{
+		Vector vecZero;
+		Vector vecVelocity;
+
+		pPhysicsObject->GetVelocity( &vecZero, NULL );
+
+		float flVelocity = 0.0f;
+		flVelocity = vecZero.Length();
+
+		vecVelocity = vec;
+		vecVelocity *= flVelocity;
+
+		AngularImpulse angImpulse( ( 600, random->RandomInt( -1200, 1200 ), 0 ) );
+
+		// pPhysicsObject->AddVelocity( &vecVelocity, &angImpulse );
+		pPhysicsObject->SetVelocityInstantaneous( &vecVelocity, &angImpulse );
+	}
+}
+#endif

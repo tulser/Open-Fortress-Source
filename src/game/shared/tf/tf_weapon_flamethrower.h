@@ -65,7 +65,10 @@ public:
 
 	virtual void	DestroySounds( void );
 
-	void	DeflectCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in );
+#ifdef GAME_DLL
+	void			AirBlastCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in );
+	void			AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in );
+#endif
 
 	Vector GetVisualMuzzlePos();
 	Vector GetFlameOriginPos();
@@ -91,7 +94,6 @@ private:
 	Vector GetMuzzlePosHelper( bool bVisualPos );
 	CNetworkVar( int, m_iWeaponState );
 	CNetworkVar( int, m_bCritFire );
-	CNetworkVar( bool, m_bAirblast );
 
 	float m_flStartFiringTime;
 	float m_flNextPrimaryAttackAnim;

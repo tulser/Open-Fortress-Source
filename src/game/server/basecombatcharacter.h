@@ -387,7 +387,7 @@ public:
 	// I can't use my current weapon anymore. Switch me to the next best weapon.
 	bool SwitchToNextBestWeapon(CBaseCombatWeapon *pCurrent);
 
-	void	ApplyAirblastImpulse( const Vector &vec );
+	void	ApplyAirBlastImpulse( const Vector &vec );
 
 	// This is a hack to copy the relationship strings used by monstermaker
 	void SetRelationshipString( string_t theString ) { m_RelationshipString = theString; }
@@ -401,6 +401,8 @@ public:
 	bool				IsAllowedToPickupWeapons( void ) { return !m_bPreventWeaponPickup; }
 	void				SetPreventWeaponPickup( bool bPrevent ) { m_bPreventWeaponPickup = bPrevent; }
 	bool				m_bPreventWeaponPickup;
+
+	virtual bool	IsAirBlast( void ) const { return true; }
 
 	virtual CNavArea *GetLastKnownArea( void ) const		{ return m_lastNavArea; }		// return the last nav area the player occupied - NULL if unknown
 	virtual bool IsAreaTraversable( const CNavArea *area ) const;							// return true if we can use the given area 

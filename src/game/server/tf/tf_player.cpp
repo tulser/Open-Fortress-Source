@@ -137,6 +137,7 @@ ConVar of_startloadout("of_startloadout", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Eq
 ConVar of_gravitygun("of_gravitygun", "0", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Equips players everytime they spawn with a gravity gun.");
 
 ConVar of_zombie_lunge_speed( "of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge." );
+ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Should zombies drop small ammopacks + healthkits on death?." );
 
 extern ConVar of_grenades;
 extern ConVar of_retromode;
@@ -1158,6 +1159,8 @@ void CTFPlayer::Spawn()
 
 	m_bIsIdle = false;
 	//m_flPowerPlayTime = 0.0;
+
+	m_Shared.m_flNextLungeTime = 0.0f;
 
 	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
@@ -4580,6 +4583,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 		info.SetDamage( flDamage );
 	}
+
+	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_MINIGUN && TFGameRules()->IsInfGamemode() )
+	{
+		// this deals less damage in infection
+		info.SetDamage( info.GetDamage() * 0.5 );
+	}
 	
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
@@ -5737,8 +5746,15 @@ void CTFPlayer::AmmoPackCleanUp( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropAmmoPack( void )
 {
-	// zombies don't drop these for balance
+	// zombies have a special function for this
 	if ( m_Shared.IsZombie() )
+	{
+		DropZombieAmmoHealth();
+		return;
+	}
+
+	// survivors drop nothing in Infected
+	if ( TFGameRules()->IsInfGamemode() )
 		return;
 
 	// We want the ammo packs to look like the player's weapon model they were carrying.
@@ -9879,8 +9895,8 @@ bool CTFPlayer::DoZombieLunge( void )
 
 	QAngle angDir = EyeAngles();
 
-	// must be facing at least 50 degrees up or more to lunge
-	if ( angDir.x > -45 )
+	// must be facing at least 10 degrees up or more to lunge
+	if ( angDir.x > 10 )
 	{
 		// TODO: Replace with a nicer display
 		ClientPrint( this, HUD_PRINTTALK, "#of_zombie_lunge" );
@@ -9911,4 +9927,50 @@ bool CTFPlayer::DoZombieLunge( void )
 	EmitSound( "Player.ZombieLunge" );	
 
 	return bSuccess;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Used by zombies: drops ammo and health small packs on death
+//-----------------------------------------------------------------------------
+void CTFPlayer::DropZombieAmmoHealth( void )
+{
+	if ( !of_zombie_dropitems.GetBool() )
+		return;
+
+	QAngle angLaunch = QAngle( 0, 0 ,0 ); // the angle we will launch ourselves from
+	Vector vecLaunch;					  // final velocity used to launch the items
+
+	CTFPowerup *pPowerup = dynamic_cast< CTFPowerup * >( CBaseEntity::Create( "item_healthkit_small", WorldSpaceCenter(), angLaunch, this ) );
+
+	if ( !pPowerup )
+		return;
+
+	angLaunch[ PITCH ] += RandomInt( 5 , 15 );
+	angLaunch[ YAW ] = RandomInt( 0 , 360 );
+
+	AngleVectors( angLaunch, &vecLaunch );
+
+	// boost it up baby
+	vecLaunch *= RandomInt( 200, 500 );
+
+	UTIL_SetSize( pPowerup, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ) );
+
+	pPowerup->DropSingleInstance( vecLaunch, this, 10.0f, 0.2f );
+
+	CTFPowerup *pPowerup2 = dynamic_cast< CTFPowerup * >( CBaseEntity::Create( "item_ammopack_small", WorldSpaceCenter(), angLaunch, this ) );
+
+	if ( !pPowerup2 )
+		return;
+
+	angLaunch[ PITCH ] += RandomInt( 5 , 15 );
+	angLaunch[ YAW ] = RandomInt( 0 , 720 );
+
+	AngleVectors( angLaunch, &vecLaunch );
+
+	// boost it up baby
+	vecLaunch *= RandomInt( 225, 550 );
+
+	UTIL_SetSize( pPowerup2, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ) );
+
+	pPowerup2->DropSingleInstance( vecLaunch, this, 10.0f, 0.2f );
 }

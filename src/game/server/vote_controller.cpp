@@ -1139,6 +1139,13 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 	if ( iEntIndex == -1 )
 		return false;
 
+	if ( !IsEnabled() )
+	{
+		nFailCode = VOTE_FAILED_ISSUE_DISABLED;
+		nTime = m_flNextCallTime - gpGlobals->curtime;
+		return false;
+	}
+
 	// Note: Issue timers reset on level change because the class is created/destroyed during transitions.
 	// It'd be nice to refactor the basic framework of the system to get rid of side-effects like this.
 	if ( m_flNextCallTime != -1.f && gpGlobals->curtime < m_flNextCallTime )
@@ -1148,10 +1155,18 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 		return false;
 	}
 
-	if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() )
+	if ( TFGameRules() )
 	{
-		nFailCode = VOTE_FAILED_WAITINGFORPLAYERS;
-		return false;
+		if ( TFGameRules()->IsInWaitingForPlayers() )
+		{
+			nFailCode = VOTE_FAILED_WAITINGFORPLAYERS;
+			return false;
+		}
+		if ( TFGameRules()->State_Get() == GR_STATE_GAME_OVER )
+		{
+			nFailCode = VOTE_FAILED_INTERMISSION;
+			return false;
+		}
 	}
 
 	CBaseEntity *pVoteCaller = UTIL_EntityByIndex( iEntIndex );

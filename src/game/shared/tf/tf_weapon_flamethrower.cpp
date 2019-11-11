@@ -8,6 +8,7 @@
 #include "tf_fx_shared.h"
 #include "in_buttons.h"
 #include "ammodef.h"
+#include "tf_weapon_grenade_pipebomb.h"
 
 #if defined( CLIENT_DLL )
 
@@ -45,8 +46,6 @@
 	//ConVar  tf_flame_force( "tf_flame_force", "30" );
 #endif
 
-ConVar of_debug_airblast("of_debug_airblast", "0", FCVAR_CHEAT, "Enable wip Airblast");
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -64,11 +63,10 @@ BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
 	#if defined( CLIENT_DLL )
 		RecvPropInt( RECVINFO( m_iWeaponState ) ),
 		RecvPropInt( RECVINFO( m_bCritFire ) ),
-		RecvPropBool( RECVINFO( m_bAirblast ) )
+
 	#else
 		SendPropInt( SENDINFO( m_iWeaponState ), 4, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 		SendPropInt( SENDINFO( m_bCritFire ) ),
-		SendPropBool( SENDINFO( m_bAirblast ) )
 	#endif
 END_NETWORK_TABLE()
 
@@ -76,7 +74,6 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CTFFlameThrower )
 	DEFINE_PRED_FIELD( m_iWeaponState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bCritFire, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bAirblast, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
 
@@ -216,7 +213,7 @@ void CTFFlameThrower::ItemPostFrame()
 
 	int iAmmo = ReserveAmmo();
 
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && iAmmo > 0 && !m_bAirblast )
+	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && !( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo > 0 && CanPerformSecondaryAttack() )
 	{
 		PrimaryAttack();
 	}
@@ -229,7 +226,7 @@ void CTFFlameThrower::ItemPostFrame()
 	}
 
 	// TODO: add a delay here
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo > TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK )
+	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && !( pOwner->m_nButtons & IN_ATTACK ) && iAmmo >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK && CanPerformSecondaryAttack() )
 	{
 		SecondaryAttack();
 	}
@@ -269,6 +266,9 @@ void CTFFlameThrower::PrimaryAttack()
 
 	// Are we capable of firing again?
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+
+	if ( !CanPerformSecondaryAttack() )
 		return;
 
 	// Get the player owning the weapon.
@@ -443,7 +443,7 @@ void CTFFlameThrower::PrimaryAttack()
 			iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 
 		if ( TFGameRules()->IsInfGamemode() )
-			iDamagePerSec = ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) / 4;
+			iDamagePerSec = ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) / 3;
 
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 
@@ -482,13 +482,11 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
-	// remove when the attack actually works
-	if ( !of_debug_airblast.GetBool() )
+	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+	// Are we capable of firing again?
+	if ( m_flNextSecondaryAttack > gpGlobals->curtime )
 		return;
-
-	// TODO: you might need to add an additional state named something like FT_STATE_SECONDARYATTACK
-
-	// TODO: primaryattack sound + particles don't play after using secondaryattack
 
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
@@ -505,13 +503,18 @@ void CTFFlameThrower::SecondaryAttack()
 		return;
 	}
 
-	// if you are adding another state then replace this bool	
-	m_bAirblast = true;
+	m_iReserveAmmo = m_iReserveAmmo - TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
 
-	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
 
 #if defined ( CLIENT_DLL )
-		StopFlame();
+	StopFlame();
+
+	C_BaseEntity *pModel = GetWeaponForEffect();
+
+	if ( pModel )
+		pModel->ParticleProp()->Create( "pyro_blast", PATTACH_POINT_FOLLOW, "muzzle" );
 #endif
 
 	SendWeaponAnim( ACT_VM_SECONDARYATTACK );
@@ -526,35 +529,192 @@ void CTFFlameThrower::SecondaryAttack()
 
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
-#endif
 
-	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	// ---------------------------------------------------------------------------------------------------
+	// Special thanks to sigsegv for documentation
+	// Source: https://www.youtube.com/watch?v=W1g2x4b_Byg and https://www.youtube.com/watch?v=PZ-d4oUSVzE
+	// ---------------------------------------------------------------------------------------------------
 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
-	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;		// fewer than 45 frames!
+	// Where are we aiming?
+	Vector vForward;
+	QAngle vAngles = pOwner->EyeAngles();
+	AngleVectors( vAngles, &vForward);
 
-	//
-	// TODO: Deflect logic here
-	// remember to use DeflectCharacter for players & npcs
-	//
+	// "256x256x128 HU box"
+	Vector vAirBlastBox = Vector( 128, 128, 64 );	
 
-	pOwner->RemoveAmmo( TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK, m_iPrimaryAmmoType );
+	// TODO: this isn't an accurate distance
+	// Max distance we can airblast to
+	float flDist = 256.0f;
 
-#if !defined ( CLIENT_DLL )
+	// Used as the centre of the box trace
+	Vector vOrigin = pOwner->Weapon_ShootPosition() + vForward * flDist;
+
+	//CBaseEntity *pList[ 32 ];
+	CBaseEntity *pList[ 64 ];
+
+	int count = UTIL_EntitiesInBox( pList, 64, vOrigin - vAirBlastBox, vOrigin + vAirBlastBox, 0 );
+
+	for ( int i = 0; i < count; i++ )
+	{
+		CBaseEntity *pEntity = pList[ i ];
+
+		if ( !pEntity )
+			continue;
+
+		if ( !pEntity->IsAlive() )
+			continue;
+
+		if ( pEntity->GetTeamNumber() == TEAM_SPECTATOR )
+			continue;
+
+		if ( pEntity == pOwner )
+			continue;
+
+		if ( !pEntity->IsAirBlast() )
+			continue;
+
+		trace_t trWorld;
+
+		// now, let's see if the flame visual could have actually hit this player.  Trace backward from the
+		// point of impact to where the flame was fired, see if we hit anything.  Since the point of impact was
+		// determined using the flame's bounding box and we're just doing a ray test here, we extend the
+		// start point out by the radius of the box.
+		// UTIL_TraceLine( GetAbsOrigin() + vDir * WorldAlignMaxs().x, m_vecInitialPos, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );		
+		UTIL_TraceLine( pOwner->Weapon_ShootPosition(), pEntity->WorldSpaceCenter(), MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );
+
+		// can't see it!
+		if ( trWorld.fraction != 1.0f )
+			continue;
+
+		if ( pEntity->IsCombatCharacter() )
+		{
+			// Convert angles to vector
+			Vector vForwardDir;
+			AngleVectors( vAngles, &vForwardDir );
+
+			CBaseCombatCharacter *pCharacter = dynamic_cast<CBaseCombatCharacter *>( pEntity );
+
+			if ( pCharacter )
+				AirBlastCharacter( pCharacter, vForwardDir );
+		}
+		else
+		{
+			// TODO: vphysics specific tracing!
+
+			Vector vecPos = pEntity->GetAbsOrigin();
+			Vector vecAirBlast;
+
+			// TODO: handle trails here i guess?
+			GetProjectileAirblastSetup( GetTFPlayerOwner(), vecPos, &vecAirBlast, false );
+
+			AirBlastProjectile( pEntity, vecAirBlast );
+		}
+	}
+
 	lagcompensation->FinishLagCompensation( pOwner );
 #endif
+}
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Airblast a player / npc
+//
+// Special thanks to sigsegv for the majority of this function
+// Source: https://gist.github.com/sigsegv-mvm/269d1e0abacb29040b5c
+// 
+//-----------------------------------------------------------------------------
+void CTFFlameThrower::AirBlastCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in )
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	CTFPlayer *pTFPlayer = ToTFPlayer( pCharacter );
+
+	if ( ( pCharacter->InSameTeam( pOwner ) && pCharacter->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+	{
+		if ( pTFPlayer && pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
+		{
+			pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
+
+			pTFPlayer->EmitSound( "TFPlayer.FlameOut" );
+		}
+	}
+	else
+	{
+		Vector vec = vec_in;
+	
+		float impulse = 360;
+		impulse = MIN( 1000, impulse );
+	
+		vec *= impulse;
+	
+		vec.z += 350.0f;
+
+		if ( pTFPlayer )
+		{
+			pTFPlayer->AddDamagerToHistory( pOwner );
+			pTFPlayer->EmitSound( "TFPlayer.AirBlastImpact" );
+
+			// much less push for zombies
+			if ( pTFPlayer->m_Shared.IsZombie() )
+				vec = vec * 0.4;
+		}
+
+		pCharacter->ApplyAirBlastImpulse( vec );
+	}
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::DeflectCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in )
+void CTFFlameThrower::AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in )
 {
-	// TODO:
-	// in the airblast, if the target ent is a player or NPC,
-	// call to this function as it applies special velocity depending on if they are on the ground currently or not
+	// TODO: A lot of this stuff should be moved into the AirBlast() functions for each projectile
+	// The AirBlast function will probably require a pointer to the player to be added in the parameters
+	// E.g. stickybombs shouldn't be changing team here
 
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( ( pEntity->InSameTeam( pOwner ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+		return;
+
+	Vector vec = vec_in;
+
+	Vector vecPos = pEntity->GetAbsOrigin();
+	Vector vecAirBlast;
+
+	GetProjectileAirblastSetup( pOwner, vecPos, &vecAirBlast, false );
+
+	pEntity->SetOwnerEntity( pOwner );
+
+	CTFGrenadePipebombProjectile *pStickyGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>( pEntity );
+
+	if ( pStickyGrenade && pStickyGrenade->GetType() == TF_GL_MODE_REMOTE_DETONATE )
+	{
+		// jesus christ, FIXME
+	}
+	else
+	{
+		pEntity->ChangeTeam( pOwner->GetTeamNumber() );
+
+		CBaseGrenade *pGrenade = dynamic_cast<CBaseGrenade *>( pEntity );
+
+		if ( pGrenade )
+		{
+			pGrenade->SetThrower( pOwner );
+			pGrenade->m_nSkin = pOwner->GetTeamNumber() - 2;
+		}
+	}
+
+	pEntity->AirBlast( vec );
+
+	pEntity->EmitSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -634,10 +794,7 @@ void CTFFlameThrower::OnDataChanged(DataUpdateType_t updateType)
 	{
 		if ( m_iWeaponState > FT_STATE_IDLE )
 		{
-			if ( !m_bAirblast )
-			{
-				StartFlame();
-			}
+			StartFlame();
 		}
 		else
 		{
@@ -686,13 +843,8 @@ void CTFFlameThrower::SetDormant( bool bDormant )
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::StartFlame()
 {
-	if ( m_bAirblast )
-	{
-		C_BaseEntity *pModel = GetWeaponForEffect();
-
-		if ( pModel )
-			pModel->ParticleProp()->Create( "pyro_blast", PATTACH_POINT_FOLLOW, "muzzle" );
-	}
+	if ( !CanPerformSecondaryAttack() )
+		return;
 
 	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
 

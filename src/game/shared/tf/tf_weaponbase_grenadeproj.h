@@ -52,8 +52,12 @@ public:
 	virtual int			GetDamageType();
 	virtual int			GetCustomDamageType();
 
-	CNetworkHandle( CBaseEntity, m_hLauncher );
-		
+#ifdef GAME_DLL
+	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual void	AirBlast( const Vector &vec_in );
+#endif
+
+		CNetworkHandle( CBaseEntity, m_hLauncher );	
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
@@ -93,10 +97,11 @@ public:
 
 	void					SetTimer( float time ){ m_flDetonateTime = time; }
 	float					GetDetonateTime( void ){ return m_flDetonateTime; }
+	
 
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 	virtual CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
-	
+
 	void					SetDetonateTimerLength( float timer );
 
 	void					VPhysicsUpdate( IPhysicsObject *pPhysics );
@@ -105,9 +110,9 @@ public:
 
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
-
-	CTFWeaponBase *pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
 	
+	CTFWeaponBase		 *pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
+
 protected:
 
 	void					DrawRadius( float flRadius );

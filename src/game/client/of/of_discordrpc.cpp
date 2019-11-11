@@ -76,7 +76,6 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"3 Wave",
 	"Zombie Survival",
 	"Coop",
-	"Randomizer"
 };
 
 CTFDiscordRPC g_discordrpc;

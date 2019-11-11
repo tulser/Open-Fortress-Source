@@ -49,6 +49,11 @@ public:
 
 	virtual void	UpdateOnRemove( void );
 
+#ifdef GAME_DLL
+	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual void	AirBlast( const Vector &vec_in );
+#endif
+
 #ifdef CLIENT_DLL
 
 	virtual void    OnDataChanged( DataUpdateType_t updateType );
@@ -85,8 +90,9 @@ public:
 	virtual CBaseEntity		*GetEnemy(void)			{ return m_hEnemy; }
 
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
-
+	
 	virtual void	Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType );
+
 
 private:
 

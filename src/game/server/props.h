@@ -369,6 +369,8 @@ public:
 
 	void ClearFlagsThink( void );
 
+	virtual bool	IsAirBlast( void ) const { return true; }
+
 	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 	int DrawDebugTextOverlays(void);
 	bool IsGib();

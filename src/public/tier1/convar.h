@@ -369,6 +369,8 @@ public:
 	bool						GetMax( float& maxVal ) const;
 	void						SetMin( float min );
     void						SetMax( float max );
+	void						SetFlags( int flags );
+	void						Nuke( void );
 	const char					*GetDefault( void ) const;
 	void						SetDefault( const char *pszDefault );
 
@@ -417,6 +419,25 @@ private:
 	// Call this function when ConVar changes
 	FnChangeCallback_t			m_fnChangeCallback;
 };
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+FORCEINLINE_CVAR void ConVar::Nuke( void )
+{
+	m_pParent->Shutdown();
+	Shutdown();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : flags - 
+//-----------------------------------------------------------------------------
+FORCEINLINE_CVAR void ConVar::SetFlags( int flags )
+{
+	m_pParent->m_nFlags = flags;
+	m_nFlags = flags;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Set a convar's bound

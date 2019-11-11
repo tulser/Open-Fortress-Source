@@ -151,7 +151,7 @@ void CTFBaseRocket::Spawn( void )
 void CTFBaseRocket::UpdateOnRemove( void )
 {
 	// Tell our launcher that we were removed
-	CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
+	CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( GetLauncher() );
 
 	if ( pLauncher )
 	{
@@ -160,6 +160,8 @@ void CTFBaseRocket::UpdateOnRemove( void )
 
 	BaseClass::UpdateOnRemove();
 }
+
+
 
 //=============================================================================
 //
@@ -199,7 +201,7 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 
 		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
 		
-		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( GetLauncher() );
+		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
 
 		if ( pLauncher )
 		{
@@ -392,8 +394,10 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 	Vector vecReported = GetOwnerEntity() ? GetOwnerEntity()->GetAbsOrigin() : vec3_origin;
 
 	CTakeDamageInfo info( this, GetOwnerEntity(), vec3_origin, vecOrigin, GetDamage(), bitsDamageType, 0, &vecReported );
+
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetLauncher() );
 	info.SetWeapon( pTFWeapon );
+	
 	float flRadius = GetRadius();
 
 	if ( tf_rocket_show_radius.GetBool() )
@@ -458,6 +462,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	info.SetWeapon( pTFWeapon );
 	info.SetDamageCustom( GetCustomDamageType() );
 	float flRadius = GetRadius();
+
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 
 	// Debug!
@@ -575,4 +580,21 @@ void CTFBaseRocket::FlyThink( void )
 	SetNextThink( gpGlobals->curtime + 0.1 );
 }
 
+#endif
+
+#ifdef GAME_DLL
+void CTFBaseRocket::AirBlast( const Vector &vec_in )
+{
+	Vector vec = vec_in;
+
+	// conserver speed when changing trajectory
+	float flLength = GetAbsVelocity().Length();
+
+	QAngle angles;
+	VectorAngles( vec, angles );
+
+	SetAbsAngles( angles );
+
+	SetAbsVelocity( vec * flLength );
+}
 #endif

@@ -84,6 +84,7 @@ class CChangeMutatorIssue : public CBaseTFIssue
 {
 public:
 	virtual bool		IsEnabled( void );							// Query the issue to see if it's enabled
+	virtual bool		CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime );
 	virtual const char	*GetDetailsString( void );
 	virtual const char *GetDisplayString( void );					// The string that will be passed to the client for display
 	virtual void		ExecuteCommand( void );						// Where the magic happens.  Do your thing.

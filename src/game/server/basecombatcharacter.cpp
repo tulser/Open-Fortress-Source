@@ -3564,13 +3564,15 @@ float CBaseCombatCharacter::GetTimeSinceLastInjury( int team /*= TEAM_ANY */ ) c
 }
 
 //-----------------------------------------------------------------------------
-// Airblast
+// Purpose: add additional upwards velocity
+//
+// Special thanks to sigsegv for the majority of this function
+// Source: https://gist.github.com/sigsegv-mvm/269d1e0abacb29040b5c
 //-----------------------------------------------------------------------------
-void CBaseCombatCharacter::ApplyAirblastImpulse( const Vector &vec )
+void CBaseCombatCharacter::ApplyAirBlastImpulse( const Vector &vec )
 {
 	Vector Vector = vec;
 	
-	// lift the player up if on the ground!
 	bool bOnGround;
 
 	if ( GetFlags() & FL_ONGROUND )
@@ -3578,9 +3580,8 @@ void CBaseCombatCharacter::ApplyAirblastImpulse( const Vector &vec )
 	else
 		bOnGround = false;
 
-	// these values are a guess! as reasonably close as I could get
-	if ( bOnGround && Vector.z < 270.0f ) 
-		Vector.z = 270.0f;
+	if ( bOnGround && Vector.z < 268.32816f ) 
+		Vector.z = 268.32816f; // value from https://gist.github.com/sigsegv-mvm/269d1e0abacb29040b5c
 	
 	RemoveFlag( FL_ONGROUND );
 	

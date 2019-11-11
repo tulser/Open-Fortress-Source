@@ -690,8 +690,6 @@ void CVoteSetupDialog::OnItemSelected( vgui::Panel *panel )
 					pMutator6->SetInt( "index", 7 );
 					int iMutator6 = m_pVoteParameterList->AddItem( 0, pMutator6 );
 
-					// TODO: RANDOMIZER
-
 					pMutator0->deleteThis();
 					pMutator1->deleteThis();
 					pMutator2->deleteThis();
@@ -733,9 +731,6 @@ void CVoteSetupDialog::OnItemSelected( vgui::Panel *panel )
 
 					C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
 					if ( !pLocalPlayer )
-						continue;
-
-					if ( pPlayer == pLocalPlayer )
 						continue;
 
 					bool bAllowKickUnassigned = false;
@@ -961,19 +956,39 @@ void CHudVote::LevelInit( void )
 int	CHudVote::KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
 	if ( !IsVisible() )
+	{
+		if ( keynum == KEY_F1 || keynum == KEY_F2 )
+			Msg( "Ghost Vote Debug: CHudVote not visible!\n" );
 		return 1;
+	}
 
 	if ( !down )
+	{
+		if ( keynum == KEY_F1 || keynum == KEY_F2 )
+			Msg( "Ghost Vote Debug: Down is 0!\n" );
 		return 1;
+	}
 
 	if ( !m_bVotingActive )
+	{
+		if ( keynum == KEY_F1 || keynum == KEY_F2 )
+			Msg( "Ghost Vote Debug: Voting is not active!\n" );
 		return 1;
+	}
 
  	if ( m_bPlayerVoted )
+	{
+		if ( keynum == KEY_F1 || keynum == KEY_F2 )
+			Msg( "Ghost Vote Debug: Player already voted!\n" );
  		return 1;
+	}
 
 	if ( !m_bShowVoteActivePanel )
+	{
+		if ( keynum == KEY_F1 || keynum == KEY_F2 )
+			Msg( "Ghost Vote Debug: ShowVoteActivePanel is false!\n" );
 		return 1;
+	}
 
 	int nSlot = 999;
 
@@ -999,12 +1014,16 @@ int	CHudVote::KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBin
 	}
 	else
 	{
+		Msg( "Ghost Vote Debug: Invalid slot key!\n" );
 		return 1;
 	}
 
 	// Limit key checking to the number of options
 	if ( nSlot > m_nVoteChoicesCount )
+	{
+		Msg( "Ghost Vote Debug: Slot doesn't match the vote choice!\n" );
 		return 1;
+	}
 
 	char szNumber[2];
 	Q_snprintf( szNumber, sizeof( szNumber ), "%i", nSlot );
@@ -1146,6 +1165,14 @@ void CHudVote::MsgFunc_CallVoteFailed( bf_read &msg )
 
 		case VOTE_FAILED_KICK_LIMIT_REACHED:
 			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_kick_limit" );
+			break;
+
+		case VOTE_FAILED_MUTATOR_INVALID:
+			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_mutator_invalid" );
+			break;
+
+		case VOTE_FAILED_INTERMISSION:
+			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_intermission" );
 			break;
 	}	
 }

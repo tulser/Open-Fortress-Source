@@ -82,11 +82,17 @@ void CPointDevShotCamera::Spawn( void )
 
 	// Why is this here? Prop fading cannot be disabled without engine access,
 	// However the -makedevshots does disable prop fading in the engine
-	// Therefore I added this param to cancel out any -makedevshots behaviour
-	if ( CommandLine()->FindParm("-nopropfading") )
+	// Therefore I added this horrendous hack (see cdll_client_int.cpp) to cancel out any -makedevshots behaviour
+	// See cdll_client_int.cpp, PostInit()
+	const char *pFading = CommandLine()->ParmValue( "-usedevshotsfile" );
+
+	if (pFading)
 	{
-		UTIL_Remove( this );
-		return;
+		if ( Q_strcmp (pFading, "nospf.txt" ) == 0 )
+		{
+			UTIL_Remove( this );
+			return;
+		}
 	}
 
 	// Remove this entity immediately if we're not making devshots
@@ -207,11 +213,17 @@ public:
 	{
 		// Why is this here? Prop fading cannot be disabled without engine access,
 		// However the -makedevshots does disable prop fading in the engine
-		// Therefore I added this param to cancel out any -makedevshots behaviour
-		if ( CommandLine()->FindParm("-nopropfading") )
+		// Therefore I added this convar to cancel out any -makedevshots behaviour
+		// See cdll_client_int.cpp, PostInit()
+		const char *pFading = CommandLine()->ParmValue( "-usedevshotsfile" );
+
+		if ( pFading )
 		{
-			Remove( this );
-			return;
+			if ( Q_strcmp (pFading, "nospf.txt" ) == 0 )
+			{
+				Remove( this );
+				return;
+			}
 		}
 
 		// If we're not making devshots, remove this system immediately

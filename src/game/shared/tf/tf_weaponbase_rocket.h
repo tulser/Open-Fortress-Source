@@ -51,8 +51,9 @@ public:
 	
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
 	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
-
+	
 	virtual void	UpdateOnRemove( void );
+
 protected:
 
 	// Networked.
@@ -120,6 +121,11 @@ public:
 	int 	m_hWeaponID;
 	
 	CNetworkVar( int,	m_bCritical );
+
+#ifdef GAME_DLL
+	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual void	AirBlast( const Vector &vec_in );
+#endif
 
 protected:
 

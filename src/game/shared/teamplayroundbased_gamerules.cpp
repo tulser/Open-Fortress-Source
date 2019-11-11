@@ -3561,22 +3561,32 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 
 		for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 		{
+			if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
+			{
+				if ( team == TF_TEAM_RED )
+				{
+					BroadcastSound( i, WinSongName( i ), false );
+				}
+				else
+				{
+					const char *pchLoseSong = LoseSongName( i );
+
+					BroadcastSound( i, pchLoseSong, false );
+				}
+
+				continue;
+			}
+
 			if ( i == team )
 			{
-				if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
-					BroadcastSound( i, WinSongName( i ), false );
-				else
-					BroadcastSound( i, WinSongName( i ) );
+				BroadcastSound( i, WinSongName( i ) );
 			}
 			else
 			{
 				const char *pchLoseSong = LoseSongName( i );
 				if ( pchLoseSong )
 				{
-					if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
-						BroadcastSound( i, pchLoseSong, false );
-					else
-						BroadcastSound( i, pchLoseSong );
+					BroadcastSound( i, pchLoseSong );
 				}
 			}
 		}

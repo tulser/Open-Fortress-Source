@@ -77,6 +77,10 @@ ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED |
 
 extern ConVar of_infiniteammo;
 
+ConVar of_infection_allow_sentry	 ( "of_infection_allow_sentry", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build sentries in Infection?" );
+ConVar of_infection_allow_dispenser	 ( "of_infection_allow_dispenser", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build dispensers in Infection?" );
+ConVar of_infection_allow_teleporter ( "of_infection_allow_teleporter", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build teleporters in Infection?" );
+
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
 
@@ -2788,51 +2792,6 @@ bool CTFPlayer::HasTheFlag( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Return true if this player's allowed to build another one of the specified object
-//-----------------------------------------------------------------------------
-int CTFPlayer::CanBuild( int iObjectType, int iAltMode )
-{
-	if ( iObjectType < 0 || iObjectType >= OBJ_LAST )
-		return CB_UNKNOWN_OBJECT;
-
-	if ( iObjectType != OBJ_TELEPORTER && iAltMode > 0 )
-		return CB_UNKNOWN_OBJECT;
-
-	if ( iObjectType == OBJ_TELEPORTER && iAltMode > 1 )
-		return CB_UNKNOWN_OBJECT;
-
-#ifndef CLIENT_DLL
-	CTFPlayerClass *pCls = GetPlayerClass();
-	if ( pCls )
-	{
-		if( !IsRetroModeOn() && pCls->CanBuildObject( iObjectType ) == false )
-			return CB_CANNOT_BUILD;
-		else if ( IsRetroModeOn() && pCls->CanBuildTFCObject( iObjectType ) == false )
-			return CB_CANNOT_BUILD;
-	}
-#endif
-
-	int iObjectCount = GetNumObjects( iObjectType, iAltMode );
-
-	// Make sure we haven't hit maximum number
-	if ( iObjectCount >= GetObjectInfo( iObjectType )->m_nMaxObjects && 
-		GetObjectInfo( iObjectType )->m_nMaxObjects != -1 )
-	{
-		return CB_LIMIT_REACHED;
-	}
-
-	// Find out how much the object should cost
-	int iCost = CalculateObjectCost( iObjectType );
-	// Make sure we have enough resources
-	if ( GetBuildResources() < iCost && of_infiniteammo.GetBool() == 0 )
-	{
-		return CB_NEED_RESOURCES;
-	}
-
-	return CB_CAN_BUILD;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Get the number of objects of the specified type that this player has
 //-----------------------------------------------------------------------------
 int CTFPlayer::GetNumObjects( int iObjectType, int iAltMode )
@@ -2998,6 +2957,62 @@ bool CTFPlayer::CanAttack( void )
 	return true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Return true if this player's allowed to build another one of the specified object
+//-----------------------------------------------------------------------------
+int CTFPlayer::CanBuild( int iObjectType, int iAltMode )
+{
+	if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
+	{
+		if ( iObjectType == OBJ_SENTRYGUN && !of_infection_allow_sentry.GetBool() )
+			return CB_CANNOT_BUILD;
+		else if ( iObjectType == OBJ_DISPENSER && !of_infection_allow_dispenser.GetBool() )
+			return CB_CANNOT_BUILD;
+		else if ( iObjectType == OBJ_TELEPORTER && !of_infection_allow_teleporter.GetBool() )
+			return CB_CANNOT_BUILD;
+	}
+
+	if ( iObjectType < 0 || iObjectType >= OBJ_LAST )
+		return CB_UNKNOWN_OBJECT;
+
+	if ( iObjectType != OBJ_TELEPORTER && iAltMode > 0 )
+		return CB_UNKNOWN_OBJECT;
+
+	if ( iObjectType == OBJ_TELEPORTER && iAltMode > 1 )
+		return CB_UNKNOWN_OBJECT;
+
+#ifndef CLIENT_DLL
+	CTFPlayerClass *pCls = GetPlayerClass();
+	if ( pCls )
+	{
+		if( !IsRetroModeOn() && pCls->CanBuildObject( iObjectType ) == false )
+			return CB_CANNOT_BUILD;
+		else if ( IsRetroModeOn() && pCls->CanBuildTFCObject( iObjectType ) == false )
+			return CB_CANNOT_BUILD;
+	}
+#endif
+
+	int iObjectCount = GetNumObjects( iObjectType, iAltMode );
+
+	// Make sure we haven't hit maximum number
+	if ( iObjectCount >= GetObjectInfo( iObjectType )->m_nMaxObjects && 
+		GetObjectInfo( iObjectType )->m_nMaxObjects != -1 )
+	{
+		return CB_LIMIT_REACHED;
+	}
+
+	// Find out how much the object should cost
+	int iCost = CalculateObjectCost( iObjectType );
+	// Make sure we have enough resources
+	if ( GetBuildResources() < iCost && of_infiniteammo.GetBool() == 0 )
+	{
+		return CB_NEED_RESOURCES;
+	}
+
+	return CB_CAN_BUILD;
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Weapons can call this on secondary attack and it will link to the class
@@ -3020,8 +3035,12 @@ bool CTFPlayer::DoClassSpecialSkill( void )
 		else
 		{
 			// TODO: Replace with a nicer display
-			ClientPrint( this, HUD_PRINTTALK, "#of_zombie_lunge_delay" );
-			return false;
+			int iLungeTime = (int)m_Shared.m_flNextLungeTime;
+
+			char strLungeTime [8];
+			Q_snprintf( strLungeTime, sizeof( strLungeTime ), "%d", iLungeTime );
+
+			ClientPrint( this, HUD_PRINTTALK, "[Zombie] You must wait %s1 second(s) before you can lunge again.", strLungeTime );
 			CSingleUserRecipientFilter filter( this );
 			EmitSound( filter, entindex(), "Player.DenyWeaponSelection" );
 		}

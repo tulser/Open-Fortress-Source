@@ -234,4 +234,19 @@ void CTFPowerup::SetDisabled( bool bDisabled )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Used by TF2 to drop stuff like the sandvich or candy cane packs
+//-----------------------------------------------------------------------------
+void CTFPowerup::DropSingleInstance( const Vector &Velocity, CBaseCombatCharacter *pBCC, float flLifetime, float flTime )
+{
+	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
+	SetSolid( SOLID_BBOX );
+	AddSpawnFlags( SF_NORESPAWN );
+	SetOwnerEntity( pBCC );
+	SetAbsVelocity( Velocity );
 
+	if ( flTime != 0 )
+		ActivateWhenAtRest( flTime );
+
+	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + flLifetime, "DieContext" ); // Set its death time to whenever the powerup would have ran out
+}

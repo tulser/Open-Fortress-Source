@@ -1251,6 +1251,22 @@ void CViewRender::Render( vrect_t *rect )
 			flags |= RENDERVIEW_SUPPRESSMONITORRENDERING;
 		}
 
+		// allow a viewmodel to drive the camera movement from a bone
+		if ( pPlayer && g_pClientMode->ShouldDrawViewModel() && pPlayer->GetViewModel( 0 ) )
+		{
+			int iCam = pPlayer->GetViewModel( 0 )->LookupAttachment( "cam_driver" );
+
+			if ( iCam != -1 )
+			{
+				Vector camorigin = Vector( 0, 0, 0 );
+				QAngle camangles = QAngle( 0, 0 ,0 );
+
+				pPlayer->GetViewModel( 0 )->GetAttachmentLocal( iCam, camorigin, camangles);
+
+				view.angles += camangles;
+			}
+		}
+
 	    RenderView( view, nClearFlags, flags );
 
 		if ( UseVR() )

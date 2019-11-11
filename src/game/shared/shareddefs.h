@@ -159,6 +159,10 @@ typedef enum
 
 	// TF-specific?
 	VOTE_FAILED_MODIFICATION_ALREADY_ACTIVE,
+
+	// OF-Specfic
+	VOTE_FAILED_MUTATOR_INVALID,
+	VOTE_FAILED_INTERMISSION,
 } vote_create_failed_t;
 
 enum
