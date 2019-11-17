@@ -2213,7 +2213,9 @@ void CTFPlayer::ManageZombieWeapons( TFPlayerClassData_t *pData )
 				pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
 
 				// only melees!
-				if ( pWeapon && pWeapon->GetSlot() == 2 )
+				// Ficool had a bruh moment and checked for the slot intead of Dynamic casted to melees
+				// Fixed now
+				if ( dynamic_cast<CTFWeaponBaseMelee*>(pWeapon) )
 				{
 					pWeapon->DefaultTouch( this );
 					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID() != TF_WEAPON_INVIS )

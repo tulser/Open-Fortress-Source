@@ -1991,6 +1991,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 									{
 										pMusicPlayer->SetDisabled( true );
 										pMusicPlayer->m_bInfection = true;
+										pMusicPlayer->SetName( AllocPooledString( "InfMusicTemp_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH" ) );
 										pMusicPlayer->szLoopingSong = MAKE_STRING( "DeathmatchMusic.LastManStanding" );
 										pMusicPlayer->m_flDelay = of_lms_music_delay.GetFloat();
 										pMusicPlayer->Spawn();
@@ -2048,6 +2049,7 @@ void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 	{
 		m_nRoundsPlayed++;
 	}
+	UTIL_Remove ( gEntList.FindEntityByName( NULL, "InfMusicTemp_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH_BRUH" ) );
 
 	InternalHandleTeamWin( m_iWinningTeam );
 

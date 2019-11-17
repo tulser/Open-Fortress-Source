@@ -331,7 +331,7 @@ bool CTFWeaponBase::LoadsManualy( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetSlot( void ) const
 {
-	if ( TFGameRules() &&  TFGameRules()->IsDMGamemode() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
+	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 	
 	CTFPlayer *pOwner = ToTFPlayer ( GetOwner() );

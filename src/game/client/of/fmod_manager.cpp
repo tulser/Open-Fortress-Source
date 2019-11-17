@@ -418,7 +418,7 @@ void CommSndStp( void )
 {
 	FMODManager()->StopAllSound();
 }
-static ConCommand fm_stop_all_sound( "fm_stop_all_sound", CommSndStp, "Stops every channel group", FCVAR_CHEAT );
+static ConCommand fm_stop_all_sound( "fm_stop_all_sound", CommSndStp, "Stops every channel group", FCVAR_NONE );
 
 // Abruptly stops playing all ambient sounds
 void CFMODManager::StopAllSound( void )
