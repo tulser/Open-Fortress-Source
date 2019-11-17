@@ -65,11 +65,20 @@ public:
 
 	int				IsCurrentAttackACritical( void );
 	bool			ConnectedHit( void ) { return m_bConnected; }
+	virtual float	GetShieldChargeMeter( void ) { return m_flChargeMeter; }
+	virtual void	SetShieldChargeMeter(float bValue){ m_flChargeMeter = bValue; };
+	virtual bool	CanShieldCharge( void );
+	virtual void	ShieldChargeThink( void );
+	virtual void	ItemHolsterFrame( void );
+	virtual void	ItemBusyFrame( void );
 
 public:	
 
 	CTFWeaponInfo	*m_pWeaponInfo;
 
+private:
+	CNetworkVar( float,		m_flChargeMeter );
+	
 protected:
 
 	void			Swing( CTFPlayer *pPlayer );

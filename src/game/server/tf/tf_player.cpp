@@ -71,6 +71,7 @@
 #include "tf_obj_sentrygun.h"
 #include "teamplayroundbased_gamerules.h"
 #include "tf_weaponbase_melee.h"
+#include "of_music_player.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -142,6 +143,7 @@ ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NO
 extern ConVar of_grenades;
 extern ConVar of_retromode;
 extern ConVar of_forceclass;
+extern ConVar of_forcezombieclass;
 extern ConVar of_allowteams;
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -1285,7 +1287,8 @@ void CTFPlayer::Regenerate( void )
 	RestockClips( 1.0f );
 	RestockMetal( 1.0f );
 	RestockCloak( 1.0f );
-
+	RestockSpecialEffects( 1.0f );
+	
 	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		UpdatePlayerColor();
@@ -1428,8 +1431,10 @@ void CTFPlayer::GiveDefaultItems()
 	else
 	{
 		// Give weapons.
-		if ( of_randomizer.GetBool() && ManageRandomizerWeapons( pData ) )
-			DevMsg("Successfully Randomized\n");
+		if (of_randomizer.GetBool() && ManageRandomizerWeapons(pData))
+		{
+			// Its nothing ¯\_(ツ)_/¯
+		}
 		else if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 			ManageGunGameWeapons( pData );
 		else if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
@@ -1561,11 +1566,28 @@ int CTFPlayer::RestockAmmo( float PowerupSize )
 				}
 				
 			}
-			
 		}
 	}
 	return bSuccess;
 }
+
+int CTFPlayer::RestockSpecialEffects( float PowerupSize )
+{
+	int bSuccess = 0;
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
+	{
+		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		CTFWeaponBaseMelee *pMelee = dynamic_cast<CTFWeaponBaseMelee*>( pWeapon );
+		if ( pMelee )
+		{
+			pMelee->SetShieldChargeMeter( PowerupSize );
+			bSuccess = PowerupSize;
+		}
+	}
+	return bSuccess;
+}
+
 int CTFPlayer::RestockMetal( float PowerupSize )
 {
 	int bSuccess = false;
@@ -2840,21 +2862,25 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 				TFGameRules()->GetInfectionRoundTimer() && TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 			{
 				ChangeTeam( TF_TEAM_RED, false );
-				ShowViewPortPanel( PANEL_CLASS_RED );
+				if( !of_forceclass.GetBool() )
+					ShowViewPortPanel( PANEL_CLASS_RED );
 			}
 			else if ( GetTeamNumber() != TF_TEAM_BLUE &&
 				TFGameRules()->GetInfectionRoundTimer() && !TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 			{
 				ChangeTeam( TF_TEAM_BLUE, false );
-				ShowViewPortPanel( PANEL_CLASS_BLUE );
+				if( !of_forcezombieclass.GetBool() )
+					ShowViewPortPanel( PANEL_CLASS_BLUE );
 			}
 			else
 			{
 				ChangeTeam( TF_TEAM_RED, false );
-				ShowViewPortPanel( PANEL_CLASS_RED );
+				if( !of_forceclass.GetBool() )
+					ShowViewPortPanel( PANEL_CLASS_RED );
 			}
 
-			if ( GetTeamNumber() == TF_TEAM_RED && of_forceclass.GetBool() == 1 ) 
+			if ( ( GetTeamNumber() == TF_TEAM_RED && of_forceclass.GetBool() ) 
+				|| ( GetTeamNumber() != TF_TEAM_RED && of_forcezombieclass.GetBool() ) ) 
 				SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 
 			return;
@@ -5882,6 +5908,8 @@ void CC_DropWeapon( void )
 {
 	if ( !of_dropweapons.GetBool() )
 		return;
+	if( of_randomizer.GetBool() )
+		return;
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
 	if ( !pPlayer )
 		return;
@@ -6029,6 +6057,8 @@ bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *p
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve, int Clip, int Reserve )
 {
+	if( of_randomizer.GetBool() )
+		return;
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
@@ -9333,6 +9363,7 @@ void CTFPlayer::GiveAllItems()
 	}
 
 	RestockAmmo(POWERUP_FULL);
+	RestockSpecialEffects(POWERUP_FULL);
 
 	GiveAmmo( 1000, TF_AMMO_PRIMARY );
 	GiveAmmo( 1000, TF_AMMO_SECONDARY );
@@ -9348,6 +9379,7 @@ void CTFPlayer::RefillHealthAmmo()
 	AddAccount( 16000 );
 
 	RestockAmmo(POWERUP_FULL);
+	RestockSpecialEffects(POWERUP_FULL);
 
 	GiveAmmo( 1000, TF_AMMO_PRIMARY );
 	GiveAmmo( 1000, TF_AMMO_SECONDARY );

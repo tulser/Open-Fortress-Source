@@ -34,6 +34,7 @@
 #define CTFWeaponBase C_TFWeaponBase
 #define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
 #include "tf_fx_muzzleflash.h"
+#include "baseparticleentity.h"
 #endif
 
 #define MAX_TRACER_NAME		128
@@ -105,6 +106,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	// Setup.
 	CTFWeaponBase();
+	// Deconstructor
+	~CTFWeaponBase();
 
 	virtual void Spawn();
 	virtual void Equip( CBaseCombatCharacter *pOwner );
@@ -167,6 +170,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	bool PlayEmptySound();
 
 	// Activities.
+	virtual void ItemPreFrame( void );
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
 	
@@ -283,6 +287,7 @@ public:
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
+	virtual void CritEffectThink( void );
 #endif // CLIENT_DLL
 
 	// Reloads.
@@ -319,8 +324,10 @@ protected:
 
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
+public:
+	CNewParticleEffect	*m_pCritEffect;
 #endif
-
+protected:
 	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );
 
 	CNetworkVar(float, m_flNextShotTime);

@@ -27,9 +27,17 @@
 IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseMelee, DT_TFWeaponBaseMelee )
 
 BEGIN_NETWORK_TABLE( CTFWeaponBaseMelee, DT_TFWeaponBaseMelee )
+#if !defined( CLIENT_DLL )
+	SendPropFloat( SENDINFO(m_flChargeMeter), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+#else
+	RecvPropFloat( RECVINFO(m_flChargeMeter) ),
+#endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseMelee )
+#ifdef CLIENT_DLL
+DEFINE_PRED_FIELD( m_flChargeMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+#endif
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weaponbase_melee, CTFWeaponBaseMelee );
@@ -135,6 +143,7 @@ void CTFWeaponBaseMelee::Spawn()
 
 	// No ammo.
 	m_iClip1 = -1;
+	m_flChargeMeter = 1.0f;
 
 	BaseClass::Spawn();
 }
@@ -190,17 +199,48 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 	// semi-auto behaviour
 	if ( m_bInAttack2 )
 		return;
-
+	
 	// Get the current player.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( !pPlayer )
 		return;
 
-	pPlayer->DoClassSpecialSkill();
+	bool bStartedCharge = false;
+	float flNextAttack = gpGlobals->curtime + 0.5;
+	
+	if ( CanShieldCharge() )
+	{
+		if ( m_flChargeMeter >= 1.0f )
+		{
+			pPlayer->m_Shared.AddCond( TF_COND_SHIELD_CHARGE );
+			bStartedCharge = true;
+		}
+		else
+		{
+			flNextAttack = gpGlobals->curtime;
+		}
+	}
+	if ( !bStartedCharge )
+		pPlayer->DoClassSpecialSkill();
 
 	m_bInAttack2 = true;
 
-	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
+	m_flNextSecondaryAttack = flNextAttack;
+}
+
+bool CTFWeaponBaseMelee::CanShieldCharge()
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( !pPlayer )
+		return false;
+	
+	if ( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+		return false;
+	
+	if ( !m_pWeaponInfo->m_bCanShieldCharge )
+		return false;
+	
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -233,7 +273,13 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 		WeaponSound( MELEE_MISS );
 	}
 
-	m_flSmackTime = gpGlobals->curtime  + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSmackDelay  ;
+	m_flSmackTime = gpGlobals->curtime  + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSmackDelay;
+	if( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+	{
+		pPlayer->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
+		pPlayer->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+		m_flChargeMeter = 0.0f;
+	}
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -259,14 +305,14 @@ void CTFWeaponBaseMelee::SendPlayerAnimEvent( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::ItemPostFrame()
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
+	if ( !pOwner )
+		return;	
+	
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay > 0 )
 	{
 		if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
 			BurstFire();
-
-		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
-		if ( !pOwner )
-			return;
 
 		if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime  )
 		{
@@ -279,7 +325,51 @@ void CTFWeaponBaseMelee::ItemPostFrame()
 		Smack();
 		m_flSmackTime = -1.0f;
 	}
+	
+	ShieldChargeThink();
+	
 	BaseClass::ItemPostFrame();
+}
+
+void CTFWeaponBaseMelee::ItemHolsterFrame()
+{
+	ShieldChargeThink();
+	BaseClass::ItemHolsterFrame();
+}
+
+void CTFWeaponBaseMelee::ItemBusyFrame()
+{
+	ShieldChargeThink();
+	BaseClass::ItemBusyFrame();
+}
+
+void CTFWeaponBaseMelee::ShieldChargeThink()
+{
+	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
+	if ( !pOwner )
+		return;	
+	if ( pOwner->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+	{
+		if ( m_pWeaponInfo->m_flChargeDuration > 0.0f )
+		{
+			float flChargeAmount = gpGlobals->frametime / m_pWeaponInfo->m_flChargeDuration;
+			float flNewLevel = max( m_flChargeMeter - flChargeAmount, 0.0 );
+			m_flChargeMeter = flNewLevel;
+			if ( m_pWeaponInfo->m_flCritOnChargeLevel != -1 && m_flChargeMeter <= m_pWeaponInfo->m_flCritOnChargeLevel && !pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_DEMO_CHARGE ) )
+				pOwner->m_Shared.AddCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+			if ( m_flChargeMeter <= 0.0f )
+			{
+				pOwner->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
+				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+			}
+		}
+	}
+	else if ( m_pWeaponInfo->m_flChargeRechargeRate > 0.0f && m_flChargeMeter < 1.0f )
+	{
+		float flChargeAmount = gpGlobals->frametime / m_pWeaponInfo->m_flChargeRechargeRate;
+		float flNewLevel = min( m_flChargeMeter + flChargeAmount, 1 );
+		m_flChargeMeter = flNewLevel;
+	}
 }
 
 void CTFWeaponBaseMelee::BurstFire( void )
@@ -432,6 +522,12 @@ void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 bool CTFWeaponBaseMelee::CalcIsAttackCriticalHelper( void )
 {
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	
+	if ( pOwner && pOwner->m_Shared.InCond( TF_COND_CRITBOOSTED_DEMO_CHARGE ) )
+		return true;
+	
 	int nCvarValue = tf_weapon_criticals_melee.GetInt();
 	if ( nCvarValue == 0 )
 		return false;

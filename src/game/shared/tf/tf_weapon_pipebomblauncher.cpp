@@ -450,7 +450,7 @@ bool CTFPipebombLauncher::DetonateRemotePipebombs( bool bFizzle )
 				}
 			}
 #ifdef GAME_DLL
-			pTemp->SetTimer( gpGlobals->curtime - 10 );
+			pTemp->Detonate();
 #endif
 		}
 	}

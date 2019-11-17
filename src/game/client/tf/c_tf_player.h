@@ -71,7 +71,6 @@ public:
 	virtual bool				IsAllowedToSwitchWeapons( void );
 
 	virtual void ClientThink();
-	CNewParticleEffect	*SetParticleEnd( CNewParticleEffect *pParticle );
 
 	// Deal with recording
 	virtual void GetToolRecordingState( KeyValues *msg );
@@ -312,7 +311,6 @@ private:
 	CountdownTimer m_blinkTimer;
 
 	CNewParticleEffect	*m_pTeleporterEffect;
-	CNewParticleEffect	*m_pCritEffect;
 	bool				m_bToolRecordingVisibility;
 
 	int					m_iOldState;
@@ -385,7 +383,6 @@ public:
 	// Burning
 	CSoundPatch			*m_pBurningSound;
 	CNewParticleEffect	*m_pBurningEffect;
-	CNewParticleEffect	*m_pLightningParticle_tp;
 	float				m_flBurnEffectStartTime;
 	float				m_flBurnEffectEndTime;
 

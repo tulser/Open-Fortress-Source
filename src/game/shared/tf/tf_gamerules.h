@@ -44,6 +44,8 @@
 	extern BOOL cease_fire;
 
 	class CHealthKit;
+	class CAmmoPack;
+	class CWeaponSpawner;
 
 #endif
 
@@ -443,6 +445,8 @@ private:
 	Vector2D	m_vecPlayerPositions[MAX_PLAYERS];
 
 	CUtlVector<CHandle<CHealthKit> > m_hDisabledHealthKits;	
+	CUtlVector<CHandle<CAmmoPack> >  m_hDisabledAmmoPack;	
+	CUtlVector<CHandle<CWeaponSpawner> >  m_hDisabledWeaponSpawners;	
 	
 	char	m_szMostRecentCappers[MAX_PLAYERS+1];	// list of players who made most recent capture.  Stored as string so it can be passed in events.
 	int		m_iNumCaps[TF_TEAM_COUNT];				// # of captures ever by each team during a round

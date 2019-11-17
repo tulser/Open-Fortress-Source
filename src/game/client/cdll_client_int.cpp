@@ -1846,7 +1846,7 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	g_discordrpc.Reset();
 	
 	// S:O - Stop all FMOD sounds when exiting to the main menu
-	FMODManager()->StopAmbientSound( false );	
+	FMODManager()->StopAllSound();	
 #endif
 
 #if defined( REPLAY_ENABLED )

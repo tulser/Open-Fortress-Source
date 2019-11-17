@@ -42,6 +42,7 @@
 	#include "entity_roundwin.h"
 	#include "coordsize.h"
 	#include "entity_healthkit.h"
+	#include "entity_ammopack.h"
 	#include "tf_gamestats.h"
 	#include "entity_capture_flag.h"
 	#include "entity_weapon_spawner.h"
@@ -153,6 +154,8 @@ ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
 ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
 
+ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Healthkits." );
+ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
 // Not implemented.
 // ConVar of_ggweaponlist		( "of_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
@@ -167,6 +170,7 @@ ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	4: Unholy Trinity
 	5: Rocket Arena
 	6: Gun Game
+	7: Randomizer
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
@@ -2130,7 +2134,93 @@ void CTFGameRules::SetupOnRoundStart( void )
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
+	if( of_disable_healthkits.GetBool() )
+	{
+		// Disable all the active health packs in the world
+		m_hDisabledHealthKits.Purge();
+		CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
+		while ( pHealthPack )
+		{
+			if ( !pHealthPack->IsDisabled() )
+			{
+				pHealthPack->SetDisabled( true );
+				m_hDisabledHealthKits.AddToTail( pHealthPack );
+			}
+			pHealthPack = gEntList.NextEntByClass( pHealthPack );
+		}
+	}
+	else
+	{
+		// Reenable all the health packs we disabled
+		for ( int i = 0; i < m_hDisabledHealthKits.Count(); i++ )
+		{
+			if ( m_hDisabledHealthKits[i] )
+			{
+				m_hDisabledHealthKits[i]->SetDisabled( false );
+			}
+		}
 
+		m_hDisabledHealthKits.Purge();		
+	}
+	
+	if( of_randomizer.GetBool() )
+	{
+		// Disable all the active health packs in the world
+		m_hDisabledWeaponSpawners.Purge();
+		CWeaponSpawner *pWeaponSpawner = gEntList.NextEntByClass( (CWeaponSpawner *)NULL );
+		while ( pWeaponSpawner )
+		{
+			if ( !pWeaponSpawner->IsDisabled() )
+			{
+				pWeaponSpawner->SetDisabled( true );
+				m_hDisabledWeaponSpawners.AddToTail( pWeaponSpawner );
+			}
+			pWeaponSpawner = gEntList.NextEntByClass( pWeaponSpawner );
+		}
+	}
+	else
+	{
+		// Reenable all the health packs we disabled
+		for ( int i = 0; i < m_hDisabledWeaponSpawners.Count(); i++ )
+		{
+			if ( m_hDisabledWeaponSpawners[i] )
+			{
+				m_hDisabledWeaponSpawners[i]->SetDisabled( false );
+			}
+		}
+
+		m_hDisabledWeaponSpawners.Purge();				
+	}	
+	
+	if( of_disable_ammopacks.GetBool() )
+	{
+		// Disable all the active health packs in the world
+		m_hDisabledAmmoPack.Purge();
+		CAmmoPack *pAmmoPack = gEntList.NextEntByClass( (CAmmoPack *)NULL );
+		while ( pAmmoPack )
+		{
+			if ( !pAmmoPack->IsDisabled() )
+			{
+				pAmmoPack->SetDisabled( true );
+				m_hDisabledAmmoPack.AddToTail( pAmmoPack );
+			}
+			pAmmoPack = gEntList.NextEntByClass( pAmmoPack );
+		}
+	}
+	else
+	{
+		// Reenable all the health packs we disabled
+		for ( int i = 0; i < m_hDisabledAmmoPack.Count(); i++ )
+		{
+			if ( m_hDisabledAmmoPack[i] )
+			{
+				m_hDisabledAmmoPack[i]->SetDisabled( false );
+			}
+		}
+
+		m_hDisabledAmmoPack.Purge();				
+	}
+	
 	if ( TFGameRules()->IsInfGamemode() )
 	{
 		// put everyone into RED again
@@ -4547,6 +4637,12 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = STRING( pInflictor->m_iClassname );
 	}
+	
+	static char temp[128];
+	V_strncpy( temp, killer_weapon_name, sizeof( temp ) );
+	Q_strlower( temp );
+	killer_weapon_name = temp;
+	
 	int proj = Q_strlen( "tf_projectile_" );
 	if ( strncmp( killer_weapon_name, "tf_projectile_", proj ) == 0 )
 	{
@@ -5683,7 +5779,7 @@ int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 
 bool CTFGameRules::UsesDMBuckets()
 {
-	return ( of_multiweapons.GetBool() && IsDMGamemode() );
+	return ( of_multiweapons.GetBool() && ( IsDMGamemode() || IsInfGamemode() ) && !of_randomizer.GetBool() );
 }
 
 //-----------------------------------------------------------------------------

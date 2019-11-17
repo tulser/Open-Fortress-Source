@@ -36,6 +36,11 @@ public:
 	const char* GetPowerupPickupLineSelf(void);
 	const char* GetPowerupPickupSound(void);
 
+	int UpdateTransmitState()	// always send to all clients
+	{
+		return SetTransmitState( FL_EDICT_ALWAYS );
+	}	
+	
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
 	int m_bCondition=5;
 	float m_bCondDuration=5;

@@ -28,7 +28,7 @@
 	#include "team_train_watcher.h"
 	#include "serverbenchmark_base.h"
 	#include "tf_gamestats.h"
-
+	#include "of_music_player.h"
 #if defined( REPLAY_ENABLED )	
 	#include "replay/ireplaysystem.h"
 	#include "replay/iserverreplaycontext.h"
@@ -94,7 +94,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamplayRoundBasedRules, DT_TeamplayRoundBasedRules
 	RecvPropBool( RECVINFO( m_bMultipleTrains ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_bPlayerReady), RecvPropBool( RECVINFO(m_bPlayerReady[0]) ) ),
 	RecvPropBool( RECVINFO( m_bCheatsEnabledDuringLevel ) ),
-
+	RecvPropTime( RECVINFO( m_flStartedWinState ) ),
 #else
 	SendPropInt( SENDINFO( m_iRoundState ), 5 ),
 	SendPropBool( SENDINFO( m_bInWaitingForPlayers ) ),
@@ -112,6 +112,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamplayRoundBasedRules, DT_TeamplayRoundBasedRules
 	SendPropBool( SENDINFO( m_bMultipleTrains ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_bPlayerReady), SendPropBool( SENDINFO_ARRAY(m_bPlayerReady) ) ),
 	SendPropBool( SENDINFO( m_bCheatsEnabledDuringLevel ) ),
+	SendPropTime( SENDINFO( m_flStartedWinState ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -219,6 +220,7 @@ ConVar mp_stalemate_enable( "mp_stalemate_enable", "0", FCVAR_NOTIFY, "Enable/Di
 ConVar mp_match_end_at_timelimit( "mp_match_end_at_timelimit", "0", FCVAR_NOTIFY, "Allow the match to end when mp_timelimit hits instead of waiting for the end of the current round." );
 
 ConVar mp_holiday_nogifts( "mp_holiday_nogifts", "0", FCVAR_NOTIFY, "Set to 1 to prevent holiday gifts from spawning when players are killed." );
+ConVar of_lms_music_delay("of_lms_music_delay", "3", FCVAR_ARCHIVE );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1981,17 +1983,19 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 								{
 									m_bInfectionLastManAlive = true;
 									CSingleUserRecipientFilter filter( pTFPlayer );
-									pTFPlayer->EmitSound( filter, pTFPlayer->entindex(), "Announcer.AM_LastManAlive" );
 
 									pTFPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
-
-									/*
-									// all teams
-									for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
+									BroadcastSound( TF_TEAM_RED, "AM_LastManAlive" );
+									CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", vec3_origin , vec3_angle );
+									if ( pMusicPlayer )
 									{
-										BroadcastSound( i, "InfectionMusic.LastManStanding", false );
+										pMusicPlayer->SetDisabled( true );
+										pMusicPlayer->m_bInfection = true;
+										pMusicPlayer->szLoopingSong = MAKE_STRING( "DeathmatchMusic.LastManStanding" );
+										pMusicPlayer->m_flDelay = of_lms_music_delay.GetFloat();
+										pMusicPlayer->Spawn();
+										pMusicPlayer->SetDisabled( false );
 									}
-									*/
 								}
 
 								break;
@@ -2038,7 +2042,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 {
 	m_flStateTransitionTime = gpGlobals->curtime + GetBonusRoundTime();
-
+	m_flStartedWinState = gpGlobals->curtime;
 	// if we're forcing the map to reset it must be the end of a "full" round not a mini-round
 	if ( m_bForceMapReset )
 	{

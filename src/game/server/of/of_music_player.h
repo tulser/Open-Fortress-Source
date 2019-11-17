@@ -48,7 +48,9 @@ public:
 	
 	CNetworkVar( bool, m_bShouldBePlaying );
 	CNetworkVar( bool, m_bPlayInWaitingForPlayers );
+	CNetworkVar( bool, m_bInfection );
 	CNetworkVar( bool, m_bDisabled );
+	CNetworkVar( float, m_flDelay );
 	CNetworkString( m_nszIntroSong , MAX_PATH );
 	CNetworkString( m_nszLoopingSong , MAX_PATH );
 	CNetworkString( m_nszOutroSong , MAX_PATH );

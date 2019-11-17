@@ -43,9 +43,11 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGun, DT_TFWeaponBaseGun )
 // Client specific.
 #ifdef CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bSwapFire ) ),
+	RecvPropTime( RECVINFO( m_flAccurateAtTick ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bSwapFire ) ),
+	SendPropTime( SENDINFO( m_flAccurateAtTick ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -55,7 +57,8 @@ BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
 #endif
 #if defined( CLIENT_DLL )
 	DEFINE_FIELD(m_bSwapFire, FIELD_INTEGER ),
-	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT )
+	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT ),
+	DEFINE_FIELD( m_flAccurateAtTick, FIELD_FLOAT ),
 #endif
 END_PREDICTION_DATA()
 
@@ -88,6 +91,7 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 	m_iShotsDue = 0;
 	m_flNextShotTime = 0.0f;
+	m_flAccurateAtTick = 0.0f;
 }
 
 bool CTFWeaponBaseGun::Reload( void )
@@ -227,6 +231,8 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		else
 			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
 	}
+	
+	m_flAccurateAtTick = gpGlobals->curtime + 1.25;
 
 	// Don't push out secondary attack, because our secondary fire
 	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
@@ -468,6 +474,8 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 	if ( GetWeaponID() != TF_WEAPON_LIGHTNING_GUN )
 		PlayWeaponShootSound();
 
+	bool bFirstShot =  m_flAccurateAtTick < gpGlobals->curtime;
+	
 	FX_FireBullets(
 		pPlayer->entindex(),
 		pPlayer->Weapon_ShootPosition(),
@@ -477,7 +485,8 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		CBaseEntity::GetPredictionRandomSeed() & 255,
 		GetWeaponSpread(),
 		GetProjectileDamage(),
-		IsCurrentAttackACrit() );
+		IsCurrentAttackACrit(),
+		bFirstShot );
 }
 
 class CTraceFilterIgnoreTeammates : public CTraceFilterSimple

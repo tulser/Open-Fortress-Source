@@ -112,7 +112,7 @@ void EndGroupingSounds() {}
 // only does the damage calculations.  On the client, it does all the effects.
 //-----------------------------------------------------------------------------
 void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
-					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, int bCritical /* = false*/ )
+					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, int bCritical /* = false*/, bool bFirstShot )
 {
 	// Get the weapon information.
 	const char *pszWeaponAlias = WeaponIdToAlias( iWeapon );
@@ -276,8 +276,16 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 			x = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );
 			y = RandomFloat( -0.5, 0.5 ) + RandomFloat( -0.5, 0.5 );			
 		}
-		// Initialize the varialbe firing information.
-		fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
+		if ( bFirstShot )
+		{
+			bFirstShot = false;
+			fireInfo.m_vecDirShooting = vecShootForward + ( x *  0.0f * vecShootRight ) + ( y * 0.0f * vecShootUp );
+		}
+		else
+		{
+			// Initialize the varialbe firing information.
+			fireInfo.m_vecDirShooting = vecShootForward + ( x *  flSpread * vecShootRight ) + ( y * flSpread * vecShootUp );
+		}
 		fireInfo.m_vecDirShooting.NormalizeInPlace();
 
 		// Fire a bullet.

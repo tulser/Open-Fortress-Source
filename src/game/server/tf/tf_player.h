@@ -480,6 +480,7 @@ public:
 	int				RestockAmmo( float PowerupSize );
 	int				RestockMetal( float PowerupSize );
 	int				RestockCloak( float PowerupSize );
+	int				RestockSpecialEffects( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
 
 	CNetworkVar( bool, m_bHauling );

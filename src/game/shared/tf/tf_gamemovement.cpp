@@ -39,6 +39,7 @@ ConVar	tf_avoidteammates( "tf_avoidteammates", "1", FCVAR_REPLICATED | FCVAR_CHE
 ConVar  tf_solidobjects( "tf_solidobjects", "1", FCVAR_REPLICATED | FCVAR_CHEAT  );
 ConVar	tf_clamp_back_speed( "tf_clamp_back_speed", "0.9", FCVAR_REPLICATED  );
 ConVar  tf_clamp_back_speed_min( "tf_clamp_back_speed_min", "100", FCVAR_REPLICATED  );
+ConVar	of_shield_charge_speed("of_shield_charge_speed", "720", FCVAR_REPLICATED);
 
 ConVar 	of_bunnyhop( "of_bunnyhop", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED , "Toggle bunnyhoping.\n-1: Mercenary Only\n0: None\n1:All Classes except Zombies\n2:All Classes including Zombies" );
 ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables crouch jumping." );
@@ -230,10 +231,14 @@ void CTFGameMovement::PlayerMove()
 //-----------------------------------------------------------------------------
 void CTFGameMovement::ShieldChargeMove( void )
 {
-	mv->m_flForwardMove = 750.0f;
-	mv->m_flMaxSpeed = 750.0f;
+	mv->m_flForwardMove = of_shield_charge_speed.GetFloat();
+	mv->m_flMaxSpeed = of_shield_charge_speed.GetFloat();
 	mv->m_flSideMove = 0.0f;
 	mv->m_flUpMove = 0.0f;
+	
+	// HACK HACK: This prevents Jump and crouch inputs, try to do it via functions instead
+	mv->m_nButtons &= ~IN_DUCK;
+	mv->m_nButtons &= ~IN_JUMP;
 }
 
 Vector CTFGameMovement::GetPlayerViewOffset( bool ducked ) const
@@ -997,8 +1002,8 @@ void CTFGameMovement::AirMove( void )
 
 float CTFGameMovement::GetAirSpeedCap( void )
 {
-	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) && mp_maxairspeed.GetFloat() < 720.0f)
-		return 750.0f;
+	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) && mp_maxairspeed.GetFloat() < of_shield_charge_speed.GetFloat())
+		return of_shield_charge_speed.GetFloat();
 	return mp_maxairspeed.GetFloat();
 }
 

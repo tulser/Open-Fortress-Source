@@ -694,6 +694,7 @@ enum
 	TF_COND_SHIELD,
 	TF_COND_CRIT_POWERUP,
 	TF_COND_INVIS_POWERUP,
+	TF_COND_CRITBOOSTED_DEMO_CHARGE,
 
 	// The following conditions all expire faster when the player is being healed
 	// If you add a new condition that shouldn't have this behavior, add it before this section.

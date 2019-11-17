@@ -203,7 +203,9 @@ public:
 
 	virtual int GetWinningTeam( void ){ return m_iWinningTeam; }
 	int GetWinReason() { return m_iWinReason; }
-
+#ifdef GAME_DLL
+	virtual float GetStateTransitionTime( void ){ return m_flStateTransitionTime; }
+#endif
 	bool InOvertime( void ){ return m_bInOvertime; }
 	void SetOvertime( bool bOvertime );
 
@@ -589,7 +591,7 @@ protected:
 
 public:
 	CNetworkArray( float,		m_TeamRespawnWaveTimes, MAX_TEAMS );	// Time between each team's respawn wave
-
+	CNetworkVar( float, m_flStartedWinState );
 private:
 	float m_flStartBalancingTeamsAt;
 	float m_flNextBalanceTeamsTime;

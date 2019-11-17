@@ -2362,7 +2362,6 @@ C_TFPlayer::C_TFPlayer() :
 	m_pTeleporterEffect = NULL;
 	m_pBurningSound = NULL;
 	m_pBurningEffect = NULL;
-	m_pLightningParticle_tp = NULL;
 	m_flBurnEffectStartTime = 0;
 	m_flBurnEffectEndTime = 0;
 	m_pDisguisingEffect = NULL;
@@ -3489,9 +3488,6 @@ void C_TFPlayer::ClientThink()
 		}
 	}
 	
-	if ( m_pLightningParticle_tp )
-		SetParticleEnd( m_pLightningParticle_tp );
-
 	if ( m_bWaterExitEffectActive && !IsAlive() )
 	{
 		ParticleProp()->StopParticlesNamed( "water_playeremerge", false );
@@ -3558,34 +3554,6 @@ public:
 	CBaseEntity *m_hOwner;
 	int m_iIgnoreTeam;
 };
-
-CNewParticleEffect *C_TFPlayer::SetParticleEnd( CNewParticleEffect *pParticle )
-{
-	
-	Vector vecForward, vecRight, vecUp;
-	AngleVectors( EyeAngles(), &vecForward, &vecRight, &vecUp );
-
-	Vector vecShootPos = Weapon_ShootPosition();
-
-	// Estimate end point
-	Vector endPos = vecShootPos + vecForward * 720;	
-
-	int team = GetTeamNumber();
-	if ( team == TF_TEAM_MERCENARY ) team = 0;		
-	
-	trace_t tr;
-	
-	CTraceFilterIgnoreTeammates filter( this, COLLISION_GROUP_NONE, team, this );
-	UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );	
-	
-	if ( pParticle )
-	{
-		pParticle->SetControlPoint( 1, tr.endpos );
-		return pParticle;
-	}
-
-	return false;
-}
 
 //-----------------------------------------------------------------------------
 // Purpose:

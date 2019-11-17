@@ -1545,7 +1545,7 @@ const char* ClientModeShared::GetAnnouncer()
 	}
 	if ( szDefaultAnnouncer[0] != 0 && AnnouncerEntity() )
 		return AnnouncerEntity()->szAnnouncer;
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return "Benja";
 	else
 		return "Announcer";

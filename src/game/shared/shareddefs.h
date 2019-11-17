@@ -702,9 +702,10 @@ struct FireBulletsInfo_t
 #endif
 		m_bPrimaryAttack = true;
 		m_bUseServerRandomSeed = false;
+		m_bCreateDecals = true;
 	}
 
-	FireBulletsInfo_t( int nShots, const Vector &vecSrc, const Vector &vecDir, const Vector &vecSpread, float flDistance, int nAmmoType, bool bPrimaryAttack = true )
+	FireBulletsInfo_t( int nShots, const Vector &vecSrc, const Vector &vecDir, const Vector &vecSpread, float flDistance, int nAmmoType, bool bPrimaryAttack = true, bool bDecals = true )
 	{
 		m_iShots = nShots;
 		m_vecSrc = vecSrc;
@@ -721,6 +722,7 @@ struct FireBulletsInfo_t
 		m_flDamageForceScale = 1.0f;
 		m_bPrimaryAttack = bPrimaryAttack;
 		m_bUseServerRandomSeed = false;
+		m_bCreateDecals = bDecals;
 	}
 
 	int m_iShots;
@@ -738,6 +740,7 @@ struct FireBulletsInfo_t
 	CBaseEntity *m_pAdditionalIgnoreEnt;
 	bool m_bPrimaryAttack;
 	bool m_bUseServerRandomSeed;
+	bool m_bCreateDecals;
 };
 
 //-----------------------------------------------------------------------------

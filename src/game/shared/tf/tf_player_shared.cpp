@@ -67,6 +67,7 @@ ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
 
 ConVar of_forceclass( "of_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
+ConVar of_forcezombieclass( "of_forcezombieclass", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force zombies to be Mercenaries in Infiltration." );
 ConVar of_allowteams( "of_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
 ConVar of_berserk_speed( "of_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
 ConVar of_berserk_speed_factor( "of_berserk_speed_factor", "1.33", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode. (factor mode)");
@@ -514,6 +515,7 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		break;
 	case TF_COND_CRITBOOSTED:
 	case TF_COND_CRIT_POWERUP:
+	case TF_COND_CRITBOOSTED_DEMO_CHARGE:
 		OnAddCritBoosted();
 		break;
 	case TF_COND_BERSERK:
@@ -584,6 +586,7 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		break;
 	case TF_COND_CRITBOOSTED:
 	case TF_COND_CRIT_POWERUP:
+	case TF_COND_CRITBOOSTED_DEMO_CHARGE:
 		OnRemoveCritBoosted();
 		break;
 	case TF_COND_BERSERK:
@@ -1017,73 +1020,7 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 
 void CTFPlayerShared::OnAddCritBoosted( void )
 {
-#ifdef CLIENT_DLL
-	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
-	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
-
-	if ( pWeapon )
-	{
-		char *pEffect = NULL;
-
-		if ( pWeapon->ShouldDrawUsingViewModel() )
-		{
-			C_BaseViewModel *viewmodel = pPlayer->GetViewModel( 0 );
-
-			if ( viewmodel )
-			{
-				// Get the viewmodel and use it instead
-				switch( pPlayer->GetTeamNumber() )
-				{
-				case TF_TEAM_BLUE:
-					pEffect = "critgun_firstperson_weaponmodel_blu";
-					break;
-				case TF_TEAM_RED:
-					pEffect = "critgun_firstperson_weaponmodel_red";
-					break;
-				case TF_TEAM_MERCENARY:
-					pEffect = "critgun_firstperson_weaponmodel_dm";
-					break;
-				default:
-					pEffect = "critgun_firstperson_weaponmodel_dm";
-					break;
-				}
-			}
-		}
-		else
-		{
-			switch( pPlayer->GetTeamNumber() )
-			{
-			case TF_TEAM_BLUE:
-				pEffect = "critgun_weaponmodel_blu";
-				break;
-			case TF_TEAM_RED:
-				pEffect = "critgun_weaponmodel_red";
-				break;
-			case TF_TEAM_MERCENARY:
-				pEffect = "critgun_weaponmodel_dm";
-				break;
-			default:
-				pEffect = "critgun_weaponmodel_dm";
-				break;
-			}
-		}
-
-		if ( pEffect && pWeapon )
-		{
-			if ( pPlayer != C_TFPlayer::GetLocalTFPlayer() )
-				UpdateParticleColor( pWeapon->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
-
-			if ( pPlayer == C_TFPlayer::GetLocalTFPlayer() )
-			{
-				C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
-
-				if ( vm )
-					UpdateParticleColor( vm->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
-			}
-		}
-	}
-	
-#else
+#ifndef CLIENT_DLL
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
@@ -1092,60 +1029,7 @@ void CTFPlayerShared::OnAddCritBoosted( void )
 
 void CTFPlayerShared::OnRemoveCritBoosted( void )
 {
-#ifdef CLIENT_DLL
-	C_TFPlayer *pPlayer = ToTFPlayer( m_pOuter );
-	
-	C_BaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
-
-	if ( pWeapon )
-	{
-		char *pEffect = NULL;
-
-		if ( pWeapon->ShouldDrawUsingViewModel() )
-		{
-			C_BaseViewModel *vm = pPlayer->GetViewModel( 0 );
-
-			if ( vm )
-			{
-				switch( pPlayer->GetTeamNumber() )
-				{
-				case TF_TEAM_BLUE:
-					pEffect = "critgun_firstperson_weaponmodel_blu";
-					break;
-				case TF_TEAM_RED:
-					pEffect = "critgun_firstperson_weaponmodel_red";
-					break;
-				case TF_TEAM_MERCENARY:
-					pEffect = "critgun_firstperson_weaponmodel_dm";
-					break;
-				default:
-					break;
-				}
-
-				vm->ParticleProp()->StopParticlesNamed( pEffect );
-			}
-		}
-		else
-		{
-			switch( pPlayer->GetTeamNumber() )
-			{
-			case TF_TEAM_BLUE:
-				pEffect = "critgun_weaponmodel_blu";
-				break;
-			case TF_TEAM_RED:
-				pEffect = "critgun_weaponmodel_red";
-				break;
-			case TF_TEAM_MERCENARY:
-				pEffect = "critgun_weaponmodel_dm";
-				break;
-			default:
-				break;
-			}
-
-			pWeapon->ParticleProp()->StopParticlesNamed( pEffect );
-		}
-	}
-#else
+#ifndef CLIENT_DLL
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer && pTFPlayer->IsAlive() )
 	{
@@ -3233,7 +3117,7 @@ void CTFPlayerShared::RemoveCondShield( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::InCondCrit( void )
 {
-	if ( InCond( TF_COND_CRITBOOSTED ) || InCond( TF_COND_CRIT_POWERUP ) )
+	if ( InCond( TF_COND_CRITBOOSTED ) || InCond( TF_COND_CRIT_POWERUP ) || InCond( TF_COND_CRITBOOSTED_DEMO_CHARGE ) )
 		return true;
 	else
 		return false;
@@ -3246,6 +3130,7 @@ void CTFPlayerShared::RemoveCondCrit( void )
 {
 	RemoveCond( TF_COND_CRITBOOSTED );
 	RemoveCond( TF_COND_CRIT_POWERUP );
+	RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
 }
 
 //-----------------------------------------------------------------------------

@@ -1,92 +1,23 @@
 //====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =======//
 //
-// Purpose: Deathmatch weapon spawner
+// Purpose: Music Player, used for Handling Music in Maps
 //
 //=============================================================================//
 
 #include "cbase.h"
+#include "c_of_music_player.h"
 #include "c_tf_player.h"
-#include "view.h"
-#include "soundenvelope.h"
-#include "engine/IEngineSound.h"
 #include "tf_gamerules.h"
 #include "fmod_manager.h"
-#include "saverestore_utlvector.h"
 
-// IMported from sounds	
-#include "mathlib/mathlib.h"
+// Imported from sounds	
 #include "stringregistry.h"
-#include "gamerules.h"
 #include <ctype.h>
-#include "vstdlib/random.h"
-#include "engine/IEngineSound.h"
 #include "igamesystem.h"
 #include "KeyValues.h"
 #include "filesystem.h"
 
 #include "tier0/memdbgon.h"
-
-ConVar cl_song_comp("cl_song_comp", "-0.05", FCVAR_ARCHIVE, "How much time we add to the initial song duration before it loops\nWe do this because the actual song duration is not 100% accurate");
-ConVar cl_parse_method("cl_parse_method", "0", FCVAR_ARCHIVE);
-
-enum
-{
-	OF_MUSIC_INTRO = 0,
-	OF_MUSIC_LOOP,
-	OF_MUSIC_OUTRO,
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Spawn function for the Weapon Spawner
-//-----------------------------------------------------------------------------
-class C_TFMusicPlayer : public C_BaseEntity
-{
-public:
-	DECLARE_CLASS( C_TFMusicPlayer, C_BaseEntity );
-	DECLARE_CLIENTCLASS();
-	
-	C_TFMusicPlayer();
-	~C_TFMusicPlayer();
-	virtual void ClientThink(void);
-	virtual void Spawn(void);
-	virtual void OnDataChanged(DataUpdateType_t updateType);
-
-private:
-
-	private:
-	
-	int m_iPhase;
-	
-	bool m_bShouldBePlaying;
-	bool bIsPlaying;
-	bool bInLoop;
-	
-	bool bParsed;
-	
-	float flLoopTick;
-
-	char szIntroSong[MAX_PATH];
-	char szLoopingSong[MAX_PATH];
-	char szOutroSong[MAX_PATH];
-	
-	struct songdata_t
-	{
-		songdata_t()
-		{
-			name[0] = 0;
-			artist[0] = 0;
-			path[0] = 0;
-			duration = 0;
-		}
-
-		char name[ 512 ];
-		char artist[ 256 ];
-		char path[ 256 ];
-		float duration;
-		float volume;
-	};	
-	CUtlVector<songdata_t>	m_Songdata;
-};
 
 // Inputs.
 LINK_ENTITY_TO_CLASS( of_music_player, C_TFMusicPlayer );
@@ -97,6 +28,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFMusicPlayer, DT_MusicPlayer, CTFMusicPlayer )
 	RecvPropString( RECVINFO( szOutroSong ) ),
 	RecvPropInt( RECVINFO( m_iPhase ) ),
 	RecvPropBool( RECVINFO( m_bShouldBePlaying ) ),
+	RecvPropFloat( RECVINFO( m_flDelay ) ),
 END_RECV_TABLE()
 
 C_TFMusicPlayer::C_TFMusicPlayer()
@@ -104,6 +36,7 @@ C_TFMusicPlayer::C_TFMusicPlayer()
 	bIsPlaying = false;
 	bInLoop = false;
 	bParsed = false;
+	m_flDelay = 0;
 	m_iPhase = 0;
 	m_Songdata.SetSize( 3 );
 }
@@ -115,7 +48,7 @@ C_TFMusicPlayer::~C_TFMusicPlayer()
 	bParsed = false;
 	m_iPhase = 0;
 	m_Songdata.Purge();
-	FMODManager()->StopAmbientSound(false);
+	FMODManager()->StopAmbientSound( pChannel, false );
 }
 void C_TFMusicPlayer::Spawn( void )
 {	
@@ -125,8 +58,6 @@ void C_TFMusicPlayer::Spawn( void )
 
 void C_TFMusicPlayer::ClientThink( void )
 {
-	if ( TFGameRules() && TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
-		return;
 
 	if ( !bParsed )
 	{
@@ -152,16 +83,21 @@ void C_TFMusicPlayer::ClientThink( void )
 		{
 			bIsPlaying = false;
 			m_iPhase = 0;
-			FMODManager()->StopAmbientSound(false);
+			FMODManager()->StopAmbientSound( pChannel, false );
 		}
 		else
 		{
+			FMODManager()->StopAmbientSound( pChannel, false );
 			bIsPlaying = true;
 			bInLoop = false;
 			if ( m_Songdata[0].name[0] != 0 )
-				FMODManager()->PlayLoopingMusic(m_Songdata[1].path, m_Songdata[0].path);
+			{
+				FMODManager()->PlayLoopingMusic( &pChannel, m_Songdata[1].path, m_Songdata[0].path, m_flDelay );
+			}
 			else
-				FMODManager()->PlayLoopingMusic(m_Songdata[1].path);
+			{
+				FMODManager()->PlayLoopingMusic( &pChannel, m_Songdata[1].path, NULL , m_flDelay );
+			}
 		}
 	}
 /*	else if ( bIsPlaying && !bInLoop && !FMODManager()->IsChannelPlaying() )
@@ -225,7 +161,6 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 					Q_strncpy( m_Songdata[i].artist, pSound->GetString( "Artist", "Unknown" ) , sizeof( m_Songdata[i].artist ) );
 					Q_strncpy( m_Songdata[i].path, pSound->GetString( "wave", "#music/deathmatch/map01_loop.mp3" ) , sizeof( m_Songdata[i].path ) );
 					m_Songdata[i].volume = pSound->GetFloat( "volume", 0.9f );
-					if ( cl_parse_method.GetInt() == 1 )
 					m_Songdata[i].duration = pSound->GetFloat( "duration", 0.0f );
 				}
 				const char *pszSrc = NULL;
@@ -234,21 +169,26 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 					pszSrc = m_Songdata[i].path + 1;
 					Q_strncpy( m_Songdata[i].path, pszSrc, sizeof(m_Songdata[i].path) );
 				}
-				if ( cl_parse_method.GetInt() == 0 || m_Songdata[i].duration == 0.0f )
-				m_Songdata[i].duration = enginesound->GetSoundDuration( m_Songdata[i].path );
 			}
 			bParsed = true;			
 		}
 	}
 }
-/*
-void CMP3Player::GetLocalCopyOfSong( const char *szFullSongPath, char *outsong, size_t outlen )
+
+// Instead of including windows.h This is temporary untill we find a more universal solution
+extern "C"
 {
-	outsong[ 0 ] = 0;
+	extern int __stdcall CopyFileA( char *pszSource, char *pszDest, int bFailIfExists );
+};
+
+const char *C_TFMusicPlayer::GetLocalCopyOfSong( const char *szFullSongPath )
+{
+	size_t outlen = sizeof(szFullSongPath);
+	char *outsong = 0;
 	char fn[ 512 ];
-	if ( !g_pFullFileSystem->String( szFullSongPath, fn, sizeof( fn ) ) )
+	if ( !g_pFullFileSystem->String( g_pFullFileSystem->FindOrAddFileName( szFullSongPath ), fn, sizeof( fn ) ) )
 	{
-		return;
+		return szFullSongPath;
 	}
 
 	// Get temp filename from crc
@@ -283,8 +223,8 @@ void CMP3Player::GetLocalCopyOfSong( const char *szFullSongPath, char *outsong, 
 		char sourcepath[ 512 ];
 
 		Assert( mp3.dirnum >= 0 && mp3.dirnum < m_SoundDirectories.Count() );
-		SoundDirectory_t *sdir = m_SoundDirectories[ mp3.dirnum ];
-		Q_snprintf( sourcepath, sizeof( sourcepath ), "%s/%s", sdir->m_Root.String(), fn );
+
+		Q_snprintf( sourcepath, sizeof( sourcepath ), szFullSongPath );
 		Q_FixSlashes( sourcepath );
 
 		// !!!HACK HACK:
@@ -292,10 +232,10 @@ void CMP3Player::GetLocalCopyOfSong( const char *szFullSongPath, char *outsong, 
 		int success = ::CopyFileA( sourcepath, destpath, TRUE );
 		if ( success > 0 )
 		{
-			Q_snprintf( outsong, outlen, "_mp3/%s.mp3", hexname );
+			Q_snprintf( outsong, outlen, "ogg_test/%s.ogg", hexname );
 		}
 	}
 
-	Q_FixSlashes( outsong );
+//	Q_FixSlashes( outsong );
+	return outsong;
 }
-*/

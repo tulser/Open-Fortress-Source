@@ -85,6 +85,9 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_iCost = 0;
 	
 	m_flWindupTime = 0.0f;
+	m_flChargeDuration = 0.0f;
+	m_flChargeRechargeRate = 0.0f;
+	m_flCritOnChargeLevel = -1.0f;
 	
 	m_flFuseTime = -1.0f;
 
@@ -275,7 +278,11 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
 	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
 	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
+	m_bCanShieldCharge = ( pKeyValuesData->GetInt( "CanShieldCharge", 0 ) != 0 );
 	
+	m_flChargeDuration = pKeyValuesData->GetFloat( "ChargeDuration", 0.0f );
+	m_flChargeRechargeRate = pKeyValuesData->GetFloat( "ChargeRechargeRate", 0.0f );
+	m_flCritOnChargeLevel = pKeyValuesData->GetFloat( "CritOnChargeLevel", -1.0f );
 	m_flWindupTime = pKeyValuesData->GetFloat( "WindupTime", 0.0f );
 	
 	m_flCenteredViewmodelOffsetX = pKeyValuesData->GetFloat( "CenteredViewmodelOffset_X", 0.0f );

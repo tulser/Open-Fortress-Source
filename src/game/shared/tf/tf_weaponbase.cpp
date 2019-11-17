@@ -229,6 +229,24 @@ CTFWeaponBase::CTFWeaponBase()
 	m_bWindingUp = false;
 }
 
+CTFWeaponBase::~CTFWeaponBase()
+{
+#ifdef CLIENT_DLL
+	ParticleProp()->StopEmission( m_pCritEffect );	
+	m_pCritEffect = NULL;		
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+	CTFViewModel *ViewModel = dynamic_cast<CTFViewModel*>(pOwner->GetViewModel( 0 ));
+	if ( ViewModel )
+	{
+		ViewModel->ParticleProp()->StopEmission( m_pCritEffect );
+		ViewModel->m_pCritEffect = NULL;			
+	}
+#endif
+}
+
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
@@ -635,13 +653,14 @@ int CTFWeaponBase::IsCurrentAttackACrit()
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	
 #ifndef CLIENT_DLL
 	if ( m_iAltFireHint )
 	{
-		CBasePlayer *pPlayer = GetPlayerOwner();
-		if ( pPlayer )
+		if ( pOwner )
 		{
-			pPlayer->StopHintTimer( m_iAltFireHint );
+			pOwner->StopHintTimer( m_iAltFireHint );
 		}
 	}
 #else
@@ -650,9 +669,21 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	if ( m_hMuzzleFlashModel[0] ) 
 		m_hMuzzleFlashModel[0]->Release();
 #endif
+
+	// Negates the effects of long reloads not letting you fire after you've re-drawn your weapon
+	if ( m_bInReload )
+	{
+		// Reset next player attack time (weapon independent).
+		pOwner->m_flNextAttack = gpGlobals->curtime;
+
+		// Reset next weapon attack times (based on reloading).
+		m_flNextPrimaryAttack = gpGlobals->curtime;
+		
+		// Reset the idle time
+		SetWeaponIdleTime( gpGlobals->curtime );
+	}
+
 	AbortReload();
-	
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	
 	if ( pOwner && GetTFWpnData().m_bDropOnNoAmmo && m_iClip1 <= 0 && m_iReserveAmmo<= 0 )
 	{
@@ -1304,6 +1335,95 @@ void CTFWeaponBase::ItemBusyFrame( void )
 		}
 
 }
+
+void CTFWeaponBase::ItemPreFrame( void )
+{
+	BaseClass::ItemPreFrame();
+}
+
+#ifdef CLIENT_DLL
+void CTFWeaponBase::CritEffectThink( void )
+{
+	C_TFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if( !pPlayer )
+		return;
+	
+	CTFViewModel *ViewModel = dynamic_cast<CTFViewModel*>(pPlayer->GetViewModel( 0 ));
+	
+	if( pPlayer->m_Shared.InCondCrit() && !pPlayer->m_Shared.InCondInvis() && (( !m_pCritEffect && !ShouldDrawUsingViewModel() ) 
+		|| ( ShouldDrawUsingViewModel() && ViewModel && !ViewModel->m_pCritEffect ) ) )
+	{
+		char *pEffect = NULL;
+
+		if ( ShouldDrawUsingViewModel() )
+		{
+			if ( ViewModel )
+			{
+				// Get the viewmodel and use it instead
+				switch( pPlayer->GetTeamNumber() )
+				{
+				case TF_TEAM_BLUE:
+					pEffect = "critgun_firstperson_weaponmodel_blu";
+					break;
+				case TF_TEAM_RED:
+					pEffect = "critgun_firstperson_weaponmodel_red";
+					break;
+				case TF_TEAM_MERCENARY:
+					pEffect = "critgun_firstperson_weaponmodel_dm";
+					break;
+					default:
+					pEffect = "critgun_firstperson_weaponmodel_dm";
+					break;
+				}
+			}
+		}
+		else
+		{
+			switch( pPlayer->GetTeamNumber() )
+			{
+			case TF_TEAM_BLUE:
+				pEffect = "critgun_weaponmodel_blu";
+				break;
+			case TF_TEAM_RED:
+				pEffect = "critgun_weaponmodel_red";
+				break;
+			case TF_TEAM_MERCENARY:
+				pEffect = "critgun_weaponmodel_dm";
+				break;
+			default:
+				pEffect = "critgun_weaponmodel_dm";
+				break;
+			}
+		}
+
+		if ( pEffect )
+		{
+			if ( ShouldDrawUsingViewModel() && ViewModel )
+			{
+				pPlayer->m_Shared.UpdateParticleColor( ViewModel->m_pCritEffect = ViewModel->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+			}
+			else
+				pPlayer->m_Shared.UpdateParticleColor( m_pCritEffect = ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+		}
+	}
+	else if ( !pPlayer->m_Shared.InCondCrit() || pPlayer->m_Shared.InCondInvis() )
+	{
+		if( m_pCritEffect )
+		{
+			ParticleProp()->StopEmission( m_pCritEffect );
+			m_pCritEffect = NULL;
+		}
+		if ( ViewModel )
+		{
+			if ( ViewModel->m_pCritEffect )
+			{
+				ViewModel->ParticleProp()->StopEmission( m_pCritEffect );
+				ViewModel->m_pCritEffect = NULL;
+			}			
+		}
+	}	
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2034,6 +2154,16 @@ void CTFWeaponBase::OnDataChanged( DataUpdateType_t type )
 {
 	BaseClass::OnDataChanged( type );
 
+#ifdef CLIENT_DLL
+	if( !IsEffectActive( EF_NODRAW ) )
+		CritEffectThink();
+	else
+	{
+		ParticleProp()->StopEmission( m_pCritEffect );	
+		m_pCritEffect = NULL;		
+	}
+#endif		
+	
 	if ( GetPredictable() && !ShouldPredict() )
 	{
 		ShutdownPredictable();

@@ -23,8 +23,9 @@ public:
 	bool IsChannelPlaying( int number );
 
 	void PlayAmbientSound( const char* pathToFileFromSoundsFolder, bool fadeIn );
-	void PlayLoopingMusic(const char* pLoopingMusic,const char* pIntroMusic = NULL, bool fadeIn = false);
-	void StopAmbientSound( bool fadeOut );
+	void PlayLoopingMusic( Channel **pNewChannel, const char* pLoopingMusic,const char* pIntroMusic = NULL, float flDelay = 0 , bool fadeIn = false);
+	void StopAmbientSound( Channel *pNewChannel, bool fadeOut );
+	void StopAllSound( void );
 	void TransitionAmbientSounds( const char* pathToFileFromSoundsFolder );
 	float GetSoundLenght(void);
 	unsigned int GetSoundLenghtPCM( Sound *sound );
@@ -44,6 +45,7 @@ private:
 	bool m_bIntro;
 	float m_fFadeDelay;
 	float m_flSongStart;
+	
 };
  
 extern CFMODManager* FMODManager();

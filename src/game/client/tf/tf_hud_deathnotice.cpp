@@ -453,6 +453,7 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 		{
 			Q_snprintf( m_DeathNotices[iMsg].szIcon, sizeof( m_DeathNotices[iMsg].szIcon ), "d_%s", killedwith );
 		}
+		
 		if ( !killer || killer == victim )
 		{
 			m_DeathNotices[iMsg].bSelfInflicted = true;

@@ -38,12 +38,14 @@ IMPLEMENT_SERVERCLASS_ST( CTFMusicPlayer, DT_MusicPlayer )
 	SendPropStringT( SENDINFO( szLoopingSong ) ),
 	SendPropStringT( SENDINFO( szOutroSong ) ),
 	SendPropBool( SENDINFO( m_bShouldBePlaying ) ),
+	SendPropFloat( SENDINFO( m_flDelay ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( of_music_player, CTFMusicPlayer );
 
 CTFMusicPlayer::CTFMusicPlayer()
 {
+	m_flDelay = 0.0f;
 	SetThink( &CTFMusicPlayer::MusicThink );
 	SetNextThink( gpGlobals->curtime );
 }
@@ -65,6 +67,9 @@ bool CTFMusicPlayer::ShouldPlay( void )
 	if ( m_bPlayInWaitingForPlayers && TeamplayRoundBasedRules() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
 		return false;	
 	
+	if( TFGameRules() && TFGameRules()->IsInfGamemode() && !m_bInfection )
+		return false;
+
 	return true;
 }
 

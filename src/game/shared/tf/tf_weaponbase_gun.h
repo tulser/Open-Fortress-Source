@@ -95,6 +95,7 @@ private:
 
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );	
 	float	m_flChargeBeginTime;
+	CNetworkVar( float,	m_flAccurateAtTick );
 	
 public:
 	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }

@@ -28,6 +28,7 @@ extern ConVar of_weaponspawners;
 extern ConVar of_allow_allclass_spawners;
 
 extern ConVar weaponstay;
+extern ConVar of_randomizer;
  
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Weapon Spawner
@@ -187,6 +188,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 	
 		bSuccess = true;
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  //Get the specified weapon
+		bool bSwitchTo = false;
 		
 		for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
 		{		
@@ -196,6 +198,8 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					pTFPlayer->DropWeapon( pCarriedWeapon, false, false, pCarriedWeapon->m_iClip1, pCarriedWeapon->m_iReserveAmmo );	//Drop the weapon
 					if ( pCarriedWeapon )
 					{
+						if ( pCarriedWeapon == pTFPlayer->GetActiveWeapon() ) 
+								bSwitchTo = true;
 						pTFPlayer->Weapon_Detach( pCarriedWeapon ); //Remove the weapon that the new weapon replaces
 						UTIL_Remove( pCarriedWeapon );
 						pCarriedWeapon = NULL;				
@@ -296,6 +300,8 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			
 			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
 			pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
+			if ( bSwitchTo )
+				pTFPlayer->Weapon_Switch( pGivenWeapon );
 			if ( weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
 			{
 				bSuccess = false;

@@ -132,6 +132,7 @@ public:
 	bool	m_bLoadsManualy;
 	bool	m_bNoSniperCharge;
 	bool	m_bAlwaysDrop;
+	
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
@@ -181,7 +182,14 @@ public:
 	bool	m_bDontDrop;
 	
 	float	m_flWindupTime;
-
+	
+	// Charge attributes
+	
+	bool	m_bCanShieldCharge;
+	float	m_flChargeDuration;
+	float	m_flChargeRechargeRate;
+	float	m_flCritOnChargeLevel;
+	
 	float	m_flMinViewmodelOffsetX;
 	float	m_flMinViewmodelOffsetY;
 	float	m_flMinViewmodelOffsetZ;

@@ -171,6 +171,9 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 					bSuccess = false;
 					if( pTFPlayer->m_nButtons & IN_USE )
 					{
+						bool bSwitchTo = false;
+						if ( pCarriedWeapon == pTFPlayer->GetActiveWeapon() ) 
+							bSwitchTo = true;
 						pTFPlayer->DropWeapon( pCarriedWeapon );		// Drop our current weapon
 						pTFPlayer->Weapon_Detach( pCarriedWeapon );		// And remove it from our inventory
 						UTIL_Remove( pCarriedWeapon );
@@ -188,6 +191,9 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 					
 						UTIL_Remove( this );																	// Then remove the dropped weapon entity
 				
+						if ( bSwitchTo )
+							pTFPlayer->Weapon_Switch( pGivenWeapon );
+						
 						if ( pWeapon )
 						{
 							pTFPlayer->Weapon_Detach( pWeapon );												// Remove the temp weapon

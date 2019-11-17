@@ -375,7 +375,6 @@ void CTFChainsaw::WeaponSoundUpdate()
 		break;
 	case CS_STARTFIRING:
 		iSound = SPECIAL1;	// wind up sound
-		DevMsg("Windup\n");
 		break;
 	case CS_FIRING:
 		{
@@ -388,7 +387,6 @@ void CTFChainsaw::WeaponSoundUpdate()
 			else
 			{
 				iSound = WPN_DOUBLE; // firing sound
-				DevMsg("Fire\n");
 			}
 		}
 		break;
