@@ -63,7 +63,6 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Control Point",
 	"Payload",
 	"Arena",
-	"King of the Hill",
 	"Mann vs Machine",
 	"Robot Destruction",
 	"Passtime",
@@ -227,20 +226,23 @@ void CTFDiscordRPC::SetLogo( void )
 			pszImageText = "Spectating";
 		}
 	}
-	
-	// Game Mode
-	if ( TFGameRules( ) && engine->IsConnected() )
+	if( TFGameRules() && TFGameRules()->IsInKothMode() )
+		pszGameType = "King of the Hill"; // Koth doesnt use TF_GAMETYPE so we detect it here
+	else
 	{
-		for ( int i = 0; i < TF_GAMETYPE_LAST; i++ )
+		// Game Mode
+		if ( TFGameRules( ) && engine->IsConnected() )
 		{
-			if ( TFGameRules()->InGametype(i) )
+			for ( int i = 0; i < TF_GAMETYPE_LAST; i++ )
 			{
-				pszGameType = g_aGameTypeNames_NonLocalized[i];
+				if ( TFGameRules()->InGametype(i) )
+				{
+					pszGameType = g_aGameTypeNames_NonLocalized[i];
+				}
+					
 			}
-				
 		}
 	}
-	
 	//strings that set the the discord rpc icons and text
 	m_sDiscordRichPresence.largeImageKey = pszImageLarge;
 	m_sDiscordRichPresence.largeImageText = pszGameType;

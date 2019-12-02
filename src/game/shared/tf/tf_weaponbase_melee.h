@@ -55,6 +55,7 @@ public:
 
 	virtual bool DoSwingTrace( trace_t &tr );
 	virtual void	Smack( void );
+	virtual float GetSmackDelay( void );
 
 	virtual float	GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage );
 

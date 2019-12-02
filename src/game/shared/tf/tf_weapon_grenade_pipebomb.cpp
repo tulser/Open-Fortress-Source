@@ -614,11 +614,19 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 		UTIL_Remove( this );
 		return;
 	}
-
+	
 	//If we already touched a surface then we're not exploding on contact anymore.
-	if ( m_bTouched == true )
-		return;
-
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	if( pTFWeapon )
+	{
+		if ( !pTFWeapon->GetTFWpnData().m_bAlwaysEnableTouch && m_bTouched == true )
+			return;
+	}
+	else
+	{
+		if ( m_bTouched == true )
+			return;
+	}
 	// Blow up if we hit an enemy we can damage
 	if ( pOther->GetTeamNumber() && ( pOther->GetTeamNumber() != GetTeamNumber() || pOther->GetTeamNumber() == TF_TEAM_MERCENARY )&& pOther->m_takedamage != DAMAGE_NO )
 	{
@@ -661,7 +669,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 
 	if ( !pHitEntity )
 		return;
-
+	
 	if ( ExplodeOnImpact() )
 	{
 		SetThink( &CTFGrenadePipebombProjectile::Detonate );
@@ -714,7 +722,10 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
 {
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
-	if ( pTFWeapon && ( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact || ( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact ) ) )
+	if ( pTFWeapon && 
+	( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact ) ||
+	( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact ) ||
+	( pTFWeapon->GetTFWpnData().m_flImpactBeforeTime && m_flSpawnTime + pTFWeapon->GetTFWpnData().m_flImpactBeforeTime >= gpGlobals->curtime ) )
 		return true;
 	else
 		return false;

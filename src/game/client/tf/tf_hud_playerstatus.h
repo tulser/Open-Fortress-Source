@@ -89,6 +89,23 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+// Purpose:  Clips the health image to the appropriate percentage
+//-----------------------------------------------------------------------------
+class CTFMegahealPanel : public CTFImagePanel
+{
+public:
+	DECLARE_CLASS_SIMPLE( CTFMegahealPanel, CTFImagePanel );
+
+	CTFMegahealPanel( vgui::Panel *parent, const char *name );
+	virtual void Paint();
+	void SetHealth( float flHealth ){ m_flHealth = ( flHealth <= 1.0 ) ? flHealth : 1.0f; }
+private:
+
+	float	m_flHealth; // percentage from 0.0 -> 1.0
+	int		m_iMaterialIndex;
+};
+
+//-----------------------------------------------------------------------------
 // Purpose:  Displays player health data
 //-----------------------------------------------------------------------------
 class CTFHudPlayerHealth : public vgui::EditablePanel
@@ -104,6 +121,7 @@ public:
 	virtual void Reset();
 
 	void	SetHealth( int iNewHealth, int iMaxHealth, int iMaxBuffedHealth );
+//	void	SetMegaHealth( int iNewHealth, int iMaxHealth, int iMaxBuffedHealth );
 	void	HideHealthBonusImage( void );
 
 protected:
@@ -115,12 +133,19 @@ protected:
 
 private:
 	CTFHealthPanel		*m_pHealthImage;
+//	CTFMegahealPanel	*m_pMegahealImage;
+//	CTFImagePanel		*m_pMegahealImageBG;
+//	CExLabel			*m_pMegahealLabel;
 	CTFImagePanel		*m_pHealthBonusImage;
+	CTFImagePanel		*m_pMegaHealthBonusImage;
 	vgui::ImagePanel	*m_pHealthImageBG;
 
 	int					m_nHealth;
 	int					m_nMaxHealth;
 
+	int					m_nMegaHealth;
+	int					m_nMaxMegaHealth;
+	
 	int					m_nBonusHealthOrigX;
 	int					m_nBonusHealthOrigY;
 	int					m_nBonusHealthOrigW;

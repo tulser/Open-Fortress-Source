@@ -104,6 +104,7 @@ public:
 	static CTFPlayer	*Instance( int iEnt );
 
 	virtual void		Spawn();
+	virtual void		ClearSlots();
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
 	virtual void		InitialSpawn();
@@ -497,8 +498,9 @@ public:
 	unsigned short m_iGoreLeftLeg;
 	unsigned short m_iGoreRightLeg;
 	
-	CUtlVector< SuperWeaponHandle >		m_hSuperWeapons;
+	CUtlVector< WeaponHandle >	m_hSuperWeapons;
 
+	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
 private:
 
 	int					GetAutoTeam( void );

@@ -79,7 +79,8 @@ public:
 
 	virtual void Simulate( void );
 	virtual void FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options );
-
+	virtual void FireGameEvent( IGameEvent *event );
+	
 	void FireBullet( const FireBulletsInfo_t &info, bool bDoEffects, int nDamageType, int nCustomDamageType = TF_DMG_CUSTOM_NONE );
 
 	void ImpactWaterTrace( trace_t &trace, const Vector &vecStart );
@@ -209,6 +210,7 @@ public:
 	bool			ShouldAutoSwitchWeapons( void ){ return of_autoswitchweapons.GetBool(); }
 
 	CNetworkVar(bool, m_bHauling);
+	bool			bCanHUGHAgain;
 	bool			IsHauling( void ) { return m_bHauling; }
 	void			SetHauling( bool bHauling ) { m_bHauling = bHauling; }
 
@@ -320,6 +322,7 @@ private:
 	CHandle<C_TFPlayer>	m_hHealer;
 	float				m_flHealerChargeLevel;
 	int					m_iOldHealth;
+	bool				m_bOldJumping;
 
 	CNetworkVar( int, m_iPlayerModelIndex );
 

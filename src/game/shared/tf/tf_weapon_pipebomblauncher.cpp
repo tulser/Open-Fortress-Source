@@ -255,7 +255,7 @@ void CTFPipebombLauncher::LaunchGrenade( void )
 #endif
 
 	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 	m_flLastDenySoundTime = gpGlobals->curtime;
 
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );

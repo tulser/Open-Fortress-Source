@@ -62,7 +62,7 @@ LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
 CWeaponSpawner::CWeaponSpawner()
 {
 	m_flRespawnTick = 0.0f;
-	szWeaponName = MAKE_STRING( "tf_weapon_shotgun_mercenary" );
+	szWeaponName = MAKE_STRING( "tf_weapon_shotgun" );
 	szWeaponModel = MAKE_STRING("");
 	szWeaponModelOLD = MAKE_STRING("");
 	m_iszWeaponModel[0] = 0;
@@ -80,6 +80,12 @@ void CWeaponSpawner::Spawn( void )
 		!TFGameRules()->IsGGGamemode())
 	{
 		Q_strncpy( m_iszWeaponName, STRING(szWeaponName), sizeof( m_iszWeaponName ) );
+		if( !strcmp(m_iszWeaponName,"tf_weapon_shotgun_mercenary")
+			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_primary")
+			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_soldier")
+			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_pyro")
+			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_hwg") )
+			Q_strncpy( m_iszWeaponName, "tf_weapon_shotgun", sizeof( m_iszWeaponName ) );
 		if ( szWeaponModel != MAKE_STRING("") )
 		Q_strncpy( m_iszWeaponModel, STRING(szWeaponModel) , sizeof( m_iszWeaponModel ) );
 		if ( szWeaponModelOLD != MAKE_STRING("") )
@@ -128,13 +134,10 @@ void CWeaponSpawner::SetWeaponModel( void )
 		if( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
 		{
 			DevMsg("Doesnt have a old model either \n");
-			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( m_iszWeaponName );     //Firstly create the weapon
-			if ( !pWeapon )
-				return;
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );			  //Get the weapon info
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );			  //Get the weapon info
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
-			if ( pWeapon && pWeaponInfo )                //If both the weapon and weapon info exist
+			if ( pWeaponInfo )                //If both the weapon and weapon info exist
 				SetModel( pWeaponInfo->szWorldModel );	 //Get its model
 			return;
 		}
@@ -154,13 +157,10 @@ void CWeaponSpawner::Precache( void )
 	{
 		if( m_iszWeaponModelOLD )
 		{
-			CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( m_iszWeaponName );  //Ditto for the Model Function, just precache instead
-			if ( !pWeapon )
-				return;
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-			if ( pWeapon && pWeaponInfo )
+			if ( pWeaponInfo )
 				PrecacheModel( pWeaponInfo->szWorldModel );
 			return;
 		}
@@ -187,121 +187,78 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			return false;
 	
 		bSuccess = true;
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  //Get the specified weapon
-		bool bSwitchTo = false;
+		bool bTakeWeapon = true;
 		
-		for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; ++iWeapon )
-		{		
-			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)pTFPlayer->GetWeapon( iWeapon );      // Get a weapon in the player's inventory
-			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() && pCarriedWeapon && pWeapon && pTFPlayer->CanPickupWeapon( pCarriedWeapon, pWeapon ) )  //If we're using the 3 Weapon System and we can pickup the Weapon
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+		
+		if (!pWeaponInfo)
+			return false;
+		
+		int iWeaponID = AliasToWeaponID( m_iszWeaponName );
+		int iSlot;
+
+		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
+			iSlot = pWeaponInfo->iSlotDM;
+		else if ( pWeaponInfo->m_iClassSlot[ pTFPlayer->GetPlayerClass()->GetClassIndex() ] != -1 )
+			iSlot = pWeaponInfo->m_iClassSlot[ pTFPlayer->GetPlayerClass()->GetClassIndex() ];
+		else
+			iSlot = pWeaponInfo->iSlot;
+		
+		int iPos = pWeaponInfo->iPosition;
+		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
+			iPos = pWeaponInfo->iPositionDM;
+	
+		if( !(pTFPlayer->m_hWeaponInSlot) )
+		{	
+			return false;
+		}
+		
+		// We have it already, dont take it Freeman, but get ammo
+		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )
+		{
+			bTakeWeapon = false;
+			if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->DefaultReserveAmmo() )
+				pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->m_iReserveAmmo = pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->DefaultReserveAmmo();
+			else
+				return false;
+		}
+		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster() )
+		{	
+			return false;
+		}		
+		if( TFGameRules() && !TFGameRules()->UsesDMBuckets() && bTakeWeapon )
+		{
+			// If the slot already has something, and its the 3 wep system but we're not picking it up, show the swap hud and bail out
+			if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !(pTFPlayer->m_nButtons & IN_USE) )
 			{
-					pTFPlayer->DropWeapon( pCarriedWeapon, false, false, pCarriedWeapon->m_iClip1, pCarriedWeapon->m_iReserveAmmo );	//Drop the weapon
-					if ( pCarriedWeapon )
-					{
-						if ( pCarriedWeapon == pTFPlayer->GetActiveWeapon() ) 
-								bSwitchTo = true;
-						pTFPlayer->Weapon_Detach( pCarriedWeapon ); //Remove the weapon that the new weapon replaces
-						UTIL_Remove( pCarriedWeapon );
-						pCarriedWeapon = NULL;				
-					}
-			}
-			else if ( pCarriedWeapon == pWeapon || ( !of_allow_allclass_spawners.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) )  // If the weapons are the same or you're a class that cant pickup weapons, get ammo
-			{
-				bSuccess = false;
-				if ( pTFPlayer->RestockAmmo(0.5f) ) // Restock your ammo by half ( same as medium ammo pack )
+				IGameEvent *event = gameeventmanager->CreateEvent( "player_swap_weapons" );
+				if ( event )
 				{
-					CSingleUserRecipientFilter filter( pTFPlayer );				// Filter the sound to the player that picked this up
-					EmitSound( filter, entindex(), m_iszPickupSound );  // Play the pickup sound
-					if ( weaponstay.GetBool() )								// If weaponstay is on, dont dissapear
-						bSuccess = false;
-					else														// Disapear
-					{
-						bSuccess = true;
-						m_nRenderFX = kRenderFxDistort;							// and get the Distortion effect
-					}
-					if ( pWeapon )												// If the weapon we used to check is still here
-					{
-						pTFPlayer->Weapon_Detach( pWeapon );					// Remove it
-						UTIL_Remove( pWeapon );
-						pWeapon = NULL;
-					}
-					
+					event->SetInt( "playerid", pTFPlayer->entindex() );
+					event->SetInt( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() );
+					event->SetInt( "swap_wep", iWeaponID );
+					gameeventmanager->FireEventClientSide( event );
 				}
-				if ( pTFPlayer->RestockCloak( 0.5f ) )							// Restock cloak
-				{
-					CSingleUserRecipientFilter filter( pTFPlayer );				// Ditto from above
-					EmitSound( filter, entindex(), m_iszPickupSound );
-					if ( weaponstay.GetBool() )
-					{
-						bSuccess = false;
-					}
-					else
-					{
-						bSuccess = true;
-						m_nRenderFX = kRenderFxDistort;
-					}
-					if ( pWeapon )
-					{
-						pTFPlayer->Weapon_Detach( pWeapon );
-						UTIL_Remove( pWeapon );
-						pWeapon = NULL;
-					}
-					
-				}				
-				int iMaxMetal = pTFPlayer->GetPlayerClass()->GetData()->m_aAmmoMax[TF_AMMO_METAL];		//Metal uses the old system the weapons used to use because its supposed to be bound by player and not the weapon
-				if ( pTFPlayer->GiveAmmo( ceil(iMaxMetal * PackRatios[GetPowerupSize()]), TF_AMMO_METAL, true ) )	
-				{
-					CSingleUserRecipientFilter filter( pTFPlayer );
-					EmitSound( filter, entindex(), m_iszPickupSound );
-					if ( weaponstay.GetBool() )
-					{
-						bSuccess = false;
-					}
-					else
-					{
-						bSuccess = true;
-						m_nRenderFX = kRenderFxDistort;
-					}
-					if ( pWeapon )
-					{
-						pTFPlayer->Weapon_Detach( pWeapon );
-						UTIL_Remove( pWeapon );
-						pWeapon = NULL;
-					}
-					return bSuccess;
-				}
-				if ( pWeapon )
-				{
-					pTFPlayer->Weapon_Detach( pWeapon );
-					UTIL_Remove( pWeapon );
-					pWeapon = NULL;
-				}
-				return bSuccess;
+				return false;
 			}
 		}
 		// did we give them anything?
 		if ( bSuccess )
 		{
-			if ( TFGameRules() && !TFGameRules()->UsesDMBuckets() )
-			{
-				if ( !(pTFPlayer->m_nButtons & IN_USE) )
-				{				
-					if ( pWeapon )								// Remove the weapon if we're not pressing use
-					{
-						pTFPlayer->Weapon_Detach( pWeapon );
-						UTIL_Remove( pWeapon );
-						pWeapon = NULL;
-					}					
-					return false;
-				}
-			}
 			CSingleUserRecipientFilter filter( pTFPlayer );					// Filter the sound to the player who picked this up
 			EmitSound( filter, entindex(), m_iszPickupSound );		// Play the sound
-			
-			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
-			pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
-			if ( bSwitchTo )
-				pTFPlayer->Weapon_Switch( pGivenWeapon );
+			if( bTakeWeapon )
+			{
+				CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
+				if ( pGivenWeapon )
+				{
+					pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
+					if ( pTFPlayer->GetActiveWeapon() && pGivenWeapon->GetSlot() == pTFPlayer->GetActiveWeapon()->GetSlot() 
+						&& pGivenWeapon->GetPosition() == pTFPlayer->GetActiveWeapon()->GetPosition() )
+						pTFPlayer->Weapon_Switch( pGivenWeapon );
+				}
+			}
 			if ( weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
 			{
 				bSuccess = false;
@@ -310,12 +267,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			{
 				m_nRenderFX = kRenderFxDistort;																	 // Otherwise add the distort effect
 			}
-		}
-		if ( pWeapon )																							 // Remove the temp weapon
-		{
-			pTFPlayer->Weapon_Detach( pWeapon );
-			UTIL_Remove( pWeapon );
-			pWeapon = NULL;
 		}
 	}
 	

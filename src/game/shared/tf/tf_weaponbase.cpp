@@ -14,6 +14,7 @@
 // Server specific.
 #if !defined( CLIENT_DLL )
 #include "tf_player.h"
+#include "tf_weapon_builder.h"
 // Client specific.
 #else
 #include "vgui/ISurface.h"
@@ -51,6 +52,9 @@ ConVar tf_weapon_criticals( "tf_weapon_criticals", "0", FCVAR_NOTIFY | FCVAR_REP
 ConVar of_crit_multiplier( "of_crit_multiplier", "3", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much the crit powerup increases your damage." );
 ConVar of_infiniteammo( "of_infiniteammo", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles infinite ammo." );
 ConVar sv_reloadsync( "sv_reloadsync", "0", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT , "Sync up weapon reloads." );
+ConVar of_haste_reload_multiplier("of_haste_reload_multiplier", "0.65", FCVAR_NOTIFY | FCVAR_REPLICATED, "By how much the reload time should be multiplied when in Haste.");
+ConVar of_haste_fire_multiplier("of_haste_fire_multiplier", "0.75", FCVAR_NOTIFY | FCVAR_REPLICATED, "By how much the fire rate should be multiplied when in Haste.");
+ConVar of_haste_drawtime_multiplier("of_haste_drawtime_multiplier", "0.75", FCVAR_NOTIFY | FCVAR_REPLICATED, "By how much the draw speed should be multiplied when in Haste.");
 extern ConVar tf_useparticletracers;
 extern ConVar of_multiweapons;
 //=============================================================================
@@ -126,6 +130,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bReloadedThroughAnimEvent ) ),
 	RecvPropBool( RECVINFO( m_bInBarrage ) ),
 	RecvPropBool( RECVINFO( m_bWindingUp ) ),
+	RecvPropBool( RECVINFO( m_bSwapFire ) ),
 	RecvPropTime( RECVINFO( m_flWindTick ) ),
 // Server specific.
 #else
@@ -135,6 +140,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropBool( SENDINFO( m_bReloadedThroughAnimEvent ) ),
 	SendPropBool( SENDINFO( m_bInBarrage ) ),
 	SendPropBool( SENDINFO( m_bWindingUp ) ),
+	SendPropBool( SENDINFO( m_bSwapFire ) ),
 	SendPropTime( SENDINFO( m_flWindTick ) ),
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
@@ -157,14 +163,16 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_PRED_FIELD( m_bReloadedThroughAnimEvent, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bInBarrage, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bWindingUp, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-#endif
-#if defined( CLIENT_DLL )
 	DEFINE_PRED_FIELD( m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_flNextShotTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
 	DEFINE_PRED_FIELD_TOL( m_flWindTick, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE ),	
-	DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER ),
+	DEFINE_PRED_FIELD( m_bSwapFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+#endif
+#if defined( CLIENT_DLL )
+	DEFINE_FIELD( m_iShotsDue, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flWindTick, FIELD_FLOAT ),
+	DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 #endif
 END_PREDICTION_DATA()
 
@@ -177,6 +185,7 @@ BEGIN_DATADESC( CTFWeaponBase )
 DEFINE_FIELD( m_flNextShotTime, FIELD_TIME ),
 DEFINE_FIELD( m_flWindTick, FIELD_TIME ),
 DEFINE_FIELD( m_iShotsDue, FIELD_INTEGER ),
+DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 DEFINE_FUNCTION( FallThink )
 END_DATADESC()
 
@@ -244,6 +253,14 @@ CTFWeaponBase::~CTFWeaponBase()
 		ViewModel->ParticleProp()->StopEmission( m_pCritEffect );
 		ViewModel->m_pCritEffect = NULL;			
 	}
+#else
+	CTFPlayer *pTFOwner = ToTFPlayer( GetOwner() );
+	if ( !pTFOwner )
+		return;
+	WeaponHandle hHandle;
+	hHandle = this;	
+	if ( pTFOwner->m_hWeaponInSlot && pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] == hHandle )
+		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] = NULL;
 #endif
 }
 
@@ -289,13 +306,28 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 {
 	BaseClass::Equip( pOwner );
 #ifdef GAME_DLL
+	if( dynamic_cast<CTFWeaponBuilder*>(this) ) // Builders crash the game, and those are handled seperatley anyways
+		return;
 	CTFPlayer *pTFOwner = ToTFPlayer( pOwner );
-	if ( GetTFWpnData().m_bAlwaysDrop )
+	if ( !pTFOwner )
+		return;
+	WeaponHandle hHandle;
+	hHandle = this;	
+	if ( hHandle && pTFOwner->m_hWeaponInSlot && 
+		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] && 
+		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] 
+		!= hHandle )
 	{
-		SuperWeaponHandle hHandle;
-		hHandle = this;	
-		pTFOwner->m_hSuperWeapons.AddToTail( hHandle );
+		pTFOwner->DropWeapon( pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()].Get(),
+		false, false, 
+		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()]->m_iClip1,
+		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()]->m_iReserveAmmo );
+		UTIL_Remove( pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] );
 	}
+	pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] = hHandle;
+	
+	if ( GetTFWpnData().m_bAlwaysDrop )
+		pTFOwner->m_hSuperWeapons.AddToTail( hHandle );
 #endif
 }
 
@@ -696,6 +728,17 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	return BaseClass::Holster( pSwitchingTo );
 }
 
+bool CTFWeaponBase::CanHolster( void ) const
+{
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if( !pPlayer )
+		return false;
+	
+	if ( ( m_iShotsDue > 0 || m_bInBarrage || m_bWindingUp ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
+		return false;
+	return BaseClass::CanHolster();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -722,9 +765,18 @@ bool CTFWeaponBase::Deploy( void )
 		// Don't override primary attacks that are already further out than this. This prevents
 		// people exploiting weapon switches to allow weapons to fire faster.
 		float flDeployTime = 0.67;
+		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+		if( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
+		{
+			flDeployTime *= of_haste_drawtime_multiplier.GetFloat();
+			CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
+			if ( vm )
+			{
+				vm->SetPlaybackRate( 1.0f / of_haste_drawtime_multiplier.GetFloat() );
+			}
+		}
 		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + flDeployTime );
 
-		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if (!pPlayer)
 			return false;
 
@@ -741,9 +793,9 @@ void CTFWeaponBase::BurstFire( void )
 	if ( FiresInBursts() )
 	m_iShotsDue--;
 	if ( FiresInBursts() )
-		m_flNextShotTime = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+		m_flNextShotTime = gpGlobals->curtime + GetFireRate();
 	else if ( LoadsManualy() )
-		m_flNextPrimaryAttack = gpGlobals->curtime + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay;
+		m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 }
 
 //-----------------------------------------------------------------------------
@@ -892,6 +944,18 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 		// single-shot weapon, just use random pct per shot
 		return ( RandomInt( 0.0, WEAPON_RANDOM_RANGE-1 ) < ( TF_DAMAGE_CRIT_CHANCE * flPlayerCritMult ) * WEAPON_RANDOM_RANGE );
 	}
+}
+
+float CTFWeaponBase::GetFireRate()
+{
+	float flFireRate = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner )
+	{
+		if ( pOwner->m_Shared.InCond( TF_COND_HASTE ) )
+			flFireRate *= of_haste_fire_multiplier.GetFloat();
+	}
+	return flFireRate;
 }
 
 //-----------------------------------------------------------------------------
@@ -1241,7 +1305,17 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 	if ( !pPlayer )
 		return;
 
-	float flTime = gpGlobals->curtime + flReloadTime;
+	float flSpeedMultiplier = 1.0f;
+	if ( pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
+		flSpeedMultiplier = of_haste_reload_multiplier.GetFloat();
+	
+	CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
+	if ( vm )
+	{
+		vm->SetPlaybackRate( 1.0f / flSpeedMultiplier );
+	}
+	
+	float flTime = gpGlobals->curtime + ( flReloadTime * flSpeedMultiplier );
 
 	// Set next player attack time (weapon independent).
 	pPlayer->m_flNextAttack = flTime;
@@ -2528,7 +2602,14 @@ ConVar mp_forceactivityset( "mp_forceactivityset", "-1", FCVAR_CHEAT|FCVAR_REPLI
 
 acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 {
+	int iClass = -1;
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer)
+		iClass = pPlayer->GetPlayerClass()->GetClassIndex();
+	
 	int iWeaponRole = GetTFWpnData().m_iWeaponType;
+	if (!(iClass < 0 || GetTFWpnData().m_iClassWeaponType[iClass] < 0))
+		iWeaponRole = GetTFWpnData().m_iClassWeaponType[iClass];
 
 	if ( mp_forceactivityset.GetInt() >= 0 )
 	{
@@ -2538,13 +2619,16 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 #ifdef CLIENT_DLL
 	// If we're disguised, we always show the primary weapon
 	// even though our actual weapon may not be primary 
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) && pPlayer->IsEnemyPlayer() )
 	{
 		CTFWeaponInfo *pWeaponInfo = pPlayer->m_Shared.GetDisguiseWeaponInfo();
 		if ( pWeaponInfo )
 		{
-			iWeaponRole = pWeaponInfo->m_iWeaponType;
+			iClass = pPlayer->m_Shared.GetDisguiseClass();
+			if( iClass < 0 || pWeaponInfo->m_iClassWeaponType[iClass] < 0 )
+				iWeaponRole = pWeaponInfo->m_iWeaponType;
+			else
+				iWeaponRole = pWeaponInfo->m_iClassWeaponType[iClass];
 		}
 	}
 #endif

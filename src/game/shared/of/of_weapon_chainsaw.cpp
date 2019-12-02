@@ -189,7 +189,7 @@ void CTFChainsaw::SharedAttack()
 #endif
 			if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 ) // Since smack doesn't actually set the timers, we do it here instead
 				// Set next attack times.
-				m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+				m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 			CalcIsAttackCritical();
 			m_bCritShot = IsCurrentAttackACrit();
 			pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );

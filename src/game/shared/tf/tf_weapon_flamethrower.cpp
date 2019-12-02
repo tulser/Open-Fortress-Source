@@ -96,6 +96,8 @@ END_DATADESC()
 
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
+#else
+extern ConVar of_infiniteammo;
 #endif
 
 void CTFFlameThrower::Precache( void )
@@ -397,7 +399,7 @@ void CTFFlameThrower::PrimaryAttack()
 	lagcompensation->StartLagCompensation( pOwner, pOwner->GetCurrentCommand() );
 #endif
 
-	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	float flFiringInterval = GetFireRate();
 
 	// Don't attack if we're underwater
 	if ( pOwner->GetWaterLevel() != WL_Eyes )
@@ -460,6 +462,8 @@ void CTFFlameThrower::PrimaryAttack()
 	// take the integer portion of the ammo use accumulator and subtract it from player's ammo count; any fractional amount of ammo use
 	// remains and will get used in the next shot
 	int iAmmoToSubtract = (int) m_flAmmoUseRemainder;
+	if( of_infiniteammo.GetBool() )
+		iAmmoToSubtract = 0.0f;
 	if ( iAmmoToSubtract > 0 )
 	{
 		m_iReserveAmmo -= iAmmoToSubtract;
@@ -502,10 +506,12 @@ void CTFFlameThrower::SecondaryAttack()
 		m_iWeaponState = FT_STATE_IDLE;
 		return;
 	}
-
+#ifdef GAME_DLL
+	if( !of_infiniteammo.GetBool() )
+#endif
 	m_iReserveAmmo = m_iReserveAmmo - TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
 
-	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	float flFiringInterval = GetFireRate();
 	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
 
 #if defined ( CLIENT_DLL )
@@ -931,16 +937,46 @@ void CTFFlameThrower::StopFlame( bool bAbrupt /* = false */ )
 	{
 		// Stop the effect on the viewmodel if our owner is the local player
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+		CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
+
+		if ( pOwner )
 		{
-			if ( pLocalPlayer->GetViewModel() )
+			m_iParticleWaterLevel = pOwner->GetWaterLevel();
+
+			// Stop the appropriate particle effect
+			const char *pszTeamName;
+			switch ( pOwner->GetTeamNumber() )
 			{
-				pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission();
+				case TF_TEAM_RED:
+					pszTeamName = "red";
+					break;
+				case TF_TEAM_BLUE:
+					pszTeamName = "blue";
+					break;
+				default:
+					pszTeamName = "dm";
+					break;
 			}
-		}
-		else
-		{
-			ParticleProp()->StopEmission();
+			char pszParticleEffect[32];
+			if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+			{
+				if ( pLocalPlayer->GetViewModel() )
+				{
+					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( "flamethrower_underwater" );
+					Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_%s", pszTeamName );
+					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( pszParticleEffect );
+					Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_crit_%s", pszTeamName );
+					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( pszParticleEffect );
+				}
+			}
+			else
+			{
+				ParticleProp()->StopParticlesNamed( "flamethrower_underwater" );
+				Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_%s", pszTeamName );
+				ParticleProp()->StopParticlesNamed( pszParticleEffect );
+				Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_crit_%s", pszTeamName );
+				ParticleProp()->StopParticlesNamed( pszParticleEffect );
+			}
 		}
 	}
 
@@ -1037,13 +1073,13 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	{
 		if ( pLocalPlayer->GetViewModel() )
 		{
-			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission();
+			pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed(pszParticleEffect);
 			pOwner->m_Shared.UpdateParticleColor ( pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" ) );
 		}
 	}
 	else
 	{
-		ParticleProp()->StopEmission();
+		ParticleProp()->StopParticlesNamed(pszParticleEffect);
 		pOwner->m_Shared.UpdateParticleColor ( ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" ) );
 	}
 	m_bFlameEffects = true;

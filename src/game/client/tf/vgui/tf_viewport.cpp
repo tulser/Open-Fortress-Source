@@ -51,6 +51,7 @@
 //#include "tf_overview.h"
 
 extern ConVar	of_forceclass;
+extern ConVar	of_forcezombieclass;
 
 /*
 CON_COMMAND( spec_help, "Show spectator help screen")
@@ -123,8 +124,10 @@ CON_COMMAND( changeclass, "Choose a new class" )
 	if ( !gViewPortInterface )
 		return;
 
-	if (TFGameRules() && TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() == 1)
+	if (TFGameRules() && TFGameRules()->IsDMGamemode() && of_forceclass.GetBool())
 		return;
+	
+	bool bInfection = TFGameRules() && TFGameRules()->IsInfGamemode();
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
@@ -133,10 +136,12 @@ CON_COMMAND( changeclass, "Choose a new class" )
 		switch( pPlayer->GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_RED, true );
+			if( !bInfection || ( bInfection && !of_forceclass.GetBool() ) )
+				gViewPortInterface->ShowPanel( PANEL_CLASS_RED, true );
 			break;
 		case TF_TEAM_BLUE:
-			gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
+			if( !bInfection || ( bInfection && !of_forcezombieclass.GetBool() ) )
+				gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, true );
 			break;
 		case TF_TEAM_MERCENARY:
 			gViewPortInterface->ShowPanel( PANEL_CLASS_MERCENARY, true );

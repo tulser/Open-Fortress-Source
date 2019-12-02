@@ -349,7 +349,7 @@ void CTFLightningGun::PrimaryAttack()
 	}
 #endif
 
-	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	float flFiringInterval = GetFireRate();
 
 	FireProjectile( pOwner );
 	
@@ -368,7 +368,7 @@ float CTFLightningGun::GetProjectileDamage( void )
 {
 	// create the flame entity
 	int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-	float flFiringInterval = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	float flFiringInterval = GetFireRate();
 	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 		iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 	float flDamage = (float)iDamagePerSec * flFiringInterval;

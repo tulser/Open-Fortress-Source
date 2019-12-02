@@ -40,14 +40,13 @@ public:
 	virtual void DoViewModelAnimation( void );
 
 	void Punch( void );
-	virtual bool	CanHolster( void ) const;
 
 private:
 
 	CTFFists( const CTFFists & ) {}
 };
 
-class CTFBerserk : public CTFFists
+class CTFBerserk : public CTFWeaponBaseMelee
 {
 public:
 
@@ -56,6 +55,7 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFBerserk() {}
+	virtual bool	CanHolster( void ) const { return false; }
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_BERSERK; }
 	int			GetGGLevel( void ){ return 999; }
 

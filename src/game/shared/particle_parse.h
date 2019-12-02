@@ -29,6 +29,8 @@ enum ParticleAttachment_t
 
 	PATTACH_ROOTBONE_FOLLOW,		// Create at the root bone of the entity, and update to follow
 
+	PATTACH_BONE_FOLLOW,			// Create at a bone, then follow it
+	
 	// FIXME GORE: this is horrible
 	PATTACH_GORE_HEAD,
 	PATTACH_GORE_UPPERARM_L,

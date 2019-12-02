@@ -111,7 +111,7 @@ string_t m_iszDefaultWeaponName[50] =
 	MAKE_STRING("tf_weapon_smg_mercenary"),
 	MAKE_STRING("tf_weapon_supershotgun"),
 	MAKE_STRING("tf_weapon_revolver_mercenary"),
-	MAKE_STRING("tf_weapon_shotgun_mercenary"),
+	MAKE_STRING("tf_weapon_shotgun"),
 	MAKE_STRING("tf_weapon_tommygun"),
 	MAKE_STRING("tf_weapon_nailgun"),
 	MAKE_STRING("tf_weapon_pistol_akimbo"),
@@ -1783,6 +1783,7 @@ void CTFGameRules::Activate()
 	}
 	
 	CheckTDM();
+	bMultiweapons = TFGameRules()->UsesDMBuckets();
 }
 
 #endif
@@ -2235,7 +2236,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 			{
 				pPlayer->m_Shared.SetZombie( false );
 				pPlayer->ChangeTeam( TF_TEAM_RED, true );
-				if ( of_forceclass.GetBool() == 1 ) 
+				if ( of_forceclass.GetBool() ) 
 					pPlayer->SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 			}
 		}
@@ -2823,7 +2824,12 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		else
 		{
 			if ( flNonSelfDamage )
+			{
 				pEntity->TakeSelfDamage( adjustedInfo, flNonSelfDamage * of_rocketjump_multiplier.GetFloat() );
+				CTFPlayer *pTarget = ToTFPlayer(pEntity);
+				if( pTarget && adjustedInfo.GetDamage() > 0.0f && pTarget->GetHealth() <= pTarget->m_Shared.GetDefaultHealth() + pTarget->m_Shared.m_flMegaOverheal   )
+					pTarget->m_Shared.m_flMegaOverheal = max( 0.0f, pTarget->m_Shared.m_flMegaOverheal - adjustedInfo.GetDamage() );
+			}
 			else
 				pEntity->TakeDamage( adjustedInfo/*, flNonSelfDamage, flNonSelfDamage */);
 		}
@@ -3024,7 +3030,46 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 						return;
 				}
 			}
-
+			// Only happens if we change the convar mid game
+			// For the love of all Gaben please set your convars BEFORE you start the server
+			if( TFGameRules()->UsesDMBuckets() != bMultiweapons )
+			{
+				DevMsg("What the fuck\n");
+				bMultiweapons = TFGameRules()->UsesDMBuckets();
+				for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+				{
+					CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex( i ));
+					if( pPlayer )
+					{
+						pPlayer->ClearSlots();
+						CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon( 0 );
+						for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
+						{
+							pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon( iWeapon );
+							if ( pWeapon )
+							{
+								WeaponHandle hHandle;
+								hHandle = pWeapon;
+								if( hHandle )
+								{
+									if( pPlayer->m_hWeaponInSlot 
+										&& pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] 
+										&& pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] != hHandle)
+									{
+										pPlayer->DropWeapon( pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()].Get(),
+										false, false, 
+										pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()]->m_iClip1,
+										pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()]->m_iReserveAmmo );
+										UTIL_Remove( pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] );
+									}
+									pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] = hHandle;
+								}
+							}
+						}
+					}
+				}
+			}
+			
 			// there is less than 60 seconds left of time, start voting for next map
 			if ( !IsDMGamemode() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 			{
@@ -6315,14 +6360,18 @@ void CTFGameRules::InitCustomResponseRulesDicts()
 			AI_CriteriaSet criteriaSet;
 			criteriaSet.AppendCriteria( "playerclass", g_aPlayerClassNames_NonLocalized[iClass] );
 			criteriaSet.AppendCriteria( "Concept", g_pszMPConcepts[iConcept] );
-
 			// 1 point for player class and 1 point for concept.
 			float flCriteriaScore = 2.0f;
 
 			// Name.
 			V_snprintf( szName, sizeof( szName ), "%s_%s\n", g_aPlayerClassNames_NonLocalized[iClass], g_pszMPConcepts[iConcept] );
-			m_ResponseRules[iClass].m_ResponseSystems[iConcept] = BuildCustomResponseSystemGivenCriteria( "scripts/talker/response_rules.txt", szName, criteriaSet, flCriteriaScore );
-		}		
+			m_ResponseRules[iClass].m_ResponseSystems[iConcept] =
+			BuildCustomResponseSystemGivenCriteria( 
+			"scripts/talker/response_rules.txt", 
+			szName,
+			criteriaSet, 
+			flCriteriaScore );
+		}	
 	}
 }
 

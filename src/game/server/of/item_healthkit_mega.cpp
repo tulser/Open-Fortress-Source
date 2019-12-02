@@ -19,14 +19,16 @@ bool ITEM_GiveTFMegaAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppre
 {
 	bool bSuccess = false;
 	int iHealthRestored = 0;
-	int iHealthToAdd = sk_item_healthkit_mega.GetInt();
 
 	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 	if (!pTFPlayer)
 		return false;
-
-	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetMaxHealth() );
+	
+	int iHealthToAdd = pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth();
+	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth() );
 	iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_IGNORE_MAXHEALTH );
+	
+	pTFPlayer->m_Shared.m_flMegaOverheal = pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth();
 	
 	if (iHealthRestored)
 		bSuccess = true;

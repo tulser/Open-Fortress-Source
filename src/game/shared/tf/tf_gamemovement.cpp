@@ -416,6 +416,8 @@ void CTFGameMovement::AirDash( void )
 // Only allow bunny jumping up to 1.2x server / player maxspeed setting
 //#define BUNNYJUMP_MAX_SPEED_FACTOR 1.2f
 
+ConVar of_bunnyhopfade ("of_bunnyhopfade", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "When on, instead of instantly slowing down upon a bunnyhop, you gradually loose your speed.");
+
 void CTFGameMovement::PreventBunnyJumping()
 {
 	// Speed at which bunny jumping is limited
@@ -427,12 +429,36 @@ void CTFGameMovement::PreventBunnyJumping()
 	float spd = mv->m_vecVelocity.Length();
 	if ( spd <= maxscaledspeed )
 		return;
+	// 320        400     0.8
+	if( of_bunnyhopfade.GetBool() )
+	{
+		// From testing 40 seems to be the best bunnyhop fade float
+		float fraction = ( maxscaledspeed / of_bunnyhopfade.GetFloat() );
+		
+		Vector vecSub = mv->m_vecVelocity / fraction;
+		
+		Vector vecTargetVelocity = mv->m_vecVelocity - vecSub;
+		// If doing the fade would make us slower than the max speed
+		// do the reular prevention, putting us at the exact bunnyhop speed limit instead
+		if ( vecTargetVelocity.Length() < maxscaledspeed ) 
+		{
+			// Apply this cropping fraction to velocity
+			float fraction = ( maxscaledspeed / spd );
 
-	// Apply this cropping fraction to velocity
-	float fraction = ( maxscaledspeed / spd );
+			mv->m_vecVelocity *= fraction;
+		}
+		else // otherwise, go through with the gradient
+		{
+			mv->m_vecVelocity = vecTargetVelocity;
+		}
+	}
+	else
+	{
+		// Apply this cropping fraction to velocity
+		float fraction = ( maxscaledspeed / spd );
 
-
-	mv->m_vecVelocity *= fraction;
+		mv->m_vecVelocity *= fraction;
+	}
 }
 
 bool CTFGameMovement::CheckJumpButton()
@@ -548,21 +574,24 @@ bool CTFGameMovement::CheckJumpButton()
 	// Save the output data for the physics system to react to if need be.
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
 	mv->m_outStepHeight += 0.15f;
-
-	// Flag that we jumped and don't jump again until it is released.
-	mv->m_nOldButtons |= IN_JUMP;
-#ifdef CLIENT_DLL
-	if ( of_jumpsound.GetBool() && TFGameRules() && TFGameRules()->IsDMGamemode() )
+#ifdef GAME_DLL
+	IGameEvent *event = gameeventmanager->CreateEvent( "player_jump" );
+	if ( event )
 	{
-		if ( m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
-		{
-			char jmpSound[128];
-			const char *TFClassName = g_aPlayerClassNames_NonLocalized[ m_pTFPlayer->GetPlayerClass()->GetClassIndex() ];
-			Q_snprintf(jmpSound, sizeof(jmpSound), "%s.Jumpsound", TFClassName);
-			m_pTFPlayer->EmitSound( jmpSound );
-		}
+		event->SetInt( "playerid", m_pTFPlayer->entindex() );
+		gameeventmanager->FireEventClientSide( event );
+	}
+#else
+	if ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
+	{
+		char jmpSound[128];
+		const char *TFClassName = g_aPlayerClassNames_NonLocalized[ m_pTFPlayer->GetPlayerClass()->GetClassIndex() ];
+		Q_snprintf(jmpSound, sizeof(jmpSound), "%s.Jumpsound", TFClassName);
+		m_pTFPlayer->EmitSound( jmpSound );
 	}
 #endif
+	// Flag that we jumped and don't jump again until it is released.
+	mv->m_nOldButtons |= IN_JUMP;
 	return true;
 }
 

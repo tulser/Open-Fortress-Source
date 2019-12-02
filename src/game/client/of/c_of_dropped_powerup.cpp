@@ -19,6 +19,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern ConVar of_glow_alpha;
+
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Powerup Spawner
 //-----------------------------------------------------------------------------
@@ -127,7 +129,7 @@ void C_TFDroppedPowerup::UpdateGlowEffect( void )
 	DestroyGlowEffect();
 	
 	if ( !m_bDisableShowOutline && m_bShouldGlow )
-		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
+		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
 /*
 	if ( !m_bShouldGlow && m_pGlowEffect )
 		m_pGlowEffect->SetAlpha( 0.0f );

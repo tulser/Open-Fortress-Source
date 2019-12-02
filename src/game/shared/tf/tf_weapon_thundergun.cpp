@@ -125,7 +125,7 @@ void CTFThundergun::PrimaryAttack()
 		if( Clip1() <= 0 && ReserveAmmo() <= 0 )
 			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->m_flLastShotDelay;
 		else
-			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+			m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 	}
 
 	// Don't push out secondary attack, because our secondary fire

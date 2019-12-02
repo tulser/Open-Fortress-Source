@@ -494,6 +494,7 @@ public:
 	bool	m_bDisableBluSpawns;
 	virtual void	KeepTeamSpawns( int iTeamNumber );
 	virtual void	DisableSpawns( int iTeamNumber );
+	bool			bMultiweapons;
 #endif
 	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
 	

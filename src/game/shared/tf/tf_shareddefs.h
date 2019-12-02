@@ -176,6 +176,7 @@ enum
 extern const char *g_aPlayerFirstPersonArms[];
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
+extern const char *g_aPlayerMutatorNames[];	// non-localized class names
 
 //-----------------------------------------------------------------------------
 // For entity_capture_flags to use when placed in the world
@@ -333,10 +334,7 @@ enum TFWeaponIDs
 	TF_WEAPON_SHOVEL,
 	TF_WEAPON_WRENCH,
 	TF_WEAPON_BONESAW,
-	TF_WEAPON_SHOTGUN_PRIMARY,
-	TF_WEAPON_SHOTGUN_SOLDIER,
-	TF_WEAPON_SHOTGUN_HWG,
-	TF_WEAPON_SHOTGUN_PYRO,
+	TF_WEAPON_SHOTGUN,
 	TF_WEAPON_SCATTERGUN,
 	TF_WEAPON_SNIPERRIFLE,
 	TF_WEAPON_MINIGUN,
@@ -374,7 +372,6 @@ enum TFWeaponIDs
 	TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	TF_WEAPON_ROCKETLAUNCHER_DM,
 	TF_WEAPON_ASSAULTRIFLE,
-	TF_WEAPON_SHOTGUN_MERCENARY,
 	TF_WEAPON_SWORD,
 	TF_WEAPON_C4,
 	TF_WEAPON_BERSERK,
@@ -695,6 +692,7 @@ enum
 	TF_COND_CRIT_POWERUP,
 	TF_COND_INVIS_POWERUP,
 	TF_COND_CRITBOOSTED_DEMO_CHARGE,
+	TF_COND_HASTE,
 
 	// The following conditions all expire faster when the player is being healed
 	// If you add a new condition that shouldn't have this behavior, add it before this section.

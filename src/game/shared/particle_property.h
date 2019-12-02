@@ -42,6 +42,7 @@ struct ParticleControlPoint_t
 	ParticleAttachment_t			iAttachType;
 	int								iAttachmentPoint;
 	Vector							vecOriginOffset;
+	const char						*szBoneName;
 	EHANDLE							hEntity;
 };
 
@@ -76,11 +77,14 @@ public:
 	CBaseEntity			*GetOuter( void ) { return m_pOuter; }
 
 	// Effect Creation
+		// With Attachments
 	CNewParticleEffect *Create( const char *pszParticleName, ParticleAttachment_t iAttachType, const char *pszAttachmentName );
+		// Regular
 	CNewParticleEffect *Create( const char *pszParticleName, ParticleAttachment_t iAttachType, int iAttachmentPoint = INVALID_PARTICLE_ATTACHMENT, Vector vecOriginOffset = vec3_origin );
+	
 	void				AddControlPoint( CNewParticleEffect *pEffect, int iPoint, C_BaseEntity *pEntity, ParticleAttachment_t iAttachType, const char *pszAttachmentName = NULL, Vector vecOriginOffset = vec3_origin );
 	void				AddControlPoint( int iEffectIndex, int iPoint, C_BaseEntity *pEntity, ParticleAttachment_t iAttachType, int iAttachmentPoint = INVALID_PARTICLE_ATTACHMENT, Vector vecOriginOffset = vec3_origin );
-
+	
 	inline void			SetControlPointParent( CNewParticleEffect *pEffect, int whichControlPoint, int parentIdx );
 	void				SetControlPointParent( int iEffectIndex, int whichControlPoint, int parentIdx );
 

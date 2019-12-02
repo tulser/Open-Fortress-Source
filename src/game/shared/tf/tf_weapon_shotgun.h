@@ -47,7 +47,7 @@ public:
 
 	CTFShotgun();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_PRIMARY; }
+	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN; }
 	virtual void	PrimaryAttack();
 
 	virtual acttable_t *ActivityList( int &iActivityCount );
@@ -74,39 +74,6 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SCATTERGUN; }
 };
 
-class CTFShotgun_Soldier : public CTFShotgun
-{
-public:
-	DECLARE_CLASS( CTFShotgun_Soldier, CTFShotgun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
-
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_SOLDIER; }
-};
-
-// Secondary version. Different weapon slot, different ammo
-class CTFShotgun_HWG : public CTFShotgun
-{
-public:
-	DECLARE_CLASS( CTFShotgun_HWG, CTFShotgun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
-
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_HWG; }
-};
-
-class CTFShotgun_Pyro : public CTFShotgun
-{
-public:
-	DECLARE_CLASS( CTFShotgun_Pyro, CTFShotgun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
-
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_PYRO; }
-};
-
-
-
 class CTFSuperShotgun : public CTFShotgun
 {
 public:
@@ -120,17 +87,6 @@ public:
 
 	virtual acttable_t *ActivityList(int &iActivityCount);
 	static acttable_t m_acttableSuperShotgun[];
-};
-
-
-class CTFShotgun_Merc : public CTFShotgun
-{
-public:
-	DECLARE_CLASS( CTFShotgun_Merc, CTFShotgun );
-	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
-
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SHOTGUN_MERCENARY; }
 };
 
 class CTFCShotgunSB : public CTFShotgun

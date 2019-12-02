@@ -52,7 +52,7 @@ public:
 	virtual bool FiresInBursts();
 	virtual void SecondaryAttack( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );
-	
+
 	virtual void	DoViewModelAnimation( void );
 
 	// Derived classes call this to fire a bullet.
@@ -96,10 +96,6 @@ private:
 	CTFWeaponBaseGun( const CTFWeaponBaseGun & );	
 	float	m_flChargeBeginTime;
 	CNetworkVar( float,	m_flAccurateAtTick );
-	
-public:
-	virtual bool	PrimaryAttackSwapsActivities(void) { return false; }
-	CNetworkVar( bool,	m_bSwapFire );
 };
 
 #endif // TF_WEAPONBASE_GUN_H

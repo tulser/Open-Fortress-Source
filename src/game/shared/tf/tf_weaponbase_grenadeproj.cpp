@@ -59,6 +59,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #ifdef CLIENT_DLL
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropInt( RECVINFO( m_bCritical ) ),
+	RecvPropTime( RECVINFO( m_flSpawnTime ) ),
 	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
@@ -67,6 +68,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropInt( SENDINFO( m_bCritical ) ),
+	SendPropTime( SENDINFO( m_flSpawnTime ) ),
 
 	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
@@ -150,7 +152,6 @@ void CTFWeaponBaseGrenadeProj::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGrenadeProj::Spawn()
 {
-	m_flSpawnTime = gpGlobals->curtime;
 	BaseClass::Spawn();
 }
 
@@ -298,6 +299,8 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	if ( GetTeamNumber() == TF_TEAM_RED ) m_nSkin = 0;
 	else if ( GetTeamNumber() == TF_TEAM_BLUE ) m_nSkin = 1;
 	else m_nSkin = 2;
+	
+	m_flSpawnTime = gpGlobals->curtime;
 
 	// Setup the think and touch functions (see CBaseEntity).
 	SetThink( &CTFWeaponBaseGrenadeProj::DetonateThink );

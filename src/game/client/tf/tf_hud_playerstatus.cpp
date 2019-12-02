@@ -274,11 +274,67 @@ void CTFHealthPanel::Paint()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+CTFMegahealPanel::CTFMegahealPanel( Panel *parent, const char *name ) : CTFImagePanel( parent, name )
+{
+	m_flHealth = 1.0f;
+
+	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/megahealth_color" );
+	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
+	{
+		m_iMaterialIndex = surface()->CreateNewTextureID();	
+	}
+
+	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/megahealth_color", true, false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFMegahealPanel::Paint()
+{
+	BaseClass::Paint();
+
+	int x, y, w, h;
+	GetBounds( x, y, w, h );
+
+	Vertex_t vert[4];	
+	float uv1 = 0.0f;
+	float uv2 = 1.0f;
+	int xpos = 0, ypos = 0;
+
+	float flDamageY = h * ( 1.0f - m_flHealth );
+
+	// blend in the red "damage" part
+	surface()->DrawSetTexture( m_iMaterialIndex );
+
+	Vector2D uv11( uv1, uv2 - m_flHealth );
+	Vector2D uv21( uv2, uv2 - m_flHealth );
+	Vector2D uv22( uv2, uv2 );
+	Vector2D uv12( uv1, uv2 );
+
+	vert[0].Init( Vector2D( xpos, flDamageY ), uv11 );
+	vert[1].Init( Vector2D( xpos + w, flDamageY ), uv21 );
+	vert[2].Init( Vector2D( xpos + w, ypos + h ), uv22 );				
+	vert[3].Init( Vector2D( xpos, ypos + h ), uv12 );
+
+	surface()->DrawSetColor( GetFgColor() );
+
+	surface()->DrawTexturedPolygon( 4, vert );
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 CTFHudPlayerHealth::CTFHudPlayerHealth( Panel *parent, const char *name ) : EditablePanel( parent, name )
 {
 	m_pHealthImage = new CTFHealthPanel( this, "PlayerStatusHealthImage" );	
 	m_pHealthImageBG = new ImagePanel( this, "PlayerStatusHealthImageBG" );
 	m_pHealthBonusImage = new CTFImagePanel( this, "PlayerStatusHealthBonusImage" );
+	m_pMegaHealthBonusImage = new CTFImagePanel( this, "PlayerStatusMegaHealthBonusImage" );
+//	m_pMegahealImage = new CTFMegahealPanel( this, "PlayerStatusMegahealImage" );
+//	m_pMegahealImageBG = new CTFImagePanel( this, "PlayerStatusMegahealImageBG" );
+//	m_pMegahealLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayerStatusMegahealValue" ) );
 
 	m_flNextThink = 0.0f;
 }
@@ -290,6 +346,7 @@ void CTFHudPlayerHealth::Reset()
 {
 	m_flNextThink = gpGlobals->curtime + 0.05f;
 	m_nHealth = -1;
+	m_nMegaHealth = -1;
 }
 
 //-----------------------------------------------------------------------------
@@ -304,11 +361,20 @@ void CTFHudPlayerHealth::ApplySchemeSettings( IScheme *pScheme )
 	{
 		m_pHealthBonusImage->GetBounds( m_nBonusHealthOrigX, m_nBonusHealthOrigY, m_nBonusHealthOrigW, m_nBonusHealthOrigH );
 	}
-
+	if ( m_pMegaHealthBonusImage )
+	{
+		m_pMegaHealthBonusImage->GetBounds( m_nBonusHealthOrigX, m_nBonusHealthOrigY, m_nBonusHealthOrigW, m_nBonusHealthOrigH );
+	}
 	m_flNextThink = 0.0f;
 
 	BaseClass::ApplySchemeSettings( pScheme );
 }
+
+ConVar of_pill_health_r("of_pill_health_r", "255", 	FCVAR_ARCHIVE );
+ConVar of_pill_health_g("of_pill_health_g", "100", 	FCVAR_ARCHIVE );
+ConVar of_pill_health_b("of_pill_health_b", "0", 	FCVAR_ARCHIVE );
+ConVar of_pill_health_a("of_pill_health_a", "64", 	FCVAR_ARCHIVE );
+ConVar of_pill_overheal_percent("of_pill_overheal_percent", "0", FCVAR_ARCHIVE, "Color Pill overheal to stand out from regular overheal.");
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -369,6 +435,31 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 					m_nBonusHealthOrigW + nSizeAdj,
 					m_nBonusHealthOrigH + nSizeAdj );
 			}
+			C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+			if ( m_pMegaHealthBonusImage && pPlayer->m_Shared.m_flMegaOverheal > 0.0f )
+			{
+				if ( m_pMegaHealthBonusImage->IsVisible() != of_pill_overheal_percent.GetBool() )
+				{
+					m_pMegaHealthBonusImage->SetVisible( of_pill_overheal_percent.GetBool() );
+			//		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthBonusPulse" );
+				}
+
+				m_pMegaHealthBonusImage->SetFgColor( Color( of_pill_health_r.GetInt(), of_pill_health_g.GetInt(), of_pill_health_b.GetInt(), of_pill_health_a.GetInt() ) );
+
+				// scale the flashing image based on how much health bonus we currently have
+				float flBoostMaxAmount = ( iMaxBuffedHealth ) - m_nMaxHealth;
+				float flPercent = pPlayer->m_Shared.m_flMegaOverheal / flBoostMaxAmount;
+				if (flPercent > 1.0f)
+					flPercent = 1.0f;
+
+				int nPosAdj = RoundFloatToInt( flPercent * m_nHealthBonusPosAdj );
+				int nSizeAdj = 2 * nPosAdj;
+
+				m_pMegaHealthBonusImage->SetBounds( m_nBonusHealthOrigX - nPosAdj, 
+					m_nBonusHealthOrigY - nPosAdj, 
+					m_nBonusHealthOrigW + nSizeAdj,
+					m_nBonusHealthOrigH + nSizeAdj );
+			}			
 		}
 		// are we close to dying?
 		else if ( m_nHealth < m_nMaxHealth * m_flHealthDeathWarning )
@@ -421,7 +512,90 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 		}	
 	}
 }
+/*
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHudPlayerHealth::SetMegaHealth( int iNewHealth, int iMaxHealth, int	iMaxBuffedHealth )
+{
+	if( iNewHealth <= 0 )
+	{
+		if ( m_pMegahealImage->IsVisible() )
+		{
+			m_pMegahealImage->SetVisible( false );
+			m_pMegahealImageBG->SetVisible( false );
+		}
+		if( m_pMegahealLabel )
+			m_pMegahealLabel->SetVisible( false );
+		SetDialogVariable( "MegaHealth", "" );
+		return;
+	}
+	else
+	{
+		if ( !m_pMegahealImage->IsVisible() )
+		{
+			m_pMegahealImage->SetVisible( true );
+			m_pMegahealImageBG->SetVisible( true );
+		}
+		if( m_pMegahealLabel )
+			m_pMegahealLabel->SetVisible( true );
+	}
+	int nPrevHealth = m_nMegaHealth;
 
+	// set our health
+	m_nMegaHealth = iNewHealth;
+	m_nMaxMegaHealth = iMaxHealth;
+	m_pMegahealImage->SetHealth( (float)(m_nMegaHealth) / (float)(m_nMaxMegaHealth) );
+
+	if ( m_pMegahealImage )
+	{
+		m_pMegahealImage->SetFgColor( Color( 255, 255, 255, 255 ) );
+	}
+
+	// are we getting a health bonus?
+	// implement later when we get armor
+	if ( m_nMegaHealth > m_nMaxMegaHealth )
+	{
+
+		if ( m_pHealthBonusImage )
+		{
+			if ( !m_pHealthBonusImage->IsVisible() )
+			{
+				m_pHealthBonusImage->SetVisible( true );
+				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthBonusPulse" );
+			}
+			m_pHealthBonusImage->SetFgColor( Color( 255, 255, 255, 255 ) );
+			// scale the flashing image based on how much health bonus we currently have
+			float flBoostMaxAmount = ( iMaxBuffedHealth ) - m_nMaxMegaHealth;
+			float flPercent = ( m_nMegaHealth - m_nMaxMegaHealth ) / flBoostMaxAmount;
+			if (flPercent > 1.0f)
+				flPercent = 1.0f;
+
+			int nPosAdj = RoundFloatToInt( flPercent * m_nHealthBonusPosAdj );
+			int nSizeAdj = 2 * nPosAdj;
+
+			m_pHealthBonusImage->SetBounds( m_nBonusHealthOrigX - nPosAdj, 
+			m_nBonusHealthOrigY - nPosAdj, 
+			m_nBonusHealthOrigW + nSizeAdj,
+			m_nBonusHealthOrigH + nSizeAdj );
+		}
+		
+	}
+
+	// set our health display value
+	if ( nPrevHealth != m_nMegaHealth )
+	{
+		if ( m_nMegaHealth > 0 )
+		{
+			SetDialogVariable( "MegaHealth", m_nMegaHealth );
+		}
+		else
+		{
+			SetDialogVariable( "MegaHealth", "" );
+		}	
+	}
+}
+*/
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -434,6 +608,13 @@ void CTFHudPlayerHealth::HideHealthBonusImage( void )
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthBonusPulseStop" );
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthDyingPulseStop" );
 	}
+	if ( m_pMegaHealthBonusImage && m_pMegaHealthBonusImage->IsVisible() )
+	{
+		m_pMegaHealthBonusImage->SetBounds( m_nBonusHealthOrigX, m_nBonusHealthOrigY, m_nBonusHealthOrigW, m_nBonusHealthOrigH );
+		m_pMegaHealthBonusImage->SetVisible( false );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthBonusPulseStop" );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthDyingPulseStop" );
+	}	
 }
 
 //-----------------------------------------------------------------------------
@@ -444,14 +625,16 @@ void CTFHudPlayerHealth::OnThink()
 	if ( m_flNextThink < gpGlobals->curtime )
 	{
 		C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
-
-		if ( pPlayer && pPlayer->IsRetroModeOn() )
+		if ( pPlayer )
 		{
-			SetHealth( pPlayer->GetHealth(), pPlayer->GetPlayerClass()->GetTFCMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
-		}
-		else if ( pPlayer )
-		{
-			SetHealth( pPlayer->GetHealth(), pPlayer->GetPlayerClass()->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealth() );
+//			float flMegaHeal = pPlayer->m_Shared.m_flMegaOverheal;
+//			if( pPlayer->GetHealth() < pPlayer->GetPlayerClass()->GetMaxHealth() )
+//				flMegaHeal = 0.0f;
+//			else if( pPlayer->GetHealth() - flMegaHeal < pPlayer->GetPlayerClass()->GetMaxHealth() )
+//				flMegaHeal -= pPlayer->GetPlayerClass()->GetMaxHealth() - ( pPlayer->GetHealth() - flMegaHeal );
+			
+			SetHealth( pPlayer->GetHealth(), pPlayer->m_Shared.GetDefaultHealth(), pPlayer->m_Shared.GetMaxBuffedHealthDM() );
+//			SetMegaHealth( pPlayer->m_Shared.m_flMegaOverheal, pPlayer->GetPlayerClass()->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealthDM()/ 2 );
 		}
 
 		m_flNextThink = gpGlobals->curtime + 0.05f;

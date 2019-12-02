@@ -156,12 +156,3 @@ void CTFFists::DoViewModelAnimation( void )
 
 	SendWeaponAnim( act );
 }
-
-bool CTFFists::CanHolster( void ) const
-{
-	
-	if ( GetWeaponID() == TF_WEAPON_BERSERK )
-		return false;
-
-	return BaseClass::CanHolster();
-}

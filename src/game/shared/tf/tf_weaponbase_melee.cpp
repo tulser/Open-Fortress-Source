@@ -58,6 +58,7 @@ ConVar of_melee_ignore_teammates( "of_melee_ignore_teammates", "1", FCVAR_NOTIFY
 ConVar tf_weapon_criticals_melee( "tf_weapon_criticals_melee", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Controls random crits for melee weapons.\n0 - Melee weapons do not randomly crit. \n1 - Melee weapons can randomly crit only if tf_weapon_criticals is also enabled. \n2 - Melee weapons can always randomly crit regardless of the tf_weapon_criticals setting.", true, 0, true, 2 );
 extern ConVar tf_weapon_criticals;
 extern ConVar friendlyfire;
+extern ConVar of_haste_fire_multiplier;
 
 class CTraceFilterMeleeIgnoreTeammates : public CTraceFilterSimple
 {
@@ -258,11 +259,14 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 	SendPlayerAnimEvent( pPlayer );
 
 	DoViewModelAnimation();
+	
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 		// Set next attack times.
-		m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+		m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 
-	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
+	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
+	
+//	DevMsg("Sequence duration: %f\n", SequenceDuration());
 	
 	if ( IsCurrentAttackACrit() )
 	{
@@ -273,7 +277,7 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 		WeaponSound( MELEE_MISS );
 	}
 
-	m_flSmackTime = gpGlobals->curtime  + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSmackDelay;
+	m_flSmackTime = gpGlobals->curtime + GetSmackDelay();
 	if( pPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
 	{
 		pPlayer->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
@@ -281,13 +285,54 @@ void CTFWeaponBaseMelee::Swing( CTFPlayer *pPlayer )
 		m_flChargeMeter = 0.0f;
 	}
 }
+
+float CTFWeaponBaseMelee::GetSmackDelay()
+{
+	float flSmackDelay = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flSmackDelay;
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if ( pOwner )
+	{
+		if ( pOwner->m_Shared.InCond( TF_COND_HASTE ) )
+			flSmackDelay *= of_haste_fire_multiplier.GetFloat();
+	}
+	if( flSmackDelay >= GetFireRate() )
+	{
+		flSmackDelay = max( 0.0f, GetFireRate() - 0.001f );
+	}
+	return flSmackDelay;
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseMelee::DoViewModelAnimation( void )
 {
-	Activity act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_SWINGHARD : ACT_VM_HITCENTER;
+	Activity act;
+	if ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation )
+	{
+		 act = ACT_VM_SWINGHARD;
+	}
+	else if (PrimaryAttackSwapsActivities())
+	{
+		act = ( m_bSwapFire ) ? ACT_VM_HITLEFT : ACT_VM_HITRIGHT;
+		m_bSwapFire = !m_bSwapFire;
+	}
+	else
+	{
+		act = ACT_VM_HITCENTER;
+	}
 	SendWeaponAnim( act );
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if( !pPlayer )
+		return;
+	float flSpeedMultiplier = 1.0f;
+	if ( pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
+		flSpeedMultiplier = of_haste_fire_multiplier.GetFloat();
+	
+	CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
+	if ( vm )
+	{
+		vm->SetPlaybackRate( 1.0f / flSpeedMultiplier );
+	}
 }
 
 //-----------------------------------------------------------------------------

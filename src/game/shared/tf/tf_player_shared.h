@@ -113,6 +113,8 @@ public:
 	void	InvisibilityThink( void );
 
 	int		GetMaxBuffedHealth( void );
+	int		GetMaxBuffedHealthDM( void );
+	int		GetDefaultHealth( void );
 	
 	bool InCondUber( void );
 	void RemoveCondUber( void );
@@ -250,6 +252,7 @@ private:
 	void OnAddBerserk( void );
 	void OnAddShield( void );
 	void OnAddShieldCharge( void );
+	void OnAddHaste( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -263,6 +266,7 @@ private:
 	void OnRemoveBerserk( void );
 	void OnRemoveShield( void );
 	void OnRemoveShieldCharge( void );
+	void OnRemoveHaste( void );
 
 	float GetCritMult( void );
 
@@ -278,7 +282,7 @@ private:
 #endif
 public:
 	CNetworkVar( bool, bWatchReady );
-
+	CNetworkVar( float, m_flMegaOverheal );
 private:
 
 	// Vars that are networked.

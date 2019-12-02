@@ -137,6 +137,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 	virtual void Drop( const Vector &vecVelocity );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
+	virtual bool CanHolster( void ) const;
 	virtual bool Deploy( void );
 	virtual bool ReloadOrSwitchWeapons( void );
 	virtual int				GetSlot( void ) const;
@@ -149,6 +150,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int 			GetDefaultClip1( void ) const;
 	
 	virtual void PlayWeaponShootSound( void );
+	virtual bool	PrimaryAttackSwapsActivities(void) { return GetTFWpnData().m_bSwapFireAnims; }
 	
 	// Attacks.
 	virtual void PrimaryAttack();
@@ -157,6 +159,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	void CalcIsAttackCritical( void );
 	virtual bool CalcIsAttackCriticalHelper();
 	int IsCurrentAttackACrit();
+	virtual float GetFireRate( void );
 
 	// Reloads.
 	virtual bool Reload( void );
@@ -186,7 +189,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	}
 	virtual bool InBarrage();
 	
-	virtual float	GetBurstTotalTime( void ) { return GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
+	virtual float	GetBurstTotalTime( void ) { return GetFireRate() * GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize; }	
 		
 
 	virtual void SetWeaponVisible( bool visible );
@@ -281,9 +284,9 @@ class CTFWeaponBase : public CBaseCombatWeapon
 
 #endif
 public:
-	CNetworkVar( bool, m_bWindingUp );
+	CNetworkVar( bool,  m_bWindingUp );
 	CNetworkVar( float, m_flWindTick );
-	
+	CNetworkVar( bool,	m_bSwapFire );
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
@@ -339,7 +342,7 @@ private:
 };
 
 #ifdef GAME_DLL
-typedef CHandle<CTFWeaponBase> SuperWeaponHandle;
+typedef CHandle<CTFWeaponBase> WeaponHandle;
 #endif
 
 #define WEAPON_RANDOM_RANGE 10000

@@ -72,6 +72,8 @@
 #include "teamplayroundbased_gamerules.h"
 #include "tf_weaponbase_melee.h"
 #include "of_music_player.h"
+#include "entity_ammopack.h"
+#include "entity_healthkit.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -827,6 +829,9 @@ void CTFPlayer::Precache()
 
 	// needed so the stickybomb launcher charging plays...
 	PrecacheScriptSound( "Weapon_StickyBombLauncher.ChargeUp" );
+	
+	for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+		PrecacheScriptSound ( UTIL_VarArgs( "%s.Jumpsound", g_aPlayerClassNames_NonLocalized[i] ) );
 
 	// needed to suppress console spam about weapon spawners
 	PrecacheMaterial( "VGUI/flagtime_full" );
@@ -1014,6 +1019,9 @@ void CTFPlayer::Spawn()
 	SetMoveType( MOVETYPE_WALK );
 	
 	m_hSuperWeapons.Purge();
+	ClearSlots();
+	
+	m_Shared.m_flMegaOverheal = 0.0f;
 	
 	BaseClass::Spawn();
 	
@@ -1223,6 +1231,13 @@ void CTFPlayer::Spawn()
 			//RemoveGlowEffect();
 		}
 	}
+}
+
+void CTFPlayer::ClearSlots()
+{
+	// Cant be assed to clear this a different way ¯\_(ツ)_/¯ 
+	// If you know a cleaner solution feel free to use it - Kay
+	memset( m_hWeaponInSlot, NULL, sizeof(m_hWeaponInSlot[0][0]) * 200 );	
 }
 
 //-----------------------------------------------------------------------------
@@ -2759,24 +2774,26 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
 		return;
 
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && stricmp(pTeamName, "spectate") != 0 )
+	if ( stricmp(pTeamName, "spectate") != 0 && TFGameRules() && TFGameRules()->IsDMGamemode() )
 	{
 		if ( TFGameRules()->IsTeamplay() ) 
 		{
-			if (of_forceclass.GetBool() == 1) SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
+			if (of_forceclass.GetBool()) 
+				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 		}
 		else 
 		{
-			if (of_allowteams.GetBool() == 0)
+			if (!of_allowteams.GetBool())
 			{				
 				ChangeTeam( TF_TEAM_MERCENARY, false );
 			}
-			if (of_forceclass.GetBool() == 1) 
+			if (of_forceclass.GetBool()) 
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 			else
 				ShowViewPortPanel( PANEL_CLASS_MERCENARY );
 
-			if (of_allowteams.GetBool() == 0) return;
+			if (!of_allowteams.GetBool()) 
+				return;
 		}
 		
 	}
@@ -3152,7 +3169,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 	if ( TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() )
 		return;
 
-	if ( TFGameRules()->IsInfGamemode() && of_forceclass.GetBool() && GetTeamNumber() == TF_TEAM_RED )
+	if ( TFGameRules()->IsInfGamemode() && ( (of_forceclass.GetBool() && GetTeamNumber() == TF_TEAM_RED) || (of_forcezombieclass.GetBool() && GetTeamNumber() == TF_TEAM_BLUE) ) )
 		return;
 	
 	// In case we don't get the class menu message before the spawn timer
@@ -4617,7 +4634,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		// this deals less damage in infection
 		info.SetDamage( info.GetDamage() * 0.5 );
 	}
-	
+
+	if( info.GetDamage() > 0.0f && GetHealth() <= m_Shared.GetDefaultHealth() + m_Shared.m_flMegaOverheal )
+		m_Shared.m_flMegaOverheal = max( 0.0f, m_Shared.m_flMegaOverheal - info.GetDamage() );
 	// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
 	bTookDamage = CBaseCombatCharacter::OnTakeDamage( info );
 
@@ -5606,6 +5625,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		if ( TFGameRules()->GetInfectionRoundTimer() && !TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 		{
 			ChangeTeam( TF_TEAM_BLUE, false );
+			if ( of_forcezombieclass.GetBool() ) 
+					SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 			// PLACEHOLDER
 			CBroadcastRecipientFilter filter;
 			EmitSound( filter, entindex(), "Game.Infection.Infected" );
@@ -6051,9 +6072,9 @@ CTFWeaponBase *CTFPlayer::GetWeaponInSlot( int iSlot, int iSlotPos )
 bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon )
 {
 	return ( pCarriedWeapon->GetSlot() == pWeapon->GetSlot()  	//The Weapons Occupy the same slot
-	&& pCarriedWeapon != pWeapon && 							//and they're not the same
-	m_nButtons & IN_USE );										//and we just pressed the Use button
+	&& pCarriedWeapon != pWeapon ); 							//and they're not the same
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -8476,7 +8497,8 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 		}
 	}
 
-	criteriaSet.AppendCriteria( "TFCClass", UTIL_VarArgs( "%d", IsRetroModeOn() ) );
+	if( IsRetroModeOn() )
+		criteriaSet.AppendCriteria( "playermutator", "TFC" );
 	criteriaSet.AppendCriteria( "recentkills", UTIL_VarArgs("%d", m_Shared.GetNumKillsInTime(30.0)) );
 
 	int iTotalKills = 0;
@@ -8516,6 +8538,10 @@ void CTFPlayer::ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet )
 	if ( pActiveWeapon )
 	{
 		int iWeaponRole = pActiveWeapon->GetTFWpnData().m_iWeaponType;
+		int	iClass = GetPlayerClass()->GetClassIndex();
+	
+		if (pActiveWeapon->GetTFWpnData().m_iClassWeaponType[iClass] >= 0)
+			iWeaponRole = pActiveWeapon->GetTFWpnData().m_iClassWeaponType[iClass];
 		switch( iWeaponRole )
 		{
 		case TF_WPN_TYPE_PRIMARY:
@@ -9974,7 +10000,7 @@ void CTFPlayer::DropZombieAmmoHealth( void )
 	QAngle angLaunch = QAngle( 0, 0 ,0 ); // the angle we will launch ourselves from
 	Vector vecLaunch;					  // final velocity used to launch the items
 
-	CTFPowerup *pPowerup = dynamic_cast< CTFPowerup * >( CBaseEntity::Create( "item_healthkit_small", WorldSpaceCenter(), angLaunch, this ) );
+	CHealthKit *pPowerup = dynamic_cast< CHealthKit * >( CBaseEntity::Create( "item_healthkit_small", WorldSpaceCenter(), angLaunch, this ) );
 
 	if ( !pPowerup )
 		return;
@@ -9989,9 +10015,10 @@ void CTFPlayer::DropZombieAmmoHealth( void )
 
 	UTIL_SetSize( pPowerup, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ) );
 
-	pPowerup->DropSingleInstance( vecLaunch, this, 10.0f, 0.2f );
+	pPowerup->DropSingleInstance( vecLaunch, NULL, 10.0f, 0.2f );
+	pPowerup->ChangeTeam( TF_TEAM_RED );
 
-	CTFPowerup *pPowerup2 = dynamic_cast< CTFPowerup * >( CBaseEntity::Create( "item_ammopack_small", WorldSpaceCenter(), angLaunch, this ) );
+	CAmmoPack *pPowerup2 = dynamic_cast< CAmmoPack * >( CBaseEntity::Create( "item_ammopack_small", WorldSpaceCenter(), angLaunch, this ) );
 
 	if ( !pPowerup2 )
 		return;
@@ -10006,5 +10033,6 @@ void CTFPlayer::DropZombieAmmoHealth( void )
 
 	UTIL_SetSize( pPowerup2, Vector( -16, -16, -16 ), Vector( 16, 16, 16 ) );
 
-	pPowerup2->DropSingleInstance( vecLaunch, this, 10.0f, 0.2f );
+	pPowerup2->DropSingleInstance( vecLaunch, NULL, 10.0f, 0.2f );
+	pPowerup2->ChangeTeam( TF_TEAM_RED );
 }

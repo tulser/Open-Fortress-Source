@@ -116,7 +116,7 @@ void CTFMedkit::Swing( CTFPlayer *pPlayer )
 
 if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 
 	SetWeaponIdleTime( m_flNextPrimaryAttack + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdleEmpty );
 	
@@ -140,7 +140,7 @@ void CTFMedkit::SwingMiss( CTFPlayer *pPlayer )
 
 if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 	
 	WeaponSound( MELEE_MISS );
 }

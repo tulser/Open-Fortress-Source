@@ -46,10 +46,12 @@ ConVar tf_spy_invis_unstealth_time( "tf_spy_invis_unstealth_time", "2.0", FCVAR_
 
 ConVar tf_spy_max_cloaked_speed( "tf_spy_max_cloaked_speed", "999", FCVAR_CHEAT | FCVAR_REPLICATED );	// no cap
 ConVar tf_max_health_boost( "tf_max_health_boost", "1.5", FCVAR_CHEAT | FCVAR_REPLICATED, "Max health factor that players can be boosted to by healers.", true, 1.0, false, 0 );
+ConVar of_dm_max_health_boost( "of_dm_max_health_boost", "2", FCVAR_CHEAT | FCVAR_REPLICATED, "Max health factor that players can be boosted to by pills and megahealths.", true, 1.0, false, 0 );
 ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time it takes for invulnerability to wear off." );
 
 #ifdef GAME_DLL
 ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_CHEAT, "Time is takes for a full health boost to drain away from a player.", true, 0.1, false, 0 );
+ConVar of_dm_boost_drain_time( "of_dm_boost_drain_time", "60.0", FCVAR_CHEAT, "Time is takes for a full pill health boost to drain away from a player in DM.", true, 0.1, false, 0 );
 ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_CHEAT, "Visualize bullet traces." );
 ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30",  FCVAR_CHEAT );
 
@@ -77,10 +79,13 @@ ConVar of_spawnprotecttime( "of_spawnprotecttime", "3", FCVAR_REPLICATED | FCVAR
 ConVar of_allow_special_teams( "of_allow_special_teams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow special teams outside their gamemodes." );
 
 extern ConVar of_infiniteammo;
+extern ConVar of_dynamic_color_update;
 
 ConVar of_infection_allow_sentry	 ( "of_infection_allow_sentry", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build sentries in Infection?" );
 ConVar of_infection_allow_dispenser	 ( "of_infection_allow_dispenser", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build dispensers in Infection?" );
 ConVar of_infection_allow_teleporter ( "of_infection_allow_teleporter", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow Engineer to build teleporters in Infection?" );
+
+ConVar of_haste_movespeed_multplier("of_haste_movespeed_multplier", "1.5",FCVAR_REPLICATED | FCVAR_NOTIFY, "By how much move speed should be multiplied when in Haste.");
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
@@ -149,6 +154,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 	RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
+	RecvPropTime( RECVINFO( m_flMegaOverheal ) ),
 	// Spy.
 	RecvPropTime( RECVINFO( m_flInvisChangeCompleteTime ) ),
 	RecvPropInt( RECVINFO( m_nDisguiseTeam ) ),
@@ -172,6 +178,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bGrapple, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flMegaOverheal, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 
@@ -204,6 +211,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
+	SendPropTime( SENDINFO( m_flMegaOverheal ) ),
 	// Spy
 	SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
 	SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
@@ -523,7 +531,10 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		break;		
 	case TF_COND_SHIELD_CHARGE:
 		OnAddShieldCharge();
-		break;			
+		break;	
+	case TF_COND_HASTE:
+		OnAddHaste();
+		break;
 	default:
 		break;
 	}
@@ -595,6 +606,9 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_SHIELD_CHARGE:
 		OnRemoveShieldCharge();
 		break;			
+	case TF_COND_HASTE:
+		OnRemoveHaste();
+		break;
 	default:
 		break;
 	}
@@ -616,6 +630,34 @@ int CTFPlayerShared::GetMaxBuffedHealth( void )
 	iRoundDown = iRoundDown * 5;
 
 	return iRoundDown;
+}
+
+int CTFPlayerShared::GetMaxBuffedHealthDM( void )
+{
+	float flBoostMax;
+
+	CTFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+
+	if ( pPlayer && pPlayer->IsRetroModeOn() )
+		flBoostMax = m_pOuter->GetPlayerClass()->GetTFCMaxHealth() * of_dm_max_health_boost.GetFloat();
+	else
+		flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * of_dm_max_health_boost.GetFloat();
+
+
+	int iRoundDown = floor( flBoostMax / 5 );
+	iRoundDown = iRoundDown * 5;
+
+	return iRoundDown;
+}
+
+int CTFPlayerShared::GetDefaultHealth( void )
+{
+	CTFPlayer *pPlayer = ToTFPlayer( m_pOuter );
+
+	if ( pPlayer && pPlayer->IsRetroModeOn() )
+		return m_pOuter->GetPlayerClass()->GetTFCMaxHealth();
+	else
+		return m_pOuter->GetPlayerClass()->GetMaxHealth();
 }
 
 //-----------------------------------------------------------------------------
@@ -703,7 +745,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		{
 			m_flHealFraction -= nHealthToAdd;
 
-			int iBoostMax = GetMaxBuffedHealth();
+			int iBoostMax = GetMaxBuffedHealth() + m_flMegaOverheal;
 
 			if ( InCond( TF_COND_DISGUISED ) )
 			{
@@ -714,7 +756,8 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 
 			// Cap it to the max we'll boost a player's health
 			nHealthToAdd = clamp( nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth() );
-
+			if( m_pOuter->GetHealth() + nHealthToAdd > GetMaxBuffedHealthDM() )
+				nHealthToAdd = ( m_pOuter->GetHealth() + nHealthToAdd ) - GetMaxBuffedHealthDM();
 			
 			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
 
@@ -751,12 +794,16 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
 		{
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
-			m_flHealFraction += (gpGlobals->frametime * (flBoostMaxAmount / tf_boost_drain_time.GetFloat()));
+			float flDrainTime = (m_pOuter->GetHealth() <= GetDefaultHealth() + m_flMegaOverheal) ? of_dm_boost_drain_time.GetFloat() : tf_boost_drain_time.GetFloat();
+			m_flHealFraction += (gpGlobals->frametime * (flBoostMaxAmount / flDrainTime));
 
 			int nHealthToDrain = (int)m_flHealFraction;
 			if ( nHealthToDrain > 0 )
 			{
 				m_flHealFraction -= nHealthToDrain;
+				// Drain our Pill overheal if thats the only thing left
+				if( flDrainTime == of_dm_boost_drain_time.GetFloat() )
+					m_flMegaOverheal -= nHealthToDrain;
 
 				// Manually subtract the health so we don't generate pain sounds / etc
 				m_pOuter->m_iHealth -= nHealthToDrain;
@@ -772,7 +819,6 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			if ( nHealthToDrain > 0 )
 			{
 				m_flDisguiseHealFraction -= nHealthToDrain;
-
 				// Reduce our fake disguised health by roughly the same amount
 				m_iDisguiseHealth -= nHealthToDrain;
 			}
@@ -1106,6 +1152,63 @@ void CTFPlayerShared::OnRemoveShieldCharge( void )
 {
 	m_pOuter->TeamFortress_SetSpeed();
 }
+
+void CTFPlayerShared::OnAddHaste( void )
+{
+#ifdef CLIENT_DLL
+	const char *pszTeamName;
+	switch ( m_pOuter->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			pszTeamName = "red";
+			break;
+		case TF_TEAM_BLUE:
+			pszTeamName = "blue";
+			break;
+		default:
+			pszTeamName = "dm";
+			break;
+	}
+	m_pOuter->ParticleProp()->Create( "demo_charge_socks", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+	m_pOuter->ParticleProp()->Create( "demo_charge_socks", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+	m_pOuter->ParticleProp()->Create( "speed_boost_trail", PATTACH_ABSORIGIN_FOLLOW );
+	char pszParticleEffect[32];
+	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_pelvis_%s", pszTeamName );
+	UpdateParticleColor ( m_pOuter->ParticleProp()->Create( pszParticleEffect, PATTACH_BONE_FOLLOW, "bip_spine_2" ) );
+	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_root_%s", pszTeamName );
+	UpdateParticleColor ( m_pOuter->ParticleProp()->Create( pszParticleEffect, PATTACH_ABSORIGIN_FOLLOW ) );
+	
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
+
+void CTFPlayerShared::OnRemoveHaste( void )
+{
+#ifdef CLIENT_DLL
+	const char *pszTeamName;
+	switch ( m_pOuter->GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			pszTeamName = "red";
+			break;
+		case TF_TEAM_BLUE:
+			pszTeamName = "blue";
+			break;
+		default:
+			pszTeamName = "dm";
+			break;
+	}
+	m_pOuter->ParticleProp()->StopParticlesNamed( "demo_charge_socks", true );
+	m_pOuter->ParticleProp()->StopParticlesNamed( "speed_boost_trail", true );
+	char pszParticleEffect[64];
+	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_pelvis_%s", pszTeamName );
+	m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
+	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_root_%s", pszTeamName );
+	m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1797,7 +1900,6 @@ bool CTFPlayerShared::UpdateParticleColor( CNewParticleEffect *pParticle )
 		pParticle->SetControlPoint( CUSTOM_COLOR_CP1, m_pOuter->m_vecPlayerColor );
 		return true;
 	}
-
 	return false;
 }
 
@@ -2618,7 +2720,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 			}
 		}
 	}
-
+	
 	// hauling engineers move slower
 	if ( m_bHauling )
 		maxfbspeed *= 0.9f;
@@ -2627,6 +2729,9 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.IsZombie() )
 		maxfbspeed *= 1.1f;
 
+	if ( m_Shared.InCond( TF_COND_HASTE ) )
+		maxfbspeed *= of_haste_movespeed_multplier.GetFloat();
+	
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );
 }
@@ -3062,9 +3167,13 @@ CTFWeaponBase *CTFPlayer::Weapon_GetWeaponByType( int iType )
 
 		if ( pWpn == NULL )
 			continue;
-
+	
 		int iWeaponRole = pWpn->GetTFWpnData().m_iWeaponType;
-
+	int	iClass = GetPlayerClass()->GetClassIndex();
+	
+	if (pWpn->GetTFWpnData().m_iClassWeaponType[iClass] >= 0)
+		iWeaponRole = pWpn->GetTFWpnData().m_iClassWeaponType[iClass];
+	
 		if ( iWeaponRole == iType )
 		{
 			return pWpn;

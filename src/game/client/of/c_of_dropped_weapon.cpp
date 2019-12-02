@@ -16,6 +16,8 @@
 
 ConVar of_droppedweapons_glow( "of_droppedweapons_glow", "1", FCVAR_ARCHIVE, "Enables/Disables outlines on dropped weapons." );
 
+extern ConVar of_glow_alpha;
+
 class C_TFDroppedWeapon : public C_BaseAnimating, public ITargetIDProvidesHint
 {
 	DECLARE_CLASS( C_TFDroppedWeapon, C_BaseAnimating );
@@ -119,7 +121,7 @@ void C_TFDroppedWeapon::UpdateGlowEffect( void )
 	
 	if ( TFGameRules() && m_bShouldGlow && of_droppedweapons_glow.GetBool() && pPlayer && pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
-		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), 1.0, true, true );
+		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
 	}
 }
 

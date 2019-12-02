@@ -8,7 +8,7 @@
 #include "tier0/memdbgon.h"
 
 #ifdef OPENFORTRESS_DLL
-ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","15" );
+ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","5" );
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
 #include "tf_player.h"
@@ -19,14 +19,28 @@ bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSo
 {
 	bool bSuccess = false;
 	int iHealthRestored = 0;
-	int iHealthToAdd = sk_item_healthkit_tiny.GetInt();
+	int iHealthToAdd = sk_item_healthkit_tiny.GetFloat();
 
 	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 	if (!pTFPlayer)
 		return false;
-
-	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth() );
+	int iHealthBefore = pTFPlayer->GetHealth();
+	iHealthToAdd = clamp( iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth() );
 	iHealthRestored = pPlayer->TakeHealth( iHealthToAdd, DMG_IGNORE_MAXHEALTH );
+	if( pPlayer->GetHealth() > pTFPlayer->m_Shared.GetDefaultHealth() )
+	{
+		if( iHealthBefore >= pTFPlayer->m_Shared.GetDefaultHealth() )
+		{
+			iHealthToAdd = sk_item_healthkit_tiny.GetFloat();
+			if( pTFPlayer->m_Shared.m_flMegaOverheal + iHealthToAdd > pTFPlayer->m_Shared.GetMaxBuffedHealthDM() )
+				iHealthToAdd = ( pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth() ) - pTFPlayer->m_Shared.m_flMegaOverheal;
+			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
+			iHealthRestored = 1;
+		}
+		else
+			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd + iHealthBefore - pTFPlayer->m_Shared.GetDefaultHealth();
+		pTFPlayer->m_Shared.m_flMegaOverheal = min( pTFPlayer->m_Shared.m_flMegaOverheal, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() );
+	}
 	
 	if (iHealthRestored)
 		bSuccess = true;

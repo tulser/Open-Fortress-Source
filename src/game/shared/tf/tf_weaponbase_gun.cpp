@@ -42,21 +42,15 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFWeaponBaseGun, DT_TFWeaponBaseGun )
 BEGIN_NETWORK_TABLE( CTFWeaponBaseGun, DT_TFWeaponBaseGun )
 // Client specific.
 #ifdef CLIENT_DLL
-	RecvPropBool( RECVINFO( m_bSwapFire ) ),
 	RecvPropTime( RECVINFO( m_flAccurateAtTick ) ),
 // Server specific.
 #else
-	SendPropBool( SENDINFO( m_bSwapFire ) ),
 	SendPropTime( SENDINFO( m_flAccurateAtTick ) ),
 #endif
 END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFWeaponBaseGun )
-#ifdef CLIENT_DLL
-	DEFINE_PRED_FIELD( m_bSwapFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-#endif
 #if defined( CLIENT_DLL )
-	DEFINE_FIELD(m_bSwapFire, FIELD_INTEGER ),
 	DEFINE_FIELD( m_flChargeBeginTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flAccurateAtTick, FIELD_FLOAT ),
 #endif
@@ -69,14 +63,13 @@ BEGIN_DATADESC( CTFWeaponBaseGun )
 DEFINE_THINKFUNC( ZoomOutIn ),
 DEFINE_THINKFUNC( ZoomOut ),
 DEFINE_THINKFUNC( ZoomIn ),
-#else
-DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
 #endif
 END_DATADESC()
 
 
 ConVar of_noreload( "of_noreload", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon reloading." );
 extern ConVar of_infiniteammo;
+extern ConVar of_haste_fire_multiplier;
 
 //=============================================================================
 //
@@ -226,10 +219,10 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	// Set next attack times.
 	if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0 )
 	{
-		if( Clip1() <= 0 && ReserveAmmo() <= 0 )
+		if( Clip1() <= 0 && ReserveAmmo() <= 0 ) // Stikynote
 			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->m_flLastShotDelay;
 		else
-			m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
+			m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 	}
 	
 	m_flAccurateAtTick = gpGlobals->curtime + 1.25;
@@ -977,10 +970,6 @@ float CTFWeaponBaseGun::GetProjectileDamage( void )
 bool CTFWeaponBaseGun::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 // Server specific.
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	
-	if ( ( InBurst() || InBarrage() || m_bWindingUp ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
-		return false;
 	
 	m_bWindingUp = false;
 	
@@ -994,7 +983,6 @@ bool CTFWeaponBaseGun::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	return BaseClass::Holster( pSwitchingTo );
 }
-
 //-----------------------------------------------------------------------------
 // Purpose:
 // NOTE: Should this be put into fire gun
@@ -1104,5 +1092,17 @@ void CTFWeaponBaseGun::DoViewModelAnimation( void )
 	else
 		act = ( IsCurrentAttackACrit() && GetTFWpnData().m_bUsesCritAnimation ) ? ACT_VM_PRIMARYATTACK_CRIT : ACT_VM_PRIMARYATTACK;
 	SendWeaponAnim( act );
+	
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+	if( !pPlayer )
+		return;
+	float flSpeedMultiplier = 1.0f;
+	if ( pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
+		flSpeedMultiplier = of_haste_fire_multiplier.GetFloat();
+	
+	CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
+	if ( vm )
+	{
+		vm->SetPlaybackRate( 1.0f / flSpeedMultiplier );
+	}
 }
-

@@ -56,7 +56,7 @@ public:
 	virtual bool	IsAirBlast( void ) const { return true; }
 	virtual void	AirBlast( const Vector &vec_in );
 #endif
-
+		CNetworkVar( float,		m_flSpawnTime );
 		CNetworkHandle( CBaseEntity, m_hLauncher );	
 private:
 
@@ -69,7 +69,6 @@ public:
 
 	virtual void			OnDataChanged( DataUpdateType_t type );
 
-	float					m_flSpawnTime;
 	int						m_bCritical;
 	
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetThrower(); }
@@ -111,7 +110,7 @@ public:
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
 	
-	CTFWeaponBase		 *pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
+	CTFWeaponBase		 	*pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
 
 protected:
 

@@ -86,10 +86,12 @@ public:
 	WeaponData_t	m_WeaponData[2];
 
 	int		m_iWeaponType;
+	int		m_iClassWeaponType[TF_CLASS_COUNT_ALL];
 	
 	float 	m_nBlastJumpDamageForce;
 	float 	m_flLastShotDelay;
 	bool	m_bLastShotAnim;
+	bool	m_bSwapFireAnims;
 	
 	// Grenade.
 	bool	m_bGrenade;
@@ -98,9 +100,11 @@ public:
 	bool	m_bLowerWeapon;
 	bool	m_bSuppressGrenTimer;
 	bool 	m_bExplodeOnImpact;
+	bool 	m_bAlwaysEnableTouch;
 	char 	m_nProjectileModel[MAX_WEAPON_STRING];  // Will be adapted to work in rockets once we need that
 	
 	float	m_flFuseTime;
+	float	m_flImpactBeforeTime;
 	
 	// Skins
 	bool	m_bHasTeamSkins_Viewmodel;

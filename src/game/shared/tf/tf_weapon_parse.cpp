@@ -90,6 +90,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_flCritOnChargeLevel = -1.0f;
 	
 	m_flFuseTime = -1.0f;
+	m_flImpactBeforeTime = 0.0f;
 
 	m_flMinViewmodelOffsetX = 0.0f;
 	m_flMinViewmodelOffsetY = 0.0f;
@@ -236,10 +237,53 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	{
 		m_iWeaponType = TF_WPN_TYPE_PDA;
 	}
+	
+	for( int i = TF_CLASS_SCOUT; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		char pKeyValueName[128];
+		Q_snprintf( pKeyValueName, sizeof( pKeyValueName ), "%s_WeaponType", g_aPlayerClassNames_NonLocalized[i] );
+		pszWeaponType = pKeyValuesData->GetString( pKeyValueName, "error" );
 
+		if( !Q_strcmp( pszWeaponType, "error" ) )
+		{
+			m_iClassWeaponType[i] = -1;
+			continue;
+		}
+		
+		if ( !Q_strcmp( pszWeaponType, "primary" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_PRIMARY;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "secondary" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_SECONDARY;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "melee" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_MELEE;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "melee_allclass" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_MELEE_ALLCLASS;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "grenade" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_GRENADE;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "building" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_BUILDING;
+		}
+		else if ( !Q_strcmp( pszWeaponType, "pda" ) )
+		{
+			m_iClassWeaponType[i] = TF_WPN_TYPE_PDA;
+		}
+	}
+	
 	m_nBlastJumpDamageForce	= pKeyValuesData->GetInt( "BlastJumpDamageForce", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage );
 	m_flLastShotDelay = pKeyValuesData->GetFloat( "LastShotTimeFireDelay", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay );
 	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
+	m_bSwapFireAnims = pKeyValuesData->GetBool( "SwapFireAnims", 0 );
 	
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );
@@ -248,6 +292,9 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bSuppressGrenTimer	= ( pKeyValuesData->GetInt( "PlayGrenTimer", 1 ) <= 0 );
 	
 	m_flFuseTime			= pKeyValuesData->GetFloat( "FuseTime", -1.0f );
+	m_bExplodeOnImpact		= ( pKeyValuesData->GetInt( "ExplodeOnImpact", 0 ) != 0 );
+	m_flImpactBeforeTime	= pKeyValuesData->GetFloat( "ImpactBeforeTime", 0.0f );
+	m_bAlwaysEnableTouch	= ( pKeyValuesData->GetInt( "AlwaysEnableTouch", 0 ) != 0 );
 	
 	m_iBombletAmount				= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
 	m_flBombletTimer				= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
@@ -268,7 +315,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bNeverStrip	= ( pKeyValuesData->GetInt( "NeverStrip", 0 ) != 0 );
 	m_bGibOnOverkill	= ( pKeyValuesData->GetInt( "GibOnOverkill", 0 ) != 0 );
 	m_bGibOnHeadshot	= ( pKeyValuesData->GetInt( "GibOnHeadshot", 0 ) != 0 );
-	m_bExplodeOnImpact	= ( pKeyValuesData->GetInt( "ExplodeOnImpact", 0 ) != 0 );
 	m_bDisableSecondaryAttack	= ( pKeyValuesData->GetInt( "DisableSecondaryAttack", 0 ) != 0 );
 	m_bAllowDrop	= ( pKeyValuesData->GetInt( "AllowDrop", 0 ) != 0 );
 	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );

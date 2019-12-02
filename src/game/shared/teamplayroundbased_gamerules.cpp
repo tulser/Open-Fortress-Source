@@ -1984,7 +1984,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 									m_bInfectionLastManAlive = true;
 									CSingleUserRecipientFilter filter( pTFPlayer );
 
-									pTFPlayer->m_Shared.AddCond( TF_COND_CRITBOOSTED );
+									pTFPlayer->m_Shared.AddCond( TF_COND_HASTE );
 									BroadcastSound( TF_TEAM_RED, "AM_LastManAlive" );
 									CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", vec3_origin , vec3_angle );
 									if ( pMusicPlayer )

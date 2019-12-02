@@ -124,15 +124,15 @@ public:
 // CLIENT DLL
 	// Sprite data, read from the data file
 	int						iSpriteCount;
-	CHudTexture						*iconActive;
-	CHudTexture	 					*iconInactive;
-	CHudTexture 					*iconAmmo;
-	CHudTexture 					*iconAmmo2;
-	CHudTexture 					*iconCrosshair;
-	CHudTexture 					*iconAutoaim;
-	CHudTexture 					*iconZoomedCrosshair;
-	CHudTexture 					*iconZoomedAutoaim;
-	CHudTexture						*iconSmall;
+	CHudTexture				*iconActive;
+	CHudTexture	 			*iconInactive;
+	CHudTexture 			*iconAmmo;
+	CHudTexture 			*iconAmmo2;
+	CHudTexture 			*iconCrosshair;
+	CHudTexture 			*iconAutoaim;
+	CHudTexture 			*iconZoomedCrosshair;
+	CHudTexture 			*iconZoomedAutoaim;
+	CHudTexture				*iconSmall;
 
 // TF2 specific
 	bool					bShowUsageHint;							// if true, then when you receive the weapon, show a hint about it
