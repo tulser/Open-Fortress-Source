@@ -722,7 +722,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
 {
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
-	if ( pTFWeapon && 
+	if (pTFWeapon && pTFWeapon->GetTFWpnData() &&
 	( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact ) ||
 	( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact ) ||
 	( pTFWeapon->GetTFWpnData().m_flImpactBeforeTime && m_flSpawnTime + pTFWeapon->GetTFWpnData().m_flImpactBeforeTime >= gpGlobals->curtime ) )
