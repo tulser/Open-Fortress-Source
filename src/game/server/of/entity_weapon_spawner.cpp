@@ -209,7 +209,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 			iPos = pWeaponInfo->iPositionDM;
 	
-		if( !(pTFPlayer->m_hWeaponInSlot) )
+		if( !pTFPlayer->m_hWeaponInSlot )
 		{	
 			return false;
 		}
@@ -218,8 +218,9 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )
 		{
 			bTakeWeapon = false;
-			if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->DefaultReserveAmmo() )
-				pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->m_iReserveAmmo = pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->DefaultReserveAmmo();
+			DevMsg("Reserve ammo is:%d\n Default is %d\n",pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo(), pWeaponInfo->iMaxReserveAmmo);
+			if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pWeaponInfo->iMaxReserveAmmo )
+				pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->m_iReserveAmmo = pWeaponInfo->iMaxReserveAmmo;
 			else
 				return false;
 		}
@@ -238,7 +239,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					event->SetInt( "playerid", pTFPlayer->entindex() );
 					event->SetInt( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() );
 					event->SetInt( "swap_wep", iWeaponID );
-					gameeventmanager->FireEventClientSide( event );
+					gameeventmanager->FireEvent( event );
 				}
 				return false;
 			}

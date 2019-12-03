@@ -746,6 +746,8 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			m_flHealFraction -= nHealthToAdd;
 
 			int iBoostMax = GetMaxBuffedHealth() + m_flMegaOverheal;
+			if( iBoostMax > GetMaxBuffedHealthDM() )
+				iBoostMax = GetMaxBuffedHealthDM();
 
 			if ( InCond( TF_COND_DISGUISED ) )
 			{
@@ -756,8 +758,6 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 
 			// Cap it to the max we'll boost a player's health
 			nHealthToAdd = clamp( nHealthToAdd, 0, iBoostMax - m_pOuter->GetHealth() );
-			if( m_pOuter->GetHealth() + nHealthToAdd > GetMaxBuffedHealthDM() )
-				nHealthToAdd = ( m_pOuter->GetHealth() + nHealthToAdd ) - GetMaxBuffedHealthDM();
 			
 			m_pOuter->TakeHealth( nHealthToAdd, DMG_IGNORE_MAXHEALTH );
 

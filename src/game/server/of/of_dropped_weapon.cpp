@@ -182,7 +182,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 				event->SetInt( "playerid", pTFPlayer->entindex() );
 				event->SetInt( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() );
 				event->SetInt( "swap_wep", WeaponID );
-				gameeventmanager->FireEventClientSide( event );
+				gameeventmanager->FireEvent( event );
 			}
 			return;
 		}

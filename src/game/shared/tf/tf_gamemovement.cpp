@@ -579,7 +579,7 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( event )
 	{
 		event->SetInt( "playerid", m_pTFPlayer->entindex() );
-		gameeventmanager->FireEventClientSide( event );
+		gameeventmanager->FireEvent( event );
 	}
 #else
 	if ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
