@@ -48,6 +48,8 @@ ConVar tf_grenadelauncher_livetime( "tf_grenadelauncher_livetime", "0.8", FCVAR_
 
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
+#else
+ConVar of_stabilize_grenades("of_stabilize_grenades", "0", FCVAR_REPLICATED, "Testing convar, only used to reduce crashes if they happen.");
 #endif
 
 #ifndef CLIENT_DLL
@@ -722,10 +724,15 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
 {
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
-	if ( pTFWeapon && 
-	( pTFWeapon->GetTFWpnData().m_bExplodeOnImpact ) ||
-	( GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact ) ||
-	( pTFWeapon->GetTFWpnData().m_flImpactBeforeTime && m_flSpawnTime + pTFWeapon->GetTFWpnData().m_flImpactBeforeTime >= gpGlobals->curtime ) )
+	if (pTFWeapon &&
+		(pTFWeapon->GetTFWpnData().m_bExplodeOnImpact) ||
+		(GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact))
+		return true;
+	else if (pTFWeapon && !of_stabilize_grenades.GetBool() &&
+		(pTFWeapon->GetTFWpnData().m_flImpactBeforeTime > 0.0f && m_flSpawnTime + pTFWeapon->GetTFWpnData().m_flImpactBeforeTime >= gpGlobals->curtime))
+		return true;
+	else if (pTFWeapon && of_stabilize_grenades.GetBool() &&
+		(pTFWeapon->GetWeaponID() == TF_WEAPON_GRENADELAUNCHER_MERCENARY && m_flSpawnTime + 0.05f >= gpGlobals->curtime))
 		return true;
 	else
 		return false;
