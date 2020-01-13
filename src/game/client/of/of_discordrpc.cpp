@@ -391,7 +391,7 @@ void CTFDiscordRPC::UpdateRichPresence()
 	if (engine->IsDrawingLoadingImage() == true)
 	{
 		m_sDiscordRichPresence.state = "";
-		m_sDiscordRichPresence.details = "Currently is loading...";
+		m_sDiscordRichPresence.details = "Currently loading...";
 	}
 	
 	SetLogo();
