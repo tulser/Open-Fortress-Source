@@ -80,7 +80,7 @@ const char* CFMODManager::GetFullPathToSound(const char* pathToFileFromModFolder
 	char fullpath[512];
 	Q_snprintf(fullpath, sizeof(fullpath), "sound/%s", pathToFileFromModFolder);
 	filesystem->GetLocalPath(fullpath, fullpath, sizeof(fullpath));
-	Q_snprintf(resultpath, 512, fullpath);
+	Q_snprintf(resultpath, 512, "%s", fullpath);
 	// convert backwards slashes to forward slashes
 	for (int i = 0; i < 512; i++)
 	{

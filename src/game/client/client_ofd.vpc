@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-//	CLIENT_ODF.VPC
+//	CLIENT_OFD.VPC
 //
 //	Project Script
 //-----------------------------------------------------------------------------
@@ -18,7 +18,7 @@ $Configuration
 	}
 	$Linker
 	{
-		$AdditionalLibraryDirectories			"$SRCDIR\fmod\api\lib"
+		$AdditionalLibraryDirectories	"$SRCDIR\fmod\api\lib"
 	}
 }
 
@@ -448,6 +448,7 @@ $Project "Client (OFD)"
 	}
 	$Folder "Link Libraries"
 	{
-			$Lib    "$LIBPUBLIC\libdiscord-rpc" [$LINUX]
+			$Lib		"$LIBPUBLIC\libdiscord-rpc" [$LINUX]
+			$ImpLib		fmod [$LINUX]
 	}
 }

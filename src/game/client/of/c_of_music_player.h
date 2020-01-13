@@ -19,7 +19,6 @@ public:
 	virtual void ClientThink(void);
 	virtual void Spawn(void);
 	virtual void OnDataChanged(DataUpdateType_t updateType);
-	virtual const char *GetLocalCopyOfSong( const char *szFullSongPath );
 private:
 
 	int m_iPhase;

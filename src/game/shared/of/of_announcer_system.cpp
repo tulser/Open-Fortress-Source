@@ -38,6 +38,13 @@ END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( of_announcer, CTFAnnouncerSystem );
 
+CTFAnnouncerSystem *g_pAnnouncerEntity;
+
+CTFAnnouncerSystem* AnnouncerEntity()
+{
+	return g_pAnnouncerEntity;
+}
+
 CTFAnnouncerSystem::CTFAnnouncerSystem()
 {
 	g_pAnnouncerEntity = this;

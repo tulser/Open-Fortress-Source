@@ -42,11 +42,6 @@ public:
 #endif
 };
 
-extern CTFAnnouncerSystem *g_pAnnouncerEntity = NULL;
-
-inline CTFAnnouncerSystem* AnnouncerEntity()
-{
-	return g_pAnnouncerEntity;
-}
+extern CTFAnnouncerSystem* AnnouncerEntity();
 
 #endif // TF_MUSIC_PLAYER_H
