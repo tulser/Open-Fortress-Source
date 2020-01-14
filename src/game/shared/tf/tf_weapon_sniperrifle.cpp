@@ -245,7 +245,6 @@ void CTFSniperRifle::HandleZooms( void )
 		{
 			ZoomOut();
 		}
-
 		m_flUnzoomTime = -1;
 	}
 
@@ -317,7 +316,17 @@ void CTFSniperRifle::ItemPostFrame( void )
 	}
 #endif
 
-	if ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+	bool HoldToZoom = 0;
+#ifdef GAME_DLL
+	HoldToZoom = pPlayer->IsFakeClient() ? 0 : (V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom")) > 0);
+#else
+	HoldToZoom = of_holdtozoom.GetBool();
+#endif	
+	float flChargeAfter = m_flNextSecondaryAttack;
+	if ( HoldToZoom )
+	  flChargeAfter = m_flNextPrimaryAttack;
+
+	if ( flChargeAfter <= gpGlobals->curtime )
 	{
 		// Don't start charging in the time just after a shot before we unzoom to play rack anim.
 		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge )
@@ -336,8 +345,11 @@ void CTFSniperRifle::ItemPostFrame( void )
 		Fire( pPlayer );
 	}
 
+	if( !pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
+		SoftZoomCheck();
+
 	// Idle.
-	if ( !( ( pPlayer->m_nButtons & IN_ATTACK) || ( pPlayer->m_nButtons & IN_ATTACK2 ) ) )
+	if ( !( ( pPlayer->m_nButtons & IN_ATTACK ) || ( pPlayer->m_nButtons & IN_ATTACK2 ) ) )
 	{
 		// No fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -384,17 +396,17 @@ bool CTFSniperRifle::Lower( void )
 void CTFSniperRifle::Zoom( void )
 {
 	// Don't allow the player to zoom in while jumping
-//	CTFPlayer *pPlayer = GetTFPlayerOwner();
-//	if ( pPlayer && pPlayer->m_Shared.IsJumping() )
-//	{
-//		if ( pPlayer->GetFOV() >= 75 )
-//			return;
-//	}
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+	}
 
 	ToggleZoom();
 	
 	// at least 0.1 seconds from now, but don't stomp a previous value
 	m_flNextPrimaryAttack = max( m_flNextPrimaryAttack, gpGlobals->curtime + 0.1 );
+	
 	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 }
 
@@ -434,6 +446,7 @@ void CTFSniperRifle::ZoomIn( void )
 
 	pPlayer->m_Shared.AddCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 
 #ifdef GAME_DLL
 	// Create the sniper dot.
@@ -469,6 +482,7 @@ void CTFSniperRifle::ZoomOut( void )
 
 	pPlayer->m_Shared.RemoveCond( TF_COND_AIMING );
 	pPlayer->TeamFortress_SetSpeed();
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 
 #ifdef GAME_DLL
 	// Destroy the sniper dot.
@@ -535,6 +549,20 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 {
+	int HoldToZoom = 0;
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
+#ifdef GAME_DLL
+	if( pPlayer )
+		HoldToZoom = pPlayer->IsFakeClient() ? 0 : V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
+#else
+	HoldToZoom = V_atoi(of_holdtozoom.GetString());
+#endif	
+
+	if( HoldToZoom )
+		return;
+	if( pPlayer )
+		pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + 0.25f;
+	
 	m_flUnzoomTime = gpGlobals->curtime + flDelay;
 
 	m_bRezoomAfterShot = bRezoom;

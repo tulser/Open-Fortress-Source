@@ -41,6 +41,8 @@ extern CTFWeaponInfo *GetTFWeaponInfo( int iWeapon );
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
 extern ConVar of_beta_muzzleflash;
+extern ConVar fov_softzoom;
+extern ConVar fov_desired;
 #endif
 
 #if defined (CLIENT_DLL)
@@ -781,8 +783,9 @@ bool CTFWeaponBase::Deploy( void )
 			return false;
 
 		pPlayer->SetNextAttack( m_flNextPrimaryAttack );
+		if( !CanSoftZoom() )
+			pPlayer->SetFOV( pPlayer, 0, 0.1f );
 	}
-
 	return bDeploy;
 }
 
@@ -844,7 +847,6 @@ void CTFWeaponBase::PrimaryAttack( void )
 	{
 		m_iReloadMode.Set( TF_RELOAD_START );
 	}
-	
 }
 
 //-----------------------------------------------------------------------------
@@ -857,6 +859,10 @@ void CTFWeaponBase::SecondaryAttack( void )
 		return;
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	if( !pOwner )
+		return;
 
 	// Don't hook secondary for now.
 	return;
@@ -906,10 +912,15 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	if ( !pPlayer )
 		return false;
 
-	float flPlayerCritMult = pPlayer->GetCritMult();
-
 	if ( !CanFireCriticalShot() )
 		return false;
+
+	if ( !IsAllowedToWithdrawFromCritBucket( GetDamage() ) )
+		return false;
+
+	AddToCritBucket( GetDamage() );
+
+	float flPlayerCritMult = pPlayer->GetCritMult();
 
 	if ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bUseRapidFireCrits )
 	{
@@ -1375,39 +1386,41 @@ void CTFWeaponBase::ItemBusyFrame( void )
 		return;
 	}
 	
+	bool bDidSkill = false;
+	
 	if ( (pOwner->m_nButtons & IN_ATTACK2) && m_bInReload == false && m_bInAttack2 == false )
 	{
 		if ( pOwner->DoClassSpecialSkill() )
 		{
+			bDidSkill = true;
 			m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
 		}
 
 		m_bInAttack2 = true;
-	
 	}
 	else
 	{
 		m_bInAttack2 = false;
 	}
-
+	
+	SoftZoomCheck();
+	
 	// Interrupt a reload on reload singly weapons.
-		CTFPlayer *pPlayer = GetTFPlayerOwner();
-		if ( pPlayer )
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if ( pPlayer )
+	{
+		if ( pPlayer->m_nButtons & IN_ATTACK )
 		{
-			if ( pPlayer->m_nButtons & IN_ATTACK )
+			if ( ( m_bInReload || ( ReloadsSingly() && m_iReloadMode!=TF_RELOAD_START ) ) && Clip1() > 0 )
 			{
-				if ( ( m_bInReload || ( ReloadsSingly() && m_iReloadMode!=TF_RELOAD_START ) ) && Clip1() > 0 )
-				{
-					AbortReload();
-					
-					pPlayer->m_flNextAttack = gpGlobals->curtime;
-					m_flNextPrimaryAttack = gpGlobals->curtime;
-
-					SetWeaponIdleTime( gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdle );
-				}
+				AbortReload();
+				
+				pPlayer->m_flNextAttack = gpGlobals->curtime;
+				m_flNextPrimaryAttack = gpGlobals->curtime;
+				SetWeaponIdleTime( gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdle );
 			}
 		}
-
+	}
 }
 
 void CTFWeaponBase::ItemPreFrame( void )
@@ -1498,6 +1511,52 @@ void CTFWeaponBase::CritEffectThink( void )
 	}	
 }
 #endif
+
+void CTFWeaponBase::SoftZoomCheck( void )
+{
+	
+	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
+	
+	if( !pOwner )
+		return;
+	
+	// Only merc has the eye of the TIGER DANCING THROUGH THE FIRE
+	if( pOwner->GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY )
+		return;
+	
+	float flZoomLevel = 0;
+#ifdef GAME_DLL
+	flZoomLevel = pOwner->IsFakeClient() ? 0 : Q_atof( engine->GetClientConVarValue( pOwner->entindex(), "fov_softzoom" ) );
+#else
+	flZoomLevel = fov_softzoom.GetFloat();
+#endif
+	float flFovDesired = 0;
+#ifdef GAME_DLL
+	flFovDesired = Q_atof( engine->GetClientConVarValue( pOwner->entindex(), "fov_desired" ) );
+#else
+	flFovDesired = fov_desired.GetFloat();
+#endif
+	
+	if( (
+	( pOwner->ShouldQuickZoom() && (pOwner->m_nButtons & IN_ATTACK2) && !pOwner->CheckSpecialSkill() && CanSoftZoom() )
+	|| ( pOwner->m_nButtons & IN_ZOOM ) )
+	&& pOwner->m_Shared.m_flNextZoomTime <= gpGlobals->curtime )
+	{
+		if( pOwner->GetFOV() == flFovDesired )
+			pOwner->m_Shared.m_flNextZoomTime = gpGlobals->curtime + 0.25f;
+
+		pOwner->SetFOV( pOwner, flZoomLevel, 0.25f );
+	}
+	else
+	{
+		if( ( pOwner->m_Shared.m_flNextZoomTime <= gpGlobals->curtime ) )
+		{
+			if( pOwner->GetFOV() == flZoomLevel )
+				pOwner->m_Shared.m_flNextZoomTime = gpGlobals->curtime + 0.1;
+			pOwner->SetFOV( pOwner, 0, 0.1f );
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1594,6 +1653,8 @@ void CTFWeaponBase::ItemPostFrame( void )
 			}
 		}
 	}
+	
+	SoftZoomCheck();
 	
 	if ( !bFired && !LoadsManualy() && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
@@ -2056,6 +2117,9 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 {
 	Vector vecOrigin;
 	QAngle angAngles;
+	
+	if ( !pAttachEnt )
+		return;
 
 	int iMuzzleFlashAttachment = pAttachEnt->LookupAttachment("muzzle");
 
@@ -2500,47 +2564,6 @@ acttable_t CTFWeaponBase::m_acttableMelee[] =
 	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_MELEE,	false },
 };
 
-acttable_t CTFWeaponBase::m_acttableMeleeAllClass[] =
-{
-	{ ACT_MP_STAND_IDLE,						ACT_MP_STAND_MELEE_ALLCLASS,			        false },		
-	{ ACT_MP_CROUCH_IDLE,	                    ACT_MP_CROUCH_MELEE_ALLCLASS,	                false },
-	{ ACT_MP_WALK,								ACT_MP_WALK_MELEE,								false },
-	{ ACT_MP_RUN,		                    ACT_MP_RUN_MELEE_ALLCLASS,		                false },
-	{ ACT_MP_AIRWALK,	                    ACT_MP_AIRWALK_MELEE_ALLCLASS,	                false },
-	{ ACT_MP_CROUCHWALK,                  ACT_MP_CROUCHWALK_MELEE_ALLCLASS,               false },
-	{ ACT_MP_JUMP,	                    ACT_MP_JUMP_MELEE_ALLCLASS,	                    false },
-	{ ACT_MP_JUMP_START,                  ACT_MP_JUMP_START_MELEE_ALLCLASS,               false },
-	{ ACT_MP_JUMP_FLOAT,                  ACT_MP_JUMP_FLOAT_MELEE_ALLCLASS,               false },
-	{ ACT_MP_JUMP_LAND,                   ACT_MP_JUMP_LAND_MELEE_ALLCLASS,				false },
-	{ ACT_MP_SWIM,	                    ACT_MP_SWIM_MELEE_ALLCLASS,					    false },
-
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,                ACT_MP_ATTACK_STAND_MELEE_ALLCLASS,			    false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,               ACT_MP_ATTACK_CROUCH_MELEE_ALLCLASS,		    false },
-	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,	                ACT_MP_ATTACK_SWIM_MELEE_ALLCLASS,	            false },
-	{ ACT_MP_ATTACK_AIRWALK_PRIMARYFIRE,              ACT_MP_ATTACK_AIRWALK_MELEE_ALLCLASS,           false },
-
-	{ ACT_MP_ATTACK_STAND_SECONDARYFIRE,	ACT_MP_ATTACK_STAND_MELEE_SECONDARY, false },
-	{ ACT_MP_ATTACK_CROUCH_SECONDARYFIRE,	ACT_MP_ATTACK_CROUCH_MELEE_SECONDARY,false },
-	{ ACT_MP_ATTACK_SWIM_SECONDARYFIRE,		ACT_MP_ATTACK_SWIM_MELEE,		false },
-	{ ACT_MP_ATTACK_AIRWALK_SECONDARYFIRE,	ACT_MP_ATTACK_AIRWALK_MELEE,	false },
-
-	{ ACT_MP_GESTURE_FLINCH,	ACT_MP_GESTURE_FLINCH_MELEE, false },
-
-	{ ACT_MP_GRENADE1_DRAW,		ACT_MP_MELEE_GRENADE1_DRAW,	false },
-	{ ACT_MP_GRENADE1_IDLE,		ACT_MP_MELEE_GRENADE1_IDLE,	false },
-	{ ACT_MP_GRENADE1_ATTACK,	ACT_MP_MELEE_GRENADE1_ATTACK,	false },
-	{ ACT_MP_GRENADE2_DRAW,		ACT_MP_MELEE_GRENADE2_DRAW,	false },
-	{ ACT_MP_GRENADE2_IDLE,		ACT_MP_MELEE_GRENADE2_IDLE,	false },
-	{ ACT_MP_GRENADE2_ATTACK,	ACT_MP_MELEE_GRENADE2_ATTACK,	false },
-
-	{ ACT_MP_GESTURE_VC_HANDMOUTH,	ACT_MP_GESTURE_VC_HANDMOUTH_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_FINGERPOINT,	ACT_MP_GESTURE_VC_FINGERPOINT_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_FISTPUMP,	ACT_MP_GESTURE_VC_FISTPUMP_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_THUMBSUP,	ACT_MP_GESTURE_VC_THUMBSUP_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_NODYES,	ACT_MP_GESTURE_VC_NODYES_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_MELEE,	false },
-};
-
 acttable_t CTFWeaponBase::m_acttableBuilding[] = 
 {
 	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_BUILDING,			false },
@@ -2649,10 +2672,6 @@ acttable_t *CTFWeaponBase::ActivityList( int &iActivityCount )
 	case TF_WPN_TYPE_MELEE:
 		pTable = m_acttableMelee;
 		iActivityCount = ARRAYSIZE(m_acttableMelee);
-		break;
-	case TF_WPN_TYPE_MELEE_ALLCLASS:
-		pTable = m_acttableMeleeAllClass;
-		iActivityCount = ARRAYSIZE(m_acttableMeleeAllClass);
 		break;
 	case TF_WPN_TYPE_BUILDING:
 		pTable = m_acttableBuilding;

@@ -32,7 +32,7 @@ public:
 #ifdef GAME_DLL
 	// Creation.
 	static CTFGrenadeMirvBomb *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CTFWeaponInfo *pWeaponInfo );
+		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CTFWeaponInfo *pWeaponInfo, int teamnumber );
 	virtual void	BounceSound( void );
 	virtual bool	ExplodeOnImpact( void );
 	KeyValues 		*pStatValues;

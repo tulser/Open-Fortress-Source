@@ -22,11 +22,12 @@
 ConVar sv_vote_issue_restart_game_allowed( "sv_vote_issue_restart_game_allowed", "1", FCVAR_NONE, "Can players call votes to restart the game?" );
 ConVar sv_vote_issue_restart_game_cooldown( "sv_vote_issue_restart_game_cooldown", "300", FCVAR_NONE, "Minimum time before another restart vote can occur (in seconds)." );
 ConVar sv_vote_kick_ban_duration( "sv_vote_kick_ban_duration", "20", FCVAR_NONE, "The number of minutes a vote ban should last. (0 = Disabled)" );
+ConVar sv_vote_kick_maxplayers_required( "sv_vote_kick_maxplayers_required", "6", FCVAR_NONE, "Amount of players that must be present in a server before the kick vote can be called." );
 ConVar sv_vote_issue_changelevel_allowed( "sv_vote_issue_changelevel_allowed", "1", FCVAR_NONE, "Can players call votes to change levels?" );
 ConVar sv_vote_issue_changemutator_allowed( "sv_vote_issue_changemutator_allowed", "1", FCVAR_NONE, "Can players call votes to change the mutators?" );
 ConVar sv_vote_issue_nextlevel_allowed( "sv_vote_issue_nextlevel_allowed", "1", FCVAR_NONE, "Can players call votes to set the next level?" );
 // TODO:
-// sv_vote_issue_nextlevel_allowextend( "sv_vote_issue_nextlevel_allowextend", "1", FCVAR_NONE, "Allow players to extend the current map?" );
+//ConVar sv_vote_issue_nextlevel_allowextend( "sv_vote_issue_nextlevel_allowextend", "1", FCVAR_NONE, "Allow players to extend the current map?" );
 //ConVar sv_vote_issue_extendlevel_quorum( "sv_vote_issue_extendlevel_quorum", "60", FCVAR_NONE, "What is the ratio of voters needed to reach quorum?" );
 ConVar sv_vote_issue_scramble_teams_allowed( "sv_vote_issue_scramble_teams_allowed", "1", FCVAR_NONE, "Can players call votes to scramble the teams?" );
 ConVar sv_vote_issue_scramble_teams_cooldown( "sv_vote_issue_scramble_teams_cooldown", "1200", FCVAR_NONE, "Minimum time before another scramble vote can occur (in seconds)." );
@@ -62,7 +63,7 @@ void CBaseTFIssue::ListIssueDetails( CBasePlayer *pForWhom )
 //-----------------------------------------------------------------------------
 const char *CKickIssue::GetDisplayString()
 {
-	// shouldn't there be something else for bots?
+	// TODO: shouldn't there be something else for bots?
 	return "#TF_vote_kick_player";
 }
 
@@ -86,7 +87,7 @@ const char *CKickIssue::GetDetailsString( void )
 
 const char *CKickIssue::GetVotePassedString()
 {
-	// shouldn't there be something else for bots?
+	// TODO: shouldn't there be something else for bots?
 	return "#TF_vote_passed_kick_player";
 }
 
@@ -95,18 +96,37 @@ bool CKickIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create
 	// string -> int
 	int m_iPlayerID = atoi( pszDetails );
 
-	CBasePlayer *pPlayer = UTIL_PlayerByUserId( m_iPlayerID );
+	CBasePlayer *pPlayerUser = UTIL_PlayerByUserId( m_iPlayerID );
 
-	if ( !pPlayer )
+	if ( !pPlayerUser )
 	{
 		nFailCode = VOTE_FAILED_PLAYERNOTFOUND;
 		nTime = m_flNextCallTime - gpGlobals->curtime;
 		return false;
 	}
 
+	if ( sv_vote_kick_maxplayers_required.GetInt() > 0 )
+	{
+		int playercount = 0;
+
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );				
+			if ( pPlayer )
+				playercount++;
+		}
+
+		if ( playercount < sv_vote_kick_maxplayers_required.GetInt() )
+		{
+			nFailCode = VOTE_FAILED_NOT_ENOUGH_PLAYERS;
+			nTime = m_flNextCallTime - gpGlobals->curtime;
+			return false;
+		}
+	}
+
 	if ( engine->IsDedicatedServer() )
 	{
-		if ( pPlayer->IsAutoKickDisabled() == true && !( pPlayer->GetFlags() & FL_FAKECLIENT ) )
+		if ( pPlayerUser->IsAutoKickDisabled() == true && !( pPlayerUser->GetFlags() & FL_FAKECLIENT ) )
 		{
 			nFailCode = VOTE_FAILED_CANNOT_KICK_ADMIN;
 			nTime = m_flNextCallTime - gpGlobals->curtime;
@@ -117,7 +137,7 @@ bool CKickIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create
 	{
 		CBasePlayer *pHostPlayer = UTIL_GetListenServerHost();
 
-		if ( pPlayer == pHostPlayer )
+		if ( pPlayerUser == pHostPlayer )
 		{
 			nFailCode = VOTE_FAILED_CANNOT_KICK_ADMIN;
 			nTime = m_flNextCallTime - gpGlobals->curtime;
@@ -166,8 +186,8 @@ bool CKickIssue::IsEnabled()
 {
 	if ( sv_vote_kick_ban_duration.GetInt() <= 0 )
 		return false;
-	else
-		return true;
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -199,8 +219,8 @@ bool CRestartGameIssue::IsEnabled()
 {
 	if ( sv_vote_issue_restart_game_allowed.GetBool() )
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -230,13 +250,13 @@ void CScrambleTeams::ExecuteCommand()
 
 bool CScrambleTeams::IsEnabled()
 {
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTDMGamemode() ) || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsFreeRoam() )
 		return false;
 
 	if ( sv_vote_issue_scramble_teams_allowed.GetBool() )
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -263,8 +283,8 @@ bool CChangeLevelIssue::IsEnabled()
 {
 	if ( sv_vote_issue_changelevel_allowed.GetBool() )
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
@@ -275,7 +295,6 @@ bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote
 		nTime = m_flNextCallTime - gpGlobals->curtime;
 		return false;
 	}
-
 
 	if ( MultiplayRules()->IsMapInMapCycle( pszDetails ) == false )
 	{
@@ -299,22 +318,32 @@ const char *CChangeMutatorIssue::GetDetailsString( void )
 {
 	int iMutator = ( atoi( m_szDetailsString ) );
 
-	if ( iMutator == NO_MUTATOR )
-		return "#TF_vote_mutator_disabled";
-	else if ( iMutator == INSTAGIB )
-		return "#TF_vote_mutator_instagibrailguncrowbar";
-	else if ( iMutator == INSTAGIB_NO_MELEE )
-		return "#TF_vote_mutator_instagibrailgun";
-	else if ( iMutator == CLAN_ARENA )
-		return "#TF_vote_mutator_clanarena";
-	else if ( iMutator == UNHOLY_TRINITY )
-		return "#TF_vote_mutator_unholytrinity";
-	else if ( iMutator == ROCKET_ARENA )
-		return "#TF_vote_mutator_rocketarena";
-	else if ( iMutator == GUN_GAME )
-		return "#TF_vote_mutator_gungame";
-	else
-		return m_szDetailsString;
+	switch ( iMutator )
+	{
+		case NO_MUTATOR:
+			return "#TF_vote_mutator_disabled";
+			break;
+		case INSTAGIB:
+			return "#TF_vote_mutator_instagibrailguncrowbar";
+			break;
+		case INSTAGIB_NO_MELEE:
+			return "#TF_vote_mutator_instagibrailgun";
+			break;
+		case CLAN_ARENA:
+			return "#TF_vote_mutator_clanarena";
+			break;
+		case UNHOLY_TRINITY:
+			return "#TF_vote_mutator_unholytrinity";
+			break;
+		case ROCKET_ARENA:
+			return "#TF_vote_mutator_rocketarena";
+			break;
+		case GUN_GAME:
+			return "#TF_vote_mutator_gungame";
+			break;
+	}
+
+	return m_szDetailsString;
 }
 
 const char *CChangeMutatorIssue::GetVotePassedString()
@@ -347,8 +376,8 @@ bool CChangeMutatorIssue::IsEnabled()
 {
 	if ( sv_vote_issue_changemutator_allowed.GetBool() )
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -359,37 +388,40 @@ const char *CNextLevelIssue::GetDisplayString()
 	// dedicated server vote
 	if ( m_szDetailsString[ 0 ] == '\0' )
 		return "#TF_vote_nextlevel_choices";
-	else
-		return "#TF_vote_nextlevel";
+
+	return "#TF_vote_nextlevel";
 }
 
 const char *CNextLevelIssue::GetVotePassedString()
 {
-	return "#TF_vote_passed_nextlevel";
+	return "#TF_vote_passed_nextlevel";	
 }
 
 bool CNextLevelIssue::IsYesNoVote( void )
 {
 	if ( m_szDetailsString[0] != '\0' )
 		return true;
-	else
-		return false;
+
+	return false;
 }
 
 bool CNextLevelIssue::CanCallVote( int nEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
 {
-	if ( pszDetails[ 0 ] == '\0' )
+	if ( nEntIndex != DEDICATED_SERVER )
 	{
-		nFailCode = VOTE_FAILED_MAP_NAME_REQUIRED;
-		nTime = m_flNextCallTime - gpGlobals->curtime;
-		return false;
-	}
+		if ( pszDetails[ 0 ] == '\0' )
+		{
+			nFailCode = VOTE_FAILED_MAP_NAME_REQUIRED;
+			nTime = m_flNextCallTime - gpGlobals->curtime;
+			return false;
+		}
 
-	if ( MultiplayRules()->IsMapInMapCycle( pszDetails ) == false )
-	{
-		nFailCode = VOTE_FAILED_MAP_NOT_VALID;
-		nTime = m_flNextCallTime - gpGlobals->curtime;
-		return false;
+		if ( MultiplayRules()->IsMapInMapCycle( pszDetails ) == false )
+		{
+			nFailCode = VOTE_FAILED_MAP_NOT_FOUND;
+			nTime = m_flNextCallTime - gpGlobals->curtime;
+			return false;
+		}
 	}
 
 	return CBaseTFIssue::CanCallVote( nEntIndex, pszDetails, nFailCode, nTime );
@@ -421,6 +453,7 @@ bool CNextLevelIssue::GetVoteOptions( CUtlVector <const char*> &vecNames )
 			i = RandomInt( 0, m_MapList.Count() - 1 );
 
 			vecNames.AddToTail( m_MapList[ i ] );
+
 			m_MapList.Remove( i );
 		}
 
@@ -442,6 +475,6 @@ bool CNextLevelIssue::IsEnabled()
 {
 	if ( sv_vote_issue_nextlevel_allowed.GetBool() )
 		return true;
-	else
-		return false;
+
+	return false;
 }

@@ -690,16 +690,6 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 			return 0;
 		}
 	}
-	else if ( pHudVote && !pHudVote->IsVisible() )
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: pHudVote is not visible!\n" );
-	}
-	else
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: pHudVote does not exist!\n" );
-	}
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 

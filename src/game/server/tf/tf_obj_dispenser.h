@@ -53,6 +53,8 @@ public:
 
 	void RefillThink( void );
 	void DispenseThink( void );
+	
+	virtual int GetAvailableMetal( void ) const { return m_iAmmoMetal; }
 
 	virtual void StartTouch( CBaseEntity *pOther );
 	virtual void EndTouch( CBaseEntity *pOther );

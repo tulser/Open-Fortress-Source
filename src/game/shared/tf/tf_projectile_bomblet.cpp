@@ -81,7 +81,7 @@ END_NETWORK_TABLE()
 // Purpose:
 //-----------------------------------------------------------------------------
 CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-							                    const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CTFWeaponInfo *pWeaponInfo )
+							                    const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CTFWeaponInfo *pWeaponInfo, int teamnumber )
 {
 	CTFGrenadeMirvBomb *pBomb = static_cast<CTFGrenadeMirvBomb*>( CBaseEntity::CreateNoSpawn( "tf_weapon_grenade_mirv_bomb", position, angles, pOwner ) );
 	if ( pBomb )
@@ -97,7 +97,7 @@ CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QA
 		char szTrailEffect[MAX_WEAPON_STRING];
 		if ( pWeaponInfo->m_bBombletEffectTeamColored )
 		{
-			switch ( pOwner->GetTeamNumber() )
+			switch ( teamnumber )
 			{
 				case TF_TEAM_BLUE:
 				Q_snprintf( szTrailEffect, MAX_WEAPON_STRING, "%s_blue", pWeaponInfo->m_szBombletTrailParticle );
@@ -122,7 +122,7 @@ CTFGrenadeMirvBomb *CTFGrenadeMirvBomb::Create( const Vector &position, const QA
 		pBomb->SetFriction( TF_WEAPON_GRENADE_MIRV_BOMB_GRAVITY );
 		pBomb->SetElasticity( TF_WEAPON_GRENADE_MIRV_BOMB_ELASTICITY );
 
-		pBomb->ChangeTeam( pOwner->GetTeamNumber() );
+		pBomb->ChangeTeam( teamnumber );
 
 		pBomb->SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 

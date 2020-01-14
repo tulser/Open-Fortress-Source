@@ -510,6 +510,18 @@ void CWeaponMedigun::HealTargetThink( void )
 
 	SetNextThink( gpGlobals->curtime + 0.2f, s_pszMedigunHealTargetThink );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CWeaponMedigun::IsAttachedToBuilding( void ) const
+{
+	if ( m_hHealingTarget )
+		return m_hHealingTarget->IsBaseObject();
+
+	return false;
+}
+
 #endif
 
 //-----------------------------------------------------------------------------
@@ -570,7 +582,12 @@ bool CWeaponMedigun::FindAndHealTargets( void )
 
 				if ( weapon_medigun_charge_rate.GetFloat() )
 				{
-					float flChargeAmount = gpGlobals->frametime / weapon_medigun_charge_rate.GetFloat();
+					float chargerate = weapon_medigun_charge_rate.GetFloat();
+
+					if ( TFGameRules()->InSetup() || TFGameRules()->IsInWaitingForPlayers() )
+						chargerate = chargerate / 3; // x3 faster uber buildup in setup
+
+					float flChargeAmount = gpGlobals->frametime / chargerate;
 
 					// Reduced charge for healing fully healed guys
 					if ( pNewTarget->GetHealth() >= iBoostMax && ( TFGameRules() && !TFGameRules()->InSetup() ) )

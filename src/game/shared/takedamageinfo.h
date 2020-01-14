@@ -66,6 +66,9 @@ public:
 	void			ScaleDamageForce( float flScaleAmount );
 	float			GetDamageForForceCalc() const;
 	void			SetDamageForForceCalc( const float flScaleAmount );
+	
+	float			GetDamageForceMult() const;
+	void			SetDamageForceMult( const float flMultAmount );
 
 	Vector			GetDamagePosition() const;
 	void			SetDamagePosition( const Vector &damagePosition );
@@ -132,6 +135,7 @@ protected:
 	bool			m_bForceFriendlyFire;	// Ideally this would be a dmg type, but we can't add more
 
 	float			m_flDamageForForce;
+	float			m_flDamageForceMult;
 
 	DECLARE_SIMPLE_DATADESC();
 };
@@ -302,6 +306,16 @@ inline float CTakeDamageInfo::GetDamageForForceCalc() const
 inline void CTakeDamageInfo::SetDamageForForceCalc( float flDamage )
 {
 	m_flDamageForForce = flDamage;
+}
+
+inline float CTakeDamageInfo::GetDamageForceMult() const
+{
+	return m_flDamageForceMult;
+}
+
+inline void CTakeDamageInfo::SetDamageForceMult( float flMultAmount )
+{
+	m_flDamageForceMult = flMultAmount;
 }
 
 inline Vector CTakeDamageInfo::GetDamagePosition() const

@@ -18,41 +18,7 @@
 #include "tf_imagepanel.h"
 #include "GameEventListener.h"
 #include "tf_hud_playerstatus.h"
-
-
-//-----------------------------------------------------------------------------
-// Purpose:  Clips the frag image to the appropriate percentage
-//-----------------------------------------------------------------------------
-class CTFKillsProgressBlu : public CTFImagePanel
-{
-public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgressBlu, CTFImagePanel );
-
-	CTFKillsProgressBlu( vgui::Panel *parent, const char *name );
-	virtual void Paint();
-	void SetProgress( float flProgress ){ m_flProgress = ( flProgress <= 1.0 ) ? flProgress : 1.0f; }
-
-	float	m_flProgress; // percentage from 0.0 -> 1.0
-	int		m_iMaterialIndex;
-	int		m_iDeadMaterialIndex;
-};
-
-//-----------------------------------------------------------------------------
-// Purpose:  Clips the frag meter to the appropriate percentage
-//-----------------------------------------------------------------------------
-class CTFKillsProgressRed : public CTFImagePanel
-{
-public:
-	DECLARE_CLASS_SIMPLE( CTFKillsProgressRed, CTFImagePanel );
-
-	CTFKillsProgressRed( vgui::Panel *parent, const char *name );
-	virtual void Paint();
-	void SetProgress(float flProgress){ m_flProgress = (flProgress <= 1.0) ? flProgress : 1.0f; }
-
-	float	m_flProgress; // percentage from 0.0 -> 1.0
-	int		m_iMaterialIndex;
-	int		m_iDeadMaterialIndex;
-};
+#include "of_imageprogressbar.h"
 
 //-----------------------------------------------------------------------------
 // Purpose:  Displays weapon ammo data
@@ -85,10 +51,10 @@ private:
 	CHandle<C_BaseCombatWeapon>		m_hCurrentActiveWeapon;
 	int								m_nKills;
 
+	CTFImageProgressBar				*m_pProgressRed;
+	CTFImageProgressBar				*m_pProgressBlu;
 	CExLabel						*m_pKills;
 	CExLabel						*m_pKillsShadow;
-	CTFKillsProgressRed 			*m_pRedKills;
-	CTFKillsProgressBlu				*m_pBluKills;
 };
 
 

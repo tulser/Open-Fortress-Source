@@ -51,6 +51,8 @@ public:
 
 	bool IsMatchingTeleporterReady( void );
 
+	bool IsSendingPlayer( CTFPlayer *pSender );
+
 	int GetState( void ) { return m_iState; }	// state of the object ( building, charging, ready etc )
 
 	void SetTeleportingPlayer( CTFPlayer *pPlayer )
@@ -65,6 +67,8 @@ public:
 
 	void			UpgradeThink( void );
 	virtual bool	IsUpgrading( void ) const;
+
+	bool CObjectTeleporter::IsReady( void );
 
 	// Engineer hit me with a wrench
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );

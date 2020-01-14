@@ -890,6 +890,9 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 					return;
 			}
 		}
+		
+		if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
+			return;
 
 		// Dirty hack to avoid suit playing it's pickup sound
 		if ( !Q_stricmp( item_to_give, "item_suit" ) )
@@ -938,6 +941,9 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 					return;
 			}
 		}
+		
+		if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
+			return;
 
 		// Dirty hack to avoid suit playing it's pickup sound
 		if ( !Q_stricmp( item_to_give, "item_suit" ) )	
@@ -1466,10 +1472,7 @@ void CC_HurtMe_f(const CCommand &args)
 		iDamage = atoi( args[ 1 ] );
 	}
 	
-	// The damage will get halved, so multiply it by 2
-	iDamage = iDamage * 2;
-
-	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_PREVENT_PHYSICS_FORCE) );
+	pPlayer->TakeDamage( CTakeDamageInfo( pPlayer, pPlayer, iDamage, DMG_GENERIC ) );
 }
 
 static ConCommand hurtme("hurtme", CC_HurtMe_f, "Hurts the player.\n\tArguments: <health to lose>", FCVAR_CHEAT);

@@ -46,6 +46,7 @@ public:
 	virtual void	WeaponIdle( void );
 	void			DrainCharge( void );
 	virtual void	WeaponReset( void );
+	virtual bool 	CanSoftZoom( void ) { return false; }
 
 	virtual float	GetTargetRange( void );
 	virtual float	GetStickRange( void );
@@ -71,10 +72,12 @@ public:
 #else
 
 	void			HealTargetThink( void );
+	
+	bool			IsAttachedToBuilding( void ) const;
 
 #endif
 
-	float			GetChargeLevel( void ) { return m_flChargeLevel; }
+	float			GetChargeLevel( void ) const { return m_flChargeLevel; }
 
 private:
 	bool					FindAndHealTargets( void );

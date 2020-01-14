@@ -8,7 +8,7 @@
 #include "materialsystem/imaterialsystemhardwareconfig.h"
 #include "tier2/tier2.h"
 
-ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED );
+ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 extern ConVar of_retromode;
 
@@ -44,6 +44,7 @@ const char *s_aPlayerClassFiles[] =
 };
 
 TFPlayerClassData_t s_aTFPlayerClassData[TF_CLASS_COUNT_ALL];
+KeyValues* s_aTFPlayerClassRaw[TF_CLASS_COUNT_ALL];
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -98,26 +99,6 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 		m_aBuildable[iBuildable] = OBJ_LAST;
 	}
 
-	m_flTFCMaxSpeed = 0.0f;
-	m_nTFCMaxHealth = 0;
-	m_nTFCMaxArmor = 0;
-	
-	m_szTFCModelName[0] = '\0';
-	m_szTFCArmModelName[0] = '\0';
-
-	m_szZombieModelName[0] = '\0';
-	m_szZombieArmModelName[0] = '\0';
-
-	for (int iTFCWeapon = 0; iTFCWeapon < TF_PLAYER_WEAPON_COUNT; ++iTFCWeapon)
-	{
-		m_aTFCWeapons[iTFCWeapon] = TF_WEAPON_NONE;
-	}
-	
-	for (int iTFCBuildable = 0; iTFCBuildable < TF_PLAYER_BUILDABLE_COUNT; ++iTFCBuildable)
-	{
-		m_aTFCBuildable[iTFCBuildable] = OBJ_LAST;
-	}	
-
 	m_bParsed = false;
 }
 
@@ -130,6 +111,7 @@ void TFPlayerClassData_t::Parse( const char *szName )
 	if ( m_bParsed )
 		return;
 
+	
 	// No filesystem at this point????  Hmmmm......
 
 	// Parse class file.
@@ -142,6 +124,7 @@ void TFPlayerClassData_t::Parse( const char *szName )
 	}
 
 	KeyValues *pKV = ReadEncryptedKVFile( filesystem, szName, pKey );
+	
 	if ( pKV )
 	{
 		ParseData( pKV );
@@ -241,31 +224,6 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szClassImageMercenary, pKeyValuesData->GetString( "ClassImageMercenary" ), TF_NAME_LENGTH );
 	Q_strncpy( m_szClassImageColorless, pKeyValuesData->GetString( "ClassImageColorless" ), TF_NAME_LENGTH );
 	
-	int j;
-	char bup[32];
-	for ( j=0;j<TF_PLAYER_WEAPON_COUNT;j++ )
-	{
-		Q_snprintf( bup, sizeof(bup), "tfc_weapon%d", j+1 );
-		m_aTFCWeapons[j] = GetWeaponId( pKeyValuesData->GetString( bup ) );
-	}
-	
-	// Buildables
-	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
-	{
-		Q_snprintf( buf, sizeof(buf), "tfc_buildable%d", i+1 );		
-		m_aTFCBuildable[i] = GetBuildableId( pKeyValuesData->GetString( buf ) );		
-	}	
-	
-	m_flTFCMaxSpeed = pKeyValuesData->GetFloat( "tfc_speed_max" );
-	m_nTFCMaxHealth = pKeyValuesData->GetInt( "tfc_health_max" );
-	m_nTFCMaxArmor = pKeyValuesData->GetInt( "tfc_armor_max" );
-	
-	Q_strncpy( m_szTFCArmModelName, pKeyValuesData->GetString( "tfc_arm_model" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szTFCModelName, pKeyValuesData->GetString( "tfc_model" ), TF_NAME_LENGTH );
-
-	Q_strncpy( m_szZombieArmModelName, pKeyValuesData->GetString( "zombie_arm_model" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szZombieModelName, pKeyValuesData->GetString( "zombie_model" ), TF_NAME_LENGTH );
-
 	// The file has been parsed.
 	m_bParsed = true;
 }
@@ -282,21 +240,37 @@ void InitPlayerClasses( void )
 	Q_strncpy( pClassData->m_szModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
 	Q_strncpy( pClassData->m_szArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
 	Q_strncpy( pClassData->m_szLocalizableName, "undefined", TF_NAME_LENGTH );
-	Q_strncpy( pClassData->m_szTFCModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
-	Q_strncpy( pClassData->m_szTFCArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
-	Q_strncpy( pClassData->m_szZombieModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
-	Q_strncpy( pClassData->m_szZombieArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
 
 	Q_strncpy( pClassData->m_szClassSelectImageRed, "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
 	Q_strncpy( pClassData->m_szClassSelectImageBlue, "class_sel_sm_civilian_blu", TF_NAME_LENGTH );
 	Q_strncpy( pClassData->m_szClassSelectImageMercenary, "class_sel_sm_civilian_mercenary", TF_NAME_LENGTH );
-
+	
 	// Initialize the classes.
 	for ( int iClass = 1; iClass < TF_CLASS_COUNT_ALL; ++iClass )
 	{
 		TFPlayerClassData_t *pClassData = &s_aTFPlayerClassData[iClass];
 		Assert( pClassData );
 		pClassData->Parse( s_aPlayerClassFiles[iClass] );
+	}
+	
+	const unsigned char *pKey = NULL;
+
+	if ( g_pGameRules )
+	{
+		pKey = g_pGameRules->GetEncryptionKey();
+	}
+	
+	for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+	{	
+		KeyValues *pKV = ReadEncryptedKVFile( filesystem, s_aPlayerClassFiles[i], pKey );
+
+		if( !s_aPlayerClassFiles[i] )
+		{
+			DevWarning("Failed loading Keyvalues\n");
+			continue;
+		}
+		s_aTFPlayerClassRaw[i] = pKV;
+		DevWarning("Keyvalue Loaded\n");
 	}
 }
 
@@ -324,6 +298,10 @@ TFPlayerClassData_t *GetPlayerClassData( int iClass )
 
 BEGIN_RECV_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	RecvPropInt( RECVINFO( m_iClass ) ),
+	RecvPropInt( RECVINFO( m_iModifiers ) ),
+	RecvPropInt( RECVINFO( m_iOldClass ) ),
+	RecvPropInt( RECVINFO( m_iOldModifiers ) ),
+	RecvPropBool( RECVINFO( m_bRefresh ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomModel ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomArmModel ) ),
 END_RECV_TABLE()
@@ -333,6 +311,10 @@ END_RECV_TABLE()
 
 BEGIN_SEND_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	SendPropInt( SENDINFO( m_iClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iModifiers ), TF_CLASSMOD_LAST , SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iOldClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iOldModifiers ), TF_CLASSMOD_LAST , SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bRefresh ) ),
 	SendPropStringT( SENDINFO( m_iszSetCustomModel ) ),
 	SendPropStringT( SENDINFO( m_iszSetCustomArmModel ) ),
 END_SEND_TABLE()
@@ -346,11 +328,16 @@ END_SEND_TABLE()
 CTFPlayerClassShared::CTFPlayerClassShared()
 {
 	m_iClass.Set( TF_CLASS_UNDEFINED );
+	m_iOldClass.Set( TF_CLASS_UNDEFINED );
+	m_iModifiers.Set( 0 );
+	m_iOldModifiers.Set( 0 );
+	m_bRefresh = false;
 #ifdef CLIENT_DLL
 	m_iszSetCustomModel[0] = '\0';
+	bRefresh = false;
 #else
 	m_iszSetCustomModel.Set( NULL_STRING );
-#endif	
+#endif
 }
 
 #ifndef CLIENT_DLL
@@ -385,16 +372,25 @@ void CTFPlayerClassShared::SetCustomArmModel( const char *pszModelName )
 //-----------------------------------------------------------------------------
 // Purpose: Initialize the player class.
 //-----------------------------------------------------------------------------
-bool CTFPlayerClassShared::Init( int iClass )
+bool CTFPlayerClassShared::Init( int iClass, int iModifiers )
 {
 	Assert ( ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_LAST_NORMAL_CLASS ) );
+	m_iOldClass = m_iClass;
 	m_iClass = iClass;
+	m_iOldModifiers = m_iModifiers;
+	m_iModifiers = iModifiers;
 #ifdef CLIENT_DLL
 	m_iszSetCustomModel[0] = '\0';
 #else
 	m_iszSetCustomModel.Set( NULL_STRING );
-#endif	
+#endif
 	return true;
+}
+
+void CTFPlayerClassShared::SetModifier( int iModifiers )
+{
+	m_iOldModifiers = m_iModifiers;
+	m_iModifiers = iModifiers;
 }
 
 // If needed, put this into playerclass scripts
@@ -417,47 +413,30 @@ bool CTFPlayerClassShared::CanBuildObject( int iObjectType )
 	return bFound;
 }
 
-// If needed, put this into playerclass scripts
-bool CTFPlayerClassShared::CanBuildTFCObject( int iObjectType )
-{
-	bool bFound = false;
-
-	TFPlayerClassData_t  *pData = GetData();
-
-	int i;
-	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
-	{
-		if ( iObjectType == pData->m_aTFCBuildable[i] )
-		{
-			bFound = true;
-			break;
-		}
-	}
-
-	return bFound;
-}
-
 extern ConVar of_retromode;
 
-const char	*CTFPlayerClassShared::GetModelName( void ) const						
+char	*CTFPlayerClassShared::GetModelName( void )						
 { 
 #ifdef CLIENT_DLL
 	if ( m_iszSetCustomModel[0] ) return m_iszSetCustomModel;
 #else
-	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomModel.Get() ) );
+	static char tmp[ 256 ];
+	Q_strncpy( tmp, STRING( m_iszSetCustomModel.Get() ), sizeof( tmp ) );
+	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return tmp;
 #endif
 	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetModelName(), sizeof( modelFilename ) );
-	
+	Q_strncpy( modelFilename, GetData()->GetModelName(), sizeof( modelFilename ) );
 	return modelFilename;
 }
 
-const char	*CTFPlayerClassShared::GetSetCustomModel( void ) const						
+char	*CTFPlayerClassShared::GetSetCustomModel( void )						
 { 
 #ifdef CLIENT_DLL
 	return m_iszSetCustomModel;
 #else
-	return ( STRING( m_iszSetCustomModel.Get() ) );
+	static char tmp[ 256 ];
+	Q_strncpy( tmp, STRING(m_iszSetCustomModel.Get()), sizeof(tmp) );
+	return tmp;
 #endif
 }
 
@@ -471,64 +450,42 @@ bool CTFPlayerClassShared::UsesCustomModel( void )
 return false;
 }
 
-const char	*CTFPlayerClassShared::GetArmModelName( void ) const						
+char	*CTFPlayerClassShared::GetArmModelName( void )						
 { 
 #ifdef CLIENT_DLL
 	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
 #else
-	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
+	static char tmp[ 256 ];
+	Q_strncpy( tmp, STRING( m_iszSetCustomArmModel.Get() ), sizeof( tmp ) );
+	if (m_iszSetCustomArmModel.Get() != NULL_STRING) return tmp;
 #endif
 	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetArmModelName(), sizeof( modelFilename ) );
+	Q_strncpy( modelFilename, GetData()->GetArmModelName(), sizeof( modelFilename ) );
 	
 	return modelFilename;
 }
 
 int CTFPlayerClassShared::MaxAirDashCount( void )
 {
-	if ( of_airdashcount.GetInt() > GetPlayerClassData( m_iClass )->m_nMaxAirDashCount )
+	if ( of_airdashcount.GetInt() > GetData()->m_nMaxAirDashCount )
 		return of_airdashcount.GetInt();
 	else
-		return GetPlayerClassData( m_iClass )->m_nMaxAirDashCount; 
+		return GetData()->m_nMaxAirDashCount; 
 }
 
 bool CTFPlayerClassShared::CanAirDash( void )
-{ 
-	return GetPlayerClassData( m_iClass )->m_nMaxAirDashCount > 0 || of_airdashcount.GetInt() > 0; 
+{
+	return GetData()->m_nMaxAirDashCount > 0 || of_airdashcount.GetInt() > 0; 
 }
 
-const char	*CTFPlayerClassShared::GetTFCArmModelName( void ) const						
-{ 
-#ifdef CLIENT_DLL
-	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
-#else
-	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
-#endif
-	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetTFCArmModelName(), sizeof( modelFilename ) );
-	
-	return modelFilename;
-}
-
-const char	*CTFPlayerClassShared::GetZombieArmModelName( void ) const						
-{ 
-#ifdef CLIENT_DLL
-	if ( m_iszSetCustomArmModel[0] ) return m_iszSetCustomArmModel;
-#else
-	if ( m_iszSetCustomArmModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomArmModel.Get() ) );
-#endif
-	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetZombieArmModelName(), sizeof( modelFilename ) );
-	
-	return modelFilename;
-}
-
-const char	*CTFPlayerClassShared::GetSetCustomArmModel( void ) const						
+char	*CTFPlayerClassShared::GetSetCustomArmModel( void )						
 { 
 #ifdef CLIENT_DLL
 	return m_iszSetCustomArmModel;
 #else
-	return ( STRING( m_iszSetCustomArmModel.Get() ) );
+	static char tmp[ 256 ];
+	Q_strncpy( tmp, STRING( m_iszSetCustomArmModel.Get() ), sizeof( tmp ) );
+	return tmp;
 #endif
 }
 
@@ -542,28 +499,93 @@ bool CTFPlayerClassShared::UsesCustomArmModel( void )
 return false;
 }
 
-const char	*CTFPlayerClassShared::GetTFCModelName( void ) const						
+TFPlayerClassData_t *CTFPlayerClassShared::GetData( void )
 { 
-#ifdef CLIENT_DLL
-	if ( m_iszSetCustomModel[0] ) return m_iszSetCustomModel;
+	if ( ( GetClass() <= 0 ) && ( GetClass() >= TF_CLASS_COUNT_ALL ) )
+		return GetPlayerClassData( m_iClass );
+	if( GetModifiers() > 0 )
+	{
+		TFPlayerClassData_t *pLocalPointer = &pLocalData;
+		if( !pLocalPointer ||
+#ifdef GAME_DLL
+		GetModifiers() != GetOldModifiers() || GetClass() != GetOldClass() 
 #else
-	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomModel.Get() ) );
+		bRefresh != m_bRefresh
 #endif
-	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetTFCModelName(), sizeof( modelFilename ) );
-	
-	return modelFilename;
+		)
+		{
+			// Special case the undefined class.
+			TFPlayerClassData_t *pClassData = &s_aTFPlayerClassData[TF_CLASS_UNDEFINED];
+			Assert( pClassData );
+			
+			KeyValues* kvFinal = s_aTFPlayerClassRaw[GetClass()];
+			
+			if( !kvFinal )
+			{
+				DevWarning("Cant get class keyvalue for class %s\n", g_aPlayerClassNames_NonLocalized[GetClass()]);
+				return &s_aTFPlayerClassData[GetClass()];
+			}
+
+			if( ( GetModifiers() & (1<<TF_CLASSMOD_TFC) ) != 0 )
+			{
+				KeyValues* kvTFC = kvFinal->FindKey("TFC");
+				if( kvTFC )
+				{
+					KeyValues* pValue = kvTFC->GetFirstValue();
+					for( pValue; pValue != NULL; pValue = pValue->GetNextValue() ) // Loop through all the keyvalues
+					{
+						DevWarning("%s %s\n", pValue->GetName(), pValue->GetString() );
+						kvFinal->SetString( pValue->GetName(), pValue->GetString() );
+					}
+				}
+			}
+			
+			if( ( GetModifiers() & (1<<TF_CLASSMOD_ZOMBIE) ) != 0 )
+			{
+				KeyValues* kvZombie = kvFinal->FindKey( "Zombie" );
+				if( kvZombie )
+				{
+					KeyValues* pValue = kvZombie->GetFirstValue();
+					for( pValue; pValue != NULL; pValue = pValue->GetNextValue() ) // Loop through all the keyvalues
+					{
+						DevWarning("%s %s\n", pValue->GetName(), pValue->GetString() );
+						kvFinal->SetString( pValue->GetName(), pValue->GetString() );
+					}
+				}
+			}
+			pClassData->ParseData(kvFinal);
+			pLocalData = *pClassData;
+#ifdef CLIENT_DLL
+			bRefresh = m_bRefresh;
+#else
+			m_bRefresh = !m_bRefresh;
+			SetOldModifiers( GetModifiers() );
+			SetOldClass( GetClass() );
+#endif
+			return pClassData;
+		}
+		else
+		{
+			return &pLocalData;
+		}
+	}
+	return GetPlayerClassData( m_iClass );
 }
 
-const char	*CTFPlayerClassShared::GetZombieModelName( void ) const						
-{ 
-#ifdef CLIENT_DLL
-	if ( m_iszSetCustomModel[0] ) return m_iszSetCustomModel;
-#else
-	if ( m_iszSetCustomModel.Get() != NULL_STRING ) return ( STRING( m_iszSetCustomModel.Get() ) );
-#endif
-	static char modelFilename[ 256 ];
-	Q_strncpy( modelFilename, GetPlayerClassData( m_iClass )->GetZombieModelName(), sizeof( modelFilename ) );
-	
-	return modelFilename;
-}
+int	CTFPlayerClassShared::GetCapNumber( void )
+{ return GetData()->m_nCapNumber; }
+
+bool CTFPlayerClassShared::IsSpecialClass( void )
+{ return GetData()->m_bSpecialClass; }
+
+int	CTFPlayerClassShared::GetMaxArmor( void )
+{ return GetData()->m_nMaxArmor; }
+
+int	CTFPlayerClassShared::GetMaxHealth( void )
+{ return GetData()->m_nMaxHealth; }
+
+float CTFPlayerClassShared::GetMaxSpeed( void )
+{ return GetData()->m_flMaxSpeed; }
+
+char	*CTFPlayerClassShared::GetName( void )
+{ return GetData()->m_szClassName; }

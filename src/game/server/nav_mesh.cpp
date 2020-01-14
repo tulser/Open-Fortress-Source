@@ -37,6 +37,7 @@
  */
 CNavMesh *TheNavMesh = NULL;
 
+// nav editing is only supported in TF2, not in Open Fortress
 ConVar nav_edit( "nav_edit", "0", FCVAR_GAMEDLL | FCVAR_CHEAT, "Set to one to interactively edit the Navigation Mesh. Set to zero to leave edit mode." );
 ConVar nav_quicksave( "nav_quicksave", "1", FCVAR_GAMEDLL | FCVAR_CHEAT, "Set to one to skip the time consuming phases of the analysis.  Useful for data collection and testing." );	// TERROR: defaulting to 1, since we don't need the other data
 ConVar nav_show_approach_points( "nav_show_approach_points", "0", FCVAR_GAMEDLL | FCVAR_CHEAT, "Show Approach Points in the Navigation Mesh." );
@@ -2597,6 +2598,9 @@ static ConCommand nav_ladder_flip( "nav_ladder_flip", CommandNavLadderFlip, "Fli
 //--------------------------------------------------------------------------------------------------------------
 void CommandNavGenerate( void )
 {
+	//ConColorMsg( Color( 255, 100, 100, 255 ), "nav_generate is disabled in Open Fortress, you must use nav_generate in Team Fortress 2 instead.\n" );
+	//	return;
+
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
 
@@ -2751,6 +2755,20 @@ void CommandNavShowLadderBounds( void )
 		ladder->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
 		ladder->m_debugOverlays |= OVERLAY_TEXT_BIT | OVERLAY_ABSBOX_BIT;
 		NDebugOverlay::Box( vec3_origin, mins, maxs, 0, 255, 0, 0, 600 );
+	}
+}
+static ConCommand nav_show_ladder_bounds( "nav_show_ladder_bounds", CommandNavShowLadderBounds, "Draws the bounding boxes of all func_ladders in the map.", FCVAR_GAMEDLL | FCVAR_CHEAT );
+#else
+void CommandNavShowLadderBounds( void )
+{
+	if ( !UTIL_IsCommandIssuedByServerAdmin() )
+		return;
+
+	CInfoLadder *ladder = NULL;
+	while( (ladder = dynamic_cast< CInfoLadder * >(gEntList.FindEntityByClassname( ladder, "info_ladder" ))) != NULL )
+	{
+		NDebugOverlay::Box( vec3_origin, ladder->mins, ladder->maxs, 0, 255, 0, 0, 600 );
+		NDebugOverlay::Box( ladder->GetAbsOrigin(), ladder->mins, ladder->maxs, 0, 0, 255, 0, 600 );
 	}
 }
 static ConCommand nav_show_ladder_bounds( "nav_show_ladder_bounds", CommandNavShowLadderBounds, "Draws the bounding boxes of all func_ladders in the map.", FCVAR_GAMEDLL | FCVAR_CHEAT );

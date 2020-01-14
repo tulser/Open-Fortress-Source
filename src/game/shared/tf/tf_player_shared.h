@@ -138,7 +138,7 @@ public:
 	virtual void OnDataChanged( void );
 
 	// check the newly networked conditions for changes
-	void	UpdateConditions( void );
+	void	UpdateConditions( int nCond, int nCondOld, int nCondOffset );
 #endif
 
 	void	Disguise( int nTeam, int nClass );
@@ -175,8 +175,10 @@ public:
 	void	StopHealing( CTFPlayer *pPlayer );
 	void	RecalculateInvuln( bool bInstantRemove = false );
 	int		FindHealerIndex( CTFPlayer *pPlayer );
-	
+	EHANDLE GetHealerByIndex( int index );
 	EHANDLE	GetFirstHealer();
+	bool	HealerIsDispenser( int index ) const;
+	void	HealthKitPickupEffects( int iAmount );
 #endif
 	bool	IsTopThree();
 	virtual void SetTopThree( bool bTop3 );
@@ -185,6 +187,8 @@ public:
 	virtual void SetZombie( bool bZombie );
 
 	int		GetNumHealers( void ) { return m_nNumHealers; }
+
+	bool	IsControlStunned( void );
 
 	void	Burn( CTFPlayer *pPlayer, float flTime );
 
@@ -203,6 +207,7 @@ public:
 
 	void	FadeInvis( float flInvisFadeTime );
 	float	GetPercentInvisible( void );
+	float	GetNextLungeTime( void ){ return m_flNextLungeTime; }
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
@@ -283,13 +288,20 @@ private:
 public:
 	CNetworkVar( bool, bWatchReady );
 	CNetworkVar( float, m_flMegaOverheal );
+	CNetworkVar( float, m_flNextZoomTime );
 private:
 
 	// Vars that are networked.
 	CNetworkVar( int, m_nPlayerState );			// Player state.
+
 	CNetworkVar( int, m_nPlayerCond );			// Player condition flags.
+	CNetworkVar( int, m_nPlayerCondEx );        
+	CNetworkVar( int, m_nPlayerCondEx2 );       // https://csrd.science/misc/datadump/current/netprops.txt
+	CNetworkVar( int, m_nPlayerCondEx3 );		// Disgusting, don't blame me -ficool2
+	CNetworkVar( int, m_nPlayerCondEx4 );
+
 	CNetworkVar( int, m_nPlayerCosmetics );			// Player condition flags.
-	float m_flCondExpireTimeLeft[TF_COND_LAST];		// Time until each condition expires
+	CNetworkArray( float, m_flCondExpireTimeLeft, TF_COND_LAST );	// Time until each condition expires
 
 //TFTODO: What if the player we're disguised as leaves the server?
 //...maybe store the name instead of the index?
@@ -342,6 +354,11 @@ private:
 	float m_flDisguiseCompleteTime;
 
 	int	m_nOldConditions;
+	int m_nOldConditionsEx;
+	int m_nOldConditionsEx2;
+	int m_nOldConditionsEx3;
+	int m_nOldConditionsEx4;
+
 	int	m_nOldDisguiseClass;
 
 	CNetworkVar( int, m_iDesiredPlayerClass );
@@ -359,6 +376,7 @@ private:
 	CNetworkVar( float, m_flStealthNextChangeTime );
 
 	CNetworkVar( float, m_flNextLungeTime );
+
 
 	CNetworkVar( int, m_iCritMult );
 

@@ -15,6 +15,7 @@
 #ifdef CLIENT_DLL
 #define CTFFists C_TFFists
 #define CTFBerserk C_TFBerserk
+#define CTFClaws C_TFClaws
 #endif
 
 //=============================================================================
@@ -34,6 +35,7 @@ public:
 
 	virtual void PrimaryAttack();
 	virtual void SecondaryAttack();
+	virtual bool CanSoftZoom( void ) { return false; }
 
 	virtual void SendPlayerAnimEvent( CTFPlayer *pPlayer );
 
@@ -50,7 +52,7 @@ class CTFBerserk : public CTFWeaponBaseMelee
 {
 public:
 
-	DECLARE_CLASS( CTFBerserk, CTFFists );
+	DECLARE_CLASS( CTFBerserk, CTFWeaponBaseMelee );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
@@ -62,6 +64,22 @@ public:
 private:
 
 	CTFBerserk( const CTFBerserk & ) {}
+};
+
+class CTFClaws : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS( CTFClaws, CTFWeaponBaseMelee );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	CTFClaws() {}
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_CLAWS; }
+
+private:
+
+	CTFClaws( const CTFClaws & ) {}
 };
 
 #endif // TF_WEAPON_FISTS_H

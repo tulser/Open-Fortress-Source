@@ -18,6 +18,9 @@
 #define CTFRevolver_Mercenary C_TFRevolver_Mercenary
 #endif
 
+acttable_t m_acttableRevolver[];
+acttable_t m_acttableRevolver2[];
+
 //=============================================================================
 //
 // TF Weapon Revolver.
@@ -31,7 +34,6 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual acttable_t *ActivityList(int &iActivityCount);
-	static acttable_t m_acttableRevolver[];
 
 // Server specific.
 #ifdef GAME_DLL
@@ -60,7 +62,6 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_REVOLVER_MERCENARY; }
 
 	virtual acttable_t *ActivityList(int &iActivityCount);
-	static acttable_t m_acttableRevolver_Mercenary[];
 };
 
 #endif // TF_WEAPON_REVOLVER_H

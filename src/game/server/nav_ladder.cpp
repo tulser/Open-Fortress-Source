@@ -23,7 +23,54 @@
 
 extern ConVar nav_area_bgcolor;
 
+LINK_ENTITY_TO_CLASS( info_ladder, CInfoLadder );
+
+BEGIN_DATADESC( CInfoLadder )
+
+	DEFINE_FIELD( mins, FIELD_VECTOR ),
+	DEFINE_FIELD( maxs, FIELD_VECTOR ),
+
+END_DATADESC()
+
 unsigned int CNavLadder::m_nextID = 1;
+
+//--------------------------------------------------------------------------------------------------------------
+bool CInfoLadder::KeyValue( const char *szKeyName, const char *szValue )
+{
+	if ( FStrEq( szKeyName, "mins.x" ) )
+	{
+		mins.x = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+	else if ( FStrEq( szKeyName, "mins.y" ) )
+	{
+		mins.y = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+	else if ( FStrEq( szKeyName, "mins.z" ) )
+	{
+		mins.z = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+	else if ( FStrEq( szKeyName, "maxs.x" ) )
+	{
+		maxs.x = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+	else if ( FStrEq( szKeyName, "maxs.y" ) )
+	{
+		maxs.y = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+	else if ( FStrEq( szKeyName, "maxs.z" ) )
+	{
+		maxs.z = atof( szValue );
+		SetCollisionBounds( mins, maxs );
+	}
+
+	return BaseClass::KeyValue( szKeyName, szValue );
+}
+
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -457,7 +504,11 @@ void CNavLadder::OnRoundRestart( void )
 //--------------------------------------------------------------------------------------------------------------
 void CNavLadder::FindLadderEntity( void )
 {
+#ifdef TERROR
 	m_ladderEntity = gEntList.FindEntityByClassnameNearest( "func_simpleladder", (m_top + m_bottom) * 0.5f, HalfHumanWidth );
+#else
+	m_ladderEntity = gEntList.FindEntityByClassnameNearest( "func_ladder", (m_top + m_bottom) * 0.5f, HalfHumanWidth );
+#endif
 }
 
 

@@ -9,15 +9,15 @@
 #include "tf_obj_sentrygun.h"
 #include "engine/IEngineSound.h"
 #include "tf_player.h"
+#include "bot/tf_bot.h"
 #include "tf_team.h"
 #include "world.h"
 #include "tf_projectile_rocket.h"
 #include "te_effect_dispatch.h"
 #include "tf_gamerules.h"
 #include "ammodef.h"
-
-// for npcs
 #include "ai_basenpc.h"
+#include "tf_bot_manager.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -169,6 +169,8 @@ void CObjectSentrygun::Spawn()
 	m_flLastAttackedTime = 0;
 
 	m_flHeavyBulletResist = SENTRYGUN_MINIGUN_RESIST_LVL_1;
+
+	m_fireTimer.Start();
 
 	BaseClass::Spawn();
 
@@ -733,6 +735,9 @@ bool CObjectSentrygun::FindTarget()
 	CBaseEntity *pTargetOld = m_hEnemy.Get();
 	float flOldTargetDist2 = FLT_MAX;
 
+	CUtlVector<INextBot *> bots;
+	TheNextBots().CollectAllBots( &bots );
+
 	// Sentries will try to target players first, then objects, then NPCs.  However, if the enemy held was an object it will continue
 	// to try and attack it first.	
 	// the teams are further tested from above
@@ -864,6 +869,36 @@ bool CObjectSentrygun::FindTarget()
 			}
 		}
 
+		if ( pTargetCurrent == NULL )
+		{
+			for ( int iBot=0; iBot<bots.Count(); ++iBot )
+			{
+				CBaseCombatCharacter *pTargetActor = bots[iBot]->GetEntity();
+				if ( pTargetActor == NULL )
+					continue;
+
+				VectorSubtract( pTargetActor->WorldSpaceCenter(), vecSentryOrigin, vecSegment );
+				float flDist2 = vecSegment.LengthSqr();
+
+				// Store the current target distance if we come across it
+				if ( pTargetActor == pTargetOld )
+				{
+					flOldTargetDist2 = flDist2;
+				}
+
+				// Check to see if the target is closer than the already validated target.
+				if ( flDist2 > flMinDist2 )
+					continue;
+
+				// It is closer, check to see if the target is valid.
+				if ( ValidTargetBot( pTargetActor ) )
+				{
+					flMinDist2 = flDist2;
+					pTargetCurrent = pTargetActor;
+				}
+			}
+		}
+		
 		// We have a target.
 		if ( pTargetCurrent )
 		{
@@ -926,7 +961,9 @@ bool CObjectSentrygun::ValidTargetObject( CBaseObject *pObject, const Vector &ve
 	return FVisible( pObject, MASK_SHOT | CONTENTS_GRATE );
 }
 
-// and also check npcs
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 bool CObjectSentrygun::ValidTargetNPC( CAI_BaseNPC *pNPC, const Vector &vecStart, const Vector &vecEnd )
 {
 	// Not across water boundary.
@@ -935,6 +972,40 @@ bool CObjectSentrygun::ValidTargetNPC( CAI_BaseNPC *pNPC, const Vector &vecStart
 
 	// Ray trace.
 	return FVisible( pNPC, MASK_SHOT | CONTENTS_GRATE );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CObjectSentrygun::ValidTargetBot( CBaseCombatCharacter *pActor )
+{
+	// Players should already be checked, ignore
+	if ( pActor->IsPlayer() )
+		return false;
+
+	// Ignore the dead
+	if ( !pActor->IsAlive() )
+		return false;
+
+	// Make sure it's an enemy
+	if ( InSameTeam( pActor ) )
+		return false;
+
+	// Make sure we can even hit it
+	if ( !pActor->IsSolid() )
+		return false;
+
+	// Ray trace with respect to parents
+	CBaseEntity *pBlocker = nullptr;
+	if ( !FVisible( pActor, MASK_SHOT|CONTENTS_GRATE, &pBlocker ) )
+	{
+		if ( pActor->GetMoveParent() == pBlocker )
+			return true;
+
+		return false;
+	}
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -957,6 +1028,13 @@ void CObjectSentrygun::FoundTarget( CBaseEntity *pTarget, const Vector &vecSound
 			CSingleUserRecipientFilter singleFilter( pPlayer );
 			EmitSound( singleFilter, entindex(), "Building_Sentrygun.AlertTarget" );
 			filter.RemoveRecipient( pPlayer );
+
+			CTFBot *pBot = ToTFBot( pTarget );
+			if ( pBot )
+			{
+				pBot->m_hTargetSentry = this;
+				pBot->m_vecLastHurtBySentry = GetAbsOrigin();
+			}			
 		}
 
 		EmitSound( filter, entindex(), "Building_Sentrygun.Alert" );
@@ -1108,6 +1186,8 @@ bool CObjectSentrygun::Fire()
 		// Setup next rocket shot
 		m_flNextRocketAttack = gpGlobals->curtime + 3;
 
+		m_fireTimer.Start();
+
 		//if ( !tf_sentrygun_ammocheat.GetBool() )
 		if ( !tf_sentrygun_ammocheat.GetBool() && !HasSpawnFlags( SF_SENTRY_INFINITE_AMMO ) )
 		{
@@ -1232,6 +1312,14 @@ bool CObjectSentrygun::Fire()
 	}
 
 	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CObjectSentrygun::GetTimeSinceLastFired( void ) const
+{
+	return m_fireTimer.GetElapsedTime();
 }
 
 //-----------------------------------------------------------------------------

@@ -145,7 +145,9 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		return;
 
 	bool bSuccess = true;
-	
+
+	// oh boy...
+	// HACK: can't update all the maps with the old conditions, therefore this has to be remapped!
 	switch ( PowerupID )
 	{
 		case TF_COND_STEALTHED:
@@ -154,11 +156,17 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		case TF_COND_CRITBOOSTED:
 			PowerupID = TF_COND_CRIT_POWERUP;
 			break;
-		case TF_COND_INVIS_POWERUP:
-			PowerupID = TF_COND_INVIS_POWERUP;
+		case 12:
+			PowerupID = TF_COND_SPAWNPROTECT;
 			break;
-		case TF_COND_CRIT_POWERUP:
-			PowerupID = TF_COND_CRIT_POWERUP;
+		case 13:
+			PowerupID = TF_COND_SHIELD_CHARGE;
+			break;
+		case 14:
+			PowerupID = TF_COND_BERSERK;
+			break;
+		case 15:
+			PowerupID = TF_COND_SHIELD;
 			break;
 	}
 	
@@ -169,6 +177,8 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		CSingleUserRecipientFilter filter( pTFPlayer );		// Filter the sound to the person who picked this up
 		EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the pickup sound
 		pTFPlayer->m_Shared.AddCond( PowerupID , PowerupDuration - ( gpGlobals->curtime - GetCreationTime()) ); // Give them the condition
+		int iRandom = random->RandomInt( 0, 1 );
+		pTFPlayer->SpeakConceptIfAllowed( ( iRandom == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
 		Vector vecPackOrigin;	// These are only used so that the create function compiles,
 		QAngle vecPackAngles;	// if we are sure we wont use physics on this we can remove it from the function
 		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer, STRING( GetModelName() ), PowerupID, PowerupDuration - ( gpGlobals->curtime - GetCreationTime()), OriginalPowerupDuration );

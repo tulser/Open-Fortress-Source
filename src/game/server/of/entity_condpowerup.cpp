@@ -80,6 +80,8 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		if ( !pTFPlayer )
 			return false;
 		
+		// oh boy...
+		// HACK: can't update all the maps with the old conditions, therefore this has to be remapped!
 		switch ( m_bCondition )
 		{
 			case TF_COND_STEALTHED:
@@ -88,20 +90,29 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 			case TF_COND_CRITBOOSTED:
 				m_bCondition = TF_COND_CRIT_POWERUP;
 				break;
-			case TF_COND_INVIS_POWERUP:
-				m_bCondition = TF_COND_INVIS_POWERUP;
+			case 12:
+				m_bCondition = TF_COND_SPAWNPROTECT;
 				break;
-			case TF_COND_CRIT_POWERUP:
-				m_bCondition = TF_COND_CRITBOOSTED;
+			case 13:
+				m_bCondition = TF_COND_SHIELD_CHARGE;
 				break;
-		}		
+			case 14:
+				m_bCondition = TF_COND_BERSERK;
+				break;
+			case 15:
+				m_bCondition = TF_COND_SHIELD;
+				break;
+		}	
 		
 		if ( pTFPlayer->m_Shared.InCond(m_bCondition) )
 			return false;
+
 		bSuccess = true;
 		Vector vecPackOrigin;
 		QAngle vecPackAngles;
 		pTFPlayer->m_Shared.AddCond( m_bCondition , m_bCondDuration );
+		int iRandom = random->RandomInt( 0, 1 );
+		pTFPlayer->SpeakConceptIfAllowed( ( iRandom == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
 		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );  // The dropped powerup is spawned here, more explanation in its cpp file but basicaly we do this to preserve custom settings like its model on it
 		if ( TeamplayRoundBasedRules() )
 		{

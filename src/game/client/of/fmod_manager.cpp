@@ -3,6 +3,7 @@
 #include "filesystem.h"
 #include "c_tf_player.h"
 #include "teamplayroundbased_gamerules.h"
+#include "KeyValues.h"
 
 using namespace FMOD;
 
@@ -17,6 +18,36 @@ CFMODManager gFMODMng;
 CFMODManager* FMODManager()
 {
 	return &gFMODMng;
+}
+
+KeyValues* gSoundManifest;
+KeyValues* GlobalSoundManifest()
+{
+	return gSoundManifest;
+}
+
+void InitGlobalSoundManifest()
+{
+	if( gSoundManifest )
+	{
+		gSoundManifest->deleteThis();
+	}
+	gSoundManifest = new KeyValues( "GlobalSoundManifest" );
+}
+
+KeyValues* gLevelSoundManifest;
+KeyValues* LevelSoundManifest()
+{
+	return gLevelSoundManifest;
+}
+
+void InitLevelSoundManifest()
+{
+	if( gLevelSoundManifest )
+	{
+		gLevelSoundManifest->deleteThis();
+	}
+	gLevelSoundManifest = new KeyValues( "LevelSoundManifest" );
 }
 
 CFMODManager::CFMODManager()

@@ -120,6 +120,7 @@
 #endif
 #if defined( OPENFORTRESS_DLL )
 #include "fmod_manager.h"
+#include "c_of_music_player.h"
 #endif
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
@@ -1148,6 +1149,7 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	g_pClientMode->Enable();
 	
 #ifdef OPENFORTRESS_DLL	
+	ParseSoundManifest();
 	FMODManager()->InitFMOD();
 #endif
 
@@ -1236,6 +1238,23 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	if ( mat_showlowresimage )
 	{
 		mat_showlowresimage->SetFlags( FCVAR_NONE );
+	}
+
+
+	// To disable the effects of HDR, requires cheat flag removal
+	ConVar *mat_dynamic_tonemapping = NULL;
+	mat_dynamic_tonemapping = g_pCVar->FindVar( "mat_dynamic_tonemapping" );
+	if ( mat_dynamic_tonemapping )
+	{
+		mat_dynamic_tonemapping->SetFlags( FCVAR_ARCHIVE );
+	}
+
+	// To disable the effects of HDR, requires cheat flag removal
+	ConVar *mat_disable_bloom = NULL;
+	mat_disable_bloom = g_pCVar->FindVar( "mat_disable_bloom" );
+	if ( mat_disable_bloom )
+	{
+		mat_disable_bloom->SetFlags( FCVAR_ARCHIVE );
 	}
 
 	// mat_picmip is handled in PostInit() instead
@@ -1846,7 +1865,10 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	g_discordrpc.Reset();
 	
 	// S:O - Stop all FMOD sounds when exiting to the main menu
-	FMODManager()->StopAllSound();	
+	FMODManager()->StopAllSound();
+	InitLevelSoundManifest();
+	DevWarning("MAPNAME %s\n", pMapName);
+	ParseLevelSoundManifest();
 #endif
 
 #if defined( REPLAY_ENABLED )

@@ -129,14 +129,15 @@ public:
 	DECLARE_CLASS(CTFLogicGG, CBaseEntity);
 	CTFLogicGG();
 
-	virtual void	Spawn(void);
+	virtual void Spawn(void);
+	virtual bool KeyValue( const char *szKeyName, const char *szValue );
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
-	string_t	m_iszWeaponName[50];
 	bool		m_bListOnly;
-	int			m_iMaxLevel = 0;
-	int			m_iRequiredKills = 2;
+	int			m_iMaxLevel;
+	int			m_iRequiredKills;
+	KeyValues   *pWeaponsData;
 #endif
 };
 
@@ -222,13 +223,34 @@ public:
 	virtual bool	PlayerMayCapturePoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
 	virtual bool	PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, char *pszReason = NULL, int iMaxReasonLength = 0 );
 
+#ifdef GAME_DLL
+	void			CollectCapturePoints( CBasePlayer *player, CUtlVector<CTeamControlPoint *> *controlPointVector );
+	void			CollectDefendPoints( CBasePlayer *player, CUtlVector<CTeamControlPoint *> *controlPointVector );
+	CTeamTrainWatcher *GetPayloadToPush( int iTeam );
+	CTeamTrainWatcher *GetPayloadToBlock( int iTeam );
+	bool			IsPayloadRace( void ) { return ( m_hRedAttackTrain && m_hBlueAttackTrain ); }
+#endif
+
 	CTeamRoundTimer* GetInfectionRoundTimer( void ) { return m_hInfectionTimer.Get(); }
 	CTeamRoundTimer* GetBlueKothRoundTimer( void ) { return m_hBlueKothTimer.Get(); }
 	CTeamRoundTimer* GetRedKothRoundTimer( void ) { return m_hRedKothTimer.Get(); }
 	
+	CBaseEntity*	GetIT( void ) const { return m_itHandle.Get(); }
+	void			SetIT( CBaseEntity *pPlayer );
+	
 	static int		CalcPlayerScore( RoundStats_t *pRoundStats );
 
 	bool			IsBirthday( void );
+
+	// Halloween Scenarios
+	enum
+	{
+		HALLOWEEN_SCENARIO_MANOR = 1,
+		HALLOWEEN_SCENARIO_VIADUCT,
+		HALLOWEEN_SCENARIO_LAKESIDE,
+		HALLOWEEN_SCENARIO_HIGHTOWER,
+		HALLOWEEN_SCENARIO_DOOMSDAY
+	};
 
 	virtual const unsigned char *GetEncryptionKey( void ) { return (unsigned char *)"Op3Nf0rt"; }
 
@@ -281,10 +303,20 @@ public:
 	void			SetInfectionRoundTimer(CTeamRoundTimer *pTimer) { m_hInfectionTimer.Set( pTimer ); }
 	void			SetRedKothRoundTimer(CTeamRoundTimer *pTimer) { m_hRedKothTimer.Set( pTimer ); }
 	void			SetBlueKothRoundTimer(CTeamRoundTimer *pTimer) { m_hBlueKothTimer.Set( pTimer ); }
+	
+	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
+	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
 
 	virtual void	Activate();
 
+	virtual void	OnNavMeshLoad( void );
+
+	virtual void	LevelShutdown( void );
+
 	virtual bool	AllowDamage( CBaseEntity *pVictim, const CTakeDamageInfo &info );
+
+	bool			CanBotChooseClass( CBasePlayer *pBot, int iDesiredClassIndex );
+	bool			CanBotChangeClass( CBasePlayer *pBot );
 
 	void			SetTeamGoalString( int iTeam, const char *pszGoal );
 
@@ -338,12 +370,18 @@ public:
 	virtual bool WeaponSpawnersMayBeUsed( void );
 
 	virtual bool	IsInKothMode( void ) { return m_bKOTH; }
+	virtual bool    IsHalloweenScenario( int iEventType ) { return m_halloweenScenario == iEventType; };
 
 	void	RunPlayerConditionThink ( void );
 
+	virtual bool	IsMannVsMachineMode( void ) { return false; };
+	virtual bool	IsPVEModeActive( void ) { return false; };
+
 	const char *GetTeamGoalString( int iTeam );
 
-	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer ) { return true; }
+	int				GetAssignedHumanTeam( void ) const;
+
+	virtual bool	IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer );
 
 	CNetworkVar( int, m_iCosmeticCount ); 
 
@@ -380,7 +418,6 @@ public:
 	// Spawing rules.
 	CBaseEntity *GetPlayerSpawnSpot( CBasePlayer *pPlayer );
 	bool IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers );
-	bool IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers );
 
 	virtual float FlItemRespawnTime( CItem *pItem );
 	virtual Vector VecItemRespawnSpot( CItem *pItem );
@@ -428,14 +465,29 @@ public:
 	virtual bool UseSuicidePenalty() { return false; }
 
 	int		GetPreviousRoundWinners( void ) { return m_iPreviousRoundWinners; }
+	
+	const CUtlVector<EHANDLE> &GetAmmoEnts( void ) const { Assert( m_hAmmoEntities.Count() ); return m_hAmmoEntities; }
+	const CUtlVector<EHANDLE> &GetHealthEnts( void ) const { Assert( m_hHealthEntities.Count() ); return m_hHealthEntities; }
+	const CUtlVector<EHANDLE> &GetWeaponEnts( void ) const { Assert( m_hWeaponEntities.Count() ); return m_hWeaponEntities; }
+	const CUtlVector<EHANDLE> &GetMapTeleportEnts( void ) const { Assert( m_hMapTeleportEntities.Count() ); return m_hMapTeleportEntities; }
+	const CUtlVector<EHANDLE> &GetJumpPadEnts( void ) const { Assert( m_hJumpPadEntities.Count() ); return m_hJumpPadEntities; }
+	const CUtlVector<EHANDLE> &GetPowerupEnts( void ) const { Assert( m_hPowerupEntities.Count() ); return m_hPowerupEntities; }
+
+	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
 	void	SendHudNotification( IRecipientFilter &filter, HudNotification_t iType );
 	void	SendHudNotification( IRecipientFilter &filter, const char *pszText, const char *pszIcon, int iTeam = TEAM_UNASSIGNED );
 
 private:
 
-	int DefaultFOV( void ) { return 75; }
+	int				DefaultFOV( void ) { return 90; }
 
+	void			SpawnHalloweenBoss( void );
+	void			SpawnZombieMob( void );
+	CountdownTimer	m_bossSpawnTimer;
+	CountdownTimer	m_mobSpawnTimer;
+	int				m_nZombiesToSpawn;
+	Vector			m_vecMobSpawnLocation;
 #endif
 
 private:
@@ -459,6 +511,20 @@ private:
 	float m_flTimerMayExpireAt;
 	bool m_bStartedVote;
 	
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
+
+	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;
+	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
+	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
+	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
+
+	CUtlVector<EHANDLE> m_hAmmoEntities;
+	CUtlVector<EHANDLE> m_hHealthEntities;
+	CUtlVector<EHANDLE> m_hWeaponEntities;
+	CUtlVector<EHANDLE> m_hMapTeleportEntities;
+	CUtlVector<EHANDLE> m_hJumpPadEntities;
+	CUtlVector<EHANDLE> m_hPowerupEntities;
+
 #endif
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nMutator ); // Type of game this map is (CTF, CP)
@@ -467,6 +533,8 @@ private:
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hInfectionTimer );
+	CNetworkVar( EHANDLE, m_itHandle );
+	CNetworkVar( int, m_halloweenScenario );
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );
@@ -495,33 +563,38 @@ public:
 	virtual void	KeepTeamSpawns( int iTeamNumber );
 	virtual void	DisableSpawns( int iTeamNumber );
 	bool			bMultiweapons;
+
+	bool m_bHasTeamSpawns;
+	bool m_bHasCivilianSpawns;
+	bool m_bHasJuggernautSpawns;
 #endif
 	CNetworkVar( bool, m_nbDontCountKills ); // Do we Count Kills?
 	
 	string_t 		m_iszWeaponName[50];
 
-	int				m_iMaxLevel;
+	CNetworkVar( int, m_iMaxLevel );
 	bool			m_bListOnly;
 	int				m_iRequiredKills;
 	
-	virtual bool	IsDMGamemode(void);
-	virtual bool	IsTDMGamemode(void);
-	virtual bool	IsDOMGamemode(void);
-	virtual void	CheckTDM(void);
-	virtual bool	IsTeamplay(void);
-	virtual bool 	DontCountKills( void );
-	virtual bool	IsGGGamemode(void);
-	virtual bool	Is3WaveGamemode(void);
-	virtual bool	IsArenaGamemode(void);
-	virtual bool	IsESCGamemode(void);
-	virtual bool	IsCoopGamemode(void);
-	virtual bool	IsZSGamemode(void);
-	virtual bool	IsInfGamemode(void);
-	virtual bool	IsPayloadOverride(void);
-	virtual bool	IsHL2(void);
-	virtual bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
-	virtual bool	UsesMoney(void);
-	virtual bool	UsesDMBuckets( void );
+	bool	IsDMGamemode(void);
+	bool	IsTDMGamemode(void);
+	bool	IsDOMGamemode(void);
+	void	CheckTDM(void);
+	bool	IsTeamplay(void);
+	bool 	DontCountKills( void );
+	bool	IsGGGamemode(void);
+	bool	Is3WaveGamemode(void);
+	bool	IsArenaGamemode(void);
+	bool	IsESCGamemode(void);
+	bool	IsCoopGamemode(void);
+	bool	IsZSGamemode(void);
+	bool	IsInfGamemode(void);
+	bool	IsPayloadOverride(void);
+	bool	IsHL2(void);
+	bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
+	bool	IsFreeRoam(void); // this is used for bots
+	bool	UsesMoney(void);
+	bool	UsesDMBuckets( void );
 	void	FireGamemodeOutputs(void);
 	int		m_iBirthdayMode;
 
@@ -543,6 +616,10 @@ public:
 
 #ifdef GAME_DLL
 	void SetMutator( int nMutator );	
+
+	bool HasTeamSpawns( void ) { return m_bHasTeamSpawns; }
+	bool HasCivilianSpawns( void ) { return m_bHasCivilianSpawns; }
+	bool HasJuggernautSpawns( void ) { return m_bHasJuggernautSpawns; }
 #endif
 	
 	CNetworkVar( bool, m_bUsesHL2Hull );

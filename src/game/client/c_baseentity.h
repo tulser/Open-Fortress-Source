@@ -1016,8 +1016,6 @@ public:
 	virtual bool					IsCombatItem( void ) const { return false; }
 
 	virtual bool					IsBaseTrain( void ) const { return false; }
-		
-	virtual bool					IsAirBlast( void ) const { return false; }
 
 	// Returns the eye point + angles (used for viewing + shooting)
 	virtual Vector			EyePosition( void );

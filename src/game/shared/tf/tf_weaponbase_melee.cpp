@@ -221,9 +221,10 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 			flNextAttack = gpGlobals->curtime;
 		}
 	}
+	
 	if ( !bStartedCharge )
 		pPlayer->DoClassSpecialSkill();
-
+	
 	m_bInAttack2 = true;
 
 	m_flNextSecondaryAttack = flNextAttack;
@@ -559,7 +560,29 @@ float CTFWeaponBaseMelee::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDama
 
 void CTFWeaponBaseMelee::OnEntityHit( CBaseEntity *pEntity )
 {
-	NULL;
+#ifdef GAME_DLL
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer && TFGameRules()->GetIT() && ToBasePlayer( pEntity ))
+	{
+		if (TFGameRules()->GetIT() == pPlayer)
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent( "tagged_player_as_it" );
+			if (event)
+			{
+				event->SetInt( "player", engine->GetPlayerUserId( pPlayer->edict() ) );
+
+				gameeventmanager->FireEvent( event );
+			}
+
+			UTIL_ClientPrintAll( HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_ANNOUNCE_TAG", pPlayer->GetPlayerName(), ToBasePlayer( pEntity )->GetPlayerName() );
+
+			CSingleUserRecipientFilter filter( pPlayer );
+			CBaseEntity::EmitSound( filter, pPlayer->entindex(), "Player.TaggedOtherIT" );
+
+			TFGameRules()->SetIT( pEntity );
+		}
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

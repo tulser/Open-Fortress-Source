@@ -45,6 +45,17 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_berserk, CTFBerserk );
 PRECACHE_WEAPON_REGISTER( tf_weapon_berserk );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFClaws, DT_TFWeaponClaws )
+
+BEGIN_NETWORK_TABLE( CTFClaws, DT_TFWeaponClaws )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFClaws )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_claws, CTFClaws );
+PRECACHE_WEAPON_REGISTER( tf_weapon_claws );
+
 //=============================================================================
 //
 // Weapon Fists functions.

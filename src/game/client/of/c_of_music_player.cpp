@@ -90,7 +90,7 @@ void C_TFMusicPlayer::ClientThink( void )
 			FMODManager()->StopAmbientSound( pChannel, false );
 			bIsPlaying = true;
 			bInLoop = false;
-			if ( m_Songdata[0].name[0] != 0 )
+			if ( m_Songdata[0].path[0] != 0 )
 			{
 				FMODManager()->PlayLoopingMusic( &pChannel, m_Songdata[1].path, m_Songdata[0].path, m_flDelay );
 			}
@@ -118,59 +118,157 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 		if ( bParsed )
 			return;
 		
-		KeyValues *pManifest = new KeyValues( "Sounds" );
+		char szScriptName[MAX_PATH];
+		Q_strncpy( szScriptName, szLoopingSong, sizeof( szScriptName ) );
 		
-		char mapsounds[MAX_PATH];
-		Q_snprintf( mapsounds, sizeof( mapsounds ), "maps/%s_level_sounds.txt",engine->GetLevelName() );
-		pManifest->LoadFromFile( filesystem, mapsounds );
-		if ( !pManifest ) 
+		KeyValues *pSound = GetSoundscript( szScriptName );
+		
+		if ( pSound )
 		{
-			pManifest->LoadFromFile( filesystem, "scripts/game_sounds_manifest.txt" );
-		}
-		if ( pManifest )
-		{
-			for (int i = 0; i < m_Songdata.Count(); i++ )
+			Q_strncpy( m_Songdata[1].name, pSound->GetString( "Name", "Unknown" ) , sizeof( m_Songdata[1].name ) );
+			Q_strncpy( m_Songdata[1].artist, pSound->GetString( "Artist", "Unknown" ) , sizeof( m_Songdata[1].artist ) );
+			Q_strncpy( m_Songdata[1].path, pSound->GetString( "wave" ) , sizeof( m_Songdata[1].path ) );
+			m_Songdata[1].volume = pSound->GetFloat( "volume", 0.9f );
+			const char *pszSrc = NULL;
+			if ( !Q_strncmp( m_Songdata[1].path, "#", 1 ) )
 			{
-				char szScriptName[MAX_PATH];
-				switch ( i )
+				pszSrc = m_Songdata[1].path + 1;
+				Q_strncpy( m_Songdata[1].path, pszSrc, sizeof(m_Songdata[1].path) );
+			}
+			DevMsg("Intro is %s\nOutro is %s\n", pSound->GetString( "intro" ), pSound->GetString( "outro" ));
+			KeyValues *pSoundIntro = GetSoundscript( pSound->GetString( "intro" ) );
+			if( pSoundIntro )
+			{
+				Q_strncpy( m_Songdata[0].path, pSoundIntro->GetString( "wave" ) , sizeof( m_Songdata[0].path ) );
+				if ( !Q_strncmp( m_Songdata[0].path, "#", 1 ) )
 				{
-					case 0:
-						Q_strncpy( szScriptName, szIntroSong, sizeof( szScriptName ) );
-						break;
-					case 1:
-						Q_strncpy( szScriptName, szLoopingSong, sizeof( szScriptName ) );
-						break;
-					case 2:
-						Q_strncpy( szScriptName, szOutroSong, sizeof( szScriptName ) );
-						break;
+					pszSrc = m_Songdata[0].path + 1;
+					Q_strncpy( m_Songdata[0].path, pszSrc, sizeof(m_Songdata[0].path) );
 				}
+				DevMsg("Intro wav is %s\n", m_Songdata[0].path);
+			}
+			KeyValues *pSoundOutro = GetSoundscript( pSound->GetString( "outro" ) );
+			if( pSoundOutro )
+			{
+				Q_strncpy( m_Songdata[2].path, pSoundOutro->GetString( "wave" ) , sizeof( m_Songdata[2].path ) );
+				if ( !Q_strncmp( m_Songdata[2].path, "#", 1 ) )
+				{
+					pszSrc = m_Songdata[2].path + 1;
+					Q_strncpy( m_Songdata[2].path, pszSrc, sizeof(m_Songdata[2].path) );
+				}
+				DevMsg("Outro wav is %s\n", m_Songdata[2].path);
+			}
+		}
+
+		bParsed = true;			
+	}
+}
+
+void ParseSoundManifest( void )
+{	
+	InitGlobalSoundManifest();
+	
+	KeyValues *pManifestFile = new KeyValues( "game_sounds_manifest" );
+	pManifestFile->LoadFromFile( filesystem, "scripts/game_sounds_manifest.txt" );
+	
+	if ( pManifestFile )
+	{
+		KeyValues *pManifest = new KeyValues( "Manifest" );
+		pManifest = pManifestFile->GetFirstValue();
+		for( pManifest; pManifest != NULL; pManifest = pManifest->GetNextValue() ) // Loop through all the keyvalues
+		{
+			KeyValues *pSoundFile = new KeyValues( "SoundFile" );
+			pSoundFile->LoadFromFile( filesystem, pManifest->GetString() );
+			if( pSoundFile )
+			{
 				KeyValues *pSound = new KeyValues( "SoundScript" );
-				pSound->LoadFromFile( filesystem, "scripts/game_sounds_music.txt" ); // Gets the first key in the file
-				bool bFound = false;
+				pSound = pSoundFile;
+				GlobalSoundManifest()->AddSubKey( pSound );
+
 				for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
 				{
-					if( !Q_strncmp( szScriptName, pSound->GetName(), sizeof(szScriptName) ) ) // If their name matches our Soundscript name
+					if( pSound )
 					{
-						bFound = true; // continue
-						break;
+						DevMsg( "Parsed: %s\n", pSound->GetString( "wave" ) );
 					}
 				}
-				if ( bFound )
-				{
-					Q_strncpy( m_Songdata[i].name, pSound->GetString( "Name", "Unknown" ) , sizeof( m_Songdata[i].name ) );
-					Q_strncpy( m_Songdata[i].artist, pSound->GetString( "Artist", "Unknown" ) , sizeof( m_Songdata[i].artist ) );
-					Q_strncpy( m_Songdata[i].path, pSound->GetString( "wave", "#music/deathmatch/map01_loop.mp3" ) , sizeof( m_Songdata[i].path ) );
-					m_Songdata[i].volume = pSound->GetFloat( "volume", 0.9f );
-					m_Songdata[i].duration = pSound->GetFloat( "duration", 0.0f );
-				}
-				const char *pszSrc = NULL;
-				if ( !Q_strncmp( m_Songdata[i].path, "#", 1 ) )
-				{
-					pszSrc = m_Songdata[i].path + 1;
-					Q_strncpy( m_Songdata[i].path, pszSrc, sizeof(m_Songdata[i].path) );
-				}
 			}
-			bParsed = true;			
+		}	
+	}
+}
+static ConCommand fm_parse_soundmanifest( "fm_parse_soundmanifest", ParseSoundManifest, "Parses the global Sounscript File.", FCVAR_NONE );
+
+void CheckGlobalSounManifest( void )
+{
+	if ( GlobalSoundManifest() )
+	{		
+		KeyValues *pSound = new KeyValues( "SoundScript" );
+		pSound = GlobalSoundManifest()->GetFirstSubKey();
+		for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
+		{
+			if( strcmp( pSound->GetString( "wave" ), "" ) )
+				DevMsg( "Sound name: %s\n", pSound->GetString( "wave" ) );
 		}
 	}
+}
+static ConCommand fm_check_globalsoundmanifest( "fm_check_globalsoundmanifest", CheckGlobalSounManifest, "Prints out all Manifest files.", FCVAR_NONE );
+
+void ParseLevelSoundManifest( void )
+{	
+	InitLevelSoundManifest();
+	
+	char mapsounds[MAX_PATH];
+	char mapname[ 256 ];
+	Q_StripExtension( engine->GetLevelName(), mapname, sizeof( mapname ) );
+	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
+	if( !filesystem->FileExists( mapsounds , "MOD" ) )
+	{
+		DevMsg( "%s not present, not parsing", mapsounds );
+		return;
+	}
+	DevMsg("%s\n", mapsounds);
+	KeyValues *pSoundFile = new KeyValues( "level_sounds" );
+	pSoundFile->LoadFromFile( filesystem, mapsounds );
+
+	if( pSoundFile )
+	{
+		KeyValues *pSound = new KeyValues( "SoundScript" );
+		pSound = pSoundFile;
+		LevelSoundManifest()->AddSubKey( pSound );
+		for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
+		{
+			if( pSound )
+			{
+				DevMsg( "Parsed: %s\n", pSound->GetString( "wave" ) );
+			}
+		}
+	}
+}
+
+static ConCommand fm_parse_level_sounds( "fm_parse_level_sounds", ParseLevelSoundManifest, "Parses the level_souns file for the current map.", FCVAR_NONE );
+
+KeyValues* GetSoundscript( const char *szSoundScript )
+{
+	KeyValues *pSound = new KeyValues( "SoundScript" );
+			
+	char mapsounds[MAX_PATH];
+	char mapname[ 256 ];
+	Q_StripExtension( engine->GetLevelName(), mapname, sizeof( mapname ) );
+	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
+			
+	if( filesystem->FileExists( mapsounds , "MOD" ) )
+	{
+		pSound = LevelSoundManifest()->FindKey( szSoundScript );
+		if( !pSound )
+		{
+			DevMsg("Key not found in level sounds\n");
+			return GlobalSoundManifest()->FindKey( szSoundScript );
+		}
+	}
+	else if ( GlobalSoundManifest() )	
+	{
+		return GlobalSoundManifest()->FindKey( szSoundScript );
+	}
+	
+	return NULL;
 }

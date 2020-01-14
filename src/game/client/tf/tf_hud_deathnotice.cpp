@@ -469,11 +469,16 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 				// special case icon for hit-by-vehicle death
 				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_vehicle", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
 			}
+			else if ( ( event->GetInt( "damagebits" ) & DMG_NERVEGAS ) )
+			{
+				// saw blade!
+				Q_strncpy( m_DeathNotices[iMsg].szIcon, "d_saw_kill", ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
+			}
 		}
 
 		if ( event->GetInt( "damagebits" ) & DMG_CRITICAL )
 		{
-			// special case text for falling death
+			// special case text for crits
 			m_DeathNotices[iMsg].bCrit = true;
 			m_DeathNotices[iMsg].iconCrit = GetIcon( "d_crit", bLocalPlayerInvolved );
 		}	

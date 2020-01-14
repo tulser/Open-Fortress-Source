@@ -917,7 +917,7 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 		}
 	}
 
-	if ( !cl_showtextmsg.GetInt() )
+	if ( !cl_showtextmsg.GetInt() || engine->IsLevelMainMenuBackground() )
 		return;
 
 	int len;
@@ -971,12 +971,11 @@ void CBaseHudChat::MsgFunc_VoiceSubtitle( bf_read &msg )
 	if ( !g_PR )
 		return;
 
-	if ( !cl_showtextmsg.GetInt() )
+	// TODO: when spam checks are added, uncomment this if
+	// if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return;
 
-	// TODO: when spam checks are added, uncomment this if
-
-	// if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsInfGamemode() ) )
+	if ( !cl_showtextmsg.GetInt() || engine->IsLevelMainMenuBackground() )
 		return;
 
 	char szString[2048];

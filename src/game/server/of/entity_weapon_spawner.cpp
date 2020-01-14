@@ -18,6 +18,7 @@
 #include "KeyValues.h"
 #include "filesystem.h"
 #include "game.h"
+#include "tf_bot.h"
 
 #include "tier0/memdbgon.h"
 
@@ -185,6 +186,9 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 
 		if ( pTFPlayer->m_Shared.IsZombie() )
 			return false;
+		
+		if ( !of_allow_allclass_spawners.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+			return false;		
 	
 		bSuccess = true;
 		bool bTakeWeapon = true;
@@ -255,9 +259,39 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( pGivenWeapon )
 				{
 					pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
+
+					if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
+					{
+						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_ULTRARARE );
+					}
+					else if ( WeaponID_IsRocketWeapon ( pGivenWeapon->GetWeaponID() )  // "rare" weapons, this is kinda terrible
+							|| WeaponID_IsGrenadeWeapon ( pGivenWeapon->GetWeaponID() ) 
+							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_RAILGUN
+							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN
+							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+					{
+						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_RARE );
+					}
+					else
+					{
+						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_COMMON ); // common weapons
+					}
+
+					if ( pTFPlayer->IsFakeClient() )
+					{
+						CTFBot *actor = ToTFBot( pTFPlayer );
+						if ( actor )
+						{
+							actor->Weapon_Switch( pGivenWeapon );
+							actor->m_bPickedUpWeapon = true;
+						}
+					}
+
 					if ( pTFPlayer->GetActiveWeapon() && pGivenWeapon->GetSlot() == pTFPlayer->GetActiveWeapon()->GetSlot() 
 						&& pGivenWeapon->GetPosition() == pTFPlayer->GetActiveWeapon()->GetPosition() )
+					{
 						pTFPlayer->Weapon_Switch( pGivenWeapon );
+					}
 				}
 			}
 			if ( weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on

@@ -922,7 +922,10 @@ CON_COMMAND( npc_speakall, "Force the npc to try and speak all their responses" 
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
 		return;
-
+	
+	if ( !sv_cheats->GetBool() )
+		return;
+	
 	CBaseEntity *pEntity;
 
 	if ( args[1] && *args[1] )

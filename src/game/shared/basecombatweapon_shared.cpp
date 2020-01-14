@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
 #endif
@@ -55,7 +55,7 @@
 extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
 extern ConVar of_infiniteammo;
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
 #ifdef _DEBUG
 ConVar tf_weapon_criticals_force_random( "tf_weapon_criticals_force_random", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // _DEBUG
@@ -103,7 +103,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	UseClientSideAnimation();
 #endif
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
 	m_flCritTokenBucket = tf_weapon_criticals_bucket_default.GetFloat();
 	m_nCritChecks = 1;
 	m_nCritSeedRequests = 0;
@@ -272,7 +272,7 @@ void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
 			{
 				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
 			}
- #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+ #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) 
 			// Ammo override
 			int iModUseMetalOverride = 0;
 			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
@@ -1594,7 +1594,7 @@ bool CBaseCombatWeapon::CanReload( void )
 	return true;
 }
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
 //-----------------------------------------------------------------------------
 // Purpose: Anti-hack
 //-----------------------------------------------------------------------------

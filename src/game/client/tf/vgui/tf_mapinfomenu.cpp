@@ -574,7 +574,7 @@ const char *GetMapDisplayName( const char *mapName )
 	{
 		pszSrc = szTempName + 4;
 	}
-	else if ( !Q_strncmp( szTempName, "mctf_", 5 ) || !Q_strncmp( szTempName, "koth_", 5 ) )
+	else if ( !Q_strncmp( szTempName, "mctf_", 5 ) || !Q_strncmp( szTempName, "duel_", 5 ) || !Q_strncmp( szTempName, "koth_", 5 ) )
 	{
 		pszSrc = szTempName + 5;
 	}

@@ -62,6 +62,7 @@ extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
 extern ConVar building_cubemaps;
+extern ConVar of_allow_allclass_spawners;
 
 // Inputs.
 LINK_ENTITY_TO_CLASS( dm_weapon_spawner, C_WeaponSpawner );
@@ -106,9 +107,28 @@ void C_WeaponSpawner::ClientThink( void )
 	
 	bool bShouldGlow = false;
 
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( !pPlayer )
+	{
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
+		return;
+	}
 	
-	if ( pPlayer && !m_bRespawning ) 
+	if( 										// Don't glow if
+		( !of_allow_allclass_spawners.GetBool() && !pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) ||  // Or we're not merc
+		( building_cubemaps.GetBool() ) // or we're building cubemaps
+	)
+	{
+		if( m_bShouldGlow )
+		{
+			m_bShouldGlow = false;
+			UpdateGlowEffect();
+		}
+		SetNextClientThink( CLIENT_THINK_ALWAYS );
+		return;
+	}
+	
+	if ( !m_bRespawning ) 
 	{
 		trace_t tr;
 		UTIL_TraceLine( GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr );
@@ -118,14 +138,10 @@ void C_WeaponSpawner::ClientThink( void )
 		}
 	}
 
-	if ( pPlayer && (m_bShouldGlow != bShouldGlow || (iTeamNum != pPlayer -> GetTeamNumber())) )
+	if ( m_bShouldGlow != bShouldGlow || (iTeamNum != pPlayer -> GetTeamNumber()) )
 	{
 		m_bShouldGlow = bShouldGlow;
 		iTeamNum = pPlayer->GetTeamNumber();
-		UpdateGlowEffect();
-	}
-	if ( building_cubemaps.GetBool() )
-	{
 		UpdateGlowEffect();
 	}
 

@@ -47,6 +47,7 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 
 	m_nTeam = TEAM_UNASSIGNED;
 	m_nClass = TF_CLASS_UNDEFINED;
+	m_nModifiers = TF_CLASSMOD_NONE;
 	m_nDisguiseTeam = TEAM_UNASSIGNED;
 	m_nDisguiseClass = TF_CLASS_UNDEFINED;
 	m_flNextThink = 0.0f;
@@ -73,6 +74,7 @@ void CTFHudPlayerClass::ApplySchemeSettings( IScheme *pScheme )
 	LoadControlSettings( "resource/UI/HudPlayerClass.res" );
 	m_nTeam = TEAM_UNASSIGNED;
 	m_nClass = TF_CLASS_UNDEFINED;
+	m_nModifiers = TF_CLASSMOD_NONE;
 	m_nDisguiseTeam = TEAM_UNASSIGNED;
 	m_nDisguiseClass = TF_CLASS_UNDEFINED;
 	m_flNextThink = 0.0f;
@@ -120,11 +122,14 @@ void CTFHudPlayerClass::OnThink()
 			}
 
 			// set our class image
-			if ( m_nClass != pPlayer->GetPlayerClass()->GetClassIndex() || bTeamChange || bCloakChange ||
+			if ( m_nClass != pPlayer->GetPlayerClass()->GetClassIndex() || bTeamChange || bCloakChange 
+				|| m_nModifiers != pPlayer->GetPlayerClass()->GetModifiers() ||
 				( m_nClass == TF_CLASS_SPY && m_nDisguiseClass != pPlayer->m_Shared.GetDisguiseClass() ) ||
 				( m_nClass == TF_CLASS_SPY && m_nDisguiseTeam != pPlayer->m_Shared.GetDisguiseTeam() ) )
 			{
 				m_nClass = pPlayer->GetPlayerClass()->GetClassIndex();
+				m_nModifiers = pPlayer->GetPlayerClass()->GetModifiers();
+				TFPlayerClassData_t *pClassData = pPlayer->GetPlayerClass()->GetData();
 
 				if ( m_nClass == TF_CLASS_SPY && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 				{
@@ -151,14 +156,18 @@ void CTFHudPlayerClass::OnThink()
 					if ( m_nDisguiseTeam != TEAM_UNASSIGNED || m_nDisguiseClass != TF_CLASS_UNDEFINED )
 					{
 						m_pSpyImage->SetVisible( true );
-						m_pClassImage->SetClass( m_nDisguiseTeam, m_nDisguiseClass, iCloakState );
-						m_pClassImageColorless->SetClassColorless( m_nDisguiseTeam, m_nDisguiseClass, iCloakState );
+						CTFPlayer *pDisguiseTarget = ToTFPlayer( pPlayer->m_Shared.GetDisguiseTarget() );
+						if( pDisguiseTarget )
+							pClassData = pDisguiseTarget->GetPlayerClass()->GetData();
+							
+						m_pClassImage->SetClass( m_nDisguiseTeam, pClassData, iCloakState );
+						m_pClassImageColorless->SetClassColorless( m_nDisguiseTeam, pClassData, iCloakState );
 					}
 					else
 					{
 						m_pSpyImage->SetVisible( false );
-						m_pClassImage->SetClass( m_nTeam, m_nClass, iCloakState );
-						m_pClassImageColorless->SetClassColorless( m_nTeam, m_nClass, iCloakState );
+						m_pClassImage->SetClass( m_nTeam, pClassData, iCloakState );
+						m_pClassImageColorless->SetClassColorless( m_nTeam, pClassData, iCloakState );
 					}
 				}
 			}
@@ -693,25 +702,25 @@ void CTFHudPlayerStatus::Reset()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFClassImage::SetClass( int iTeam, int iClass, int iCloakstate )
+void CTFClassImage::SetClass( int iTeam, TFPlayerClassData_t *iClassData, int iCloakstate )
 {
 	char szImage[128];
 	szImage[0] = '\0';
-
+	
 	if ( iTeam == TF_TEAM_BLUE )
 	{
-		if ( GetPlayerClassData( iClass )->GetClassImageBlue() )
-			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageBlue(), sizeof(szImage) );
+		if ( iClassData->GetClassImageBlue() )
+			Q_strncpy( szImage, iClassData->GetClassImageBlue(), sizeof(szImage) );
 	}
 	else if ( iTeam == TF_TEAM_MERCENARY )
 	{
-		if ( GetPlayerClassData( iClass )->GetClassImageMercenary() )
-			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageMercenary(), sizeof(szImage) );
+		if ( iClassData->GetClassImageMercenary() )
+			Q_strncpy( szImage, iClassData->GetClassImageMercenary(), sizeof(szImage) );
 	}
 	else
 	{
-		if ( GetPlayerClassData( iClass )->GetClassImageRed() )
-			Q_strncpy( szImage, GetPlayerClassData( iClass )->GetClassImageRed(), sizeof(szImage) );
+		if ( iClassData->GetClassImageRed() )
+			Q_strncpy( szImage, iClassData->GetClassImageRed(), sizeof(szImage) );
 	}
 
 	switch( iCloakstate )
@@ -735,15 +744,14 @@ void CTFClassImage::SetClass( int iTeam, int iClass, int iCloakstate )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFClassImage::SetClassColorless( int iTeam, int iClass, int iCloakstate )
+void CTFClassImage::SetClassColorless( int iTeam, TFPlayerClassData_t *iClassData, int iCloakstate )
 {
 	char szImageColorless[128];
 	szImageColorless[0] = '\0';
 
-
 	if ( iTeam == TF_TEAM_MERCENARY )
 	{
-		Q_strncpy( szImageColorless, GetPlayerClassData( iClass )->GetClassImageColorless(), sizeof(szImageColorless) );
+		Q_strncpy( szImageColorless, iClassData->GetClassImageColorless(), sizeof(szImageColorless) );
 		switch( iCloakstate )
 		{
 			case 2:

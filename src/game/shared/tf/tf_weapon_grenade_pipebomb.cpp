@@ -755,7 +755,7 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 		return 0;
 	}
 
-	bool bSameTeam = ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetThrower() ));
+	bool bSameTeam = ( info.GetAttacker()->GetTeamNumber() == GetTeamNumber() && ( info.GetAttacker()->GetTeamNumber() != TF_TEAM_MERCENARY || info.GetAttacker() == GetThrower() ) );
 
 	if ( m_bTouched && ( info.GetDamageType() & (DMG_BULLET|DMG_BUCKSHOT|DMG_BLAST|DMG_SLASH|DMG_CLUB) ) && bSameTeam == false )
 	{
@@ -821,29 +821,35 @@ int CTFGrenadePipebombProjectile::OnTakeDamage( const CTakeDamageInfo &info )
 #endif
 
 #ifdef GAME_DLL
-void CTFGrenadePipebombProjectile::AirBlast( const Vector &vec_in )
+void CTFGrenadePipebombProjectile::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	Vector vec = vec_in;
-
-	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
-
-	if ( pPhysicsObject )
+	if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 	{
-		Vector vecZero;
-		Vector vecVelocity;
+		//Vector vecSrc = pDeflectedBy->GetAbsOrigin();
+		Vector vecSrc = pDeflectedBy->WorldSpaceCenter();
+		Vector vecDir2 = GetAbsOrigin() - vecSrc;
+		VectorNormalize( vecDir2 );
 
-		pPhysicsObject->GetVelocity( &vecZero, NULL );
+		// hey, at least it works
+		CTakeDamageInfo shitty_stickybomb_hack( pDeflectedBy, pDeflectedBy, 1000.0f, DMG_BLAST ); // terrible value
+		CalculateExplosiveDamageForce( &shitty_stickybomb_hack, vecDir2, vecSrc );
 
-		float flVelocity = 0.0f;
-		flVelocity = vecZero.Length();
+		if ( VPhysicsGetObject() )
+			VPhysicsGetObject()->EnableMotion( true );
 
-		vecVelocity = vec;
-		vecVelocity *= flVelocity;
+		VPhysicsTakeDamage( shitty_stickybomb_hack );
 
-		AngularImpulse angImpulse( ( 600, random->RandomInt( -1200, 1200 ), 0 ) );
+		// The pipebomb will re-stick to the ground after this time expires
+		m_flMinSleepTime = gpGlobals->curtime + tf_grenade_force_sleeptime.GetFloat();
+		m_bTouched = false;
 
-		// pPhysicsObject->AddVelocity( &vecVelocity, &angImpulse );
-		pPhysicsObject->SetVelocityInstantaneous( &vecVelocity, &angImpulse );
+		// It has moved the data is no longer valid.
+		m_bUseImpactNormal = false;
+		m_vecImpactNormal.Init();
+	}
+	else
+	{
+		BaseClass::Deflected( pDeflectedBy, vecDir );
 	}
 }
 #endif

@@ -124,6 +124,27 @@ public:
 // Global list of triggers that care about weapon fire
 extern CUtlVector< CHandle<CTriggerMultiple> >	g_hWeaponFireTriggers;
 
+//-----------------------------------------------------------------------------
+// Purpose: Teleport
+//-----------------------------------------------------------------------------
+class CTriggerTeleport : public CBaseTrigger
+{
+public:
+	DECLARE_CLASS( CTriggerTeleport, CBaseTrigger );
+
+	virtual void Spawn( void ) OVERRIDE;
+	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+	
+	virtual bool PassesTriggerFilters(CBaseEntity *pOther);
+
+	string_t m_iLandmark;
+
+	CBaseEntity	*pentTarget;
+	CBaseEntity *GetTarget( void ) { return pentTarget; }
+
+	DECLARE_DATADESC();
+};
+
 //------------------------------------------------------------------------------
 // Base VPhysics trigger implementation
 // NOTE: This uses vphysics to compute touch events.  It doesn't do a per-frame Touch call, so the 

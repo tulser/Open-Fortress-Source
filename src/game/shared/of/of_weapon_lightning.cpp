@@ -561,12 +561,22 @@ void CTFLightningGun::SetParticleEnd()
 	Vector endPos = vecShootPos + vecForward * 720;	
 
 	int team = pOwner->GetTeamNumber();
-	if ( team == TF_TEAM_MERCENARY ) team = 0;		
+	if ( team == TF_TEAM_MERCENARY )
+		team = 0;		
 	
 	trace_t tr;
 	
 	CTraceFilterIgnoreTeammates filter( pOwner, COLLISION_GROUP_NONE, team, pOwner );
-	UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );	
+
+	CTraceFilterIgnoreTeammates *pTmpFilter = &filter;
+	if ( !pTmpFilter )
+		return;
+
+	UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
+
+	trace_t *pTmpTr = &tr;
+	if ( !pTmpTr )
+		return;
 
 	if ( m_pLightningParticle && m_pLightningParticle->m_pDef && m_pLightningParticle->m_pDef->ReadsControlPoint( 1 ) )
 	{

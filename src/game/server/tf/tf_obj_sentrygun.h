@@ -65,6 +65,10 @@ public:
 	void			UpgradeThink( void );
 	virtual bool	IsUpgrading( void ) const;
 
+	const QAngle&	GetTurretAngles( void ) const { return m_vecCurAngles; }
+
+	float			GetTimeSinceLastFired( void ) const;
+
 	// If the players hit us with a wrench, should we upgrade
 	virtual bool CanBeUpgraded( CTFPlayer *pPlayer );
 	virtual void StartUpgrading( void );
@@ -79,8 +83,8 @@ private:
 	bool FindTarget( void );
 	bool ValidTargetPlayer( CTFPlayer *pPlayer, const Vector &vecStart, const Vector &vecEnd );
 	bool ValidTargetObject( CBaseObject *pObject, const Vector &vecStart, const Vector &vecEnd );
-	// npcs too
 	bool ValidTargetNPC(CAI_BaseNPC *pNPC, const Vector &vecStart, const Vector &vecEnd);
+	bool ValidTargetBot( CBaseCombatCharacter *pActor );
 	void FoundTarget( CBaseEntity *pTarget, const Vector &vecSoundCenter );
 	bool FInViewCone ( CBaseEntity *pEntity );
 	int Range( CBaseEntity *pTarget );
@@ -136,6 +140,8 @@ private:
 	float m_flHeavyBulletResist;
 
 	int m_iPlacementBodygroup;
+
+	IntervalTimer m_fireTimer;
 
 	DECLARE_DATADESC();
 };

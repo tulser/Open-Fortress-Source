@@ -481,16 +481,20 @@ void CTFClassMenu::Join_Class( const CCommand &args )
 static const char *g_sDialogVariables[] = {
 	"",
 	"numScout",
+	"numSniper",
 	"numSoldier",
-	"numPyro",
+	
 
 	"numDemoman",
-	"numHeavy",
-	"numEngineer",
-	
 	"numMedic",
-	"numSniper",
+	"numHeavy",
+	
+	"numPyro",
 	"numSpy",
+	"numEngineer",
+	"numMercenary",
+	"numCivilian",
+	"numJuggernaut",
 	"",
 };
 
@@ -501,17 +505,17 @@ static const char *g_sClassImagesPlaceholder[] = {
 
 static int g_sClassDefines[] = {
 	0,
-	TF_CLASS_SCOUT,	
-	TF_CLASS_SOLDIER,
-	TF_CLASS_PYRO,
-
+	TF_CLASS_SCOUT,
+    TF_CLASS_SNIPER,
+    TF_CLASS_SOLDIER,
+	
 	TF_CLASS_DEMOMAN,
-	TF_CLASS_HEAVYWEAPONS,
-	TF_CLASS_ENGINEER,
-
 	TF_CLASS_MEDIC,
-	TF_CLASS_SNIPER,
+	TF_CLASS_HEAVYWEAPONS,
+	
+	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
+	TF_CLASS_ENGINEER,		
 	TF_CLASS_MERCENARY,
 	TF_CLASS_CIVILIAN,
 	TF_CLASS_JUGGERNAUT,
@@ -553,25 +557,26 @@ void CTFClassMenu::UpdateNumClassLabels( int iTeam )
 				CTFImagePanel *pImage = m_ClassCountImages[nTotalCount];
 				if ( pImage )
 				{
+					TFPlayerClassData_t *pClassData = GetPlayerClassData(i);
 					pImage->SetVisible( true );
 					if ( iTeam == TF_TEAM_RED ){
-						if ( GetPlayerClassData( i )->GetClassSelectImageRed() )
-							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageRed() );
+						if ( pClassData->GetClassSelectImageRed() )
+							pImage->SetImage( pClassData->GetClassSelectImageRed() );
 						else
 							pImage->SetImage( g_sClassImagesPlaceholder[0] );
 							
 					}
 					else if ( iTeam == TF_TEAM_BLUE )
 					{
-						if( GetPlayerClassData( i )->GetClassSelectImageBlue() )
-							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageBlue() );
+						if( pClassData->GetClassSelectImageBlue() )
+							pImage->SetImage( pClassData->GetClassSelectImageBlue() );
 						else
 							pImage->SetImage( g_sClassImagesPlaceholder[0] );
 					}
 					else if ( iTeam == TF_TEAM_MERCENARY )
 					{
-						if ( GetPlayerClassData( i )->GetClassSelectImageMercenary() )
-							pImage->SetImage( GetPlayerClassData( i )->GetClassSelectImageMercenary() );
+						if ( pClassData->GetClassSelectImageMercenary() )
+							pImage->SetImage( pClassData->GetClassSelectImageMercenary() );
 						else
 							pImage->SetImage( g_sClassImagesPlaceholder[0] );
 					}

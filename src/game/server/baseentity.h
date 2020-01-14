@@ -992,9 +992,6 @@ public:
 	virtual bool	IsWearable( void ) const { return false; }
 	virtual CBaseCombatWeapon *MyCombatWeaponPointer( void ) { return NULL; }
 
-	virtual bool	IsAirBlast( void ) const { return false; }
-	virtual void	AirBlast( const Vector &vec_in ) { }
-
 	// If this is a vehicle, returns the vehicle interface
 	virtual IServerVehicle*			GetServerVehicle() { return NULL; }
 

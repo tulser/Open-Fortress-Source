@@ -22,6 +22,8 @@ extern ConVar of_allow_allclass_pickups;
 // Network table.
 IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
 	SendPropVector( SENDINFO( m_vecInitialVelocity ), -1, SPROP_NOSCALE ),
+	SendPropInt( SENDINFO( m_iReserveAmmo ) ),
+	SendPropInt( SENDINFO( m_iClip ) ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CTFDroppedWeapon )
@@ -157,17 +159,17 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		iPos = pWeaponInfo->iPositionDM;
 		
 	
-	if( !(pTFPlayer->m_hWeaponInSlot) )
+	if ( !(pTFPlayer->m_hWeaponInSlot) )
 	{	
 		return;
 	}
 	
-	if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == WeaponID )
+	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == WeaponID )
 	{	
 		return;
 	}
 	
-	if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster() )
+	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster() )
 	{	
 		return;
 	}
@@ -203,6 +205,23 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 				pGivenWeapon->m_iReserveAmmo = m_iReserveAmmo;
 			if ( m_iClip > -1 )
 				pGivenWeapon->m_iClip1 = m_iClip;
+
+			if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
+			{
+				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_ULTRARARE );
+			}
+			else if ( WeaponID_IsRocketWeapon ( pGivenWeapon->GetWeaponID() )  // "rare" weapons, this is kinda terrible
+					|| WeaponID_IsGrenadeWeapon ( pGivenWeapon->GetWeaponID() ) 
+					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_RAILGUN
+					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN
+					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+			{
+				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_RARE );
+			}
+			else
+			{
+				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_COMMON ); // common weapons
+			}
 		}
 		UTIL_Remove( this );																	// Remove the dropped weapon entity
 	}

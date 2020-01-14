@@ -403,7 +403,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 				Vector vecZero( 0,0,0 );
 				CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 
-				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo );
+				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo, GetTeamNumber() );
 				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
 				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
@@ -821,9 +821,9 @@ void CTFWeaponBaseGrenadeProj::DrawRadius( float flRadius )
 #endif
 
 #ifdef GAME_DLL
-void CTFWeaponBaseGrenadeProj::AirBlast( const Vector &vec_in )
+void CTFWeaponBaseGrenadeProj::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	Vector vec = vec_in;
+	Vector vec = vecDir;
 
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 
@@ -845,5 +845,14 @@ void CTFWeaponBaseGrenadeProj::AirBlast( const Vector &vec_in )
 		// pPhysicsObject->AddVelocity( &vecVelocity, &angImpulse );
 		pPhysicsObject->SetVelocityInstantaneous( &vecVelocity, &angImpulse );
 	}
+	
+	SetOwnerEntity( pDeflectedBy );
+
+	CBaseCombatCharacter *pBCC = dynamic_cast< CBaseCombatCharacter * >( pDeflectedBy );
+	if ( pBCC )
+		SetThrower( pBCC );
+
+	ChangeTeam( pDeflectedBy->GetTeamNumber() );
+	m_nSkin = pDeflectedBy->GetTeamNumber() - 2;
 }
 #endif

@@ -33,6 +33,7 @@
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #include "multiplay_gamerules.h"
+#include "of_imageprogressbar.h"
 
 #include <vgui/VGUI.h>
 #include <vgui_controls/Panel.h>
@@ -58,9 +59,6 @@ CTFHudTDM::CTFHudTDM( const char *pElementName ) : CHudElement( pElementName ), 
 
 	hudlcd->SetGlobalStat( "(kills)", "0" );
 
-	m_pRedKills = new CTFKillsProgressRed( this, "RedKills" );
-	m_pBluKills = new CTFKillsProgressBlu( this, "BluKills" );
-	
 	m_nKills	= 0;
 	m_flNextThink = 0.0f;
 }
@@ -85,6 +83,11 @@ void CTFHudTDM::ApplySchemeSettings( IScheme *pScheme )
 
 	m_pKills = dynamic_cast<CExLabel *>( FindChildByName( "Kills" ) );
 	m_pKillsShadow = dynamic_cast<CExLabel *>( FindChildByName( "KillsShadow" ) );
+	m_pProgressRed = dynamic_cast<CTFImageProgressBar *>( FindChildByName( "RedProgress" ) );
+	m_pProgressBlu = dynamic_cast<CTFImageProgressBar *>( FindChildByName( "BluProgress" ) );
+
+//	m_pProgressRed->SetParent(this);
+//	m_pProgressBlu->SetParent(this);
 
 	m_nKills	= -1;
 	m_flNextThink = 0.0f;
@@ -166,8 +169,16 @@ void CTFHudTDM::OnThink()
 			C_Team *pRedTeam = GetGlobalTeam( TF_TEAM_RED );
 			C_Team *pBluTeam = GetGlobalTeam( TF_TEAM_BLUE );
 
-			m_pRedKills->SetProgress( (float)(pRedTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
-			m_pBluKills->SetProgress( (float)(pBluTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+			if( m_pProgressRed )
+			{
+				m_pProgressRed->SetProgress( (float)(pRedTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+				m_pProgressRed->Update();
+			}
+			if( m_pProgressBlu )
+			{
+				m_pProgressBlu->SetProgress( (float)(pBluTeam->Get_Score()) / (float)(fraglimit.GetInt()) );
+				m_pProgressBlu->Update();
+			}
 
 			SetDialogVariable( "RedKills", pRedTeam->Get_Score() );
 			SetDialogVariable( "BluKills", pBluTeam->Get_Score() );
@@ -203,107 +214,3 @@ ConVar vert0_x( "vert0_x", "1", FCVAR_CHEAT );
 ConVar vert1_x( "vert1_x", "1", FCVAR_CHEAT );
 ConVar vert2_x( "vert2_x", "1", FCVAR_CHEAT );
 ConVar vert3_x( "vert3_x", "1", FCVAR_CHEAT );
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFKillsProgressBlu::Paint()
-{
-	BaseClass::Paint();
-
-	int x, y, w, h;
-	GetBounds( x, y, w, h );
-
-	Vertex_t vert[4];	
-	float uv1 = 1.0f;
-	float uv2 = 0.0f;
-	int xpos = 0;
-	int ypos = 0;
-
-	float flProgressX = w * ( m_flProgress );
-
-	// blend in the red "damage" part
-	surface()->DrawSetTexture( m_iMaterialIndex );
-	
-	Vector2D uv11( uv1, uv2 );						//topleft
-	Vector2D uv21( uv2, uv2 - m_flProgress );		//topright
-	Vector2D uv22( uv2, uv2 - m_flProgress );		//bottomright
-	Vector2D uv12( uv1, uv2 );						//bottomleft
-
-	vert[0].Init( Vector2D( xpos, ypos ), uv11 );
-	vert[1].Init( Vector2D( flProgressX, ypos ), uv21 );
-	vert[2].Init( Vector2D( flProgressX, ypos + h ), uv22 );				
-	vert[3].Init( Vector2D( xpos, ypos + h ), uv12 );
-
-	surface()->DrawSetColor( GetFgColor() );
-	
-	surface()->DrawTexturedPolygon( 4, vert );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFKillsProgressRed::Paint()
-{
-	BaseClass::Paint();
-
-	int x, y, w, h;
-	GetBounds( x, y, w, h );
-
-	Vertex_t vert[4];	
-	float uv1 = 1.0f;
-	float uv2 = 0.0f;
-	int xpos = 0;
-	int ypos = 0;
-
-	float flProgressX = w * ( m_flProgress );
-
-	// blend in the red "damage" part
-	surface()->DrawSetTexture( m_iMaterialIndex );
-	
-	Vector2D uv11( uv1, uv2 - m_flProgress);		//topleft
-	Vector2D uv21( uv2, uv2 );						//topright
-	Vector2D uv22( uv2, uv2 );						//bottomright
-	Vector2D uv12( uv1, uv2 - m_flProgress );		//bottomleft
-
-	vert[0].Init( Vector2D( xpos + w - flProgressX, ypos ), uv11 );
-	vert[1].Init( Vector2D( xpos + w, ypos ), uv21 );
-	vert[2].Init( Vector2D( xpos + w, ypos + h ), uv22 );				
-	vert[3].Init( Vector2D( xpos + w - flProgressX, ypos + h ), uv12 );
-
-	surface()->DrawSetColor( GetFgColor() );
-	
-	surface()->DrawTexturedPolygon( 4, vert );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFKillsProgressBlu::CTFKillsProgressBlu(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
-{
-	m_flProgress = 1.0f;
-	
-	m_iMaterialIndex = surface()->DrawGetTextureId( "hud/objectives_tdm_left" );
-	if ( m_iMaterialIndex == -1 ) // we didn't find it, so create a new one
-	{
-		m_iMaterialIndex = surface()->CreateNewTextureID();	
-	}
-
-	surface()->DrawSetTextureFile( m_iMaterialIndex, "hud/objectives_tdm_left", true, false );	
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Constructor
-//-----------------------------------------------------------------------------
-CTFKillsProgressRed::CTFKillsProgressRed(Panel *parent, const char *panelName) : CTFImagePanel(parent, panelName)
-{
-	m_flProgress = 1.0f;
-
-	m_iMaterialIndex = surface()->DrawGetTextureId("hud/objectives_tdm_right");
-	if (m_iMaterialIndex == -1) // we didn't find it, so create a new one
-	{
-		m_iMaterialIndex = surface()->CreateNewTextureID();
-	}
-
-	surface()->DrawSetTextureFile(m_iMaterialIndex, "hud/objectives_tdm_right", true, false);
-}

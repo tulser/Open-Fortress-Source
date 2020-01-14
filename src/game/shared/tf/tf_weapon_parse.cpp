@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright ? 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -221,10 +221,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	{
 		m_iWeaponType = TF_WPN_TYPE_MELEE;
 	}
-	else if ( !Q_strcmp( pszWeaponType, "melee_allclass" ) )
-	{
-		m_iWeaponType = TF_WPN_TYPE_MELEE_ALLCLASS;
-	}
 	else if ( !Q_strcmp( pszWeaponType, "grenade" ) )
 	{
 		m_iWeaponType = TF_WPN_TYPE_GRENADE;
@@ -261,10 +257,6 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 		else if ( !Q_strcmp( pszWeaponType, "melee" ) )
 		{
 			m_iClassWeaponType[i] = TF_WPN_TYPE_MELEE;
-		}
-		else if ( !Q_strcmp( pszWeaponType, "melee_allclass" ) )
-		{
-			m_iClassWeaponType[i] = TF_WPN_TYPE_MELEE_ALLCLASS;
 		}
 		else if ( !Q_strcmp( pszWeaponType, "grenade" ) )
 		{

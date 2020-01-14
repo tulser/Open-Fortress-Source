@@ -646,15 +646,20 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	int iTeam = pLocalPlayer->GetTeamNumber();
 	if ( ( iTeam >= FIRST_GAME_TEAM ) && ( iClass >= TF_FIRST_NORMAL_CLASS ) && ( iClass <= TF_CLASS_COUNT_ALL ) )
 	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		TFPlayerClassData_t *pClassData = GetPlayerClassData(iClass);
+		if ( pPlayer )
+			pClassData = pPlayer->GetPlayerClass()->GetData();
+
 		if ( iTeam == TF_TEAM_MERCENARY )
 		{
-			m_pClassImageColorless->SetClassColorless( iTeam, iClass, 0 );
+			m_pClassImageColorless->SetClassColorless( iTeam, pClassData, 0 );
 			m_pClassImageColorless->SetVisible( true );
 		}
 		else
 			m_pClassImageColorless->SetVisible( false );
 		
-		m_pClassImage->SetClass( iTeam, iClass, 0 );
+		m_pClassImage->SetClass( iTeam, pClassData, 0 );
 		m_pClassImage->SetVisible( true );
 	} 
 	else

@@ -1,0 +1,481 @@
+//========= Copyright © Valve LLC, All rights reserved. =======================
+//
+// Purpose:		
+//
+// $NoKeywords: $
+//=============================================================================
+
+#include "cbase.h"
+#include "tf_team.h"
+#include "tf_gamerules.h"
+#include "tf_bot_manager.h"
+#include "tf_bot.h"
+#include "tier3/tier3.h"
+#include "vgui/ILocalize.h"
+#include "fmtstr.h"
+
+
+extern ConVar tf_bot_difficulty;
+extern ConVar tf_bot_prefix_name_with_difficulty;
+
+ConVar tf_bot_quota( "tf_bot_quota", "0", FCVAR_NONE, "Determines the total number of TF bots in the game." );
+ConVar tf_bot_quota_mode( "tf_bot_quota_mode", "normal", FCVAR_NONE, "Determines the type of quota. Allowed values: 'normal', 'fill', and 'match'. If 'fill', the server will adjust bots to keep N players in the game, where N is bot_quota. If 'match', the server will maintain a 1:N ratio of humans to bots, where N is bot_quota." );
+ConVar tf_bot_join_after_player( "tf_bot_join_after_player", "0", FCVAR_NONE, "If nonzero, bots wait until a player joins before entering the game.", true, 0.0f, true, 1.0f );
+ConVar tf_bot_auto_vacate( "tf_bot_auto_vacate", "1", FCVAR_NONE, "If nonzero, bots will automatically leave to make room for human players.", true, 0.0f, true, 1.0f );
+ConVar tf_bot_offline_practice( "tf_bot_offline_practice", "0", FCVAR_NONE, "Tells the server that it is in offline practice mode.", true, 0.0f, true, 1.0f );
+ConVar tf_bot_melee_only( "tf_bot_melee_only", "0", FCVAR_GAMEDLL, "If nonzero, TFBots will only use melee weapons", true, 0.0f, true, 1.0f );
+
+bool UTIL_KickBotFromTeam( int teamNum )
+{
+	// a ForEachPlayer functor goes here
+
+	// find a dead guy first, so we don't disrupt combat
+	for ( int i=1; i<gpGlobals->maxClients; ++i )
+	{
+		CBasePlayer *player = UTIL_PlayerByIndex( i );
+		if ( player == nullptr || FNullEnt( player->edict() ) || !player->IsPlayer() || !player->IsConnected() )
+			continue;
+
+		CTFBot *bot = dynamic_cast<CTFBot *>( player );
+		if ( bot == nullptr )
+			continue;
+
+		if ( player->GetTeamNumber() != teamNum || player->IsAlive() )
+			continue;
+
+		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", engine->GetPlayerUserId( player->edict() ) ) );
+		return true;
+	}
+	
+	// go with anyone otherwise
+	for ( int i=1; i<gpGlobals->maxClients; ++i )
+	{
+		CBasePlayer *player = UTIL_PlayerByIndex( i );
+		if ( player == nullptr || FNullEnt( player->edict() ) || !player->IsPlayer() || !player->IsConnected() )
+			continue;
+
+		CTFBot *bot = dynamic_cast<CTFBot *>( player );
+		if ( bot == nullptr )
+			continue;
+
+		if ( player->GetTeamNumber() != teamNum )
+			continue;
+
+		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", engine->GetPlayerUserId( player->edict() ) ) );
+		return true;
+	}
+
+	return false;
+}
+
+const char *DifficultyToName( int iSkillLevel )
+{
+	switch ( iSkillLevel )
+	{
+		default:
+		case CTFBot::EASY:
+			return "Easy ";
+		case CTFBot::NORMAL:
+			return "Normal ";
+		case CTFBot::HARD:
+			return "Hard ";
+		case CTFBot::EXPERT:
+			return "Expert ";
+	}
+}
+int NameToDifficulty( const char *pszSkillName )
+{
+	if ( !Q_stricmp( pszSkillName, "expert" ) )
+		return CTFBot::EXPERT;
+	else if ( !Q_stricmp( pszSkillName, "hard" ) )
+		return CTFBot::HARD;
+	else if ( !Q_stricmp( pszSkillName, "normal" ) )
+		return CTFBot::NORMAL;
+
+	return CTFBot::EASY;
+}
+
+void CreateBotName( int iTeamNum, int iClassIdx, int iSkillLevel, char *out, int outlen )
+{
+	char szName[64] = "", szRelationship[16] = "", szDifficulty[8] = "";
+	if ( TFGameRules()->IsInTraining() )
+	{
+		int iHumanTeam = TFGameRules()->GetAssignedHumanTeam();
+		if ( iHumanTeam != TEAM_ANY )
+		{
+			const wchar_t *szLRelations = nullptr;
+			if ( iTeamNum == iHumanTeam )
+			{
+				szLRelations = g_pVGuiLocalize->Find( "#TF_Bot_Title_Friendly" );
+			}
+			else
+			{
+				szLRelations = g_pVGuiLocalize->Find( "#TF_Bot_Title_Enemy" );
+			}
+
+			if ( szLRelations )
+				g_pVGuiLocalize->ConvertUnicodeToANSI( szLRelations, szRelationship, sizeof( szRelationship ) );
+		}
+
+		const wchar_t *szLClassname = nullptr;
+		if ( ( iClassIdx-1 ) < TF_LAST_NORMAL_CLASS )
+		{
+			szLClassname = g_pVGuiLocalize->Find( g_aPlayerClassNames[iClassIdx] );
+		}
+		else
+		{
+			szLClassname = g_pVGuiLocalize->Find( "#TF_Bot_Generic_ClassName" );
+		}
+
+		if ( szLClassname )
+			g_pVGuiLocalize->ConvertUnicodeToANSI( szLClassname, szName, sizeof( szName ) );
+	}
+	else
+	{
+		Q_strncpy( szName, TheTFBots().GetRandomBotName(), sizeof( szName ) );
+	}
+
+	if ( tf_bot_prefix_name_with_difficulty.GetBool() )
+	{
+		Q_strncpy( szDifficulty, DifficultyToName( iSkillLevel ), sizeof( szDifficulty ) );
+	}
+
+	Q_strncpy( out, CFmtStr( "%s%s%s", szDifficulty, szRelationship, szName ), outlen );
+}
+
+
+CTFBotManager sTFBotManager;
+CTFBotManager &TheTFBots()
+{
+	return sTFBotManager;
+}
+
+
+CTFBotManager::CTFBotManager()
+{
+	NextBotManager::SetInstance( this );
+
+	m_flQuotaChangeTime = 0.0f;
+
+	m_bLoadedBotNames = false;
+}
+
+CTFBotManager::~CTFBotManager()
+{
+	NextBotManager::SetInstance( NULL );
+
+	m_BotNames.RemoveAll();
+	m_BotNamesFile->deleteThis();
+}
+
+
+void CTFBotManager::Update()
+{
+	MaintainBotQuota();
+
+	NextBotManager::Update();
+}
+
+
+void CTFBotManager::OnMapLoaded()
+{
+	// We load the bot names here because filesystem can be null if we do it in the constructor
+	if ( !m_bLoadedBotNames )
+		LoadBotNames();
+
+	NextBotManager::OnMapLoaded();
+}
+
+void CTFBotManager::OnRoundRestart()
+{
+	NextBotManager::OnRoundRestart();
+}
+
+void CTFBotManager::OnLevelShutdown()
+{
+	m_flQuotaChangeTime = 0.0f;
+
+	if ( IsInOfflinePractice() )
+		RevertOfflinePracticeConvars();
+}
+
+
+bool CTFBotManager::IsInOfflinePractice() const
+{
+	return tf_bot_offline_practice.GetBool();
+}
+
+void CTFBotManager::SetIsInOfflinePractice( bool set )
+{
+	tf_bot_offline_practice.SetValue( set );
+}
+
+void CTFBotManager::RevertOfflinePracticeConvars()
+{
+	tf_bot_quota.Revert();
+	tf_bot_quota_mode.Revert();
+	tf_bot_auto_vacate.Revert();
+	tf_bot_difficulty.Revert();
+	tf_bot_offline_practice.Revert();
+}
+
+
+void CTFBotManager::OnForceAddedBots( int count )
+{
+	tf_bot_quota.SetValue( Min( gpGlobals->maxClients, count + tf_bot_quota.GetInt() ) );
+	m_flQuotaChangeTime = gpGlobals->curtime + 1.0f;
+}
+
+void CTFBotManager::OnForceKickedBots( int count )
+{
+	tf_bot_quota.SetValue( Max( 0, tf_bot_quota.GetInt() - count ) );
+	m_flQuotaChangeTime = gpGlobals->curtime + 2.0f;
+}
+
+
+bool CTFBotManager::IsAllBotTeam( int teamNum )
+{
+	CTeam *team = GetGlobalTeam( teamNum );
+	if ( team == nullptr )
+		return false;
+
+	if ( team->GetNumPlayers() > 0 )
+	{
+		for ( int i=0; i<team->GetNumPlayers(); ++i )
+		{
+			CBasePlayer *player = team->GetPlayer( i );
+			if ( player->IsNetClient() && !player->IsFakeClient() )
+				return false;
+		}
+	}
+	else
+	{
+		return teamNum != TFGameRules()->GetAssignedHumanTeam();
+	}
+
+	return true;
+}
+
+
+bool CTFBotManager::IsMeleeOnly() const
+{
+	return tf_bot_melee_only.GetBool();
+}
+
+
+void CTFBotManager::MaintainBotQuota()
+{
+	if ( TheNavMesh->IsGenerating() || g_fGameOver ) return;
+	if ( !TFGameRules() || TFGameRules()->IsInTraining() ) return;
+	if ( !engine->IsDedicatedServer() && !UTIL_GetListenServerHost() ) return;
+	if ( gpGlobals->curtime < m_flQuotaChangeTime ) return;
+
+	m_flQuotaChangeTime = gpGlobals->curtime + 0.25f;
+
+	int nPlayersTotal = 0;
+	int nTFBotsTotal  = 0;
+	int nTFBotsTeamed = 0;
+	int nHumansTeamed = 0;
+	int nHumansSpec   = 0;
+
+	for ( int i = 1; i < gpGlobals->maxClients; ++i )
+	{
+		CBasePlayer *player = UTIL_PlayerByIndex( i );
+
+		if ( player == nullptr || FNullEnt( player->edict() ) )
+			continue;
+		if ( !player->IsPlayer() || !player->IsConnected() )
+			continue;
+
+		CTFBot *bot = dynamic_cast<CTFBot *>( player );
+		if ( bot != nullptr )
+		{
+			++nTFBotsTotal;
+			if ( bot->GetTeamNumber() == TF_TEAM_RED || bot->GetTeamNumber() == TF_TEAM_BLUE || bot->GetTeamNumber() == TF_TEAM_MERCENARY )
+			{
+				++nTFBotsTeamed;
+			}
+		}
+		else
+		{
+			if ( player->GetTeamNumber() == TF_TEAM_RED || player->GetTeamNumber() == TF_TEAM_BLUE || player->GetTeamNumber() == TF_TEAM_MERCENARY  )
+			{
+				++nHumansTeamed;
+			}
+			else if ( player->GetTeamNumber() == TEAM_SPECTATOR )
+			{
+				++nHumansSpec;
+			}
+		}
+
+		++nPlayersTotal;
+	}
+
+	int nHumansTotal = nPlayersTotal - nTFBotsTotal;
+
+	int nDesired = tf_bot_quota.GetInt();
+
+	if ( FStrEq( tf_bot_quota_mode.GetString(), "fill" ) )
+	{
+		nDesired = Max( 0, nDesired - nHumansTeamed );
+	}
+	else if ( FStrEq( tf_bot_quota_mode.GetString(), "match" ) )
+	{
+		nDesired = Max( 0, tf_bot_quota.GetInt() * nHumansTeamed );
+	}
+
+	if ( tf_bot_join_after_player.GetBool() )
+	{
+		if ( nHumansTeamed == 0 )
+		{
+			nDesired = 0;
+		}
+	}
+
+	if ( tf_bot_auto_vacate.GetBool() )
+	{
+		nDesired = Min( nDesired, gpGlobals->maxClients - ( nHumansTotal + 1 ) );
+	}
+	else
+	{
+		nDesired = Min( nDesired, gpGlobals->maxClients - nHumansTotal );
+	}
+
+	if ( nDesired > nTFBotsTeamed )
+	{
+		if ( !TFGameRules()->WouldChangeUnbalanceTeams( TF_TEAM_BLUE, TEAM_UNASSIGNED ) ||
+			 !TFGameRules()->WouldChangeUnbalanceTeams( TF_TEAM_RED, TEAM_UNASSIGNED ) )
+		{
+			extern ConVar tf_bot_force_class;
+
+			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( GetRandomBotName() );
+
+			if ( bot != nullptr )
+			{
+				bot->HandleCommand_JoinTeam( "auto" );
+				
+				// pick a random color!
+				Vector m_vecPlayerColor = vec3_origin;
+
+				if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+				{
+					float flColors[ 3 ];
+
+					for ( int i = 0; i < ARRAYSIZE( flColors ); i++ )
+						flColors[ i ] = RandomFloat( 1, 255 );
+
+					m_vecPlayerColor.Init( flColors[0], flColors[1], flColors[2] );
+
+					m_vecPlayerColor /= 255.0f;
+
+					bot->m_vecPlayerColor = m_vecPlayerColor;
+				}
+
+
+				const char *szClassname;
+				if ( FStrEq( tf_bot_force_class.GetString(), "" ) )
+				{
+					szClassname = bot->GetNextSpawnClassname();
+				}
+				else
+				{
+					szClassname = tf_bot_force_class.GetString();
+				}
+
+				bot->HandleCommand_JoinClass( szClassname );
+
+				char szName[256];
+				CreateBotName( bot->GetTeamNumber(), bot->GetPlayerClass()->GetClassIndex(), tf_bot_difficulty.GetInt(), szName, sizeof( szName ) );
+				engine->SetFakeClientConVarValue( bot->edict(), "name", szName );
+			}
+		}
+	}
+	else if ( nDesired < nTFBotsTeamed )
+	{
+		if ( !UTIL_KickBotFromTeam( TEAM_UNASSIGNED ) )
+		{
+			CTeam *team_red = GetGlobalTeam( TF_TEAM_RED );
+			CTeam *team_blu = GetGlobalTeam( TF_TEAM_BLUE );
+
+			int team_kick = TF_TEAM_BLUE;
+			if ( team_red->GetNumPlayers() >= team_blu->GetNumPlayers() )
+			{
+				team_kick = TF_TEAM_RED;
+				if ( team_red->GetNumPlayers() <= team_blu->GetNumPlayers() )
+				{
+					team_kick = TF_TEAM_BLUE;
+					if ( team_red->GetScore() >= team_blu->GetScore() )
+					{
+						team_kick = TF_TEAM_RED;
+						if ( team_red->GetScore() <= team_blu->GetScore() )
+						{
+							team_kick = RandomInt( 0, 1 ) == 1 ? TF_TEAM_RED : TF_TEAM_BLUE;
+						}
+					}
+				}
+			}
+
+			if ( !UTIL_KickBotFromTeam( team_kick ) )
+			{
+				UTIL_KickBotFromTeam( team_kick == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED );
+			}
+		}
+	}
+}
+
+#define BOT_NAMES_FILE	"scripts/tf_bot_names.txt"
+
+void CTFBotManager::LoadBotNames()
+{
+	if ( !filesystem )
+		return;
+
+	m_BotNamesFile = new KeyValues( "BotNames" );
+	if ( !m_BotNamesFile->LoadFromFile( filesystem, BOT_NAMES_FILE ) )
+	{
+		Warning( "CTFBotManager: Could not load %s", BOT_NAMES_FILE );
+		m_BotNamesFile->deleteThis();
+		m_BotNamesFile = NULL;
+		return;
+	}
+
+	for ( KeyValues *pBotNames = m_BotNamesFile->GetFirstSubKey(); pBotNames != NULL; pBotNames = pBotNames->GetNextKey() )
+	{
+		m_BotNames.AddToTail( pBotNames );
+		continue;
+	}
+
+	m_bLoadedBotNames = true;
+}
+
+void CTFBotManager::ReloadBotNames()
+{
+	m_BotNames.RemoveAll();
+	m_BotNamesFile->deleteThis();
+
+	LoadBotNames();
+}
+
+const char *CTFBotManager::GetRandomBotName()
+{
+	if ( m_BotNames.Count() == 0 )
+		return "Unnamed";
+
+	const char *string;
+
+	int iName = RandomInt( 0, m_BotNames.Count() );
+
+	if ( m_BotNames.IsValidIndex( iName ) )
+		string = m_BotNames[ iName ]->GetString();
+	else
+		string = "Unnamed";
+		
+	return string;
+}
+
+void CC_ReloadBotNames( const CCommand &args )
+{
+	TheTFBots().ReloadBotNames();
+}
+
+ConCommand tf_bot_names_reload( "tf_bot_names_reload", CC_ReloadBotNames, "Reload all names for TFBots.", FCVAR_CHEAT );

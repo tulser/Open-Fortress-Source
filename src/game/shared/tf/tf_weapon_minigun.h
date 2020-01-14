@@ -53,6 +53,7 @@ public:
 
 	virtual void	Precache( void );
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_MINIGUN; }
+	MinigunState_t  GetWeaponState( void ) const		{ return m_iWeaponState; }
 	virtual void	PrimaryAttack();
 	virtual void	SecondaryAttack();
 	void			SharedAttack();
@@ -66,7 +67,8 @@ public:
 	
 	virtual void	ItemPostFrame( void );
 	virtual bool	IsChainGun() const { return false; }
-
+	virtual bool 	CanSoftZoom( void ) { return false; }
+	virtual MinigunState_t GetMinigunState(){ return m_iWeaponState; }
 #ifdef GAME_DLL
 	virtual int		UpdateTransmitState( void );
 #endif

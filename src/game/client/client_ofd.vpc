@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-//	CLIENT_OFD.VPC
+//	CLIENT_ODF.VPC
 //
 //	Project Script
 //-----------------------------------------------------------------------------
@@ -59,15 +59,18 @@ $Project "Client (OFD)"
 			$File	"of\of_hud_tdm.cpp"
 			$File	"of\of_hud_tdm.h"
 			$File	"of\of_hud_kills.cpp"
-			$File	"of\of_hud_kills.h"		
+			$File	"of\of_hud_kills.h"	
 			$File	"tf\tf_hud_shieldcharge.cpp"
 			$File	"tf\tf_hud_swapweapons.cpp"
+			$File	"tf\tf_hud_lungemeter.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_lightning.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_lightning.h"
 			$File	"$SRCDIR\game\shared\of\gamemounter.cpp"
 			$File	"$SRCDIR\game\shared\of\gamemounter.h"
 			$File	"of\vgui\of_loadout.cpp"
-			$File	"of\vgui\of_loadout.h"	
+			$File	"of\vgui\of_loadout.h"
+			$File	"of\vgui\of_imageprogressbar.cpp"			
+			$File	"of\vgui\of_imageprogressbar.h"
 			$File	"of\c_of_music_player.cpp"
 			$File	"of\c_of_music_player.h"
 			$File	"of\fmod_manager.cpp"
@@ -98,6 +101,16 @@ $Project "Client (OFD)"
 		$File	"hud_base_account.h"
 		
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+		
+		$Folder "NextBot"
+		{
+			$File	"NextBot\c_NextBot.cpp"
+			$File	"NextBot\c_NextBot.h"
+			$File	"tf\c_headless_hatman.cpp"
+			$File	"tf\c_headless_hatman.h"
+			$File	"tf\c_eyeball_boss.cpp"
+			$File	"tf\c_eyeball_boss.h"
+		}
 
 		$Folder	"TF"
 		{
@@ -209,6 +222,8 @@ $Project "Client (OFD)"
 			$File	"tf\tf_tips.h"
 			$File	"tf\tf_viewrender.cpp"
 			$File	"tf\tf_viewrender.h"
+			$File	"tf\tf_hud_bosshealthmeter.cpp"
+			$File	"tf\tf_hud_bosshealthmeter.h"
 			$File	"$SRCDIR\game\shared\tf\tf_item.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_item.h"
 			$File	"$SRCDIR\game\shared\tf\tf_obj_baseupgrade_shared.cpp"
@@ -233,15 +248,14 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.h"
 			$File	"$SRCDIR\game\shared\tf\tf_gamestats_shared.cpp"
-			{
-				$Configuration
-				{
-					$Compiler
-					{
-						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-					}
-				}
-			}
+			$File	"$SRCDIR\game\shared\tf\entity_bossresource.cpp"
+			$File	"$SRCDIR\game\shared\tf\entity_bossresource.h"
+			$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.cpp"
+			$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.h"
+			$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.h"
+			$File	"$SRCDIR\game\shared\tf\tf_zombie.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_zombie.h"
 
 			$Folder	"Weapon"
 			{

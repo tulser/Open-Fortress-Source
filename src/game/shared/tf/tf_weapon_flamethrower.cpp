@@ -29,8 +29,8 @@
 	#include "collisionutils.h"
 	#include "tf_team.h"
 	#include "tf_obj.h"
-
 	#include "ai_basenpc.h"
+	#include "tf_bot_manager.h"
 
 	ConVar	tf_debug_flamethrower("tf_debug_flamethrower", "0", FCVAR_CHEAT, "Visualize the flamethrower damage." );
 	ConVar  tf_flamethrower_velocity( "tf_flamethrower_velocity", "2300.0", FCVAR_CHEAT, "Initial velocity of flame damage entities." );
@@ -445,7 +445,7 @@ void CTFFlameThrower::PrimaryAttack()
 			iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
 
 		if ( TFGameRules()->IsInfGamemode() )
-			iDamagePerSec = ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) / 3;
+			iDamagePerSec = ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) / 2;
 
 		float flDamage = (float)iDamagePerSec * flFiringInterval;
 
@@ -550,8 +550,8 @@ void CTFFlameThrower::SecondaryAttack()
 	Vector vAirBlastBox = Vector( 128, 128, 64 );	
 
 	// TODO: this isn't an accurate distance
-	// Max distance we can airblast to
-	float flDist = 256.0f;
+	// offset the box origin from our shoot position
+	float flDist = 128.0f;
 
 	// Used as the centre of the box trace
 	Vector vOrigin = pOwner->Weapon_ShootPosition() + vForward * flDist;
@@ -571,13 +571,13 @@ void CTFFlameThrower::SecondaryAttack()
 		if ( !pEntity->IsAlive() )
 			continue;
 
-		if ( pEntity->GetTeamNumber() == TEAM_SPECTATOR )
+		if ( pEntity->GetTeamNumber() < TF_TEAM_RED )
 			continue;
 
 		if ( pEntity == pOwner )
 			continue;
 
-		if ( !pEntity->IsAirBlast() )
+		if ( !pEntity->IsDeflectable() )
 			continue;
 
 		trace_t trWorld;
@@ -662,10 +662,6 @@ void CTFFlameThrower::AirBlastCharacter( CBaseCombatCharacter *pCharacter, const
 		{
 			pTFPlayer->AddDamagerToHistory( pOwner );
 			pTFPlayer->EmitSound( "TFPlayer.AirBlastImpact" );
-
-			// much less push for zombies
-			if ( pTFPlayer->m_Shared.IsZombie() )
-				vec = vec * 0.4;
 		}
 
 		pCharacter->ApplyAirBlastImpulse( vec );
@@ -677,10 +673,6 @@ void CTFFlameThrower::AirBlastCharacter( CBaseCombatCharacter *pCharacter, const
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in )
 {
-	// TODO: A lot of this stuff should be moved into the AirBlast() functions for each projectile
-	// The AirBlast function will probably require a pointer to the player to be added in the parameters
-	// E.g. stickybombs shouldn't be changing team here
-
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
@@ -689,34 +681,11 @@ void CTFFlameThrower::AirBlastProjectile( CBaseEntity *pEntity, const Vector &ve
 		return;
 
 	Vector vec = vec_in;
-
-	Vector vecPos = pEntity->GetAbsOrigin();
 	Vector vecAirBlast;
 
-	GetProjectileAirblastSetup( pOwner, vecPos, &vecAirBlast, false );
+	GetProjectileAirblastSetup( pOwner, pEntity->GetAbsOrigin(), &vecAirBlast, false );
 
-	pEntity->SetOwnerEntity( pOwner );
-
-	CTFGrenadePipebombProjectile *pStickyGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>( pEntity );
-
-	if ( pStickyGrenade && pStickyGrenade->GetType() == TF_GL_MODE_REMOTE_DETONATE )
-	{
-		// jesus christ, FIXME
-	}
-	else
-	{
-		pEntity->ChangeTeam( pOwner->GetTeamNumber() );
-
-		CBaseGrenade *pGrenade = dynamic_cast<CBaseGrenade *>( pEntity );
-
-		if ( pGrenade )
-		{
-			pGrenade->SetThrower( pOwner );
-			pGrenade->m_nSkin = pOwner->GetTeamNumber() - 2;
-		}
-	}
-
-	pEntity->AirBlast( vec );
+	pEntity->Deflected( pEntity, vec );
 
 	pEntity->EmitSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 }
@@ -1225,6 +1194,19 @@ void CTFFlameEntity::FlameThink( void )
 					return;
 			}
 		}
+		
+		CUtlVector<INextBot *> bots;
+		TheNextBots().CollectAllBots( &bots );
+		for ( int i=0; i < bots.Count(); ++i )
+		{
+			CBaseCombatCharacter *pActor = bots[i]->GetEntity();
+			if ( pActor && !pActor->IsPlayer() && pActor->IsAlive() )
+			{
+				CheckCollision( pActor, &bHitWorld );
+				if ( bHitWorld )
+					return;
+			}
+		}
 	}
 
 	// Calculate how long the flame has been alive for
@@ -1244,7 +1226,7 @@ void CTFFlameEntity::FlameThink( void )
 	SetAbsVelocity( vecVelocity );
 
 	// Render debug visualization if convar on
-	if ( tf_debug_flamethrower.GetInt() )
+	if ( tf_debug_flamethrower.GetBool() )
 	{
 		if ( m_hEntitiesBurnt.Count() > 0 )
 		{
@@ -1298,7 +1280,7 @@ void CTFFlameEntity::CheckCollision( CBaseEntity *pOther, bool *pbHitWorld )
 		vDir.NormalizeInPlace();
 		UTIL_TraceLine( GetAbsOrigin() + vDir * WorldAlignMaxs().x, m_vecInitialPos, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );			
 
-		if ( tf_debug_flamethrower.GetInt() )
+		if ( tf_debug_flamethrower.GetBool() )
 		{
 			NDebugOverlay::Line( trWorld.startpos, trWorld.endpos, 0, 255, 0, true, 3.0f );
 		}
@@ -1340,7 +1322,7 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 	}
 	float flDamage = m_flDmgAmount * flMultiplier;
 	flDamage = max( flDamage, 1.0 );
-	if ( tf_debug_flamethrower.GetInt() )
+	if ( tf_debug_flamethrower.GetBool() )
 	{
 		Msg( "Flame touch dmg: %.1f\n", flDamage );
 	}

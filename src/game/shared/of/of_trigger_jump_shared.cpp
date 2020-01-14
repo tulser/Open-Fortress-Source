@@ -6,7 +6,7 @@
 
 #include "of_trigger_jump.h"
 #include "tf_player.h"
-
+#include "tf_bot.h"
 #else
 
 #include "engine/ivdebugoverlay.h"
@@ -85,6 +85,13 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 
 #ifdef GAME_DLL
 	m_OnJump.FireOutput( pOther, this );
+
+	CTFBot *actor = ToTFBot( pOther );
+	if ( actor )
+	{
+		actor->m_bTouchedJumpPad = true;
+		actor->TouchJumpPad();
+	}
 
 	pOther->EmitSound( "JumpPadSound" );
 #endif

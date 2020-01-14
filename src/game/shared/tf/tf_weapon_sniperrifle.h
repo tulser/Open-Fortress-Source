@@ -109,6 +109,7 @@ public:
 	virtual void WeaponReset( void );
 
 	virtual bool CanFireCriticalShot( bool bIsHeadshot = false );
+	virtual bool CanSoftZoom( void ) { return false; }
 
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );

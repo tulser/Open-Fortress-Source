@@ -27,6 +27,9 @@
 #define	PISTOL_ACCURACY_SHOT_PENALTY_TIME		0.2f	// Applied amount of time each shot adds to the time we must recover from
 #define	PISTOL_ACCURACY_MAXIMUM_PENALTY_TIME	1.5f	// Maximum time penalty we'll allow
 
+acttable_t m_acttablePistol[];
+acttable_t m_acttableSecondary2[];
+
 //=============================================================================
 //
 // TF Weapon Pistol.
@@ -54,8 +57,6 @@ public:
 	CNetworkVar( float,	m_flSoonestPrimaryAttack );
 
 	virtual acttable_t *ActivityList( int &iActivityCount );
-	static acttable_t m_acttablePistol[];
-
 private:
 	CTFPistol( const CTFPistol & ) {}
 };
@@ -80,7 +81,7 @@ public:
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PISTOL_MERCENARY; }
 	
 	virtual acttable_t *ActivityList( int &iActivityCount );
-	static acttable_t m_acttablePistolMercenary[];
+
 };
 class CTFPistol_Akimbo : public CTFPistol
 {

@@ -11,6 +11,10 @@
 #pragma once
 #endif
 
+#include "vgui_avatarimage.h"
+
+using namespace vgui;
+
 #define TF_MAX_FILENAME_LENGTH	128
 
 //-----------------------------------------------------------------------------
@@ -28,7 +32,7 @@ public:
 	virtual void Reset();
 
 	virtual bool ShouldDraw( void );
-
+	virtual void ShowBottom( bool bShow );
 protected:
 
 	virtual void OnThink();
@@ -39,10 +43,15 @@ private:
 
 private:
 
+	bool							bBottomVisible;
+
 	float							m_flNextThink;
 
 	CHandle<C_BaseCombatWeapon>		m_hCurrentActiveWeapon;
 	int								m_nKills;
+
+	CAvatarImagePanel				*m_pAvatar;
+	CAvatarImagePanel				*m_pLeadAvatar;
 
 	CExLabel						*m_pKills;
 	CExLabel						*m_pKillsShadow;

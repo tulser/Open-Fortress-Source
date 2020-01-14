@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright ? 1996-2004, Valve LLC, All rights reserved. ============
 //
 //	Weapons.
 //
@@ -168,6 +168,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	void SendReloadEvents();
 
 	virtual bool CanDrop( void ) { return false; }
+	virtual bool CanSoftZoom( void ) { return true; }
 
 	// Sound.
 	bool PlayEmptySound();
@@ -176,6 +177,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void ItemPreFrame( void );
 	virtual void ItemBusyFrame( void );
 	virtual void ItemPostFrame( void );
+	virtual void SoftZoomCheck( void );
 	
 	// Reloading
 	virtual	void			CheckReload( void );	
@@ -198,7 +200,6 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	static acttable_t m_acttablePrimary[];
 	static acttable_t m_acttableSecondary[];
 	static acttable_t m_acttableMelee[];
-	static acttable_t m_acttableMeleeAllClass[];
 	static acttable_t m_acttableBuilding[];
 	static acttable_t m_acttablePDA[];
 

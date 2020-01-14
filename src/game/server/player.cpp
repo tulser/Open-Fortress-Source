@@ -3590,6 +3590,8 @@ bool CBasePlayer::IsUserCmdDataValid( CUserCmd *pCmd )
 	bool bValid = ( pCmd->tick_count >= nMinDelta && pCmd->tick_count < nMaxDelta ) &&
 				  // Prevent clients from sending invalid view angles to try to get leaf server code to crash
 				  ( pCmd->viewangles.IsValid() && IsEntityQAngleReasonable( pCmd->viewangles ) ) &&
+				  // Prevent roll speed hack
+				  ( pCmd->viewangles.z < 51.0f ) &&
 				  // Movement ranges
 				  ( IsFinite( pCmd->forwardmove ) && IsEntityCoordinateReasonable( pCmd->forwardmove ) ) &&
 				  ( IsFinite( pCmd->sidemove ) && IsEntityCoordinateReasonable( pCmd->sidemove ) ) &&
@@ -8754,11 +8756,12 @@ void CBasePlayer::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CBasePlayer::InputSetHealth( inputdata_t &inputdata )
 {
+	// not necessary as armor doesn't exist here
 	int iNewHealth = inputdata.value.Int();
 	int iDelta = abs(GetHealth() - iNewHealth);
 	if ( iNewHealth > GetHealth() )
 	{
-		TakeHealth( iDelta, DMG_GENERIC );
+		TakeDamage( CTakeDamageInfo( this, this, iDelta, DMG_GENERIC ) );
 	}
 	else if ( iNewHealth < GetHealth() )
 	{

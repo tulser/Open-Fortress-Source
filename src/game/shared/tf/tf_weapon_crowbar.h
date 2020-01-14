@@ -19,6 +19,8 @@
 #define CTFCUmbrella C_TFCUmbrella
 #endif
 
+acttable_t m_acttableMeleeAllClass[];
+
 //=============================================================================
 //
 // Crowbar class.
@@ -33,6 +35,7 @@ public:
 
 	CTFCrowbar();
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_CROWBAR; }
+	virtual acttable_t *ActivityList( int &iActivityCount );
 
 private:
 

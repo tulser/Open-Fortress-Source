@@ -42,6 +42,7 @@ ConVar cl_flag_return_size( "cl_flag_return_size", "20", FCVAR_CHEAT );
 extern ConVar tf_flag_caps_per_round;
 
 ConVar cl_flag_return_height( "cl_flag_return_height", "82", FCVAR_CHEAT );
+ConVar tf_flag_return_on_touch( "tf_flag_return_on_touch", "0", FCVAR_CHEAT, "if this is set, your flag must be at base in order to capture the enemy flag. Remote friendly flags return to your base instantly when you touch them." );
 
 #endif
 
@@ -72,7 +73,7 @@ BEGIN_NETWORK_TABLE( CCaptureFlag, DT_CaptureFlag )
 
 #ifdef GAME_DLL
 	SendPropBool( SENDINFO( m_bDisabled ) ),
-	SendPropInt( SENDINFO( m_nGameType ), 5, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nType ), 5, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nFlagStatus ), 3, SPROP_UNSIGNED ),
 	SendPropTime( SENDINFO( m_flResetTime ) ),
 	SendPropTime( SENDINFO( m_flReturnTime ) ),
@@ -82,7 +83,7 @@ BEGIN_NETWORK_TABLE( CCaptureFlag, DT_CaptureFlag )
 	SendPropEHandle( SENDINFO( m_hPrevOwner ) ),
 #else
 	RecvPropInt( RECVINFO( m_bDisabled ), 0, RecvProxy_IsDisabled ),
-	RecvPropInt( RECVINFO( m_nGameType ) ),
+	RecvPropInt( RECVINFO( m_nType ) ),
 	RecvPropInt( RECVINFO( m_nFlagStatus ) ),
 	RecvPropTime( RECVINFO( m_flResetTime ) ),
 	RecvPropTime( RECVINFO( m_flReturnTime ) ),
@@ -96,7 +97,7 @@ END_NETWORK_TABLE()
 BEGIN_DATADESC( CCaptureFlag )
 
 	// Keyfields.
-	DEFINE_KEYFIELD( m_nGameType, FIELD_INTEGER, "GameType" ),
+	DEFINE_KEYFIELD( m_nType, FIELD_INTEGER, "GameType" ),
 	DEFINE_KEYFIELD( m_flReturnTime, FIELD_FLOAT, "ReturnTime"),
 	DEFINE_KEYFIELD( m_flSetNeutralTime, FIELD_FLOAT, "NeutralTime"),
 	DEFINE_KEYFIELD( m_Model, FIELD_STRING, "model"),
@@ -115,11 +116,16 @@ BEGIN_DATADESC( CCaptureFlag )
 	DEFINE_OUTPUT( m_outputOnPickUp, "OnPickUp" ),
 	DEFINE_OUTPUT( m_outputOnDrop, "OnDrop" ),
 	DEFINE_OUTPUT( m_outputOnCapture, "OnCapture" ),
+	DEFINE_OUTPUT( m_outputOnTouchSameTeam, "OnTouchSameTeam" ),
 #endif
 
 END_DATADESC();
 
 LINK_ENTITY_TO_CLASS( item_teamflag, CCaptureFlag );
+
+#ifdef GAME_DLL
+IMPLEMENT_AUTO_LIST( ICaptureFlagAutoList );
+#endif
 
 //=============================================================================
 //
@@ -229,6 +235,9 @@ void CCaptureFlag::Spawn( void )
 	m_bDisabled = m_bStartDisabled;
 	m_bStartDisabled = false;
 
+	// glow!
+	AddGlowEffect();
+
 	// Don't allow the intelligence to fade.
 	m_flFadeScale = 0.0f;
 #else
@@ -305,7 +314,7 @@ void CCaptureFlag::Reset( void )
 	m_bAllowOwnerPickup = true;
 	m_hPrevOwner = NULL;
 
-	if ( m_nGameType == TF_FLAGTYPE_INVADE )
+	if ( m_nType == TF_FLAGTYPE_INVADE )
 	{
 		ChangeTeam( m_iOriginalTeam );
 		m_nSkin = ( GetTeamNumber() == TEAM_UNASSIGNED ) ? 2 : (GetTeamNumber() - 2);
@@ -321,7 +330,7 @@ void CCaptureFlag::Reset( void )
 void CCaptureFlag::ResetMessage( void )
 {
 #ifdef GAME_DLL
-	if ( m_nGameType == TF_FLAGTYPE_CTF )
+	if ( m_nType == TF_FLAGTYPE_CTF )
 	{
 		for ( int iTeam = TF_TEAM_RED; iTeam < TF_TEAM_COUNT; ++iTeam )
 		{
@@ -344,7 +353,7 @@ void CCaptureFlag::ResetMessage( void )
 		EmitSound( filter, entindex(), TF_CTF_FLAGSPAWN );
 		
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND )
+	else if ( m_nType == TF_FLAGTYPE_ATTACK_DEFEND )
 	{
 		for ( int iTeam = TF_TEAM_RED; iTeam < TF_TEAM_COUNT; ++iTeam )
 		{
@@ -364,7 +373,7 @@ void CCaptureFlag::ResetMessage( void )
 			}
 		}
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_INVADE )
+	else if ( m_nType == TF_FLAGTYPE_INVADE )
 	{
 		for ( int iTeam = TF_TEAM_RED; iTeam < TF_TEAM_COUNT; ++iTeam )
 		{
@@ -391,73 +400,113 @@ void CCaptureFlag::ResetMessage( void )
 //-----------------------------------------------------------------------------
 void CCaptureFlag::FlagTouch( CBaseEntity *pOther )
 {
+	// special thanks to Pelipoika for reverse engineering parts of this: https://forums.alliedmods.net/archive/index.php/t-294659.html
+
 	// Is the flag enabled?
 	if ( IsDisabled() )
-	{
 		return;
-	}
+
+	if ( m_nFlagStatus == TF_FLAGINFO_STOLEN )
+		return;
 
 	// The the touch from a live player.
 	if ( !pOther->IsPlayer() || !pOther->IsAlive() )
-	{
-		return;
-	}
-
-#ifdef GAME_DLL
-	// Don't let the person who threw this flag pick it up until it hits the ground.
-	// This way we can throw the flag to people, but not touch it as soon as we throw it ourselves
-	if(  m_hPrevOwner.Get() && m_hPrevOwner.Get() == pOther && m_bAllowOwnerPickup == false )
-	{
-		return;
-	}
-#endif
-
-	// Does my team own this flag? If so, no touch.
-	if ( m_nGameType == TF_FLAGTYPE_CTF && pOther->GetTeamNumber() == GetTeamNumber() )
-	{
-		return;
-	}
-
-	if ( ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND || m_nGameType == TF_FLAGTYPE_TERRITORY_CONTROL ) &&
-		   pOther->GetTeamNumber() != GetTeamNumber() )
-	{
-		return;
-	}
-
-	if ( m_nGameType == TF_FLAGTYPE_INVADE && GetTeamNumber() != TEAM_UNASSIGNED )
-	{
-		if ( pOther->GetTeamNumber() != GetTeamNumber() )
-		{
-			return;
-		}
-	}
-
-	// Can't pickup flags during WaitingForPlayers
-	if ( TFGameRules()->IsInWaitingForPlayers() )
 		return;
 
 	// Get the touching player.
 	CTFPlayer *pPlayer = ToTFPlayer( pOther );
 	if ( !pPlayer )
-	{
-		return;
-	}
-
-	// Is the touching player about to teleport?
-	if ( pPlayer->m_Shared.InCond( TF_COND_SELECTED_TO_TELEPORT ) )
-		return;
-
-	// Don't let invulnerable players pickup flags
-	if ( pPlayer->m_Shared.InCondUber() )
 		return;
 
 #ifdef GAME_DLL
-	if ( PointInRespawnRoom(pPlayer,pPlayer->WorldSpaceCenter()) )
+	// Don't let the person who threw this flag pick it up until it hits the ground.
+	// This way we can throw the flag to people, but not touch it as soon as we throw it ourselves
+	if ( m_hPrevOwner.Get() && m_hPrevOwner.Get() == pPlayer && m_bAllowOwnerPickup == false )
 		return;
-#endif
 
-	// Pick up the flag.
-	PickUp( pPlayer, true );
+	if ( pPlayer->GetTeamNumber() == GetTeamNumber() )
+	{
+		m_outputOnTouchSameTeam.FireOutput( this, this );
+
+		if ( m_nType == TF_FLAGTYPE_CTF )
+			return;
+
+		if ( ( m_nType != TF_FLAGTYPE_CTF || m_nType == TF_FLAGTYPE_ROBOT_DESTRUCTION ) && m_nType != TF_FLAGTYPE_INVADE )
+		{
+			if ( !tf_flag_return_on_touch.GetBool() )
+				return;
+
+			if ( m_nFlagStatus != TF_FLAGINFO_NONE )
+				return;
+		}
+	}
+
+	if ( m_nType == TF_FLAGTYPE_ATTACK_DEFEND || m_nType == TF_FLAGTYPE_TERRITORY_CONTROL )
+	{
+		if ( pPlayer->GetTeamNumber() != GetTeamNumber() )
+			return;
+	}
+
+	if ( m_nType == TF_FLAGTYPE_INVADE || m_nType == TF_FLAGTYPE_SPECIAL_DELIVERY && GetTeamNumber() != TEAM_UNASSIGNED )
+	{
+		if ( pPlayer->GetTeamNumber() != GetTeamNumber() )
+			return;
+	}
+
+	if ( !TFGameRules()->IsInWaitingForPlayers()/* && pPlayer->IsAllowedToPickUpFlag()*/ )
+	{
+		if ( TFGameRules()->IsMannVsMachineMode() )
+		{
+			PickUp( pPlayer, true );
+			return;
+		}
+		
+		// Is the touching player about to teleport?
+		if ( pPlayer->m_Shared.InCond( TF_COND_SELECTED_TO_TELEPORT ) )
+			return;
+		
+		// Can't pickup flag while invulnerable if not playing player destruction
+		if ( pPlayer->m_Shared.InCondUber() && m_nType != TF_FLAGTYPE_PLAYER_DESTRUCTION )
+			return;
+		
+		// Can't pickup flag while invisible
+		if ( pPlayer->m_Shared.InCondInvis() )
+			return;
+		
+		// If the player isnt 25% visible don't let them pickup flag
+		if ( ( pPlayer->m_Shared.InCond( TF_COND_STEALTHED_BLINK ) && pPlayer->m_Shared.GetPercentInvisible() > 0.25 ) )
+			return;
+		
+		// Don't let bonked players pickup the flag
+		if ( pPlayer->m_Shared.InCond( TF_COND_PHASE ) )
+			return;
+		
+		// Do not allow the player to pick up multiple flags unless the gamemode is player destruction
+		if ( !pPlayer->HasTheFlag()
+		|| m_nType == TF_FLAGTYPE_ROBOT_DESTRUCTION
+		|| m_nType == TF_FLAGTYPE_PLAYER_DESTRUCTION
+		|| tf_flag_return_on_touch.GetBool() )
+		{
+			if ( !PointInRespawnRoom( pPlayer, pPlayer->WorldSpaceCenter() /*, false*/ ) )
+			{
+				if ( m_nFlagStatus == TF_FLAGINFO_DROPPED )
+				{
+					if ( pPlayer->GetTeamNumber() == GetTeamNumber() && m_nType != TF_FLAGTYPE_CTF && tf_flag_return_on_touch.GetBool() )
+					{
+						Reset();
+						ResetMessage();
+						//CTF_GameStats.Event_PlayerReturnedFlag( pPlayer );
+						return;
+					}
+				}
+				
+				PickUp( pPlayer, true );
+			}
+		}
+		
+	}
+
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -517,7 +566,7 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 	m_hPrevOwner = pPlayer;
 	m_bAllowOwnerPickup = true;
 
-	if ( m_nGameType == TF_FLAGTYPE_CTF )
+	if ( m_nType == TF_FLAGTYPE_CTF )
 	{
 		for ( int iTeam = TF_TEAM_RED; iTeam < TF_TEAM_COUNT; ++iTeam )
 		{
@@ -538,7 +587,7 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 			}
 		}
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND )
+	else if ( m_nType == TF_FLAGTYPE_ATTACK_DEFEND )
 	{
 		// Handle messages to the screen.
 		TFTeamMgr()->PlayerCenterPrint( pPlayer, "#TF_AD_TakeFlagToPoint" );
@@ -557,7 +606,7 @@ void CCaptureFlag::PickUp( CTFPlayer *pPlayer, bool bInvisible )
 			}
 		}
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_INVADE )
+	else if ( m_nType == TF_FLAGTYPE_INVADE )
 	{
 		// Handle messages to the screen.
 		TFTeamMgr()->PlayerCenterPrint( pPlayer, "#TF_Invade_PlayerPickup" );
@@ -622,7 +671,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 #ifdef GAME_DLL
 
-	if ( m_nGameType == TF_FLAGTYPE_CTF )
+	if ( m_nType == TF_FLAGTYPE_CTF )
 	{
 		bool bNotify = true;
 
@@ -670,7 +719,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 			TFTeamMgr()->AddTeamScore( pPlayer->GetTeamNumber(), TF_CTF_CAPTURED_TEAM_FRAGS );
 		}
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND )
+	else if ( m_nType == TF_FLAGTYPE_ATTACK_DEFEND )
 	{
 		char szNumber[64];
 		Q_snprintf( szNumber, sizeof(szNumber), "%d", nCapturePoint );
@@ -703,7 +752,7 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 
 		// TFTODO:: Reward the team	
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_INVADE )
+	else if ( m_nType == TF_FLAGTYPE_INVADE )
 	{
 		// Handle messages to the screen.
 		TFTeamMgr()->PlayerCenterPrint( pPlayer, "#TF_Invade_PlayerCapture" );
@@ -813,7 +862,7 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 	UTIL_TraceHull( vecStart, vecEnd, WorldAlignMins(), WorldAlignMaxs(), MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trace );
 	SetAbsOrigin( trace.endpos );
 
-	if ( m_nGameType == TF_FLAGTYPE_CTF )
+	if ( m_nType == TF_FLAGTYPE_CTF )
 	{
 		if ( bMessage  )
 		{
@@ -838,7 +887,7 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 		else
 			SetFlagReturnIn( TF_CTF_RESET_TIME );
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_INVADE )
+	else if ( m_nType == TF_FLAGTYPE_INVADE )
 	{
 		if ( bMessage  )
 		{
@@ -872,7 +921,7 @@ void CCaptureFlag::Drop( CTFPlayer *pPlayer, bool bVisible,  bool bThrown /*= fa
 		else
 			SetFlagNeutralIn( TF_INVADE_NEUTRAL_TIME );		
 	}
-	else if ( m_nGameType == TF_FLAGTYPE_ATTACK_DEFEND )
+	else if ( m_nType == TF_FLAGTYPE_ATTACK_DEFEND )
 	{
 		if ( bMessage  )
 		{
@@ -1013,7 +1062,7 @@ void CCaptureFlag::Think( void )
 			}
 		}
 
-		if ( m_nGameType == TF_FLAGTYPE_INVADE )
+		if ( m_nType == TF_FLAGTYPE_INVADE )
 		{
 			if ( m_flResetTime && gpGlobals->curtime > m_flResetTime )
 			{

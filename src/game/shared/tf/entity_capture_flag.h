@@ -123,7 +123,12 @@ public:
 //
 // CTF Flag class.
 //
+#ifdef GAME_DLL
+DECLARE_AUTO_LIST( ICaptureFlagAutoList )
+class CCaptureFlag : public CTFItem, public ICaptureFlagAutoList
+#else
 class CCaptureFlag : public CTFItem
+#endif
 {
 public:
 
@@ -195,7 +200,7 @@ public:
 	virtual void	PickUp( CTFPlayer *pPlayer, bool bInvisible );
 	virtual void	Drop( CTFPlayer *pPlayer, bool bVisible, bool bThrown = false, bool bMessage = true );
 
-	int				GetGameType( void ){ return m_nGameType; }
+	int				GetGameType( void ){ return m_nType; }
 	
 	void			Reset( void );
 	void			ResetMessage( void );
@@ -221,7 +226,7 @@ public:
 private:
 
 	CNetworkVar( bool,	m_bDisabled );	// Enabled/Disabled?
-	CNetworkVar( int,	m_nGameType );	// Type of game this flag will be used for.
+	CNetworkVar( int,	m_nType );	// Type of game this flag will be used for.
 
 	CNetworkVar( int,	m_nFlagStatus );
 	CNetworkVar( float,	m_flResetTime );		// Time until the flag is placed back at spawn.
@@ -242,6 +247,7 @@ private:
 	COutputEvent	m_outputOnPickUp;	// Fired when the flag is picked up.
 	COutputEvent	m_outputOnDrop;		// Fired when the flag is dropped.
 	COutputEvent	m_outputOnCapture;	// Fired when the flag is captured.
+	COutputEvent	m_outputOnTouchSameTeam; // Fired when the flag is touched by a client with the same team as the flag
 
 	bool			m_bAllowOwnerPickup;
 

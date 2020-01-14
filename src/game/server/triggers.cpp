@@ -43,6 +43,7 @@
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #include "team.h"
+#include "tf_bot.h"
 
 #include "entity_croc.h"
 
@@ -789,13 +790,13 @@ bool CTriggerHurt::HurtEntity( CBaseEntity *pOther, float damage )
 void CTriggerHurt::HurtThink()
 {
 	// if I hurt anyone, think again
-	if ( HurtAllTouchers( 0.2 ) <= 0 )
+	if ( HurtAllTouchers( 0.5 ) <= 0 )
 	{
 		SetThink(NULL);
 	}
 	else
 	{
-		SetNextThink( gpGlobals->curtime + 0.2f );
+		SetNextThink( gpGlobals->curtime + 0.5f );
 	}
 }
 
@@ -2413,20 +2414,6 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 //-----------------------------------------------------------------------------
 const int SF_TELEPORT_PRESERVE_ANGLES = 0x20;	// Preserve angles even when a local landmark is not specified
 const int SF_TELEPORT_ADJUST_ANGLES = 0x2000; // adjust angles and velocity when a local landmark is specified
-class CTriggerTeleport : public CBaseTrigger
-{
-public:
-	DECLARE_CLASS( CTriggerTeleport, CBaseTrigger );
-
-	virtual void Spawn( void ) OVERRIDE;
-	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
-	
-	virtual bool PassesTriggerFilters(CBaseEntity *pOther);
-
-	string_t m_iLandmark;
-
-	DECLARE_DATADESC();
-};
 
 LINK_ENTITY_TO_CLASS(trigger_teleport, CTriggerTeleport);
 
@@ -2454,8 +2441,6 @@ void CTriggerTeleport::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTriggerTeleport::Touch( CBaseEntity *pOther )
 {
-	CBaseEntity	*pentTarget = NULL;
-
 	if (!PassesTriggerFilters(pOther))
 	{
 		return;
@@ -2471,6 +2456,10 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	{
 	   return;
 	}
+
+	CTFBot *actor = ToTFBot( pOther );
+	if ( actor )
+		actor->m_bTouchedTeleport = true;
 
 	// The angle and velocity to give pOther
 	const QAngle *pAngles = NULL;
@@ -2550,16 +2539,19 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	tmp += vecLandmarkOffset;
 	pOther->Teleport( &tmp, pAngles, pVelocity );
 
-	CBaseEntity *ent = NULL;
-
 	// telefragging
-	// copied from tf_player
 	if ( pOther->IsPlayer() )
 	{
-		for ( CEntitySphereQuery sphere( pentTarget->GetAbsOrigin(), 50 ); ( ent = sphere.GetCurrentEntity() ) != NULL; sphere.NextEntity() )
+		CBaseEntity *pList[ 32 ];
+		Vector mins = pentTarget->GetAbsOrigin() + VEC_HULL_MIN;
+		Vector maxs = pentTarget->GetAbsOrigin() + VEC_HULL_MAX;
+		int targets = UTIL_EntitiesInBox( pList, 32, mins, maxs, FL_CLIENT );
+
+		for ( int i = 0; i < targets; i++ )
 		{
 			// don't telefrag ourselves
-			if ( ent->IsPlayer() && ent != pOther )
+			CBaseEntity *ent = pList[ i ];
+			if ( ent->IsPlayer() && ent != pOther && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 			{
 				CTakeDamageInfo info( this, pOther, 1000, DMG_ACID|DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
 				ent->TakeDamage( info );

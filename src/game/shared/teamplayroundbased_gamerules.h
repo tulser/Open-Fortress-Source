@@ -393,6 +393,7 @@ public:
 
 	virtual bool ShouldWaitToStartRecording( void ){ return IsInWaitingForPlayers(); }
 
+	virtual int	 CountActivePlayers( void );
 protected:
 	virtual void Think( void );
 
@@ -465,7 +466,6 @@ protected:
 
 protected:
 	virtual void InitTeams( void );
-	virtual int	 CountActivePlayers( void );
 
 	virtual void RoundRespawn( void );
 	virtual void CleanUpMap( void );

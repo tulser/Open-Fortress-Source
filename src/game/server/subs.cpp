@@ -75,7 +75,7 @@ bool CBaseDMStart::IsTriggered( CBaseEntity *pEntity )
 // Convenient way to delay removing oneself
 void CBaseEntity::SUB_Remove( void )
 {
-	if (m_iHealth > 0)
+	if ( m_iHealth > 0 )
 	{
 		// this situation can screw up NPCs who can't tell their entity pointers are invalid.
 		m_iHealth = 0;

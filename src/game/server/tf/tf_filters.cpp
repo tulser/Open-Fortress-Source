@@ -86,8 +86,8 @@ bool CFilterTFTeam::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity
 			}
 		}
 
-		// in infection, we can enter any spawn we want
-		if  ( TFGameRules()->IsInfGamemode() )
+		// in free roam, we can enter any spawn we want
+		if  ( TFGameRules()->IsFreeRoam() )
 		{
 			if ( m_bNegated )
 			{
@@ -345,7 +345,7 @@ LINK_ENTITY_TO_CLASS( filter_tf_owns_weapon, CFilterTFOwnsWeapon );
 bool CFilterTFOwnsWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity )
 {
 	CTFPlayer *pPlayer = dynamic_cast< CTFPlayer * >(pEntity);
-	if (!pPlayer)
+	if ( !pPlayer )
 		return false;
 	bool bSuccess = pPlayer->OwnsWeaponID(AliasToWeaponID(STRING(m_iszTFWeaponName)) );
 	return bSuccess;
@@ -356,4 +356,54 @@ bool CFilterTFOwnsWeapon::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *p
 void CFilterTFOwnsWeapon::InputRoundActivate( inputdata_t &input )
 {
 
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CFilterDamagedByWeaponInSlot : public CBaseFilter
+{
+	DECLARE_CLASS( CFilterDamagedByWeaponInSlot, CBaseFilter );
+
+public:
+
+	bool PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity ) { return true; };
+	bool PassesDamageFilterImpl( const CTakeDamageInfo &info );
+
+	int m_iWeaponSlot;
+
+private:
+	DECLARE_DATADESC();
+};
+
+LINK_ENTITY_TO_CLASS( filter_tf_damaged_by_weapon_in_slot, CFilterDamagedByWeaponInSlot );
+
+BEGIN_DATADESC( CFilterDamagedByWeaponInSlot )
+	DEFINE_KEYFIELD( m_iWeaponSlot,	FIELD_INTEGER,	"weaponSlot" ),
+END_DATADESC()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CFilterDamagedByWeaponInSlot::PassesDamageFilterImpl( const CTakeDamageInfo &info )
+{
+	CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( info.GetWeapon() );
+
+	if ( !pWeapon )
+		return false;
+
+	CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
+
+	if ( !pAttacker )
+		return false;
+
+	CTFWeaponBase *pWeapon2 = pAttacker->Weapon_GetWeaponByType( m_iWeaponSlot );
+
+	if ( !pWeapon2 )
+		return false;
+
+	if ( pWeapon == pWeapon2 )
+		return true;
+
+	return false;
 }

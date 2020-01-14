@@ -15,6 +15,8 @@
 #include "KeyValues.h"
 #include "filesystem.h"
 
+#include "bone_setup.h"
+
 // Using MAP_DEBUG mode?
 #ifdef MAP_DEBUG
 	#define MDEBUG(x) x
@@ -57,10 +59,34 @@ enum
 	TF_TEAM_RED = LAST_SHARED_TEAM+1,
 	TF_TEAM_BLUE,
 	TF_TEAM_MERCENARY,
-	TF_TEAM_COUNT
+	TF_TEAM_NPC,
+	TF_TEAM_COUNT,
 };
 
-#define TF_TEAM_AUTOASSIGN (TF_TEAM_COUNT + 1 )
+inline int GetEnemyTeam( CBaseEntity *ent )
+{
+	int enemy_team = ent->GetTeamNumber();
+	
+	switch ( enemy_team ) 
+	{
+		case TF_TEAM_RED:
+			enemy_team = TF_TEAM_BLUE;
+			break;
+		case TF_TEAM_BLUE:
+			enemy_team = TF_TEAM_RED;
+			break;
+		case TF_TEAM_MERCENARY:
+			enemy_team = TF_TEAM_MERCENARY;
+			break;
+	}
+	
+	return enemy_team;
+}
+
+
+#define TF_TEAM_AUTOASSIGN ( TF_TEAM_COUNT + 1 )
+
+bool IsTeamName( const char *name );
 
 extern const char *g_aTeamNames[TF_TEAM_COUNT];
 extern const char *TF_WEARABLE_MODEL[];
@@ -162,11 +188,11 @@ enum
 	TF_CLASS_HEAVYWEAPONS,
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
-	TF_CLASS_ENGINEER,		// TF_LAST_NORMAL_CLASS
+	TF_CLASS_ENGINEER,		
 
 	// Add any new classes after Engineer
 	TF_CLASS_MERCENARY,
-	TF_CLASS_CIVILIAN,
+	TF_CLASS_CIVILIAN,		// TF_LAST_NORMAL_CLASS
 	TF_CLASS_JUGGERNAUT,
 	TF_CLASS_COUNT_ALL,
 
@@ -178,6 +204,9 @@ extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
 extern const char *g_aPlayerMutatorNames[];	// non-localized class names
 
+bool IsPlayerClassName( const char *name );
+int GetClassIndexFromString( const char *name, int maxClass );
+
 //-----------------------------------------------------------------------------
 // For entity_capture_flags to use when placed in the world
 //-----------------------------------------------------------------------------
@@ -187,7 +216,9 @@ enum
 	TF_FLAGTYPE_ATTACK_DEFEND,
 	TF_FLAGTYPE_TERRITORY_CONTROL,
 	TF_FLAGTYPE_INVADE,
-	TF_FLAGTYPE_KINGOFTHEHILL,
+	TF_FLAGTYPE_SPECIAL_DELIVERY, //sd_
+	TF_FLAGTYPE_ROBOT_DESTRUCTION, //rd_ and pd_
+	TF_FLAGTYPE_PLAYER_DESTRUCTION //pd_
 };
 
 //-----------------------------------------------------------------------------
@@ -266,6 +297,10 @@ enum
 
 int AliasToWeaponID( const char *alias );
 
+bool WeaponID_IsSniperRifle( int iWeaponID );
+bool WeaponID_IsRocketWeapon( int iWeaponID );
+bool WeaponID_IsGrenadeWeapon( int iWeaponID );
+
 //-----------------------------------------------------------------------------
 // Grenade Launcher mode (for pipebombs).
 //-----------------------------------------------------------------------------
@@ -287,7 +322,6 @@ enum
 	TF_WPN_TYPE_BUILDING,
 	TF_WPN_TYPE_PDA,
 	TF_WPN_TYPE_WEARABLE,
-	TF_WPN_TYPE_MELEE_ALLCLASS,
 };
 
 extern const char *g_aAmmoNames[];
@@ -312,6 +346,10 @@ extern const char *g_aAmmoNames[];
 #define TF_WEAPON_PIPEBOMB_WORLD_COUNT					15
 #define TF_WEAPON_PIPEBOMB_COUNT						8
 #define TF_WEAPON_PIPEBOMB_INTERVAL						0.6f
+
+#define TF_PIPEBOMB_MIN_CHARGE_VEL						900
+#define TF_PIPEBOMB_MAX_CHARGE_VEL						2400
+#define TF_PIPEBOMB_MAX_CHARGE_TIME						4.0f
 
 #define TF_WEAPON_ROCKET_INTERVAL						0.8f
 
@@ -385,6 +423,8 @@ enum TFWeaponIDs
 	TF_WEAPON_FLAREGUN,
 	TF_WEAPON_GIB,
 	TF_WEAPON_THUNDERGUN,
+	TF_WEAPON_CLAWS,
+	
 	TFC_WEAPON_SHOTGUN_SB,
 	TFC_WEAPON_SHOTGUN_DB,
 	TFC_WEAPON_CROWBAR,
@@ -526,7 +566,7 @@ extern const char *g_szProjectileNames[];
 
 // until we get the live tf2 cond system, don't use this
 
-/*
+
 // not all of these exist, compatibility only
 // https://csrd.science/misc/datadump/current/tf_conds.txt
 enum
@@ -659,47 +699,14 @@ enum
 	TF_COND_ROCKETPACK,
 	TF_COND_LOST_FOOTING,
 	TF_COND_AIR_CURRENT,
-	
+
 	// Open fortress
-	TF_COND_SPAWNPROTECT,
-	TF_COND_BERSERK,
-	TF_COND_SHIELD,
-	TF_COND_CRIT_POWERUP,
-	TF_COND_INVIS_POWERUP,
-
-	TF_COND_LAST
-};
-*/
-
-enum
-{
-	TF_COND_AIMING = 0,		// Sniper aiming, Heavy minigun.
-	TF_COND_ZOOMED,
-	TF_COND_DISGUISING,
-	TF_COND_DISGUISED,
-	TF_COND_STEALTHED,
-	TF_COND_INVULNERABLE,
-	TF_COND_TELEPORTED,
-	TF_COND_TAUNTING,
-	TF_COND_INVULNERABLE_WEARINGOFF,
-	TF_COND_STEALTHED_BLINK,
-	TF_COND_SELECTED_TO_TELEPORT,
-	TF_COND_CRITBOOSTED,
-	TF_COND_SPAWNPROTECT,
-	TF_COND_SHIELD_CHARGE,
-	TF_COND_BERSERK,
-	TF_COND_SHIELD,
-	TF_COND_CRIT_POWERUP,
-	TF_COND_INVIS_POWERUP,
-	TF_COND_CRITBOOSTED_DEMO_CHARGE,
-	TF_COND_HASTE,
-
-	// The following conditions all expire faster when the player is being healed
-	// If you add a new condition that shouldn't have this behavior, add it before this section.
-	TF_COND_HEALTH_BUFF,
-	TF_COND_BURNING,
-
-	// Add new conditions that should be affected by healing here
+	TF_COND_SPAWNPROTECT, // 128
+	TF_COND_BERSERK, // 129
+	TF_COND_SHIELD, // 130
+	TF_COND_CRIT_POWERUP, // 131
+	TF_COND_INVIS_POWERUP, // 132
+	TF_COND_HASTE, // 133
 
 	TF_COND_LAST
 };
@@ -718,6 +725,16 @@ enum
 };
 
 int GetWearableCount( void );
+
+enum
+{
+	TF_CLASSMOD_NONE = 0,		// Sniper aiming, Heavy minigun.
+	TF_CLASSMOD_TFC,
+	TF_CLASSMOD_ZOMBIE,
+	
+	
+	TF_CLASSMOD_LAST,
+};
 
 //-----------------------------------------------------------------------------
 // TF Player State.
@@ -759,6 +776,7 @@ enum {
 //-----------------------------------------------------------------------------
 #define TF_TIME_ASSIST_KILL				3.0f	// Time window for a recent damager to get credit for an assist for a kill
 #define TF_TIME_SUICIDE_KILL_CREDIT		10.0f	// Time window for a recent damager to get credit for a kill if target suicides
+#define TF_TIME_DEATH_KILL_CREDIT		5.0f	// Time window for a recent damager to get credit for a kill if target dies from environmental causes
 
 //-----------------------------------------------------------------------------
 // Domination/nemesis constants
@@ -1065,6 +1083,7 @@ enum
 #define SENTRYGUN_MAX_SHELLS_2			200
 #define SENTRYGUN_MAX_SHELLS_3			200
 #define SENTRYGUN_MAX_ROCKETS			20
+#define SENTRYGUN_BASE_RANGE			1100.0f
 
 // Dispenser's maximum carrying capability
 #define DISPENSER_MAX_METAL_AMMO		400
@@ -1364,6 +1383,10 @@ typedef enum
 
 	NUM_STOCK_NOTIFICATIONS
 } HudNotification_t;
+
+bool IsSpaceToSpawnHere( const Vector &vecPos );
+
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, CBoneBitList &boneComputed, float flScale );
 
 
 #endif // TF_SHAREDDEFS_H

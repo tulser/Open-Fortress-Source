@@ -135,7 +135,7 @@ private:
 	CPanelAnimationVarAliasType( float, item_wide, "item_wide", "160", "proportional_float" );
 	CPanelAnimationVarAliasType( float, item_spacing, "item_spacing", "2", "proportional_float" );
 
-	CPanelAnimationVarAliasType( bool, show_avatar, "show_avatar", "0", "bool" );
+	CPanelAnimationVarAliasType( bool, show_avatar, "show_avatar", "1", "bool" );
 	CPanelAnimationVarAliasType( bool, show_friend, "show_friend", "1", "bool" );
 	CPanelAnimationVarAliasType( float, avatar_ypos, "avatar_ypos", "0", "proportional_float" );
 	CPanelAnimationVarAliasType( float, avatar_xpos, "avatar_xpos", "16", "proportional_float" );

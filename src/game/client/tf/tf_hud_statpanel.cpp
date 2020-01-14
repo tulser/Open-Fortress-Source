@@ -596,8 +596,13 @@ void CTFStatPanel::ShowStatPanel( int iClass, int iTeam, int iCurStatValue, TFSt
 
 	if ( m_pClassImage )
 	{
-		m_pClassImage->SetClass( iTeam, iClass, 0 );
-		m_pClassImageColorless->SetClassColorless( iTeam, iClass, 0 );
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		TFPlayerClassData_t *pClassData = GetPlayerClassData(iClass);
+		if ( pPlayer )
+			pClassData = pPlayer->GetPlayerClass()->GetData();
+
+		m_pClassImage->SetClass( iTeam, pClassData, 0 );
+		m_pClassImageColorless->SetClassColorless( iTeam, pClassData, 0 );
 	}
 
 	Show();

@@ -199,7 +199,7 @@ public:
 			// only copy out entities that will simulate or think this frame
 			if ( m_simThinkList[i].nextThinkTick <= gpGlobals->tickcount )
 			{
-				Assert(m_simThinkList[i].nextThinkTick>=0);
+				//Assert(m_simThinkList[i].nextThinkTick>=0);
 				int entinfoIndex = m_simThinkList[i].entEntry;
 				const CEntInfo *pInfo = gEntList.GetEntInfoPtrByIndex( entinfoIndex );
 				pList[out] = (CBaseEntity *)pInfo->m_pEntity;

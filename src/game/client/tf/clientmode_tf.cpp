@@ -54,7 +54,8 @@
 #endif
 
 ConVar default_fov( "default_fov", "90", FCVAR_CHEAT );
-ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 50.0, true, 130.0 );
+ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 65.0, true, 130.0 );
+ConVar fov_softzoom( "fov_softzoom", "55", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 35.0, true, 130.0 );
 
 void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOldValue )
 {
@@ -204,6 +205,15 @@ void ClientModeTFNormal::Init()
 	}
 
 	BaseClass::Init();
+	
+	ListenForGameEvent( "pumpkin_lord_summoned" );
+	ListenForGameEvent( "pumpkin_lord_killed" );
+	ListenForGameEvent( "eyeball_boss_summoned" );
+	ListenForGameEvent( "eyeball_boss_stunned" );
+	ListenForGameEvent( "eyeball_boss_killed" );
+	ListenForGameEvent( "eyeball_boss_killer" );
+	ListenForGameEvent( "eyeball_boss_escape_imminent" );
+	ListenForGameEvent( "eyeball_boss_escaped" );
 }
 
 //-----------------------------------------------------------------------------
@@ -350,7 +360,50 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 	if ( !eventname || !eventname[0] )
 		return;
 
-	if ( Q_strcmp( "player_changename", eventname ) == 0 )
+	if (FStrEq( eventname, "pumpkin_lord_summoned" ))
+	{
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if (pLocal)
+			pLocal->EmitSound( "Halloween.HeadlessBossSpawn" );
+	}
+	else if (FStrEq( eventname, "pumpkin_lord_killed" ))
+	{
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if (pLocal)
+			pLocal->EmitSound( "Halloween.HeadlessBossDeath" );
+	}
+	else if ( FStrEq( eventname, "eyeball_boss_summoned" ) )
+	{
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if ( pLocal )
+			pLocal->EmitSound( "Halloween.MonoculusBossSpawn" );
+	}
+	else if ( FStrEq( eventname, "eyeball_boss_killed" ) )
+	{
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if ( pLocal )
+			pLocal->EmitSound( "Halloween.HeadlessBossDeath" );
+	}
+	else if ( FStrEq( eventname, "eyeball_boss_escape_imminent" ) )
+	{
+		int iTimeLeft = event->GetInt( "time_remaining" );
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if ( pLocal )
+		{
+			if ( iTimeLeft > 10 )
+				pLocal->EmitSound( "Halloween.EyeballBossEscapeSoon" );
+			else
+				pLocal->EmitSound( "Halloween.EyeballBossEscapeImminent" );
+		}
+
+	}
+	else if ( FStrEq( eventname, "eyeball_boss_escaped" ) )
+	{
+		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
+		if ( pLocal )
+			pLocal->EmitSound( "Halloween.EyeballBossEscaped" );
+	}
+	else if ( FStrEq( eventname, "player_changename" ) )
 	{
 		return; // server sends a colorized text string for this
 	}

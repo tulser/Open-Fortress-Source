@@ -956,37 +956,16 @@ void CHudVote::LevelInit( void )
 int	CHudVote::KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
 	if ( !IsVisible() )
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: CHudVote not visible!\n" );
 		return 1;
-	}
 
 	if ( !down )
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: Down is 0!\n" );
 		return 1;
-	}
 
 	if ( !m_bVotingActive )
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: Voting is not active!\n" );
 		return 1;
-	}
-
- 	if ( m_bPlayerVoted )
-	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: Player already voted!\n" );
- 		return 1;
-	}
 
 	if ( !m_bShowVoteActivePanel )
 	{
-		if ( keynum == KEY_F1 || keynum == KEY_F2 )
-			Msg( "Ghost Vote Debug: ShowVoteActivePanel is false!\n" );
 		return 1;
 	}
 
@@ -1014,14 +993,12 @@ int	CHudVote::KeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBin
 	}
 	else
 	{
-		Msg( "Ghost Vote Debug: Invalid slot key!\n" );
 		return 1;
 	}
 
 	// Limit key checking to the number of options
 	if ( nSlot > m_nVoteChoicesCount )
 	{
-		Msg( "Ghost Vote Debug: Slot doesn't match the vote choice!\n" );
 		return 1;
 	}
 
@@ -1167,12 +1144,18 @@ void CHudVote::MsgFunc_CallVoteFailed( bf_read &msg )
 			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_kick_limit" );
 			break;
 
+		// open fortress
+
 		case VOTE_FAILED_MUTATOR_INVALID:
 			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_mutator_invalid" );
 			break;
 
 		case VOTE_FAILED_INTERMISSION:
 			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_intermission" );
+			break;
+
+		case VOTE_FAILED_NOT_ENOUGH_PLAYERS:
+			m_pCallVoteFailed->SetControlString( "FailedReason", "#GameUI_vote_failed_not_enough_players" );
 			break;
 	}	
 }

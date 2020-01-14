@@ -11,10 +11,15 @@
 #include "tf_shareddefs.h"
 #include "tf_player_shared.h"
 #include "tf_weaponbase.h"
+#include "tf_weaponbase_gun.h"
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
 #include "hl2_playerlocaldata.h"
 #include "hl2_player.h"
+#include "trigger_area_capture.h"
+#include "nav_mesh/tf_nav_area.h"
+#include "Path/NextBotPathFollow.h"
+#include "NextBotUtil.h"
 
 #include "hl_movedata.h"
 
@@ -64,6 +69,28 @@ struct DamagerHistory_t
 	float	flTimeDamage;
 };
 #define MAX_DAMAGER_HISTORY 2
+
+class CTFPlayerPathCost : public IPathCost
+{
+public:
+	CTFPlayerPathCost( CTFPlayer *player )
+		: m_pPlayer( player )
+	{
+		m_flStepHeight = 18.0f;
+		m_flMaxJumpHeight = 72.0f;
+		m_flDeathDropHeight = 200.0f;
+	}
+
+	virtual float operator()( CNavArea *area, CNavArea *fromArea, const CNavLadder *ladder, const CFuncElevator *elevator, float length ) const;
+
+private:
+	CTFPlayer *m_pPlayer;
+	float m_flStepHeight;
+	float m_flMaxJumpHeight;
+	float m_flDeathDropHeight;
+};
+
+
 
 #define ARMOR_DECAY_TIME 3.5f
 
@@ -123,10 +150,13 @@ public:
 	virtual void		LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExitAngles );
 
 	virtual void		CommitSuicide( bool bExplode = false, bool bForce = false );
+	
+	virtual CTFNavArea *GetLastKnownArea( void ) const override;
 
 	// Combats
 	virtual void		TraceAttack(const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator);
 	virtual int			TakeHealth( float flHealth, int bitsDamageType );
+	virtual void		OnMyWeaponFired( CBaseCombatWeapon *weapon ) override;
 	virtual	void		Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info );
 	virtual	void		GotKilled(){ m_bGotKilled = true; };
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
@@ -134,10 +164,12 @@ public:
 
 	virtual int			OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
+	void				ApplyDamageKnockback( const CTakeDamageInfo &info );
 	void				AddDamagerToHistory( EHANDLE hDamager );
 	void				ClearDamagerHistory();
 	DamagerHistory_t	&GetDamagerHistory( int i ) { return m_DamagerHistory[i]; }
 	virtual void		DamageEffect(float flDamage, int fDamageType);
+	void				DismemberRandomLimbs( void );
 	virtual	bool		ShouldCollide( int collisionGroup, int contentsMask ) const;
 
 	void				SetHealthBuffTime( float flTime )		{ m_flHealthBuffTime = flTime; }
@@ -179,7 +211,7 @@ public:
 
 	// Team.
 	void				ForceChangeTeam( int iTeamNum );
-	virtual void		ChangeTeam( int iTeamNum, bool bNoKill );
+	virtual void		ChangeTeam( int iTeamNum, bool bNoKill = false );
 
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
@@ -208,8 +240,11 @@ public:
 	void				UpdateSkin( int iTeam );
 
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
+	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 
 	bool				CanAttack( void );
+	
+	virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );
 
 	// This passes the event to the client's and server's CPlayerAnimState.
 	void				DoAnimationEvent( PlayerAnimEvent_t event, int mData = 0 );
@@ -292,6 +327,7 @@ public:
 	void DetonateOwnedObjectsOfType( int iType, int iAltMode );
 	void StartBuildingObjectOfType( int iType, int iAltMode );
 	virtual CBaseEntity	*GetHeldObject(void);
+	CBaseObject			*GetObjectOfType( int iType, int iMode );
 
 	CTFTeam *GetTFTeam( void );
 	CTFTeam *GetOpposingTFTeam( void );
@@ -302,7 +338,7 @@ public:
 
 	// Death & Ragdolls.
 	virtual void CreateRagdollEntity( void );
-	void CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve, int iDamageCustom );
+	void CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve, bool bFlagOnGround, int iDamageCustom );
 	void DestroyRagdoll( void );
 	CNetworkHandle( CBaseEntity, m_hRagdoll );	// networked entity handle 
 	virtual bool ShouldGib( const CTakeDamageInfo &info );
@@ -326,6 +362,7 @@ public:
 	void PrintTargetWeaponInfo( void );
 
 	bool DoClassSpecialSkill( void );
+	bool CheckSpecialSkill( void );
 	bool DoZombieLunge( void );
 
 	float GetLastDamageTime( void ) { return m_flLastDamageTime; }
@@ -351,11 +388,13 @@ public:
 	bool ShouldAutoSwitchWeapons( void ) { return m_bAutoSwitchWeapons; }
 	void SetAutoSwitchWeapons( bool bAutoSwitchWeapons ) { m_bAutoSwitchWeapons = bAutoSwitchWeapons; }	
 	
+	bool ShouldQuickZoom( void );
+	
 	virtual void	ModifyOrAppendCriteria( AI_CriteriaSet& criteriaSet );
 
 	virtual bool CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
-	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual bool	IsDeflectable( void ) { return true; }
 
 	Vector 	GetClassEyeHeight( void );
 
@@ -389,7 +428,6 @@ public:
 
 	bool ShouldAnnouceAchievement( void );
 
-	bool	IsEnemy(const CBaseEntity *pEntity) const;
 	void UpdatePlayerColor( void );
 	
 public:
@@ -413,6 +451,8 @@ public:
 	// TEAMFORTRESS VARIABLES
 	int		no_sentry_message;
 	int		no_dispenser_message;
+	
+	bool	m_bPuppet;
 	
 	CNetworkVar( bool, m_bSaveMeParity );
 	CNetworkVar( bool, m_bDied );
@@ -442,10 +482,16 @@ public:
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
-	void				ManageTFCBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
-	void				ManageTFCWeapons( TFPlayerClassData_t *pData );
-	void				ManageZombieWeapons( TFPlayerClassData_t *pData );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
+	void				ManageCustomSpawnWeapons( TFPlayerClassData_t *pData );
+	
+	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+
+	bool				IsCapturingPoint( void );
+
+	CTriggerAreaCapture *GetControlPointStandingOn( void );
 	
 	// Taunts.
 	void				Taunt( void );
@@ -474,6 +520,8 @@ public:
 
 	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
+	CBaseEntity			*MedicGetHealTarget( void );
+
 	CTFWeaponBase		*Weapon_OwnsThisID( int iWeaponID );
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 
@@ -490,6 +538,10 @@ public:
 	void				SetHauling( bool bHauling ) { m_bHauling = bHauling; }
 
 	float				m_flLastAction;
+	
+	CountdownTimer m_purgatoryDuration;
+
+	IntervalTimer m_lastCalledMedic;
 
 	// Gore
 	unsigned short m_iGoreHead;
@@ -537,6 +589,9 @@ private:
 
 	// Bots.
 	friend void			Bot_Think( CTFPlayer *pBot );
+	
+	friend static void tf_bot_add( const CCommand &args );
+	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.
 	void				PhysObjectSleep();
@@ -663,6 +718,7 @@ public:
 	void				InputIgnitePlayer( inputdata_t &inputdata );
 	void				InputExtinguishPlayer( inputdata_t &inputdata );
 	void				InputSetZombie( inputdata_t &inputdata );
+	void				InputSetTeamNoKill( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;
 	bool				IsAllowedToPickupWeapons( void ) { return true; }
 	bool				Weapon_CanUse( void ) { return true; }
@@ -671,6 +727,7 @@ public:
 	void				RefillHealthAmmo();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 	bool				IsRetroModeOn();
+
 	CNetworkVar( bool, m_bRetroMode );
 	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.

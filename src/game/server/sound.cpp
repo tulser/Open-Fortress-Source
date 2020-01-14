@@ -346,7 +346,6 @@ void CAmbientGeneric::Spawn( void )
 	{
 		if ( stricmp( szSoundFile, szWaitingMusicArray[i]) == 0 )
 		{
-			DevMsg("Sound file is %s, matches with %s\n",szSoundFile,szWaitingMusicArray[i] );
 			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
 			pMusicPlayer->SetDisabled( true );
 			pMusicPlayer->m_bPlayInWaitingForPlayers = true;
@@ -365,12 +364,10 @@ void CAmbientGeneric::Spawn( void )
 	{
 		if ( stricmp( szSoundFile, szMusicArray[i]) == 0 )
 		{
-			DevMsg("Sound file is %s, matches with %s\n",szSoundFile,szMusicArray[i] );
 			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
 			pMusicPlayer->SetDisabled( true );
 			char buf[128];
 			Q_snprintf( buf, sizeof(buf), "%sIntro", szSoundFile );
-			DevMsg("%s\n", buf);
 			pMusicPlayer->szIntroSong = MAKE_STRING( szMusicIntroArray[i] );
 			pMusicPlayer->szLoopingSong = MAKE_STRING( szMusicArray[i] );
 			pMusicPlayer->Spawn();

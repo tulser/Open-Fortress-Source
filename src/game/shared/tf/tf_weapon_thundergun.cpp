@@ -173,7 +173,7 @@ void CTFThundergun::PrimaryAttack()
 
 	// TODO: this isn't an accurate distance
 	// Max distance we can airblast to
-	float flDist = 512.0f;
+	float flDist = 128.0f;
 
 	// Used as the centre of the box trace
 	Vector vOrigin = pPlayer->Weapon_ShootPosition() + vForward * flDist;
@@ -193,13 +193,13 @@ void CTFThundergun::PrimaryAttack()
 		if ( !pEntity->IsAlive() )
 			continue;
 
-		if ( pEntity->GetTeamNumber() == TEAM_SPECTATOR )
+		if ( pEntity->GetTeamNumber() < TF_TEAM_RED )
 			continue;
 
 		if ( pEntity == pPlayer )
 			continue;
 
-		if ( !pEntity->IsAirBlast() )
+		if ( !pEntity->IsDeflectable() )
 			continue;
 
 		trace_t trWorld;
@@ -230,12 +230,12 @@ void CTFThundergun::PrimaryAttack()
 				Vector vecForce;
 				QAngle angForce( -45, vAngles[YAW], 0 );
 				AngleVectors( angForce, &vecForce );
-				vecForce *= 75000;
+				vecForce *= 99999;
 
 				Vector vecDamagePos = WorldSpaceCenter();
 				vecDamagePos += ( pEntity->WorldSpaceCenter() - vecDamagePos ) * 0.75f;
 
-				CTakeDamageInfo info( this, pPlayer, pPlayer->GetActiveTFWeapon(), vecForce, vecDamagePos, 999, DMG_GENERIC ) ;
+				CTakeDamageInfo info( this, pPlayer, pPlayer->GetActiveTFWeapon(), vecForce, vecDamagePos, 9999, DMG_GENERIC ) ;
 				pCharacter->TakeDamage( info );
 			}
 		}
@@ -309,10 +309,6 @@ void CTFThundergun::AirBlastCharacter( CBaseCombatCharacter *pCharacter, const V
 //-----------------------------------------------------------------------------
 void CTFThundergun::AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in )
 {
-	// TODO: A lot of this stuff should be moved into the AirBlast() functions for each projectile
-	// The AirBlast function will probably require a pointer to the player to be added in the parameters
-	// E.g. stickybombs shouldn't be changing team here
-
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
@@ -321,33 +317,12 @@ void CTFThundergun::AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_
 		return;
 
 	Vector vec = vec_in;
-
-	Vector vecPos = pEntity->GetAbsOrigin();
 	Vector vecAirBlast;
 
-	GetProjectileAirblastSetup( pOwner, vecPos, &vecAirBlast, false );
+	GetProjectileAirblastSetup( pOwner, pEntity->GetAbsOrigin(), &vecAirBlast, false );
 
-	pEntity->SetOwnerEntity( pOwner );
+	pEntity->Deflected( pEntity, vec );
 
-	CTFGrenadePipebombProjectile *pStickyGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>( pEntity );
-
-	if ( pStickyGrenade && pStickyGrenade->GetType() == TF_GL_MODE_REMOTE_DETONATE )
-	{
-		pStickyGrenade->Fizzle();
-	}
-	else
-	{
-		pEntity->ChangeTeam( pOwner->GetTeamNumber() );
-
-		CBaseGrenade *pGrenade = dynamic_cast<CBaseGrenade *>( pEntity );
-
-		if ( pGrenade )
-		{
-			pGrenade->SetThrower( pOwner );
-			pGrenade->m_nSkin = pOwner->GetTeamNumber() - 2;
-		}
-	}
-
-	pEntity->AirBlast( vec );
+	pEntity->EmitSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 }
 #endif

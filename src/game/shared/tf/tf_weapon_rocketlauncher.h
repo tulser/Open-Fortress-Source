@@ -101,6 +101,7 @@ public:
 	virtual	bool	DetonateRockets( void );
 	virtual void	ItemPostFrame( void );
 	virtual	void	DeathNotice( CBaseEntity *pVictim );
+	virtual bool CanSoftZoom( void ) { return false; }
 
 #ifdef CLIENT_DLL
 	CNewParticleEffect *m_pEffect;

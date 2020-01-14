@@ -333,8 +333,8 @@ void CTFWeaponBaseGun::SecondaryAttack( void )
 	if ( !pPlayer )
 		return;
 
-	pPlayer->DoClassSpecialSkill();
-
+	pPlayer->DoClassSpecialSkill();	
+	
 	m_bInAttack2 = true;
 
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
@@ -610,7 +610,9 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
 
 	int iQuakeCvar = 0;
-	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+	
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
 
 	Vector vecSrc;
 	QAngle angForward;
@@ -658,7 +660,9 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
 
 	int iQuakeCvar = 0;
-	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+	
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_centered") );
 
 	Vector vecSrc;
 	QAngle angForward;
@@ -707,10 +711,11 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	int iQuakeCvar = 0;
 	
 #ifdef GAME_DLL
+	if ( !pPlayer->IsFakeClient() )
 		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );	
 #else
-		extern ConVar viewmodel_centered;
-		iQuakeCvar = V_atoi(viewmodel_centered.GetString());
+	extern ConVar viewmodel_centered;
+	iQuakeCvar = V_atoi(viewmodel_centered.GetString());
 #endif	
 
 	if ( iQuakeCvar )
@@ -887,7 +892,9 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 //	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
 
 	int iQuakeCvar = 0;
-	iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+	
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
 
 	Vector vecSrc;
 	QAngle angForward;
@@ -1023,7 +1030,7 @@ void CTFWeaponBaseGun::ToggleZoom( void )
 	CBasePlayer *pPlayer = GetPlayerOwner();
 	if ( pPlayer )
 	{
-		if( pPlayer->GetFOV() >= 75 )
+		if( pPlayer->GetFOV() >= 65 )
 		{
 			ZoomIn();
 		}

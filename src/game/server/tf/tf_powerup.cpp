@@ -240,13 +240,12 @@ void CTFPowerup::SetDisabled( bool bDisabled )
 void CTFPowerup::DropSingleInstance( const Vector &Velocity, CBaseCombatCharacter *pBCC, float flLifetime, float flTime )
 {
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_BOUNCE );
-	SetSolid( SOLID_BBOX );
 	AddSpawnFlags( SF_NORESPAWN );
 	SetOwnerEntity( pBCC );
 	SetAbsVelocity( Velocity );
 
-	if ( flTime != 0 )
-		ActivateWhenAtRest( flTime );
+	//if ( flTime != 0.0f )
+	//	ActivateWhenAtRest( flTime );
 
 	SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + flLifetime, "DieContext" ); // Set its death time to whenever the powerup would have ran out
 }

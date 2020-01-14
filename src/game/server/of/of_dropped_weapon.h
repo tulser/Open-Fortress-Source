@@ -37,7 +37,7 @@ public:
 
 public:
 		CNetworkVar( int, m_iReserveAmmo );
-		CNetworkVar( int, m_iClip )
+		CNetworkVar( int, m_iClip );
 private:
 	float m_flCreationTime;
 

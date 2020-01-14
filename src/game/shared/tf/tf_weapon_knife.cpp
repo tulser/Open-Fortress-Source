@@ -181,19 +181,9 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 		//	( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget ) )
 		if ( m_iWeaponMode == TF_WEAPON_SECONDARY_MODE && m_hBackstabVictim.Get() == pTarget )
 		{
-			if ( TFGameRules()->IsInfGamemode() )
-			{
-				if ( pTarget->GetTeamNumber() == TF_TEAM_BLUE )
-					flBaseDamage = pTarget->GetHealth() * 2;
-				else
-					flBaseDamage = flBaseDamage * 1.25; // zombies only deal x1.25 more damage on backstabs instead of insta killing
-			}
-			else
-			{
-				// this will be a backstab, do the strong anim.
-				// Do twice the target's health so that random modification will still kill him.
-				flBaseDamage = pTarget->GetHealth() * 2;
-			}
+			// this will be a backstab, do the strong anim.
+			// Do twice the target's health so that random modification will still kill him.
+			flBaseDamage = pTarget->GetHealth() * 2;
 
 			// Declare a backstab.
 			iCustomDamage = TF_DMG_CUSTOM_BACKSTAB;

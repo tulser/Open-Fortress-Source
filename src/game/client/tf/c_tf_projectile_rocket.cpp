@@ -82,6 +82,9 @@ void C_TFProjectile_Rocket::CreateRocketTrails(void)
 		case TF_TEAM_MERCENARY:
 			pPlayer->m_Shared.UpdateParticleColor (ParticleProp()->Create("critical_rocket_dm", PATTACH_ABSORIGIN_FOLLOW) );
 			break;
+		case TF_TEAM_NPC:
+			ParticleProp()->Create("eyeboss_projectile", PATTACH_ABSORIGIN_FOLLOW);
+			break;
 		default:
 			break;
 		}

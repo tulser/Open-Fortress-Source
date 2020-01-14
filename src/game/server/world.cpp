@@ -160,6 +160,9 @@ void CDecal::StaticDecal( void )
 				"prop_static",
 				"prop_physics",
 				"npc_bullseye",  // Tracker 15335
+				"tf_weapon_*",
+				"tf_ammo_pack",
+				"tf_dropped_weapon",
 			};
 
 			CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );

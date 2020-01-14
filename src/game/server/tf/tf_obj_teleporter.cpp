@@ -418,6 +418,18 @@ CObjectTeleporter *CObjectTeleporter::GetMatchingTeleporter( void )
 	return m_hMatchingTeleporter.Get();
 }
 
+bool CObjectTeleporter::IsReady( void )
+{
+	if ( IsMatchingTeleporterReady() &&
+		GetState() != TELEPORTER_STATE_BUILDING &&
+		!IsDisabled() &&
+		!IsUpgrading() &&
+		!IsHauling() )
+		return true;
+
+	return false;
+}
+
 void CObjectTeleporter::DeterminePlaybackRate( void )
 {
 	float flPlaybackRate = GetPlaybackRate();
@@ -1068,3 +1080,15 @@ CObjectTeleporter* CObjectTeleporter::FindMatch( void )
 
 	return pMatch;
 }
+
+bool CObjectTeleporter::IsSendingPlayer( CTFPlayer *pSender )
+{
+	bool bResult = false;
+
+	if ( pSender && m_hTeleportingPlayer.Get() )
+	{
+		bResult = m_hTeleportingPlayer.Get() == pSender;
+	}
+	return bResult;
+}
+

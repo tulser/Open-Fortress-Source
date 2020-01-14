@@ -499,7 +499,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 				Vector vecZero( 0,0,0 );
 				CTFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );	
 		
-				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo );
+				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo, GetTeamNumber() );
 				PrecacheModel ( pWeaponInfo->m_szBombletModel );
 				pBomb->SetModel( pWeaponInfo->m_szBombletModel );
 				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
@@ -583,9 +583,9 @@ void CTFBaseRocket::FlyThink( void )
 #endif
 
 #ifdef GAME_DLL
-void CTFBaseRocket::AirBlast( const Vector &vec_in )
+void CTFBaseRocket::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
-	Vector vec = vec_in;
+	Vector vec = vecDir;
 
 	// conserver speed when changing trajectory
 	float flLength = GetAbsVelocity().Length();
@@ -596,5 +596,8 @@ void CTFBaseRocket::AirBlast( const Vector &vec_in )
 	SetAbsAngles( angles );
 
 	SetAbsVelocity( vec * flLength );
+	
+	SetOwnerEntity( pDeflectedBy );
+	ChangeTeam( pDeflectedBy->GetTeamNumber() );
 }
 #endif

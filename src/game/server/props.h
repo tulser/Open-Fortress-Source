@@ -369,7 +369,7 @@ public:
 
 	void ClearFlagsThink( void );
 
-	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual bool	IsDeflectable( void ) { return true; }
 
 	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 	int DrawDebugTextOverlays(void);

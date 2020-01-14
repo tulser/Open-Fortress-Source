@@ -172,7 +172,7 @@ public:
 	void			SetHealer( C_TFPlayer *pHealer, float flChargeLevel );
 	void			GetHealer( C_TFPlayer **pHealer, float *flChargeLevel ) { *pHealer = m_hHealer; *flChargeLevel = m_flHealerChargeLevel; }
 	float			MedicGetChargeLevel( void );
-	CBaseEntity		*MedicGetHealTarget( void );
+	C_BaseEntity	 *MedicGetHealTarget( void );
 
 	void			StartBurningSound( void );
 	void			StopBurningSound( void );
@@ -208,6 +208,7 @@ public:
 	bool			ShouldAutoRezoom( void ){ return cl_autorezoom.GetBool(); }
 	bool			ShouldAutoReload( void ){ return of_autoreload.GetBool(); }
 	bool			ShouldAutoSwitchWeapons( void ){ return of_autoswitchweapons.GetBool(); }
+	bool 			ShouldQuickZoom( void );
 
 	CNetworkVar(bool, m_bHauling);
 	bool			bCanHUGHAgain;
@@ -240,9 +241,10 @@ public:
 	virtual void		SetStepSoundTime( stepsoundtimes_t iStepSoundTime, bool bWalking );
 
 	bool	DoClassSpecialSkill( void );
+	bool	CheckSpecialSkill( void );
 	bool	CanGoInvisible( void );
 
-	bool				IsEnemy(const C_BaseEntity *pEntity) const;
+	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 
 public:
 	// Ragdolls.
@@ -496,6 +498,8 @@ public:
 	void DismemberLeftLeg( bool bLevel );
 	void DismemberRightLeg( bool bLevel );
 
+	void DismemberRandomLimbs( void );
+
 	virtual float FrameAdvance( float flInterval = 0.0f );
 
 	virtual C_BaseEntity *GetItemTintColorOwner( void )
@@ -503,12 +507,6 @@ public:
 		EHANDLE hPlayer = GetPlayerHandle();
 		return hPlayer.Get();
 	}
-
-	int m_HeadBodygroup;
-	int	m_LeftArmBodygroup;
-	int	m_RightArmBodygroup;
-	int	m_LeftLegBodygroup;
-	int	m_RightLegBodygroup;
 	
 private:
 	
@@ -529,14 +527,25 @@ private:
 	int	  m_iClass;
 	float m_flBurnEffectStartTime;	// start time of burning, or 0 if not burning
 	float m_flDeathAnimationTime; // start time of burning, or 0 if not burning
-	bool m_bGoreEnabled;
 
 	// gore stuff
-	CNetworkVar( unsigned short, m_iGoreHead );
-	CNetworkVar( unsigned short, m_iGoreLeftArm );
-	CNetworkVar( unsigned short, m_iGoreRightArm );
-	CNetworkVar( unsigned short, m_iGoreLeftLeg );
-	CNetworkVar( unsigned short, m_iGoreRightLeg );
+	int m_iGoreHead;
+	int m_iGoreLeftArm;
+	int m_iGoreRightArm;
+	int m_iGoreLeftLeg;
+	int m_iGoreRightLeg;
+
+	bool m_bFlagOnGround;
+
+	// checks if this model can utilise gore
+	bool m_bGoreEnabled;
+
+	// how many blood decals to spray out when we dismember a limb overtime
+	int m_iGoreDecalAmount;
+	// the index of the bone we should spray blood decals out from
+	int m_iGoreDecalBone;
+	// time when blood decal was sprayed so that blood decals sprays are delayed in bursts for ClientThink
+	float m_fGoreDecalTime;
 
 	// takedamageinfo.h
 	//int				m_bitsDamageType;

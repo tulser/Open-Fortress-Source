@@ -16,7 +16,10 @@
 #include "tier3/tier3.h"
 #include "tf_weapon_grenade_pipebomb.h"
 #include "gameeventdefs.h"
-
+#include "tf_halloween_boss.h"
+#include "tf_zombie.h"
+#include "entity_bossresource.h"
+	
 #ifdef CLIENT_DLL
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
@@ -62,9 +65,11 @@
 	
 	#include "ai_basenpc.h"
 	#include "ai_dynamiclink.h"
-	#include "nav_mesh.h"
 	#include "vote_controller.h"
+	#include "tf_weaponbase_grenadeproj.h"
 	#include "tf_voteissues.h"
+	#include "nav_mesh.h"
+	#include "bot/tf_bot_manager.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -101,24 +106,6 @@ static int g_TauntCamAchievements[] =
 	0,		// TF_CLASS_COUNT_ALL,
 };
 
-string_t m_iszDefaultWeaponName[50] =
-{
-	MAKE_STRING("tf_weapon_rocketlauncher_dm"),
-	MAKE_STRING("tf_weapon_grenadelauncher_mercenary"),
-	MAKE_STRING("tf_weapon_railgun"),
-	MAKE_STRING("tf_weapon_gatlinggun"),
-	MAKE_STRING("tf_weapon_flamethrower"),
-	MAKE_STRING("tf_weapon_smg_mercenary"),
-	MAKE_STRING("tf_weapon_supershotgun"),
-	MAKE_STRING("tf_weapon_revolver_mercenary"),
-	MAKE_STRING("tf_weapon_shotgun"),
-	MAKE_STRING("tf_weapon_tommygun"),
-	MAKE_STRING("tf_weapon_nailgun"),
-	MAKE_STRING("tf_weapon_pistol_akimbo"),
-	MAKE_STRING("tf_weapon_pistol_mercenary"),	
-	MAKE_STRING("tf_weapon_knife")	
-};
-
 extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
@@ -149,8 +136,6 @@ ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, 
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
-ConVar of_rocketjump_multiplier		( "of_rocketjump_multiplier", "3.75", FCVAR_NOTIFY | FCVAR_REPLICATED, "How much blast jumps should push you further than when you blast enemies." );
-ConVar of_selfdamage				( "of_selfdamage", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
 ConVar of_allow_special_classes		( "of_allow_special_classes", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow Special classes outside of their respective modes.");
 ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Escort instead of Payload.");
 
@@ -170,7 +155,6 @@ ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	4: Unholy Trinity
 	5: Rocket Arena
 	6: Gun Game
-	7: Randomizer
 */
 
 /*	Individual gamemode mutators, deprecated by the convar above.
@@ -190,10 +174,38 @@ ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMED
 ConVar tf_gravetalk( "tf_gravetalk", "1", FCVAR_NOTIFY, "Allows living players to hear dead players using text/voice chat." );
 ConVar tf_spectalk( "tf_spectalk", "1", FCVAR_NOTIFY, "Allows living players to hear spectators using text chat." );
 
+ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDLL | FCVAR_REPLICATED, "Restricts human players to a single team {any, blue, red, spectator}" );
+
 // Infection stuff
 ConVar of_infection_preparetime		 ( "of_infection_preparetime", "20", FCVAR_GAMEDLL, "How many seconds survivors have to prepare before the Infection." );
 ConVar of_infection_roundtime		 ( "of_infection_roundtime", "300", FCVAR_GAMEDLL, "How many seconds survivors need to... survive for after the Infection." );
 ConVar of_infection_zombie_threshold ( "of_infection_zombie_threshold", "6", FCVAR_GAMEDLL, "For every n humans, this many zombies are selected when the Infection starts." );
+
+ConVar of_dominations( "of_dominations", "1", FCVAR_GAMEDLL, "Enable or disable dominations for players." );
+
+extern ConVar tf_halloween_bot_min_player_count;
+
+ConVar tf_halloween_boss_spawn_interval( "tf_halloween_boss_spawn_interval", "480", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
+ConVar tf_halloween_boss_spawn_interval_variation( "tf_halloween_boss_spawn_interval_variation", "60", FCVAR_CHEAT, "Variation of spawn interval +/-" );
+
+ConVar tf_halloween_eyeball_boss_spawn_interval( "tf_halloween_eyeball_boss_spawn_interval", "180", FCVAR_CHEAT, "Average interval between boss spawns, in seconds" );
+ConVar tf_halloween_eyeball_boss_spawn_interval_variation( "tf_halloween_eyeball_boss_spawn_interval_variation", "30", FCVAR_CHEAT, "Variation of spawn interval +/-" );
+
+ConVar tf_halloween_zombie_mob_enabled( "tf_halloween_zombie_mob_enabled", "0", FCVAR_CHEAT, "If set to 1, spawn zombie mobs on non-Halloween Valve maps" );
+ConVar tf_halloween_zombie_mob_spawn_interval( "tf_halloween_zombie_mob_spawn_interval", "180", FCVAR_CHEAT, "Average interval between zombie mob spawns, in seconds" );
+ConVar tf_halloween_zombie_mob_spawn_count( "tf_halloween_zombie_mob_spawn_count", "20", FCVAR_CHEAT, "How many zombies to spawn" );
+
+static bool isBossForceSpawning = false;
+CON_COMMAND_F( tf_halloween_force_boss_spawn, "For testing.", FCVAR_CHEAT )
+{
+	isBossForceSpawning = true;
+}
+
+static bool isZombieMobForceSpawning = false;
+CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_CHEAT )
+{
+	isZombieMobForceSpawning = true;
+}	
 #endif
 
 ConVar of_retromode ( "of_retromode", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
@@ -209,8 +221,6 @@ ConVar of_randomizer ( "of_randomizer", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 
 ConVar of_randomizer_setting( "of_randomizer_setting", "TF2", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Sets which Config randomizer pulls its weapons from.");
-
-ConVar of_dominations( "of_dominations", "1", FCVAR_GAMEDLL, "Enable or disable dominations for players." );
 
 #ifdef GAME_DLL
 //listner class creates a listener for the mEvent and returns the mEvent as true
@@ -328,7 +338,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bKOTH ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
+	RecvPropEHandle( RECVINFO( m_itHandle ) ),
 	RecvPropEHandle( RECVINFO( m_hInfectionTimer ) ),
+	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
+	RecvPropInt( RECVINFO( m_iMaxLevel ) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -357,7 +370,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bKOTH ) ),
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ), 
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
-	SendPropEHandle( SENDINFO( m_hInfectionTimer ) )
+	SendPropEHandle( SENDINFO( m_hInfectionTimer ) ),
+	SendPropEHandle( SENDINFO( m_itHandle ) ),
+	SendPropInt( SENDINFO( m_halloweenScenario ) ),
+	SendPropInt( SENDINFO( m_iMaxLevel ) )
 #endif
 END_NETWORK_TABLE()
 
@@ -622,93 +638,39 @@ void CTFLogicDM::Spawn(void)
 // GG Logic 
 //-----------------------------------------------------------------------------
 
+
 LINK_ENTITY_TO_CLASS(of_logic_gg, CTFLogicGG);
 
 BEGIN_DATADESC( CTFLogicGG )
 	//Keyfields
 	DEFINE_KEYFIELD( m_bListOnly, FIELD_BOOLEAN, "ListOnly"),
 	DEFINE_KEYFIELD( m_iRequiredKills, FIELD_INTEGER, "RequiredKills"),
-	
-	DEFINE_KEYFIELD(m_iszWeaponName[0],  FIELD_STRING, "WeaponName01"),
-	DEFINE_KEYFIELD(m_iszWeaponName[1],  FIELD_STRING, "WeaponName02"),
-	DEFINE_KEYFIELD(m_iszWeaponName[2],  FIELD_STRING, "WeaponName03"),
-	DEFINE_KEYFIELD(m_iszWeaponName[3],  FIELD_STRING, "WeaponName04"),
-	DEFINE_KEYFIELD(m_iszWeaponName[4],  FIELD_STRING, "WeaponName05"),
-	DEFINE_KEYFIELD(m_iszWeaponName[5],  FIELD_STRING, "WeaponName06"),
-	DEFINE_KEYFIELD(m_iszWeaponName[6],  FIELD_STRING, "WeaponName07"),
-	DEFINE_KEYFIELD(m_iszWeaponName[7],  FIELD_STRING, "WeaponName08"),
-	DEFINE_KEYFIELD(m_iszWeaponName[8],  FIELD_STRING, "WeaponName09"),
-	DEFINE_KEYFIELD(m_iszWeaponName[9],  FIELD_STRING, "WeaponName10"),
-	DEFINE_KEYFIELD(m_iszWeaponName[10], FIELD_STRING, "WeaponName11"),
-	DEFINE_KEYFIELD(m_iszWeaponName[11], FIELD_STRING, "WeaponName12"),
-	DEFINE_KEYFIELD(m_iszWeaponName[12], FIELD_STRING, "WeaponName13"),
-	DEFINE_KEYFIELD(m_iszWeaponName[13], FIELD_STRING, "WeaponName14"),
-	DEFINE_KEYFIELD(m_iszWeaponName[14], FIELD_STRING, "WeaponName15"),
-	DEFINE_KEYFIELD(m_iszWeaponName[15], FIELD_STRING, "WeaponName16"),
-	DEFINE_KEYFIELD(m_iszWeaponName[16], FIELD_STRING, "WeaponName17"),
-	DEFINE_KEYFIELD(m_iszWeaponName[17], FIELD_STRING, "WeaponName18"),
-	DEFINE_KEYFIELD(m_iszWeaponName[18], FIELD_STRING, "WeaponName19"),
-	DEFINE_KEYFIELD(m_iszWeaponName[19], FIELD_STRING, "WeaponName20"),
-	DEFINE_KEYFIELD(m_iszWeaponName[20], FIELD_STRING, "WeaponName21"),
-	DEFINE_KEYFIELD(m_iszWeaponName[21], FIELD_STRING, "WeaponName22"),
-	DEFINE_KEYFIELD(m_iszWeaponName[22], FIELD_STRING, "WeaponName23"),
-	DEFINE_KEYFIELD(m_iszWeaponName[23], FIELD_STRING, "WeaponName24"),
-	DEFINE_KEYFIELD(m_iszWeaponName[24], FIELD_STRING, "WeaponName25"),
-	DEFINE_KEYFIELD(m_iszWeaponName[25], FIELD_STRING, "WeaponName26"),
-	DEFINE_KEYFIELD(m_iszWeaponName[26], FIELD_STRING, "WeaponName27"),
-	DEFINE_KEYFIELD(m_iszWeaponName[27], FIELD_STRING, "WeaponName28"),
-	DEFINE_KEYFIELD(m_iszWeaponName[28], FIELD_STRING, "WeaponName29"),
-	DEFINE_KEYFIELD(m_iszWeaponName[29], FIELD_STRING, "WeaponName30"),
-	DEFINE_KEYFIELD(m_iszWeaponName[30], FIELD_STRING, "WeaponName31"),
-	DEFINE_KEYFIELD(m_iszWeaponName[31], FIELD_STRING, "WeaponName32"),
-	DEFINE_KEYFIELD(m_iszWeaponName[32], FIELD_STRING, "WeaponName33"),
-	DEFINE_KEYFIELD(m_iszWeaponName[33], FIELD_STRING, "WeaponName34"),
-	DEFINE_KEYFIELD(m_iszWeaponName[34], FIELD_STRING, "WeaponName35"),
-	DEFINE_KEYFIELD(m_iszWeaponName[35], FIELD_STRING, "WeaponName36"),
-	DEFINE_KEYFIELD(m_iszWeaponName[36], FIELD_STRING, "WeaponName37"),
-	DEFINE_KEYFIELD(m_iszWeaponName[37], FIELD_STRING, "WeaponName38"),
-	DEFINE_KEYFIELD(m_iszWeaponName[38], FIELD_STRING, "WeaponName39"),
-	DEFINE_KEYFIELD(m_iszWeaponName[39], FIELD_STRING, "WeaponName40"),
-	DEFINE_KEYFIELD(m_iszWeaponName[40], FIELD_STRING, "WeaponName41"),	
-	DEFINE_KEYFIELD(m_iszWeaponName[41], FIELD_STRING, "WeaponName42"),
-	DEFINE_KEYFIELD(m_iszWeaponName[42], FIELD_STRING, "WeaponName43"),
-	DEFINE_KEYFIELD(m_iszWeaponName[43], FIELD_STRING, "WeaponName44"),
-	DEFINE_KEYFIELD(m_iszWeaponName[44], FIELD_STRING, "WeaponName45"),
-	DEFINE_KEYFIELD(m_iszWeaponName[45], FIELD_STRING, "WeaponName46"),
-	DEFINE_KEYFIELD(m_iszWeaponName[46], FIELD_STRING, "WeaponName47"),
-	DEFINE_KEYFIELD(m_iszWeaponName[47], FIELD_STRING, "WeaponName48"),
-	DEFINE_KEYFIELD(m_iszWeaponName[48], FIELD_STRING, "WeaponName49"),
-	DEFINE_KEYFIELD(m_iszWeaponName[49], FIELD_STRING, "WeaponName50"),
 END_DATADESC()
 
 CTFLogicGG::CTFLogicGG()
 {
-	for ( int i = 0; i < 50; i++ )
-	{
-		m_iszWeaponName[i] = MAKE_STRING( "NULL" );
-		TFGameRules()->m_iszWeaponName[i] = MAKE_STRING( "" );
-	}
+	pWeaponsData = new KeyValues( "WeaponsData" );
 }
 
 void CTFLogicGG::Spawn( void )
 {
-	int y = 0;
-	m_iMaxLevel = 0;
-	for ( int i = 0; i < 50; i++ )
-	{
-		if ( m_iszWeaponName[i] != MAKE_STRING( "NULL" ) )
-		{
-			m_iMaxLevel++;
-			TFGameRules()->m_iszWeaponName[y] = m_iszWeaponName[i];
-			y++;
-		}
-	}
-
-	TFGameRules()->m_iMaxLevel = m_iMaxLevel;
-	TFGameRules()->m_bListOnly = m_bListOnly;
-	TFGameRules()->m_iRequiredKills = m_iRequiredKills;
-
 	BaseClass::Spawn();
+}
+
+bool CTFLogicGG::KeyValue( const char *szKeyName, const char *szValue )
+{
+	const char *pszSrc = NULL;
+	if ( !Q_strncmp( szKeyName, "WeaponName", 10 ) )
+	{
+		char pTmp[128];
+		pszSrc = szKeyName + 10;
+		Q_snprintf( pTmp, sizeof(pszSrc), pszSrc );
+		pWeaponsData->SetString( pTmp, szValue );
+	}
+	else
+		BaseClass::KeyValue( szKeyName, szValue );
+	
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1072,6 +1034,62 @@ void CTFLogicArena::InputRoundActivate( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
+// Barebone for now, just so maps don't complain
+//-----------------------------------------------------------------------------
+class CTFHolidayEntity : public CPointEntity, public CGameEventListener
+{
+public:
+	DECLARE_CLASS( CTFHolidayEntity, CPointEntity );
+	DECLARE_DATADESC();
+
+	CTFHolidayEntity();
+	virtual ~CTFHolidayEntity() { }
+
+	virtual int UpdateTransmitState( void ) { return SetTransmitState( FL_EDICT_ALWAYS ); }
+	virtual void FireGameEvent( IGameEvent *event );
+
+	void InputHalloweenSetUsingSpells( inputdata_t& inputdata );
+	void InputHalloweenTeleportToHell( inputdata_t& inputdata );
+
+private:
+	int m_nHolidayType;
+	int m_nTauntInHell;
+	int m_nAllowHaunting;
+};
+
+CTFHolidayEntity::CTFHolidayEntity()
+{
+	ListenForGameEvent( "player_turned_to_ghost" );
+	ListenForGameEvent( "player_team" );
+	ListenForGameEvent( "player_disconnect" );
+}
+
+void CTFHolidayEntity::FireGameEvent( IGameEvent *event )
+{
+}
+
+void CTFHolidayEntity::InputHalloweenSetUsingSpells( inputdata_t& inputdata )
+{
+}
+
+void CTFHolidayEntity::InputHalloweenTeleportToHell( inputdata_t& inputdata )
+{
+}
+
+BEGIN_DATADESC( CTFHolidayEntity )
+
+	DEFINE_KEYFIELD( m_nHolidayType, FIELD_INTEGER, "holiday_type" ),
+	DEFINE_KEYFIELD( m_nTauntInHell, FIELD_INTEGER, "tauntInHell" ),
+	DEFINE_KEYFIELD( m_nAllowHaunting, FIELD_INTEGER, "allowHaunting" ),
+
+	DEFINE_INPUTFUNC( FIELD_VOID, "HalloweenSetUsingSpells", InputHalloweenSetUsingSpells ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "Halloween2013TeleportToHell", InputHalloweenTeleportToHell ),
+
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( tf_logic_holiday, CTFHolidayEntity )
+
+//-----------------------------------------------------------------------------
 // KOTH Logic 
 //-----------------------------------------------------------------------------
 
@@ -1413,6 +1431,9 @@ CTFGameRules::CTFGameRules()
 	m_bDomRedLeadThreshold = false;
 	m_bDomBlueLeadThreshold = false;
 	m_bStartedVote = false;
+	m_bHasTeamSpawns = false;
+	m_bHasCivilianSpawns = false;
+	m_bHasJuggernautSpawns = false;
 
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
@@ -1438,6 +1459,22 @@ CTFGameRules::CTFGameRules()
 	char szCommand[32];
 	Q_snprintf( szCommand, sizeof( szCommand ), "exec %s.cfg\n", STRING( gpGlobals->mapname ) );
 	engine->ServerCommand( szCommand );
+	
+	if ( filesystem->FileExists( "cfg/gungame.cfg" , "MOD" ) )
+	{
+		m_iRequiredKills = 2;
+		KeyValues* pWeaponsData = new KeyValues( "GunGame" );
+		pWeaponsData->LoadFromFile( filesystem, "cfg/gungame.cfg" );
+
+		KeyValues *pWeapon = new KeyValues( "Weapon" );
+		pWeapon = pWeaponsData->GetFirstValue();
+		m_iMaxLevel = 0;
+		for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
+		{
+			m_iszWeaponName[m_iMaxLevel] = MAKE_STRING( pWeapon->GetString() );
+			m_iMaxLevel++;
+		}
+	}
 
 #else // GAME_DLL
 
@@ -1471,13 +1508,21 @@ CTFGameRules::CTFGameRules()
 
 	m_flLastHealthDropTime = 0.0f;
 	m_flLastGrenadeDropTime = 0.0f;	
+
 	
-	for( int i = 0; i<50 ; i++ )
-	{
-		m_iszWeaponName[i] = m_iszDefaultWeaponName[i];
-	}
-	m_iMaxLevel = 14;
-	m_iRequiredKills = 2;
+#ifdef GAME_DLL
+	const char *szMapname = STRING( gpGlobals->mapname );
+	if ( !Q_strncmp( szMapname, "cp_manor_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = HALLOWEEN_SCENARIO_MANOR;
+	else if ( !Q_strncmp( szMapname, "koth_viaduct_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = HALLOWEEN_SCENARIO_VIADUCT;
+	else if ( !Q_strncmp( szMapname, "koth_lakeside_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = HALLOWEEN_SCENARIO_LAKESIDE;
+	else if ( !Q_strncmp( szMapname, "plr_hightower_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = HALLOWEEN_SCENARIO_HIGHTOWER;
+	else if ( !Q_strncmp( szMapname, "sd_doomsday_event", MAX_MAP_NAME ) )
+		m_halloweenScenario = HALLOWEEN_SCENARIO_DOOMSDAY;
+#endif
 }
 
 bool CTFGameRules::InGametype( int nGametype )
@@ -1615,6 +1660,7 @@ static const char *s_PreserveEnts[] =
 	"tf_halloween_gift_pickup",
 	"tf_logic_competitive",
 	"tf_wearable_razorback",
+	"info_ladder",
 	"", // END Marker
 };
 
@@ -1634,6 +1680,7 @@ void CTFGameRules::Activate()
 	m_nCurrFrags.Set(0);
 	m_bDisableRedSpawns = false;
 	m_bDisableBluSpawns = false;
+
 //	m_nGameType.Set(TF_GAMETYPE_UNDEFINED);
 	CCaptureFlag *pFlag = dynamic_cast<CCaptureFlag*> (gEntList.FindEntityByClassname(NULL, "item_teamflag"));
 	if (pFlag)
@@ -1675,7 +1722,7 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) )
+	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "duel_", 5) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
 		if ( ((( teamplay.GetInt() < 0 || gEntList.FindEntityByClassname(NULL, "of_logic_tdm")) && m_bIsTeamplay ) || teamplay.GetInt() > 0 )  )
@@ -1695,7 +1742,7 @@ void CTFGameRules::Activate()
 	
 	if ( ( gEntList.FindEntityByClassname(NULL, "of_logic_gg") && !m_bListOnly ) || !Q_strncmp(STRING(gpGlobals->mapname), "gg_", 3) || TFGameRules()->IsMutator( GUN_GAME ) )
 	{
-		AddGametype(TF_GAMETYPE_GG);
+		AddGametype( TF_GAMETYPE_GG );
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server GG gamemode config file\n");
 		engine->ServerCommand("exec config_default_gg.cfg \n");
 		engine->ServerExecute();
@@ -1757,26 +1804,14 @@ void CTFGameRules::Activate()
 	if ( gEntList.FindEntityByClassname(NULL, "of_logic_inf") || !Q_strncmp(STRING(gpGlobals->mapname), "inf_", 4) || of_infection.GetBool() )
 	{
 		// incompatible gametypes with infection!
-		if ( InGametype( TF_GAMETYPE_CTF ) )
-			RemoveGametype( TF_GAMETYPE_CTF );
-		if ( InGametype( TF_GAMETYPE_CP ) )
-			RemoveGametype( TF_GAMETYPE_CP );
-		if ( InGametype( TF_GAMETYPE_DM ) )
-			RemoveGametype( TF_GAMETYPE_DM );
-		if ( InGametype( TF_GAMETYPE_TDM ) )
-			RemoveGametype( TF_GAMETYPE_TDM );
-		if ( InGametype( TF_GAMETYPE_ESC ) )
-			RemoveGametype( TF_GAMETYPE_ESC );
-		if ( InGametype( TF_GAMETYPE_COOP ) )
-			RemoveGametype( TF_GAMETYPE_COOP );
-		if ( InGametype( TF_GAMETYPE_DOM ) )
-			RemoveGametype( TF_GAMETYPE_DOM );
-		if ( InGametype( TF_GAMETYPE_DOM ) )
-			RemoveGametype( TF_GAMETYPE_DOM );
-		if ( InGametype( TF_GAMETYPE_PAYLOAD ) )
-			RemoveGametype( TF_GAMETYPE_PAYLOAD );
+		for ( int i = 0; i < TF_GAMETYPE_LAST; i++ )
+		{
+			if ( TFGameRules()->InGametype( i ) )
+				TFGameRules()->RemoveGametype( i );
+				
+		}
 
-		AddGametype(TF_GAMETYPE_INF);
+		AddGametype( TF_GAMETYPE_INF );
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Infection gamemode config file\n");
 		engine->ServerCommand("exec config_default_inf.cfg \n");
 		engine->ServerExecute();
@@ -1786,6 +1821,18 @@ void CTFGameRules::Activate()
 	bMultiweapons = TFGameRules()->UsesDMBuckets();
 }
 
+#endif
+
+#ifdef GAME_DLL
+void CTFGameRules::OnNavMeshLoad( void )
+{
+	TheNavMesh->SetPlayerSpawnName( "info_player_teamspawn" );
+}
+
+void CTFGameRules::LevelShutdown( void )
+{
+	TheTFBots().OnLevelShutdown();
+}
 #endif
 
 void CTFGameRules::CheckTDM( void )
@@ -1873,6 +1920,29 @@ bool CTFGameRules::IsHL2( void )
 	return m_bIsHL2;
 }
 
+bool CTFGameRules::IsFreeRoam( void )
+{ 
+	// tells bots whether they should just move randomly around on the map, like if its free for all
+	bool bFreeRoam = false;
+
+#ifdef GAME_DLL
+	if ( ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
+		bFreeRoam = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopGamemode() )
+		bFreeRoam = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#else
+	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
+		bFreeRoam = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopGamemode() )
+		bFreeRoam = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#endif
+	return bFreeRoam;
+}
+
 bool CTFGameRules::UsesMoney( void )
 { 
 	return m_bUsesMoney;
@@ -1897,6 +1967,32 @@ void CTFGameRules::FireGamemodeOutputs()
 			pProxy->FireGunGameOutput();
 	}
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::CanBotChooseClass( CBasePlayer *pBot, int iDesiredClassIndex )
+{
+	// TODO: Implement CTFBotRoster entity
+	//return CanPlayerChooseClass( pBot, iDesiredClassIndex );
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFGameRules::CanBotChangeClass( CBasePlayer *pBot )
+{
+	if ( ( TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() ) )
+		return false;
+
+	if ( !pBot || !pBot->IsPlayer()/* || !DWORD(a2 + 2309) */ )
+		return false;
+
+	// TODO: Implement CTFBotRoster entity
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -2076,12 +2172,98 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
+	m_bHasTeamSpawns = false;
+	m_bHasCivilianSpawns = false;
+	m_bHasJuggernautSpawns = false;
+
+	// Preload the GG settings here so changing mutators mid game doesnt crash
+	CTFLogicGG *pLogicGG = dynamic_cast<CTFLogicGG *>(gEntList.FindEntityByClassname(NULL, "of_logic_gg") );
+	if ( pLogicGG )
+	{
+		KeyValues *pWeapon = new KeyValues( "Weapon" );
+		pWeapon = pLogicGG->pWeaponsData->GetFirstValue();
+		m_iMaxLevel = 0;
+		for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
+		{
+			m_iszWeaponName[m_iMaxLevel] = MAKE_STRING( pWeapon->GetString() );
+			m_iMaxLevel++;
+		}
+		m_iRequiredKills = pLogicGG->m_iRequiredKills;
+	}
+
+	// verify if info_player_teamspawns exist on this map
+	// if none exist, then this will tell the spawning system to utilise info_player_deathmatch / info_player_start spawnpoints
+	// this also checks whether spawnpoints exist with the Civilian or Juggernaut spawnflag
+	// see IsSpawnPointValid to see why this is necessary
+	CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, "info_player_teamspawn" );
+	while ( pSpot )
+	{
+		CTFTeamSpawn *pTFSpawn = dynamic_cast< CTFTeamSpawn* >( pSpot );
+		if ( pTFSpawn )
+		{
+			m_bHasTeamSpawns = true;
+
+			if ( pTFSpawn->AllowCivilian() )
+				m_bHasCivilianSpawns = true;
+
+			if ( pTFSpawn->AllowJuggernaut() )
+				m_bHasJuggernautSpawns = true;
+		}
+
+		pSpot = gEntList.FindEntityByClassname( pSpot, "info_player_teamspawn" );
+	}
+	
+	m_hRedAttackTrain = NULL;
+	m_hBlueAttackTrain = NULL;
+	m_hRedDefendTrain = NULL;
+	m_hBlueDefendTrain = NULL;
+
+	m_hAmmoEntities.RemoveAll();
+	m_hHealthEntities.RemoveAll();
+	m_hWeaponEntities.RemoveAll();
+	m_hMapTeleportEntities.RemoveAll();
+	m_hJumpPadEntities.RemoveAll();
+	m_hPowerupEntities.RemoveAll();
+
+	SetIT( NULL );
+
 	// Let all entities know that a new round is starting
 	CBaseEntity *pEnt = gEntList.FirstEnt();
 	while( pEnt )
 	{
 		variant_t emptyVariant;
 		pEnt->AcceptInput( "RoundSpawn", NULL, NULL, emptyVariant, 0 );
+		
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_ammopack*" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hAmmoEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_healthkit*" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hHealthEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "ofd_trigger_jump" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hJumpPadEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "trigger_teleport" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hMapTeleportEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "dm_powerup_spawner" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hPowerupEntities.AddToTail( hndl );
+		}
+
 
 		pEnt = gEntList.NextEnt( pEnt );
 	}
@@ -2099,7 +2281,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 	if ( g_pObjectiveResource && !g_pObjectiveResource->PlayingMiniRounds() )
 	{
 		// Find all the control points with associated spawnpoints
-		memset( m_bControlSpawnsPerTeam, 0, sizeof(bool) * MAX_TEAMS * MAX_CONTROL_POINTS );
+		Q_memset( m_bControlSpawnsPerTeam, 0, sizeof(bool) * MAX_TEAMS * MAX_CONTROL_POINTS );
 		CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, "info_player_teamspawn" );
 		while( pSpot )
 		{
@@ -2135,7 +2317,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
-	if( of_disable_healthkits.GetBool() )
+	if ( of_disable_healthkits.GetBool() )
 	{
 		// Disable all the active health packs in the world
 		m_hDisabledHealthKits.Purge();
@@ -2164,7 +2346,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_hDisabledHealthKits.Purge();		
 	}
 	
-	if( of_randomizer.GetBool() )
+	if ( of_randomizer.GetBool() )
 	{
 		// Disable all the active health packs in the world
 		m_hDisabledWeaponSpawners.Purge();
@@ -2193,7 +2375,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_hDisabledWeaponSpawners.Purge();				
 	}	
 	
-	if( of_disable_ammopacks.GetBool() )
+	if ( of_disable_ammopacks.GetBool() )
 	{
 		// Disable all the active health packs in the world
 		m_hDisabledAmmoPack.Purge();
@@ -2434,7 +2616,7 @@ void CTFGameRules::DisableSpawns( int iTeamNumber )
 		{
 			CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
 			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
-			if ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+			if ( !TFGameRules()->HasTeamSpawns() && !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
 			{
 				bool bSpotCreated = false;
 				// Check to see if this is a valid team spawn (player is on this team, etc.).
@@ -2685,20 +2867,16 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		// Adjust the damage - apply falloff.
 		float flAdjustedDamage = 0.0f;
-		float flNonSelfDamage = 0.0f;
+		//float flNonSelfDamage = 0.0f;
 
 		float flDistanceToEntity;
 
-		bool bInstantKill = false;
 		// Rockets store the ent they hit as the enemy and have already
 		// dealt full damage to them by this time
 		if ( pInflictor && ( pEntity == pInflictor->GetEnemy() ) )
 		{
 			// Full damage, we hit this entity directly
-			flDistanceToEntity = 0;
-			
-			if ( TFGameRules()->IsMutator( ROCKET_ARENA ) && !TFGameRules()->IsGGGamemode() )
-				bInstantKill = true;
+			flDistanceToEntity = 0.0f;
 		}
 		else if ( pEntity->IsPlayer() || pEntity->IsNPC() )
 		{
@@ -2722,57 +2900,19 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			flAdjustedDamage = flDistanceToEntity * falloff;
 			flAdjustedDamage = info.GetDamage() - flAdjustedDamage;
 		}
-
-		// Take a little less damage from yourself
-		if ( pEntity == info.GetAttacker() )
-		{
-			flNonSelfDamage = flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent);
-			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( info.GetWeapon() );
-			if ( pWeapon )
-			{
-				float flMultiplier = pWeapon->GetTFWpnData().m_nBlastJumpDamageForce / pWeapon->GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage;
-				flNonSelfDamage *= flMultiplier;
-			}
-			
-			CTFPlayer *pSelf = ToTFPlayer(pEntity);
-			
-			if ( pSelf && pSelf->m_Shared.InCond( TF_COND_SHIELD ) )
-				flNonSelfDamage /= ( of_resistance.GetFloat() * 2.0f );
-			if ( pSelf && pSelf->m_Shared.InCondUber() )
-				flNonSelfDamage = 0;
-			else
-			{
-				switch ( of_selfdamage.GetInt() )
-				{
-					case -1:
-						switch ( TFGameRules()->GetMutator() )
-						{	
-						case CLAN_ARENA:
-						case UNHOLY_TRINITY:
-						case ROCKET_ARENA:
-								flAdjustedDamage = 0.0f;
-								break;
-							default:
-								flAdjustedDamage = flAdjustedDamage * 0.75f;
-								break;
-						}
-						break;
-					case 0:
-						flAdjustedDamage = flAdjustedDamage * 0.0f;
-						break;
-					default:
-					case 1:
-						flAdjustedDamage = flAdjustedDamage * 0.75f;
-						break;
-				}
-			}
-		}
-		/*
-		if ( flAdjustedDamage <= 0 && !flNonSelfDamage )
+		
+		// NOTE: explosive damage is modified later in TakeDamage anyway to have 0 damage with some cvars, mutators etc
+		if ( flAdjustedDamage <= 0 )
 			continue;
-		*/
+
+		// insta kill on direct hit
+		if ( flDistanceToEntity == 0.0f && TFGameRules()->IsMutator( ROCKET_ARENA ) )
+		{
+			flAdjustedDamage *= 10.0f;
+		}
+
 		// the explosion can 'see' this entity, so hurt them!
-		if (tr.startsolid)
+		if ( tr.startsolid )
 		{
 			// if we're stuck inside them, fixup the position and distance
 			tr.endpos = vecSrc;
@@ -2782,6 +2922,20 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		CTakeDamageInfo adjustedInfo = info;
 		//Msg("%s: Blocked damage: %f percent (in:%f  out:%f)\n", pEntity->GetClassname(), flBlockedDamagePercent * 100, flAdjustedDamage, flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
 		adjustedInfo.SetDamage( flAdjustedDamage - (flAdjustedDamage * flBlockedDamagePercent) );
+
+		adjustedInfo.SetDamageForForceCalc( adjustedInfo.GetDamage() );
+		if( info.GetAttacker() == pEntity )
+		{
+			CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( info.GetWeapon() );
+			if ( pWeapon )
+			{
+				float flMultiplier = pWeapon->GetTFWpnData().m_nBlastJumpDamageForce / pWeapon->GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage;
+				if( flMultiplier != 1.0f )
+				{
+					adjustedInfo.SetDamageForceMult( flMultiplier );
+				}
+			}		
+		}
 
 		// Now make a consideration for skill level!
 		if( info.GetAttacker() && info.GetAttacker()->IsPlayer() && pEntity->IsNPC() )
@@ -2794,44 +2948,29 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		VectorNormalize(dir);
 
 		// If we don't have a damage force, manufacture one
-		if (adjustedInfo.GetDamagePosition() == vec3_origin || adjustedInfo.GetDamageForce() == vec3_origin)
+		if ( adjustedInfo.GetDamagePosition() == vec3_origin || adjustedInfo.GetDamageForce() == vec3_origin )
 		{
-			float SelfDamage = adjustedInfo.GetDamage();
-			adjustedInfo.SetDamage ( flNonSelfDamage );
-			CalculateExplosiveDamageForce(&adjustedInfo, dir, vecSrc);
-			adjustedInfo.SetDamage ( SelfDamage );
+			CalculateExplosiveDamageForce( &adjustedInfo, dir, vecSrc);
 		}
 		else
 		{
 			// Assume the force passed in is the maximum force. Decay it based on falloff.
 			float flForce = adjustedInfo.GetDamageForce().Length() * falloff;
+
 			adjustedInfo.SetDamageForce(dir * flForce);
 			adjustedInfo.SetDamagePosition(vecSrc);
 		}
-		
-		if ( bInstantKill )
-			adjustedInfo.SetDamage( pEntity->GetHealth() / falloff );
 
-		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt)
+		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt )
 		{
 			ClearMultiDamage( );
 			pEntity->DispatchTraceAttack( adjustedInfo, dir, &tr );
-			if ( flNonSelfDamage )
-				ApplyMultiSelfDamage( flNonSelfDamage * of_rocketjump_multiplier.GetFloat() );
-			else
-				ApplyMultiDamage();
+
+			ApplyMultiDamage();
 		}
 		else
 		{
-			if ( flNonSelfDamage )
-			{
-				pEntity->TakeSelfDamage( adjustedInfo, flNonSelfDamage * of_rocketjump_multiplier.GetFloat() );
-				CTFPlayer *pTarget = ToTFPlayer(pEntity);
-				if( pTarget && adjustedInfo.GetDamage() > 0.0f && pTarget->GetHealth() <= pTarget->m_Shared.GetDefaultHealth() + pTarget->m_Shared.m_flMegaOverheal   )
-					pTarget->m_Shared.m_flMegaOverheal = max( 0.0f, pTarget->m_Shared.m_flMegaOverheal - adjustedInfo.GetDamage() );
-			}
-			else
-				pEntity->TakeDamage( adjustedInfo/*, flNonSelfDamage, flNonSelfDamage */);
+			pEntity->TakeDamage( adjustedInfo );
 		}
 
 		// Now hit all triggers along the way that respond to damage... 
@@ -3034,7 +3173,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// For the love of all Gaben please set your convars BEFORE you start the server
 			if( TFGameRules()->UsesDMBuckets() != bMultiweapons )
 			{
-				DevMsg("What the fuck\n");
 				bMultiweapons = TFGameRules()->UsesDMBuckets();
 				for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 				{
@@ -3069,7 +3207,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					}
 				}
 			}
-			
+
 			// there is less than 60 seconds left of time, start voting for next map
 			if ( !IsDMGamemode() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 			{
@@ -3294,6 +3432,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			}
 		} // Game playerdie
 		// Play( MineOddity );
+		
+		SpawnHalloweenBoss();
+		
 		BaseClass::Think();
 	}
 	// entity limit measures, if we are above 1950 then start clearing out entities 
@@ -3364,6 +3505,258 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 		RunPlayerConditionThink();
 	}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::SpawnHalloweenBoss( void )
+{
+	//if ( !IsHolidayActive( kHoliday_Halloween ) )
+	//{
+	//	SpawnZombieMob();
+	//	return;
+	//}
+
+	float fSpawnInterval;
+	float fSpawnVariation;
+	CHalloweenBaseBoss::HalloweenBossType iBossType;
+
+	if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_MANOR ) )
+	{
+		iBossType = CHalloweenBaseBoss::HEADLESS_HATMAN;
+		fSpawnInterval = tf_halloween_boss_spawn_interval.GetFloat();
+		fSpawnVariation = tf_halloween_boss_spawn_interval_variation.GetFloat();
+	}
+	else if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_VIADUCT ) )
+	{
+		iBossType = CHalloweenBaseBoss::EYEBALL_BOSS;
+		fSpawnInterval = tf_halloween_eyeball_boss_spawn_interval.GetFloat();
+		fSpawnVariation = tf_halloween_eyeball_boss_spawn_interval_variation.GetFloat();
+	}
+	else if ( /*IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE )*/false )
+	{
+		/*CWheelOfDoom *pWheelOfDoom = (CWheelOfDoom *)gEntList.FindEntityByClassname( NULL, "wheel_of_doom" );
+		if ( pWheelOfDoom && !pWheelOfDoom->IsDoneBoardcastingEffectSound() )
+			return;
+		if (CMerasmus::m_level > 3)
+		{
+			fSpawnInterval = 60.0f;
+			fSpawnVariation = 0.0f;
+		}
+		else
+		{
+			fSpawnInterval = tf_merasmus_spawn_interval.GetFloat();
+			fSpawnVariation = tf_merasmus_spawn_interval_variation.GetFloat();
+		}*/
+		iBossType = CHalloweenBaseBoss::MERASMUS;
+	}
+	else
+	{
+		SpawnZombieMob();
+		return;
+	}
+
+	if ( !m_hBosses.IsEmpty() )
+	{
+		if ( m_hBosses[0] )
+		{
+			isBossForceSpawning = false;
+			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+			return;
+		}
+	}
+
+	if ( !m_bossSpawnTimer.HasStarted() && !isBossForceSpawning )
+	{
+		if ( IsHalloweenScenario( HALLOWEEN_SCENARIO_LAKESIDE ) )
+			m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+		else
+			m_bossSpawnTimer.Start( RandomFloat( 0, fSpawnInterval + fSpawnVariation ) * 0.5 );
+
+		return;
+	}
+
+	if ( m_bossSpawnTimer.IsElapsed() || isBossForceSpawning )
+	{
+		if ( !isBossForceSpawning )
+		{
+			if ( InSetup() || IsInWaitingForPlayers() )
+				return;
+
+			CUtlVector<CTFPlayer *> players;
+			CollectPlayers( &players, TF_TEAM_RED, true );
+			CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+			int nNumHumans = 0;
+			for ( int i=0; i<players.Count(); ++i )
+			{
+				if ( !players[i]->IsBot() )
+					nNumHumans++;
+			}
+
+			if ( tf_halloween_bot_min_player_count.GetInt() > nNumHumans )
+				return;
+		}
+
+		Vector vecSpawnLoc = vec3_origin;
+		if ( !g_hControlPointMasters.IsEmpty() && g_hControlPointMasters[0] )
+		{
+			CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
+			for ( int i=0; i<pMaster->GetNumPoints(); ++i )
+			{
+				CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+				if ( pMaster->IsInRound( pPoint ) &&
+					 ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != TF_TEAM_BLUE &&
+					 TFGameRules()->TeamMayCapturePoint( TF_TEAM_BLUE, pPoint->GetPointIndex() ) )
+				{
+					CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+					if ( pSpawnPoint )
+					{
+						vecSpawnLoc = pSpawnPoint->GetAbsOrigin();
+					}
+					else
+					{
+						vecSpawnLoc = pPoint->GetAbsOrigin();
+						if ( iBossType > CHalloweenBaseBoss::HEADLESS_HATMAN )
+						{
+							pPoint->ForceOwner( TEAM_UNASSIGNED );
+
+							if ( TFGameRules()->IsInKothMode() )
+							{
+								CTeamRoundTimer *pRedTimer = TFGameRules()->GetRedKothRoundTimer();
+								CTeamRoundTimer *pBluTimer = TFGameRules()->GetBlueKothRoundTimer();
+
+								if ( pRedTimer )
+								{
+									variant_t emptyVar;
+									pRedTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+								}
+								if ( pBluTimer )
+								{
+									variant_t emptyVar;
+									pBluTimer->AcceptInput( "Pause", NULL, NULL, emptyVar, 0 );
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			CBaseEntity *pSpawnPoint = gEntList.FindEntityByClassname( NULL, "spawn_boss" );
+			if ( pSpawnPoint )
+			{
+				vecSpawnLoc = pSpawnPoint->GetAbsOrigin();
+			}
+			else
+			{
+				CUtlVector<CNavArea *> candidates;
+				for ( int i=0; i<TheNavAreas.Count(); ++i )
+				{
+					CNavArea *area = TheNavAreas[i];
+					if ( area->GetSizeX() >= 100.0f && area->GetSizeY() >= 100.0f )
+						candidates.AddToTail( area );
+				}
+
+				if ( !candidates.IsEmpty() )
+				{
+					CNavArea *area = candidates.Random();
+					vecSpawnLoc = area->GetCenter();
+				}
+			}
+		}
+
+		CHalloweenBaseBoss::SpawnBossAtPos( iBossType, vecSpawnLoc );
+		isBossForceSpawning = false;
+		m_bossSpawnTimer.Start( RandomFloat( fSpawnInterval - fSpawnVariation, fSpawnInterval + fSpawnVariation ) );
+	}
+}
+
+void CTFGameRules::SpawnZombieMob( void )
+{
+	if ( !tf_halloween_zombie_mob_enabled.GetBool() )
+		return;
+
+	if ( InSetup() || IsInWaitingForPlayers() )
+	{
+		m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
+		return;
+	}
+	
+	if ( isZombieMobForceSpawning )
+	{
+		isZombieMobForceSpawning = false;
+		m_mobSpawnTimer.Invalidate();
+	}
+
+	if ( m_nZombiesToSpawn > 0 && IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+	{
+		if ( CZombie::SpawnAtPos( m_vecMobSpawnLocation, 0 ) )
+			--m_nZombiesToSpawn;
+	}
+
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, TF_TEAM_RED, true );
+	CollectPlayers( &players, TF_TEAM_BLUE, true, true );
+
+	int nHumans = 0;
+	for ( CTFPlayer *pPlayer : players )
+	{
+		if ( !pPlayer->IsBot() )
+			++nHumans;
+	}
+
+	if ( nHumans <= 0 || !m_mobSpawnTimer.IsElapsed() )
+		return;
+
+	m_mobSpawnTimer.Start( tf_halloween_zombie_mob_spawn_interval.GetFloat() );
+
+	CUtlVector<CTFNavArea *> validAreas;
+	const float flSearchRange = 2000.0f;
+
+	// populate a vector of valid spawn locations
+	for ( CTFPlayer *pPlayer : players )
+	{
+		CUtlVector<CTFNavArea *> nearby;
+		// ignore bots
+		if ( pPlayer->IsBot() )
+			continue;
+		// are they on mesh?
+		if ( pPlayer->GetLastKnownArea() == nullptr )
+			continue;
+
+		CollectSurroundingAreas( &nearby, pPlayer->GetLastKnownArea(), flSearchRange );
+		for ( CTFNavArea *pArea : nearby )
+		{
+			if ( !pArea->IsValidForWanderingPopulation() )
+				continue;
+
+			if ( pArea->IsBlocked( TF_TEAM_RED ) || pArea->IsBlocked( TF_TEAM_BLUE ) )
+				continue;
+
+			validAreas.AddToTail( pArea );
+		}
+	}
+
+	if ( validAreas.IsEmpty() )
+		return;
+
+	int iAttempts = 10;
+	while( true )
+	{
+		CTFNavArea *pArea = validAreas.Random();
+		m_vecMobSpawnLocation = pArea->GetCenter() + Vector( 0, 0, StepHeight );
+		if ( IsSpaceToSpawnHere( m_vecMobSpawnLocation ) )
+			break;
+
+		if ( --iAttempts == 0 )
+			return;
+	}
+
+	m_nZombiesToSpawn = tf_halloween_zombie_mob_spawn_count.GetInt();
+}
+
 
 	bool CTFGameRules::CheckCapsPerRound()
 	{
@@ -3771,12 +4164,14 @@ void TestSpawnPointType( const char *pEntClassName )
 			// the successful spawn point's location
 			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
 
-			// drop down to ground
-			// removed this causes issues with info player start on some maps
-			//Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+			if ( !TFGameRules()->IsHL2() )
+			{
+				// drop down to ground
+				Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
-			// the location the player will spawn at
-			//NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
+				// the location the player will spawn at
+				NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
+			}
 
 			// draw the spawn angles
 			QAngle spotAngles = pSpot->GetLocalAngles();
@@ -3915,7 +4310,11 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 		Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 		// Move the player to the place it said.
-		pPlayer->SetLocalOrigin( pSpawnSpot->GetAbsOrigin() + Vector(0,0,1) );
+		if ( TFGameRules()->IsHL2() )
+			pPlayer->SetLocalOrigin( pSpawnSpot->GetAbsOrigin() + Vector(0,0,1) );
+		else
+			pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
+
 		pPlayer->SetAbsVelocity( vec3_origin );
 		pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 		pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
@@ -3947,7 +4346,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		{
 			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
 			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
-			if ( ( TFGameRules()->IsInfGamemode() && !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) ) )
+			if ( ( TFGameRules()->IsInfGamemode() && ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) || !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) ) ) )
 			{
 			}
 			else
@@ -3968,152 +4367,72 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
 		if ( pCTFSpawn->GetMatchSummary() >= 1 )
 			return false;
-
-		DevMsg("Checking this CTFTeamSpawn... \n");
 		
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
-		// check if this spawnpoint allows our class to spawn here
-		if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_UNDEFINED )
+
+		int iClassIndex = pTFPlayer->GetPlayerClass()->GetClassIndex();
+
+		switch (iClassIndex)
 		{
-			// You shouldn't be looking for a spawnpoint when class is undefined
-			Warning( "CTFGameRules::IsSpawnPointValid: Player has undefined class" );
-			return false;
+			case TF_CLASS_UNDEFINED:
+				Warning( "CTFGameRules::IsSpawnPointValid: Player has undefined class" );
+					return false;
+				break;
+			case TF_CLASS_SCOUT:
+				if ( !pCTFSpawn->AllowScout() )
+					return false;
+				break;
+			case TF_CLASS_SNIPER:
+				if ( !pCTFSpawn->AllowSniper() )
+					return false;
+				break;
+			case TF_CLASS_SOLDIER:
+				if ( !pCTFSpawn->AllowSoldier() )
+					return false;
+				break;
+			case TF_CLASS_DEMOMAN:
+				if ( !pCTFSpawn->AllowDemoman() )
+					return false;
+				break;
+			case TF_CLASS_MEDIC:
+				if ( !pCTFSpawn->AllowMedic() )
+					return false;
+				break;
+			case TF_CLASS_HEAVYWEAPONS:
+				if ( !pCTFSpawn->AllowHeavyweapons() )
+					return false;
+				break;
+			case TF_CLASS_PYRO:
+				if ( !pCTFSpawn->AllowPyro() )
+					return false;
+				break;
+			case TF_CLASS_SPY:
+				if ( !pCTFSpawn->AllowSpy() )
+					return false;
+				break;
+			case TF_CLASS_ENGINEER:
+				if ( !pCTFSpawn->AllowEngineer() )
+					return false;
+				break;
+			case TF_CLASS_CIVILIAN:
+				if ( !pCTFSpawn->AllowCivilian() )
+				{
+					// official tf2 maps will have spawnflags missing for Civilian, therefore I do a cheeky solution
+					// get every single spawnpoint and check if any of them has a Civilian spawnflag before the round starts
+					// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
+					// otherwise, force ourselves to spawn here
+					if ( TFGameRules()->HasCivilianSpawns() )
+						return false;
+				}
+				break;
+			case TF_CLASS_JUGGERNAUT:
+				if ( !pCTFSpawn->AllowJuggernaut() )
+				{
+					if ( TFGameRules()->HasJuggernautSpawns() )
+						return false;
+				}
+				break;
 		}
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SCOUT && !pCTFSpawn->AllowScout() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SNIPER && !pCTFSpawn->AllowSniper() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SOLDIER && !pCTFSpawn->AllowSoldier() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_DEMOMAN && !pCTFSpawn->AllowDemoman() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MEDIC && !pCTFSpawn->AllowMedic() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_HEAVYWEAPONS && !pCTFSpawn->AllowHeavyweapons() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_PYRO && !pCTFSpawn->AllowPyro() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY && !pCTFSpawn->AllowSpy() )
-			return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_ENGINEER && !pCTFSpawn->AllowEngineer() )
-			return false;
-		//else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY && !pCTFSpawn->AllowMercenary() )
-		//	return false;
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_CIVILIAN && !pCTFSpawn->AllowCivilian() )
-		{
-			DevMsg("Found a spawnpoint not allowing civilian to spawn\n");
-			// official tf2 maps will have spawnflags missing for Civilian, therefore I do a cheeky solution
-			// get every single spawnpoint and check if any of them has a Civilian spawnflag
-			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
-			// otherwise, force ourselves to spawn here
-			CBaseEntity *pEntity = NULL;
-
-			bool bValidSpawn = false;
-
-			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "info_player_teamspawn" ) ) != NULL )
-			{
-				DevMsg("Looking for another spawnpoint... \n");
-
-				if ( TFGameRules()->IsSpawnPointValidNoClass( pEntity, pPlayer, true ) )
-					continue;
-
-				DevMsg("Found a potentially valid spawnpoint\n");
-
-				CTFTeamSpawn *pCTFSpot = dynamic_cast<CTFTeamSpawn*>( pEntity );
-
-				if ( pCTFSpot && pCTFSpot->AllowCivilian() )
-					bValidSpawn = true;
-			}
-
-			if ( bValidSpawn )
-			{
-				DevMsg("Found a valid spawnpoint with civilian spawnflag! this spawnpoint is now invalid... \n");
-				return false;
-			}
-		}
-		else if ( pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_JUGGERNAUT && !pCTFSpawn->AllowJuggernaut() )
-		{
-			// official tf2 maps will have spawnflags missing for Juggernaut, therefore I do a cheeky solution
-			// get every single spawnpoint and check if any of them has a Juggernaut spawnflag
-			// if there is, then its likely a custom map for our mod and therefore we can just keep looping spawnpoints until we hit that one
-			// otherwise, force ourselves to spawn here
-			// Find all entities of the correct name and try and sit where they're at
-			CBaseEntity *pEntity = NULL;
-
-			bool bValidSpawn = false;
-
-			while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "info_player_teamspawn" ) ) != NULL )
-			{
-				if ( TFGameRules()->IsSpawnPointValidNoClass( pEntity, pPlayer, true ) )
-					continue;
-
-				if ( pEntity->HasSpawnFlags( SF_CLASS_JUGGERNAUT ) )
-					bValidSpawn = true;
-			}
-
-			if ( bValidSpawn )
-				return false;
-		}	
-	}
-
-	Vector mins = GetViewVectors()->m_vHullMin;
-	Vector maxs = GetViewVectors()->m_vHullMax;
-
-	if ( !bIgnorePlayers )
-	{
-		Vector vTestMins = pSpot->GetAbsOrigin() + mins;
-		Vector vTestMaxs = pSpot->GetAbsOrigin() + maxs;
-		return UTIL_IsSpaceEmpty( pPlayer, vTestMins, vTestMaxs );
-	}
-
-	trace_t trace;
-	UTIL_TraceHull( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
-	return ( trace.fraction == 1 && trace.allsolid != 1 && (trace.startsolid != 1) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Checks to see if the player is on the correct team and whether or
-//          not the spawn point is available.
-//          This time however, without checking if the class spawnflags match
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsSpawnPointValidNoClass( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
-{
-    // Check the team if not in deathmatch
-	if ( IsHL2() )
-	{
-	}
-	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
-	{
-		// wow...
-		// some fools assigned teampoints to spectator team so i have to check this too
-		if ( pSpot->GetTeamNumber() == TEAM_UNASSIGNED || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
-		{
-		}
-		else
-		{
-			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
-			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
-			if ( ( TFGameRules()->IsInfGamemode() && !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) ) )
-			{
-			}
-			else
-				return false;
-		}
-	}
-
-	if ( !pSpot->IsTriggered( pPlayer ) )
-		return false;
-
-	CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
-	if ( pCTFSpawn )
-	{
-		if ( pCTFSpawn->IsDisabled() )
-			return false;
-
-		// live tf2 uses spawnpoints for the comp end screen, which are given the unassigned team (and unassigned spawnpoints are regarded as valid here)
-		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
-		if ( pCTFSpawn->GetMatchSummary() >= 1 )
-			return false;
 	}
 
 	Vector mins = GetViewVectors()->m_vHullMin;
@@ -4217,14 +4536,14 @@ VoiceCommandMenuItem_t *CTFGameRules::VoiceCommand( CBaseMultiplayerPlayer *pPla
 	{
 		int iActivity = ActivityList_IndexForName( pItem->m_szGestureActivity );
 
-		if ( iActivity != ACT_INVALID )
-		{
-			CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
-			if ( pTFPlayer )
-			{
-				pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_VOICE_COMMAND_GESTURE, iActivity );
-			}
+		if ( iActivity != ACT_INVALID && pTFPlayer )
+		{
+			pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_VOICE_COMMAND_GESTURE, iActivity );
+
+			if ( iMenu == 0 && iItem == 0 )
+				pTFPlayer->m_lastCalledMedic.Start();
 		}
 	}
 
@@ -4559,7 +4878,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			CalcDominationAndRevenge( pTFPlayerAssister, pTFPlayerVictim, true, &iDeathFlags );
 		}
 
-		if ( IsTeamplay() && IsTDMGamemode() && pTFPlayerScorer->IsEnemy(pTFPlayerVictim) && !DontCountKills() )
+		if ( IsTeamplay() && IsTDMGamemode() && !pTFPlayerScorer->InSameTeam(pTFPlayerVictim) && !DontCountKills() )
 		{
 			TFTeamMgr()->AddTeamScore( pTFPlayerScorer->GetTeamNumber(), 1 );
 		}
@@ -4670,6 +4989,16 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		// special-case burning damage, since persistent burning damage may happen after attacker has switched weapons
 		killer_weapon_name = "tf_weapon_flamethrower";
 	}
+	if ( info.GetDamageType() & DMG_NERVEGAS )
+	{
+		// sawblade!
+		killer_weapon_name = "saw_kill";
+	}
+	else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_DECAPITATION_BOSS )
+	{
+		// special-case burning damage, since persistent burning damage may happen after attacker has switched weapons
+		killer_weapon_name = "headtaker";
+	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{
 		// If the inflictor is the killer,  then it must be their current weapon doing the damage
@@ -4713,11 +5042,35 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		}
 	}
 
+	// sentry kill icons based on level
+	if ( 0 == Q_strcmp( killer_weapon_name, "obj_sentrygun" ) )
+	{
+		CBaseObject* pObject = dynamic_cast< CBaseObject * >( pInflictor );
+
+		if ( pObject )
+		{
+			switch ( pObject->GetUpgradeLevel() )
+			{
+				case 1:
+					killer_weapon_name = "obj_sentrygun";
+					break;
+				case 2:
+					killer_weapon_name = "obj_sentrygun2";
+					break;
+				case 3:
+				default: // up to level 90
+					killer_weapon_name = "obj_sentrygun3";
+					break;
+			}
+		}
+	}
+
 	// look out for sentry rocket as weapon and map it to sentry gun, so we get the sentry death icon
 	if ( 0 == Q_strcmp( killer_weapon_name, "tf_projectile_sentryrocket" ) )
 	{
-		killer_weapon_name = "obj_sentrygun";
+		killer_weapon_name = "obj_sentrygun3";
 	}
+
 	return killer_weapon_name;
 }
 
@@ -5220,7 +5573,9 @@ bool CTFGameRules::TimerMayExpire( void )
 	if ( m_flTimerMayExpireAt >= gpGlobals->curtime )
 		return false;
 
-	return true;
+	// return true;
+	// ficool2 - this fixes the payload overtime logic breaking... but what about other gamemodes?
+ 	return BaseClass::TimerMayExpire();
 }
 
 //-----------------------------------------------------------------------------
@@ -5634,6 +5989,166 @@ bool CTFGameRules::PlayerMayBlockPoint( CBasePlayer *pPlayer, int iPointIndex, c
 	return false;
 }
 
+#if defined( GAME_DLL )
+//-----------------------------------------------------------------------------
+// Purpose: Fills a vector with valid points that the player can capture right now
+// Input:	pPlayer - The player that wants to capture
+//			controlPointVector - A vector to fill with results
+//-----------------------------------------------------------------------------
+void CTFGameRules::CollectCapturePoints( CBasePlayer *pPlayer, CUtlVector<CTeamControlPoint *> *controlPointVector )
+{
+	Assert( ObjectiveResource() );
+	if ( !controlPointVector || !pPlayer )
+		return;
+
+	controlPointVector->RemoveAll();
+
+	if ( g_hControlPointMasters.IsEmpty() )
+		return;
+
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
+	if ( !pMaster || !pMaster->IsActive() )
+		return;
+
+	if ( IsInKothMode() && pMaster->GetNumPoints() == 1 )
+	{
+		CTeamControlPoint *pPoint = pMaster->GetControlPoint( 0 );
+		if ( pPoint && pPoint->GetPointIndex() == 0 )
+			controlPointVector->AddToTail( pPoint );
+
+		return;
+	}
+
+	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
+	{
+		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+		if ( pMaster->IsInRound( pPoint ) &&
+			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) != pPlayer->GetTeamNumber() &&
+			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), pPlayer->GetTeamNumber() ) &&
+			TeamMayCapturePoint( pPlayer->GetTeamNumber(), pPoint->GetPointIndex() ) )
+		{
+			controlPointVector->AddToTail( pPoint );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fills a vector with valid points that the player needs to defend from capture
+// Input:	pPlayer - The player that wants to defend
+//			controlPointVector - A vector to fill with results
+//-----------------------------------------------------------------------------
+void CTFGameRules::CollectDefendPoints( CBasePlayer *pPlayer, CUtlVector<CTeamControlPoint *> *controlPointVector )
+{
+	Assert( ObjectiveResource() );
+	if ( !controlPointVector || !pPlayer )
+		return;
+
+	controlPointVector->RemoveAll();
+
+	if ( g_hControlPointMasters.IsEmpty() )
+		return;
+
+	CTeamControlPointMaster *pMaster = g_hControlPointMasters[0];
+	if ( !pMaster || !pMaster->IsActive() )
+		return;
+
+	for ( int i = 0; i < pMaster->GetNumPoints(); ++i )
+	{
+		CTeamControlPoint *pPoint = pMaster->GetControlPoint( i );
+		if ( pMaster->IsInRound( pPoint ) &&
+			ObjectiveResource()->GetOwningTeam( pPoint->GetPointIndex() ) == pPlayer->GetTeamNumber() &&
+			ObjectiveResource()->TeamCanCapPoint( pPoint->GetPointIndex(), GetEnemyTeam( pPlayer ) ) &&
+			TeamMayCapturePoint( GetEnemyTeam( pPlayer ), pPoint->GetPointIndex() ) )
+		{
+			controlPointVector->AddToTail( pPoint );
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTeamTrainWatcher *CTFGameRules::GetPayloadToPush( int iTeam )
+{
+	if ( GetGameType() != TF_GAMETYPE_PAYLOAD )
+		return nullptr;
+
+	if ( iTeam == TF_TEAM_BLUE )
+	{
+		if ( m_hBlueAttackTrain )
+			return m_hBlueAttackTrain;
+
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
+		{
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() == iTeam )
+			{
+				m_hBlueAttackTrain = pWatcher;
+				return m_hBlueAttackTrain;
+			}
+
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
+	}
+
+	if ( iTeam == TF_TEAM_RED )
+	{
+		if ( m_hRedAttackTrain )
+			return m_hRedAttackTrain;
+
+		CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+		while ( pWatcher )
+		{
+			if ( !pWatcher->IsDisabled() && pWatcher->GetTeamNumber() == iTeam )
+			{
+				m_hRedAttackTrain = pWatcher;
+				return m_hRedAttackTrain;
+			}
+
+			pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+		}
+	}
+
+	return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CTeamTrainWatcher *CTFGameRules::GetPayloadToBlock( int iTeam )
+{
+	if ( m_nGameType != TF_GAMETYPE_PAYLOAD )
+		return nullptr;
+
+	if ( iTeam == TF_TEAM_BLUE )
+	{
+		if ( m_hBlueDefendTrain || HasMultipleTrains() )
+			return m_hBlueDefendTrain;
+	}
+
+	if ( iTeam != TF_TEAM_RED )
+		return nullptr;
+
+	if ( m_hRedDefendTrain || HasMultipleTrains() )
+		return m_hRedAttackTrain;
+
+	CTeamTrainWatcher *pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( NULL, "team_train_watcher" ) );
+	while ( pWatcher )
+	{
+		if ( !pWatcher->IsDisabled() )
+		{
+			m_hRedDefendTrain = pWatcher;
+			return m_hRedDefendTrain;
+		}
+
+		pWatcher = dynamic_cast<CTeamTrainWatcher *>( gEntList.FindEntityByClassname( pWatcher, "team_train_watcher" ) );
+	}
+
+	return m_hRedDefendTrain;
+}
+
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Calculates score for player
 //-----------------------------------------------------------------------------
@@ -5652,7 +6167,7 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 					( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE );
 	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 		iScore = ( pRoundStats->m_iStat[TFSTAT_KILLS] * TF_SCORE_KILL );
-	return max( iScore, 0 );
+	return Max( iScore, 0 );
 }
 
 //-----------------------------------------------------------------------------
@@ -5687,6 +6202,42 @@ bool CTFGameRules::IsBirthday( void )
 
 	return ( m_iBirthdayMode == BIRTHDAY_ON );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFGameRules::SetIT( CBaseEntity *pEnt )
+{
+	CBasePlayer *pPlayer = ToBasePlayer( pEnt );
+	if (pPlayer)
+	{
+		if (!m_itHandle.Get() || pPlayer != m_itHandle.Get())
+		{
+			ClientPrint( pPlayer, HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_WARN_VICTIM", pPlayer->GetPlayerName() );
+			ClientPrint( pPlayer, HUD_PRINTCENTER, "#TF_HALLOWEEN_BOSS_WARN_VICTIM", pPlayer->GetPlayerName() );
+
+			CSingleUserRecipientFilter filter( pPlayer );
+			CBaseEntity::EmitSound( filter, pEnt->entindex(), "Player.YouAreIT" );
+			pEnt->EmitSound( "Halloween.PlayerScream" );
+		}
+	}
+
+	CBasePlayer *pIT = ToBasePlayer( m_itHandle.Get() );
+	if (pIT && pEnt != pIT)
+	{
+		if (pIT->IsAlive())
+		{
+			CSingleUserRecipientFilter filter( pIT );
+			CBaseEntity::EmitSound( filter, pIT->entindex(), "Player.TaggedOtherIT" );
+			ClientPrint( pIT, HUD_PRINTTALK, "#TF_HALLOWEEN_BOSS_LOST_AGGRO" );
+			ClientPrint( pIT, HUD_PRINTCENTER, "#TF_HALLOWEEN_BOSS_LOST_AGGRO" );
+		}
+	}
+
+	m_itHandle = pEnt;
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -6101,6 +6652,19 @@ const char *CTFGameRules::GetTeamGoalString( int iTeam )
 	return NULL;
 }
 
+int CTFGameRules::GetAssignedHumanTeam( void ) const
+{
+#ifdef GAME_DLL
+	if ( FStrEq( mp_humans_must_join_team.GetString(), "blue" ) )
+		return TF_TEAM_BLUE;
+	else if ( FStrEq( mp_humans_must_join_team.GetString(), "red" ) )
+		return TF_TEAM_RED;
+	else if ( FStrEq( mp_humans_must_join_team.GetString(), "any" ) )
+		return TEAM_ANY;
+#endif
+	return TEAM_ANY;
+}
+
 const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 {
 	wchar_t *GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_UNDEFINED]);
@@ -6412,9 +6976,44 @@ bool CTFGameRules::HasPassedMinRespawnTime( CBasePlayer *pPlayer )
 	return ( gpGlobals->curtime > flMinSpawnTime );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFGameRules::PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector )
+{
+	CUtlVector<CTFPlayer *> players;
+	CollectPlayers( &players, iTeamNum, true );
+
+	for ( CTFPlayer *pPlayer : players )
+	{
+		Vector vecTo = pPlayer->EyePosition() - vecPos;
+		if ( vecTo.LengthSqr() > Square( flRange ) )
+			continue;
+
+		vecTo.NormalizeInPlace();
+
+		pPlayer->ApplyAbsVelocityImpulse( vecTo * flForce );
+
+		if ( outVector )
+			outVector->AddToTail( pPlayer );
+	}
+}
 
 #endif
 
+bool CTFGameRules::IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer )
+{
+	// IsConnectedUserInfoChangeAllowed allows the clients to change
+	// cvars with the FCVAR_NOT_CONNECTED rule if it returns true
+#ifndef GAME_DLL
+	pPlayer = C_BasePlayer::GetLocalPlayer();
+#endif
+
+	if ( pPlayer && !pPlayer->IsAlive() && pPlayer->GetTeamNumber() < TF_TEAM_RED )
+		return true;
+
+	return false;
+}
 
 #ifdef CLIENT_DLL
 const char *CTFGameRules::GetVideoFileForMap( bool bWithExtension /*= true*/ )
@@ -6484,6 +7083,8 @@ void CTFGameRules::BeginInfection( void )
 
 void CTFGameRules::SelectInfector( void )
 {
+	Msg("TFGameRulesInfection: Infection is selecting zombies...\n");
+	
 	// Find random player(s) to infect
 	// This is based on the amount of players (default ratio: 1 zombie for every 6 humans, rounded up)
 	CBasePlayer *pPlayer = NULL;
@@ -6492,7 +7093,8 @@ void CTFGameRules::SelectInfector( void )
 	int playercount = 0;
 	int targets = 0;
 	int candidates = 0;
-
+	
+	// Get a count of all players, and then a count of those players who will be suitable targets
 	for ( i = 1; i <= gpGlobals->maxClients; i++ )
 	{
 		pPlayer = UTIL_PlayerByIndex( i );
@@ -6521,7 +7123,8 @@ void CTFGameRules::SelectInfector( void )
 
 		if ( threshold <= 0 )
 			threshold = 6;
-
+		
+		// Get a count of players who will be selected as zombies, this division is rounded up
 		candidates = ceil( (float)targets / threshold );
 
 		if ( candidates <= 0 )
@@ -6541,10 +7144,17 @@ void CTFGameRules::SelectInfector( void )
 		TFGameRules()->SetInWaitingForPlayers( true );
 		return;
 	}
+	
+	int failsafe = 0;
 
+	// Pick a random player index between 0 and the player count, and zombify them, until all candidates are exhausted
 	do
 	{
+		Msg( "TFGameRulesInfection: Infection is finding a potential candidate...\n" );
 		int index = RandomInt( 0, playercount - 1 );
+		
+		// Potential fix for an infinite loop here
+		failsafe++;	
 
 		pPlayer = UTIL_PlayerByIndex( index );
 
@@ -6556,12 +7166,13 @@ void CTFGameRules::SelectInfector( void )
 
 			if ( pTFPlayer )
 			{
-				pTFPlayer->CommitSuicide( true, true );
+				Msg( "TFGameRulesInfection: Infection found a suitable candidate! Zombifying...\n" );
 				pTFPlayer->ChangeTeam( TF_TEAM_BLUE, false );
+				pTFPlayer->CommitSuicide( true, true );
 			}
 		}
 	} 
-	while ( candidates > 0 );
+	while ( candidates > 0 && failsafe < 65 );
 }
 
 void CTFGameRules::FinishInfection( void )

@@ -9,10 +9,16 @@
 #include "KeyValues.h"
 #include "takedamageinfo.h"
 #include "tf_gamerules.h"
-#ifdef CLIENT_DLL
+#include "bone_setup.h"
+
+#if defined( CLIENT_DLL )
+#include "c_team.h"
 #include "c_tf_player.h"
 #include "filesystem.h"
+#else
+#include "team.h"
 #endif
+
 extern ConVar of_infiniteammo;
 ConVar sv_unlockedchapters( "sv_unlockedchapters", "99" );
 
@@ -71,6 +77,27 @@ int GetWearableCount( void )
 	return i;
 }
 
+bool IsGameTeam( int iTeam )
+{
+	return ( iTeam > LAST_SHARED_TEAM && iTeam < TF_TEAM_COUNT ); 
+}
+
+bool IsTeamName( const char *str )
+{
+	for (int i = 0; i < g_Teams.Size(); ++i)
+	{
+#if defined( CLIENT_DLL )
+		if (FStrEq( str, g_Teams[i]->Get_Name() ))
+			return true;
+#else
+		if (FStrEq( str, g_Teams[i]->GetName() ))
+			return true;
+#endif
+	}
+
+	return Q_strcasecmp( str, "spectate" ) == 0;
+}
+
 //-----------------------------------------------------------------------------
 // Teams.
 //-----------------------------------------------------------------------------
@@ -80,7 +107,8 @@ const char *g_aTeamNames[TF_TEAM_COUNT] =
 	"Spectator",
 	"Red",
 	"Blue",
-	"Mercenary" //add team
+	"Mercenary",
+	"NPC" //add team
 };
 
 color32 g_aTeamColors[TF_TEAM_COUNT] = 
@@ -134,6 +162,37 @@ const char *g_aPlayerMutatorNames[] =
 	"None",
 	"TFC",
 };
+
+bool IsPlayerClassName( char const *str )
+{
+	for ( int i = 1; i < TF_CLASS_COUNT_ALL; ++i )
+	{
+		TFPlayerClassData_t *data = GetPlayerClassData( i );
+
+		if ( FStrEq( str, data->m_szClassName ) )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+int GetClassIndexFromString( char const *name, int maxClass )
+{
+	for ( int i = TF_FIRST_NORMAL_CLASS; i <= maxClass; ++i )
+	{
+		size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+
+		if ( length <= strlen( name ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], name, length ) )
+		{
+			return i;
+		}
+	}
+
+	return TF_CLASS_UNDEFINED;
+}
+
 
 //-----------------------------------------------------------------------------
 // Gametypes.
@@ -245,6 +304,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_FLAREGUN",
 	"TF_WEAPON_GIB",
 	"TF_WEAPON_THUNDERGUN",
+	"TF_WEAPON_CLAWS",
 
 	"TFC_WEAPON_SHOTGUN_SB",
 	"TFC_WEAPON_SHOTGUN_DB",
@@ -274,6 +334,32 @@ const char *g_aWeaponNames[] =
 
 	"TF_WEAPON_COUNT",	// end marker, do not add below here 
 };
+
+bool WeaponID_IsSniperRifle( int iWeaponID )
+{
+	return iWeaponID == TF_WEAPON_SNIPERRIFLE || 
+		/*iWeaponID == TF_WEAPON_RAILGUN ||*/
+		iWeaponID == TFC_WEAPON_SNIPER_RIFLE;
+}
+
+bool WeaponID_IsRocketWeapon( int iWeaponID )
+{
+	return iWeaponID == TF_WEAPON_ROCKETLAUNCHER || 
+		iWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM || 
+		iWeaponID == TF_WEAPON_SUPER_ROCKETLAUNCHER || 
+		iWeaponID == TFC_WEAPON_INCENDIARYCANNON || 
+		iWeaponID == TFC_WEAPON_RPG;
+}
+
+bool WeaponID_IsGrenadeWeapon( int iWeaponID )
+{
+	return iWeaponID == TF_WEAPON_GRENADELAUNCHER || 
+		iWeaponID == TF_WEAPON_PIPEBOMBLAUNCHER || 
+		iWeaponID == TF_WEAPON_GRENADELAUNCHER_MERCENARY || 
+		iWeaponID == TF_WEAPON_DYNAMITE_BUNDLE || 
+		iWeaponID == TFC_WEAPON_PIPEBOMBLAUNCHER || 
+		iWeaponID == TFC_WEAPON_GRENADELAUNCHER;
+}
 
 const char *g_aGrenadeNames[] =
 {
@@ -374,6 +460,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_IGNITE,			// TF_WEAPON_FLAREGUN
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GIB,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_THUNDERGUN,
+	DMG_SLASH, // TF_WEAPON_CLAWS
 	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_DB
@@ -822,3 +909,56 @@ int	CalculateObjectUpgrade( int iObjectType, int iObjectLevel )
 
 	return iCost;
 }
+
+bool IsSpaceToSpawnHere( const Vector &vecPos )
+{
+	Vector mins = VEC_HULL_MIN - Vector( -5.0f, -5.0f, 0 );
+	Vector maxs = VEC_HULL_MAX + Vector( 5.0f, 5.0f, 5.0f );
+	trace_t tr;
+	UTIL_TraceHull( vecPos, vecPos, mins, maxs, MASK_PLAYERSOLID, nullptr, COLLISION_GROUP_PLAYER_MOVEMENT, &tr );
+	return tr.fraction >= 1.0f;
+}
+
+void BuildBigHeadTransformation( CBaseAnimating *pAnimating, CStudioHdr *pStudio, Vector *pos, Quaternion *q, matrix3x4_t const &cameraTransformation, int boneMask, CBoneBitList &boneComputed, float flScale )
+{
+	if ( pAnimating == nullptr )
+		return;
+
+	if ( flScale == 1.0f )
+		return;
+
+	int headBone = pAnimating->LookupBone( "bip_head" );
+	if ( headBone == -1 )
+		return;
+
+#if defined( CLIENT_DLL )
+	matrix3x4_t &head = pAnimating->GetBoneForWrite( headBone );
+
+	Vector oldTransform, newTransform;
+	MatrixGetColumn( head, 3, &oldTransform );
+	MatrixScaleBy( flScale, head );
+
+	int helmetBone = pAnimating->LookupBone( "prp_helmet" );
+	if ( helmetBone != -1 )
+	{
+		matrix3x4_t &helmet = pAnimating->GetBoneForWrite( helmetBone );
+		MatrixScaleBy( flScale, helmet );
+
+		MatrixGetColumn( helmet, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, helmet );
+	}
+
+	int hatBone = pAnimating->LookupBone( "prp_hat" );
+	if ( hatBone != -1 )
+	{
+		matrix3x4_t &hat = pAnimating->GetBoneForWrite( hatBone );
+		MatrixScaleBy( flScale, hat );
+
+		MatrixGetColumn( hat, 3, &newTransform );
+		Vector transform = ( ( newTransform - oldTransform ) * flScale ) + oldTransform;
+		MatrixSetColumn( transform, 3, hat );
+	}
+#endif
+}
+

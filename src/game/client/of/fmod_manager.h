@@ -47,7 +47,12 @@ private:
 	float m_flSongStart;
 	
 };
- 
+
 extern CFMODManager* FMODManager();
+extern KeyValues* GlobalSoundManifest();
+extern void InitGlobalSoundManifest();
+
+extern KeyValues* LevelSoundManifest();
+extern void InitLevelSoundManifest();
  
 #endif //FMOD_MANAGER_H

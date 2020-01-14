@@ -163,6 +163,7 @@ typedef enum
 	// OF-Specfic
 	VOTE_FAILED_MUTATOR_INVALID,
 	VOTE_FAILED_INTERMISSION,
+	VOTE_FAILED_NOT_ENOUGH_PLAYERS,
 } vote_create_failed_t;
 
 enum

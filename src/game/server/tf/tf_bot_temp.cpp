@@ -34,7 +34,7 @@ ConVar bot_forceattackon( "bot_forceattackon", "1", 0, "When firing, don't tap f
 ConVar bot_flipout( "bot_flipout", "0", 0, "When on, all bots fire their guns." );
 ConVar bot_defend( "bot_defend", "0", 0, "Set to a team number, and that team will all keep their combat shields raised." );
 ConVar bot_changeclass( "bot_changeclass", "0", 0, "Force all bots to change to the specified class." );
-ConVar bot_dontmove( "bot_dontmove", "1", 0, "Force bots to not move." );
+ConVar bot_dontmove( "bot_dontmove", "0", 0, "Force bots to not move." );
 ConVar bot_saveme( "bot_saveme", "0", FCVAR_CHEAT );
 static ConVar bot_mimic( "bot_mimic", "0", 0, "Bot uses usercmd of player by index." );
 static ConVar bot_mimic_yaw_offset( "bot_mimic_yaw_offset", "0", 0, "Offsets the bot yaw." );
@@ -117,6 +117,8 @@ CBasePlayer *BotPutInServer( bool bFrozen, int iTeam, int iClass, const char *ps
 	CTFPlayer *pPlayer = ((CTFPlayer *)CBaseEntity::Instance( pEdict ));
 	pPlayer->ClearFlags();
 	pPlayer->AddFlag( FL_CLIENT | FL_FAKECLIENT );
+	
+	pPlayer->m_bPuppet = true;
 
 	// random color
 	pPlayer->m_vecPlayerColor = vecColor;
@@ -157,7 +159,7 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 		count = 128;
 
 	// Look at -frozen.
-	bool bFrozen = !!args.FindArg( "-frozen" );
+	bool bFrozen = !(!!args.FindArg( "-frozen" ));
 		
 	// Ok, spawn all the bots.
 	while ( --count >= 0 )
@@ -221,7 +223,7 @@ CON_COMMAND_F( bot, "Add a bot.", FCVAR_CHEAT )
 		// pick a random color!
 		Vector m_vecPlayerColor = vec3_origin;
 
-		if ( TFGameRules() && TFGameRules()->IsDeathmatch() )
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
 		{
 			float flColors[3];
 
@@ -364,11 +366,13 @@ void Bot_RunAll( void )
 	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 	{
 		CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		
+		if ( !pPlayer || !pPlayer->IsConnected() )
+			continue;
+		if ( !pPlayer->m_bPuppet || pPlayer->MyNextBotPointer() != NULL )
+			continue;
 
-		if ( pPlayer && (pPlayer->GetFlags() & FL_FAKECLIENT) )
-		{
-			Bot_Think( pPlayer );
-		}
+		Bot_Think( pPlayer );
 	}
 }
 

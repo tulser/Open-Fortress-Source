@@ -175,6 +175,7 @@ public:
 	CHandle<CBaseObject> m_hObj2;
 };
 
+IMPLEMENT_AUTO_LIST( IBaseObjectAutoList )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1202,25 +1203,11 @@ bool CBaseObject::StartBuilding( CBaseEntity *pBuilder )
 
 		if ( pWeapon == NULL )
 		{
-			if ( !pTFBuilder->IsRetroModeOn() )
+			if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
 			{
-				if ( pData->m_aBuildable[0] != OBJ_ATTACHMENT_SAPPER )
-				{
-
-					DevMsg( "Tried to build something without a Construction PDA.\n" );
-					StopPlacement();
-					return false;
-				}
-			}
-			else
-			{
-				if ( pData->m_aTFCBuildable[0] != OBJ_ATTACHMENT_SAPPER )
-				{
-
-					DevMsg( "Tried to build something without a Construction PDA.\n" );
-					StopPlacement();
-					return false;
-				}				
+				DevMsg( "Tried to build something without a Construction PDA.\n" );
+				StopPlacement();
+				return false;		
 			}
 		}
 

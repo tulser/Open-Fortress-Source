@@ -76,6 +76,14 @@ char* C_TFTeam::Get_Name( void )
 	{
 		return "RED";
 	}
+	else if ( Q_stricmp( m_szTeamname, "mercenary" ) == 0 )
+	{
+		return "Mercenary";
+	}
+	else if ( Q_stricmp( m_szTeamname, "npc" ) == 0 )
+	{
+		return "NPC";
+	}
 
 	return m_szTeamname;
 }

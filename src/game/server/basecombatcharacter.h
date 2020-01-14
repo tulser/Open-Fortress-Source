@@ -402,7 +402,7 @@ public:
 	void				SetPreventWeaponPickup( bool bPrevent ) { m_bPreventWeaponPickup = bPrevent; }
 	bool				m_bPreventWeaponPickup;
 
-	virtual bool	IsAirBlast( void ) const { return true; }
+	virtual bool	IsDeflectable( void ) { return true; }
 
 	virtual CNavArea *GetLastKnownArea( void ) const		{ return m_lastNavArea; }		// return the last nav area the player occupied - NULL if unknown
 	virtual bool IsAreaTraversable( const CNavArea *area ) const;							// return true if we can use the given area 

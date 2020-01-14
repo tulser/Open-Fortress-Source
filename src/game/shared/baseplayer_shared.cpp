@@ -719,7 +719,9 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 
 #ifndef CLIENT_DLL
 	// in MP, server removes all players in the vecOrigin's PVS, these players generate the footsteps client side
-	if ( gpGlobals->maxClients > 1 )
+	filter.UsePredictionRules();
+	   
+	if ( !force && gpGlobals->maxClients > 1 )
 	{
 		filter.RemoveRecipientsByPVS( vecOrigin );
 	}

@@ -98,19 +98,22 @@ ConVar of_color_r( "of_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets me
 ConVar of_color_g( "of_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
 ConVar of_color_b( "of_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
-ConVar of_tennisball("of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF" );
-ConVar of_mercenary_hat("of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats" );
-ConVar of_disable_cosmetics("of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
+ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF" );
+ConVar of_mercenary_hat( "of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats" );
+ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
 
-ConVar tf_hud_no_crosshair_on_scope_zoom("tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
+ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
 
-static ConVar cl_fp_ragdoll("cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls." );
+static ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls." );
 
-ConVar of_respawn_particle("of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch", true, 1, true, 35 );
+ConVar of_respawn_particle( "of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch", true, 1, true, 35 );
 
-ConVar of_critglow_saturation("of_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is" );
+ConVar of_critglow_saturation( "of_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is." );
 
-ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Should taunts be performed in firstperson? (cl_first_person_uses_world_model 1 recommended)" );
+ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Should taunts be performed in firstperson? (cl_first_person_uses_world_model 1 recommended)." );
+
+ConVar cl_quickzoom( "cl_quickzoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Softzoom on right click whenever avalible" );
+ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces death animation." );
 
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
@@ -199,23 +202,16 @@ static void ScaleGoreHead( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_head" );
-		if ( iBone != -1 )
-			MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite(iBone) );
+		const char* boneNames[] = { "bip_head", "prp_helmet", "prp_hat", "prp_cig" };
 
-		iBone = pAnimating->LookupBone( "prp_helmet" );
-		if ( iBone != -1 )
-			MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite(iBone) );
-
-		iBone = pAnimating->LookupBone( "prp_hat" );
-		if ( iBone != -1 )
-			MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite(iBone) );
-
-		iBone = pAnimating->LookupBone( "prp_cig" );
-		if ( iBone != -1 )
-			MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite(iBone) );
+		for ( int i = 0; i < 4; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 	
 }
@@ -225,80 +221,20 @@ static void ScaleGoreLeftArm( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_lowerArm_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_lowerArm_L", "bip_hand_L", "hlp_forearm_L", 
+									"bip_thumb_0_L", "bip_index_0_L", "bip_middle_0_L", "bip_ring_0_L", "bip_pinky_0_L",
+									"bip_thumb_1_L", "bip_index_1_L", "bip_middle_1_L", "bip_ring_1_L", "bip_pinky_1_L",
+									"bip_thumb_2_L", "bip_index_2_L", "bip_middle_2_L", "bip_ring_2_L", "bip_pinky_2_L",
+								  };
 
-		iBone = pAnimating->LookupBone( "bip_hand_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "hlp_forearm_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-
-		iBone = pAnimating->LookupBone( "bip_thumb_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 18; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
@@ -307,72 +243,20 @@ static void ScaleGoreLeftHand( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_hand_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_hand_L",
+									"bip_thumb_0_L", "bip_index_0_L", "bip_middle_0_L", "bip_ring_0_L", "bip_pinky_0_L",
+									"bip_thumb_1_L", "bip_index_1_L", "bip_middle_1_L", "bip_ring_1_L", "bip_pinky_1_L",
+									"bip_thumb_2_L", "bip_index_2_L", "bip_middle_2_L", "bip_ring_2_L", "bip_pinky_2_L",
+								  };
 
-		iBone = pAnimating->LookupBone( "bip_thumb_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_0_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_1_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-
-		iBone = pAnimating->LookupBone( "bip_thumb_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_2_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 16; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
@@ -381,80 +265,20 @@ static void ScaleGoreRightArm( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
-		iBone = pAnimating->LookupBone( "bip_lowerArm_R" );
+		int iBone = -1;
 
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_lowerArm_R", "bip_hand_R", "hlp_forearm_R",
+									"bip_thumb_0_R", "bip_index_0_R", "bip_middle_0_R", "bip_ring_0_R", "bip_pinky_0_R",
+									"bip_thumb_1_R", "bip_index_1_R", "bip_middle_1_R", "bip_ring_1_R", "bip_pinky_1_R",
+									"bip_thumb_2_R", "bip_index_2_R", "bip_middle_2_R", "bip_ring_2_R", "bip_pinky_2_R",
+								  };
 
-		iBone = pAnimating->LookupBone( "hlp_forearm_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_hand_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-
-		iBone = pAnimating->LookupBone( "bip_thumb_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 18; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
@@ -463,95 +287,39 @@ static void ScaleGoreRightHand( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
-		
-		iBone = pAnimating->LookupBone( "bip_hand_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_thumb_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_hand_R",
+									"bip_thumb_0_R", "bip_index_0_R", "bip_middle_0_R", "bip_ring_0_R", "bip_pinky_0_R",
+									"bip_thumb_1_R", "bip_index_1_R", "bip_middle_1_R", "bip_ring_1_R", "bip_pinky_1_R",
+									"bip_thumb_2_R", "bip_index_2_R", "bip_middle_2_R", "bip_ring_2_R", "bip_pinky_2_R",
+								  };
 
-		iBone = pAnimating->LookupBone( "bip_index_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_0_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_thumb_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_1_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-
-		iBone = pAnimating->LookupBone( "bip_thumb_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_index_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_middle_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_ring_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_pinky_2_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 16; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
 // Scale left knee to nothing
 static void ScaleGoreLeftKnee( C_BaseAnimating *pAnimating )
 {
-	
 	if ( pAnimating )
 	{
-		int iBone;
-		iBone = pAnimating->LookupBone( "bip_knee_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_foot_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_knee_L", "bip_foot_L", "bip_toe_L" };
 
-		iBone = pAnimating->LookupBone( "bip_toe_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 3; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
-	
 }
 
 // Scale left foot to nothing
@@ -559,14 +327,16 @@ static void ScaleGoreLeftFoot( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
-		iBone = pAnimating->LookupBone( "bip_foot_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_toe_L" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_foot_L", "bip_toe_L" };
+
+		for ( int i = 0; i < 2; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
@@ -575,21 +345,17 @@ static void ScaleGoreRightKnee( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
+		int iBone = -1;
 
-		iBone = pAnimating->LookupBone( "bip_knee_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		const char* boneNames[] = { "bip_knee_r", "bip_foot_r", "bip_toe_R" };
 
-		iBone = pAnimating->LookupBone( "bip_foot_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-
-		iBone = pAnimating->LookupBone( "bip_toe_R" );
-		if ( iBone != -1 )
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
+		for ( int i = 0; i < 3; i++ )
+		{
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
-
 }
 
 // Scale right foot to nothing
@@ -597,17 +363,16 @@ static void ScaleGoreRightFoot( C_BaseAnimating *pAnimating )
 {
 	if ( pAnimating )
 	{
-		int iBone;
-		iBone = pAnimating->LookupBone( "bip_foot_R" );
-		if ( iBone != -1 )
+		int iBone = -1;
+
+		const char* boneNames[] = { "bip_foot_R", "bip_toe_R" };
+
+		for ( int i = 0; i < 2; i++ )
 		{
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-		}	
-		iBone = pAnimating->LookupBone( "bip_toe_R" );
-		if ( iBone != -1 )
-		{
-			MatrixScaleBy(0.001f, pAnimating->GetBoneForWrite(iBone));
-		}	
+			iBone = pAnimating->LookupBone( boneNames[i] );
+			if ( iBone != -1 )
+			  MatrixScaleBy( 0.001f, pAnimating->GetBoneForWrite( iBone ) );
+		}
 	}
 }
 
@@ -639,6 +404,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_iGoreRightArm ) ),
 	RecvPropInt( RECVINFO( m_iGoreLeftLeg ) ),
 	RecvPropInt( RECVINFO( m_iGoreRightLeg ) ),
+	RecvPropBool( RECVINFO( m_bFlagOnGround ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -652,7 +418,6 @@ C_TFRagdoll::C_TFRagdoll()
 	m_bFadingOut = false;
 	m_bGib = false;
 	m_bBurning = false;
-	m_bGoreEnabled = false;
 	m_flBurnEffectStartTime = 0.0f;
 	m_iTeam = -1;
 	m_iClass = -1;
@@ -662,6 +427,20 @@ C_TFRagdoll::C_TFRagdoll()
 	// takedamageinfo.h
 	//m_bitsDamageType = 0;
 	m_iDamageCustom = 0;
+
+	m_bGoreEnabled = false;
+
+	m_iGoreDecalAmount = 0;
+	m_iGoreDecalBone = 0;
+	m_fGoreDecalTime = -1;
+
+	m_iGoreHead = 0;
+	m_iGoreLeftArm = 0;
+	m_iGoreRightArm = 0;
+	m_iGoreLeftLeg = 0;
+	m_iGoreRightLeg = 0;
+
+	m_bFlagOnGround = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -775,16 +554,13 @@ void C_TFRagdoll::BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Qua
 {
 	BaseClass::BuildTransformations( pStudioHdr, pos, q, cameraTransform, boneMask, boneComputed );
 
-	m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
-
-	if ( of_gore.GetBool() && m_bGoreEnabled )
+	if ( m_bGoreEnabled )
 		ScaleGoreBones();
 }
 
 void C_TFRagdoll::ScaleGoreBones()
 {
-	// this is ugly
-	if ( m_iGoreHead == 2 || m_iGoreHead == 3 )
+	if ( m_iGoreHead > 1 )
 		ScaleGoreHead( this );
 
 	if ( m_iGoreLeftArm == 2 )
@@ -808,35 +584,35 @@ void C_TFRagdoll::ScaleGoreBones()
 		ScaleGoreRightKnee( this );
 }
 
-void C_TFRagdoll::DismemberHead( )
+void C_TFRagdoll::DismemberHead()
 {
 	m_iGoreHead = 3;
 
-	m_HeadBodygroup = FindBodygroupByName( "head" );
+	int m_HeadBodygroup = FindBodygroupByName( "head" );
 
 	if ( m_HeadBodygroup >= 0 )
 		SetBodygroup( m_HeadBodygroup, 2 );
 
-	// this isn't actually attached to the head attachment
-	// it goes to the bone, but an attachment is needed here to shut the particle system up
-	ParticleProp()->Create( "blood_decap", PATTACH_BONE_FOLLOW, "bip_neck" );
+	int iAttach = LookupBone( "bip_neck" );
 
-	Vector	vecSpot;
-	trace_t	tr;
+	if ( iAttach != -1 )
+	{
+		ParticleProp()->Create( "blood_decap", PATTACH_BONE_FOLLOW, "bip_neck" );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_neck" );
 
-	// emit some blood
-	vecSpot = GetAbsOrigin();
-	UTIL_TraceLine ( vecSpot, vecSpot + Vector ( 0, 0, -32 ),  MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+		EmitSound( "TFPlayer.Decapitated" );
 
-	UTIL_BloodDecalTrace( &tr, BLOOD_COLOR_RED );
+		m_iGoreDecalAmount += 15;
+		m_iGoreDecalBone = iAttach;
 
-	EmitSound( "TFPlayer.Decapitated" );
-
+	}
 }
 
 void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 {
-	m_LeftArmBodygroup = FindBodygroupByName( "leftarm" );
+	int m_LeftArmBodygroup = FindBodygroupByName( "leftarm" );
+
+	int iAttach;
 
 	if ( bLevel )
 	{
@@ -845,14 +621,17 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 		if ( m_LeftArmBodygroup >= 0 )
 			SetBodygroup( m_LeftArmBodygroup, 3 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+		iAttach = LookupBone( "bip_upperArm_L" );
+
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+		}
 	}
 	else
 	{
@@ -861,23 +640,33 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 		if ( m_LeftArmBodygroup >= 0 )
 			SetBodygroup( m_LeftArmBodygroup, 2 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+		iAttach = LookupBone( "bip_lowerArm_L" );
 
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+		}
 	}
 
-	EmitSound( "Flesh_Bloody.ImpactHard" );
+	if ( iAttach != -1 )
+	{
+		m_iGoreDecalAmount += 4;
+		m_iGoreDecalBone = iAttach;
+
+		EmitSound( "Flesh_Bloody.ImpactHard" );
+	}
 }
 
 void C_TFRagdoll::DismemberRightArm( bool bLevel )
 {
-	m_RightArmBodygroup = FindBodygroupByName( "rightarm" );
+	int m_RightArmBodygroup = FindBodygroupByName( "rightarm" );
+
+	int iAttach;
 
 	if ( bLevel )
 	{
@@ -886,14 +675,17 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		if ( m_RightArmBodygroup >= 0 )
 			SetBodygroup( m_RightArmBodygroup, 3 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+		iAttach = LookupBone( "bip_upperArm_R" );
+
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+		}
 	}
 	else
 	{
@@ -902,23 +694,33 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		if ( m_RightArmBodygroup >= 0 )
 			SetBodygroup( m_RightArmBodygroup, 2 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create("blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_R");
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+		iAttach = LookupBone( "bip_lowerArm_R" );
 
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+		}
 	}
 
-	EmitSound( "Flesh_Bloody.ImpactHard" );
+	if ( iAttach != -1 )
+	{
+		m_iGoreDecalAmount += 4;
+		m_iGoreDecalBone = iAttach;
+
+		EmitSound( "Flesh_Bloody.ImpactHard" );
+	}
 }
 
 void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 {
-	m_LeftLegBodygroup = FindBodygroupByName( "leftleg" );
+	int m_LeftLegBodygroup = FindBodygroupByName( "leftleg" );
+
+	int iAttach;
 
 	if ( bLevel )
 	{
@@ -927,14 +729,17 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		if ( m_LeftLegBodygroup >= 0 )
 			SetBodygroup( m_LeftLegBodygroup, 3 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+		iAttach = LookupBone( "bip_knee_L" );
+
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+		}
 	}
 	else
 	{
@@ -943,23 +748,33 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		if ( m_LeftLegBodygroup >= 0 )
 			SetBodygroup( m_LeftLegBodygroup, 2 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+		iAttach = LookupBone( "bip_foot_L" );
 
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+		}
 	}
 
-	EmitSound( "Flesh_Bloody.ImpactHard" );
+	if ( iAttach != -1 )
+	{
+		m_iGoreDecalAmount += 4;
+		m_iGoreDecalBone = iAttach;
+
+		EmitSound( "Flesh_Bloody.ImpactHard" );
+	}
 }
 
 void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 {
-	m_RightLegBodygroup = FindBodygroupByName( "rightleg" );
+	int m_RightLegBodygroup = FindBodygroupByName( "rightleg" );
+
+	int iAttach;
 
 	if ( bLevel )
 	{
@@ -968,14 +783,17 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 		if ( m_RightLegBodygroup >= 0 )
 			SetBodygroup( m_RightLegBodygroup, 3 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+		iAttach = LookupBone( "bip_knee_R" );
+
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+		}
 	}
 	else
 	{
@@ -984,67 +802,104 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 		if ( m_RightLegBodygroup >= 0 )
 			SetBodygroup( m_RightLegBodygroup, 2 );
 
-		// this isn't actually attached to the head attachment
-		// it goes to the bone, but an attachment is needed here to shut the particle system up
-		// for some reason blood_decap does not work here so each effect needs to be created individually
-		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+		iAttach = LookupBone( "bip_foot_R" );
 
+		if ( iAttach != -1 )
+		{
+			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+		}
 	}
 
-	EmitSound( "Flesh_Bloody.ImpactHard" );
+	if ( iAttach != -1 )
+	{
+		m_iGoreDecalAmount += 4;
+		m_iGoreDecalBone = iAttach;
+
+		EmitSound( "Flesh_Bloody.ImpactHard" );
+	}
 }
 
 void C_TFRagdoll::InitDismember()
 {
-	if ( m_iGoreHead == 3 )
-	{
+	// HHH
+	if ( m_iDamageCustom == TF_DMG_CUSTOM_DECAPITATION_BOSS )
+		m_iGoreHead = 2;
+
+	// head does not have two levels of dismemberment, only one
+	if ( m_iGoreHead > 1 )
 		DismemberHead();
-	}
-	else if ( m_iGoreHead == 2 )
-	{
-		DismemberHead();
-	}
 
 	if ( m_iGoreLeftArm == 3 )
-	{
 		DismemberLeftArm( true );
-	}
 	else if ( m_iGoreLeftArm == 2 )
-	{
 		DismemberLeftArm( false );
-	}
 
 	if ( m_iGoreRightArm == 3 )
-	{
 		DismemberRightArm( true );
-	}
 	else if ( m_iGoreRightArm == 2 )
-	{
 		DismemberRightArm( false );
-	}
 
 	if ( m_iGoreLeftLeg == 3 )
-	{
 		DismemberLeftLeg( true );
-	}
 	else if ( m_iGoreLeftLeg == 2 )
-	{
 		DismemberLeftLeg( false );
-	}
 
 	if ( m_iGoreRightLeg == 3 )
-	{
 		DismemberRightLeg( true );
-	}
 	else if ( m_iGoreRightLeg == 2 )
-	{
 		DismemberRightLeg( false );
+}
+
+void C_TFRagdoll::DismemberRandomLimbs( void )
+{
+	int iGore = 0;
+
+	// NOTE: head is not dismembered here intentionally
+
+	if ( m_iGoreLeftArm < 3 )
+	{
+		iGore = random->RandomInt( 0,3 );
+
+		if ( iGore == 2 )
+			DismemberLeftArm( false );
+		else if ( iGore == 3 )
+			DismemberLeftArm( true );
 	}
 
+	if ( m_iGoreRightArm < 3 )
+	{
+		iGore = random->RandomInt( 0,3 );
+
+		if ( iGore == 2 )
+			DismemberRightArm( false );
+		else if ( iGore == 3 )
+			DismemberRightArm( true );
+	}
+
+	if ( m_iGoreLeftLeg < 3 )
+	{
+		iGore = random->RandomInt( 0,3 );
+
+		if ( iGore == 2 )
+			DismemberLeftLeg( false );
+		else if ( iGore == 3 )
+			DismemberLeftLeg( true );
+	}
+
+	if ( m_iGoreRightLeg < 3 )
+	{
+		iGore = random->RandomInt( 0,3 );
+
+		if ( iGore == 2 )
+			DismemberRightLeg( false );
+		else if ( iGore == 3 )
+			DismemberRightLeg( true );
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1076,7 +931,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 	// if our current level is at level 0/1, that means we can dismember this limb up to level 2
 	// Dismember<limb> function accepts true or false, true means this limb will be dismembered to level 3, false means dismembered to level 2
 
-	if ( of_gore.GetBool() && m_bGoreEnabled )
+	if ( m_bGoreEnabled )
 	{
 	switch ( pTrace->hitgroup )
 	{
@@ -1171,6 +1026,8 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 				vecDir *= 2999999;
 			pPhysicsObject->ApplyForceCenter( vecDir );
 		}
+
+		DismemberRandomLimbs();
 	}
 	else
 	{
@@ -1244,15 +1101,14 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		pPlayer = dynamic_cast<C_TFPlayer*>( hPlayer.Get() );
 	}
 
-	TFPlayerClassData_t *pData = GetPlayerClassData( m_iClass );
+	TFPlayerClassData_t *pData = nullptr;
+
+	if ( pPlayer && pPlayer->GetPlayerClass() )
+		pData = pPlayer->GetPlayerClass()->GetData();
+
 	if ( pData )
 	{
 		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
-
-		if ( pPlayer && pPlayer->m_Shared.IsZombie() )
-			nModelIndex = modelinfo->GetModelIndex( pData->GetZombieModelName() );
-		else if ( pPlayer && pPlayer->IsRetroModeOn() )
-			nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
 
 		if (  pPlayer && pPlayer->GetPlayerClass()->UsesCustomModel() )
 			nModelIndex = modelinfo->GetModelIndex( pPlayer->GetPlayerClass()->GetSetCustomModel() );
@@ -1340,8 +1196,9 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	}
 
 	bool bPlayDeathAnim = false;
+	int iRandom = random->RandomInt( 0 , 3 ); // 25% chance to play
 
-	if ( pPlayer )
+	if ( pPlayer && m_bFlagOnGround && ( iRandom == 1 || tf_always_deathanim.GetBool() ) )
 	{
 		int iSeq = pPlayer->m_Shared.PlayDeathAnimation( this, m_iDamageCustom );
 
@@ -1431,13 +1288,14 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	// blame the TFC civilian placeholder for needing to do this
 	if ( iBone != -1 )
 	{
-		m_bGoreEnabled = true;
+		if ( of_gore.GetBool() )
+			m_bGoreEnabled = true;
 	}
 	else
-	{
 		m_bGoreEnabled = false;
-		return;
-	}
+
+	if ( m_bGoreEnabled )
+		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
 
 	if ( m_bBurning )
 	{
@@ -1447,7 +1305,11 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 	// Fade out the ragdoll in a while
 	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
-	SetNextClientThink( gpGlobals->curtime + cl_ragdoll_fade_time.GetFloat() * 0.33f );
+
+	//SetNextClientThink( gpGlobals->curtime + cl_ragdoll_fade_time.GetFloat() * 0.33f );
+
+	// must think immediately for dismemberment
+	SetNextClientThink( gpGlobals->curtime + 0.1f );
 
 	// Birthday mode.
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
@@ -1621,6 +1483,34 @@ void C_TFRagdoll::ClientThink( void )
 			RemoveAllDecals();
 		}
 
+		// emit some blood decals if necessary
+		if ( m_iGoreDecalAmount > 0 && m_fGoreDecalTime < gpGlobals->curtime )
+		{
+			// emit another decal again after 0.1 seconds
+			m_fGoreDecalTime = gpGlobals->curtime + 0.1f;
+			m_iGoreDecalAmount--;
+
+			if ( m_iGoreDecalBone != -1 )
+			{
+				Vector direction;
+				Vector start;
+				QAngle dummy;
+				trace_t	tr;
+
+				GetBonePosition( m_iGoreDecalBone, start, dummy );
+
+				// any random direction
+				direction.x = random->RandomFloat ( -32, 32 );
+				direction.y = random->RandomFloat ( -32, 32 );
+				direction.z = random->RandomFloat ( -32, 32 );
+
+				UTIL_TraceLine ( start, start + direction, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+				UTIL_BloodDecalTrace( &tr, BLOOD_COLOR_RED );
+
+				//debugoverlay->AddLineOverlay( start, start + direction, 0, 255, 0, true, 1 ); 
+			}
+		}
+
 		StartFadeOut( cl_ragdoll_fade_time.GetFloat() * 0.33f );
 		return;
 	}
@@ -1648,7 +1538,6 @@ void C_TFRagdoll::EndFadeOut()
 	SetRenderMode( kRenderNone );
 	UpdateVisibility();
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for spy invisiblity material
@@ -4250,7 +4139,7 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 		origin = pRagdoll->GetRagdollOrigin();
 		origin.z += VEC_DEAD_VIEWHEIGHT.z; // look over ragdoll, not through
 		
-		if (cl_fp_ragdoll.GetBool() && m_hRagdoll.Get())
+		if ( cl_fp_ragdoll.GetBool() && m_hRagdoll.Get() )
 		{
 			// pointer to the ragdoll
 			C_TFRagdoll *pRagdoll = ( C_TFRagdoll* )m_hRagdoll.Get();
@@ -4259,20 +4148,21 @@ void C_TFPlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float& f
 			int iAttachment = pRagdoll->LookupAttachment( "eyes" );
 
 			// if no eyes attachment is found, fallback to head attachment
-			if (iAttachment <= 0)
+			if ( iAttachment <= 0 )
 			{
-				pRagdoll->GetAttachment(pRagdoll->LookupAttachment( "head" ), eyeOrigin, eyeAngles );
+				pRagdoll->GetAttachment( pRagdoll->LookupAttachment( "head" ), eyeOrigin, eyeAngles );
 			}
 			else
 			{
-				pRagdoll->GetAttachment(pRagdoll->LookupAttachment( "eyes" ), eyeOrigin, eyeAngles );
+				pRagdoll->GetAttachment( pRagdoll->LookupAttachment( "eyes" ), eyeOrigin, eyeAngles );
 			}
 
 			Vector vForward;
 			AngleVectors( eyeAngles, &vForward );
 
-				return;
+			return;
 		}
+
 		if ( cl_fp_ragdoll.GetBool() )
 		{
 			eyeOrigin = vec3_origin;
@@ -4985,26 +4875,16 @@ float C_TFPlayer::MedicGetChargeLevel( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CBaseEntity *C_TFPlayer::MedicGetHealTarget( void )
-{
-		CWeaponMedigun *pWeapon = dynamic_cast <CWeaponMedigun*>( GetActiveWeapon() );
-
-		if ( pWeapon )
-			return pWeapon->GetHealTarget();
-		else
-			return NULL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 bool C_TFPlayer::CanShowClassMenu( void )
 {
 	if ( TFGameRules()->IsESCGamemode() && m_PlayerClass.GetClassIndex() == TF_CLASS_CIVILIAN  
 				&& TFGameRules()->GetMaxHunted( GetTeamNumber() ) != 0 && TFGameRules()->GetMaxHunted( GetTeamNumber() ) >= TFGameRules()->GetHuntedCount( GetTeamNumber() ) )
 		return false;
 
-	return ( GetTeamNumber() > LAST_SHARED_TEAM );
+	if ( this )
+		return ( GetTeamNumber() > LAST_SHARED_TEAM );
+
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -5050,24 +4930,14 @@ void C_TFPlayer::ValidateModelIndex( void )
 	if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
 	{
 		TFPlayerClassData_t *pData = GetPlayerClassData( m_Shared.GetDisguiseClass() );
-		if ( m_Shared.IsZombie() )
-			m_nModelIndex = modelinfo->GetModelIndex( pData->GetZombieModelName() );
-		else if ( m_bRetroMode )
-			m_nModelIndex = modelinfo->GetModelIndex( pData->GetTFCModelName() );
-		else
-			m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
+		m_nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
 	}
 	else
 	{
 		C_TFPlayerClass *pClass = GetPlayerClass();
 		if ( pClass )
 		{
-			if ( m_Shared.IsZombie() )
-				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetZombieModelName() );
-			else if ( m_bRetroMode )
-				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetTFCModelName() );
-			else
-				m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
+			m_nModelIndex = modelinfo->GetModelIndex( pClass->GetModelName() );
 		}
 	}
 

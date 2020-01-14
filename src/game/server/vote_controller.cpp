@@ -272,6 +272,20 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 		return;
 	}
 
+	CSteamID steamID;
+	if ( pVoteCaller->GetSteamID( &steamID ) && steamID.IsValid() )
+	{
+		uint64 iID = steamID.ConvertToUint64();
+
+		Msg( "Vote Controller: A vote was created. Username: %s SteamID: %i Details: %s\n", 
+			pVoteCaller->GetPlayerName(), iID, arg3 );
+	}
+	else
+	{
+		Msg( "Vote Controller: A vote was created. Username: SteamID: <none> Details: %s\n", 
+			pVoteCaller->GetPlayerName(), arg3 );
+	}
+
 	g_voteController->CreateVote( pVoteCaller->entindex(), arg2, arg3 );
 }
 
@@ -430,6 +444,10 @@ bool CVoteController::SetupVote( int iEntIndex )
 //-----------------------------------------------------------------------------
 bool CVoteController::CreateVote( int iEntIndex, const char *pszTypeString, const char *pszDetailString )
 {
+	// don't call votes in a map background!!
+	if ( gpGlobals->eLoadType == MapLoad_Background )
+		return false;
+
 	// Terrible Hack:  Dedicated servers pass 129 as the EntIndex
 	bool bDedicatedServer = ( iEntIndex == DEDICATED_SERVER ) ? true : false;
 

@@ -56,6 +56,8 @@ private:
 	CUtlVector<EHANDLE>		m_hEntitiesBurnt;		// list of entities this flame has burnt
 	EHANDLE					m_hAttacker;			// attacking player
 	int						m_iAttackerTeam;		// team of attacking player
+
+	virtual bool	IsDeflectable( void ) { return false; }
 };
 
 #endif // GAME_DLL

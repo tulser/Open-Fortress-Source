@@ -13,9 +13,9 @@
 #include <vgui_controls/Label.h>
 
 #include "tf_controls.h"
-#include "tf_imagepanel.h"
 #include "c_tf_player.h"
 #include "tf_gamerules.h"
+#include "teamplayroundbased_gamerules.h"
 #include "c_tf_playerresource.h"
 #include "of_hud_kills.h"
 
@@ -39,6 +39,8 @@ CTFHudKills::CTFHudKills( const char *pElementName ) : CHudElement( pElementName
 	SetParent( pParent );
 
 	SetHiddenBits( HIDEHUD_HEALTH );
+	
+	bBottomVisible = true;
 
 	m_nKills	= 0;
 	m_flNextThink = 0.0f;
@@ -65,6 +67,9 @@ void CTFHudKills::ApplySchemeSettings( IScheme *pScheme )
 	m_pKills = dynamic_cast<CExLabel *>( FindChildByName( "Kills" ) );
 	m_pKillsShadow = dynamic_cast<CExLabel *>( FindChildByName( "KillsShadow" ) );
 
+	m_pAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName("AvatarImage") );
+	m_pLeadAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName("TopAvatarImage") );	
+	
 	m_nKills	= -1;
 	m_flNextThink = 0.0f;
 
@@ -83,11 +88,11 @@ bool CTFHudKills::ShouldDraw( void )
 		return false;
 	}
 	if (TFGameRules() &&
-		!TFGameRules()->DontCountKills() &&
 		!TFGameRules()->IsTeamplay() &&
 		!TFGameRules()->IsArenaGamemode() &&
 		!TFGameRules()->IsCoopGamemode() &&
-		(TFGameRules()->IsDMGamemode() || TFGameRules()->IsGGGamemode()))
+		( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() ) 
+		|| TFGameRules()->IsGGGamemode()) )
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -127,33 +132,125 @@ void CTFHudKills::OnThink()
 		}
 		else
 		{
-			// Get the ammo in our clip.
-			int iIndex = GetLocalPlayerIndex();
-			int nKills = tf_PR->GetPlayerScore( iIndex );
-			int nGGLevel = tf_PR->GetGGLevel( iIndex );
-			
-			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
-				m_nKills = nGGLevel;
-			else
-				m_nKills = nKills;
-			
-			UpdateKillLabel( true );
-			SetDialogVariable( "Kills",m_nKills );
 			wchar_t string1[1024];
+			wchar_t wzMaxLevel[128];
+			wchar_t wzFragLimit[128];
 			
 			if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 			{
 				SetDialogVariable( "FragLimit", TFGameRules()->m_iMaxLevel  );
-				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_GGLevel" ), 1, 1 );
+				_snwprintf( wzMaxLevel, ARRAYSIZE( wzMaxLevel ), L"%i", TFGameRules()->m_iMaxLevel );
+				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_LevelLimit" ), 1, wzMaxLevel );
 			}
 			else
 			{
 				SetDialogVariable( "FragLimit", fraglimit.GetInt()  );
-				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Kills" ), 1, 1 );
+				_snwprintf( wzFragLimit, ARRAYSIZE( wzFragLimit ), L"%i", fraglimit.GetInt() );
+				g_pVGuiLocalize->ConstructString( string1, sizeof(string1), g_pVGuiLocalize->Find( "#TF_ScoreBoard_Fraglimit" ), 1, wzFragLimit );
 			}
-			SetDialogVariable( "killslabel", string1 );
-		}
+			SetDialogVariable( "PlayingToLabel", string1 );
+			
+			bool bIsGG = TFGameRules() && TFGameRules()->IsGGGamemode();
+			int iIndex = GetLocalPlayerIndex();
+			int nKills = !bIsGG ? tf_PR->GetPlayerScore( iIndex ) : tf_PR->GetGGLevel( iIndex );
+		
+			int iTopKills = 0;
+			int iTopIndex = 0;
+			for ( int i = 1; i <= MAX_PLAYERS; i++ )
+			{
+				if ( g_PR->IsConnected( i ) )
+				{
+					int nTmpKills = !bIsGG ? tf_PR->GetPlayerScore( i ) : tf_PR->GetGGLevel( i );
+					if ( i != iIndex && nTmpKills >= iTopKills )
+					{
+						iTopKills = nTmpKills;
+						iTopIndex = i;
+					}
+				}
+			}
+			
+			bool bLocalTop = iTopKills <= nKills;
+			
+			m_nKills = nKills;
+			
+			if( m_pAvatar )
+			{
+				m_pAvatar->SetPlayer( bLocalTop ? UTIL_PlayerByIndex(iTopIndex) : pPlayer );
+				m_pAvatar->SetShouldDrawFriendIcon( false );
+			}
+			if( m_pLeadAvatar )
+			{
+				m_pLeadAvatar->SetPlayer( bLocalTop ? pPlayer : UTIL_PlayerByIndex(iTopIndex) );
+				m_pLeadAvatar->SetShouldDrawFriendIcon( false );
+			}
+			
+			char szTmp[64];
+			char *szPlacement = bLocalTop ? "top" : "";
+			
+			Q_snprintf( szTmp, sizeof( szTmp ), "%splayername", szPlacement );
+			
+			SetDialogVariable( szTmp, g_PR->GetPlayerName( pPlayer->entindex() ) );
+			
+			UpdateKillLabel( true );
+			Q_snprintf( szTmp, sizeof( szTmp ), "%skills", szPlacement );
+			SetDialogVariable( szTmp, m_nKills );
+			
+			if( iTopIndex != 0 )
+			{
+				ShowBottom( true );
 
+				szPlacement = bLocalTop ? "" : "top";
+				Q_snprintf( szTmp, sizeof( szTmp ), "%splayername", szPlacement );
+				SetDialogVariable( szTmp, g_PR->GetPlayerName( iTopIndex ) );
+				
+				Q_snprintf( szTmp, sizeof( szTmp ), "%sKills", szPlacement );
+				SetDialogVariable( szTmp, iTopKills );
+			}
+			else
+				ShowBottom( false );
+		}
 		m_flNextThink = gpGlobals->curtime + 0.1f;
 	}
+}
+
+void CTFHudKills::ShowBottom( bool bShow )
+{
+	if( bBottomVisible == bShow )
+		return;
+
+	ImagePanel *m_pBGImage = dynamic_cast<ImagePanel *>( FindChildByName("MainBG") );
+	if( m_pBGImage )
+	{
+		int w,h;
+		m_pBGImage->GetSize( w, h );
+		int iAdj = bShow ? -50 : 50;
+		m_pBGImage->SetSize( w, h - iAdj );
+	}
+	int x, y;
+	GetPos( x, y );
+	int iPosAdj = bShow ? 50 : -50;
+	SetPos( x, y - iPosAdj );
+	
+	CExLabel *m_pPlayerPlayingToLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayingToLabel" ) );
+	if( m_pPlayerPlayingToLabel )
+	{
+		int labelX, labelY;
+		m_pPlayerPlayingToLabel->GetPos( labelX, labelY );
+		int iAdj = bShow ? 50 : -50;	
+		m_pPlayerPlayingToLabel->SetPos( labelX, labelY + iAdj );
+	}
+	CExLabel *m_pPlayerNameLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayerNameLabel" ) );
+	CExLabel *m_pTmpKills = dynamic_cast<CExLabel *>( FindChildByName( "KillsLabel" ) );
+	ImagePanel *m_pShadedBox = dynamic_cast<ImagePanel *>( FindChildByName("ShadedBarP2") );	
+	
+	bBottomVisible = bShow;
+	
+	if( m_pAvatar )
+		m_pAvatar->SetVisible( bShow );
+	if( m_pPlayerNameLabel )
+		m_pPlayerNameLabel->SetVisible( bShow );
+	if( m_pTmpKills )
+		m_pTmpKills->SetVisible( bShow );
+	if( m_pShadedBox )
+		m_pShadedBox->SetVisible( bShow );
 }

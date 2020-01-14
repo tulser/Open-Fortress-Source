@@ -155,6 +155,12 @@ void CNavMesh::BuildLadders( void )
 		ladder->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
 		CreateLadder( mins, maxs, 0.0f );
 	}
+#else
+	CInfoLadder *entity = NULL;
+	while( (entity = dynamic_cast< CInfoLadder * >(gEntList.FindEntityByClassname( entity, "info_ladder" ))) != NULL )
+	{
+		CreateLadder( entity->WorldAlignMins(), entity->WorldAlignMaxs(), NULL );
+	}
 #endif
 }
 

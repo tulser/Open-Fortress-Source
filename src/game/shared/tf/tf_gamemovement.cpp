@@ -94,6 +94,7 @@ public:
 	virtual void CategorizePosition( void );
 	virtual void CheckFalling( void );
 	virtual void Duck( void );
+
 	virtual Vector GetPlayerViewOffset( bool ducked ) const;
 
 	virtual void	TracePlayerBBox( const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm );
@@ -103,9 +104,9 @@ public:
 	virtual void SetGroundEntity( trace_t *pm );
 	virtual void PlayerRoughLandingEffects( float fvol );
 protected:
-
 	virtual void CheckWaterJump(void );
 	void		 FullWalkMoveUnderwater();
+	virtual void HandleDuckingSpeedCrop();
 
 private:
 
@@ -300,8 +301,8 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	player = m_pTFPlayer;
 	mv = pMove;
 
-	// The max speed is currently set to the scout - if this changes we need to change this!
-	mv->m_flMaxSpeed = TF_MAX_SPEED; /*tf_maxspeed.GetFloat();*/
+	// The max speed is currently set to the demoman charge - if this changes we need to change this!
+	mv->m_flMaxSpeed = tf_maxspeed.GetFloat() <= 0.0f ? 100000.0f : tf_maxspeed.GetFloat();
 
 	// Run the command.
 	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))
@@ -1370,6 +1371,22 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 		mv->m_vecVelocity[2] = 0;			
 	}
 }
+
+void CTFGameMovement::HandleDuckingSpeedCrop( void )
+{
+	BaseClass::HandleDuckingSpeedCrop();
+
+	// no moving while crouched in loser state
+	if ( ( m_iSpeedCropped & SPEED_CROPPED_DUCK && m_pTFPlayer->m_Shared.IsLoser() ) )
+	{
+		// Suppress regular motion
+		mv->m_flForwardMove = 0.0f;
+		mv->m_flSideMove = 0.0f;
+		mv->m_flUpMove = 0.0f;
+	}
+}
+
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 

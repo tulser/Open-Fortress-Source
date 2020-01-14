@@ -53,8 +53,8 @@ public:
 	virtual int			GetCustomDamageType();
 
 #ifdef GAME_DLL
-	virtual bool	IsAirBlast( void ) const { return true; }
-	virtual void	AirBlast( const Vector &vec_in );
+	virtual bool	IsDeflectable( void ) { return true; }
+	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 #endif
 		CNetworkVar( float,		m_flSpawnTime );
 		CNetworkHandle( CBaseEntity, m_hLauncher );	

@@ -1985,6 +1985,7 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 									CSingleUserRecipientFilter filter( pTFPlayer );
 
 									pTFPlayer->m_Shared.AddCond( TF_COND_HASTE );
+									pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LAST_MAN_STANDING );
 									BroadcastSound( TF_TEAM_RED, "AM_LastManAlive" );
 									CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", vec3_origin , vec3_angle );
 									if ( pMusicPlayer )
@@ -2894,7 +2895,7 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 			if ( pPlayer->IsAlive() )
 				continue; 
 
-			if ( m_iRoundState != GR_STATE_PREROUND || TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
+			if ( m_iRoundState != GR_STATE_PREROUND || ( TFGameRules()->IsDMGamemode() ) )
 			{
 					// If the player hasn't been dead the minimum respawn time, he
 				// waits until the next wave.

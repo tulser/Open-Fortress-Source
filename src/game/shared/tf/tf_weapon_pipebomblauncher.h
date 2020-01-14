@@ -76,7 +76,6 @@ public:
 	
 	
 
-private:
 
 	// This is here so we can network the pipebomb count for prediction purposes
 	CNetworkVar( int,				m_iPipebombCount );	
@@ -90,6 +89,7 @@ private:
 	typedef CHandle<CTFGrenadePipebombProjectile>	PipebombHandle;
 	CUtlVector<PipebombHandle>		m_Pipebombs;
 
+private:
 	float	m_flChargeBeginTime;
 	float	m_flLastDenySoundTime;
 

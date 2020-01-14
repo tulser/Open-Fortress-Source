@@ -3233,7 +3233,6 @@ void CClientShadowMgr::PreRender()
 {
 #ifdef ASW_PROJECTED_TEXTURES
 	// only update shadows once per frame
-	Assert( gpGlobals->framecount != m_nPrevFrameCount );
 	m_nPrevFrameCount = gpGlobals->framecount;
 #endif
 

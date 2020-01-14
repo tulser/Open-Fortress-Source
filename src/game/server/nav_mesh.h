@@ -1158,9 +1158,11 @@ private:
 	NavDirType m_generationDir;
 	CNavNode *AddNode( const Vector &destPos, const Vector &destNormal, NavDirType dir, CNavNode *source, bool isOnDisplacement, float obstacleHeight, float flObstacleStartDist, float flObstacleEndDist );		// add a nav node and connect it, update current node
 
+public:
 	NavLadderVector m_ladders;									// list of ladder navigation representations
 	void BuildLadders( void );
 	void DestroyLadders( void );
+private:
 
 	bool SampleStep( void );									// sample the walkable areas of the map
 	void CreateNavAreasFromNodes( void );						// cover all of the sampled nodes with nav areas

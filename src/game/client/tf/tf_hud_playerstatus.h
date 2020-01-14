@@ -15,6 +15,7 @@
 #include "tf_controls.h"
 #include "tf_imagepanel.h"
 #include "GameEventListener.h"
+#include "c_tf_player.h"
 
 //-----------------------------------------------------------------------------
 // Purpose:  
@@ -28,8 +29,8 @@ public:
 	{
 	}
 
-	void SetClass( int iTeam, int iClass, int iCloakstate );
-	void SetClassColorless( int iTeam, int iClass, int iCloakstate );
+	void SetClass( int iTeam, TFPlayerClassData_t *iClassData, int iCloakstate );
+	void SetClassColorless( int iTeam, TFPlayerClassData_t *iClassData, int iCloakstate );
 };
 
 //-----------------------------------------------------------------------------
@@ -64,6 +65,7 @@ private:
 
 	int					m_nTeam;
 	int					m_nClass;
+	int					m_nModifiers;
 	int					m_nDisguiseTeam;
 	int					m_nDisguiseClass;
 	int					m_nCloakLevel;
