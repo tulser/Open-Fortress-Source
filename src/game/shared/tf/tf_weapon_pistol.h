@@ -27,8 +27,8 @@
 #define	PISTOL_ACCURACY_SHOT_PENALTY_TIME		0.2f	// Applied amount of time each shot adds to the time we must recover from
 #define	PISTOL_ACCURACY_MAXIMUM_PENALTY_TIME	1.5f	// Maximum time penalty we'll allow
 
-acttable_t m_acttablePistol[];
-acttable_t m_acttableSecondary2[];
+extern acttable_t m_acttablePistol[];
+extern acttable_t m_acttableSecondary2[];
 
 //=============================================================================
 //

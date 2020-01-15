@@ -277,12 +277,12 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 	{
 		uint64 iID = steamID.ConvertToUint64();
 
-		Msg( "Vote Controller: A vote was created. Username: %s SteamID: %i Details: %s\n", 
+		Msg( "Vote Controller: A vote was created. Username: %s SteamID: %llu Details: %s\n", 
 			pVoteCaller->GetPlayerName(), iID, arg3 );
 	}
 	else
 	{
-		Msg( "Vote Controller: A vote was created. Username: SteamID: <none> Details: %s\n", 
+		Msg( "Vote Controller: A vote was created. Username: %s SteamID: <none> Details: %s\n", 
 			pVoteCaller->GetPlayerName(), arg3 );
 	}
 

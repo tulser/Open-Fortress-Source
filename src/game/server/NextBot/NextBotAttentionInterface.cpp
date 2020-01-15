@@ -103,3 +103,17 @@ bool IAttention::IsAwareOf( CBaseEntity *who ) const
 
 	return false;
 }
+
+//------------------------------------------------------------------------------------------
+/**
+ * Stubs for GetAwareDuration and INextBotEventResponder
+ */
+float IAttention::GetAwareDuration( CBaseEntity *what ) const
+{
+	return 0.0f;
+}
+void IAttention::OnInjured( const CTakeDamageInfo &info ){}
+void IAttention::OnContact( CBaseEntity *other, CGameTrace *result ){}
+void IAttention::OnSight( CBaseEntity *subject ){}
+void IAttention::OnLostSight( CBaseEntity *subject ){}
+void IAttention::OnSound( CBaseEntity *source, const CSoundParameters &params ){}

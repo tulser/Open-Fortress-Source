@@ -133,8 +133,5 @@ acttable_t *CTFRevolver_Mercenary::ActivityList(int &iActivityCount)
 		iActivityCount = ARRAYSIZE( m_acttableRevolver2 );
 		return m_acttableRevolver2;
 	}
-	else
-	{
-		return BaseClass::ActivityList(iActivityCount);
-	}
+	return BaseClass::ActivityList(iActivityCount);
 }

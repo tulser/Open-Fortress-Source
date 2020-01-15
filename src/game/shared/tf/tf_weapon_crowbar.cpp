@@ -134,8 +134,5 @@ acttable_t *CTFCrowbar::ActivityList( int &iActivityCount )
 		iActivityCount = ARRAYSIZE( m_acttableMeleeAllClass );
 		return m_acttableMeleeAllClass;
 	}
-	else
-	{
-		return BaseClass::ActivityList( iActivityCount );
-	}
+	return BaseClass::ActivityList( iActivityCount );
 }

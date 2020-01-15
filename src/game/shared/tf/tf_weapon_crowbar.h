@@ -19,7 +19,7 @@
 #define CTFCUmbrella C_TFCUmbrella
 #endif
 
-acttable_t m_acttableMeleeAllClass[];
+extern acttable_t m_acttableMeleeAllClass[];
 
 //=============================================================================
 //

@@ -18,8 +18,8 @@
 #define CTFRevolver_Mercenary C_TFRevolver_Mercenary
 #endif
 
-acttable_t m_acttableRevolver[];
-acttable_t m_acttableRevolver2[];
+extern acttable_t m_acttableRevolver[];
+extern acttable_t m_acttableRevolver2[];
 
 //=============================================================================
 //

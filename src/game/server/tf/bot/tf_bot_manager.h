@@ -14,6 +14,8 @@
 
 #include "NextBotManager.h"
 
+class CTFBot;
+
 class CTFBotManager : public NextBotManager
 {
 public:

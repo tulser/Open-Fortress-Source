@@ -281,8 +281,5 @@ acttable_t *CTFPistol_Akimbo::ActivityList( int &iActivityCount )
 		iActivityCount = ARRAYSIZE( m_acttableSecondary2 );
 		return m_acttableSecondary2;
 	}
-	else
-	{
-		return BaseClass::ActivityList(iActivityCount);
-	}
+	return BaseClass::ActivityList(iActivityCount);
 }
