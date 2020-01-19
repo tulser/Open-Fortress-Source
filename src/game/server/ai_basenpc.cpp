@@ -104,6 +104,7 @@
 
 extern ConVar sk_healthkit;
 extern ConVar of_headshots;
+extern ConVar of_crit_multiplier;
 
 // dvs: for opening doors -- these should probably not be here
 #include "ai_route.h"
@@ -1308,7 +1309,8 @@ void CAI_BaseNPC::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 				if (bCritical)
 				{
 					subInfo.AddDamageType( DMG_CRITICAL );
-					subInfo.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
+					if( subInfo.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat() )
+						subInfo.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )

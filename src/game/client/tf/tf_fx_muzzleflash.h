@@ -41,6 +41,8 @@ public:
 	void	ClientThink( void );
 
 	void	SetLifetime( float flLifetime );
+	void	SetViewmodel( bool bViewmodel ) { m_bViewmodel = bViewmodel; }
+	virtual bool IsViewModel() const { return m_bViewmodel; }
 
 	// Recording
 	virtual void GetToolRecordingState( KeyValues *msg );
@@ -49,6 +51,7 @@ public:
 	void	SetIs3rdPersonFlash( bool bEnable );
 
 private:
+	bool	m_bViewmodel;
 	float	m_flExpiresAt;
 	float	m_flRotateAt;
 	bool	m_bIs3rdPersonFlash;

@@ -77,6 +77,7 @@
 #include "of_music_player.h"
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
+#include "of_dropped_powerup.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1059,6 +1060,7 @@ void CTFPlayer::Spawn()
 	SetMoveType( MOVETYPE_WALK );
 	
 	m_hSuperWeapons.Purge();
+	m_hPowerups.Purge();
 	ClearSlots();
 	
 	m_Shared.m_flMegaOverheal = 0.0f;
@@ -4078,7 +4080,8 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				if ( bCritical )
 				{
 					info_modified.AddDamageType( DMG_CRITICAL );
-					info_modified.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
+					if( info_modified.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat() )
+						info_modified.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )
@@ -4560,7 +4563,8 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				Warning( "    CRITICAL!\n");
 			}
-			if ( bitsCustomDamage & TF_DMG_CUSTOM_CRIT_POWERUP )
+			
+			if ( bitsCustomDamage == TF_DMG_CUSTOM_CRIT_POWERUP )
 				flDamage = info.GetDamage() * of_crit_multiplier.GetFloat();
 			else
 				flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
@@ -5547,6 +5551,20 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}	
 	m_hSuperWeapons.Purge();
+	
+	for ( int i = 0; i < m_hPowerups.Count(); i++ )
+	{
+		if ( m_hPowerups[i] )
+		{
+			m_hPowerups[i]->SetAbsOrigin( GetAbsOrigin() );
+			m_hPowerups[i]->SetTouch( &CTFDroppedPowerup::PackTouch );
+			m_hPowerups[i]->SetThink( &CTFDroppedPowerup::FlyThink );
+			m_hPowerups[i]->SetOwnerEntity( NULL );
+			DispatchSpawn( m_hPowerups[i] );
+			m_hPowerups[i]->SetNextThink( gpGlobals->curtime ); // Set the next think to happen imidiatley
+		}
+	}
+	m_hPowerups.Purge();
 
 	// If the player has a capture flag and was killed by another player, award that player a defense
 	if ( HasItem() && pPlayerAttacker && ( pPlayerAttacker != this ) )

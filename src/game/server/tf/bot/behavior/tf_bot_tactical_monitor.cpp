@@ -380,6 +380,9 @@ CObjectTeleporter *CTFBotTacticalMonitor::FindNearbyTeleporter( CTFBot *actor )
 		if ( pTele->GetAltMode() != TELEPORTER_TYPE_ENTRANCE || !pTele->IsReady() || pTele->GetLastKnownArea() == nullptr || nearby.IsEmpty() )
 			continue;
 
+		if ( !pTele->GetLastKnownArea() )
+			continue;
+
 		// the first element is the starting area, it will always exist
 		if ( nearby[0]->GetID() == pTele->GetLastKnownArea()->GetID() )
 		{

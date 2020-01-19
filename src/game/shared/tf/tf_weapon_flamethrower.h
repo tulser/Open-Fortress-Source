@@ -64,6 +64,7 @@ public:
 	virtual void	WeaponReset( void );
 
 	virtual void	DestroySounds( void );
+	virtual bool CanSoftZoom( void ) { return false; }
 
 #ifdef GAME_DLL
 	void			AirBlastCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in );

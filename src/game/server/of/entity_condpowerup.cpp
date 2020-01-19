@@ -24,11 +24,12 @@ extern ConVar of_powerups;
 BEGIN_DATADESC( CCondPowerup )
 
 // Inputs.
-DEFINE_KEYFIELD( m_bCondition, FIELD_INTEGER, "condID" ),
-DEFINE_KEYFIELD( m_bCondDuration, FIELD_FLOAT, "duration" ),
+DEFINE_KEYFIELD( m_iCondition, FIELD_INTEGER, "condID" ),
+DEFINE_KEYFIELD( m_flCondDuration, FIELD_FLOAT, "duration" ),
 DEFINE_KEYFIELD( m_iszPowerupModel, FIELD_STRING, "model" ),
 DEFINE_KEYFIELD( m_iszPowerupModelOLD, FIELD_STRING, "powerup_model" ),
 DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
+DEFINE_KEYFIELD( m_iszTimerIcon, FIELD_STRING, "timericon" ),
 DEFINE_KEYFIELD( m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow" ),
 
 END_DATADESC()
@@ -43,6 +44,17 @@ SendPropTime( SENDINFO( fl_RespawnDelay ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
+
+CCondPowerup::CCondPowerup()
+{
+	m_flRespawnTick = 0.0f;
+	m_iCondition = 0;
+	m_flCondDuration = 5;
+	m_iszPickupSound = MAKE_STRING( "AmmoPack.Touch" );
+	m_iszPowerupModelOLD = MAKE_STRING( "" );
+	m_iszPowerupModel = MAKE_STRING( "" );
+	m_iszTimerIcon = MAKE_STRING( "" );
+}
 
 void CCondPowerup::Spawn( void )
 {
@@ -82,38 +94,61 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		
 		// oh boy...
 		// HACK: can't update all the maps with the old conditions, therefore this has to be remapped!
-		switch ( m_bCondition )
+		switch ( m_iCondition )
 		{
 			case TF_COND_STEALTHED:
-				m_bCondition = TF_COND_INVIS_POWERUP;
+				m_iCondition = TF_COND_INVIS_POWERUP;
 				break;
 			case TF_COND_CRITBOOSTED:
-				m_bCondition = TF_COND_CRIT_POWERUP;
+				m_iCondition = TF_COND_CRIT_POWERUP;
 				break;
 			case 12:
-				m_bCondition = TF_COND_SPAWNPROTECT;
+				m_iCondition = TF_COND_SPAWNPROTECT;
 				break;
 			case 13:
-				m_bCondition = TF_COND_SHIELD_CHARGE;
+				m_iCondition = TF_COND_SHIELD_CHARGE;
 				break;
 			case 14:
-				m_bCondition = TF_COND_BERSERK;
+				m_iCondition = TF_COND_BERSERK;
 				break;
 			case 15:
-				m_bCondition = TF_COND_SHIELD;
+				m_iCondition = TF_COND_SHIELD;
 				break;
 		}	
 		
-		if ( pTFPlayer->m_Shared.InCond(m_bCondition) )
+		if ( pTFPlayer->m_Shared.InCond(m_iCondition) )
 			return false;
 
 		bSuccess = true;
-		Vector vecPackOrigin;
-		QAngle vecPackAngles;
-		pTFPlayer->m_Shared.AddCond( m_bCondition , m_bCondDuration );
+		pTFPlayer->m_Shared.AddCond( m_iCondition , m_flCondDuration );
 		int iRandom = random->RandomInt( 0, 1 );
 		pTFPlayer->SpeakConceptIfAllowed( ( iRandom == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
-		CTFDroppedPowerup::Create( vecPackOrigin, vecPackAngles , pTFPlayer,STRING( m_iszPowerupModel ), m_bCondition, m_bCondDuration, 0 );  // The dropped powerup is spawned here, more explanation in its cpp file but basicaly we do this to preserve custom settings like its model on it
+		
+		Vector vecOrigin;
+		QAngle vecAngles;
+		CTFDroppedPowerup *pPowerup = static_cast<CTFDroppedPowerup*>( CBaseAnimating::CreateNoSpawn( "tf_dropped_powerup", vecOrigin, vecAngles, pTFPlayer ) );
+		if( pPowerup )
+		{
+			pPowerup->SetModelName( m_iszPowerupModel );
+			Q_strncpy( pPowerup->szTimerIcon, STRING(m_iszTimerIcon), sizeof( pPowerup->szTimerIcon ) );
+			pPowerup->m_iPowerupID = m_iCondition;
+			pPowerup->m_flCreationTime = gpGlobals->curtime;
+			pPowerup->m_flDespawnTime = gpGlobals->curtime + m_flCondDuration;
+			pPowerup->SetContextThink( &CBaseEntity::SUB_Remove, pPowerup->m_flDespawnTime, "DieContext" );
+		}
+		PowerupHandle hHandle;
+		hHandle = pPowerup;	
+		pTFPlayer->m_hPowerups.AddToTail( hHandle );
+		
+		IGameEvent *event = gameeventmanager->CreateEvent( "add_powerup_timer" );
+		if ( event )
+		{
+			event->SetInt( "player", pTFPlayer->entindex() );
+			event->SetInt( "cond", m_iCondition );
+			event->SetString( "icon", STRING( m_iszTimerIcon ) );
+			gameeventmanager->FireEvent( event );
+		}
+		
 		if ( TeamplayRoundBasedRules() )
 		{
 			if ( strcmp( GetPowerupPickupLine(), "None" ) || strcmp( GetPowerupPickupLineSelf(), "None" ) )
@@ -131,7 +166,7 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 
 const char* CCondPowerup::GetPowerupPickupLineSelf( void )
 {
-	switch ( m_bCondition )
+	switch ( m_iCondition )
 	{
 		case TF_COND_INVULNERABLE:
 		case TF_COND_SHIELD:
@@ -143,7 +178,7 @@ const char* CCondPowerup::GetPowerupPickupLineSelf( void )
 
 const char* CCondPowerup::GetPowerupPickupLine( void )
 {
-	switch ( m_bCondition )
+	switch ( m_iCondition )
 	{
 		case TF_COND_CRITBOOSTED:
 		case TF_COND_CRIT_POWERUP:
@@ -155,7 +190,7 @@ const char* CCondPowerup::GetPowerupPickupLine( void )
 
 const char* CCondPowerup::GetPowerupPickupSound( void )
 {
-	switch ( m_bCondition )
+	switch ( m_iCondition )
 	{
 		case TF_COND_CRITBOOSTED:
 		case TF_COND_CRIT_POWERUP:
@@ -176,11 +211,6 @@ const char* CCondPowerup::GetPowerupPickupSound( void )
 	return "None";
 }
 
-CCondPowerup::CCondPowerup()
-{
-	m_flRespawnTick = 0.0f;
-}
-
 CBaseEntity* CCondPowerup::Respawn( void )
 {
 	CBaseEntity *ret = BaseClass::Respawn();
@@ -191,7 +221,7 @@ CBaseEntity* CCondPowerup::Respawn( void )
 
 const char* CCondPowerup::GetPowerupRespawnLine( void )
 {
-	switch ( m_bCondition )
+	switch ( m_iCondition )
 	{
 		case TF_COND_CRITBOOSTED:
 		case TF_COND_CRIT_POWERUP:

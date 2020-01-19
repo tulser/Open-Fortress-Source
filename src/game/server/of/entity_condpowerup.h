@@ -42,11 +42,12 @@ public:
 	}	
 	
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
-	int m_bCondition=5;
-	float m_bCondDuration=5;
-	string_t m_iszPowerupModel=MAKE_STRING( "" );
-	string_t m_iszPowerupModelOLD=MAKE_STRING( "" );
-	string_t m_iszPickupSound=MAKE_STRING( "AmmoPack.Touch" );
+	int m_iCondition;
+	float m_flCondDuration;
+	string_t m_iszPowerupModel;
+	string_t m_iszPowerupModelOLD;
+	string_t m_iszPickupSound;
+	string_t m_iszTimerIcon;
 
 	CNetworkVar(bool, m_bDisableShowOutline);
 
@@ -56,5 +57,3 @@ private:
 };
 
 #endif // ENTITY_WEAPON_SPAWNER_H
-
-

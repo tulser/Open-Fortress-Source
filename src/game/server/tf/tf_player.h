@@ -20,6 +20,7 @@
 #include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
 #include "NextBotUtil.h"
+#include "tf_powerup.h"
 
 #include "hl_movedata.h"
 
@@ -550,6 +551,7 @@ public:
 	unsigned short m_iGoreLeftLeg;
 	unsigned short m_iGoreRightLeg;
 	
+	CUtlVector< PowerupHandle >	m_hPowerups;
 	CUtlVector< WeaponHandle >	m_hSuperWeapons;
 
 	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
@@ -590,7 +592,13 @@ private:
 	// Bots.
 	friend void			Bot_Think( CTFPlayer *pBot );
 	
+	// Linux gives us errors when this function is static
+	// but windows gives us errors when its not...
+#ifdef __linux__
 	friend void tf_bot_add( const CCommand &args );
+#else
+	friend static void tf_bot_add( const CCommand &args );
+#endif
 	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.

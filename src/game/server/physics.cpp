@@ -283,7 +283,7 @@ void CPhysicsHook::LevelShutdownPostEntity()
 		return;
 
 	if ( !g_EntityCollisionHash )
-		return
+		return;
 
 	g_pPhysSaveRestoreManager->ForgetAllModels();
 

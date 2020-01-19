@@ -426,7 +426,7 @@ void CTFFlameThrower::PrimaryAttack()
 		}
 		if ( m_bCritFire >= 2 )
 		{
-			iCustomDmgType |= TF_DMG_CUSTOM_CRIT_POWERUP;
+			iCustomDmgType = TF_DMG_CUSTOM_CRIT_POWERUP;
 		}		
 
 #ifdef CLIENT_DLL

@@ -45,13 +45,10 @@ private:
 		void	DestroyGlowEffect( void );
 		bool	m_bDisableShowOutline;
 		bool	m_bRespawning;
-		bool	bInitialDelay;
 		int		iTeamNum;
 		bool	m_bShouldGlow;
-		float				PowerupDuration;
-		float				OriginalPowerupDuration;
-		float				m_flRespawnTick;
-		float				fl_RespawnDelay;
+		float	m_flDespawnTime;
+		float	m_flCreationTime;
 		
 		Vector		m_vecInitialVelocity;
 		
@@ -70,13 +67,8 @@ extern ConVar of_color_b;
 LINK_ENTITY_TO_CLASS( dm_powerup_spawner, C_TFDroppedPowerup );
 
 IMPLEMENT_CLIENTCLASS_DT( C_TFDroppedPowerup, DT_DroppedPowerup, CTFDroppedPowerup )
-RecvPropBool( RECVINFO( m_bDisableShowOutline ) ),
-RecvPropBool( RECVINFO( m_bRespawning ) ),
-RecvPropBool( RECVINFO( bInitialDelay ) ),
-RecvPropTime( RECVINFO( PowerupDuration ) ),
-RecvPropTime( RECVINFO( OriginalPowerupDuration ) ),
-RecvPropTime( RECVINFO( m_flRespawnTick ) ),
-RecvPropTime( RECVINFO( fl_RespawnDelay ) ),
+RecvPropTime( RECVINFO( m_flDespawnTime ) ),
+RecvPropTime( RECVINFO( m_flCreationTime ) ),
 RecvPropVector( RECVINFO( m_vecInitialVelocity ) ),
 END_RECV_TABLE()
 
@@ -286,8 +278,7 @@ int C_TFDroppedPowerup::DrawModel( int flags )
 	meshBuilder.End();
 
 	pMesh->Draw();
-	float RespawnTime = OriginalPowerupDuration;
-	float flProgress = 1 - ( ( m_flRespawnTick - gpGlobals->curtime ) / RespawnTime );
+	float flProgress = 1 - ( (m_flDespawnTime - gpGlobals->curtime) / (m_flDespawnTime - m_flCreationTime) );
 	pRenderContext->Bind( m_pReturnProgressMaterial_Full );
 	pMesh = pRenderContext->GetDynamicMesh();
 

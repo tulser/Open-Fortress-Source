@@ -12,6 +12,10 @@
 
 #include "items.h"
 
+class CTFDroppedPowerup;
+
+typedef CHandle<CTFDroppedPowerup> PowerupHandle;
+
 enum powerupsize_t
 {
 	POWERUP_TINY,

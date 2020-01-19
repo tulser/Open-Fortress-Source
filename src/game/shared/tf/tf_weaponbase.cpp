@@ -2181,6 +2181,7 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 
 				// FIXME: This is an incredibly brutal hack to get muzzle flashes positioned correctly for recording
 				m_hMuzzleFlashModel[nIndex]->SetIs3rdPersonFlash( nIndex == 1 );
+				m_hMuzzleFlashModel[nIndex]->SetViewmodel( nIndex != 1 );
 			}
 		}
 
