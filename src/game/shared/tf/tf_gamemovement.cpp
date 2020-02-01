@@ -586,8 +586,7 @@ bool CTFGameMovement::CheckJumpButton()
 	if ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 	{
 		char jmpSound[128];
-		const char *TFClassName = g_aPlayerClassNames_NonLocalized[ m_pTFPlayer->GetPlayerClass()->GetClassIndex() ];
-		Q_snprintf(jmpSound, sizeof(jmpSound), "%s.Jumpsound", TFClassName);
+		Q_snprintf(jmpSound, sizeof(jmpSound), m_pTFPlayer->GetPlayerClass()->GetJumpSound());
 		m_pTFPlayer->EmitSound( jmpSound );
 	}
 #endif

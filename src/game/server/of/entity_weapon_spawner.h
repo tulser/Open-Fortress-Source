@@ -33,11 +33,15 @@ public:
 	void	SetWeaponModel( void );
 
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
+	const char* GetSuperWeaponRespawnLine(void);
+	const char* GetSuperWeaponPickupLine(void);
+	const char* GetSuperWeaponPickupLineSelf(void);
+	virtual void Materialize(void);
 	string_t szWeaponName;
 	string_t szWeaponModel;
 	string_t szWeaponModelOLD;
 	string_t szPickupSound;
-	char m_iszWeaponName[128];
+	CNetworkString(m_iszWeaponName, 128);
 	char m_iszWeaponModel[128];
 	char m_iszWeaponModelOLD[128];
 	char m_iszPickupSound[128];

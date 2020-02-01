@@ -98,7 +98,7 @@ void C_TFDroppedWeapon::ClientThink( void )
 	
 	if( 										// Don't glow if
 		( TFGameRules() && TFGameRules()->IsGGGamemode() ) || // we're in gun game
-		( m_iReserveAmmo <= 0 && m_iClip <= 0 )	||			// or empty
+		( ( m_iReserveAmmo <= 0 && m_iReserveAmmo != -1 ) && ( m_iClip <= 0 && m_iClip != -1 ) )	||			// or empty
 		( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) // Or we're not merc
 	)
 	{

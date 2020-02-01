@@ -2057,9 +2057,6 @@ bool CTFPlayer::ManageRandomizerWeapons( TFPlayerClassData_t *pData )
 		int  iAllWeapons = TF_WEAPON_COUNT;
 		while ( !bFound )
 		{
-			DevMsg("Test\n");
-//			if ( iFailsafe > iAllWeapons )
-//				return false;
 			int iWeaponID = random->RandomInt( 0, iAllWeapons-1 );
 			if ( pSetting->FindKey( g_aWeaponNames[ iWeaponID ] ) )
 			{
@@ -5310,22 +5307,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
 		CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
-		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pTFVictim != pTFAttacker ) // If you killed someone and it wasnt yourself
-		{
-			if ( GGLevel() == TFGameRules()->m_iMaxLevel-1 )
-				IncrementLevelProgress(TFGameRules()->m_iRequiredKills);
-			else
-				IncrementLevelProgress(1);
-			if ( GetLevelProgress() >= TFGameRules()->m_iRequiredKills )
-			{
-				SetLevelProgress(0);
-				IncrementGGLevel(1);
-				if ( GGLevel() < TFGameRules()->m_iMaxLevel )
-				{
-					UpdateGunGameLevel();
-				}
-			}
-		}
 		if ( pTFVictim != pTFAttacker )
 			pTFVictim->GotKilled();
 		
@@ -5687,6 +5668,23 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		if ( this == TFGameRules()->GetIT() )
 			TFGameRules()->SetIT( pPlayerAttacker );
 
+		if ( TFGameRules() && TFGameRules()->IsGGGamemode() && pPlayerAttacker != this ) // If you killed someone and it wasnt yourself
+		{
+			if ( pPlayerAttacker->GGLevel() == TFGameRules()->m_iMaxLevel-1 )
+				pPlayerAttacker->IncrementLevelProgress(TFGameRules()->m_iRequiredKills);
+			else
+				pPlayerAttacker->IncrementLevelProgress(1);
+			if ( pPlayerAttacker->GetLevelProgress() >= TFGameRules()->m_iRequiredKills )
+			{
+				pPlayerAttacker->SetLevelProgress(0);
+				pPlayerAttacker->IncrementGGLevel(1);
+				if ( pPlayerAttacker->GGLevel() < TFGameRules()->m_iMaxLevel )
+				{
+					pPlayerAttacker->UpdateGunGameLevel();
+				}
+			}
+		}
+		
 		// reset fov to default
 		SetFOV( this, 0 );
 	}
@@ -5808,6 +5806,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			// PLACEHOLDER
 			CBroadcastRecipientFilter filter;
 			EmitSound( filter, entindex(), "Game.Infection.Infected" );
+			if( TeamplayRoundBasedRules() && random->RandomInt( 1, 4 ) == 1 )
+				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "SomeoneDied" );
 		}
 	}
 
@@ -6293,7 +6293,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 		int iWeight = -1;
 
 		// find the highest weighted weapon
-		for (int i = 0;i < WeaponCount(); i++) 
+		for ( int i = 0;i < WeaponCount(); i++ ) 
 		{
 			CTFWeaponBase *pWpn = ( CTFWeaponBase *)GetWeapon(i);
 			if ( !pWpn )
@@ -6405,7 +6405,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 			pDroppedWeapon->VPhysicsGetObject()->SetMass( 25.0f );
 
 			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
-			AngularImpulse	angImp( 200, 200, 200 );
+			AngularImpulse angImp( 200, 200, 200 );
 //			if ( thrown )
 //				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &pVecThrowDir, &angImp );
 //			else

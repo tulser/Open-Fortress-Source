@@ -30,8 +30,8 @@ struct EntityParticleTrailInfo_t
 	EntityParticleTrailInfo_t();
 
 	DECLARE_CLASS_NOBASE( EntityParticleTrailInfo_t );
-	DECLARE_SIMPLE_DATADESC();
 	DECLARE_EMBEDDED_NETWORKVAR();
+	DECLARE_SIMPLE_DATADESC();
 
 	string_t m_strMaterialName;
 	CNetworkVar( float, m_flLifetime );

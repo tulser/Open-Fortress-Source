@@ -262,9 +262,9 @@ CTFTeamMenu::CTFTeamMenu( IViewPort *pViewPort ) : CTeamMenu( pViewPort )
 
 #ifdef _X360
 	m_pFooter = new CTFFooter( this, "Footer" );
-#else
-	m_pCancelButton = new CExButton( this, "CancelButton", "#TF_Cancel" );
 #endif
+
+	m_pCancelButton = new CExButton( this, "CancelButton", "#TF_Cancel" );
 
 	vgui::ivgui()->AddTickSignal( GetVPanel() );
 
@@ -706,7 +706,7 @@ CTFDMTeamMenu::CTFDMTeamMenu(IViewPort *pViewPort) : CTeamMenu(pViewPort)
 	m_pAutoTeamButton = new CTFTeamButton(this, "teambutton2");
 	m_pSpecTeamButton = new CTFTeamButton(this, "teambutton3");
 	m_pSpecLabel = new CExLabel(this, "TeamMenuSpectate", "");
-	m_pCancelButton = new CExLabel(this, "CancelButton", "#TF_Cancel");
+	m_pCancelButton = new CExButton(this, "CancelButton", "#TF_Cancel");
 	
 	m_pBackgroundModel = new CModelPanel(this, "MenuBG");
 	
@@ -753,11 +753,11 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "Arena";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
 		GameType = "Escort";
-	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD ) && !TFGameRules()->m_bEscortOverride )
 		GameType = "Payload";
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP ) )
 		GameType = "Coop";
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
 		GameType = "Infection";
 	return GameType;
 }
@@ -803,12 +803,7 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 		engine->CheckPoint("TeamMenu");
 		Activate();
 		SetMouseInputEnabled(true);
-		
-		if ( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer()->m_Shared.InState( TF_STATE_WELCOME ) && TeamplayRoundBasedRules() )
-		{
-			DevMsg("Message broadcasted\n");
-			TeamplayRoundBasedRules()->BroadcastSoundFFA( C_TFPlayer::GetLocalTFPlayer()->entindex(), GetGamemodeMessage() );
-		}
+
 		// get key bindings if shown
 		m_iTeamMenuKey = gameuifuncs->GetButtonCodeForBind("changeteam");
 		m_iScoreBoardKey = gameuifuncs->GetButtonCodeForBind("showscores");
@@ -880,6 +875,8 @@ void CTFDMTeamMenu::Update(void)
 	}
 	else
 	{
+		if( TeamplayRoundBasedRules() )
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( C_TFPlayer::GetLocalTFPlayer()->entindex(), GetGamemodeMessage() );
 		if (m_pCancelButton && m_pCancelButton->IsVisible())
 		{
 			m_pCancelButton->SetVisible(false);

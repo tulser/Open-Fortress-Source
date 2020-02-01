@@ -143,7 +143,7 @@ private:
 	CTFTeamButton	*m_pAutoTeamButton;
 	CTFTeamButton	*m_pSpecTeamButton;
 	CExLabel		*m_pSpecLabel;
-	CExLabel		*m_pCancelButton;
+	CExButton		*m_pCancelButton;
 	
 	CModelPanel		*m_pBackgroundModel;
 

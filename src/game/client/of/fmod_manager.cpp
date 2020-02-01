@@ -205,31 +205,9 @@ void CFMODManager::FadeThink(void)
 	}
 }
 
-static const ConVar *snd_musicvolume = NULL;
-static const ConVar *snd_mute_losefocus = NULL;
 // Called every frame when the client is in-game
 void CFMODManager::Think(void)
 {
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	snd_musicvolume = g_pCVar->FindVar("snd_musicvolume");
-	snd_mute_losefocus = g_pCVar->FindVar("snd_mute_losefocus");
-
-	float flVolumeMod = 1.0f;
-	
-	if( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() == GR_STATE_TEAM_WIN )
-	{
-		flVolumeMod -= ( gpGlobals->curtime / ( TeamplayRoundBasedRules()->m_flStartedWinState + 4.0f ) ) ;
-		flVolumeMod = max( flVolumeMod, 0.0f );
-	}
-	
-	if (pLocalPlayer && !pLocalPlayer->IsAlive())
-		flVolumeMod *= 0.4f;
-
-	if (!engine->IsActiveApp() && snd_mute_losefocus->GetBool())
-		flVolumeMod = 0.0f;
-	
-	if( pChannelGroup )
-		pChannelGroup->setVolume(m_fDefaultVolume * snd_musicvolume->GetFloat() * flVolumeMod);
 }
 
 // Compares specified ambient sound with the current ambient sound being played
@@ -283,12 +261,13 @@ unsigned int CFMODManager::GetSoundLenghtPCM(Sound *sound)
 
 // Abruptly starts playing a specified ambient sound
 // In most cases, we'll want to use TransitionAmbientSounds instead
-void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLoopingMusic, const char* pIntroMusic, float flDelay , bool fadeIn)
+void CFMODManager::PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char* pLoopingMusic, const char* pIntroMusic, float flDelay , bool fadeIn)
 {
 	Channel *pTempChannel;
+	Channel *pTempLoopChannel;
 	
-	if ( !pChannelGroup )
-		pSystem->createChannelGroup("Parent", &pChannelGroup);
+	if ( !pNewChannelGroup )
+		return;
 	
 	int  outputrate = 0;
 	result = pSystem->getSoftwareFormat(&outputrate, 0, 0);
@@ -304,7 +283,7 @@ void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLooping
 		Sound *pLoopingSound = NULL;
 		
 		result = pSystem->createStream(GetFullPathToSound(pIntroMusic), FMOD_CREATESTREAM, 0, &pIntroSound);
-		pSystem->playSound(pIntroSound, pChannelGroup, true, &pTempChannel);
+		pSystem->playSound(pIntroSound, pNewChannelGroup, true, &pTempChannel);
 
 		result = pIntroSound->getDefaults(&freq, 0);
 		
@@ -322,7 +301,7 @@ void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLooping
 
 		result = pLoopingSound->setLoopPoints(0, FMOD_TIMEUNIT_PCM, GetSoundLenghtPCM(pLoopingSound), FMOD_TIMEUNIT_PCM);
 		result = pSystem->createStream(GetFullPathToSound(pLoopingMusic), FMOD_LOOP_NORMAL | FMOD_CREATESTREAM , 0, &pLoopingSound);
-		pSystem->playSound(pLoopingSound, pChannelGroup, true, &pTempChannel);
+		pSystem->playSound(pLoopingSound, pNewChannelGroup, true, &pTempLoopChannel);
 
 		result = pIntroSound->getLength(&slen, FMOD_TIMEUNIT_PCM);
 		result = pIntroSound->getDefaults(&freq, 0);
@@ -331,8 +310,10 @@ void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLooping
 		DevMsg("Intro delay lenght is %d\n", slen);
 		clock_start += slen;
 
-		result = pTempChannel->setDelay(clock_start, 0, false);
-		result = pTempChannel->setPaused(false);
+		result = pTempLoopChannel->setDelay(clock_start, 0, false);
+		result = pTempLoopChannel->setPaused(false);
+		pTempChannel->setChannelGroup(pNewChannelGroup);
+		pTempLoopChannel->setChannelGroup(pNewChannelGroup);
 
 	}
 	else
@@ -344,7 +325,7 @@ void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLooping
 			Warning("FMOD: Failed to create stream of sound '%s' ! (ERROR NUMBER: %i)\n", GetFullPathToSound(pLoopingMusic), result);
 			return;
 		}
-		result = pSystem->playSound(pSound, pChannelGroup, true, &pTempChannel);
+		result = pSystem->playSound(pSound, pNewChannelGroup, true, &pTempChannel);
 		
 		result = pTempChannel->getDSPClock(0, &clock_start);
 
@@ -364,25 +345,11 @@ void CFMODManager::PlayLoopingMusic( Channel **pNewChannel, const char* pLooping
 			Warning("FMOD: Failed to play sound '%s' ! (ERROR NUMBER: %i)\n", pLoopingMusic, result);
 			return;
 		}
+		pTempChannel->setChannelGroup(pNewChannelGroup);
 	}
 	//	result = pSound->setLoopCount( -1 );
 	//	
-
-	pTempChannel->setChannelGroup(pChannelGroup);
-	pTempChannel->setVolume(1.0f);
-	*pNewChannel = pTempChannel;
 	m_flSongStart = gpGlobals->realtime;
-
-	if (fadeIn)
-	{
-		pChannel->setVolume(0.0);
-		m_fDefaultVolume = 0.0f;
-		m_bFadeIn = true;
-	}
-	else
-	{
-		m_fDefaultVolume = 1.0f;
-	}
 	currentSound = pLoopingMusic;
 }
 
@@ -421,7 +388,7 @@ void CFMODManager::PlayAmbientSound(const char* pathToFileFromSoundsFolder, bool
 	currentSound = pathToFileFromSoundsFolder;
 }
 
-void CFMODManager::StopAmbientSound( Channel *pNewChannel ,bool fadeOut)
+void CFMODManager::StopAmbientSound( ChannelGroup *pNewChannel, bool fadeOut)
 {
 	if (fadeOut)
 	{
@@ -432,17 +399,31 @@ void CFMODManager::StopAmbientSound( Channel *pNewChannel ,bool fadeOut)
 	}
 	else
 	{
-		Sound *pCurrentSound;
 		pNewChannel->setVolume(0.0f);
-		pNewChannel->getCurrentSound(&pCurrentSound);
-		if( pCurrentSound )
-		{
-//			pCurrentSound->release();
-		}
 		pNewChannel->stop();
 	}
 
 	currentSound = "NULL";
+}
+
+void CFMODManager::PlayMusicEnd( ChannelGroup *pNewChannelGroup, const char* pLoopingMusic, bool bDelay, Channel *pLoopingChannel )
+{
+	Channel *pTempChannel;
+	
+	if ( !pNewChannelGroup )
+		return;
+	
+	if (pLoopingMusic)
+	{
+		Sound *pIntroSound = NULL;
+		
+		result = pSystem->createStream(GetFullPathToSound(pLoopingMusic), FMOD_CREATESTREAM, 0, &pIntroSound);
+		pSystem->playSound(pIntroSound, pNewChannelGroup, true, &pTempChannel);
+		
+		result = pTempChannel->setPaused(false);
+		pTempChannel->setChannelGroup(pNewChannelGroup);
+	}
+	
 }
 
 void CommSndStp( void )

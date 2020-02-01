@@ -5,6 +5,7 @@
 #endif
 
 #include "fmod.hpp"
+
 using namespace FMOD;
 
 class CFMODManager
@@ -23,8 +24,9 @@ public:
 	bool IsChannelPlaying( int number );
 
 	void PlayAmbientSound( const char* pathToFileFromSoundsFolder, bool fadeIn );
-	void PlayLoopingMusic( Channel **pNewChannel, const char* pLoopingMusic,const char* pIntroMusic = NULL, float flDelay = 0 , bool fadeIn = false);
-	void StopAmbientSound( Channel *pNewChannel, bool fadeOut );
+	void PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char* pLoopingMusic,const char* pIntroMusic = NULL, float flDelay = 0 , bool fadeIn = false);
+	void StopAmbientSound( ChannelGroup *pNewChannel, bool fadeOut );
+	void PlayMusicEnd( ChannelGroup *pNewChannelGroup, const char* pLoopingMusic, bool bDelay = false, Channel *pLoopingChannel = NULL );
 	void StopAllSound( void );
 	void TransitionAmbientSounds( const char* pathToFileFromSoundsFolder );
 	float GetSoundLenght(void);

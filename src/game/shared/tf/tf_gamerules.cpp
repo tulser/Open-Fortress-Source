@@ -223,19 +223,6 @@ ConVar of_randomizer_setting( "of_randomizer_setting", "TF2", FCVAR_REPLICATED |
 					"Sets which Config randomizer pulls its weapons from.");
 
 #ifdef GAME_DLL
-//listner class creates a listener for the mEvent and returns the mEvent as true
-class CMyListener : public IGameEventListener2
-{
-	CMyListener()
-	{
-		// add myself as client-side listener for this event
-		gameeventmanager->AddListener(this, "teamplay_round_win", false);
-	}
-	//this is the event checker
-	void FireGameEvent(IGameEvent* mEvent)
-	{
-	}
-};
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
 	ConVarRef var( pConVar );
@@ -2480,6 +2467,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
 				BroadcastSound( i, "InfectionMusic.Warmup", false );
+				BroadcastSound( i, "Benja.RoundStart" );
 			}
 		}
 	}
@@ -3171,6 +3159,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			}
 			// Only happens if we change the convar mid game
 			// For the love of all Gaben please set your convars BEFORE you start the server
+			// Literaly just look at this stank code
 			if( TFGameRules()->UsesDMBuckets() != bMultiweapons )
 			{
 				bMultiweapons = TFGameRules()->UsesDMBuckets();
@@ -3217,93 +3206,6 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
 				szEmptyDetails[0] = '\0';
 				g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
-			}
-
-			if ( IsDMGamemode() && CountActivePlayers() > 0 && !DontCountKills() )
-			{
-				int iFragLimit = fraglimit.GetInt();
-				if ( IsGGGamemode() )
-						iFragLimit = (m_iMaxLevel * m_iRequiredKills) - m_iRequiredKills+1;
-				if ( iFragLimit > 0 ) 
-				{
-					if ( IsTDMGamemode() )
-					{
-						if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() )
-						{
-							m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore();
-							FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_RED), TFTeamMgr()->GetTeam(TF_TEAM_RED), USE_TOGGLE, 0 );
-						}
-						else if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() )
-						{
-							m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore();
-							FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_BLUE), TFTeamMgr()->GetTeam(TF_TEAM_BLUE), USE_TOGGLE, 0 );
-						}						
-						if ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= iFragLimit || TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= iFragLimit )
-						{
-							SendTeamScoresEvent();
-							GoToIntermission();
-						}
-						// one of our teams is at 80% of the fragcount, start voting for next map
-						if ( ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
-							( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
-							&& !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
-						{
-							DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
-							m_bStartedVote = true;
-							//engine->ServerCommand( "callvote nextlevel" );
-							char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
-							szEmptyDetails[0] = '\0';
-							g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
-						}
-					}
-					else
-					{
-						// check if any player is over the frag limit
-						for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-						{
-							CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-							if ( pPlayer )
-							{
-								if ( m_nCurrFrags < pPlayer->FragCount() )
-								{
-									m_nCurrFrags = pPlayer->FragCount();
-									FireTargets( "game_fragincrease", pPlayer, pPlayer, USE_TOGGLE, 0 );
-								}
-
-								if ( pPlayer->FragCount() >= iFragLimit )
-								{
-									SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
-								}
-
-								// one of our players is at 80% of the fragcount, start voting for next map
-								if ( pPlayer->FragCount() >= ( (float)iFragLimit * 0.8 ) && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
-								{
-									DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
-									m_bStartedVote = true;
-									//engine->ServerCommand( "callvote nextlevel" );
-									char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
-									szEmptyDetails[0] = '\0';
-									g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
-								}
-							}					
-						}
-					}
-				}
-			}
-			
-			if ( IsGGGamemode() && CountActivePlayers() > 0 )
-			{
-				// check if any player is over the frag limit
-				// and creates a game event for achievement
-				for (int i = 1; i <= gpGlobals->maxClients; i++)
-				{
-					CTFPlayer *pPlayer =( CTFPlayer *) UTIL_PlayerByIndex(i);				
-					if (pPlayer && pPlayer->GGLevel() == m_iMaxLevel )
-					{
-						GoToIntermission();
-					}
-				}
 			}
 			
 			if ( IsArenaGamemode() )
@@ -4898,6 +4800,84 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	}
 
 	BaseClass::PlayerKilled( pVictim, info );
+	
+	if ( IsDMGamemode() && !DontCountKills() )
+	{
+		int iFragLimit = fraglimit.GetInt();
+		
+		if ( IsGGGamemode() )
+				iFragLimit = (m_iMaxLevel * m_iRequiredKills) - m_iRequiredKills + 1;
+		if ( iFragLimit > 0 ) 
+		{
+			if ( IsTDMGamemode() )
+			{
+				if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() )
+				{
+					m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore();
+					FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_RED), TFTeamMgr()->GetTeam(TF_TEAM_RED), USE_TOGGLE, 0 );
+				}
+				else if ( m_nCurrFrags < TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() )
+				{
+					m_nCurrFrags = TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore();
+					FireTargets( "game_fragincrease", TFTeamMgr()->GetTeam(TF_TEAM_BLUE), TFTeamMgr()->GetTeam(TF_TEAM_BLUE), USE_TOGGLE, 0 );
+				}						
+				if ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= iFragLimit || TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= iFragLimit )
+				{
+					SendTeamScoresEvent();
+					GoToIntermission();
+				}
+				// one of our teams is at 80% of the fragcount, start voting for next map
+				if ( ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
+					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
+					&& !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+				{
+					DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
+					m_bStartedVote = true;
+					//engine->ServerCommand( "callvote nextlevel" );
+					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+					szEmptyDetails[0] = '\0';
+					g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+				}
+			}
+			else
+			{
+				if ( pTFPlayerScorer )
+				{
+					if ( m_nCurrFrags < pTFPlayerScorer->FragCount() )
+					{
+						m_nCurrFrags = pTFPlayerScorer->FragCount();
+						FireTargets( "game_fragincrease", pTFPlayerScorer, pTFPlayerScorer, USE_TOGGLE, 0 );
+						if( fraglimit.GetInt() - m_nCurrFrags == 10 || fraglimit.GetInt() - m_nCurrFrags <= 5 )
+							BroadcastSound( TEAM_UNASSIGNED, UTIL_VarArgs( "FragsLeft%d", fraglimit.GetInt() - m_nCurrFrags ) );
+					}
+
+					if ( pTFPlayerScorer->FragCount() >= iFragLimit )
+					{
+						SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+					}
+
+					// one of our players is at 80% of the fragcount, start voting for next map
+					if ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+					{
+						DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
+						m_bStartedVote = true;
+						//engine->ServerCommand( "callvote nextlevel" );
+						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+						szEmptyDetails[0] = '\0';
+						g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
+					}
+				}
+			}
+		}
+	}
+	
+	if ( IsGGGamemode() )
+	{			
+		if (pTFPlayerScorer && pTFPlayerScorer->GGLevel() == m_iMaxLevel )
+		{
+			SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+		}
+	}	
 }
 
 //-----------------------------------------------------------------------------
@@ -5028,7 +5008,11 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 			else 
 				killer_weapon_name = pGrenade->GetClassname();
 		}
-	}	
+	}
+
+	V_strncpy( temp, killer_weapon_name, sizeof( temp ) );
+	Q_strlower( temp );
+	killer_weapon_name = temp;
 	// strip certain prefixes from inflictor's classname
 	const char *prefix[] = { "tf_weapon_grenade_", "tf_weapon_", "NPC_", "func_" };
 	for ( int i = 0; i< ARRAYSIZE( prefix ); i++ )
@@ -7054,6 +7038,7 @@ void CTFGameRules::BeginInfection( void )
 	// all teams
 	for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 	{
+		BroadcastSound( i, "RoundStart" );
 		BroadcastSound( i, "InfectionMusic.Begin", false );
 	}
 

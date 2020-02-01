@@ -112,6 +112,7 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		if( pPowerup )
 		{
 			pPowerup->SetModelName( GetModelName() );
+			pPowerup->m_nSkin = m_nSkin;
 			Q_strncpy( pPowerup->szTimerIcon, szTimerIcon, sizeof( pPowerup->szTimerIcon ) );
 			pPowerup->m_iPowerupID = m_iPowerupID;
 			pPowerup->m_flCreationTime = m_flCreationTime;

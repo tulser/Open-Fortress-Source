@@ -1195,6 +1195,8 @@ void CBaseHudChat::StartMessageMode( int iMessageModeType )
 	if ( !IsConsole() )
 	{
 		m_pChatInput->ClearEntry();
+		
+		m_pChatInput->SetPrompt( ( m_nMessageMode == MM_SAY ) ? g_pVGuiLocalize->Find( "#chat_say" ) : g_pVGuiLocalize->Find( "#chat_say_team" ) );
 	
 		if ( GetChatHistory() )
 		{

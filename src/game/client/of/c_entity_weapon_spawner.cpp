@@ -10,6 +10,7 @@
 
 #include "glow_outline_effect.h"
 #include "tf_gamerules.h"
+#include "tf_shareddefs.h"
 
 #include "tier0/memdbgon.h"
 
@@ -27,6 +28,9 @@ public:
 	void	ClientThink( void );
 	void	Spawn( void );
 	int		DrawModel( int flags );
+	int		GetWeaponID(){ return AliasToWeaponID( m_iszWeaponName ); };
+	bool	IsSuperWeapon();
+	const char *GetSuperWeaponsIncomingLine( void );
 	virtual C_BaseEntity *GetItemTintColorOwner( void )
 	{
 		return (C_BaseEntity *) C_BasePlayer::GetLocalPlayer();
@@ -48,10 +52,15 @@ private:
 		bool	m_bRespawning;
 		bool	bInitialDelay;
 		int		iTeamNum;
+		bool	bSuperWeapon;
+		bool	bParsed;
+		bool	bWarningTriggered;
 		
 		float				fl_RespawnTime;
 		float				m_flRespawnTick;
 		float				fl_RespawnDelay;
+		
+		char				m_iszWeaponName[128];
 
 	IMaterial	*m_pReturnProgressMaterial_Empty;		// For labels above players' heads.
 	IMaterial	*m_pReturnProgressMaterial_Full;
@@ -75,6 +84,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_WeaponSpawner, DT_WeaponSpawner, CWeaponSpawner )
 	RecvPropTime( RECVINFO( fl_RespawnTime ) ),
 	RecvPropTime( RECVINFO( m_flRespawnTick ) ),
 	RecvPropTime( RECVINFO( fl_RespawnDelay ) ),
+	RecvPropString( RECVINFO( m_iszWeaponName ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -95,7 +105,21 @@ void C_WeaponSpawner::Spawn( void )
 // Purpose: Update angles every think
 //-----------------------------------------------------------------------------
 void C_WeaponSpawner::ClientThink( void )
-{	
+{
+	if( IsSuperWeapon() )
+	{
+		if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetSuperWeaponsIncomingLine() );
+			bWarningTriggered = true;
+		}
+		else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
+		{
+			bWarningTriggered = false;
+		}
+		if ( bWarningTriggered && !m_bRespawning )
+			bWarningTriggered = false;	
+	}
 	if ( !m_bDisableSpin )
 	{
 		absAngle.y += 90 * gpGlobals->frametime;
@@ -130,11 +154,16 @@ void C_WeaponSpawner::ClientThink( void )
 	
 	if ( !m_bRespawning ) 
 	{
-		trace_t tr;
-		UTIL_TraceLine( GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr );
-		if ( tr.fraction == 1.0f )
-		{
+		if ( IsSuperWeapon() )
 			bShouldGlow = true;
+		else
+		{
+			trace_t tr;
+			UTIL_TraceLine(GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr);
+			if (tr.fraction == 1.0f)
+			{
+				bShouldGlow = true;
+			}
 		}
 	}
 
@@ -370,4 +399,32 @@ int C_WeaponSpawner::DrawModel( int flags )
 	}
 
 	return nRetVal;
+}
+
+bool C_WeaponSpawner::IsSuperWeapon( void )
+{ 	
+	if( bParsed )
+		return bSuperWeapon;
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	
+	if (!pWeaponInfo)
+		return false;
+	
+	bSuperWeapon = pWeaponInfo->m_bAlwaysDrop;
+	
+	return bSuperWeapon;
+}
+
+const char *C_WeaponSpawner::GetSuperWeaponsIncomingLine( void )
+{ 	
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	
+	switch ( m_iWeaponID )
+	{
+		case TF_WEAPON_GIB:
+		return "GIBIncoming";
+		break;
+	}
+	return "SuperWeaponsIncoming";
 }

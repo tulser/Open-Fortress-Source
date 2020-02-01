@@ -65,6 +65,7 @@ public:
 	DECLARE_CLASS( CTFCKnife, CTFKnife);
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
+	virtual int			GetWeaponID( void ) const			{ return TFC_WEAPON_KNIFE; }
 };
 
 #endif // TF_WEAPON_KNIFE_H

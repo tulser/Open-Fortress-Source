@@ -276,6 +276,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flLastShotDelay = pKeyValuesData->GetFloat( "LastShotTimeFireDelay", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flTimeFireDelay );
 	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
 	m_bSwapFireAnims = pKeyValuesData->GetBool( "SwapFireAnims", 0 );
+	m_bNoFixedSpread = pKeyValuesData->GetBool( "NoFixedSpread", 0 );
 	
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );

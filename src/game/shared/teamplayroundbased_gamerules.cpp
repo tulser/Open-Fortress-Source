@@ -2055,7 +2055,7 @@ void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 	InternalHandleTeamWin( m_iWinningTeam );
 
 	SendWinPanelInfo();
-
+	
 #ifdef TF_DLL
 	// Do this now, so players don't leave before the usual CheckWinLimit() call happens
 	bool bDone = ( CheckTimeLimit( false ) || CheckWinLimit( false ) || CheckMaxRounds( false ) || CheckNextLevelCvar( false ) );
@@ -3123,8 +3123,6 @@ void CTeamplayRoundBasedRules::RoundRespawn( void )
     //  so the below function can use the now freed ones.
 	engine->AllowImmediateEdictReuse();
 
-	RespawnPlayers( true );
-
 	// reset per-round scores for each player
 	for ( int i = 1; i <= MAX_PLAYERS; i++ )
 	{
@@ -3136,7 +3134,9 @@ void CTeamplayRoundBasedRules::RoundRespawn( void )
 			if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTDMGamemode() )
 				pPlayer->ResetFragCount();
 		}
-	}
+	}	
+	
+	RespawnPlayers( true );
 }
 
 //-----------------------------------------------------------------------------
@@ -3563,6 +3563,12 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 		if ( TFGameRules() && TFGameRules()->IsPlayingSpecialDeliveryMode() )
 			return;
 #endif // TF_DLL
+		if( TFGameRules() && TFGameRules()->IsDMGamemode() && DMMusicManager() )
+		{
+			DMMusicManager()->m_bDisableThink = true;
+			DMMusicManager()->pRoundMusicPlayer->EndTransition();
+			DMMusicManager()->pRoundMusicPlayer->SetDisabled( true );		
+		}
 
 		BroadcastSound( TEAM_UNASSIGNED, UTIL_VarArgs( "Game.TeamWin%d", team ) );
 
@@ -3572,13 +3578,18 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 			{
 				if ( team == TF_TEAM_RED )
 				{
+					CTeam *pTeam = GetGlobalTeam( TF_TEAM_RED );
+					if( pTeam && pTeam->GetNumPlayers() == 1 )
+						BroadcastSound( i, "LastManWon" );
+					else
+						BroadcastSound( i, "SurvivorsWin" );
+
 					BroadcastSound( i, WinSongName( i ), false );
 				}
 				else
 				{
-					const char *pchLoseSong = LoseSongName( i );
-
-					BroadcastSound( i, pchLoseSong, false );
+					BroadcastSound( i, "ZombiesWin" );
+					BroadcastSound( i, LoseSongName( i ), false );
 				}
 
 				continue;
@@ -3627,9 +3638,7 @@ void CTeamplayRoundBasedRules::PlayStalemateSong( void )
 }
 const char* CTeamplayRoundBasedRules::WinSongName( int nTeam )
 { 
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
-		return "Game.DMEnd"; 
-	else if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
 		return "Game.Infection.YourTeamWon";
 	else
 		return "Game.YourTeamWon"; 

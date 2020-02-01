@@ -193,6 +193,9 @@ public:
 	void	SetSkin( int nSkin );
 	void	SetDefaultAnimation( const char *pszName );
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
+	
+	virtual void GetModelPos( float &x, float &y, float &z );
+	virtual void SetModelPos( float x, float y, float z );
 
 	virtual void ParseModelInfo( KeyValues *inResourceData );
 

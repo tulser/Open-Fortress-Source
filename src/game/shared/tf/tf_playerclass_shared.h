@@ -38,6 +38,7 @@ struct TFPlayerClassData_t
 	char		m_szModelName[TF_NAME_LENGTH];
 	char		m_szArmModelName[TF_NAME_LENGTH];
 	char		m_szLocalizableName[TF_NAME_LENGTH];
+	char		m_szJumpSound[TF_NAME_LENGTH];
 	float		m_flMaxSpeed;
 	int			m_nMaxHealth;
 	int			m_nMaxArmor;
@@ -84,6 +85,7 @@ struct TFPlayerClassData_t
 	const char *GetClassImageBlue() const { return m_szClassImageBlue; }
 	const char *GetClassImageMercenary() const { return m_szClassImageMercenary; }
 	const char *GetClassImageColorless() const { return m_szClassImageColorless; }
+	const char *GetJumpSound() const { return m_szJumpSound; }
 	void Parse( const char *pszClassName );
 
 	// Parser for the class data.
@@ -127,6 +129,7 @@ public:
 	bool		CanAirDash( void );
 	int			MaxAirDashCount( void );
 	int			GetCapNumber( void );
+	const char *GetJumpSound();
 
 	TFPlayerClassData_t  *GetData( void );
 

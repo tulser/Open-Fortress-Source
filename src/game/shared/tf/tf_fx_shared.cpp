@@ -243,10 +243,10 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	ClearMultiDamage();
 
 	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
-	
+
 	bool bNoSpread = false;
 
-	if ( nBulletsPerShot > 1 )
+	if ( nBulletsPerShot > 1 && !pWeaponInfo->m_bNoFixedSpread )
 	{
 		bNoSpread = tf_use_fixed_weaponspreads.GetBool();
 	}	

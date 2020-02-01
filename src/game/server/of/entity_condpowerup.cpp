@@ -130,6 +130,7 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 		if( pPowerup )
 		{
 			pPowerup->SetModelName( m_iszPowerupModel );
+			pPowerup->m_nSkin = m_nSkin;
 			Q_strncpy( pPowerup->szTimerIcon, STRING(m_iszTimerIcon), sizeof( pPowerup->szTimerIcon ) );
 			pPowerup->m_iPowerupID = m_iCondition;
 			pPowerup->m_flCreationTime = gpGlobals->curtime;
@@ -183,6 +184,19 @@ const char* CCondPowerup::GetPowerupPickupLine( void )
 		case TF_COND_CRITBOOSTED:
 		case TF_COND_CRIT_POWERUP:
 		return "CritTaken";
+		break;
+		case TF_COND_SHIELD:
+		return "ShieldTaken";
+		break;
+		case TF_COND_HASTE:
+		return "HasteTaken";
+		break;
+		case TF_COND_BERSERK:
+		return "BerserkTaken";
+		break;
+		case TF_COND_INVIS_POWERUP:
+		case TF_COND_STEALTHED:
+		return "InvisibilityTaken";
 		break;
 	}
 	return "None";

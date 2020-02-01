@@ -781,6 +781,7 @@ void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 			pPlayerName->SetVisible( bShow );
 			pPlayerNameDropShadow->SetVisible( bShow );
 			pShadedBar->SetVisible( bShow );
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudDMWinpanelIntro" );
 		}
 
 		m_bShouldBeVisible = true;

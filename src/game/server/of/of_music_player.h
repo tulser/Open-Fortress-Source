@@ -19,7 +19,7 @@ enum
 	OF_MUSIC_OUTRO,
 };
 
-class CTFMusicPlayer : public CBaseAnimating
+class CTFMusicPlayer : public CBaseEntity
 {
 public:
 	DECLARE_CLASS(CTFMusicPlayer, CBaseEntity);
@@ -39,7 +39,10 @@ public:
 	void			InputEnable( inputdata_t &inputdata );
 	void			InputDisable( inputdata_t &inputdata );
 	void			InputToggle( inputdata_t &inputdata );	
+	void			InputSetVolume( inputdata_t &inputdata );	
+	void			InputAddVolume( inputdata_t &inputdata );	
 	void			SetDisabled( bool bDisable );
+	void			EndTransition( void );
 	int m_iIndex;
 
 	CNetworkVar(string_t, szIntroSong);
@@ -47,12 +50,42 @@ public:
 	CNetworkVar(string_t, szOutroSong);
 	
 	CNetworkVar( bool, m_bShouldBePlaying );
-	CNetworkVar( bool, m_bPlayInWaitingForPlayers );
 	CNetworkVar( bool, m_bInfection );
+	CNetworkVar( bool, m_bHardTransition );
 	CNetworkVar( bool, m_bDisabled );
 	CNetworkVar( float, m_flDelay );
-	CNetworkString( m_nszIntroSong , MAX_PATH );
+	CNetworkVar( float, m_flVolume );
 	CNetworkString( m_nszLoopingSong , MAX_PATH );
-	CNetworkString( m_nszOutroSong , MAX_PATH );
 };
+
+class CTFDMMusicManager : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFDMMusicManager, CBaseEntity);
+	DECLARE_DATADESC();
+
+	CTFDMMusicManager();
+	~CTFDMMusicManager();
+	virtual void Spawn();
+	virtual void DMMusicThink();
+	int UpdateTransmitState()	// always send to all clients
+	{
+		return SetTransmitState( FL_EDICT_ALWAYS );
+	}	
+	// Input handlers
+	int m_iIndex;
+	bool m_bDisableThink;
+
+	CTFMusicPlayer *pWaitingMusicPlayer;
+	CTFMusicPlayer *pRoundMusicPlayer;
+	
+	string_t szWaitingForPlayerMusic;
+	string_t szRoundMusic;
+	
+	string_t szWaitingMusicPlayer;
+	string_t szRoundMusicPlayer;
+};
+
+extern CTFDMMusicManager* DMMusicManager();
+
 #endif // TF_MUSIC_PLAYER_H

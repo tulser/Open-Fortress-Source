@@ -260,6 +260,20 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const
 	m_bPanelDirty = true;
 }
 
+void CModelPanel::GetModelPos( float &x, float &y, float &z )
+{
+	x = m_pModelInfo->m_vecOriginOffset.x;
+	y = m_pModelInfo->m_vecOriginOffset.y;
+	z = m_pModelInfo->m_vecOriginOffset.z;
+}
+
+void CModelPanel::SetModelPos( float x, float y, float z )
+{
+	m_pModelInfo->m_vecOriginOffset.x = x;
+	m_pModelInfo->m_vecOriginOffset.y = y;
+	m_pModelInfo->m_vecOriginOffset.z = z;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

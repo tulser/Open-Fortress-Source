@@ -19,16 +19,17 @@
 
 #include "tier0/memdbgon.h"
 
+extern System *pSystem;
+
 // Inputs.
 LINK_ENTITY_TO_CLASS( of_music_player, C_TFMusicPlayer );
 
 IMPLEMENT_CLIENTCLASS_DT( C_TFMusicPlayer, DT_MusicPlayer, CTFMusicPlayer )
-	RecvPropString( RECVINFO( szIntroSong ) ),
 	RecvPropString( RECVINFO( szLoopingSong ) ),
-	RecvPropString( RECVINFO( szOutroSong ) ),
-	RecvPropInt( RECVINFO( m_iPhase ) ),
 	RecvPropBool( RECVINFO( m_bShouldBePlaying ) ),
+	RecvPropBool( RECVINFO( m_bHardTransition ) ),
 	RecvPropFloat( RECVINFO( m_flDelay ) ),
+	RecvPropFloat( RECVINFO( m_flVolume ) ),
 END_RECV_TABLE()
 
 C_TFMusicPlayer::C_TFMusicPlayer()
@@ -39,6 +40,8 @@ C_TFMusicPlayer::C_TFMusicPlayer()
 	m_flDelay = 0;
 	m_iPhase = 0;
 	m_Songdata.SetSize( 3 );
+	if( pSystem )
+		pSystem->createChannelGroup("Parent", &pChannel);
 }
 
 C_TFMusicPlayer::~C_TFMusicPlayer()
@@ -58,6 +61,8 @@ void C_TFMusicPlayer::Spawn( void )
 
 void C_TFMusicPlayer::ClientThink( void )
 {
+
+// Called every frame when the client is in-game
 
 	if ( !bParsed )
 	{
@@ -84,6 +89,10 @@ void C_TFMusicPlayer::ClientThink( void )
 			bIsPlaying = false;
 			m_iPhase = 0;
 			FMODManager()->StopAmbientSound( pChannel, false );
+			if( m_bHardTransition )
+			{
+				FMODManager()->PlayMusicEnd( pChannel, m_Songdata[2].path );
+			}
 		}
 		else
 		{
@@ -92,22 +101,39 @@ void C_TFMusicPlayer::ClientThink( void )
 			bInLoop = false;
 			if ( m_Songdata[0].path[0] != 0 )
 			{
-				FMODManager()->PlayLoopingMusic( &pChannel, m_Songdata[1].path, m_Songdata[0].path, m_flDelay );
+				FMODManager()->PlayLoopingMusic( pChannel, m_Songdata[1].path, m_Songdata[0].path, m_flDelay );
 			}
 			else
 			{
-				FMODManager()->PlayLoopingMusic( &pChannel, m_Songdata[1].path, NULL , m_flDelay );
+				FMODManager()->PlayLoopingMusic( pChannel,m_Songdata[1].path, NULL , m_flDelay );
 			}
 		}
 	}
-/*	else if ( bIsPlaying && !bInLoop && !FMODManager()->IsChannelPlaying() )
-	{
-		m_iPhase = 0;
-		bInLoop = true;
-		FMODManager()->PlayLoopingMusic(m_Songdata[1].path, false);
-	}
-*/
+
+	HandleVolume();
+	
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
+}
+
+static const ConVar *snd_musicvolume = NULL;
+static const ConVar *snd_mute_losefocus = NULL;
+
+void C_TFMusicPlayer::HandleVolume( void )
+{
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	snd_musicvolume = g_pCVar->FindVar("snd_musicvolume");
+	snd_mute_losefocus = g_pCVar->FindVar("snd_mute_losefocus");
+
+	float flVolumeMod = 1.0f;
+	
+	if (pLocalPlayer && !pLocalPlayer->IsAlive())
+		flVolumeMod *= 0.4f;
+
+	if (!engine->IsActiveApp() && snd_mute_losefocus->GetBool())
+		flVolumeMod = 0.0f;
+	
+	if( pChannel )
+		pChannel->setVolume(m_flVolume * snd_musicvolume->GetFloat() * flVolumeMod);
 }
 
 void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)

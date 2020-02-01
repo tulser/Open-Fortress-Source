@@ -199,6 +199,7 @@ public:
 	string_t m_sSourceEntName;
 	EHANDLE m_hSoundSource;	// entity from which the sound comes
 	int		m_nSoundSourceEntIndex; // In case the entity goes away before we finish stopping the sound...
+	CTFMusicPlayer *pMusicPlayer;
 };
 
 LINK_ENTITY_TO_CLASS( ambient_generic, CAmbientGeneric );
@@ -272,43 +273,7 @@ const char *szMusicArray[] =
 	"DeathmatchMusic.OpenHazards",
 	"DeathmatchMusic.BadWorks",
 	"DeathmatchMusic.GetPsyched",
-	"DeathmatchMusic.E1M1alt"
-};
-
-
-const char *szMusicIntroArray[] =
-{
-	"DeathmatchMusic.AtFortressGateIntro",
-	"DeathmatchMusic.SkateIntro",
-	"DeathmatchMusic.GenericIntro",
-	"DeathmatchMusic.FacilityIntro",
-	"DeathmatchMusic.ChaseIntro",
-	"DeathmatchMusic.IntermissionIntro",
-	"DeathmatchMusic.E2M1Intro",
-	"DeathmatchMusic.Map01Intro",
-	"DeathmatchMusic.OrchestralIntro",
-	"DeathmatchMusic.StalkerIntro",
-	"DeathmatchMusic.TeamFortresqueIntro",
-	"DeathmatchMusic.TF2BeatIntro",
-	"DeathmatchMusic.TurbineTurmoilIntro",	
-	"DeathmatchMusic.OverpoweredIntro",
-	"DeathmatchMusic.ResonanceIntro",
-	"DeathmatchMusic.LastManStandingIntro",
-	"DeathmatchMusic.HealerIntro",
-	"DeathmatchMusic.DMStuffIntro",
-	"DeathmatchMusic.MagnumSmoothIntro",
-	"DeathmatchMusic.WatergateIntro",
-	"DeathmatchMusic.Coaltown_TempIntro",
-	"DeathmatchMusic.WiseauIntro",
-	"DeathmatchMusic.ChthonIntro",
-	"DeathmatchMusic.OpenHazardsIntro",
-	"DeathmatchMusic.BadWorksIntro",
-	"DeathmatchMusic.GetPsychedIntro",
-	"DeathmatchMusic.E1M1altIntro"
-};
-
-const char *szWaitingMusicArray[] =
-{
+	"DeathmatchMusic.E1M1alt",
 	"DeathmatchMusic.Skate_Waiting",
 	"DeathmatchMusic.AtFortressGate_Waiting",
 	"DeathmatchMusic.Generic_Waiting",
@@ -316,16 +281,6 @@ const char *szWaitingMusicArray[] =
 	"DeathmatchMusic.Map01_Waiting",
 	"DeathmatchMusic.Mayann",
 	"DeathmatchMusic.Watergate_Waiting"
-};
-const char *szWaitingMusicIntroArray[] =
-{
-	"DeathmatchMusic.Skate_WaitingIntro",
-	"DeathmatchMusic.AtFortressGate_WaitingIntro",
-	"DeathmatchMusic.Generic_WaitingIntro",
-	"DeathmatchMusic.Chase_WaitingIntro",
-	"DeathmatchMusic.Map01_WaitingIntro",
-	"DeathmatchMusic.MayannIntro",
-	"DeathmatchMusic.Watergate_WaitingIntro"
 };
 //-----------------------------------------------------------------------------
 // Spawn
@@ -342,38 +297,15 @@ void CAmbientGeneric::Spawn( void )
 		UTIL_Remove(this);
 		return;
 	}
-	for ( int i = 0; i < ARRAYSIZE( szWaitingMusicArray ); i++ )
-	{
-		if ( stricmp( szSoundFile, szWaitingMusicArray[i]) == 0 )
-		{
-			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
-			pMusicPlayer->SetDisabled( true );
-			pMusicPlayer->m_bPlayInWaitingForPlayers = true;
-			char buf[128];
-			Q_snprintf( buf, sizeof(buf), "%sIntro", szSoundFile );			
-//			pMusicPlayer->szIntroSong = MAKE_STRING( buf );
-			pMusicPlayer->szLoopingSong = MAKE_STRING( szWaitingMusicArray[i] );
-			pMusicPlayer->Spawn();
-			pMusicPlayer->SetDisabled( false );
-			UTIL_Remove(this);
-			return;
-			break;
-		}
-	}
 	for ( int i = 0; i < ARRAYSIZE( szMusicArray ); i++ )
 	{
 		if ( stricmp( szSoundFile, szMusicArray[i]) == 0 )
 		{
-			CTFMusicPlayer *pMusicPlayer =(CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
-			pMusicPlayer->SetDisabled( true );
-			char buf[128];
-			Q_snprintf( buf, sizeof(buf), "%sIntro", szSoundFile );
-			pMusicPlayer->szIntroSong = MAKE_STRING( szMusicIntroArray[i] );
+			pMusicPlayer = (CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
 			pMusicPlayer->szLoopingSong = MAKE_STRING( szMusicArray[i] );
 			pMusicPlayer->Spawn();
-			pMusicPlayer->SetDisabled( false );
-			UTIL_Remove(this);
-			return;
+			pMusicPlayer->SetDisabled( true );
+			m_iszSound = MAKE_STRING( "" );
 			break;
 		}
 	}
@@ -564,7 +496,11 @@ void CAmbientGeneric::Precache( void )
 	{
 		// start the sound ASAP
 		if (m_fLooping)
+		{
 			m_fActive = true;
+			if( pMusicPlayer )
+				pMusicPlayer->SetDisabled( false );
+		}
 	}
 }
 
@@ -1015,6 +951,8 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 			UTIL_EmitAmbientSound(pSoundSource->GetSoundSourceIndex(), pSoundSource->GetAbsOrigin(), szSoundFile, 
 						0, SNDLVL_NONE, flags, 0);
 			m_fActive = false;
+			if( pMusicPlayer )
+				pMusicPlayer->SetDisabled( true );
 		}
 		else
 		{
@@ -1026,7 +964,11 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 			// and then restarted.
 
 			if (m_fLooping)
+			{
 				m_fActive = true;
+				if( pMusicPlayer )
+					pMusicPlayer->SetDisabled( false );
+			}
 		}
 	}	
 	else
@@ -1037,6 +979,8 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 			UTIL_EmitAmbientSound(m_nSoundSourceEntIndex, GetAbsOrigin(), szSoundFile, 
 					0, SNDLVL_NONE, flags, 0);
 			m_fActive = false;
+			if( pMusicPlayer )
+				pMusicPlayer->SetDisabled( true );
 		}
 	}
 }
@@ -1094,6 +1038,8 @@ void CAmbientGeneric::ToggleSound()
 		else
 		{
 			m_fActive = false;
+			if( pMusicPlayer )
+				pMusicPlayer->SetDisabled( true );
 			
 			// HACKHACK - this makes the code in Precache() work properly after a save/restore
 			m_spawnflags |= SF_AMBIENT_SOUND_START_SILENT;
@@ -1123,7 +1069,11 @@ void CAmbientGeneric::ToggleSound()
 		// and then restarted.
 
 		if (m_fLooping)
+		{
 			m_fActive = true;
+			if( pMusicPlayer )
+				pMusicPlayer->SetDisabled( false );
+		}
 		else
 		{
 			// shut sound off now - may be interrupting a long non-looping sound

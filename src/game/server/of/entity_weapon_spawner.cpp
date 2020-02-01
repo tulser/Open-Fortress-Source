@@ -56,6 +56,7 @@ IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
 	SendPropTime( SENDINFO( m_flRespawnTick ) ),
 	SendPropTime( SENDINFO( fl_RespawnTime ) ),
 	SendPropTime( SENDINFO( fl_RespawnDelay ) ),
+	SendPropString( SENDINFO( m_iszWeaponName ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( dm_weapon_spawner, CWeaponSpawner );
@@ -80,13 +81,13 @@ void CWeaponSpawner::Spawn( void )
 		TFGameRules() && 
 		!TFGameRules()->IsGGGamemode())
 	{
-		Q_strncpy( m_iszWeaponName, STRING(szWeaponName), sizeof( m_iszWeaponName ) );
+		Q_strncpy( m_iszWeaponName.GetForModify(), STRING(szWeaponName), 128 );
 		if( !strcmp(m_iszWeaponName,"tf_weapon_shotgun_mercenary")
 			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_primary")
 			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_soldier")
 			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_pyro")
 			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_hwg") )
-			Q_strncpy( m_iszWeaponName, "tf_weapon_shotgun", sizeof( m_iszWeaponName ) );
+			Q_strncpy( m_iszWeaponName.GetForModify(), "tf_weapon_shotgun", 128 );
 		if ( szWeaponModel != MAKE_STRING("") )
 		Q_strncpy( m_iszWeaponModel, STRING(szWeaponModel) , sizeof( m_iszWeaponModel ) );
 		if ( szWeaponModelOLD != MAKE_STRING("") )
@@ -111,7 +112,7 @@ void CWeaponSpawner::Spawn( void )
 						KeyValues* pWeaponSpawner = pWeaponSpawners->FindKey( pTemp );
 						if ( pWeaponSpawner )
 						{
-							Q_strncpy( m_iszWeaponName, pWeaponSpawner->GetString("Weapon", m_iszWeaponName), sizeof( m_iszWeaponName ) );
+							Q_strncpy( m_iszWeaponName.GetForModify(), pWeaponSpawner->GetString("Weapon", m_iszWeaponName.GetForModify()), 128 );
 							Q_strncpy( m_iszWeaponModel, pWeaponSpawner->GetString("Model", m_iszWeaponModel) , sizeof( m_iszWeaponModel ) );
 							Q_strncpy( m_iszPickupSound,  pWeaponSpawner->GetString("PickupSound", m_iszPickupSound), sizeof( m_iszPickupSound ) );						
 						}
@@ -222,7 +223,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )
 		{
 			bTakeWeapon = false;
-			DevMsg("Reserve ammo is:%d\n Default is %d\n",pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo(), pWeaponInfo->iMaxReserveAmmo);
 			if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pWeaponInfo->iMaxReserveAmmo )
 				pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->m_iReserveAmmo = pWeaponInfo->iMaxReserveAmmo;
 			else
@@ -263,6 +263,11 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
 					{
 						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_ULTRARARE );
+						if ( TeamplayRoundBasedRules() )
+						{
+							if ( strcmp( GetSuperWeaponPickupLine(), "None" ) || strcmp( GetSuperWeaponPickupLineSelf(), "None" ) )
+								TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFPlayer->entindex(), GetSuperWeaponPickupLineSelf(), GetSuperWeaponPickupLine() );
+						}
 					}
 					else if ( WeaponID_IsRocketWeapon ( pGivenWeapon->GetWeaponID() )  // "rare" weapons, this is kinda terrible
 							|| WeaponID_IsGrenadeWeapon ( pGivenWeapon->GetWeaponID() ) 
@@ -315,4 +320,72 @@ CBaseEntity* CWeaponSpawner::Respawn( void )
 	m_flRespawnTick = GetNextThink();
 	ResetSequence( LookupSequence("spin") );
 	return ret;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponSpawner::Materialize( void )
+{
+	BaseClass::Materialize();
+	
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	
+	if (!pWeaponInfo)
+		return;
+	
+	if ( pWeaponInfo->m_bAlwaysDrop && TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && strcmp(GetSuperWeaponRespawnLine(), "None" ) )
+		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, GetSuperWeaponRespawnLine() );
+	
+	if( pWeaponInfo->m_bAlwaysDrop )
+		SetTransmitState( FL_EDICT_ALWAYS );
+}
+
+const char* CWeaponSpawner::GetSuperWeaponPickupLineSelf( void )
+{
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	
+	switch ( m_iWeaponID )
+	{
+		case TF_WEAPON_GIB:
+		return "GIBTakenSelf";
+		break;
+		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
+		return "QuadTakenSelf";
+		break;
+	}
+	return "None";
+}
+
+const char* CWeaponSpawner::GetSuperWeaponPickupLine( void )
+{
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	
+	switch ( m_iWeaponID )
+	{
+		case TF_WEAPON_GIB:
+		return "GIBTaken";
+		break;
+		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
+		return "QuadTaken";
+		break;
+	}
+	return "None";
+}
+
+const char* CWeaponSpawner::GetSuperWeaponRespawnLine( void )
+{
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	
+	switch ( m_iWeaponID )
+	{
+		case TF_WEAPON_GIB:
+		return "GIBSpawn";
+		break;
+		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
+		return "QuadSpawn";
+		break;
+	}
+	return "None";
 }

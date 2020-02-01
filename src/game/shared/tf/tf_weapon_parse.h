@@ -92,6 +92,7 @@ public:
 	float 	m_flLastShotDelay;
 	bool	m_bLastShotAnim;
 	bool	m_bSwapFireAnims;
+	bool	m_bNoFixedSpread;
 	
 	// Grenade.
 	bool	m_bGrenade;

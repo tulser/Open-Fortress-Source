@@ -17,6 +17,7 @@ public:
 	C_TFMusicPlayer();
 	~C_TFMusicPlayer();
 	virtual void ClientThink(void);
+	void HandleVolume(void);
 	virtual void Spawn(void);
 	virtual void OnDataChanged(DataUpdateType_t updateType);
 private:
@@ -24,6 +25,7 @@ private:
 	int m_iPhase;
 	
 	bool m_bShouldBePlaying;
+	bool m_bHardTransition;
 	bool bIsPlaying;
 	bool bInLoop;
 	
@@ -31,10 +33,9 @@ private:
 	
 	float flLoopTick;
 	float m_flDelay;
+	float m_flVolume;
 
-	char szIntroSong[MAX_PATH];
 	char szLoopingSong[MAX_PATH];
-	char szOutroSong[MAX_PATH];
 	
 	struct songdata_t
 	{
@@ -54,7 +55,7 @@ private:
 	};	
 	CUtlVector<songdata_t>	m_Songdata;
 	
-	Channel *pChannel;
+	ChannelGroup *pChannel;
 };
 
 extern void ParseSoundManifest( void );
