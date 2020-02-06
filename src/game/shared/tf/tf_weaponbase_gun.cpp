@@ -198,7 +198,18 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		if (!m_bSwapFire)
 			DoViewModelAnimation();
 		else
+		{
 			SendWeaponAnim( ACT_VM_SECONDARYATTACK );
+			float flSpeedMultiplier = 1.0f;
+			if ( pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
+				flSpeedMultiplier = of_haste_fire_multiplier.GetFloat();
+			
+			CBaseViewModel *vm = pPlayer->GetViewModel( m_nViewModelIndex );
+			if ( vm )
+			{
+				vm->SetPlaybackRate( 1.0f / flSpeedMultiplier );
+			}
+		}
 
 		m_bSwapFire = !m_bSwapFire;
 	}

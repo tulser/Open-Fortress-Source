@@ -34,7 +34,7 @@ public:
 
 	float m_fDefaultVolume;
 private:
-	const char* GetFullPathToSound( const char* pathToFileFromModFolder );
+	void *GetFullPathToSound( const char* pathToFileFromModFolder, int *pLength );
 	const char* GetCurrentSoundName( void );
 
 	const char* currentSound;

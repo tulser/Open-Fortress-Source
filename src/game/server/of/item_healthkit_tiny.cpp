@@ -8,7 +8,7 @@
 #include "tier0/memdbgon.h"
 
 #ifdef OPENFORTRESS_DLL
-ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","5" );
+ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","8" );
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
 #include "tf_player.h"

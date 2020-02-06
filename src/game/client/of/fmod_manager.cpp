@@ -103,14 +103,18 @@ void CFMODManager::ExitFMOD(void)
 		DevMsg("FMOD system terminated successfully.\n");
 }
 
-// Returns the full path of a specified sound file in the /sounds folder
-const char* CFMODManager::GetFullPathToSound(const char* pathToFileFromModFolder)
-{
-	char* resultpath = new char[512];
+ConVar fuck_fmod("fuck_fmod", "rb", FCVAR_ARCHIVE);
 
+// Returns the full path of a specified sound file in the /sounds folder
+void *CFMODManager::GetFullPathToSound(const char* pathToFileFromModFolder, int *pLength )
+{
+/*
+	char* resultpath = new char[512];
+*/
 	char fullpath[512];
 	Q_snprintf(fullpath, sizeof(fullpath), "sound/%s", pathToFileFromModFolder);
-	filesystem->GetLocalPath(fullpath, fullpath, sizeof(fullpath));
+/*	filesystem->GetLocalPath(fullpath, fullpath, sizeof(fullpath));
+
 	Q_snprintf(resultpath, 512, "%s", fullpath);
 	// convert backwards slashes to forward slashes
 	for (int i = 0; i < 512; i++)
@@ -119,7 +123,17 @@ const char* CFMODManager::GetFullPathToSound(const char* pathToFileFromModFolder
 			resultpath[i] = '/';
 	}
 
-	return resultpath;
+*/	
+	void *buffer = NULL;
+
+	int length = filesystem->ReadFileEx( fullpath, "GAME", &buffer, true, true );
+
+	if ( pLength )
+	{
+		*pLength = length;
+	}
+
+	return buffer;
 }
 
 // Returns the name of the current ambient sound being played
@@ -157,7 +171,15 @@ void CFMODManager::FadeThink(void)
 	}
 	else if (m_bShouldTransition)
 	{
-		result = pSystem->createStream(GetFullPathToSound(newSoundFileToTransitionTo), FMOD_DEFAULT, 0, &pSound);
+		int iLenght = 0;
+		void *buffer = GetFullPathToSound(newSoundFileToTransitionTo, &iLenght);
+		
+		FMOD_CREATESOUNDEXINFO info;
+		memset(&info, 0, sizeof(info));
+		info.length = iLenght;
+		info.cbsize = sizeof(info);
+		
+		result = pSystem->createStream((const char*)buffer, FMOD_OPENMEMORY , &info, &pSound);
 
 		if (result != FMOD_OK)
 		{
@@ -282,7 +304,15 @@ void CFMODManager::PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char*
 		Sound *pIntroSound = NULL;
 		Sound *pLoopingSound = NULL;
 		
-		result = pSystem->createStream(GetFullPathToSound(pIntroMusic), FMOD_CREATESTREAM, 0, &pIntroSound);
+		int iLenghtIntro = 0;
+		void *vBufferIntro = GetFullPathToSound(pIntroMusic, &iLenghtIntro);
+		
+		FMOD_CREATESOUNDEXINFO infoIntro;
+		memset(&infoIntro, 0, sizeof(infoIntro));
+		infoIntro.length = iLenghtIntro;
+		infoIntro.cbsize = sizeof(infoIntro);
+		
+		result = pSystem->createStream((const char *)vBufferIntro, FMOD_OPENMEMORY | FMOD_CREATESTREAM , &infoIntro, &pIntroSound);
 		pSystem->playSound(pIntroSound, pNewChannelGroup, true, &pTempChannel);
 
 		result = pIntroSound->getDefaults(&freq, 0);
@@ -300,7 +330,16 @@ void CFMODManager::PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char*
 		result = pTempChannel->setPaused(false);
 
 		result = pLoopingSound->setLoopPoints(0, FMOD_TIMEUNIT_PCM, GetSoundLenghtPCM(pLoopingSound), FMOD_TIMEUNIT_PCM);
-		result = pSystem->createStream(GetFullPathToSound(pLoopingMusic), FMOD_LOOP_NORMAL | FMOD_CREATESTREAM , 0, &pLoopingSound);
+
+		int iLenghtLoop = 0;
+		void *vBufferLoop = GetFullPathToSound(pLoopingMusic, &iLenghtLoop);
+		
+		FMOD_CREATESOUNDEXINFO infoLoop;
+		memset(&infoLoop, 0, sizeof(infoLoop));
+		infoLoop.length = iLenghtLoop;
+		infoLoop.cbsize = sizeof(infoLoop);
+
+		result = pSystem->createStream((const char *)vBufferLoop, FMOD_OPENMEMORY | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM, &infoLoop, &pLoopingSound);
 		pSystem->playSound(pLoopingSound, pNewChannelGroup, true, &pTempLoopChannel);
 
 		result = pIntroSound->getLength(&slen, FMOD_TIMEUNIT_PCM);
@@ -318,11 +357,19 @@ void CFMODManager::PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char*
 	}
 	else
 	{
+		int iLenghtLoop = 0;
+		void *vBufferLoop = GetFullPathToSound(pLoopingMusic, &iLenghtLoop);
+		
+		FMOD_CREATESOUNDEXINFO infoLoop;
+		memset(&infoLoop, 0, sizeof(infoLoop));
+		infoLoop.length = iLenghtLoop;
+		infoLoop.cbsize = sizeof(infoLoop);
+		
 		result = pSound->setLoopPoints(0, FMOD_TIMEUNIT_PCM, GetSoundLenghtPCM(pSound), FMOD_TIMEUNIT_PCM);
-		result = pSystem->createStream(GetFullPathToSound(pLoopingMusic), FMOD_LOOP_NORMAL | FMOD_CREATESTREAM, 0, &pSound);
+		result = pSystem->createStream((const char *)vBufferLoop, FMOD_OPENMEMORY | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM , &infoLoop, &pSound);
 		if (result != FMOD_OK)
 		{
-			Warning("FMOD: Failed to create stream of sound '%s' ! (ERROR NUMBER: %i)\n", GetFullPathToSound(pLoopingMusic), result);
+			Warning("FMOD: Failed to create stream of sound '%s' ! (ERROR NUMBER: %i)\n", pLoopingMusic, result);
 			return;
 		}
 		result = pSystem->playSound(pSound, pNewChannelGroup, true, &pTempChannel);
@@ -357,7 +404,15 @@ void CFMODManager::PlayLoopingMusic( ChannelGroup *pNewChannelGroup, const char*
 // In most cases, we'll want to use TransitionAmbientSounds instead
 void CFMODManager::PlayAmbientSound(const char* pathToFileFromSoundsFolder, bool fadeIn)
 {
-	result = pSystem->createStream(GetFullPathToSound(pathToFileFromSoundsFolder), FMOD_DEFAULT, 0, &pSound);
+	int iLenghtLoop = 0;
+	void *vBufferLoop = GetFullPathToSound(pathToFileFromSoundsFolder, &iLenghtLoop);
+	
+	FMOD_CREATESOUNDEXINFO infoLoop;
+	memset(&infoLoop, 0, sizeof(infoLoop));
+	infoLoop.length = iLenghtLoop;
+	infoLoop.cbsize = sizeof(infoLoop);	
+	
+	result = pSystem->createStream((const char*)vBufferLoop, FMOD_OPENMEMORY , &infoLoop, &pSound);
 
 	if (result != FMOD_OK)
 	{
@@ -417,7 +472,15 @@ void CFMODManager::PlayMusicEnd( ChannelGroup *pNewChannelGroup, const char* pLo
 	{
 		Sound *pIntroSound = NULL;
 		
-		result = pSystem->createStream(GetFullPathToSound(pLoopingMusic), FMOD_CREATESTREAM, 0, &pIntroSound);
+		int iLenght = 0;
+		void *vBuffer = GetFullPathToSound(pLoopingMusic, &iLenght);
+		
+		FMOD_CREATESOUNDEXINFO info;
+		memset(&info, 0, sizeof(info));
+		info.length = iLenght;
+		info.cbsize = sizeof(info);			
+		
+		result = pSystem->createStream((const char*)vBuffer, FMOD_CREATESTREAM | FMOD_OPENMEMORY, &info, &pIntroSound);
 		pSystem->playSound(pIntroSound, pNewChannelGroup, true, &pTempChannel);
 		
 		result = pTempChannel->setPaused(false);

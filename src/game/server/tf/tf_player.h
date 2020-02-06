@@ -364,7 +364,6 @@ public:
 
 	bool DoClassSpecialSkill( void );
 	bool CheckSpecialSkill( void );
-	bool DoZombieLunge( void );
 
 	float GetLastDamageTime( void ) { return m_flLastDamageTime; }
 

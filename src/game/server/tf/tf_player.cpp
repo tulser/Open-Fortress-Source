@@ -143,7 +143,6 @@ ConVar of_knockback_melee("of_knockback_melee", "1", FCVAR_ARCHIVE | FCVAR_NOTIF
 
 ConVar of_startloadout("of_startloadout", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Equips players with the normal spawn loadout.");
 
-ConVar of_zombie_lunge_speed( "of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge." );
 ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Should zombies drop small ammopacks + healthkits on death?." );
 
 ConVar of_spawn_with_weapon( "of_spawn_with_weapon", "", FCVAR_ARCHIVE | FCVAR_NOTIFY, "For bot behaviour debugging: players will only spawn with the specified weapon classname." );
@@ -10187,42 +10186,6 @@ Vector CTFPlayer::EyeDirection3D( void )
 	
 	AngleVectors( EyeAngles(), &vecForward );
 	return vecForward;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFPlayer::DoZombieLunge( void )
-{
-	bool bSuccess = false;
-
-	QAngle angDir = EyeAngles();
-
-	Vector vecForward, vecRight;
-	Vector velocity;
-
-	AngleVectors( angDir, &vecForward, &vecRight, NULL );
-	vecForward.z = 0.0f;
-	vecRight.z = 0.0f;		
-	VectorNormalize( vecForward );
-	VectorNormalize( vecRight );
-
-	Vector vecWishDirection( ( ( vecForward.x * ( of_zombie_lunge_speed.GetFloat() / 3 ) ) + ( vecRight.x ) ),
-		                     ( ( vecForward.y * ( of_zombie_lunge_speed.GetFloat() / 3 ) ) + ( vecRight.y ) ),
-		                     0.0f );
-	
-	velocity = vecWishDirection;
-	velocity.z += of_zombie_lunge_speed.GetFloat();
-
-	SetAbsVelocity( velocity );
-
-	bSuccess = true;
-
-	// PLACEHOLDER
-	EmitSound( "Player.ZombieLunge" );	
-
-	return bSuccess;
 }
 
 //-----------------------------------------------------------------------------

@@ -2147,6 +2147,75 @@ public:
 EXPOSE_INTERFACE( CProxyClipCount, IMaterialProxy, "ClipCount" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
+// Purpose: Used for rage material
+//			Returns 0 if the player is in Berserk, and 1 if the player is not.
+//			I know.. Its confusing
+//-----------------------------------------------------------------------------
+class CProxyRage : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+			return;
+		
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer )
+		{
+			if ( pPlayer->m_Shared.InCond( TF_COND_BERSERK ))
+			{
+				m_pResult->SetFloatValue( 0.0 );
+			}
+			else
+			{
+				m_pResult->SetFloatValue( 1.0 );
+			}
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyRage, IMaterialProxy, "RipAndTear" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
 // Purpose: RecvProxy that converts the Player's object UtlVector to entindexes
 //-----------------------------------------------------------------------------
 void RecvProxy_PlayerObjectList( const CRecvProxyData *pData, void *pStruct, void *pOut )

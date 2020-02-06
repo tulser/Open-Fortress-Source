@@ -185,6 +185,8 @@ public:
 
 	bool	IsZombie();
 	virtual void SetZombie( bool bZombie );
+	
+	bool	DoLungeCheck();
 
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
@@ -208,6 +210,7 @@ public:
 	void	FadeInvis( float flInvisFadeTime );
 	float	GetPercentInvisible( void );
 	float	GetNextLungeTime( void ){ return m_flNextLungeTime; }
+	void	SetNextLungeTime( float flNextLungeTime ){ m_flNextLungeTime = flNextLungeTime; }
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }

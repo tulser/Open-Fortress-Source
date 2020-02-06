@@ -44,6 +44,8 @@ ConVar	of_shield_charge_speed("of_shield_charge_speed", "720", FCVAR_REPLICATED)
 ConVar 	of_bunnyhop( "of_bunnyhop", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED , "Toggle bunnyhoping.\n-1: Mercenary Only\n0: None\n1:All Classes except Zombies\n2:All Classes including Zombies" );
 ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables crouch jumping." );
 ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED , "Max Speed achievable with bunnyhoping." );
+ConVar 	of_jump_velocity( "of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED , "The velocity applied when a player jumps." );
+ConVar  of_zombie_lunge_speed( "of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge." );
 #if defined (CLIENT_DLL)
 ConVar 	of_jumpsound( "of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Hough", true, 0, true, 2 );
 #endif
@@ -59,6 +61,8 @@ static ConVar sv_autoladderdismount( "sv_autoladderdismount", "1", FCVAR_REPLICA
 static ConVar sv_ladderautomountdot( "sv_ladderautomountdot", "0.4", FCVAR_REPLICATED, "When auto-mounting a ladder by looking up its axis, this is the tolerance for looking now directly along the ladder axis." );
 
 static ConVar sv_ladder_useonly( "sv_ladder_useonly", "0", FCVAR_REPLICATED, "If set, ladders can only be mounted by pressing +USE" );
+
+extern ConVar of_zombie_lunge_delay;
 
 #define USE_DISMOUNT_SPEED 100
 
@@ -84,6 +88,7 @@ public:
 	virtual void ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMove );
 	virtual bool CanAccelerate();
 	virtual bool CheckJumpButton();
+	bool CheckLunge();
 	virtual bool CheckWater( void );
 	virtual void WaterMove( void );
 	virtual void FullWalkMove();
@@ -547,7 +552,7 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// fMul = sqrt( 2.0 * gravity * jump_height (21.0units) ) * GroundFactor
 	Assert( sv_gravity.GetFloat() == 800.0f );
-	float flMul = 268.3281572999747f * flGroundFactor;
+	float flMul = of_jump_velocity.GetFloat() * flGroundFactor;
 
 	// Save the current z velocity.
 	float flStartZ = mv->m_vecVelocity[2];
@@ -592,6 +597,116 @@ bool CTFGameMovement::CheckJumpButton()
 #endif
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
+	return true;
+}
+
+
+bool CTFGameMovement::CheckLunge()
+{
+	// Check to see if we are in water.
+	if ( player->GetWaterLevel() >= 2 )
+		return false;
+
+	// Cannot lunge jump while taunting
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
+		return false;
+
+	// Check to see if the player is a scout.
+	bool bOnGround = ( player->GetGroundEntity() != NULL );
+	
+	// Cannot lunge whithout ducking, so auto duck if we aren't already
+	if ( !(player->GetFlags() & FL_DUCKING) )
+	{
+		return false;
+	}
+
+	// In air, so ignore jumps (unless you are a scout).
+	if ( !bOnGround )
+	{
+		mv->m_nOldButtons |= IN_JUMP;
+		mv->m_nOldButtons |= IN_DUCK;
+		return false;
+	}
+
+	// Start jump animation and player sound (specific TF animation and flags).
+	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_JUMP );
+	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
+	m_pTFPlayer->m_Shared.SetJumping( true );
+
+	// Set the player as in the air.
+	SetGroundEntity( NULL );
+
+	// Check the surface the player is standing on to see if it impacts jumping.
+	float flGroundFactor = 1.0f;
+	if ( player->m_pSurfaceData )
+	{
+		flGroundFactor = player->m_pSurfaceData->game.jumpFactor; 
+	}
+
+	// fMul = sqrt( 2.0 * gravity * jump_height (21.0units) ) * GroundFactor
+	
+	// I hate vectors
+	QAngle angDir = player->EyeAngles();
+	
+	float flTmpAngY = angDir.y - 90.0f;
+	
+	if( flTmpAngY < -180.0f )
+	{
+		flTmpAngY += 180;
+		flTmpAngY = -flTmpAngY;
+	}
+	
+	float flAbsAngX = flTmpAngY < 0 ? -flTmpAngY : flTmpAngY;
+	
+	if( flAbsAngX > 90 )
+	{
+		flAbsAngX = flAbsAngX - 90;
+		flAbsAngX = flTmpAngY < 0 ? flAbsAngX : -flAbsAngX;
+		flTmpAngY += (flAbsAngX * 2);
+	}
+	
+	if( angDir.x > -24.0f )
+		angDir.x = -24.0f;
+	
+	float flAbsAngY = angDir.y < 0 ? -angDir.y : angDir.y;
+	
+	if( flAbsAngY > 90 )
+	{
+		flAbsAngY = flAbsAngY - 90;
+		flAbsAngY = angDir.y < 0 ? flAbsAngY : -flAbsAngY;
+		angDir.y += (flAbsAngY * 2);
+	}
+	
+	if( angDir.x > -24.0f )
+		angDir.x = -24.0f;
+	
+	float flMulZ = of_zombie_lunge_speed.GetFloat() * flGroundFactor * ( -angDir.x / 90 );
+	float flMulX = of_zombie_lunge_speed.GetFloat() * 2 * flGroundFactor * ( -flTmpAngY / 180 );
+	float flMulY = of_zombie_lunge_speed.GetFloat() * 2 * flGroundFactor * ( angDir.y / 180 );
+	// Save the current z velocity.
+	float flStartZ = mv->m_vecVelocity[2];
+	float flStartX = mv->m_vecVelocity[0];
+	float flStartY = mv->m_vecVelocity[1];
+
+	mv->m_vecVelocity[2] = flMulZ;  // UP
+	mv->m_vecVelocity[0] += flMulX;  // Forward backward
+	mv->m_vecVelocity[1] += flMulY;  // Left Right
+	
+	// Apply gravity.
+	FinishGravity();
+
+	player->EmitSound( "Player.ZombieLunge" );	
+	m_pTFPlayer->m_Shared.SetNextLungeTime( gpGlobals->curtime + of_zombie_lunge_delay.GetFloat() );
+	
+	// Save the output data for the physics system to react to if need be.
+	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
+	mv->m_outJumpVel.x += mv->m_vecVelocity[0] - flStartX;
+	mv->m_outJumpVel.y += mv->m_vecVelocity[1] - flStartY;
+	mv->m_outStepHeight += 0.15f;
+
+	// Flag that we jumped and don't jump again until it is released.
+	mv->m_nOldButtons |= IN_JUMP;
+	mv->m_nOldButtons |= IN_ATTACK2;
 	return true;
 }
 
@@ -1423,6 +1538,9 @@ void CTFGameMovement::FullWalkMove()
 	{
 		mv->m_nOldButtons &= ~IN_JUMP;
 	}
+	
+	if( m_pTFPlayer->m_Shared.DoLungeCheck() )
+		CheckLunge();
 
 	// Make sure velocity is valid.
 	CheckVelocity();

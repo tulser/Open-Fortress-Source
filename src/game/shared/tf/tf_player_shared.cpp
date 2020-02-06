@@ -216,7 +216,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCondEx2 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx3 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx4 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 32, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( bWatchReady ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -1322,26 +1322,30 @@ void CTFPlayerShared::OnAddHaste( void )
 void CTFPlayerShared::OnRemoveHaste( void )
 {
 #ifdef CLIENT_DLL
-	const char *pszTeamName;
-	switch ( m_pOuter->GetTeamNumber() )
-	{
-		case TF_TEAM_RED:
-			pszTeamName = "red";
-			break;
-		case TF_TEAM_BLUE:
-			pszTeamName = "blue";
-			break;
-		default:
-			pszTeamName = "dm";
-			break;
-	}
 	m_pOuter->ParticleProp()->StopParticlesNamed( "demo_charge_socks", true );
 	m_pOuter->ParticleProp()->StopParticlesNamed( "speed_boost_trail", true );
-	char pszParticleEffect[64];
-	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_pelvis_%s", pszTeamName );
-	m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
-	Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_root_%s", pszTeamName );
-	m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
+	
+	for( int i = TF_TEAM_RED; i <= TF_TEAM_MERCENARY; i++ )
+	{
+		const char *pszTeamName;
+		switch ( i )
+		{
+			case TF_TEAM_RED:
+				pszTeamName = "red";
+				break;
+			case TF_TEAM_BLUE:
+				pszTeamName = "blue";
+				break;
+			default:
+				pszTeamName = "dm";
+				break;
+		}
+		char pszParticleEffect[64];
+		Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_pelvis_%s", pszTeamName );
+		m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
+		Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "demo_charge_root_%s", pszTeamName );
+		m_pOuter->ParticleProp()->StopParticlesNamed( pszParticleEffect, true );
+	}
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 }
@@ -1986,6 +1990,28 @@ void CTFPlayerShared::RemoveDisguise( void )
 	RemoveCond( TF_COND_DISGUISED );
 	RemoveCond( TF_COND_DISGUISING );
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPlayerShared::DoLungeCheck( void )
+{
+	if ( IsZombie() && (m_pOuter->m_nButtons & IN_ATTACK2) )
+	{
+		if ( m_flNextLungeTime <= gpGlobals->curtime )
+		{
+			return true;
+		}
+		else
+		{
+			CSingleUserRecipientFilter filter( m_pOuter );
+			m_pOuter->EmitSound(filter, m_pOuter->entindex(), "Player.DenyWeaponSelection");
+			return false;
+		}
+	}
+
+	return false;
 }
 
 #ifdef CLIENT_DLL
@@ -3215,25 +3241,6 @@ int CTFPlayer::CanBuild( int iObjectType, int iAltMode )
 bool CTFPlayer::DoClassSpecialSkill( void )
 {
 	bool bDoSkill = false;
-
-	if ( m_Shared.IsZombie() )
-	{
-#ifdef GAME_DLL
-		if ( m_Shared.m_flNextLungeTime <= gpGlobals->curtime )
-		{
-			if ( DoZombieLunge() )
-			{
-				m_Shared.m_flNextLungeTime = gpGlobals->curtime + of_zombie_lunge_delay.GetFloat();
-				bDoSkill = true;
-			}
-		}
-		else
-		{
-			CSingleUserRecipientFilter filter( this );
-			EmitSound( filter, entindex(), "Player.DenyWeaponSelection" );
-		}
-#endif
-	}
 
 	if ( GetPlayerClass()->GetClassIndex() == TF_CLASS_SPY )
 	{
