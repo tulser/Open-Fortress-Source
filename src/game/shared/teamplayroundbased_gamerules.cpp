@@ -3566,8 +3566,11 @@ void CTeamplayRoundBasedRules::PlayWinSong( int team )
 		if( TFGameRules() && TFGameRules()->IsDMGamemode() && DMMusicManager() )
 		{
 			DMMusicManager()->m_bDisableThink = true;
-			DMMusicManager()->pRoundMusicPlayer->EndTransition();
-			DMMusicManager()->pRoundMusicPlayer->SetDisabled( true );		
+			if ( DMMusicManager()->pRoundMusicPlayer )
+			{
+				DMMusicManager()->pRoundMusicPlayer->EndTransition();
+				DMMusicManager()->pRoundMusicPlayer->SetDisabled(true);
+			}
 		}
 
 		BroadcastSound( TEAM_UNASSIGNED, UTIL_VarArgs( "Game.TeamWin%d", team ) );

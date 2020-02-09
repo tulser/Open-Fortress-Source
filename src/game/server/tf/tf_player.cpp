@@ -2581,6 +2581,7 @@ void CTFPlayer::OnNavAreaChanged( CNavArea *newArea, CNavArea *oldArea )
 
 	FOR_EACH_VEC( *areas, i ) {
 		CTFNavArea *area = static_cast<CTFNavArea *>( ( *areas )[i] );
+		if ( area )
 		area->IncreaseDanger( GetTeamNumber(), ( area->GetCenter() - GetAbsOrigin() ).Length() );
 	}
 }
