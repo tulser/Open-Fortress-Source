@@ -46,16 +46,123 @@ const char *s_aPlayerClassFiles[] =
 TFPlayerClassData_t s_aTFPlayerClassData[TF_CLASS_COUNT_ALL];
 KeyValues* s_aTFPlayerClassRaw[TF_CLASS_COUNT_ALL];
 
+BEGIN_NETWORK_TABLE_NOBASE( TFPlayerClassData_t, DT_PlayerClassData )
+
+#ifdef CLIENT_DLL
+
+	RecvPropString( RECVINFO( m_szModelName ) ),
+	RecvPropString( RECVINFO( m_szArmModelName ) ),
+	RecvPropString( RECVINFO( m_szLocalizableName ) ),
+	RecvPropString( RECVINFO( m_szJumpSound ) ),
+	RecvPropFloat( RECVINFO( m_flMaxSpeed ) ),
+	RecvPropInt( RECVINFO( m_nMaxHealth ) ),
+	RecvPropInt( RECVINFO( m_nMaxArmor ) ),
+	
+	RecvPropArray3( RECVINFO_ARRAY(m_aWeapons), RecvPropInt( RECVINFO( m_aWeapons[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY(m_aGrenades), RecvPropInt( RECVINFO( m_aGrenades[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY(m_aAmmoMax), RecvPropInt( RECVINFO( m_aAmmoMax[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY(m_aBuildable), RecvPropInt( RECVINFO( m_aBuildable[0] ) ) ),
+
+	RecvPropInt( RECVINFO( m_nCapNumber) ),
+	RecvPropInt( RECVINFO( m_nMaxAirDashCount) ),
+	RecvPropBool( RECVINFO( m_bDontDoAirwalk) ),
+	RecvPropBool( RECVINFO( m_bDontDoNewJump) ),
+	
+	RecvPropBool( RECVINFO( m_bSpecialClass) ),
+	RecvPropString( RECVINFO( m_szClassSelectImageRed ) ),
+	RecvPropString( RECVINFO( m_szClassSelectImageBlue ) ),
+	RecvPropString( RECVINFO( m_szClassSelectImageMercenary ) ),	
+	
+	RecvPropString( RECVINFO( m_szClassImageRed ) ),
+	RecvPropString( RECVINFO( m_szClassImageBlue ) ),
+	RecvPropString( RECVINFO( m_szClassImageMercenary ) ),		
+	RecvPropString( RECVINFO( m_szClassImageColorless ) ),	
+
+	RecvPropInt( RECVINFO( m_nViewVector ) ),
+/*
+	RecvPropBool( RECVINFO( m_bParsed ) ),
+*/
+#else
+
+	SendPropString( SENDINFO( m_szModelName ) ),
+	SendPropString( SENDINFO( m_szArmModelName ) ),
+	SendPropString( SENDINFO( m_szLocalizableName ) ),
+	SendPropString( SENDINFO( m_szJumpSound ) ),
+	SendPropFloat( SENDINFO( m_flMaxSpeed ) ),
+	SendPropInt( SENDINFO( m_nMaxHealth ) ),
+	SendPropInt( SENDINFO( m_nMaxArmor ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_aWeapons), SendPropInt( SENDINFO_ARRAY(m_aWeapons) ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_aGrenades), SendPropInt( SENDINFO_ARRAY(m_aGrenades) ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_aAmmoMax), SendPropInt( SENDINFO_ARRAY(m_aAmmoMax) ) ),
+	SendPropArray3( SENDINFO_ARRAY3(m_aBuildable), SendPropInt( SENDINFO_ARRAY(m_aBuildable) ) ),
+
+	SendPropInt( SENDINFO( m_nCapNumber ) ),
+	SendPropInt( SENDINFO( m_nMaxAirDashCount ) ),
+	SendPropBool( SENDINFO( m_bDontDoAirwalk ) ),
+	SendPropBool( SENDINFO( m_bDontDoNewJump ) ),
+	
+	SendPropBool( SENDINFO( m_bSpecialClass ) ),
+	SendPropString( SENDINFO( m_szClassSelectImageRed ) ),
+	SendPropString( SENDINFO( m_szClassSelectImageBlue ) ),
+	SendPropString( SENDINFO( m_szClassSelectImageMercenary ) ),	
+	
+	SendPropString( SENDINFO( m_szClassImageRed ) ),
+	SendPropString( SENDINFO( m_szClassImageBlue ) ),
+	SendPropString( SENDINFO( m_szClassImageMercenary ) ),		
+	SendPropString( SENDINFO( m_szClassImageColorless ) ),	
+
+	SendPropInt( SENDINFO( m_nViewVector ) ),
+/*
+	SendPropBool( SENDINFO( m_bParsed ) ),
+*/
+#endif 
+END_NETWORK_TABLE()
+
+#ifndef CLIENT_DLL
+BEGIN_SIMPLE_DATADESC( TFPlayerClassData_t )
+	DEFINE_FIELD( m_szModelName, FIELD_STRING ),
+	DEFINE_FIELD( m_szArmModelName, FIELD_STRING ),
+	DEFINE_FIELD( m_szLocalizableName, FIELD_STRING ),
+	DEFINE_FIELD( m_szJumpSound, FIELD_STRING ),
+	DEFINE_FIELD( m_flMaxSpeed, FIELD_FLOAT ),
+	DEFINE_FIELD( m_nMaxHealth, FIELD_INTEGER ),
+	DEFINE_FIELD( m_nMaxArmor, FIELD_INTEGER ),
+	DEFINE_AUTO_ARRAY( m_aWeapons, FIELD_INTEGER ),
+	DEFINE_AUTO_ARRAY( m_aGrenades, FIELD_INTEGER ),
+	DEFINE_AUTO_ARRAY( m_aAmmoMax, FIELD_INTEGER ),
+	DEFINE_AUTO_ARRAY( m_aBuildable, FIELD_INTEGER ),
+	
+
+	DEFINE_FIELD( m_nCapNumber, FIELD_INTEGER ),
+	DEFINE_FIELD( m_nMaxAirDashCount, FIELD_INTEGER ),
+	DEFINE_FIELD( m_bDontDoAirwalk, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_bDontDoNewJump, FIELD_BOOLEAN ),
+	
+	DEFINE_FIELD( m_bSpecialClass, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_szClassSelectImageRed, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassSelectImageBlue, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassSelectImageMercenary, FIELD_STRING ),
+	
+	DEFINE_FIELD( m_szClassImageRed, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassImageBlue, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassImageMercenary, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassImageColorless, FIELD_STRING ),
+	
+	DEFINE_FIELD( m_nViewVector, FIELD_INTEGER ),
+
+	DEFINE_FIELD( m_bParsed, FIELD_BOOLEAN ),
+END_DATADESC()
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 TFPlayerClassData_t::TFPlayerClassData_t()
 {
-	m_szClassName[0] = '\0';
-	m_szModelName[0] = '\0';
-	m_szArmModelName[0] = '\0';
-	m_szLocalizableName[0] = '\0';
-	m_szJumpSound[0] = '\0';
+//	m_szClassName.Set( NULL_STRING );
+//	m_szModelName.Set( NULL_STRING );
+//	m_szArmModelName.Set( NULL_STRING );
+//	m_szLocalizableName.Set( NULL_STRING );
+//	m_szJumpSound.Set( NULL_STRING );
 	m_flMaxSpeed = 0.0f;
 	m_nMaxHealth = 0;
 	m_nMaxArmor = 0;
@@ -71,33 +178,33 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	m_szExplosionDeathSound[0] = '\0';
 #endif
 
-	m_szClassSelectImageRed[0] = '\0';
-	m_szClassSelectImageBlue[0] = '\0';
-	m_szClassSelectImageMercenary[0] = '\0';
+//	m_szClassSelectImageRed.Set( NULL_STRING );
+//	m_szClassSelectImageBlue.Set( NULL_STRING );
+//	m_szClassSelectImageMercenary.Set( NULL_STRING );
 	
-	m_szClassImageRed[0] = '\0';
-	m_szClassImageBlue[0] = '\0';
-	m_szClassImageMercenary[0] = '\0';
-	m_szClassImageColorless[0] = '\0';
+//	m_szClassImageRed.Set( NULL_STRING );
+//	m_szClassImageBlue.Set( NULL_STRING );
+//	m_szClassImageMercenary.Set( NULL_STRING );
+//	m_szClassImageColorless.Set( NULL_STRING );
 
 	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
 	{
-		m_aWeapons[iWeapon] = TF_WEAPON_NONE;
+		m_aWeapons.GetForModify(iWeapon) = TF_WEAPON_NONE;
 	}
 
 	for ( int iGrenade = 0; iGrenade < TF_PLAYER_GRENADE_COUNT; ++iGrenade )
 	{
-		m_aGrenades[iGrenade] = TF_WEAPON_NONE;
+		m_aGrenades.GetForModify(iGrenade) = TF_WEAPON_NONE;
 	}
 
 	for ( int iAmmo = 0; iAmmo < TF_AMMO_COUNT; ++iAmmo )
 	{
-		m_aAmmoMax[iAmmo] = TF_AMMO_DUMMY;
+		m_aAmmoMax.GetForModify(iAmmo) = TF_AMMO_DUMMY;
 	}
 
 	for ( int iBuildable = 0; iBuildable < TF_PLAYER_BUILDABLE_COUNT; ++iBuildable )
 	{
-		m_aBuildable[iBuildable] = OBJ_LAST;
+		m_aBuildable.GetForModify(iBuildable) = OBJ_LAST;
 	}
 
 	m_bParsed = false;
@@ -154,10 +261,10 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szClassName, pKeyValuesData->GetString( "name" ), TF_NAME_LENGTH );
 
 	// Load the high res model or the lower res model.
-	Q_strncpy( m_szArmModelName, pKeyValuesData->GetString( "arm_model" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szModelName, pKeyValuesData->GetString( "model" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szLocalizableName, pKeyValuesData->GetString( "localize_name" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szJumpSound, pKeyValuesData->GetString( "jump_sound" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szArmModelName.GetForModify(), pKeyValuesData->GetString( "arm_model" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szModelName.GetForModify(), pKeyValuesData->GetString( "model" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szLocalizableName.GetForModify(), pKeyValuesData->GetString( "localize_name" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szJumpSound.GetForModify(), pKeyValuesData->GetString( "jump_sound" ), TF_NAME_LENGTH );
 	
 	m_flMaxSpeed = pKeyValuesData->GetFloat( "speed_max" );
 	m_nMaxHealth = pKeyValuesData->GetInt( "health_max" );
@@ -173,13 +280,13 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	for ( i=0;i<TF_PLAYER_WEAPON_COUNT;i++ )
 	{
 		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );		
-		m_aWeapons[i] = GetWeaponId( pKeyValuesData->GetString( buf ) );
+		m_aWeapons.GetForModify(i) = GetWeaponId(pKeyValuesData->GetString(buf));
 	}
 
 	// Grenades.
-	m_aGrenades[0] = GetWeaponId( pKeyValuesData->GetString( "grenade1" ) );
-	m_aGrenades[1] = GetWeaponId( pKeyValuesData->GetString( "grenade2" ) );
-	m_aGrenades[2] = GetWeaponId( pKeyValuesData->GetString( "grenade3" ) );
+	m_aGrenades.GetForModify(0) = GetWeaponId(pKeyValuesData->GetString("grenade1"));
+	m_aGrenades.GetForModify(1) = GetWeaponId(pKeyValuesData->GetString("grenade2"));
+	m_aGrenades.GetForModify(2) = GetWeaponId(pKeyValuesData->GetString("grenade3"));
 
 	// Ammo Max.
 	KeyValues *pAmmoKeyValuesData = pKeyValuesData->FindKey( "AmmoMax" );
@@ -187,7 +294,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	{
 		for ( int iAmmo = 1; iAmmo < TF_AMMO_COUNT; ++iAmmo )
 		{
-			m_aAmmoMax[iAmmo] = pAmmoKeyValuesData->GetInt( g_aAmmoNames[iAmmo], 0 );
+			m_aAmmoMax.GetForModify(iAmmo) = pAmmoKeyValuesData->GetInt(g_aAmmoNames[iAmmo], 0);
 		}
 	}
 
@@ -195,7 +302,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	for ( i=0;i<TF_PLAYER_BUILDABLE_COUNT;i++ )
 	{
 		Q_snprintf( buf, sizeof(buf), "buildable%d", i+1 );		
-		m_aBuildable[i] = GetBuildableId( pKeyValuesData->GetString( buf ) );		
+		m_aBuildable.GetForModify(i) = GetBuildableId(pKeyValuesData->GetString(buf));
 	}
 
 	// Temp animation flags
@@ -217,14 +324,14 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szExplosionDeathSound, pKeyValuesData->GetString( "sound_explosion_death", "Player.ExplosionDeath" ), MAX_PLAYERCLASS_SOUND_LENGTH );
 #endif
 
-	Q_strncpy( m_szClassSelectImageRed, 		pKeyValuesData->GetString( "ClassSelectImageRed" ), 		TF_NAME_LENGTH );
-	Q_strncpy( m_szClassSelectImageBlue, 		pKeyValuesData->GetString( "ClassSelectImageBlue" ), 		TF_NAME_LENGTH );
-	Q_strncpy( m_szClassSelectImageMercenary, 	pKeyValuesData->GetString( "ClassSelectImageMercenary" ), 	TF_NAME_LENGTH );	
+	Q_strncpy( m_szClassSelectImageRed.GetForModify(), 		pKeyValuesData->GetString( "ClassSelectImageRed" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassSelectImageBlue.GetForModify(), 		pKeyValuesData->GetString( "ClassSelectImageBlue" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassSelectImageMercenary.GetForModify(), 	pKeyValuesData->GetString( "ClassSelectImageMercenary" ), 	TF_NAME_LENGTH );	
 
-	Q_strncpy( m_szClassImageRed, 		pKeyValuesData->GetString( "ClassImageRed" ), 		TF_NAME_LENGTH );
-	Q_strncpy( m_szClassImageBlue, 		pKeyValuesData->GetString( "ClassImageBlue" ), 		TF_NAME_LENGTH );
-	Q_strncpy( m_szClassImageMercenary, pKeyValuesData->GetString( "ClassImageMercenary" ), TF_NAME_LENGTH );
-	Q_strncpy( m_szClassImageColorless, pKeyValuesData->GetString( "ClassImageColorless" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageRed.GetForModify(), 		pKeyValuesData->GetString( "ClassImageRed" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageBlue.GetForModify(), 		pKeyValuesData->GetString( "ClassImageBlue" ), 		TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageMercenary.GetForModify(), pKeyValuesData->GetString( "ClassImageMercenary" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageColorless.GetForModify(), pKeyValuesData->GetString( "ClassImageColorless" ), TF_NAME_LENGTH );
 	
 	// The file has been parsed.
 	m_bParsed = true;
@@ -239,13 +346,13 @@ void InitPlayerClasses( void )
 	TFPlayerClassData_t *pClassData = &s_aTFPlayerClassData[TF_CLASS_UNDEFINED];
 	Assert( pClassData );
 	Q_strncpy( pClassData->m_szClassName, "undefined", TF_NAME_LENGTH );
-	Q_strncpy( pClassData->m_szModelName, "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
-	Q_strncpy( pClassData->m_szArmModelName, "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
-	Q_strncpy( pClassData->m_szLocalizableName, "undefined", TF_NAME_LENGTH );
+	Q_strncpy( pClassData->m_szModelName.GetForModify(), "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
+	Q_strncpy( pClassData->m_szArmModelName.GetForModify(), "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
+	Q_strncpy( pClassData->m_szLocalizableName.GetForModify(), "undefined", TF_NAME_LENGTH );
 
-	Q_strncpy( pClassData->m_szClassSelectImageRed, "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
-	Q_strncpy( pClassData->m_szClassSelectImageBlue, "class_sel_sm_civilian_blu", TF_NAME_LENGTH );
-	Q_strncpy( pClassData->m_szClassSelectImageMercenary, "class_sel_sm_civilian_mercenary", TF_NAME_LENGTH );
+	Q_strncpy( pClassData->m_szClassSelectImageRed.GetForModify(), "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
+	Q_strncpy( pClassData->m_szClassSelectImageBlue.GetForModify(), "class_sel_sm_civilian_blu", TF_NAME_LENGTH );
+	Q_strncpy( pClassData->m_szClassSelectImageMercenary.GetForModify(), "class_sel_sm_civilian_mercenary", TF_NAME_LENGTH );
 	
 	// Initialize the classes.
 	for ( int iClass = 1; iClass < TF_CLASS_COUNT_ALL; ++iClass )
@@ -303,6 +410,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	RecvPropInt( RECVINFO( m_iModifiers ) ),
 	RecvPropInt( RECVINFO( m_iOldClass ) ),
 	RecvPropInt( RECVINFO( m_iOldModifiers ) ),
+	RecvPropDataTable( RECVINFO_DT( pLocalData ), 0, &REFERENCE_RECV_TABLE( DT_PlayerClassData ) ),
 	RecvPropBool( RECVINFO( m_bRefresh ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomModel ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomArmModel ) ),
@@ -316,11 +424,11 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	SendPropInt( SENDINFO( m_iModifiers ), TF_CLASSMOD_LAST , SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iOldClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iOldModifiers ), TF_CLASSMOD_LAST , SPROP_UNSIGNED ),
+	SendPropDataTable( SENDINFO_DT( pLocalData ), &REFERENCE_SEND_TABLE( DT_PlayerClassData ) ),
 	SendPropBool( SENDINFO( m_bRefresh ) ),
 	SendPropStringT( SENDINFO( m_iszSetCustomModel ) ),
 	SendPropStringT( SENDINFO( m_iszSetCustomArmModel ) ),
 END_SEND_TABLE()
-
 #endif
 
 
@@ -508,13 +616,7 @@ TFPlayerClassData_t *CTFPlayerClassShared::GetData( void )
 	if( GetModifiers() > 0 )
 	{
 		TFPlayerClassData_t *pLocalPointer = &pLocalData;
-		if( !pLocalPointer ||
-#ifdef GAME_DLL
-		GetModifiers() != GetOldModifiers() || GetClass() != GetOldClass() 
-#else
-		bRefresh != m_bRefresh
-#endif
-		)
+		if( !pLocalPointer || GetModifiers() != GetOldModifiers() || GetClass() != GetOldClass() )
 		{
 			// Special case the undefined class.
 			TFPlayerClassData_t *pClassData = &s_aTFPlayerClassData[TF_CLASS_UNDEFINED];
@@ -556,15 +658,12 @@ TFPlayerClassData_t *CTFPlayerClassShared::GetData( void )
 				}
 			}
 			pClassData->ParseData(kvFinal);
-			pLocalData = *pClassData;
-#ifdef CLIENT_DLL
-			bRefresh = m_bRefresh;
-#else
+			const TFPlayerClassData_t *pTempData = pClassData;
+			pLocalData.CopyFrom(*pTempData);
 			m_bRefresh = !m_bRefresh;
 			SetOldModifiers( GetModifiers() );
 			SetOldClass( GetClass() );
-#endif
-			return pClassData;
+			return &pLocalData;
 		}
 		else
 		{

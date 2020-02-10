@@ -147,6 +147,7 @@ private:
 	CPanelAnimationVarAliasType( float, voice_icon_xpos, "icon_xpos", "24", "proportional_float" );
 	CPanelAnimationVarAliasType( float, voice_icon_tall, "icon_tall", "16", "proportional_float" );
 	CPanelAnimationVarAliasType( float, voice_icon_wide, "icon_wide", "16", "proportional_float" );
+	CPanelAnimationVarAliasType( float, voice_icon_alpha, "icon_alpha", "128", "proportional_float" );
 
 	CPanelAnimationVarAliasType( bool, show_dead_icon, "show_dead_icon", "1", "bool" );
 	CPanelAnimationVarAliasType( float, dead_icon_ypos, "dead_ypos", "0", "proportional_float" );
@@ -173,7 +174,7 @@ CHudVoiceStatus::CHudVoiceStatus( const char *pName ) :
 
 	SetHiddenBits( 0 );
 
-	m_clrIcon = Color(255,255,255,255);
+	m_clrIcon = Color(255,255,255,voice_icon_alpha);
 
 	m_iDeadImageID = surface()->DrawGetTextureId( "hud/leaderboard_dead" );
 	if ( m_iDeadImageID == -1 ) // we didn't find it, so create a new one
@@ -416,7 +417,7 @@ void CHudVoiceStatus::Paint()
 
 		// Draw the item background
 		surface()->DrawSetColor( c );
-		surface()->DrawFilledRect( 0, ypos, item_wide, ypos + item_tall );
+		surface()->DrawFilledRect( 1, ypos, item_wide, ypos + item_tall );
 
 		if ( show_dead_icon && bIsAlive == false && m_iDeadImageID != -1 )
 		{
@@ -440,6 +441,18 @@ void CHudVoiceStatus::Paint()
 		}
 
 		//=============================================================================
+		// HPE_END
+		//=============================================================================
+
+		// Draw the voice icon
+		if (show_voice_icon && bIsAlive)
+			m_pVoiceIcon->DrawSelf( voice_icon_xpos, ypos + voice_icon_ypos, voice_icon_wide, voice_icon_tall, m_clrIcon );
+
+		// Draw the player's name
+		surface()->DrawSetTextColor(COLOR_WHITE);
+		surface()->DrawSetTextPos( text_xpos, ypos + ( item_tall / 2 ) - ( iFontHeight / 2 ) );
+
+		//=============================================================================
 		// HPE_BEGIN:
 		// [pfreese] Draw the avatar for the given player
 		//=============================================================================
@@ -447,21 +460,9 @@ void CHudVoiceStatus::Paint()
 		// Draw the players icon
 		if (show_avatar && m_SpeakingList[i].pAvatar)
 		{
-			m_SpeakingList[i].pAvatar->SetPos( avatar_xpos, ypos + avatar_ypos );
+			m_SpeakingList[i].pAvatar->SetPos(avatar_xpos, ypos + avatar_ypos);
 			m_SpeakingList[i].pAvatar->Paint();
 		}
-
-		//=============================================================================
-		// HPE_END
-		//=============================================================================
-
-		// Draw the voice icon
-		if (show_voice_icon)
-			m_pVoiceIcon->DrawSelf( voice_icon_xpos, ypos + voice_icon_ypos, voice_icon_wide, voice_icon_tall, m_clrIcon );
-
-		// Draw the player's name
-		surface()->DrawSetTextColor(COLOR_WHITE);
-		surface()->DrawSetTextPos( text_xpos, ypos + ( item_tall / 2 ) - ( iFontHeight / 2 ) );
 
 		int iTextSpace = item_wide - text_xpos;
 

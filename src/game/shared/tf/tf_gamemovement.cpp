@@ -613,18 +613,11 @@ bool CTFGameMovement::CheckLunge()
 
 	// Check to see if the player is a scout.
 	bool bOnGround = ( player->GetGroundEntity() != NULL );
-	
-	// Cannot lunge whithout ducking, so auto duck if we aren't already
-	if ( !(player->GetFlags() & FL_DUCKING) )
-	{
-		return false;
-	}
 
 	// In air, so ignore jumps (unless you are a scout).
 	if ( !bOnGround )
 	{
 		mv->m_nOldButtons |= IN_JUMP;
-		mv->m_nOldButtons |= IN_DUCK;
 		return false;
 	}
 

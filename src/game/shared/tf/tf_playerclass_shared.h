@@ -34,35 +34,46 @@ EXTERN_SEND_TABLE( DT_TFPlayerClassShared );
 
 struct TFPlayerClassData_t
 {
-	char		m_szClassName[TF_NAME_LENGTH];
-	char		m_szModelName[TF_NAME_LENGTH];
-	char		m_szArmModelName[TF_NAME_LENGTH];
-	char		m_szLocalizableName[TF_NAME_LENGTH];
-	char		m_szJumpSound[TF_NAME_LENGTH];
-	float		m_flMaxSpeed;
-	int			m_nMaxHealth;
-	int			m_nMaxArmor;
-	int			m_aWeapons[TF_PLAYER_WEAPON_COUNT];
-	int			m_aGrenades[TF_PLAYER_GRENADE_COUNT];
-	int			m_aAmmoMax[TF_AMMO_COUNT];
-	int			m_aBuildable[TF_PLAYER_BUILDABLE_COUNT];
+	DECLARE_CLASS_NOBASE( TFPlayerClassData_t );
+	DECLARE_EMBEDDED_NETWORKVAR();
+#ifndef CLIENT_DLL
+	DECLARE_SIMPLE_DATADESC();
+#endif
 
-	int			m_nCapNumber;
-	int			m_nMaxAirDashCount;
-	bool		m_bDontDoAirwalk;
-	bool		m_bDontDoNewJump;
+	char		m_szClassName[TF_NAME_LENGTH];
+
+	CNetworkString( m_szModelName, TF_NAME_LENGTH );
+	CNetworkString( m_szArmModelName, TF_NAME_LENGTH );
+	CNetworkString( m_szLocalizableName, TF_NAME_LENGTH );
+	CNetworkString( m_szJumpSound, TF_NAME_LENGTH );
+
+	CNetworkVar( float, m_flMaxSpeed );
+	CNetworkVar( int, m_nMaxHealth );
+	CNetworkVar( int, m_nMaxArmor );
 	
-	bool		m_bSpecialClass;
-	char 		m_szClassSelectImageRed[TF_NAME_LENGTH];
-	char 		m_szClassSelectImageBlue[TF_NAME_LENGTH];
-	char 		m_szClassSelectImageMercenary[TF_NAME_LENGTH];	
+	CNetworkArray( int, m_aWeapons, TF_PLAYER_WEAPON_COUNT );
+	CNetworkArray( int, m_aGrenades, TF_PLAYER_GRENADE_COUNT );
+	CNetworkArray( int, m_aAmmoMax, TF_AMMO_COUNT );
+	CNetworkArray( int, m_aBuildable, TF_PLAYER_BUILDABLE_COUNT );
+
+	CNetworkVar( int, m_nCapNumber );
+	CNetworkVar( int, m_nMaxAirDashCount );
+	CNetworkVar( bool, m_bDontDoAirwalk );
+	CNetworkVar( bool, m_bDontDoNewJump );
 	
-	char 		m_szClassImageRed[TF_NAME_LENGTH];
-	char 		m_szClassImageBlue[TF_NAME_LENGTH];
-	char 		m_szClassImageMercenary[TF_NAME_LENGTH];		
-	char 		m_szClassImageColorless[TF_NAME_LENGTH];	
+	CNetworkVar( bool, m_bSpecialClass );
+
+	CNetworkString( m_szClassSelectImageRed, TF_NAME_LENGTH );
+	CNetworkString( m_szClassSelectImageBlue, TF_NAME_LENGTH );
+	CNetworkString( m_szClassSelectImageMercenary, TF_NAME_LENGTH );	
 	
-	int			m_nViewVector;
+	CNetworkString( m_szClassImageRed, TF_NAME_LENGTH );
+	CNetworkString( m_szClassImageBlue, TF_NAME_LENGTH );
+	CNetworkString( m_szClassImageMercenary, TF_NAME_LENGTH );		
+	CNetworkString( m_szClassImageColorless, TF_NAME_LENGTH );	
+
+	
+	CNetworkVar( int, m_nViewVector );
 
 	bool		m_bParsed;
 
@@ -136,7 +147,7 @@ public:
 	// If needed, put this into playerclass scripts
 	bool CanBuildObject( int iObjectType );
 
-	TFPlayerClassData_t pLocalData;
+	CNetworkVarEmbedded( TFPlayerClassData_t, pLocalData );
 	
 	const int GetClass ( void ) const { return m_iClass; }
 	const int GetModifiers ( void ) const { return m_iModifiers; }
