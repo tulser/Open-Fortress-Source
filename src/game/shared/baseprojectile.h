@@ -19,6 +19,8 @@
 #include "c_baseanimating.h"
 #endif
 
+#include "tf_weaponbase.h"
+
 #ifdef CLIENT_DLL
 #define CBaseProjectile C_BaseProjectile
 #endif // CLIENT_DLL

@@ -5003,8 +5003,8 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		CTFGrenadePipebombProjectile *pGrenade = dynamic_cast<CTFGrenadePipebombProjectile *>(pInflictor);
 		if ( pGrenade ) 
 		{
-			if ( pGrenade->GetLauncher() )
-				killer_weapon_name = pGrenade->GetLauncher()->GetClassname();
+			if ( pGrenade->GetOriginalLauncher() )
+				killer_weapon_name = pGrenade->GetOriginalLauncher()->GetClassname();
 			else 
 				killer_weapon_name = pGrenade->GetClassname();
 		}

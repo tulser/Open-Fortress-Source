@@ -11,6 +11,7 @@
 
 #include "tf_weaponbase_gun.h"
 #include "tf_weaponbase_rocket.h"
+#include "tf_weapon_sniperrifle.h"
 
 
 // Client specific.
@@ -65,10 +66,10 @@ public:
 	
 	// This is here so we can network the pipebomb count for prediction purposes
 	CNetworkVar( int,				m_iRocketCount );
-
+	
 private:
 	float	m_flShowReloadHintAt;
-
+	
 	//CNetworkVar( bool, m_bLockedOn );
 
 	CTFRocketLauncher( const CTFRocketLauncher & ) {}
@@ -94,21 +95,34 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFSuperRocketLauncher();
+	~CTFSuperRocketLauncher();
 	
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
+	virtual CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	virtual	void	AddRocket( CTFBaseRocket *pRocket );
+	virtual bool	Reload( void );
 	virtual	void	SecondaryAttack( void );
 	virtual	bool	DetonateRockets( void );
 	virtual void	ItemPostFrame( void );
 	virtual	void	DeathNotice( CBaseEntity *pVictim );
-	virtual bool CanSoftZoom( void ) { return false; }
+	virtual bool 	CanSoftZoom( void ) { return false; }
+	virtual	bool	CanHolster( void );
 
 #ifdef CLIENT_DLL
 	CNewParticleEffect *m_pEffect;
+#else
+	CHandle<CSniperDot>		m_hTargetDot;
 #endif
 
 	float m_flLastPingSoundTime;
+public:
+
+	void CreateTargetDot( void );
+	void DestroyTargetDot( void );
+	void UpdateTargetDot( void );	
 	
+private:
+	CNetworkVar( bool, m_bTargeting );
 };
 
 class CTFCRPG : public CTFRocketLauncher

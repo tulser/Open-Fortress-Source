@@ -18,8 +18,8 @@
 #else
 #include "baseanimating.h"
 #include "smoke_trail.h"
-#include "tf_weaponbase.h"
 #endif
+#include "tf_weaponbase.h"
 
 #ifdef CLIENT_DLL
 #define CTFBaseRocket C_TFBaseRocket
@@ -43,14 +43,14 @@ public:
 	DECLARE_CLASS( CTFBaseRocket, CBaseAnimating );
 	DECLARE_NETWORKCLASS();
 
-			CTFBaseRocket();
-			~CTFBaseRocket();
+	CTFBaseRocket();
+	~CTFBaseRocket();
 
 	void	Precache( void );
 	void	Spawn( void );
-	
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
-	CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
+
+	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hOriginalLauncher = pLauncher; }
+	CBaseEntity		*GetOriginalLauncher( void ) { return m_hOriginalLauncher; }	
 	
 	virtual void	UpdateOnRemove( void );
 
@@ -61,7 +61,7 @@ protected:
 	
 public:
 
-	CNetworkHandle( CBaseEntity, m_hLauncher );
+	CNetworkHandle( CBaseEntity, m_hOriginalLauncher );
 	
 	float	m_flCreationTime;
 
@@ -122,10 +122,8 @@ public:
 	
 	CNetworkVar( int,	m_bCritical );
 
-#ifdef GAME_DLL
 	virtual bool	IsDeflectable( void ) { return true; }
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
-#endif
 
 protected:
 
@@ -142,6 +140,8 @@ protected:
 
 
 	CHandle<CBaseEntity>	m_hEnemy;
+	
+	CHandle<CBaseEntity>	m_hHomingTarget;
 
 #endif
 };

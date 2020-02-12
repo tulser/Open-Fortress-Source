@@ -464,16 +464,178 @@ void CTFWeaponBase::Precache()
 	if ( pTFInfo->m_szExplosionEffect && pTFInfo->m_szExplosionEffect[0] )
 	{
 		PrecacheParticleSystem( pTFInfo->m_szExplosionEffect );
+		if( pTFInfo->m_bTeamExplosion )
+		{
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionEffect, "_red") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionEffect, "_blue") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionEffect, "_dm") );
+		}
 	}
 
 	if ( pTFInfo->m_szExplosionPlayerEffect && pTFInfo->m_szExplosionPlayerEffect[0] )
 	{
 		PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffect );
+		if( pTFInfo->m_bTeamExplosion )
+		{
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_red") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_blue") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_dm") );
+		}
 	}
 
 	if ( pTFInfo->m_szExplosionWaterEffect && pTFInfo->m_szExplosionWaterEffect[0] )
 	{
 		PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffect );
+		if( pTFInfo->m_bTeamExplosion )
+		{
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_red") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_blue") );
+			PrecacheParticleSystem( 
+#ifdef GAME_DLL
+			UTIL_VarArgs
+#else
+			VarArgs
+#endif
+			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_dm") );
+		}
+	}
+	
+	if( pTFInfo->m_bDropBomblets )
+	{
+		if ( pTFInfo->m_szExplosionEffectBomblets && pTFInfo->m_szExplosionEffectBomblets[0] )
+		{
+			PrecacheParticleSystem( pTFInfo->m_szExplosionEffectBomblets );
+			if( pTFInfo->m_bTeamExplosion )
+			{
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_red") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_blue") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_dm") );
+			}
+		}
+
+		if ( pTFInfo->m_szExplosionPlayerEffectBomblets && pTFInfo->m_szExplosionPlayerEffectBomblets[0] )
+		{
+			PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffectBomblets );
+			if( pTFInfo->m_bTeamExplosion )
+			{
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_red") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_blue") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_dm") );
+			}
+		}
+
+		if ( pTFInfo->m_szExplosionWaterEffectBomblets && pTFInfo->m_szExplosionWaterEffectBomblets[0] )
+		{
+			PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffectBomblets );
+			if( pTFInfo->m_bTeamExplosion )
+			{
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_red") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_blue") );
+				PrecacheParticleSystem( 
+#ifdef GAME_DLL
+				UTIL_VarArgs
+#else
+				VarArgs
+#endif
+				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_dm") );
+			}
+		}		
 	}
 
 	if ( pTFInfo->m_szTracerEffect && pTFInfo->m_szTracerEffect[0] )
@@ -687,6 +849,8 @@ int CTFWeaponBase::IsCurrentAttackACrit()
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
+	if( !CanHolster() )
+		return false;
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	
 #ifndef CLIENT_DLL
@@ -982,7 +1146,7 @@ bool CTFWeaponBase::Reload( void )
 		if ( ReserveAmmo() <= 0 )
 			return false;
 
-		if ( Clip1() >= GetMaxClip1())
+		if ( Clip1() >= GetMaxClip1() )
 			return false;
 	}
 	// Reload one object at a time.
@@ -1014,7 +1178,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	m_bFireOnEmpty = false;
 
 	// If we don't have any ammo, switch to the next best weapon
-	if ( !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
+	if ( CanHolster() && !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
 	{
 		// weapon isn't useable, switch.
 		if ( ( (GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false ) && ( g_pGameRules->SwitchToNextBestWeapon( pOwner, this ) ) )

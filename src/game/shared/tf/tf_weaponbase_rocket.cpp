@@ -34,8 +34,6 @@ RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 
 RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
-
-RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 // Server specific.
 #else
 SendPropVector( SENDINFO( m_vInitialVelocity ), 12 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
@@ -45,8 +43,6 @@ SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
 
 SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
-
-SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 // Server specific.
@@ -151,7 +147,7 @@ void CTFBaseRocket::Spawn( void )
 void CTFBaseRocket::UpdateOnRemove( void )
 {
 	// Tell our launcher that we were removed
-	CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( GetLauncher() );
+	CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( GetOriginalLauncher() );
 
 	if ( pLauncher )
 	{
@@ -201,7 +197,7 @@ void CTFBaseRocket::PostDataUpdate( DataUpdateType_t type )
 
 		rotInterpolator.AddToHead( flChangeTime - 1.0, &vCurAngles, false );
 		
-		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hLauncher.Get() );
+		CTFSuperRocketLauncher *pLauncher = dynamic_cast<CTFSuperRocketLauncher*>( m_hOriginalLauncher.Get() );
 
 		if ( pLauncher )
 		{
@@ -377,16 +373,14 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 	// Explosion effect on client
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
-	
-	int UseWeaponID = m_hWeaponID;
 
 	if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 	{
-		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
+		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, pTrace->m_pEnt->entindex(), GetWeaponID() , GetOriginalLauncher() );
 	}
 	else
 	{
-		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1, GetLauncher() );
+		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, -1, GetWeaponID(), GetOriginalLauncher() );
 	}
 
 
@@ -395,7 +389,7 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 
 	CTakeDamageInfo info( this, GetOwnerEntity(), vec3_origin, vecOrigin, GetDamage(), bitsDamageType, 0, &vecReported );
 
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetLauncher() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	info.SetWeapon( pTFWeapon );
 	
 	float flRadius = GetRadius();
@@ -446,7 +440,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	int EntIndex = 0;
 	if ( pOther )
 		EntIndex = pOther->entindex();
-	TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, m_hWeaponID, EntIndex, GetLauncher() );
+	TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, EntIndex, GetWeaponID(), GetOriginalLauncher() );
 	CSoundEnt::InsertSound ( SOUND_COMBAT, vecOrigin, 1024, 3.0 );
 
 	// Damage.
@@ -458,7 +452,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 	}
 
 	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetLauncher() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	info.SetWeapon( pTFWeapon );
 	info.SetDamageCustom( GetCustomDamageType() );
 	float flRadius = GetRadius();
@@ -506,8 +500,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
 				pBomb->SetCritical( m_bCritical );
-				pBomb->WeaponID = m_hWeaponID;				
-
+				pBomb->SetLauncher(GetOriginalLauncher());
 			}		
 		}
 #endif
@@ -577,7 +570,24 @@ void CTFBaseRocket::FlyThink( void )
 		m_bCollideWithTeammates = true;
 	}
 
+	if( m_hHomingTarget )
+	{
+		Vector vecTarget = m_hHomingTarget->GetAbsOrigin();
+		Vector vecDir = vecTarget - GetAbsOrigin();
+		VectorNormalize( vecDir );
+		float flSpeed = GetAbsVelocity().Length();
+		QAngle angForward;
+		VectorAngles( vecDir, angForward );
+		SetAbsAngles( angForward );
+		SetAbsVelocity( vecDir * flSpeed );
+	}
+	
 	SetNextThink( gpGlobals->curtime + 0.1 );
+}
+
+void CTFBaseRocket::SetHomingTarget( CBaseEntity *pHomingTarget )
+{
+	m_hHomingTarget = pHomingTarget;
 }
 
 #endif

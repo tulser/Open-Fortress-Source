@@ -59,8 +59,6 @@ BEGIN_NETWORK_TABLE( CTFGrenadeMirvBomb, DT_TFGrenadeMirvBomb )
 	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
-
-	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropInt( SENDINFO( m_bCritical ) ),
@@ -71,8 +69,6 @@ BEGIN_NETWORK_TABLE( CTFGrenadeMirvBomb, DT_TFGrenadeMirvBomb )
 
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 	SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
-	
-	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 

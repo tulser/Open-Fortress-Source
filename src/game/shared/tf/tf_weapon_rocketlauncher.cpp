@@ -8,6 +8,7 @@
 #include "tf_fx_shared.h"
 #include "tf_weaponbase_rocket.h"
 #include "in_buttons.h"
+#include "tf_weapon_sniperrifle.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
@@ -94,9 +95,18 @@ CTFSuperRocketLauncher::CTFSuperRocketLauncher()
 {
 #ifdef CLIENT_DLL
 	m_pEffect = NULL;
+#else
+	m_hTargetDot = NULL;
 #endif
 	m_bReloadsSingly = false;
 	m_flLastPingSoundTime = 0;
+}
+
+CTFSuperRocketLauncher::~CTFSuperRocketLauncher()
+{
+#ifndef CLIENT_DLL
+	DestroyTargetDot();
+#endif
 }
 
 CTFCRPG::CTFCRPG()
@@ -278,6 +288,11 @@ void CTFSuperRocketLauncher::AddRocket( CTFBaseRocket *pRocket )
 	m_Rockets.AddToTail( hHandle );
 }
 
+CBaseEntity *CTFSuperRocketLauncher::FireRocket( CTFPlayer *pPlayer )
+{
+	CBaseEntity *pRet = BaseClass::FireRocket( pPlayer );
+	return pRet;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Detonate the Rockets if secondary fire is down.
@@ -301,6 +316,15 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 		}
 	}
 #endif
+
+#ifdef GAME_DLL
+	// Update the sniper dot position if we have one
+	if ( m_hTargetDot )
+	{
+		UpdateTargetDot();
+	}
+#endif
+
 	BaseClass::ItemPostFrame();
 }
 
@@ -357,6 +381,9 @@ void CTFSuperRocketLauncher::DeathNotice( CBaseEntity *pVictim )
 	m_Rockets.FindAndRemove( hHandle );
 
 	m_iRocketCount = m_Rockets.Count();
+	
+	if( !m_iRocketCount )
+		DestroyTargetDot();
 }
 
 //-----------------------------------------------------------------------------
@@ -364,7 +391,6 @@ void CTFSuperRocketLauncher::DeathNotice( CBaseEntity *pVictim )
 //-----------------------------------------------------------------------------
 bool CTFSuperRocketLauncher::DetonateRockets()
 {
-
 	int count = m_Rockets.Count();
 
 	bool bDetonated = true;
@@ -386,6 +412,107 @@ bool CTFSuperRocketLauncher::DetonateRockets()
 	return bDetonated;
 }
 
+bool CTFSuperRocketLauncher::Reload( void )
+{
+	if( m_bTargeting )
+		return false;	
+	return BaseClass::Reload();
+}
+
+bool CTFSuperRocketLauncher::CanHolster( void )
+{
+	if( m_bTargeting )
+		return false;
+
+	return BaseClass::CanHolster();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::CreateTargetDot( void )
+{
+// Server specific.
+#ifdef GAME_DLL
+
+	// Check to see if we have already been created?
+	if ( m_hTargetDot )
+		return;
+
+	// Get the owning player (make sure we have one).
+	CBaseCombatCharacter *pPlayer = GetOwner();
+	if ( !pPlayer )
+		return;
+
+	// Create the sniper dot, but do not make it visible yet.
+	m_hTargetDot = CSniperDot::Create( GetAbsOrigin(), GetDamage() , pPlayer, true );
+	m_hTargetDot->ChangeTeam( pPlayer->GetTeamNumber() );
+	
+	m_bTargeting = true;
+
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::DestroyTargetDot( void )
+{
+// Server specific.
+#ifdef GAME_DLL
+
+	// Destroy the sniper dot.
+	if ( m_hTargetDot )
+	{
+		UTIL_Remove( m_hTargetDot );
+		m_hTargetDot = NULL;
+	}
+	
+	m_bTargeting = false;
+
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFSuperRocketLauncher::UpdateTargetDot( void )
+{
+// Server specific.
+#ifdef GAME_DLL
+
+	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+	if ( !pPlayer )
+		return;
+
+	// Get the start and endpoints.
+	Vector vecMuzzlePos = pPlayer->Weapon_ShootPosition();
+	Vector forward;
+	pPlayer->EyeVectors( &forward );
+	Vector vecEndPos = vecMuzzlePos + ( forward * MAX_TRACE_LENGTH );
+
+	trace_t	trace;
+	UTIL_TraceLine( vecMuzzlePos, vecEndPos, ( MASK_SHOT & ~CONTENTS_WINDOW ), GetOwner(), COLLISION_GROUP_NONE, &trace );
+
+	// Update the sniper dot.
+	if ( m_hTargetDot )
+	{
+		CBaseEntity *pEntity = NULL;
+		if ( trace.DidHitNonWorldEntity() )
+		{
+			pEntity = trace.m_pEnt;
+			if ( !pEntity || !pEntity->m_takedamage )
+			{
+				pEntity = NULL;
+			}
+		}
+
+		m_hTargetDot->Update( pEntity, trace.endpos, trace.plane.normal );
+	}
+
+#endif
+}
+
 IMPLEMENT_NETWORKCLASS_ALIASED(TFOriginal, DT_TFOriginal);
 
 BEGIN_NETWORK_TABLE( CTFOriginal, DT_TFOriginal )
@@ -402,8 +529,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
 BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iRocketCount ) ),
+	RecvPropInt( RECVINFO( m_bTargeting ) ),
 #else
 	SendPropInt( SENDINFO( m_iRocketCount ), 5, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bTargeting ) ),
 #endif
 END_NETWORK_TABLE()
 

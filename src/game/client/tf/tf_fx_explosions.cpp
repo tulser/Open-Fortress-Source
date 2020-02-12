@@ -12,6 +12,7 @@
 #include "tf_weapon_parse.h"
 #include "ragdollexplosionenumerator.h"
 #include "tf_weapon_rocketlauncher.h"
+#include "c_tf_player.h"
 #include "c_basetempentity.h"
 #include "tier0/vprof.h"
 #include "dlight.h"
@@ -44,13 +45,29 @@ CTFWeaponInfo *GetTFWeaponInfo( int iWeapon )
 //-----------------------------------------------------------------------------
 void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, ClientEntityHandle_t hEntity, CBaseEntity *m_hLauncher)
 {
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher );
+	
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
-	pWeaponInfo = GetTFWeaponInfo(iWeaponID);
+	pWeaponInfo = pWeapon ? GetTFWeaponInfo(pWeapon->GetWeaponID()) : GetTFWeaponInfo(iWeaponID);
+	
 	if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB )
-		pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER_MERCENARY );
+	{
+		if( pWeapon )
+		{
+			pWeaponInfo = GetTFWeaponInfo( pWeapon->GetWeaponID() );
+			DevMsg( "%s\n" ,pWeapon->GetClassname() );
+		}
+		else
+			pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER_MERCENARY );
+	}
 
 	bool bIsPlayer = false;
+	
+	C_TFPlayer *pPlayer = NULL;
+	if( pWeapon )
+		pPlayer = (C_TFPlayer *)pWeapon->GetOwner();
+
 	if (hEntity.Get())
 	{
 		C_BaseEntity *pEntity = C_BaseEntity::Instance(hEntity);
@@ -59,7 +76,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 			bIsPlayer = true;
 		}
 	}
-
+	
 	// Calculate the angles, given the normal.
 	bool bIsWater = (UTIL_PointContents(vecOrigin) & CONTENTS_WATER);
 	bool bInAir = false;
@@ -85,23 +102,67 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		// Explosions.
 		if ( bIsWater )
 		{
-			if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
+			if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB && Q_strlen(pWeaponInfo->m_szExplosionWaterEffectBomblets) > 0 )
+			{
+				pszEffect = pWeaponInfo->m_szExplosionWaterEffectBomblets;
+			}
+			else if (Q_strlen(pWeaponInfo->m_szExplosionWaterEffect) > 0)
+			{
 				pszEffect = pWeaponInfo->m_szExplosionWaterEffect;
+			}
 		}
 		else
 		{
 			if (bIsPlayer || bInAir)
 			{
-				if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
+				if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB && Q_strlen(pWeaponInfo->m_szExplosionPlayerEffectBomblets) > 0 )
+				{
+					pszEffect = pWeaponInfo->m_szExplosionPlayerEffectBomblets;
+				}
+				else if (Q_strlen(pWeaponInfo->m_szExplosionPlayerEffect) > 0)
+				{
 					pszEffect = pWeaponInfo->m_szExplosionPlayerEffect;
+				}
 			}
 			else
 			{
-				if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
+				if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB && Q_strlen(pWeaponInfo->m_szExplosionEffectBomblets) > 0 )
+				{
+					pszEffect = pWeaponInfo->m_szExplosionEffectBomblets;
+				}
+				else if (Q_strlen(pWeaponInfo->m_szExplosionEffect) > 0)
+				{
 					pszEffect = pWeaponInfo->m_szExplosionEffect;
+				}
 			}
 		}
-
+		if( pWeaponInfo->m_bTeamExplosion )
+		{
+			if( pPlayer )
+			{
+				char buf[MAX_PATH];
+				Q_strncpy( buf, pszEffect, sizeof(buf) );
+				switch( pPlayer->GetTeamNumber() )
+				{
+					case TF_TEAM_RED:
+						Q_strncat( buf, "_red", sizeof(buf) );
+						break;
+					case TF_TEAM_BLUE:
+						Q_strncat( buf, "_blue", sizeof(buf) );
+						break;
+					case TF_TEAM_MERCENARY:
+						Q_strncat( buf, "_dm", sizeof(buf) );
+						break;
+					default:
+						break;
+				}
+				DevMsg("%s\n", buf);
+				pszEffect = buf;
+			}
+			else
+				DevWarning("FUCKING\n");
+		}
+		
 		// Sound.
 		if (Q_strlen(pWeaponInfo->m_szExplosionSound) > 0)
 		{
@@ -136,8 +197,13 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
-
-	DispatchParticleEffect(pszEffect, vecOrigin, angExplosion);
+	if( pPlayer && pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+	{
+		Vector Color = pPlayer->m_vecPlayerColor;
+		DispatchParticleEffect(pszEffect, vecOrigin, angExplosion, Color, Color);
+	}
+	else
+		DispatchParticleEffect(pszEffect, vecOrigin, angExplosion);
 }
 
 //-----------------------------------------------------------------------------
@@ -160,7 +226,7 @@ public:
 	Vector		m_vecNormal;
 	int			m_iWeaponID;
 	ClientEntityHandle_t m_hEntity;
-	CNetworkHandle( CBaseEntity, m_hLauncher );
+	CNetworkHandle( CTFWeaponBase, m_hLauncher );
 };
 
 //-----------------------------------------------------------------------------

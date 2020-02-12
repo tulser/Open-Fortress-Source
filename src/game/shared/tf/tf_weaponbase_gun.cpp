@@ -14,6 +14,7 @@
 #include "tf_gamerules.h"
 #include "of_projectile_bfg.h"
 #include "tf_weapon_grenade_pipebomb.h"
+#include "tf_weapon_rocketlauncher.h"
 
 #if !defined( CLIENT_DLL )	// Server specific.
 
@@ -650,6 +651,7 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 
@@ -698,8 +700,16 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
+		CTFSuperRocketLauncher *pQuad = dynamic_cast<CTFSuperRocketLauncher*>(this);
+		if( pQuad )
+		{
+			if( !pQuad->m_hTargetDot )
+				pQuad->CreateTargetDot();
+			pProjectile->SetHomingTarget( pQuad->m_hTargetDot );
+		}
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 
@@ -801,6 +811,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 
@@ -834,6 +845,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
+		pProjectile->SetLauncher( this );
 	}
 
 	return pProjectile;
@@ -931,6 +943,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
+		pProjectile->SetLauncher( this );
 	}
 	return pProjectile;
 

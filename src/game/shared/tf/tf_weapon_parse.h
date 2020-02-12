@@ -172,17 +172,19 @@ public:
 	bool	m_bDoInstantEjectBrass;
 	char	m_szBrassModel[128];
 
+	bool	m_bTeamExplosion;
+	
 	// Explosion Effect
 	char	m_szExplosionSound[128];
 	char	m_szExplosionEffect[128];
 	char	m_szExplosionPlayerEffect[128];
 	char	m_szExplosionWaterEffect[128];
-
-	// Explosion Effect
-	char	m_szExplosionSoundClassic[128];
-	char	m_szExplosionEffectClassic[128];
-	char	m_szExplosionPlayerEffectClassic[128];
-	char	m_szExplosionWaterEffectClassic[128];	
+	
+	bool	m_bTeamBombletsExplosion;
+	
+	char	m_szExplosionEffectBomblets[128];
+	char	m_szExplosionPlayerEffectBomblets[128];
+	char	m_szExplosionWaterEffectBomblets[128];
 	
 	bool	m_bDontDrop;
 	

@@ -242,7 +242,7 @@ void CTFBaseProjectile::PostDataUpdate( DataUpdateType_t type )
 int CTFBaseProjectile::DrawModel( int flags )
 {
 	// During the first 0.2 seconds of our life, don't draw ourselves.
-	if ( gpGlobals->curtime - m_flSpawnTime < 0.1f )
+	if ( gpGlobals->curtime - m_flSpawnTime < 0.2f )
 		return 0;
 
 	return BaseClass::DrawModel( flags );
@@ -264,7 +264,10 @@ C_LocalTempEntity *ClientsideProjectileCallback( const CEffectData &data, float 
 
 	Vector vecSrc = data.m_vOrigin;
 
-	// If we're seeing another player shooting the nails, move their start point to the weapon origin
+	// Disabled for now in the name of Gameplay, we need to either adjust the anims 
+	// or find a better solution to smooth out muzzle -> world
+	/*
+		// If we're seeing another player shooting the nails, move their start point to the weapon origin
 	if ( pEnt && pEnt->IsPlayer() )
 	{
 		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
@@ -296,8 +299,7 @@ C_LocalTempEntity *ClientsideProjectileCallback( const CEffectData &data, float 
 			}
 		}
 	}
-
-
+	*/
 	float flGravity = ( flGravityBase * 800 );
 
 	Vector vecGravity(0,0,-flGravity);

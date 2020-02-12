@@ -290,6 +290,8 @@ KeyValues* GetSoundscript( const char *szSoundScript )
 			DevMsg("Key not found in level sounds\n");
 			return GlobalSoundManifest()->FindKey( szSoundScript );
 		}
+		else
+			return pSound;
 	}
 	else if ( GlobalSoundManifest() )	
 	{

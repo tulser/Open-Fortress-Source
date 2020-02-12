@@ -42,8 +42,6 @@ public:
 	// This gets sent to the client and placed in the client's interpolation history
 	// so the projectile starts out moving right off the bat.
 	CNetworkVector( m_vInitialVelocity );
-	
-	int WeaponID;
 
 	virtual float		GetShakeAmplitude( void ) { return 10.0; }
 	virtual float		GetShakeRadius( void ) { return 300.0; }
@@ -57,7 +55,6 @@ public:
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 #endif
 		CNetworkVar( float,		m_flSpawnTime );
-		CNetworkHandle( CBaseEntity, m_hLauncher );	
 private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
@@ -96,10 +93,6 @@ public:
 
 	void					SetTimer( float time ){ m_flDetonateTime = time; }
 	float					GetDetonateTime( void ){ return m_flDetonateTime; }
-	
-
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
-	virtual CBaseEntity		*GetLauncher( void ) { return m_hLauncher; }
 
 	void					SetDetonateTimerLength( float timer );
 

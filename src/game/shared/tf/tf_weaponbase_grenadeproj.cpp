@@ -64,7 +64,6 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
-	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropInt( SENDINFO( m_bCritical ) ),
@@ -76,7 +75,6 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 	SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 	
-	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -234,7 +232,6 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	else
 		ChangeTeam( TF_TEAM_MERCENARY );
 
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pWeapon );
 /*
 	if ( pTFWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
 	{
@@ -242,11 +239,6 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 		SetModel( pTFWeapon->GetTFWpnData().m_nProjectileModel );	
 	}
 */
-	if ( pTFWeapon )
-	{
-		WeaponID = pTFWeapon->GetWeaponID();
-		SetLauncher( pWeapon );
-	}
 	
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 	if ( pPhysicsObject )
@@ -276,15 +268,8 @@ void CTFWeaponBaseGrenadeProj::Spawn( void )
 	SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-//	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-//	{
-//		m_bCollideWithTeammates = true;
-//	}
-//	else
-//	{
-		m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
-		m_bCollideWithTeammates = false;
-//	}
+	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
+	m_bCollideWithTeammates = false;
 	VPhysicsInitNormal( SOLID_BBOX, 0, false );
 
 	m_takedamage = DAMAGE_EVENTS_ONLY;
@@ -329,39 +314,36 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 	Vector vecOrigin = GetAbsOrigin();
 	CPVSFilter filter( vecOrigin );
 	
-	int UseWeaponID = WeaponID;
+	CTFWeaponBase *pTmpLauncher = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	
 	if ( UseImpactNormal() )
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), pTrace->m_pEnt->entindex(), GetWeaponID(), pTmpLauncher );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), UseWeaponID, -1, GetLauncher() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, GetImpactNormal(), -1, GetWeaponID(), pTmpLauncher );
 		}
 	}
 	else
 	{
 		if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, pTrace->m_pEnt->entindex(), GetLauncher() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, pTrace->m_pEnt->entindex(), GetWeaponID(), pTmpLauncher );
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, UseWeaponID, -1, GetLauncher() );
+			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, -1, GetWeaponID(), pTmpLauncher );
 		}
 	}
-
 
 	// Use the thrower's position as the reported position
 	Vector vecReported = GetThrower() ? GetThrower()->GetAbsOrigin() : vec3_origin;
 
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( pFuckThisShit );
-	CTakeDamageInfo info( this, GetThrower(), pTFWeapon , GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
-	if ( pTFWeapon ) 
-		info.SetWeapon( pTFWeapon );
+	CTakeDamageInfo info( this, GetThrower(), GetOriginalLauncher() , GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	info.SetWeapon( GetOriginalLauncher() );
 	
 	info.SetDamageCustom( bitsCustomDamageType );
 	float flRadius = GetDamageRadius();
@@ -380,16 +362,14 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 	}
 
 	// Get the Weapon info
-	CTFWeaponBase *pWeapon = (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( WeaponID ) );
+	
+	CTFWeaponBase *pWeapon = GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB && pTmpLauncher ? (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( pTmpLauncher->GetWeaponID() ) ) : NULL;
 	if ( pWeapon )
 	{
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
 		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-		Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
 
-
-		
 #ifdef GAME_DLL
 		// Create the bomblets.
 		if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
@@ -408,7 +388,6 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
 				pBomb->SetCritical( m_bCritical );
-				pBomb->WeaponID = WeaponID;
 			}		
 		}
 #endif

@@ -62,7 +62,6 @@ RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
-RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 // Server specific.
 #else
 SendPropInt( SENDINFO( m_bSpawnTrails ) ),
@@ -75,7 +74,6 @@ SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
 SendPropVector	(SENDINFO(m_vecOrigin), -1,  SPROP_COORD_MP_INTEGRAL|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_Origin ),
 SendPropQAngles	(SENDINFO(m_angRotation), 6, SPROP_CHANGES_OFTEN, SendProxy_Angles ),
 
-SendPropEHandle( SENDINFO( m_hLauncher ) ),
 #endif
 END_NETWORK_TABLE()
 // Server specific.

@@ -45,8 +45,6 @@ public:
 	bool		m_bPulsed;
 	float		m_flFullDamage;
 
-	CNetworkHandle( CBaseEntity, m_hLauncher );
-
 	virtual void	UpdateOnRemove( void );
 
 #ifdef GAME_DLL
@@ -77,9 +75,6 @@ public:
 	virtual void	BounceSound( void );
 	virtual void	Detonate();
 	virtual void	Fizzle();
-
-	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hLauncher = pLauncher; }
-	virtual CBaseEntity *GetLauncher( void ) { return m_hLauncher; };
 
 	void			SetPipebombMode( bool bRemoteDetonate );
 	

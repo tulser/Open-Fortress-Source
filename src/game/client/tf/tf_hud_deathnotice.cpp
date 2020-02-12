@@ -149,6 +149,8 @@ using namespace vgui;
 
 static ConVar hud_deathnotice_time( "hud_deathnotice_time", "6", 0 );
 
+ConVar of_dm_soundcues( "of_dm_soundcues", "1", FCVAR_ARCHIVE, "Whether or not Dominations, Nemesiss and Revenges use the DM specific ones in Deathmatch" );
+
 DECLARE_HUDELEMENT( CTFHudDeathNotice );
 
 //-----------------------------------------------------------------------------
@@ -654,6 +656,8 @@ void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, i
 		}
 		if ( TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 		{
+			if( of_dm_soundcues.GetBool() )
+				pszSoundName = iKillerIndex == iLocalPlayerIndex ? "DM.Domination" : "DM.Nemesis";
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( iKillerIndex, "Dominating" );
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( iVictimIndex, "Dominating" );
 		}
@@ -663,6 +667,8 @@ void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, i
 		pszSoundName = "Game.Revenge";
 		if ( TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 		{
+			if( of_dm_soundcues.GetBool() )
+				pszSoundName = "DM.Revenge";
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( iKillerIndex, "Revenge" );
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( iVictimIndex, "Revenge" );
 		}

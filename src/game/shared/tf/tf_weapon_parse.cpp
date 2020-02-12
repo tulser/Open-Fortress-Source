@@ -76,10 +76,11 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szExplosionPlayerEffect[0] = '\0';
 	m_szExplosionWaterEffect[0] = '\0';
 	
-	m_szExplosionSoundClassic[0] = '\0';
-	m_szExplosionEffectClassic[0] = '\0';
-	m_szExplosionPlayerEffectClassic[0] = '\0';
-	m_szExplosionWaterEffectClassic[0] = '\0';	
+	m_szExplosionEffectBomblets[0] = '\0';
+	m_szExplosionPlayerEffectBomblets[0] = '\0';
+	m_szExplosionWaterEffectBomblets[0] = '\0';
+	
+	m_bTeamExplosion = false;
 
 	m_iWeaponType = TF_WPN_TYPE_PRIMARY;
 	m_iCost = 0;
@@ -387,47 +388,34 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	{
 		Q_strncpy( m_szExplosionSound, pszSound, sizeof( m_szExplosionSound ) );
 	}
-	
-	pszSound = pKeyValuesData->GetString( "ExplosionSoundClassic", NULL );
-	if ( pszSound )
-	{
-		Q_strncpy( m_szExplosionSoundClassic, pszSound, sizeof( m_szExplosionSoundClassic ) );
-	}
+
 	const char *pszEffect = pKeyValuesData->GetString( "ExplosionEffect", NULL );
 	if ( pszEffect )
-	{
 		Q_strncpy( m_szExplosionEffect, pszEffect, sizeof( m_szExplosionEffect ) );
-	}
 
 	pszEffect = pKeyValuesData->GetString( "ExplosionPlayerEffect", NULL );
 	if ( pszEffect )
-	{
 		Q_strncpy( m_szExplosionPlayerEffect, pszEffect, sizeof( m_szExplosionPlayerEffect ) );
-	}
 
 	pszEffect = pKeyValuesData->GetString( "ExplosionWaterEffect", NULL );
 	if ( pszEffect )
-	{
 		Q_strncpy( m_szExplosionWaterEffect, pszEffect, sizeof( m_szExplosionWaterEffect ) );
-	}
 	
-	pszEffect = pKeyValuesData->GetString( "ExplosionEffectClassic", NULL );
+	// Bomblets
+	
+	pszEffect = pKeyValuesData->GetString( "ExplosionEffectBomblets", NULL );
 	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionEffectClassic, pszEffect, sizeof( m_szExplosionEffectClassic ) );
-	}
+		Q_strncpy( m_szExplosionEffectBomblets, pszEffect, sizeof( m_szExplosionEffectBomblets ) );
 
-	pszEffect = pKeyValuesData->GetString( "ExplosionPlayerEffectClassic", NULL );
+	pszEffect = pKeyValuesData->GetString( "ExplosionPlayerEffectBomblets", NULL );
 	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionPlayerEffectClassic, pszEffect, sizeof( m_szExplosionPlayerEffectClassic ) );
-	}
+		Q_strncpy( m_szExplosionPlayerEffectBomblets, pszEffect, sizeof( m_szExplosionPlayerEffectBomblets ) );
 
-	pszEffect = pKeyValuesData->GetString( "ExplosionWaterEffectClassic", NULL );
+	pszEffect = pKeyValuesData->GetString( "ExplosionWaterEffectBomblets", NULL );
 	if ( pszEffect )
-	{
-		Q_strncpy( m_szExplosionWaterEffectClassic, pszEffect, sizeof( m_szExplosionWaterEffectClassic ) );
-	}
+		Q_strncpy( m_szExplosionWaterEffectBomblets, pszEffect, sizeof( m_szExplosionWaterEffectBomblets ) );
 
+	m_bTeamExplosion = ( pKeyValuesData->GetInt( "TeamExplosion", 0 ) != 0 );
+	
 	m_bDontDrop = ( pKeyValuesData->GetInt( "DontDrop", 0 ) > 0 );
 }

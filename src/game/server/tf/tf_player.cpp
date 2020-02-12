@@ -1221,10 +1221,8 @@ void CTFPlayer::Spawn()
 
 	m_Shared.m_flNextLungeTime = 0.0f;
 
-	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		UpdatePlayerColor();
-	}
+	UpdatePlayerColor();
+
 	for( int i = 0; i < GetWearableCount(); i++)
 		m_Shared.RemoveHat(i);
 	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
@@ -1338,10 +1336,7 @@ void CTFPlayer::Regenerate( void )
 	RestockCloak( 1.0f );
 	RestockSpecialEffects( 1.0f );
 	
-	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		UpdatePlayerColor();
-	}
+	UpdatePlayerColor();
 	
 	m_bRegenerating = false;
 	if ( iCurrentHealth > GetHealth() )
@@ -1375,10 +1370,7 @@ void CTFPlayer::InitClass( void )
 	// Give default items for class.
 	GiveDefaultItems();
 
-	if ( GetTeamNumber() == TF_TEAM_MERCENARY )
-	{
-		UpdatePlayerColor();
-	}
+	UpdatePlayerColor();
 }
 
 //-----------------------------------------------------------------------------
@@ -5538,6 +5530,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		if ( m_hPowerups[i] )
 		{
 			m_hPowerups[i]->SetAbsOrigin( GetAbsOrigin() );
+			m_hPowerups[i]->SetAbsAngles( QAngle( 0, 0, 0 ) );
 			m_hPowerups[i]->SetTouch( &CTFDroppedPowerup::PackTouch );
 			m_hPowerups[i]->SetThink( &CTFDroppedPowerup::FlyThink );
 			m_hPowerups[i]->SetOwnerEntity( NULL );
@@ -9549,11 +9542,27 @@ void CTFPlayer::UpdatePlayerColor ( void )
 	// bots have their own system so dont do this
 	if ( IsFakeClient() )
 		return;
-
+	
 	Vector vecNewColor;
-	vecNewColor.x = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_r" ) ) / 255.0f;
-	vecNewColor.y = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_g" ) ) / 255.0f;
-	vecNewColor.z = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_b" ) ) / 255.0f;
+	switch( GetTeamNumber() )
+	{
+		default:
+		case TF_TEAM_MERCENARY:
+			vecNewColor.x = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_r" ) ) / 255.0f;
+			vecNewColor.y = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_g" ) ) / 255.0f;
+			vecNewColor.z = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_b" ) ) / 255.0f;
+			break;
+		case TF_TEAM_RED:
+			vecNewColor.x = 159.0f / 255.0f;
+			vecNewColor.y = 55.0f / 255.0f;
+			vecNewColor.z = 34.0f / 255.0f;
+			break;
+		case TF_TEAM_BLUE:
+			vecNewColor.x = 76.0f / 255.0f;
+			vecNewColor.y = 109.0f / 255.0f;
+			vecNewColor.z = 129.0f / 255.0f;		
+			break;
+	}
 	m_vecPlayerColor = vecNewColor;
 }
 

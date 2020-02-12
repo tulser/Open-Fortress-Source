@@ -635,55 +635,25 @@ bool CTFGameMovement::CheckLunge()
 	{
 		flGroundFactor = player->m_pSurfaceData->game.jumpFactor; 
 	}
+	
+	// Get the start and endpoints.
+	Vector vecMuzzlePos = player->Weapon_ShootPosition();
+	Vector forward;
+	player->EyeVectors( &forward );
+	Vector vecEndPos = vecMuzzlePos + ( forward * MAX_TRACE_LENGTH );
 
-	// fMul = sqrt( 2.0 * gravity * jump_height (21.0units) ) * GroundFactor
+	trace_t	trace;
+	UTIL_TraceLine( vecMuzzlePos, vecEndPos, ( MASK_SHOT & ~CONTENTS_WINDOW ), player, COLLISION_GROUP_NONE, &trace );
 	
-	// I hate vectors
-	QAngle angDir = player->EyeAngles();
-	
-	float flTmpAngY = angDir.y - 90.0f;
-	
-	if( flTmpAngY < -180.0f )
-	{
-		flTmpAngY += 180;
-		flTmpAngY = -flTmpAngY;
-	}
-	
-	float flAbsAngX = flTmpAngY < 0 ? -flTmpAngY : flTmpAngY;
-	
-	if( flAbsAngX > 90 )
-	{
-		flAbsAngX = flAbsAngX - 90;
-		flAbsAngX = flTmpAngY < 0 ? flAbsAngX : -flAbsAngX;
-		flTmpAngY += (flAbsAngX * 2);
-	}
-	
-	if( angDir.x > -24.0f )
-		angDir.x = -24.0f;
-	
-	float flAbsAngY = angDir.y < 0 ? -angDir.y : angDir.y;
-	
-	if( flAbsAngY > 90 )
-	{
-		flAbsAngY = flAbsAngY - 90;
-		flAbsAngY = angDir.y < 0 ? flAbsAngY : -flAbsAngY;
-		angDir.y += (flAbsAngY * 2);
-	}
-	
-	if( angDir.x > -24.0f )
-		angDir.x = -24.0f;
-	
-	float flMulZ = of_zombie_lunge_speed.GetFloat() * flGroundFactor * ( -angDir.x / 90 );
-	float flMulX = of_zombie_lunge_speed.GetFloat() * 2 * flGroundFactor * ( -flTmpAngY / 180 );
-	float flMulY = of_zombie_lunge_speed.GetFloat() * 2 * flGroundFactor * ( angDir.y / 180 );
-	// Save the current z velocity.
-	float flStartZ = mv->m_vecVelocity[2];
-	float flStartX = mv->m_vecVelocity[0];
-	float flStartY = mv->m_vecVelocity[1];
+	Vector vecTarget = trace.endpos;
+	Vector vecDir = vecTarget - player->GetAbsOrigin();
+	VectorNormalize( vecDir );
+	float flSpeed = of_zombie_lunge_speed.GetFloat();
+	vecDir *= flSpeed;
 
-	mv->m_vecVelocity[2] = flMulZ;  // UP
-	mv->m_vecVelocity[0] += flMulX;  // Forward backward
-	mv->m_vecVelocity[1] += flMulY;  // Left Right
+	Vector vecTmpStart = mv->m_vecVelocity;
+
+	mv->m_vecVelocity = vecDir * flGroundFactor; 
 	
 	// Apply gravity.
 	FinishGravity();
@@ -692,9 +662,7 @@ bool CTFGameMovement::CheckLunge()
 	m_pTFPlayer->m_Shared.SetNextLungeTime( gpGlobals->curtime + of_zombie_lunge_delay.GetFloat() );
 	
 	// Save the output data for the physics system to react to if need be.
-	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
-	mv->m_outJumpVel.x += mv->m_vecVelocity[0] - flStartX;
-	mv->m_outJumpVel.y += mv->m_vecVelocity[1] - flStartY;
+	mv->m_outJumpVel += mv->m_vecVelocity - vecTmpStart;
 	mv->m_outStepHeight += 0.15f;
 
 	// Flag that we jumped and don't jump again until it is released.

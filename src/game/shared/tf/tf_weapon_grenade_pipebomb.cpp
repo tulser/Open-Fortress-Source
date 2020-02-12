@@ -62,12 +62,9 @@ BEGIN_NETWORK_TABLE( CTFGrenadePipebombProjectile, DT_TFProjectile_Pipebomb )
 #ifdef CLIENT_DLL
 RecvPropInt( RECVINFO( m_bTouched ) ),
 RecvPropInt( RECVINFO( m_iType ) ),
-RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 #else
 SendPropBool( SENDINFO( m_bTouched ) ),
 SendPropInt( SENDINFO( m_iType ), 2 ),
-SendPropEHandle( SENDINFO( m_hLauncher ) ),
-
 #endif
 END_NETWORK_TABLE()
 
@@ -126,7 +123,7 @@ int	CTFGrenadePipebombProjectile::GetDamageType( void )
 void CTFGrenadePipebombProjectile::UpdateOnRemove( void )
 {
 	// Tell our launcher that we were removed
-	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
+	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( GetOriginalLauncher() );
 
 	if ( pLauncher )
 	{
@@ -206,7 +203,7 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 			pPlayer->m_Shared.UpdateParticleColor( pParticle );
 		}
 
-		CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( m_hLauncher.Get() );
+		CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( GetOriginalLauncher() );
 
 		if ( pLauncher )
 		{
@@ -512,7 +509,7 @@ void CTFGrenadePipebombProjectile::Spawn()
 
 void CTFGrenadePipebombProjectile::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
 {
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	// HACK HACK HACK
 	// Please if you somehow know how to fix m_hLauncher not being able to get pulled in tf_weaponbase_grenadeproj.cpp
 	// PLEASE fix it, idk ill suck your dick or something, i've been trying to get this to work for over 3 days straight - Kay
@@ -618,7 +615,7 @@ void CTFGrenadePipebombProjectile::PipebombTouch( CBaseEntity *pOther )
 	}
 	
 	//If we already touched a surface then we're not exploding on contact anymore.
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	if( pTFWeapon )
 	{
 		if ( !pTFWeapon->GetTFWpnData().m_bAlwaysEnableTouch && m_bTouched == true )
@@ -723,7 +720,7 @@ void CTFGrenadePipebombProjectile::VPhysicsCollision( int index, gamevcollisione
 
 bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
 {
-	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher.Get() );
+	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	if (pTFWeapon &&
 		(pTFWeapon->GetTFWpnData().m_bExplodeOnImpact) ||
 		(GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact))

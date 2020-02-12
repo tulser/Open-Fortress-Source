@@ -8,6 +8,7 @@
 #include "basetempentity.h"
 #include "tf_fx.h"
 #include "tf_shareddefs.h"
+#include "tf_weaponbase.h"
 #include "coordsize.h"
 
 #define NUM_BULLET_SEED_BITS	8
@@ -54,15 +55,15 @@ CTEFireBullets::~CTEFireBullets( void )
 }
 
 IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEFireBullets, DT_TEFireBullets )
-SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
-SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
-SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
-SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
-SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
-SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
-SendPropInt( SENDINFO( m_bCritical ) ),
+	SendPropVector( SENDINFO(m_vecOrigin), -1, SPROP_COORD_MP_INTEGRAL ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 0 ), 7, 0 ),
+	SendPropAngle( SENDINFO_VECTORELEM( m_vecAngles, 1 ), 7, 0 ),
+	SendPropInt( SENDINFO( m_iWeaponID ), Q_log2(TF_WEAPON_COUNT)+1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iMode ), 1, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
+	SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
+	SendPropInt( SENDINFO( m_bCritical ) ),
 END_SEND_TABLE()
 
 // Singleton
@@ -110,7 +111,7 @@ public:
 	Vector m_vecNormal;
 	int m_iWeaponID;
 	int m_nEntIndex;
-	CNetworkHandle( CBaseEntity, m_hLauncher );
+	CNetworkHandle( CTFWeaponBase, m_hLauncher );
 };
 
 // Singleton to fire explosion objects
@@ -139,13 +140,17 @@ IMPLEMENT_SERVERCLASS_ST( CTETFExplosion, DT_TETFExplosion )
 	SendPropEHandle( SENDINFO( m_hLauncher ) ),
 END_SEND_TABLE()
 
-void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, int nEntIndex, CBaseEntity *pWeapon  )
+void TE_TFExplosion( IRecipientFilter &filter, float flDelay, const Vector &vecOrigin, const Vector &vecNormal, int nEntIndex, int iWeaponID, CBaseEntity *pWeapon  )
 {
 	VectorCopy( vecOrigin, g_TETFExplosion.m_vecOrigin );
 	VectorCopy( vecNormal, g_TETFExplosion.m_vecNormal );
+	
+	CTFWeaponBase *pLauncher = dynamic_cast<CTFWeaponBase*>(pWeapon);
+	
 	g_TETFExplosion.m_iWeaponID	= iWeaponID;	
 	g_TETFExplosion.m_nEntIndex	= nEntIndex;
-	g_TETFExplosion.m_hLauncher = pWeapon;
+	if (pLauncher)
+		g_TETFExplosion.m_hLauncher = pLauncher;
 	// Send it over the wire
 	g_TETFExplosion.Create( filter, flDelay );
 }

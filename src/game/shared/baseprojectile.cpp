@@ -44,10 +44,7 @@ CBaseProjectile::CBaseProjectile()
 //-----------------------------------------------------------------------------
 void CBaseProjectile::SetLauncher( CBaseEntity *pLauncher )
 {
-	if ( m_hOriginalLauncher == NULL )
-	{
-		m_hOriginalLauncher = pLauncher;
-	}
+	m_hOriginalLauncher = pLauncher;
 
 #ifdef GAME_DLL
 	ResetCollideWithTeammates();
