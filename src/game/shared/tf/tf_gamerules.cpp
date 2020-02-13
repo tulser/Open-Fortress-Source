@@ -6176,7 +6176,8 @@ bool CTFGameRules::IsBirthday( void )
 			struct tm *today = localtime( ptime );
 			if ( today )
 			{
-				if ( today->tm_mon == 7 && today->tm_mday == 24 )
+//								TEAM FORTRESS 2									OPEN FORTRESS
+				if ( (today->tm_mon == 7 && today->tm_mday == 24) || (today->tm_mon == 1 && today->tm_mday == 13) ) // Months start from 0, days from 1
 				{
 					m_iBirthdayMode = BIRTHDAY_ON;
 				}

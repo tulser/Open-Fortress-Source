@@ -25,9 +25,9 @@ class C_PlayerAttachedModel : public C_BaseAnimating
 {
 	DECLARE_CLASS( C_PlayerAttachedModel, C_BaseAnimating );
 public:
-	static C_PlayerAttachedModel *Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime = 0.2, int iFlags = 0, bool SpyMask = false );
+	static C_PlayerAttachedModel *Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime = 0.2, int iFlags = 0, int iEffects = 0, bool SpyMask = false );
 
-	bool	Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, bool SpyMask );
+	bool	Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, int iEffects, bool SpyMask );
 	void	SetLifetime( float flLifetime );
 	void	ClientThink( void );
 	void	ApplyBoneMatrixTransform( matrix3x4_t& transform );

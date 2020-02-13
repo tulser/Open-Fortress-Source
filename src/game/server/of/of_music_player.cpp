@@ -139,7 +139,7 @@ void CTFMusicPlayer::InputAddVolume( inputdata_t &inputdata )
 
 void CTFMusicPlayer::EndTransition( void )
 {
-	m_bHardTransition = true;
+//	m_bHardTransition = true;
 }
 
 BEGIN_DATADESC(CTFDMMusicManager)

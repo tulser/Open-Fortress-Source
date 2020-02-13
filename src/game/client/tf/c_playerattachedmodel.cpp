@@ -19,13 +19,13 @@
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, bool SpyMask )
+C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, int iEffects, bool SpyMask )
 {
 	C_PlayerAttachedModel *pFlash = new C_PlayerAttachedModel;
 	if ( !pFlash )
 		return NULL;
 
-	if ( !pFlash->Initialize( pszModelName, pParent, iAttachment, vecOffset, flLifetime, iFlags, SpyMask ) )
+	if ( !pFlash->Initialize( pszModelName, pParent, iAttachment, vecOffset, flLifetime, iFlags, iEffects, SpyMask ) )
 		return NULL;
 
 	return pFlash;
@@ -34,10 +34,10 @@ C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool C_PlayerAttachedModel::Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, bool SpyMask )
+bool C_PlayerAttachedModel::Initialize( const char *pszModelName, C_BaseEntity *pParent, int iAttachment, Vector vecOffset, float flLifetime, int iFlags, int iEffects ,bool SpyMask )
 {
 	m_bSpyMask = false;
-	AddEffects( EF_NOSHADOW | EF_BONEMERGE );
+	AddEffects( EF_NOSHADOW | iEffects );
 	if ( InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
 	{
 		Release();

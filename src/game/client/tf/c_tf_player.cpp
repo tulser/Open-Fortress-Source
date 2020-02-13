@@ -3063,7 +3063,7 @@ void C_TFPlayer::UpdatePlayerAttachedModels( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && m_Shared.WearsHat( 0 ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && ( m_Shared.WearsHat( 0 ) || GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
 	{
 		if ( m_hPartyHat )
 		{
@@ -3071,7 +3071,7 @@ void C_TFPlayer::UpdatePartyHat( void )
 		}
 		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() ) // If we're the local player and not in third person, bail
 			return;
-		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
+		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, 0, false );
 												  // Model name, object it gets attached to, attachment name,
 		// C_PlayerAttachedModel::Create can return NULL!
 		if ( m_hPartyHat )
@@ -3097,7 +3097,7 @@ void C_TFPlayer::UpdateSpyMask( void )
 	{
 		if ( !pMask )
 		{
-			pMask = C_PlayerAttachedModel::Create( "models/player/spy_mask.mdl", this, LookupAttachment( "partyhat" ), vec3_origin, PAM_PERMANENT, 0, true );
+			pMask = C_PlayerAttachedModel::Create( "models/player/spy_mask.mdl", this, LookupAttachment( "partyhat" ), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, true );
 
 			if ( !pMask )
 			{
@@ -3157,7 +3157,7 @@ void C_TFPlayer::UpdateWearables( void )
 					KeyValues* pCosmetic = pCosmetics->FindKey( pTemp );
 					if ( pCosmetic )
 					{
-						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );	
+						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
 						if ( m_hCosmetic.Count() )
 						{
 							m_hCosmetic[iSlot].Set( handle );
@@ -3197,7 +3197,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 			m_hShieldEffect->Release();
 		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
 		{
-			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, false );
+			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE , false );
 			if ( m_hShieldEffect )
 			{
 				int iVisibleTeam = GetTeamNumber();
