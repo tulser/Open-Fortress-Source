@@ -111,6 +111,7 @@ public:
 	bool	m_bHasTeamSkins_Viewmodel;
 	bool	m_bHasTeamSkins_Worldmodel;
 	// Eye candy
+	bool	m_bHolyShit;
 	bool	m_bUsesCritAnimation;
 	bool	m_bGibOnOverkill;
 	bool	m_bGibOnHeadshot;	

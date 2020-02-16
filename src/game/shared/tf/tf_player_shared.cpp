@@ -1250,6 +1250,7 @@ void CTFPlayerShared::OnAddBerserk( void )
 		}
 	}
 	m_pOuter->TeamFortress_SetSpeed();
+	m_pOuter->EmitSound("HeartbeatLoop");
 #endif
 }
 
@@ -1278,6 +1279,7 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 		}
 	}
 	m_pOuter->TeamFortress_SetSpeed();
+	m_pOuter->StopSound("HeartbeatLoop");
 #endif
 }
 

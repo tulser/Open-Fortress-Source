@@ -72,6 +72,7 @@ public:
 	virtual void	ShieldChargeThink( void );
 	virtual void	ItemHolsterFrame( void );
 	virtual void	ItemBusyFrame( void );
+	virtual bool 	IsMeleeWeapon( void )const { return true; };
 
 public:	
 

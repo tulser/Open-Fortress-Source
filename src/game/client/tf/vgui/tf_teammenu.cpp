@@ -967,7 +967,7 @@ void CTFDMTeamMenu::OnKeyCodePressed(KeyCode code)
 	}
 	else if (m_iScoreBoardKey != BUTTON_CODE_INVALID && m_iScoreBoardKey == code)
 	{
-		gViewPortInterface->ShowPanel(PANEL_DMTEAMSELECT, true);
+		gViewPortInterface->ShowPanel(PANEL_SCOREBOARD, true);
 		gViewPortInterface->PostMessageToPanel(PANEL_SCOREBOARD, new KeyValues("PollHideCode", "code", code));
 	}
 	else

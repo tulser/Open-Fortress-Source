@@ -35,6 +35,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bHasTeamSkins_Viewmodel = false;
 	m_bHasTeamSkins_Worldmodel = false;
 	
+	m_bHolyShit = false;
+	
 	m_bUsesCritAnimation = false;
 	
 	m_bNeverStrip = false;
@@ -305,6 +307,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
 	m_bHasTeamSkins_Worldmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Worldmodel", 0 ) != 0 );
+	m_bHolyShit = ( pKeyValuesData->GetInt( "HolyShit", 0 ) != 0 );
 	m_bUsesCritAnimation	= ( pKeyValuesData->GetInt( "UsesCritAnimation", 0 ) != 0 );
 	m_bNeverStrip	= ( pKeyValuesData->GetInt( "NeverStrip", 0 ) != 0 );
 	m_bGibOnOverkill	= ( pKeyValuesData->GetInt( "GibOnOverkill", 0 ) != 0 );

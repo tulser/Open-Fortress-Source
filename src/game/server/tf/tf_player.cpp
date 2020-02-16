@@ -845,6 +845,8 @@ void CTFPlayer::Precache()
 	// needed so the stickybomb launcher charging plays...
 	PrecacheScriptSound( "Weapon_StickyBombLauncher.ChargeUp" );
 	
+	PrecacheScriptSound( "HeartbeatLoop" );
+	
 	for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 		PrecacheScriptSound ( UTIL_VarArgs( "%s.Jumpsound", g_aPlayerClassNames_NonLocalized[i] ) );
 
@@ -1595,11 +1597,14 @@ int CTFPlayer::RestockSpecialEffects( float PowerupSize )
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-		CTFWeaponBaseMelee *pMelee = dynamic_cast<CTFWeaponBaseMelee*>( pWeapon );
-		if ( pMelee )
+		if( pWeapon && pWeapon->IsMeleeWeapon() )
 		{
-			pMelee->SetShieldChargeMeter( PowerupSize );
-			bSuccess = PowerupSize;
+			CTFWeaponBaseMelee *pMelee = dynamic_cast<CTFWeaponBaseMelee*>( pWeapon );
+			if ( pMelee )
+			{
+				pMelee->SetShieldChargeMeter( PowerupSize );
+				bSuccess = PowerupSize;
+			}
 		}
 	}
 	return bSuccess;
@@ -4537,14 +4542,16 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			return 0;
 		}
 	}
-	if ( m_Shared.InCondShield() )
-	{
-		float flDamage = info.GetDamage() * of_resistance.GetFloat();
-		info.SetDamage( flDamage );
-	}
 	// If we're not damaging ourselves, apply randomness
 	if ( info.GetAttacker() != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)) ) 
 	{
+
+		if ( m_Shared.InCondShield() )
+		{
+			float flDamage = info.GetDamage() * of_resistance.GetFloat();
+			info.SetDamage( flDamage );
+		}
+			
 		float flDamage = 0;
 		if ( bitsDamage & DMG_CRITICAL )
 		{
@@ -4695,14 +4702,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		float flAdjustedDamage = 1.0f;
 
-		if ( m_Shared.InCond( TF_COND_SHIELD ) )
-			flAdjustedDamage = flAdjustedDamage * ( of_resistance.GetFloat() * 2.0f );
-
 		if ( m_Shared.InCondUber() )
 			flAdjustedDamage = 0.0f;		
 	
 		if ( info.GetAttacker() == this )
-		{
+		{			
+//			if( m_Shared.InCond( TF_COND_SHIELD ) )
+//				flAdjustedDamage = flAdjustedDamage * of_resistance.GetFloat();
+
 			switch ( of_selfdamage.GetInt() )
 			{
 				case -1:
@@ -4723,8 +4730,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				default:
 					break;
 			}
-		}
-
+		}			
 		// apply damage knockback anyway if the adjustment leads to zero damage
 		if ( flAdjustedDamage <= 0.0f )
 			ApplyDamageKnockback( info );
@@ -5436,11 +5442,23 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		pPlayerAttacker = ToTFPlayer( info.GetAttacker() );
 	}
 	
-	CTFWeaponBaseMelee *pMelee = dynamic_cast<CTFWeaponBaseMelee*>(info.GetWeapon());
-	if ( pMelee && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+	CTFWeaponBaseMelee *pWeapon = dynamic_cast<CTFWeaponBaseMelee*>(info.GetWeapon());
+
+	if ( pWeapon && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 	{
-		TeamplayRoundBasedRules()->BroadcastSoundFFA( info.GetAttacker()->entindex(), "Humiliation" ); 
-		TeamplayRoundBasedRules()->BroadcastSoundFFA( entindex(), "Humiliation" ); 
+		if( pWeapon->GetTFWpnData().m_bHolyShit )
+		{
+			if( random->RandomInt( 1, 4 ) == 3 )
+			{
+				TeamplayRoundBasedRules()->BroadcastSoundFFA( info.GetAttacker()->entindex(), "HolyShit" ); 
+				TeamplayRoundBasedRules()->BroadcastSoundFFA( entindex(), "HolyShit" ); 
+			}
+		}
+		else
+		{
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( info.GetAttacker()->entindex(), "Humiliation" ); 
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( entindex(), "Humiliation" ); 			
+		}
 	}	
 	
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );

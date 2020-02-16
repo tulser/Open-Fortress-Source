@@ -46,6 +46,7 @@ ConVar tf_bot_sniper_goal_entity_move_tolerance( "tf_bot_sniper_goal_entity_move
 ConVar tf_bot_suspect_spy_touch_interval( "tf_bot_suspect_spy_touch_interval", "5", FCVAR_CHEAT, "How many seconds back to look for touches against suspicious spies", true, 0.0f, false, 0.0f );
 ConVar tf_bot_suspect_spy_forget_cooldown( "tf_bot_suspect_spy_forced_cooldown", "5", FCVAR_CHEAT, "How long to consider a suspicious spy as suspicious", true, 0.0f, false, 0.0f );
 
+extern ConVar of_mutator;
 
 LINK_ENTITY_TO_CLASS( tf_bot, CTFBot )
 
@@ -1924,7 +1925,7 @@ bool CTFBot::EquipBestWeaponForThreat( const CKnownEntity *threat )
 		{
 			return Weapon_Switch( pWeapon );
 		}
-		else
+		else if( of_mutator.GetInt() > 0 )
 		{
 			// iterate through all weapons if we didn't find anything (weapon isn't primary/secondary/melee)
 			// prioritize non melee weapons first, if none found, then swap to the melee
@@ -1954,7 +1955,6 @@ bool CTFBot::EquipBestWeaponForThreat( const CKnownEntity *threat )
 				return Weapon_Switch( pMelee );
 		}
 	}
-
 	return false;
 }
 
