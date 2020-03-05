@@ -77,6 +77,20 @@ $Project "Server (OFD)"
 			$File	"of\of_music_player.h"		
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
+			
+            $File "$SRCDIR\game\shared\of\engine_patch.h"
+
+            $File "$SRCDIR\game\shared\of\engine_patch.cpp"
+            {
+                $Configuration
+                {
+                    $Compiler
+                    {
+                        $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                    }
+                }
+            }
+
 		}
 		
 		$File	"ai_relationship.cpp"
@@ -835,7 +849,6 @@ $Project "Server (OFD)"
 			$File	"hl2\func_bulletshield.cpp"
 			$File	"hl2\func_bulletshield.h"
 			$File	"episodic\npc_puppet.cpp"
-
 
 			$Folder	"unused"
 			{

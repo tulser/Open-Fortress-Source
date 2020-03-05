@@ -158,6 +158,8 @@
 #include "tf_player_shared.h"
 #include "c_tf_player.h"
 
+#include "engine_patch.h"
+
 extern vgui::IInputInternal *g_InputInternal;
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
 
@@ -1145,6 +1147,8 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 	if (!IGameSystem::InitAllSystems())
 		return false;
+
+	EnginePatch::InitPatches();
 
 	g_pClientMode->Enable();
 	

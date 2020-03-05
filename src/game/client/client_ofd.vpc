@@ -79,6 +79,19 @@ $Project "Client (OFD)"
 			$File	"of\fmod_manager.h"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
+			
+            $File "$SRCDIR\game\shared\of\engine_patch.h"
+
+            $File "$SRCDIR\game\shared\of\engine_patch.cpp"
+            {
+                $Configuration
+                {
+                    $Compiler
+                    {
+                        $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                    }
+                }
+            }
 		}
 		
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"
