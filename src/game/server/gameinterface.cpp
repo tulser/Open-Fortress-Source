@@ -131,7 +131,6 @@ extern ConVar tf_mm_servermode;
 #endif
 
 #include "gamemounter.h"
-#include "engine_patch.h"
 
 extern IToolFrameworkServer *g_pToolFrameworkServer;
 extern IParticleSystemQuery *g_pParticleSystemQuery;
@@ -748,9 +747,6 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( !IGameSystem::InitAllSystems() )
 		return false;
 	
-
-	EnginePatch::InitPatches();
-
 #if defined( REPLAY_ENABLED )
 	if ( gameeventmanager->LoadEventsFromFile( "resource/replayevents.res" ) <= 0 )
 	{

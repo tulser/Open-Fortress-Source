@@ -2,22 +2,59 @@
 // Credits to Momentum Mod for this code and specifically xen-000
 //---------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------
+// Functions used to find patterns of bytes in the engine's memory to hook or patch
+//-----------------------------------------------------------------------------------
 #pragma once
-//---------------------------------------------------------------------------------------------
-// Functions used to find patterns of bytes mainly in the engine binary for patching/hooking
-//---------------------------------------------------------------------------------------------
-//
-#include "cbase.h"
-#include "tier0/platform.h"
 
-class EnginePatch
+class CEngineBinary : public CAutoGameSystem
 {
 public:
-	static void InitPatches();
-	static inline bool DataCompare(const unsigned char*, const unsigned char*, const char*);
-	static void* FindPattern(const unsigned char*, const char*, size_t);
+    CEngineBinary();
+
+    bool Init() OVERRIDE;
+    void PostInit() OVERRIDE;
+
+    static inline bool DataCompare(const char*, const char*, const char*);
+    static void* FindPattern(const char*, const char*, size_t = 0);
+
+    static bool SetMemoryProtection(void*, size_t, int);
+
+    static void* GetModuleBase() { return m_pModuleBase; }
+    static size_t GetModuleSize() { return m_iModuleSize; }
 
 private:
-	static void* moduleBase;
-	static size_t moduleSize;
+    void ApplyAllPatches();
+
+    static void* m_pModuleBase;
+    static size_t m_iModuleSize;
+};
+
+enum PatchType
+{
+    PATCH_IMMEDIATE = true,
+    PATCH_REFERENCE = false
+};
+
+class CEnginePatch
+{
+public:
+    CEnginePatch(const char*, char*, char*, size_t, bool);
+    CEnginePatch(const char*, char*, char*, size_t, bool, int);
+    CEnginePatch(const char*, char*, char*, size_t, bool, float);
+    CEnginePatch(const char*, char*, char*, size_t, bool, char*);
+
+    void ApplyPatch();
+
+private:
+    const char *m_sName;
+
+    char *m_pSignature;
+    char *m_pMask;
+    char *m_pPatch;
+
+    size_t m_iOffset;
+    size_t m_iLength;
+
+    bool m_bImmediate;
 };

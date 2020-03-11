@@ -7,96 +7,255 @@
 #include "Windows.h"
 #include "Psapi.h"
 #pragma comment(lib, "psapi.lib")
+#define MEM_READ 1
+#define MEM_WRITE 2
+#define MEM_EXEC 4
 #elif defined (POSIX)
+#include "sys/mman.h"
+#define MEM_READ PROT_READ
+#define MEM_WRITE PROT_WRITE
+#define MEM_EXEC PROT_EXEC
+// Addresses must be aligned to page size for linux
+#define LALIGN(addr) (void*)((uintptr_t)(addr) & ~(getpagesize() - 1))
+#define LALDIF(addr) ((uintptr_t)(addr) % getpagesize())
+#endif
+
+#include "cbase.h"
 #include "util/os_utils.h"
-#endif
-
 #include "engine_patch.h"
-#include "tf_shareddefs.h"
-#include "tier0/platform.h"
 
-void* EnginePatch::moduleBase = nullptr;
-size_t EnginePatch::moduleSize;
-
-inline bool EnginePatch::DataCompare(const unsigned char* data, const unsigned char* pattern, const char* mask)
+// Engine Patch format:
+//==============================
+// m_sName:         Patch name
+// m_pSignature:    Memory signature
+// m_pMask:         Signature mask
+// m_iOffset:       Patch offset
+// m_bImmediate:    Immediate or referenced variable
+// m_pPatch:        Patch bytes (int/float/char*)
+//==============================
+CEnginePatch g_EnginePatches[] =
 {
-	for (; *mask != 0; ++data, ++pattern, ++mask)
-		if (*mask == 'x' && *data != *pattern)
-			return false;
+#ifdef _WIN32
+    // Prevent the culling of skyboxes at high FOVs
+    // https://github.com/VSES/SourceEngine2007/blob/master/se2007/engine/gl_warp.cpp#L315
+    {
+        "SkyboxCulling",
+        "\xF3\x0F\x59\x15\x00\x00\x00\x00\xF3\x0F\x58\xC1\xF3\x0F\x10\x0D",
+        "xxxx????xxxxxxxx",
+        16,
+        PATCH_REFERENCE,
+        -1.0f
+    },
+    // Example patch: Trigger "Map has too many brushes" error at 16384 brushes instead of 8192
+    //{
+    //    "BrushLimit",
+    //    "\xC1\xEF\x03\x81\xFF\x00\x00\x00\x00",
+    //    "xxxxx????",
+    //    5,
+    //    PATCH_IMMEDIATE,
+    //    16384
+    //},
+    // The same patch as above but using a pure hex value
+    //{
+    //    "BrushLimitHex",
+    //    "\xC1\xEF\x03\x81\xFF\x00\x00\x00\x00",
+    //    "xxxxx????",
+    //    5,
+    //    PATCH_IMMEDIATE,
+    //    "\x00\x40\x00\x00"
+    //}
+#elif __linux__
+    // Prevent the culling of skyboxes at high FOVs
+    // https://github.com/VSES/SourceEngine2007/blob/master/se2007/engine/gl_warp.cpp#L315
+    {
+        "SkyboxCulling",
+        "\xF3\x0F\x59\x0D\x00\x00\x00\x00\xF3\x0F\x58\xC2\xF3\x0F\x58\xC1\xF3\x0F\x10\x0D",
+        "xxxx????xxxxxxxxxxxx",
+        20,
+        PATCH_REFERENCE,
+        -1.0f
+    },
+    // Example patch: Trigger "Map has too many brushes" error at 16384 brushes instead of 8192
+    //{
+    //    "BrushLimit",
+    //    "\xBE\x00\x00\x00\x00\xF7\xE6\x89\xD6\xC1\xEE\x03\x81\xFE",
+    //    "x????xxxxxxxxx",
+    //    14,
+    //    PATCH_IMMEDIATE,
+    //    16384
+    //},
+    // The same patch as above but using a pure hex value
+    //{
+    //    "BrushLimitHex",
+    //    "\xBE\x00\x00\x00\x00\xF7\xE6\x89\xD6\xC1\xEE\x03\x81\xFE",
+    //    "x????xxxxxxxxx",
+    //    14,
+    //    PATCH_IMMEDIATE,
+    //    "\x00\x40\x00\x00"
+    //}
+#endif //_WIN32
+};
 
-	return (*mask == 0);
+CEngineBinary::CEngineBinary() : CAutoGameSystem("CEngineBinary")
+{
 }
 
-void* EnginePatch::FindPattern(const unsigned char* pattern, const char* mask, size_t offset = 0)
-{
-	auto maskLength = strlen(mask);
-	for (size_t i = 0; i <= moduleSize - maskLength; ++i)
-	{
-		auto addr = reinterpret_cast<const unsigned char*>(moduleBase) + i;
-		if (DataCompare(addr, pattern, mask))
-			return const_cast<void*>(reinterpret_cast<const void*>(addr + offset));
-	}
+void* CEngineBinary::m_pModuleBase = nullptr;
+size_t CEngineBinary::m_iModuleSize = 0;
 
-	return nullptr;
+// Get the engine's base address and size
+bool CEngineBinary::Init()
+{
+#ifdef _WIN32
+    HMODULE handle = GetModuleHandleA(ENGINE_DLL_NAME);
+    if (!handle)
+        return false;
+
+    MODULEINFO info;
+    GetModuleInformation(GetCurrentProcess(), handle, &info, sizeof(info));
+
+    m_pModuleBase = info.lpBaseOfDll;
+    m_iModuleSize = info.SizeOfImage;
+#else //POSIX
+    if (GetModuleInformation(ENGINE_DLL_NAME, &m_pModuleBase, &m_iModuleSize))
+        return false;
+#endif //_WIN32
+
+    return true;
 }
 
-void EnginePatch::InitPatches()
+void CEngineBinary::PostInit()
 {
-	// Get the engine's base address and size
+    ApplyAllPatches();
+}
+
+inline bool CEngineBinary::DataCompare(const char* data, const char* pattern, const char* mask)
+{
+    for (; *mask != 0; ++data, ++pattern, ++mask)
+        if (*mask == 'x' && *data != *pattern)
+            return false;
+
+    return (*mask == 0);
+}
+
+//---------------------------------------------------------------------------------------------------------
+// Finds a pattern of bytes in the engine memory given a signature and a mask
+// Returns the address of the first (and hopefully only) match with an optional offset, otherwise nullptr
+//---------------------------------------------------------------------------------------------------------
+void* CEngineBinary::FindPattern(const char* pattern, const char* mask, size_t offset)
+{
+    auto maskLength = strlen(mask);
+    for (size_t i = 0; i <= m_iModuleSize - maskLength; ++i)
+    {
+        auto addr = reinterpret_cast<char*>(m_pModuleBase) + i;
+        if (DataCompare(addr, pattern, mask))
+            return reinterpret_cast<void*>(addr + offset);
+    }
+
+    return nullptr;
+}
+
+bool CEngineBinary::SetMemoryProtection(void* pAddress, size_t iLength, int iProtection)
+{
 #ifdef _WIN32
-	HMODULE handle = GetModuleHandleA("engine.dll");
-	if (!handle)
-		return;
+    // VirtualProtect requires a valid pointer to store the old protection value
+    DWORD tmp;
+    DWORD prot;
 
-	MODULEINFO info;
-	GetModuleInformation(GetCurrentProcess(), handle, &info, sizeof(info));
+    switch (iProtection)
+    {
+    case MEM_READ:
+        prot = PAGE_READONLY; break;
+    case MEM_READ | MEM_WRITE:
+        prot = PAGE_READWRITE; break;
+    case MEM_READ | MEM_EXEC:
+        prot = PAGE_EXECUTE_READ; break;
+    default:
+    case MEM_READ | MEM_WRITE | MEM_EXEC:
+        prot = PAGE_EXECUTE_READWRITE; break;
+    }
 
-	moduleBase = info.lpBaseOfDll;
-	moduleSize = info.SizeOfImage;
+    return VirtualProtect(pAddress, iLength, prot, &tmp);
 #else //POSIX
-	if (GetModuleInformation(ENGINE_DLL_NAME, &moduleBase, &moduleSize))
-		return;
-#endif //WIN32
+    return mprotect(LALIGN(pAddress), iLength + LALDIF(pAddress), iProtection) == 0;
+#endif //_WIN32
+}
 
-	// TODO: Linux support
-#ifdef _WIN32
-	// Prevent the culling of skyboxes at high FOVs
-	// https://github.com/VSES/SourceEngine2007/blob/master/se2007/engine/gl_warp.cpp#L315
-	unsigned char pattern[] = { 0xF3, 0x0F, 0x59, 0x15, '?', '?', '?', '?', 0xF3, 0x0F, 0x58, 0xC1, 0xF3, 0x0F, 0x10, 0x0D };
-	auto addr = reinterpret_cast<uintptr_t>(FindPattern(pattern, "xxxx????xxxxxxxx", 16));
-
-#ifdef CLIENT_DLL
-	bool bSuccess = false;
+void CEngineBinary::ApplyAllPatches()
+{
+#if !defined (OSX) // No OSX patches
+    for (int i = 0; i < sizeof(g_EnginePatches) / sizeof(*g_EnginePatches); i++)
+        g_EnginePatches[i].ApplyPatch();
 #endif
+}
 
-	if (addr)
-	{
-		// The value is stored in the data segment so it needs write permission
-		float* fValue = *reinterpret_cast<float**>(addr);
+CEngineBinary g_EngineBinary;
 
-		// 0x40 is read,write,execute
-		unsigned long iOldProtection, iNewProtection = 0x40;
+void CEnginePatch::ApplyPatch()
+{
+    if (!m_pPatch)
+    {
+        Warning("Engine patch \"%s\" FAILED: No value provided\n", m_sName);
+        return;
+    }
 
-		if (VirtualProtect((void*)fValue, sizeof(float), iNewProtection, &iOldProtection))
-		{
-			// 130 fov is max here
-			// cos(130) = -0.6427 , padded out to rule out any possible errors
-			*fValue = -0.65;
+    void* addr = CEngineBinary::FindPattern(m_pSignature, m_pMask, m_iOffset);
 
-			// Restore old protections
-			VirtualProtect((void*)fValue, sizeof(float), iOldProtection, &iNewProtection);
+    if (addr)
+    {
+        auto pMemory = m_bImmediate ? (uintptr_t*)addr : *reinterpret_cast<uintptr_t**>(addr);
 
-#ifdef CLIENT_DLL
-			bSuccess = true;
-#endif
-		}
-	}
-#ifdef CLIENT_DLL
-	if ( bSuccess )
-		ConColorMsg( Color( 170, 255, 170, 255 ), "[Engine] Applied fix for skybox culling at >100 FOV successfully.\n" );
-	else
-		ConColorMsg( Color( 255, 100, 100, 255 ), "[Engine] WARNING: Skybox culling fix failed.\n" );
-#endif
-#else //POSIX
-#endif //WIN32
+        // Memory is write-protected so it needs to be lifted before the patch is applied
+        if (CEngineBinary::SetMemoryProtection(pMemory, m_iLength, MEM_READ|MEM_WRITE|MEM_EXEC))
+        {
+            Q_memcpy(pMemory, m_pPatch, m_iLength);
+
+            CEngineBinary::SetMemoryProtection(pMemory, m_iLength, MEM_READ|MEM_EXEC);
+
+            DevLog("Engine patch \"%s\" applied successfully\n", m_sName);
+        }
+        else
+        {
+            Warning("Engine patch \"%s\" FAILED: Could not override memory protection\n", m_sName);
+        }
+    }
+    else
+    {
+        Warning("Engine patch \"%s\" FAILED: Could not find signature\n", m_sName);
+    }
+}
+
+CEnginePatch::CEnginePatch(const char* name, char* signature, char* mask, size_t offset, bool immediate)
+{
+    m_sName = name;
+    m_pSignature = signature;
+    m_pMask = mask;
+    m_iOffset = offset;
+    m_iLength = 0;
+    m_bImmediate = immediate;
+    m_pPatch = nullptr;
+}
+
+// Converting numeric types into bytes
+CEnginePatch::CEnginePatch(const char* name, char* signature, char* mask, size_t offset, bool immediate, int value)
+    : CEnginePatch(name, signature, mask, offset, immediate)
+{
+    m_iLength = sizeof(value);
+    m_pPatch = new char[m_iLength];
+    Q_memcpy(m_pPatch, &value, m_iLength);
+}
+
+CEnginePatch::CEnginePatch(const char* name, char* signature, char* mask, size_t offset, bool immediate, float value)
+    : CEnginePatch(name, signature, mask, offset, immediate)
+{
+    m_iLength = sizeof(value);
+    m_pPatch = new char[m_iLength];
+    Q_memcpy(m_pPatch, &value, m_iLength);
+}
+
+CEnginePatch::CEnginePatch(const char* name, char* signature, char* mask, size_t offset, bool immediate, char* bytes)
+    : CEnginePatch(name, signature, mask, offset, immediate)
+{
+    m_iLength = sizeof(bytes);
+    m_pPatch = bytes;
 }
