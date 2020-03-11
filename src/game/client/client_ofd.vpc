@@ -32,7 +32,7 @@ $Project "Client (OFD)"
 			$File	"of\c_of_trigger_jump.h"
 			$File	"of\c_of_trigger_jump.cpp"
 			$File	"of\of_discordrpc.cpp"
-			$File	"of\of_discordrpc.h"			
+			$File	"of\of_discordrpc.h"
 			$File   "of\of_imagecoloredhudpanel.cpp"
 			$File   "of\of_imagecoloredhudpanel.h"
 			$File	"$SRCDIR\game\shared\of\of_trigger_jump_shared.cpp"
@@ -45,23 +45,23 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\of\of_weapon_bfg.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_bfg.h"
 			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.cpp"
-			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.h"		
+			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.h"
 			$File	"of\of_hud_account.cpp"
 			$File	"of\of_hud_account.h"
 			$File	"of\c_of_dropped_weapon.cpp"
 			$File	"of\c_of_dropped_powerup.cpp"
 			$File	"of\c_entity_weapon_spawner.cpp"
-            $File	"of\c_entity_condpowerup.cpp"			
+            $File	"of\c_entity_condpowerup.cpp"
 			$File	"of\c_weapon_grapple.cpp"
-			$File	"of\c_weapon_grapple.h"		
+			$File	"of\c_weapon_grapple.h"
 			$File	"of\of_hud_dom.cpp"
-			$File	"of\of_hud_dom.h"			
+			$File	"of\of_hud_dom.h"
 			$File	"of\of_hud_tdm.cpp"
 			$File	"of\of_hud_tdm.h"
 			$File	"of\of_hud_kills.cpp"
-			$File	"of\of_hud_kills.h"	
+			$File	"of\of_hud_kills.h"
 			$File	"of\of_hud_powerups.cpp"
-			$File	"of\of_hud_powerups.h"	
+			$File	"of\of_hud_powerups.h"
 			$File	"tf\tf_hud_shieldcharge.cpp"
 			$File	"tf\tf_hud_swapweapons.cpp"
 			$File	"tf\tf_hud_lungemeter.cpp"
@@ -71,7 +71,7 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\of\gamemounter.h"
 			$File	"of\vgui\of_loadout.cpp"
 			$File	"of\vgui\of_loadout.h"
-			$File	"of\vgui\of_imageprogressbar.cpp"			
+			$File	"of\vgui\of_imageprogressbar.cpp"
 			$File	"of\vgui\of_imageprogressbar.h"
 			$File	"of\c_of_music_player.cpp"
 			$File	"of\c_of_music_player.h"
@@ -79,10 +79,14 @@ $Project "Client (OFD)"
 			$File	"of\fmod_manager.h"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
-			
+
             $File "$SRCDIR\game\shared\of\engine_patch.h"
 
             $File "$SRCDIR\game\shared\of\engine_patch.cpp"
+
+            $File "$SRCDIR\game\shared\of\util\os_utils.h"
+
+            $File "$SRCDIR\game\shared\of\util\os_utils.cpp"
             {
                 $Configuration
                 {
@@ -93,7 +97,7 @@ $Project "Client (OFD)"
                 }
             }
 		}
-		
+
 		$File	"$SRCDIR\game\shared\basecombatweapon_shared.h"
 		$File	"c_team_objectiveresource.cpp"
 		$File	"c_team_objectiveresource.h"
@@ -114,9 +118,9 @@ $Project "Client (OFD)"
 		$File	"worldlight.cpp"
 		$File	"worldlight.h"
 		$File	"hud_base_account.h"
-		
+
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
-		
+
 		$Folder "NextBot"
 		{
 			$File	"NextBot\c_NextBot.cpp"
@@ -130,7 +134,7 @@ $Project "Client (OFD)"
 		$Folder	"TF"
 		{
 			$File	"$SRCDIR\game\shared\tf\achievements_tf.cpp"
-			$File	"$SRCDIR\game\shared\tf\baseobject_shared.cpp"				
+			$File	"$SRCDIR\game\shared\tf\baseobject_shared.cpp"
 			$File	"tf\c_baseobject.cpp"
 			$File	"tf\c_baseobject.h"
 			$File	"tf\c_func_respawnroom.cpp"
@@ -295,7 +299,7 @@ $Project "Client (OFD)"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_flamethrower.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_flamethrower.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_flag.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_flag.h"				
+				$File	"$SRCDIR\game\shared\tf\tf_weapon_flag.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_pipebomb.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenade_pipebomb.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_grenadelauncher.cpp"
@@ -333,7 +337,7 @@ $Project "Client (OFD)"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_sniperrifle.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_railgun.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_railgun.h"				
+				$File	"$SRCDIR\game\shared\tf\tf_weapon_railgun.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_syringegun.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_syringegun.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_wrench.cpp"
@@ -407,7 +411,7 @@ $Project "Client (OFD)"
 			$File	"$SRCDIR\game\shared\weapon_ifmbasecamera.h"
 			$File	"$SRCDIR\game\shared\weapon_ifmsteadycam.cpp"
 		}
-		
+
 
 		$Folder	"HL2 DLL"
 		{
@@ -472,7 +476,7 @@ $Project "Client (OFD)"
 			$File	"hl2\hud_credits.cpp"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
-			
+
 		}
 	}
 	$Folder "Link Libraries"
