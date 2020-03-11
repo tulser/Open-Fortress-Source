@@ -31,7 +31,7 @@ $Project "Server (OFD)"
 		$Folder	"OPENFORTRESS DLL"
 		{
 			$File	"of\entity_condpowerup.cpp"
-			$File	"of\entity_condpowerup.h"			
+			$File	"of\entity_condpowerup.h"
 			$File	"of\entity_weapon_spawner.cpp"
 			$File	"of\entity_weapon_spawner.h"
 			$File	"of\of_trigger_jump.h"
@@ -39,13 +39,13 @@ $Project "Server (OFD)"
 			$File	"$SRCDIR\game\shared\of\of_trigger_jump_shared.cpp"
 			$File	"of\hl1_ents.h"
 			$File	"of\hl1_ents.cpp"
-			$File	"of\item_healthkit_tiny.cpp"	
+			$File	"of\item_healthkit_tiny.cpp"
 			$File	"of\item_healthkit_mega.cpp"
 			$File	"of\logic_eventlistener.cpp"
 			$File	"of\datadesc_mod.cpp"
 			$File	"of\datadesc_mod.h"
 			$File	"of\matchers.h"
-			$File	"$SRCDIR\game\shared\of\of_weapon_flaregun.cpp"			
+			$File	"$SRCDIR\game\shared\of\of_weapon_flaregun.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_physcannon.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_physcannon.h"
 			$File	"$SRCDIR\game\shared\of\of_weapon_tripmine.cpp"
@@ -54,7 +54,7 @@ $Project "Server (OFD)"
 			$File	"$SRCDIR\game\shared\of\of_weapon_bfg.cpp"
 			$File	"$SRCDIR\game\shared\of\of_weapon_bfg.h"
 			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.cpp"
-			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.h"	
+			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.h"
 			$File	"of\of_dropped_weapon.cpp"
 			$File	"of\of_dropped_weapon.h"
 			$File	"of\of_dropped_powerup.cpp"
@@ -70,17 +70,21 @@ $Project "Server (OFD)"
 			$File	"of\of_tfcgrenade_frag.cpp"
 			$File	"of\of_tfcgrenade_frag.h"
 			$File	"tf\tf_weapon_grapple.cpp"
-			$File	"tf\tf_weapon_grapple.h"		
+			$File	"tf\tf_weapon_grapple.h"
 			$File	"of\func_bomb_target.cpp"
 			$File	"of\func_bomb_target.h"
 			$File	"of\of_music_player.cpp"
-			$File	"of\of_music_player.h"		
+			$File	"of\of_music_player.h"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.cpp"
 			$File	"$SRCDIR\game\shared\of\of_announcer_system.h"
-			
+
             $File "$SRCDIR\game\shared\of\engine_patch.h"
 
             $File "$SRCDIR\game\shared\of\engine_patch.cpp"
+
+            $File "$SRCDIR\game\shared\of\util\os_utils.h"
+
+            $File "$SRCDIR\game\shared\of\util\os_utils.cpp"
             {
                 $Configuration
                 {
@@ -92,7 +96,7 @@ $Project "Server (OFD)"
             }
 
 		}
-		
+
 		$File	"ai_relationship.cpp"
 		$File	"basegrenade_concussion.cpp"
 		$File	"basegrenade_contact.cpp"
@@ -125,10 +129,10 @@ $Project "Server (OFD)"
 		$File	"$SRCDIR\game\shared\touchlink.h"
 		$File	"trigger_area_capture.cpp"
 		$File	"trigger_area_capture.h"
-		
+
 		$File	"point_entity_finder.cpp"
 		$File	"skyboxswapper.cpp"
-		
+
 		$File	"ai_eventresponse.cpp"
 		$File	"ai_eventresponse.h"
 		$File	"h_cycler.cpp"
@@ -136,7 +140,7 @@ $Project "Server (OFD)"
 		$File	"logic_achievement.cpp"
 		$File	"vehicle_choreo_generic.cpp"
 		$File	"$SRCDIR\game\shared\vehicle_choreo_generic_shared.h"
-		
+
 		$Folder "NextBot"
 		{
 			$File	"NextBot\NextBot.cpp"
@@ -170,7 +174,7 @@ $Project "Server (OFD)"
 			$File	"NextBot\simple_bot.h"
 			$File	"NextBot\NavMeshEntities\func_nav_prerequisite.cpp"
 			$File	"NextBot\NavMeshEntities\func_nav_prerequisite.h"
-			
+
 			$Folder "Path"
 			{
 				$File "NextBot\Path\NextBotChasePath.cpp"
@@ -181,7 +185,7 @@ $Project "Server (OFD)"
 				$File "NextBot\Path\NextBotPathFollow.h"
 				$File "NextBot\Path\NextBotRetreatPath.h"
 			}
-			
+
 			$Folder "Player"
 			{
 				$File "NextBot\Player\NextBotPlayer.cpp"
@@ -191,7 +195,7 @@ $Project "Server (OFD)"
 				$File "NextBot\Player\NextBotPlayerLocomotion.cpp"
 				$File "NextBot\Player\NextBotPlayerLocomotion.h"
 			}
-		}	
+		}
 
 		$Folder	"TF"
 		{
@@ -202,7 +206,7 @@ $Project "Server (OFD)"
 				$File "tf\nav_mesh\tf_nav_mesh.cpp"
 				$File "tf\nav_mesh\tf_nav_mesh.h"
 			}
-			
+
 			$File	"$SRCDIR\game\shared\tf\achievements_tf.cpp"
 			$File	"$SRCDIR\game\shared\tf\baseobject_shared.cpp"
 			$File	"$SRCDIR\game\shared\tf\baseobject_shared.h"
@@ -323,7 +327,7 @@ $Project "Server (OFD)"
 			$File	"tf\tf_turret.cpp"
 			$File	"tf\tf_turret.h"
 			$File	"tf\tf_voteissues.cpp"
-			$File	"tf\tf_voteissues.h"	
+			$File	"tf\tf_voteissues.h"
 			$File	"$SRCDIR\game\shared\tf\tf_usermessages.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.h"
@@ -337,7 +341,7 @@ $Project "Server (OFD)"
 					}
 				}
 			}
-			
+
 			$Folder	"NPC"
 			{
 				$File	"$SRCDIR\game\shared\tf\entity_bossresource.cpp"
@@ -391,7 +395,7 @@ $Project "Server (OFD)"
 				$File	"tf\player_vs_environment\zombie_special_attack.cpp"
 				$File	"tf\player_vs_environment\zombie_special_attack.h"
 			}
-			
+
 			$Folder "Bots"
 			{
 				$Folder "Behavior"
@@ -449,7 +453,7 @@ $Project "Server (OFD)"
 					$File "tf\bot\behavior\scenario\capture_point\tf_bot_defend_point.h"
 					$File "tf\bot\behavior\scenario\capture_point\tf_bot_defend_point_block_capture.cpp"
 					$File "tf\bot\behavior\scenario\capture_point\tf_bot_defend_point_block_capture.h"
-					
+
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_attack_flag_defenders.cpp"
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_attack_flag_defenders.h"
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_deliver_flag.cpp"
@@ -458,21 +462,21 @@ $Project "Server (OFD)"
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_escort_flag_carrier.h"
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_fetch_flag.cpp"
 					$File "tf\bot\behavior\scenario\capture_the_flag\tf_bot_fetch_flag.h"
-					
+
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_block.cpp"
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_block.h"
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_guard.cpp"
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_guard.h"
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_push.cpp"
 					$File "tf\bot\behavior\scenario\payload\tf_bot_payload_push.h"
-					
+
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_destroy_entity.cpp"
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_destroy_entity.h"
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_move_to.cpp"
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_move_to.h"
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_wait.cpp"
 					$File "tf\bot\behavior\nav_entities\tf_bot_nav_ent_wait.h"
-					
+
 					$File "tf\bot\behavior\sniper\tf_bot_sniper_attack.cpp"
 					$File "tf\bot\behavior\sniper\tf_bot_sniper_attack.h"
 					$File "tf\bot\behavior\sniper\tf_bot_sniper_lurk.cpp"
@@ -514,7 +518,7 @@ $Project "Server (OFD)"
 					$File "tf\bot\behavior\spy\tf_bot_spy_sap.cpp"
 					$File "tf\bot\behavior\spy\tf_bot_spy_sap.h"
 				}
-				
+
 				$Folder	"Map Entities"
 				{
 					$File "tf\bot\map_entities\tf_hint_entity.cpp"
@@ -538,7 +542,7 @@ $Project "Server (OFD)"
 				$File "tf\bot\tf_path_follower.cpp"
 				$File "tf\bot\tf_path_follower.h"
 			}
-			
+
 			$Folder	"Weapon"
 			{
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_bat.cpp"
@@ -576,7 +580,7 @@ $Project "Server (OFD)"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_minigun.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_minigun.h"
 			    $File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.cpp"
-				$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"				
+				$File	"$SRCDIR\game\shared\tf\tf_weapon_nailgun.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_parse.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_parse.h"
 				$File	"$SRCDIR\game\shared\tf\tf_weapon_pda.cpp"
@@ -618,8 +622,8 @@ $Project "Server (OFD)"
 				$File	"$SRCDIR\game\shared\tf\tf_weaponbase_rocket.cpp"
 				$File	"$SRCDIR\game\shared\tf\tf_weaponbase_rocket.h"
 			}
-		}		
-		
+		}
+
 		$Folder	"IFM"
 		{
 			$File	"$SRCDIR\game\shared\weapon_ifmbase.cpp"
