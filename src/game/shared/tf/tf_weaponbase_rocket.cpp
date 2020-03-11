@@ -77,7 +77,7 @@ CTFBaseRocket::CTFBaseRocket()
 
 	m_flDamage = 0.0f;
 	m_flDamageRadius = (110.0f * 1.1f);
-
+	m_bHoming = false;
 #endif
 }
 
@@ -240,8 +240,8 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	{
 		pRocket->m_hWeaponID = pWeapon->GetWeaponID();
 		pRocket->SetLauncher(pWeapon);
-		if ( pWeapon->GetTFWpnData().m_flDamageRadius >= 0 )
-			pRocket->SetDamageRadius( pWeapon->GetTFWpnData().m_flDamageRadius );
+		if ( pWeapon->GetDamageRadius() >= 0 )
+			pRocket->SetDamageRadius( pWeapon->GetDamageRadius() );
 	}
 	// Spawn.
 	pRocket->Spawn();
@@ -570,7 +570,7 @@ void CTFBaseRocket::FlyThink( void )
 		m_bCollideWithTeammates = true;
 	}
 
-	if( m_hHomingTarget )
+	if( m_bHoming && m_hHomingTarget )
 	{
 		Vector vecTarget = m_hHomingTarget->GetAbsOrigin();
 		Vector vecDir = vecTarget - GetAbsOrigin();
@@ -587,7 +587,15 @@ void CTFBaseRocket::FlyThink( void )
 
 void CTFBaseRocket::SetHomingTarget( CBaseEntity *pHomingTarget )
 {
+	m_bHoming = true;
 	m_hHomingTarget = pHomingTarget;
+}
+
+void CTFBaseRocket::SetHoming( bool bHoming )
+{
+	m_bHoming = bHoming;
+	if( !m_bHoming )
+		m_hHomingTarget = NULL;
 }
 
 #endif
@@ -595,6 +603,7 @@ void CTFBaseRocket::SetHomingTarget( CBaseEntity *pHomingTarget )
 #ifdef GAME_DLL
 void CTFBaseRocket::Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir )
 {
+	m_bHoming = false;
 	Vector vec = vecDir;
 
 	// conserver speed when changing trajectory

@@ -37,6 +37,8 @@ void ToolFramework_RecordMaterialParams( IMaterial *pMaterial );
 ConVar of_holdtozoom( "of_holdtozoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hold Mouse2 to zoom instead of Toggling it." );
 #endif
 
+ConVar of_headshots	( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes all hitscan weapons headshot when set. 2 will force headshots only damage." );
+
 //=============================================================================
 //
 // Weapon Sniper Rifles tables.
@@ -588,7 +590,7 @@ int	CTFSniperRifle::GetDamageType( void ) const
 
 	// Only do hit location damage if we're zoomed
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
+	if ( ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) ) || of_headshots.GetBool() )
 		return BaseClass::GetDamageType();
 
 	return ( BaseClass::GetDamageType() & ~DMG_USE_HITLOCATIONS );
@@ -684,6 +686,9 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	// can only fire a crit shot if this is a headshot
 	if ( !bIsHeadshot )
 		return false;
+	
+	if( of_headshots.GetBool() )
+		return true;
 
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )

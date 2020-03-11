@@ -58,8 +58,4 @@ private:
 	ChannelGroup *pChannel;
 };
 
-extern void ParseSoundManifest( void );
-extern void ParseLevelSoundManifest( void );
-extern KeyValues *GetSoundscript( const char *szSoundScript );
-
 #endif //OF_MUSIC_PLAYER_H

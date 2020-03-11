@@ -193,7 +193,7 @@ ConVar tf_arena_use_queue( "tf_arena_use_queue", "1", FCVAR_REPLICATED | FCVAR_N
 ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICATED,
 					 "Teams are unbalanced when one team has this many more players than the other team. (0 disables check)",
 					 true, 0,	// min value
-					 true, 30	// max value
+					 true, 128	// max value
 					 );
 
 ConVar mp_maxrounds( "mp_maxrounds", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "max number of rounds to play before server changes maps", true, 0, false, 0 );
@@ -3837,6 +3837,7 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 
 	if ( !pNewTeam )
 	{
+		DevMsg("New Team Doesnt exist\n");
 		Assert( 0 );
 		return true;
 	}
@@ -3854,7 +3855,10 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 		if ( pTeam == pNewTeam )
 			continue;
 
-		if ( pTeam == GetGlobalTeam( TF_TEAM_MERCENARY) )
+		if ( pTeam == GetGlobalTeam( TF_TEAM_MERCENARY ) )
+			continue;
+		
+		if ( pTeam == GetGlobalTeam( TF_TEAM_NPC ) )
 			continue;
 
 		int iNumPlayers = pTeam->GetNumPlayers();
@@ -3863,7 +3867,7 @@ bool CTeamplayRoundBasedRules::WouldChangeUnbalanceTeams( int iNewTeam, int iCur
 		{
 			iNumPlayers = max( 0, iNumPlayers-1 );
 		}
-
+		
 		if ( ( iNewTeamPlayers - iNumPlayers ) > mp_teams_unbalance_limit.GetInt() )
 		{
 			return true;
@@ -3914,7 +3918,7 @@ bool CTeamplayRoundBasedRules::AreTeamsUnbalanced( int &iHeaviestTeam, int &iLig
 		}
 	}
 
-	if ( IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true )
+	if ( IsInArenaMode() && tf_arena_use_queue.GetBool() )
 	{
 		if ( iMostPlayers == 0 && iMostPlayers == iLeastPlayers )
 			return true;

@@ -85,6 +85,7 @@ struct BMPResData_t
 	float		m_flFOV;
 
 	const char	*m_pszModelName;
+	const char	*m_pszModelName_HWM;
 	const char	*m_pszVCD;
 	QAngle		m_angModelPoseRot;
 	Vector		m_vecOriginOffset;
@@ -101,6 +102,7 @@ struct BMPResData_t
 		m_flFOV = 0.0f;
 
 		m_pszModelName = NULL;
+		m_pszModelName_HWM = NULL;
 		m_pszVCD = NULL;
 		m_angModelPoseRot.Init();
 		m_vecOriginOffset.Init();
@@ -117,6 +119,12 @@ struct BMPResData_t
 			delete [] m_pszModelName;
 			m_pszModelName = NULL;
 		}
+	
+		if ( m_pszModelName_HWM && m_pszModelName_HWM[0] )
+		{
+			delete [] m_pszModelName_HWM;
+			m_pszModelName_HWM = NULL;
+		}	
 
 		if ( m_pszVCD && m_pszVCD[0] )
 		{

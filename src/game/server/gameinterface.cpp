@@ -89,6 +89,7 @@
 #include "tier3/tier3.h"
 #include "serverbenchmark_base.h"
 #include "querycache.h"
+#include "tf_gamerules.h"
 
 
 #ifdef TF_DLL
@@ -96,7 +97,6 @@
 #include "econ_item_inventory.h"
 #include "steamworks_gamestats.h"
 #include "tf/tf_gc_server.h"
-#include "tf_gamerules.h"
 #include "tf_lobby.h"
 #include "player_vs_environment/tf_population_manager.h"
 #include "workshop/maps_workshop.h"
@@ -746,7 +746,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	if ( !IGameSystem::InitAllSystems() )
 		return false;
-	
+
 #if defined( REPLAY_ENABLED )
 	if ( gameeventmanager->LoadEventsFromFile( "resource/replayevents.res" ) <= 0 )
 	{
@@ -765,6 +765,11 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// Parse the particle manifest file & register the effects within it
 	ParseParticleEffects( false, false );
+	
+#ifdef OPENFORTRESS_DLL	
+	ParseItemsGame();
+	ParseSoundManifest();
+#endif
 
 	// try to get debug overlay, may be NULL if on HLDS
 	debugoverlay = (IVDebugOverlay *)appSystemFactory( VDEBUG_OVERLAY_INTERFACE_VERSION, NULL );

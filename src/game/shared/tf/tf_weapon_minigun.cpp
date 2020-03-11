@@ -674,7 +674,6 @@ void CTFMinigun::SetDormant( bool bDormant )
 	C_BaseEntity::SetDormant( bDormant );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // won't be called for w_ version of the model, so this isn't getting updated twice
@@ -684,8 +683,15 @@ void CTFMinigun::ItemPreFrame( void )
 	UpdateBarrelMovement();
 	BaseClass::ItemPreFrame();
 }
-
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+// ditto
+//-----------------------------------------------------------------------------
+void CTFMinigun::ItemBusyFrame( void )
+{
+	UpdateBarrelMovement();
+	BaseClass::ItemBusyFrame();
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

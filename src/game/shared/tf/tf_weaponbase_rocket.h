@@ -116,6 +116,7 @@ public:
 	virtual CBaseEntity		*GetEnemy( void )			{ return m_hEnemy; }
 
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
+	void			SetHoming( bool bHoming );
 	
 	
 	int 	m_hWeaponID;
@@ -142,6 +143,8 @@ protected:
 	CHandle<CBaseEntity>	m_hEnemy;
 	
 	CHandle<CBaseEntity>	m_hHomingTarget;
+	
+	bool	m_bHoming;
 
 #endif
 };

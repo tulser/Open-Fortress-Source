@@ -134,6 +134,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bWindingUp ) ),
 	RecvPropBool( RECVINFO( m_bSwapFire ) ),
 	RecvPropTime( RECVINFO( m_flWindTick ) ),
+	RecvPropInt( RECVINFO( m_iDamageIncrease ) ),
+	RecvPropFloat( RECVINFO( m_flBlastRadiusIncrease ) ),
 // Server specific.
 #else
 	SendPropBool( SENDINFO( m_bLowered ) ),
@@ -144,6 +146,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropBool( SENDINFO( m_bWindingUp ) ),
 	SendPropBool( SENDINFO( m_bSwapFire ) ),
 	SendPropTime( SENDINFO( m_flWindTick ) ),
+	SendPropInt( SENDINFO( m_iDamageIncrease ) ),
+	SendPropFloat( SENDINFO( m_flBlastRadiusIncrease ) ),
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
 	SendPropExclude( "DT_AnimTimeMustBeFirst", "m_flAnimTime" ),
@@ -175,6 +179,8 @@ BEGIN_PREDICTION_DATA( CTFWeaponBase )
 	DEFINE_FIELD( m_flNextShotTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flWindTick, FIELD_FLOAT ),
 	DEFINE_FIELD( m_bSwapFire, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_iDamageIncrease, FIELD_INTEGER ),
+	DEFINE_FIELD( m_flBlastRadiusIncrease, FIELD_FLOAT ),
 #endif
 END_PREDICTION_DATA()
 
@@ -395,8 +401,18 @@ int CTFWeaponBase::GetPosition( void ) const
 //-----------------------------------------------------------------------------
 int CTFWeaponBase::GetDamage( void ) const
 {
-		if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-		else return m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+	int iDamage = ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) ? m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage : m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+	iDamage += m_iDamageIncrease;
+	return iDamage;
+	
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Accessor for damage, so sniper etc can modify damage
+//-----------------------------------------------------------------------------
+float CTFWeaponBase::GetDamageRadius( void ) const
+{
+	return GetTFWpnData().m_flDamageRadius + m_flBlastRadiusIncrease;
 }
 
 //-----------------------------------------------------------------------------
@@ -1149,12 +1165,16 @@ bool CTFWeaponBase::Reload( void )
 		if ( Clip1() >= GetMaxClip1() )
 			return false;
 	}
+	
 	// Reload one object at a time.
 	if ( m_bReloadsSingly )
 		return ReloadSingly();
 
 	// Normal reload.
 	DefaultReload( GetMaxClip1(), GetMaxClip2(), ACT_VM_RELOAD );
+	
+	m_iDamageIncrease = 0;
+	m_flBlastRadiusIncrease = 0;
 
 	return true;
 }
@@ -1307,6 +1327,9 @@ bool CTFWeaponBase::ReloadSingly( void )
 			// Did we finish the reload start?  Now we can finish reloading the rocket.
 			if ( m_flTimeWeaponIdle > gpGlobals->curtime )
 				return false;
+
+			m_iDamageIncrease = 0;
+			m_flBlastRadiusIncrease = 0;
 
 			// If we have ammo, remove ammo and add it to clip
 			if ( ReserveAmmo() > 0 && !m_bReloadedThroughAnimEvent )

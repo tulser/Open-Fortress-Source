@@ -249,7 +249,240 @@ ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, 
 #endif
 							  );
 
+KeyValues* gSoundManifest;
+KeyValues* GlobalSoundManifest()
+{
+	return gSoundManifest;
+}
 
+void InitGlobalSoundManifest()
+{
+	if( gSoundManifest )
+	{
+		gSoundManifest->deleteThis();
+	}
+	gSoundManifest = new KeyValues( "GlobalSoundManifest" );
+}
+
+KeyValues* gLevelSoundManifest;
+KeyValues* LevelSoundManifest()
+{
+	return gLevelSoundManifest;
+}
+
+void InitLevelSoundManifest()
+{
+	if( gLevelSoundManifest )
+	{
+		gLevelSoundManifest->deleteThis();
+	}
+	gLevelSoundManifest = new KeyValues( "LevelSoundManifest" );
+}
+
+void ParseSoundManifest( void )
+{	
+	InitGlobalSoundManifest();
+	
+	KeyValues *pManifestFile = new KeyValues( "game_sounds_manifest" );
+	pManifestFile->LoadFromFile( filesystem, "scripts/game_sounds_manifest.txt" );
+	
+	if ( pManifestFile )
+	{
+		KeyValues *pManifest = new KeyValues( "Manifest" );
+		pManifest = pManifestFile->GetFirstValue();
+		for( pManifest; pManifest != NULL; pManifest = pManifest->GetNextValue() ) // Loop through all the keyvalues
+		{
+			KeyValues *pSoundFile = new KeyValues( "SoundFile" );
+			pSoundFile->LoadFromFile( filesystem, pManifest->GetString() );
+			if( pSoundFile )
+			{
+				KeyValues *pSound = new KeyValues( "SoundScript" );
+				pSound = pSoundFile;
+				GlobalSoundManifest()->AddSubKey( pSound );
+
+				for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
+				{
+					if( pSound )
+					{
+						DevMsg( "Parsed: %s\n", pSound->GetString( "wave" ) );
+					}
+				}
+			}
+		}	
+	}
+}
+
+void CheckGlobalSounManifest( void )
+{
+	if ( GlobalSoundManifest() )
+	{		
+		KeyValues *pSound = new KeyValues( "SoundScript" );
+		pSound = GlobalSoundManifest()->GetFirstSubKey();
+		for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
+		{
+			if( strcmp( pSound->GetString( "wave" ), "" ) )
+				DevMsg( "Sound name: %s\n", pSound->GetString( "wave" ) );
+		}
+	}
+}
+
+void ParseLevelSoundManifest( void )
+{	
+	InitLevelSoundManifest();
+	
+	char mapsounds[MAX_PATH];
+	char mapname[ 256 ];
+	Q_StripExtension( 
+#if CLIENT_DLL
+	engine->GetLevelName()
+#else
+	STRING(gpGlobals->mapname)
+#endif
+	, mapname, sizeof( mapname ) );
+	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
+	if( !filesystem->FileExists( mapsounds , "MOD" ) )
+	{
+		DevMsg( "%s not present, not parsing", mapsounds );
+		return;
+	}
+	DevMsg("%s\n", mapsounds);
+	KeyValues *pSoundFile = new KeyValues( "level_sounds" );
+	pSoundFile->LoadFromFile( filesystem, mapsounds );
+
+	if( pSoundFile )
+	{
+		KeyValues *pSound = new KeyValues( "SoundScript" );
+		pSound = pSoundFile;
+		LevelSoundManifest()->AddSubKey( pSound );
+		for( pSound; pSound != NULL; pSound = pSound->GetNextKey() ) // Loop through all the keyvalues
+		{
+			if( pSound )
+			{
+				DevMsg( "Parsed: %s\n", pSound->GetString( "wave" ) );
+			}
+		}
+	}
+}
+
+KeyValues* GetSoundscript( const char *szSoundScript )
+{
+	KeyValues *pSound = new KeyValues( "SoundScript" );
+			
+	char mapsounds[MAX_PATH];
+	char mapname[ 256 ];
+	Q_StripExtension( 
+#if CLIENT_DLL
+	engine->GetLevelName()
+#else
+	STRING(gpGlobals->mapname)
+#endif
+	, mapname, sizeof( mapname ) );
+	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
+			
+	if( filesystem->FileExists( mapsounds , "MOD" ) )
+	{
+		pSound = LevelSoundManifest()->FindKey( szSoundScript );
+		if( !pSound )
+		{
+			DevMsg("Key not found in level sounds\n");
+			return GlobalSoundManifest()->FindKey( szSoundScript );
+		}
+		else
+			return pSound;
+	}
+	else if ( GlobalSoundManifest() )	
+	{
+		return GlobalSoundManifest()->FindKey( szSoundScript );
+	}
+	
+	return NULL;
+}
+
+KeyValues* gItemsGame;
+KeyValues* GetItemsGame()
+{
+	return gItemsGame;
+}
+
+void InitItemsGame()
+{
+	if( gItemsGame )
+	{
+		gItemsGame->deleteThis();
+	}
+	gItemsGame = new KeyValues( "ItemsGame" );
+}
+
+void ParseItemsGame( void )
+{	
+	InitItemsGame();
+	
+	GetItemsGame()->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+}
+
+KeyValues* GetCosmetic( int iID )
+{
+	if( !GetItemsGame() )
+		return NULL;
+	
+	KeyValues *pCosmetics = GetItemsGame()->FindKey("Cosmetics");
+	if( !pCosmetics )
+		return NULL;
+	
+	KeyValues *pCosmetic = pCosmetics->FindKey( 
+#ifdef GAME_DLL
+	UTIL_VarArgs( "%d", iID ) 
+#else
+	VarArgs( "%d", iID ) 
+#endif
+	);
+	if( !pCosmetic )
+		return NULL;
+	
+	return pCosmetic;
+}
+
+#ifdef CLIENT_DLL
+
+KeyValues* gLoadout;
+KeyValues* GetLoadout()
+{
+	return gLoadout;
+}
+
+void ResetLoadout( void )
+{
+	if( gLoadout )
+		gLoadout->deleteThis();
+	
+	gLoadout = new KeyValues( "Loadout" );
+	
+	KeyValues *pCosmetics = new KeyValues( "Cosmetics" );
+	gLoadout->AddSubKey( pCosmetics );
+	for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		KeyValues *pClass = new KeyValues( g_aPlayerClassNames_NonLocalized[i] );
+		pClass->SetString( "hat", "0" );
+		pCosmetics->AddSubKey( pClass );
+	}
+	gLoadout->SaveToFile( filesystem, "cfg/loadout.cfg" );
+}
+
+void ParseLoadout( void )
+{	
+	
+	if ( !filesystem->FileExists( "cfg/loadout.cfg" , "MOD" ) )
+	{
+		ResetLoadout();
+	}
+	else
+	{
+		gLoadout = new KeyValues( "Loadout" );
+		GetLoadout()->LoadFromFile( filesystem, "cfg/loadout.cfg" );
+	}
+}
+#endif		
+		
 /**
  * Player hull & eye position for standing, ducking, etc.  This version has a taller
  * player height, but goldsrc-compatible collision bounds.
@@ -602,6 +835,30 @@ void CTFGameRulesProxy::Activate()
 	BaseClass::Activate();
 }
 
+LINK_ENTITY_TO_CLASS(of_logic_loadout, CTFLogicLoadout);
+
+BEGIN_DATADESC( CTFLogicLoadout )
+	//Keyfields
+	DEFINE_KEYFIELD( m_iClass, FIELD_INTEGER, "Class"),
+END_DATADESC()
+
+void CTFLogicLoadout::Spawn(void)
+{
+	BaseClass::Spawn();
+}
+
+bool CTFLogicLoadout::KeyValue( const char *szKeyName, const char *szValue )
+{
+	if ( !Q_strncmp( szKeyName, "WeaponName", 10 ) )
+	{
+		hWeaponNames.AddToTail(AliasToWeaponID(szValue));
+	}
+	else
+		BaseClass::KeyValue( szKeyName, szValue );
+	
+	return true;
+}
+
 //-----------------------------------------------------------------------------
 // DM Logic 
 //-----------------------------------------------------------------------------
@@ -637,11 +894,6 @@ END_DATADESC()
 CTFLogicGG::CTFLogicGG()
 {
 	pWeaponsData = new KeyValues( "WeaponsData" );
-}
-
-void CTFLogicGG::Spawn( void )
-{
-	BaseClass::Spawn();
 }
 
 bool CTFLogicGG::KeyValue( const char *szKeyName, const char *szValue )
@@ -2360,6 +2612,14 @@ void CTFGameRules::SetupOnRoundStart( void )
 		}
 
 		m_hDisabledWeaponSpawners.Purge();				
+	}	
+
+	m_hLogicLoadout.Purge();
+	CTFLogicLoadout *pLogicLoadout = gEntList.NextEntByClass( (CTFLogicLoadout *)NULL );
+	while ( pLogicLoadout )
+	{
+		m_hLogicLoadout.AddToTail( pLogicLoadout );
+		pLogicLoadout = gEntList.NextEntByClass( pLogicLoadout );
 	}	
 	
 	if ( of_disable_ammopacks.GetBool() )
@@ -4877,7 +5137,8 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 		{
 			SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
 		}
-	}	
+	}
+
 }
 
 //-----------------------------------------------------------------------------

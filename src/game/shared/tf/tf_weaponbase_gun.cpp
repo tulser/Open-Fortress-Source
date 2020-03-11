@@ -86,6 +86,8 @@ CTFWeaponBaseGun::CTFWeaponBaseGun()
 	m_iShotsDue = 0;
 	m_flNextShotTime = 0.0f;
 	m_flAccurateAtTick = 0.0f;
+	m_iDamageIncrease = 0;
+	m_flBlastRadiusIncrease = 0;
 }
 
 bool CTFWeaponBaseGun::Reload( void )
@@ -130,7 +132,6 @@ void CTFWeaponBaseGun::BeginBurstFire(void)
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PrimaryAttack( void )
 {
-	
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
@@ -224,6 +225,9 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	int kqly = pPlayer->trickshot;
 #endif
 	FireProjectile( pPlayer );
+	
+	m_iDamageIncrease += m_pWeaponInfo->m_iContinuousFireDamageIncrease;
+	m_flBlastRadiusIncrease += m_pWeaponInfo->m_flContinuousFireBlastRadiusIncrease;
 #ifdef GAME_DLL
 	if ( kqly == pPlayer->trickshot )
 		pPlayer->trickshot = 0;
@@ -701,11 +705,11 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	if ( pProjectile )
 	{
 		CTFSuperRocketLauncher *pQuad = dynamic_cast<CTFSuperRocketLauncher*>(this);
-		if( pQuad )
+		if( pQuad && pQuad->m_bHoming )
 		{
 			if( !pQuad->m_hTargetDot )
 				pQuad->CreateTargetDot();
-			pProjectile->SetHomingTarget( pQuad->m_hTargetDot );
+			pProjectile->SetHomingTarget( pQuad->m_hTargetDot );		
 		}
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
@@ -888,8 +892,8 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 
 			if (pInfo)
 			{
-				pProjectile->SetDamageRadius(pInfo->m_flDamageRadius);
-				pProjectile->SetDamage(pInfo->m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage);
+				pProjectile->SetDamageRadius(GetDamageRadius());
+				pProjectile->SetDamage(GetDamage());
 			}
 		}
 	}
@@ -991,10 +995,8 @@ float CTFWeaponBaseGun::GetWeaponSpread( void )
 //-----------------------------------------------------------------------------
 float CTFWeaponBaseGun::GetProjectileDamage( void )
 {
-	if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) return (float)m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage;
-	else return (float)m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
+	return (float)GetDamage();
 }
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------

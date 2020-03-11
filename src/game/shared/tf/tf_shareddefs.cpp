@@ -163,6 +163,11 @@ const char *g_aPlayerMutatorNames[] =
 	"TFC",
 };
 
+const char *g_aLoadoutCategories[] =
+{
+	"Cosmetics",
+};
+
 bool IsPlayerClassName( char const *str )
 {
 	for ( int i = 1; i < TF_CLASS_COUNT_ALL; ++i )
@@ -451,7 +456,7 @@ int g_aWeaponDamageTypes[] =
 	DMG_CLUB, //TF_WEAPON_C4
 	DMG_ALWAYSGIB, //TF_WEAPON_BERSERK
 	DMG_DISSOLVE, //TF_WEAPON_PHYSCANNON
-	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_SUPER_ROCKETLAUNCHER,
+	DMG_BLAST,		// TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_CHAINSAW,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,

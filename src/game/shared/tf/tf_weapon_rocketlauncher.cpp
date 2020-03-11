@@ -100,6 +100,8 @@ CTFSuperRocketLauncher::CTFSuperRocketLauncher()
 #endif
 	m_bReloadsSingly = false;
 	m_flLastPingSoundTime = 0;
+	m_bHoming = true;
+	m_bAllowToggle = true;
 }
 
 CTFSuperRocketLauncher::~CTFSuperRocketLauncher()
@@ -174,7 +176,6 @@ void CTFRocketLauncher::ItemPostFrame( void )
 	BaseClass::ItemPostFrame();
 
 #ifdef GAME_DLL
-
 	if ( m_flShowReloadHintAt && m_flShowReloadHintAt < gpGlobals->curtime )
 	{
 		if ( Clip1() < GetMaxClip1() )
@@ -183,27 +184,6 @@ void CTFRocketLauncher::ItemPostFrame( void )
 		}
 		m_flShowReloadHintAt = 0;
 	}
-
-	/*
-	Vector forward;
-	AngleVectors( pOwner->EyeAngles(), &forward );
-	trace_t tr;
-	CTraceFilterSimple filter( pOwner, COLLISION_GROUP_NONE );
-	UTIL_TraceLine( pOwner->EyePosition(), pOwner->EyePosition() + forward * 2000, MASK_SOLID, &filter, &tr );
-
-	if ( tr.m_pEnt &&
-		tr.m_pEnt->IsPlayer() &&
-		tr.m_pEnt->IsAlive() &&
-		tr.m_pEnt->GetTeamNumber() != pOwner->GetTeamNumber() )
-	{
-		m_bLockedOn = true;
-	}
-	else
-	{
-		m_bLockedOn = false;
-	}
-	*/
-
 #endif
 }
 
@@ -294,6 +274,68 @@ CBaseEntity *CTFSuperRocketLauncher::FireRocket( CTFPlayer *pPlayer )
 	return pRet;
 }
 
+void CTFSuperRocketLauncher::ItemBusyFrame( void )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( pOwner && pOwner->m_nButtons & IN_ATTACK2 )
+	{
+		// We need to do this to catch the case of player trying to detonate
+		// pipebombs while in the middle of reloading.
+		if( m_bAllowToggle )
+		{
+			SecondaryAttack();
+			m_bAllowToggle = false;
+		}
+	}
+	else
+		m_bAllowToggle = true;
+	
+#ifdef CLIENT_DLL
+	if ( m_flLastPingSoundTime <= gpGlobals->curtime )
+	{
+		if ( m_pEffect )
+		{
+			ParticleProp()->StopEmission( m_pEffect );
+			m_pEffect = NULL;
+		}
+	}
+#endif
+
+	if ( m_bHoming && m_flLastPingSoundTime <= gpGlobals->curtime )
+	{
+		// PING!
+#ifdef CLIENT_DLL
+		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+		{
+			if ( pLocalPlayer->GetViewModel() )
+			{
+				if ( m_pEffect )
+				{
+					ParticleProp()->StopEmission( m_pEffect );
+					m_pEffect = NULL;
+				}
+
+				if ( !m_pEffect )
+					m_pEffect = pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
+			}
+		}
+#endif
+		m_flLastPingSoundTime = gpGlobals->curtime + 1.0f;
+		WeaponSound( SPECIAL3 );
+	}
+
+#ifdef GAME_DLL
+	// Update the sniper dot position if we have one
+	if ( m_hTargetDot )
+	{
+		UpdateTargetDot();
+	}
+#endif	
+	
+	BaseClass::ItemBusyFrame();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Detonate the Rockets if secondary fire is down.
 //-----------------------------------------------------------------------------
@@ -304,10 +346,16 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 	{
 		// We need to do this to catch the case of player trying to detonate
 		// pipebombs while in the middle of reloading.
-		SecondaryAttack();
+		if( m_bAllowToggle )
+		{
+			SecondaryAttack();
+			m_bAllowToggle = false;
+		}
 	}
+	else
+		m_bAllowToggle = true;
 #ifdef CLIENT_DLL
-	else if ( m_flLastPingSoundTime <= gpGlobals->curtime )
+	if ( m_flLastPingSoundTime <= gpGlobals->curtime )
 	{
 		if ( m_pEffect )
 		{
@@ -316,6 +364,30 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 		}
 	}
 #endif
+
+	if ( m_bHoming && m_flLastPingSoundTime <= gpGlobals->curtime )
+	{
+		// PING!
+#ifdef CLIENT_DLL
+		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+		{
+			if ( pLocalPlayer->GetViewModel() )
+			{
+				if ( m_pEffect )
+				{
+					ParticleProp()->StopEmission( m_pEffect );
+					m_pEffect = NULL;
+				}
+
+				if ( !m_pEffect )
+					m_pEffect = pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
+			}
+		}
+#endif
+		m_flLastPingSoundTime = gpGlobals->curtime + 1.0f;
+		WeaponSound( SPECIAL3 );
+	}
 
 #ifdef GAME_DLL
 	// Update the sniper dot position if we have one
@@ -333,40 +405,8 @@ void CTFSuperRocketLauncher::ItemPostFrame( void )
 //-----------------------------------------------------------------------------
 void CTFSuperRocketLauncher::SecondaryAttack( void )
 {
-	if ( !CanAttack() || !CanSecondaryAttack() )
-		return;
-
-	if ( m_iRocketCount )
-	{
-		// Get a valid player.
-		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-		if ( !pPlayer )
-			return;
-		//If one or more pipebombs failed to detonate then play a sound.
-		if ( DetonateRockets() && m_flLastPingSoundTime <= gpGlobals->curtime )
-		{
-			// PING!
-#ifdef CLIENT_DLL
-			C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
-			if ( pLocalPlayer && pLocalPlayer == GetOwner() )
-			{
-				if ( pLocalPlayer->GetViewModel() )
-				{
-					if ( m_pEffect )
-					{
-						ParticleProp()->StopEmission( m_pEffect );
-						m_pEffect = NULL;
-					}
-
-					if ( !m_pEffect )
-						m_pEffect = pLocalPlayer->GetViewModel()->ParticleProp()->Create( "quad_ping", PATTACH_POINT_FOLLOW, "ping" );
-				}
-			}
-#endif
-			m_flLastPingSoundTime = gpGlobals->curtime + 1;
-			WeaponSound( SPECIAL3 );
-		}	
-	}
+	if( m_bAllowToggle )
+		SwitchHomingModes();
 }
 
 //-----------------------------------------------------------------------------
@@ -389,27 +429,36 @@ void CTFSuperRocketLauncher::DeathNotice( CBaseEntity *pVictim )
 //-----------------------------------------------------------------------------
 // Purpose: Remove *with* explosions
 //-----------------------------------------------------------------------------
-bool CTFSuperRocketLauncher::DetonateRockets()
+void CTFSuperRocketLauncher::SwitchHomingModes()
 {
 	int count = m_Rockets.Count();
-
-	bool bDetonated = true;
+	
+	m_bHoming = !m_bHoming;
+	
+	DevMsg("Switched modes to %d\n", m_bHoming);
 	
 	for ( int i = 0; i < count; i++ )
 	{
 		CTFBaseRocket *pTemp = m_Rockets[i];
 		if ( pTemp )
 		{
-			//This guy will die soon enough.
-			if ( pTemp->IsEffectActive( EF_NODRAW ) || pTemp->m_flCreationTime + of_quad_explode_delay.GetFloat() > gpGlobals->curtime )
-				continue;
 #ifdef GAME_DLL
-			pTemp->Detonate();
+			if( m_bHoming )
+			{
+				if( !m_hTargetDot )
+					CreateTargetDot();
+				pTemp->SetHomingTarget( m_hTargetDot );
+			}
+			else
+			{
+				if( m_hTargetDot )
+					DestroyTargetDot();
+				pTemp->SetHoming( false );
+//				pTemp->SetHomingTarget( NULL );				
+			}
 #endif
-			bDetonated = true;
 		}
 	}
-	return bDetonated;
 }
 
 bool CTFSuperRocketLauncher::Reload( void )
@@ -426,7 +475,17 @@ bool CTFSuperRocketLauncher::CanHolster( void )
 
 	return BaseClass::CanHolster();
 }
-
+#ifdef CLIENT_DLL
+bool CTFSuperRocketLauncher::Holster( CBaseCombatWeapon *pSwitchingTo )
+{
+	if ( m_pEffect )
+	{
+		ParticleProp()->StopEmission( m_pEffect );
+		m_pEffect = NULL;
+	}
+	return BaseClass::Holster( pSwitchingTo );
+}
+#endif
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -530,9 +589,13 @@ BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_iRocketCount ) ),
 	RecvPropInt( RECVINFO( m_bTargeting ) ),
+	RecvPropBool( RECVINFO( m_bHoming ) ),
+	RecvPropBool( RECVINFO( m_bAllowToggle ) ),
 #else
 	SendPropInt( SENDINFO( m_iRocketCount ), 5, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bTargeting ) ),
+	SendPropBool( SENDINFO( m_bHoming ) ),
+	SendPropBool( SENDINFO( m_bAllowToggle ) ),
 #endif
 END_NETWORK_TABLE()
 

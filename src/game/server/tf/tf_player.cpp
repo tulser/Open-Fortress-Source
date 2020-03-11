@@ -79,6 +79,8 @@
 #include "entity_healthkit.h"
 #include "of_dropped_powerup.h"
 
+#include "dt_utlvector_send.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -106,6 +108,8 @@ extern ConVar	of_crit_multiplier;
 extern ConVar	of_randomizer;
 extern ConVar	of_randomizer_setting;
 
+extern ConVar	of_headshots;
+
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
 ConVar tf_playerstatetransitions	( "tf_playerstatetransitions", "-2", FCVAR_CHEAT, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
@@ -124,7 +128,6 @@ ConVar tf_damage_range					( "tf_damage_range", "0.5", FCVAR_CHEAT );
 
 ConVar tf_max_voice_speak_delay			( "tf_max_voice_speak_delay", "1.5", FCVAR_REPLICATED , "Max time delay between a player's voice commands." );
 
-ConVar of_headshots			( "of_headshots", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Makes all hitscan weapons headshot when set. 2 will force headshots only damage." );
 ConVar of_forcespawnprotect	( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Manually define how long the spawn protection lasts." );
 ConVar of_instantrespawn	( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawning." );
 ConVar of_dropweapons		( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow manual weapon dropping." );
@@ -416,8 +419,11 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
 
 	SendPropBool( SENDINFO( m_iSpawnCounter ) ),
+//	SendPropBool( SENDINFO( m_bUpdateCosmetics ) ),
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
+
+//	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
 
 END_SEND_TABLE()
 
@@ -513,6 +519,8 @@ CTFPlayer::CTFPlayer()
 	
 	m_bPuppet = false;
 	
+//	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
+	
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
 }
@@ -605,6 +613,8 @@ CTFPlayer::~CTFPlayer()
 {
 	DestroyRagdoll();
 	m_PlayerAnimState->Release();
+	
+//	kvDesiredCosmetics->deleteThis();
 }
 
 
@@ -1025,6 +1035,7 @@ void CTFPlayer::InitialSpawn( void )
 
 	SetWeaponBuilder( NULL );
 	
+//	m_bUpdateCosmetics = !m_bUpdateCosmetics;
 	
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
@@ -1224,9 +1235,27 @@ void CTFPlayer::Spawn()
 	m_Shared.m_flNextLungeTime = 0.0f;
 
 	UpdatePlayerColor();
-
-	for( int i = 0; i < GetWearableCount(); i++)
-		m_Shared.RemoveHat(i);
+/*
+	DevMsg("SPAWNED\n");
+	
+	m_iCosmetics.Purge();
+	NetworkStateChanged();
+	
+	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
+	{
+		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
+		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
+		{
+			DevMsg("SERVER: Add Cosmetic to tail: %f\n", pHat->GetFloat());
+			m_iCosmetics.AddToTail(pHat->GetFloat());
+			NetworkStateChanged();
+		}
+		kvDesiredCosmetics->deleteThis();
+		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
+	}
+	
+	m_bUpdateCosmetics = !m_bUpdateCosmetics;
+*/
 	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
 		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
@@ -1234,7 +1263,6 @@ void CTFPlayer::Spawn()
 			iCosmetic = random->RandomInt( 0, GetWearableCount() );
 		m_Shared.WearHat(iCosmetic);
 	}
-
 	// Gore
 	m_iGoreHead = 0;
 	m_iGoreLeftArm = 0;
@@ -1747,57 +1775,50 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
 	int pWeaponSlot[2];
 	if ( of_startloadout.GetInt() > 0 )
-	for ( int iWeapon = 0; iWeapon < GetCarriedWeapons()+5 ; iWeapon++ )
 	{
-		if ( pData->m_aWeapons[iWeapon] != TF_WEAPON_NONE )
+		for ( int iWeapon = 0; iWeapon < GetDesiredWeaponCount( pData ); iWeapon++ )
 		{
-			int iWeaponID = pData->m_aWeapons[iWeapon];
-			const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
-		
-			pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-			//If we already have a weapon in this slot but is not the same type then nuke it (changed classes)
-			if ( pWeapon && pWeapon->GetWeaponID() != iWeaponID )
+			if ( GetDesiredWeapon( iWeapon, pData ) != TF_WEAPON_NONE )
 			{
-				Weapon_Detach( pWeapon );
-				UTIL_Remove( pWeapon );
-			}
+				int iWeaponID = GetDesiredWeapon( iWeapon, pData );
+				const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
 
-			pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
-		
-			if ( pWeapon )
-			{
-				pWeapon->ChangeTeam( GetTeamNumber() );
-				pWeapon->GiveDefaultAmmo();
-
-				if ( m_bRegenerating == false )
+				pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
+				if ( pWeapon )
 				{
-					pWeapon->WeaponReset();
+					pWeapon->ChangeTeam( GetTeamNumber() );
+					pWeapon->GiveDefaultAmmo();
+
+					if ( m_bRegenerating == false )
+					{
+						pWeapon->WeaponReset();
+					}
+				}
+				else
+				{
+					pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
+
+					if ( pWeapon )
+					{
+						pWeapon->DefaultTouch( this );
+						if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID() != TF_WEAPON_INVIS )
+						{
+							pWeaponSlot[1] = pWeaponSlot[0];
+							pWeaponSlot[0] = pWeapon->GetSlot();
+						}
+					}
 				}
 			}
 			else
 			{
-				pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
-
-				if ( pWeapon )
+				//I shouldn't have any weapons in this slot, so get rid of it
+				CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+				//Don't nuke builders since they will be nuked if we don't need them later.
+				if ( pCarriedWeapon && pCarriedWeapon->GetWeaponID() != TF_WEAPON_BUILDER )
 				{
-					pWeapon->DefaultTouch( this );
-					if ( pWeapon->GetWeaponID() != TF_WEAPON_BUILDER && pWeapon->GetWeaponID() != TF_WEAPON_INVIS )
-					{
-						pWeaponSlot[1] = pWeaponSlot[0];
-						pWeaponSlot[0] = pWeapon->GetSlot();
-					}
+					Weapon_Detach( pCarriedWeapon );
+					UTIL_Remove( pCarriedWeapon );
 				}
-			}
-		}
-		else
-		{
-			//I shouldn't have any weapons in this slot, so get rid of it
-			CTFWeaponBase *pCarriedWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-			//Don't nuke builders since they will be nuked if we don't need them later.
-			if ( pCarriedWeapon && pCarriedWeapon->GetWeaponID() != TF_WEAPON_BUILDER )
-			{
-				Weapon_Detach( pCarriedWeapon );
-				UTIL_Remove( pCarriedWeapon );
 			}
 		}
 	}
@@ -1808,6 +1829,33 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 		Weapon_SetLast( Weapon_GetSlot( pWeaponSlot[1] ) );
 	}
 
+}
+
+int CTFPlayer::GetDesiredWeaponCount( TFPlayerClassData_t *pData )
+{
+	if( TFGameRules() && TFGameRules()->m_hLogicLoadout.Count() )
+	{
+		for( int i = 0; i < TFGameRules()->m_hLogicLoadout.Count(); i++ )
+		{
+			if ( ( TFGameRules()->m_hLogicLoadout[i]->m_iClass == 0 || TFGameRules()->m_hLogicLoadout[i]->m_iClass == GetPlayerClass()->GetClassIndex() ) && TFGameRules()->m_hLogicLoadout[i]->hWeaponNames.Count() )
+				return TFGameRules()->m_hLogicLoadout[i]->hWeaponNames.Count();
+		}
+	}
+	
+	return pData->m_aWeapons.Count();
+}
+
+int CTFPlayer::GetDesiredWeapon( int iWeapon, TFPlayerClassData_t *pData )
+{
+	if( TFGameRules() && TFGameRules()->m_hLogicLoadout.Count() )
+	{
+		for( int i = 0; i < TFGameRules()->m_hLogicLoadout.Count(); i++ )
+		{
+			if ( ( TFGameRules()->m_hLogicLoadout[i]->m_iClass == 0 || TFGameRules()->m_hLogicLoadout[i]->m_iClass == GetPlayerClass()->GetClassIndex() ) && TFGameRules()->m_hLogicLoadout[i]->hWeaponNames.Count())
+				return TFGameRules()->m_hLogicLoadout[i]->hWeaponNames[iWeapon];
+		}
+	}
+	return pData->m_aWeapons[iWeapon];
 }
 
 //-----------------------------------------------------------------------------
@@ -2759,6 +2807,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		// Bots MUST join a team
 		if ( TFGameRules()->WouldChangeUnbalanceTeams( iTeam, GetTeamNumber() ) && !IsFakeClient() )
 		{
+			DevMsg("Unbalanced\n");
 			ShowViewPortPanel( PANEL_TEAM );
 			return;
 		}
@@ -3652,6 +3701,30 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		data->deleteThis();
 	}
+	/*
+	else if( FStrEq( pcmd, "set_desired_cosmetic" ) )
+	{
+		DevMsg("Desired cosmetic set\n");
+		// args[1] if ever needed, this will check the class
+		KeyValues *pCosmetic = GetCosmetic( abs( atoi(args[2]) ) );
+		if( !pCosmetic )
+			return false;
+		
+		const char *szRegion = pCosmetic->GetString( "region", "none" );
+		if( kvDesiredCosmetics )
+			kvDesiredCosmetics->SetString( szRegion, args[2] );
+		else
+			return false;
+		return true;
+	}
+	else if( FStrEq( pcmd, "clear_desired_cosmetics" ) )
+	{
+		if( kvDesiredCosmetics )
+			kvDesiredCosmetics->deleteThis();
+		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
+		return true;
+	}
+	*/
 	/*	else if ( FStrEq( pcmd, "condump_on" ) )
 	{
 		if ( !PlayerHasPowerplay() )
@@ -5508,7 +5581,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	DropAmmoPack();
 	int Clip = -1;
 	int Reserve = -1;
-	if ( !of_fullammo.GetBool() )
+
+	if ( !of_fullammo.GetBool() || m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
@@ -5532,11 +5606,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			CTFWeaponBase *pSuperWeapon = m_hSuperWeapons[i].Get();
 			if ( pSuperWeapon )
 			{
-				if ( !of_fullammo.GetBool() )
-				{
-					Clip = pSuperWeapon->m_iClip1;
-					Reserve = pSuperWeapon->m_iReserveAmmo;
-				}
+				Clip = pSuperWeapon->m_iClip1;
+				Reserve = pSuperWeapon->m_iReserveAmmo;
 				DropWeapon( pSuperWeapon, false, false ,Clip, Reserve );
 			}
 		}
@@ -6176,20 +6247,6 @@ void CC_DropWeapon( void )
 		pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
 }
 static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
-
-void ReParseActiveWeapon( void )
-{
-	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
-	if ( !pPlayer )
-		return;
-	
-	if( !pPlayer->m_Shared.GetActiveTFWeapon() )
-		return;
-		
-	pPlayer->m_Shared.GetActiveTFWeapon()->ParseWeaponScript( true );
-}
-static ConCommand schema_reload_active_weapon( "schema_reload_active_weapon", ReParseActiveWeapon, "Re-Parses Your current weapon", FCVAR_CHEAT );
-
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 void CC_GiveHealthAmmo( void )
@@ -6263,17 +6320,9 @@ CON_COMMAND( give_money, "Give yourself a certain amount of currency.\n\tArgumen
 //-----------------------------------------------------------------------------
 CTFWeaponBase *CTFPlayer::GetWeaponInSlot( int iSlot, int iSlotPos )
 {
-	for ( int i = 0; i < MAX_WEAPONS; i++ )
-	{
-		CTFWeaponBase *pWeapon =(CTFWeaponBase*)GetWeapon(i);
-
-		if ( pWeapon == NULL )
-			continue;
-
-		if ( pWeapon->GetSlot() == iSlot && pWeapon->GetPosition() == iSlotPos )
-			return pWeapon;
-	}
-	
+	if( m_hWeaponInSlot[iSlot][iSlotPos] )
+		return m_hWeaponInSlot[iSlot][iSlotPos];
+	DevMsg("Failed to find a weapon\n");
 	return NULL;
 }
 
@@ -6613,7 +6662,7 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	DropAmmoPack();
 	int Clip = -1;
 	int Reserve = -1;
-	if ( !of_fullammo.GetBool() )
+	if ( !of_fullammo.GetBool() || m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;

@@ -120,6 +120,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual int GetWeaponID( void ) const;
 	bool IsWeapon( int iWeapon ) const;
 	virtual int	GetDamageType() const { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
+	float GetDamageRadius( void ) const;
 	
 	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }
 
@@ -338,6 +339,8 @@ protected:
 
 	CNetworkVar( int, m_iShotsDue );
 	CNetworkVar( bool, m_bInBarrage );
+	CNetworkVar( int, m_iDamageIncrease );
+	CNetworkVar( float, m_flBlastRadiusIncrease );
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };

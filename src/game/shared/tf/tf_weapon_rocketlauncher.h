@@ -102,11 +102,15 @@ public:
 	virtual	void	AddRocket( CTFBaseRocket *pRocket );
 	virtual bool	Reload( void );
 	virtual	void	SecondaryAttack( void );
-	virtual	bool	DetonateRockets( void );
+	virtual	void	SwitchHomingModes( void );
 	virtual void	ItemPostFrame( void );
+	virtual void 	ItemBusyFrame( void );
 	virtual	void	DeathNotice( CBaseEntity *pVictim );
 	virtual bool 	CanSoftZoom( void ) { return false; }
 	virtual	bool	CanHolster( void );
+#ifdef CLIENT_DLL
+	virtual	bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+#endif
 
 #ifdef CLIENT_DLL
 	CNewParticleEffect *m_pEffect;
@@ -115,6 +119,8 @@ public:
 #endif
 
 	float m_flLastPingSoundTime;
+	CNetworkVar( bool, m_bHoming );
+	CNetworkVar( bool, m_bAllowToggle );
 public:
 
 	void CreateTargetDot( void );

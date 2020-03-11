@@ -89,8 +89,6 @@ inline int GetEnemyTeam( CBaseEntity *ent )
 bool IsTeamName( const char *name );
 
 extern const char *g_aTeamNames[TF_TEAM_COUNT];
-extern const char *TF_WEARABLE_MODEL[];
-extern int TF_WEARABLE_COUNT;
 extern color32 g_aTeamColors[TF_TEAM_COUNT];
 
 #define COLOR_TF_SPECTATOR Color( 245, 229, 196, 255 )
@@ -202,7 +200,8 @@ enum
 extern const char *g_aPlayerFirstPersonArms[];
 extern const char *g_aPlayerClassNames[];				// localized class names
 extern const char *g_aPlayerClassNames_NonLocalized[];	// non-localized class names
-extern const char *g_aPlayerMutatorNames[];	// non-localized class names
+extern const char *g_aPlayerMutatorNames[];	// non-localized mutator names, used for special voice lines
+extern const char *g_aLoadoutCategories[];
 
 bool IsPlayerClassName( const char *name );
 int GetClassIndexFromString( const char *name, int maxClass );

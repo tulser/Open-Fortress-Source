@@ -94,6 +94,8 @@ void C_TFProjectile_Rocket::CreateRocketTrails(void)
 void C_TFProjectile_Rocket::CreateLightEffects(void)
 {
 	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
+	if( !pPlayer )
+		return;
 	// Handle the dynamic light
 	if (of_muzzlelight.GetBool())
 	{

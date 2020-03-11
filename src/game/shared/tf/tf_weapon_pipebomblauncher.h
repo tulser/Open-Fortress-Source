@@ -105,6 +105,8 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_DYNAMITE_BUNDLE; }
+//	virtual acttable_t *ActivityList(int &iActivityCount);
+//	static acttable_t m_acttableDynamiteBundle[];	
 };
 
 

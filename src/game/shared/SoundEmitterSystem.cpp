@@ -1491,6 +1491,8 @@ void CBaseEntity::EmitCloseCaption( IRecipientFilter& filter, int entindex, char
 			fromplayer = true;
 			break;
 		}
+		if( ent == ent->GetOwnerEntity() )
+			break;
 		ent = ent->GetOwnerEntity();
 	}
 

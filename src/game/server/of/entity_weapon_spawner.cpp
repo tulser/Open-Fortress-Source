@@ -301,13 +301,13 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 					}
 				}
 			}
-			if ( weaponstay.GetBool() )																		 // Leave the weapon spawner active if weaponstay is on
+			if ( weaponstay.GetBool() && !pWeaponInfo->m_bAlwaysDrop )			// Leave the weapon spawner active if weaponstay is on
 			{
 				bSuccess = false;
 			}
 			else
 			{
-				m_nRenderFX = kRenderFxDistort;																	 // Otherwise add the distort effect
+				m_nRenderFX = kRenderFxDistort;		// Otherwise add the distort effect
 			}
 		}
 	}

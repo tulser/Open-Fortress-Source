@@ -117,7 +117,7 @@ public:
 	bool	m_bGibOnHeadshot;	
 	// Used exclusivley for the Berserk powerup for now so that you don't loose it in gun game
 	bool	m_bNeverStrip;
-	// Bomblet functions for the dynamite pack, may be used in the BFG later
+	// Bomblet functions for the dynamite pack and GIB
 	bool 	m_bDropBomblets;
 	int 	m_iBombletAmount;
 	
@@ -138,6 +138,9 @@ public:
 	bool	m_bLoadsManualy;
 	bool	m_bNoSniperCharge;
 	bool	m_bAlwaysDrop;
+	
+	int		m_iContinuousFireDamageIncrease;
+	float	m_flContinuousFireBlastRadiusIncrease;
 	
 	// Mag
 	char    m_szMagModel[128];

@@ -94,6 +94,9 @@ CTFWeaponInfo::CTFWeaponInfo()
 	
 	m_flFuseTime = -1.0f;
 	m_flImpactBeforeTime = 0.0f;
+	
+	m_iContinuousFireDamageIncrease = 0.0f;
+	m_flContinuousFireBlastRadiusIncrease = 0.0f;
 
 	m_flMinViewmodelOffsetX = 0.0f;
 	m_flMinViewmodelOffsetY = 0.0f;
@@ -280,6 +283,9 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
 	m_bSwapFireAnims = pKeyValuesData->GetBool( "SwapFireAnims", 0 );
 	m_bNoFixedSpread = pKeyValuesData->GetBool( "NoFixedSpread", 0 );
+	
+	m_iContinuousFireDamageIncrease = pKeyValuesData->GetInt( "ContinuousFire_DamageIncrease", 0 );
+	m_flContinuousFireBlastRadiusIncrease = pKeyValuesData->GetFloat( "ContinuousFire_BlastRadiusIncrease", 0.0f );
 	
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );

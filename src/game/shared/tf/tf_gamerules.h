@@ -63,6 +63,30 @@ enum
 	GUN_GAME = 6,
 };
 
+extern void ParseSoundManifest( void );
+extern void ParseLevelSoundManifest( void );
+extern KeyValues *GetSoundscript( const char *szSoundScript );
+
+extern KeyValues* GlobalSoundManifest();
+extern void InitGlobalSoundManifest();
+
+extern KeyValues* LevelSoundManifest();
+extern void InitLevelSoundManifest();
+
+extern void ParseItemsGame( void );
+extern void InitItemsGame();
+extern KeyValues* GetItemsGame();
+
+extern KeyValues* GetCosmetic( int iID );
+
+#ifdef CLIENT_DLL
+extern KeyValues* GetLoadout();
+extern void ParseLoadout( void );
+extern void ResetLoadout( void );
+#endif
+
+extern void CheckGlobalSounManifest( void );
+
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
 {
 public:
@@ -110,6 +134,20 @@ public:
 #endif
 };
 
+class CTFLogicLoadout : public CBaseEntity
+{
+public:
+	DECLARE_CLASS(CTFLogicLoadout, CBaseEntity);
+
+	virtual bool KeyValue( const char *szKeyName, const char *szValue );
+	virtual void	Spawn( void );
+#ifdef GAME_DLL
+	DECLARE_DATADESC();
+	int			m_iClass;
+	CUtlVector<int> hWeaponNames;
+#endif
+};
+
 class CTFLogicDM : public CBaseEntity
 {
 public:
@@ -129,7 +167,6 @@ public:
 	DECLARE_CLASS(CTFLogicGG, CBaseEntity);
 	CTFLogicGG();
 
-	virtual void Spawn(void);
 	virtual bool KeyValue( const char *szKeyName, const char *szValue );
 
 #ifdef GAME_DLL
@@ -385,6 +422,10 @@ public:
 
 	CNetworkVar( int, m_iCosmeticCount ); 
 
+#ifdef GAME_DLL
+	CUtlVector<CHandle<CTFLogicLoadout> > m_hLogicLoadout;
+#endif
+	
 #ifdef CLIENT_DLL
 
 	DECLARE_CLIENTCLASS_NOBASE(); // This makes data tables able to access our private vars.
@@ -498,7 +539,7 @@ private:
 
 	CUtlVector<CHandle<CHealthKit> > m_hDisabledHealthKits;	
 	CUtlVector<CHandle<CAmmoPack> >  m_hDisabledAmmoPack;	
-	CUtlVector<CHandle<CWeaponSpawner> >  m_hDisabledWeaponSpawners;	
+	CUtlVector<CHandle<CWeaponSpawner> >  m_hDisabledWeaponSpawners;
 	
 	char	m_szMostRecentCappers[MAX_PLAYERS+1];	// list of players who made most recent capture.  Stored as string so it can be passed in events.
 	int		m_iNumCaps[TF_TEAM_COUNT];				// # of captures ever by each team during a round

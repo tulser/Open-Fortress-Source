@@ -432,6 +432,8 @@ public:
 	
 public:
 	CNetworkVector( m_vecPlayerColor );
+//	CUtlVector<float> m_iCosmetics;
+//	KeyValues *kvDesiredCosmetics;
 	CTFPlayerShared m_Shared;
 	int	    item_list;			// Used to keep track of which goalitems are 
 								// affecting the player at any time.
@@ -484,6 +486,9 @@ public:
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
 	void				ManageCustomSpawnWeapons( TFPlayerClassData_t *pData );
+	
+	int 				GetDesiredWeaponCount( TFPlayerClassData_t *pData );
+	int 				GetDesiredWeapon( int iWeapon, TFPlayerClassData_t *pData );
 	
 	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
 	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
@@ -643,6 +648,8 @@ private:
 	bool				m_bAbortFreezeCam;
 	bool				m_bSeenRoundInfo;
 	bool				m_bRegenerating;
+	
+	CNetworkVar( bool, m_bUpdateCosmetics );
 
 	// Items.
 	CNetworkHandle( CTFItem, m_hItem );

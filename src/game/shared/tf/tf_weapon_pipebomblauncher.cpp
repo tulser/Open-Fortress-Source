@@ -472,3 +472,39 @@ bool CTFPipebombLauncher::Reload( void )
 
 	return BaseClass::Reload();
 }
+/*
+acttable_t CTFDynamite::m_acttableDynamiteBundle[] =
+{
+	{ ACT_MP_STAND_IDLE, ACT_MERC_STAND_DYNAMITE, false },
+	{ ACT_MP_CROUCH_IDLE, ACT_MERC_CROUCH_DYNAMITE, false },
+	{ ACT_MP_RUN, ACT_MERC_RUN_DYNAMITE, false },
+	{ ACT_MP_WALK, ACT_MERC_WALK_DYNAMITE, false },
+	{ ACT_MP_AIRWALK, ACT_MERC_AIRWALK_DYNAMITE, false },
+	{ ACT_MP_CROUCHWALK, ACT_MERC_CROUCHWALK_DYNAMITE, false },
+	{ ACT_MP_JUMP, ACT_MERC_JUMP_DYNAMITE, false },
+	{ ACT_MP_JUMP_START, ACT_MERC_JUMP_START_DYNAMITE, false },
+	{ ACT_MP_JUMP_FLOAT, ACT_MERC_JUMP_FLOAT_DYNAMITE, false },
+	{ ACT_MP_JUMP_LAND, ACT_MERC_JUMP_LAND_DYNAMITE, false },
+	{ ACT_MP_SWIM, ACT_MERC_SWIM_DYNAMITE, false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_MERC_ATTACK_STAND_DYNAMITE, false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_MERC_ATTACK_CROUCH_DYNAMITE, false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE, ACT_MERC_ATTACK_SWIM_DYNAMITE, false },
+
+	{ ACT_MP_RELOAD_STAND, ACT_MERC_RELOAD_STAND_DYNAMITE, false },
+	{ ACT_MP_RELOAD_CROUCH, ACT_MERC_RELOAD_CROUCH_DYNAMITE, false },
+	{ ACT_MP_RELOAD_SWIM, ACT_MERC_RELOAD_SWIM_DYNAMITE, false },
+};
+
+acttable_t *CTFDynamite::ActivityList(int &iActivityCount)
+{
+	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
+	{
+		iActivityCount = ARRAYSIZE(m_acttableDynamiteBundle);
+		return m_acttableDynamiteBundle;
+	}
+	else
+	{
+		return BaseClass::ActivityList(iActivityCount);
+	}
+}*/

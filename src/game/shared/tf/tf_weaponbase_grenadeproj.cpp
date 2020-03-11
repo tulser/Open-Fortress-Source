@@ -225,7 +225,7 @@ void CTFWeaponBaseGrenadeProj::InitGrenade( const Vector &velocity, const Angula
 	if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE )  SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nDamage );
 	else SetDamage( weaponInfo.GetWeaponData( TF_WEAPON_PRIMARY_MODE ).m_nInstagibDamage );
 	
-	SetDamageRadius( weaponInfo.m_flDamageRadius );
+	SetDamageRadius( pWeapon ? pWeapon->GetDamageRadius() : weaponInfo.m_flDamageRadius );
 
 	if ( pOwner )
 		ChangeTeam( pOwner->GetTeamNumber() );

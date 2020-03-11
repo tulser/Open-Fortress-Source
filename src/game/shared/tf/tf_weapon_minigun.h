@@ -103,6 +103,7 @@ private:
 	void				OnDataChanged( DataUpdateType_t type );
 		
 	virtual void	ItemPreFrame( void );
+	virtual void	ItemBusyFrame( void );
 	
 	// Firing sound
 	void				WeaponSoundUpdate( void );

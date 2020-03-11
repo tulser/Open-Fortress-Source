@@ -37,7 +37,7 @@
 #include "voice_gamemgr.h"
 #include "tf_player.h"
 #include "tf_weaponbase.h"
-
+#include "tf_gamerules.h"
 
 #ifdef HL2_DLL
 #include "weapon_physcannon.h"
@@ -902,12 +902,49 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		}
 
 		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
-		CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem( STRING(iszItem) );  // Create the specified weapon
-		if( pGivenWeapon )
-			if( !pPlayer->OwnsWeaponID( pGivenWeapon->GetWeaponID() ) )
-				pGivenWeapon->GiveTo( pPlayer ); 
-			else
-				pGivenWeapon = NULL;
+		
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( STRING(iszItem) );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );		
+		if( !pWeaponInfo )
+			return;
+		
+		int iSlot;
+
+		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
+			iSlot = pWeaponInfo->iSlotDM;
+		else if ( pWeaponInfo->m_iClassSlot[ pPlayer->GetPlayerClass()->GetClassIndex() ] != -1 )
+			iSlot = pWeaponInfo->m_iClassSlot[ pPlayer->GetPlayerClass()->GetClassIndex() ];
+		else
+			iSlot = pWeaponInfo->iSlot;
+		
+		int iPos = pWeaponInfo->iPosition;
+		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
+			iPos = pWeaponInfo->iPositionDM;		
+		
+		if( pPlayer->m_hWeaponInSlot[iSlot][iPos] )
+			UTIL_Remove(pPlayer->m_hWeaponInSlot[iSlot][iPos]);
+			
+		EHANDLE pent;
+
+		pent = CreateEntityByName(STRING(iszItem));
+		if ( pent == NULL )
+		{
+			Msg( "NULL Ent in Give Weapon!\n" );
+			return;
+		}
+
+		pent->SetLocalOrigin( pPlayer->GetLocalOrigin() );
+		pent->AddSpawnFlags( SF_NORESPAWN );
+
+		CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( (CBaseEntity*)pent );
+
+		DispatchSpawn( pent );
+
+		if( pWeapon )
+		{
+			pWeapon->GiveTo( pPlayer ); 
+		}
+		pPlayer->Weapon_Switch( pWeapon );
 	}
 }
 
