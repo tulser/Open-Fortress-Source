@@ -549,6 +549,9 @@ void CTFPlayer::TFPlayerThink()
 	if ( of_dynamic_color_update.GetBool() )
 		UpdatePlayerColor();
 
+	for( int i = 0; i < GetWearableCount(); i++)
+		m_Shared.RemoveHat(i);	
+	
 	TauntEffectThink();
 
 	if ( TFGameRules() )
