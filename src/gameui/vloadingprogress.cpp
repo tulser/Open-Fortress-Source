@@ -58,6 +58,8 @@ LoadingProgress::LoadingProgress(Panel *parent, const char *panelName, LoadingWi
 	m_pBGImage = NULL;
 	m_pPoster = NULL;
 
+	m_pCancelButton = new vgui::Button(this, "CancelButton", "");
+
 	m_pFooter = NULL;
 
 	// purposely not pre-caching the poster images
@@ -113,6 +115,18 @@ void LoadingProgress::OnThink()
 //=============================================================================
 void LoadingProgress::OnCommand(const char *command)
 {
+	if ( !stricmp(command, "Cancel") )
+	{
+		// disconnect from the server
+		engine->ClientCmd_Unrestricted("disconnect\n");
+
+		// close
+		Close();
+	}
+	else
+	{
+		BaseClass::OnCommand(command);
+	}
 }
 
 //=============================================================================
@@ -343,6 +357,9 @@ void LoadingProgress::PaintBackground()
 		surface()->DrawTexturedRect(x, y, x + nIntegerWide, y + tall);
 	}
 
+	if ( m_pCancelButton )
+		m_pCancelButton->SetVisible(true);
+
 	// Need to call this periodically to collect sign in and sign out notifications,
 	// do NOT dispatch events here in the middle of loading and rendering!
 	if ( ThreadInMainThread() )
@@ -408,6 +425,8 @@ void LoadingProgress::SetupControlStates()
 	}
 
 	m_pFooter = dynamic_cast< vgui::EditablePanel* >( FindChildByName( "CampaignFooter" ) );
+
+	m_pCancelButton  = dynamic_cast< vgui::Button* >( FindChildByName( "CancelButton" ) );
 
 	m_pBGImage = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "BGImage" ) );
 	if ( m_pBGImage )

@@ -72,6 +72,7 @@ private:
 	vgui::ImagePanel	*m_pBGImage;
 	vgui::ImagePanel	*m_pPoster; 
 	vgui::EditablePanel *m_pFooter;
+	vgui::Button		*m_pCancelButton;
 	LoadingType			m_LoadingType;
 	LoadingWindowType	m_LoadingWindowType;
 
