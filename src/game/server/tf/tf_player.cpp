@@ -548,9 +548,6 @@ void CTFPlayer::TFPlayerThink()
 	
 	if ( of_dynamic_color_update.GetBool() )
 		UpdatePlayerColor();
-
-	for( int i = 0; i < GetWearableCount(); i++)
-		m_Shared.RemoveHat(i);	
 	
 	TauntEffectThink();
 
@@ -1259,6 +1256,10 @@ void CTFPlayer::Spawn()
 	
 	m_bUpdateCosmetics = !m_bUpdateCosmetics;
 */
+	
+	for( int i = 0; i < GetWearableCount(); i++)
+		m_Shared.RemoveHat(i);	
+	
 	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 	{
 		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
