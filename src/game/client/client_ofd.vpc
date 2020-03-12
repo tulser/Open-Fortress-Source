@@ -122,8 +122,6 @@ $Project "Client (OFD)"
 		$File	"TeamBitmapImage.cpp"
 		$File	"voice_menu.cpp"
 		$File	"glow_outline_effect.h"
-		$File	"worldlight.cpp"
-		$File	"worldlight.h"
 		$File	"hud_base_account.h"
 
 		-$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"

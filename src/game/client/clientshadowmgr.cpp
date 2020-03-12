@@ -88,10 +88,12 @@
 #include "flashlighteffect.h"
 #endif
 #ifdef DYNAMIC_RTT_SHADOWS
-#include "debugoverlay_shared.h"
 #include "worldlight.h"
 #endif
 
+// ficool2
+#include "debugoverlay_shared.h"
+#include "view.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1178,8 +1180,6 @@ void CVisibleShadowList::EnumShadow( unsigned short clientShadowHandle )
 	s_ClientShadowMgr.ComputeShadowBBox( pRenderable, vecAbsCenter, flRadius, &vecAbsMins, &vecAbsMaxs );
 #endif
 
-	// FIXME: Add distance check here?
-
 	// Make sure it's in the frustum. If it isn't it's not interesting
 	if (engine->CullBox( vecAbsMins, vecAbsMaxs ))
 		return;
@@ -1399,7 +1399,7 @@ bool CClientShadowMgr::Init()
 	m_nMaxDepthTextureShadows = bTools ? 4 : 1;	// Just one shadow depth texture in games, more in tools
 #else
 	
-	int iNumShadows = CommandLine()->ParmValue( "-numshadowtextures", 64 );
+	int iNumShadows = CommandLine()->ParmValue( "-numshadowtextures", 8 );
 	m_nMaxDepthTextureShadows = iNumShadows;
 #endif
 
@@ -3493,6 +3493,8 @@ void CClientShadowMgr::UpdateShadow( ClientShadowHandle_t handle, bool force )
 		m_TransparentShadows.AddToTail( handle );
 		return;
 	}
+
+
 
 #ifdef _DEBUG
 	if (s_bBreak)

@@ -1481,10 +1481,6 @@ inline void AddRenderableToRenderList( CClientRenderablesList &renderList, IClie
 		pEntry->m_RenderHandle = renderHandle;
 		curCount++;
 	}
-	else
-	{
-		engine->Con_NPrintf( 10, "Warning: overflowed CClientRenderablesList group %d", group );
-	}
 }
 
 
