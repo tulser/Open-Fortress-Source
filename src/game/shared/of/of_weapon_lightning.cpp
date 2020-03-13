@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
 //
 //
 //=============================================================================
@@ -445,12 +445,11 @@ Vector CTFLightningGun::GetMuzzlePosHelper( bool bVisualPos )
 void CTFLightningGun::OnDataChanged(DataUpdateType_t updateType)
 {
 	BaseClass::OnDataChanged(updateType);
-
-	if ( m_pLightningParticle )
-		SetParticleEnd();
 	
 	if ( IsCarrierAlive() && ( WeaponState() == WEAPON_IS_ACTIVE ) && ( ReserveAmmo() > 0 ) )
 	{
+		if ( m_pLightningParticle )
+			SetParticleEnd();
 		if ( m_iWeaponState > FT_STATE_IDLE )
 		{
 			StartLightning();
