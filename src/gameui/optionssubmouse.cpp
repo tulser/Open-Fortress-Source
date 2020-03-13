@@ -38,6 +38,12 @@ COptionsSubMouse::COptionsSubMouse(vgui::Panel *parent) : PropertyPage(parent, N
 		"#GameUI_MouseFilter", 
 		"m_filter" );
 
+    m_pMouseRawCheckbox = new CCvarToggleCheckButton(
+        this,
+        "MouseRaw",
+        "#GameUI_MouseRaw",
+        "m_rawinput");
+
 	m_pJoystickCheckBox = new CCvarToggleCheckButton( 
 		this, 
 		"Joystick", 
@@ -106,6 +112,7 @@ void COptionsSubMouse::OnResetData()
 {
 	m_pReverseMouseCheckBox->Reset();
 	m_pMouseFilterCheckBox->Reset();
+	m_pMouseRawCheckbox->Reset();
 	m_pJoystickCheckBox->Reset();
 	m_pJoystickSouthpawCheckBox->Reset();
 	m_pMouseSensitivitySlider->Reset();
@@ -122,6 +129,7 @@ void COptionsSubMouse::OnApplyChanges()
 {
 	m_pReverseMouseCheckBox->ApplyChanges();
 	m_pMouseFilterCheckBox->ApplyChanges();
+	m_pMouseRawCheckbox->ApplyChanges();
 	m_pJoystickCheckBox->ApplyChanges();
 	m_pJoystickSouthpawCheckBox->ApplyChanges();
 	m_pMouseSensitivitySlider->ApplyChanges();

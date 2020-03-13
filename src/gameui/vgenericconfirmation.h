@@ -66,6 +66,7 @@ protected:
 	virtual void LoadLayout();
 	virtual void PaintBackground();
 
+public:
 	vgui::Label	*m_pLblOkButton;
 	vgui::Label *m_pLblOkText;
 	vgui::Label *m_pLblCancelButton;
@@ -75,10 +76,10 @@ protected:
 
 	CNB_Button* m_pBtnOK;
 	CNB_Button* m_pBtnCancel;
-
-private:
 	vgui::Label *m_pLblMessage;
 	vgui::Label *m_pLblCheckBox;
+
+private:
 
 	Data_t		 m_data;
 	int			 m_usageId;

@@ -429,6 +429,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iDamageCustom = 0;
 
 	m_bGoreEnabled = false;
+	m_bFlesh = false;
 
 	m_iGoreDecalAmount = 0;
 	m_iGoreDecalBone = 0;
@@ -593,18 +594,21 @@ void C_TFRagdoll::DismemberHead()
 	if ( m_HeadBodygroup >= 0 )
 		SetBodygroup( m_HeadBodygroup, 2 );
 
-	int iAttach = LookupBone( "bip_neck" );
-
-	if ( iAttach != -1 )
+	if ( m_bFlesh )
 	{
-		ParticleProp()->Create( "blood_decap", PATTACH_BONE_FOLLOW, "bip_neck" );
-		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_neck" );
+		int iAttach = LookupBone( "bip_neck" );
 
-		EmitSound( "TFPlayer.Decapitated" );
+		if ( iAttach != -1 )
+		{
+			ParticleProp()->Create( "blood_decap", PATTACH_BONE_FOLLOW, "bip_neck" );
+			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_neck" );
 
-		m_iGoreDecalAmount += 15;
-		m_iGoreDecalBone = iAttach;
+			EmitSound( "TFPlayer.Decapitated" );
 
+			m_iGoreDecalAmount += 15;
+			m_iGoreDecalBone = iAttach;
+
+		}
 	}
 }
 
@@ -612,7 +616,7 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 {
 	int m_LeftArmBodygroup = FindBodygroupByName( "leftarm" );
 
-	int iAttach;
+	int iAttach = -1;
 
 	if ( bLevel )
 	{
@@ -621,16 +625,19 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 		if ( m_LeftArmBodygroup >= 0 )
 			SetBodygroup( m_LeftArmBodygroup, 3 );
 
-		iAttach = LookupBone( "bip_upperArm_L" );
-
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			iAttach = LookupBone( "bip_upperArm_L" );
+
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
+			}
 		}
 	}
 	else
@@ -642,18 +649,21 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 
 		iAttach = LookupBone( "bip_lowerArm_L" );
 
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			}
 		}
 	}
 
-	if ( iAttach != -1 )
+	if ( m_bFlesh && iAttach != -1 )
 	{
 		m_iGoreDecalAmount += 4;
 		m_iGoreDecalBone = iAttach;
@@ -666,7 +676,7 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 {
 	int m_RightArmBodygroup = FindBodygroupByName( "rightarm" );
 
-	int iAttach;
+	int iAttach = -1;
 
 	if ( bLevel )
 	{
@@ -675,16 +685,19 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		if ( m_RightArmBodygroup >= 0 )
 			SetBodygroup( m_RightArmBodygroup, 3 );
 
-		iAttach = LookupBone( "bip_upperArm_R" );
-
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			iAttach = LookupBone( "bip_upperArm_R" );
+
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
+			}
 		}
 	}
 	else
@@ -694,20 +707,23 @@ void C_TFRagdoll::DismemberRightArm( bool bLevel )
 		if ( m_RightArmBodygroup >= 0 )
 			SetBodygroup( m_RightArmBodygroup, 2 );
 
-		iAttach = LookupBone( "bip_lowerArm_R" );
-
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			iAttach = LookupBone( "bip_lowerArm_R" );
+
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
+			}
 		}
 	}
 
-	if ( iAttach != -1 )
+	if ( m_bFlesh && iAttach != -1 )
 	{
 		m_iGoreDecalAmount += 4;
 		m_iGoreDecalBone = iAttach;
@@ -720,7 +736,7 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 {
 	int m_LeftLegBodygroup = FindBodygroupByName( "leftleg" );
 
-	int iAttach;
+	int iAttach = -1;
 
 	if ( bLevel )
 	{
@@ -729,16 +745,19 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		if ( m_LeftLegBodygroup >= 0 )
 			SetBodygroup( m_LeftLegBodygroup, 3 );
 
-		iAttach = LookupBone( "bip_knee_L" );
-
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			iAttach = LookupBone( "bip_knee_L" );
+
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
+			}
 		}
 	}
 	else
@@ -748,20 +767,23 @@ void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 		if ( m_LeftLegBodygroup >= 0 )
 			SetBodygroup( m_LeftLegBodygroup, 2 );
 
-		iAttach = LookupBone( "bip_foot_L" );
-
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			iAttach = LookupBone( "bip_foot_L" );
+
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
+			}
 		}
 	}
 
-	if ( iAttach != -1 )
+	if ( m_bFlesh && iAttach != -1 )
 	{
 		m_iGoreDecalAmount += 4;
 		m_iGoreDecalBone = iAttach;
@@ -774,7 +796,7 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 {
 	int m_RightLegBodygroup = FindBodygroupByName( "rightleg" );
 
-	int iAttach;
+	int iAttach = -1;
 
 	if ( bLevel )
 	{
@@ -785,14 +807,17 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 
 		iAttach = LookupBone( "bip_knee_R" );
 
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
+			}
 		}
 	}
 	else
@@ -804,18 +829,21 @@ void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 
 		iAttach = LookupBone( "bip_foot_R" );
 
-		if ( iAttach != -1 )
+		if ( m_bFlesh )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			if ( iAttach != -1 )
+			{
+				// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+				ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+				ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+				ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+				ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+				ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
+			}
 		}
 	}
 
-	if ( iAttach != -1 )
+	if ( m_bFlesh && iAttach != -1 )
 	{
 		m_iGoreDecalAmount += 4;
 		m_iGoreDecalBone = iAttach;
@@ -1051,23 +1079,20 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 
 		pPhysicsObject->ApplyForceOffset( vecDir, vecHitPos );	
 
-		// make ragdolls emit blood decals
-		// not a great way to do it, but it only works if all of it is defined here for some reason
-
-		// make blood decal on the wall!
-		trace_t Bloodtr;
-		Vector vecTraceDir;
-		float flNoise;
-		int i;
-
-		int cCount = 3;
-
-		flNoise = 0.3;
-
-		float flTraceDist = 172;
-
-		for ( i = 0 ; i < cCount ; i++ )
+		if ( m_bFlesh )
 		{
+			// make ragdolls emit blood decals
+			// not a great way to do it, but it only works if all of it is defined here for some reason
+
+			// make blood decal on the wall!
+			trace_t Bloodtr;
+			Vector vecTraceDir;
+			float flNoise;
+
+			flNoise = 0.5;
+
+			float flTraceDist = 172;
+
 			vecTraceDir = vecDir * -1;// trace in the opposite direction the shot came from (the direction the shot is going)
 
 			vecTraceDir.x += random->RandomFloat( -flNoise, flNoise );
@@ -1297,6 +1322,9 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	if ( m_bGoreEnabled )
 		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
 
+	if ( VPhysicsIsFlesh() )
+		m_bFlesh = true;
+
 	if ( m_bBurning )
 	{
 		m_flBurnEffectStartTime = gpGlobals->curtime;
@@ -1484,7 +1512,7 @@ void C_TFRagdoll::ClientThink( void )
 		}
 
 		// emit some blood decals if necessary
-		if ( m_iGoreDecalAmount > 0 && m_fGoreDecalTime < gpGlobals->curtime )
+		if ( m_bFlesh && m_iGoreDecalAmount > 0 && m_fGoreDecalTime < gpGlobals->curtime )
 		{
 			// emit another decal again after 0.1 seconds
 			m_fGoreDecalTime = gpGlobals->curtime + 0.1f;

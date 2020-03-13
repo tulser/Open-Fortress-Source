@@ -40,17 +40,16 @@ public:
 
 	bool IsMeleeOnly( void ) const;
 
-	void LoadBotNames();
-	void ReloadBotNames();
-	const char *GetRandomBotName();
+	const char *GetRandomBotName( void );
+	void ReloadBotNames( void );
 
 private:
-	KeyValues					*m_BotNamesFile;	// The bot name file in memory
-	CUtlVector<KeyValues *>		m_BotNames;			// Index of every bot name
-	bool						m_bLoadedBotNames;	// Did we load the bot names list yet?
+	bool LoadBotNames( void );
+
 	void MaintainBotQuota( void );
 	void RevertOfflinePracticeConvars( void );
 
+	CUtlVector<string_t> m_BotNames;
 	float m_flQuotaChangeTime;
 };
 

@@ -54,6 +54,7 @@ private:
 
 	CCvarNegateCheckButton		*m_pReverseMouseCheckBox;
 	CCvarToggleCheckButton		*m_pMouseFilterCheckBox;
+	CCvarToggleCheckButton		*m_pMouseRawCheckbox;
 	CCvarToggleCheckButton		*m_pJoystickCheckBox;
 	CCvarToggleCheckButton		*m_pJoystickSouthpawCheckBox;
 	CCvarToggleCheckButton		*m_pQuickInfoCheckBox;

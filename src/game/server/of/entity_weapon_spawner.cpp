@@ -121,6 +121,7 @@ void CWeaponSpawner::Spawn( void )
 				}
 			}
 		}
+
 		Precache();
 		SetWeaponModel();
 		BaseClass::Spawn();
@@ -131,13 +132,10 @@ void CWeaponSpawner::Spawn( void )
 
 void CWeaponSpawner::SetWeaponModel( void )
 {
-	
 	if ( m_iszWeaponModel[0] == 0 )       // If we dont use a weapon model
 	{
-		DevMsg("Doesnt have a model \n");
-		if( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
+		if ( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
 		{
-			DevMsg("Doesnt have a old model either \n");
 			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );			  //Get the weapon info
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
@@ -148,6 +146,7 @@ void CWeaponSpawner::SetWeaponModel( void )
 		else
 			Q_strncpy( m_iszWeaponModel, m_iszWeaponModelOLD, sizeof( m_iszWeaponModel ) ); //If we do have the old model set, set the model value to the old model value
 	}
+
 	SetModel( m_iszWeaponModel );     //Set the model
 }
 

@@ -156,16 +156,11 @@ CTFBotManager::CTFBotManager()
 	NextBotManager::SetInstance( this );
 
 	m_flQuotaChangeTime = 0.0f;
-
-	m_bLoadedBotNames = false;
 }
 
 CTFBotManager::~CTFBotManager()
 {
 	NextBotManager::SetInstance( NULL );
-
-	m_BotNames.RemoveAll();
-	m_BotNamesFile->deleteThis();
 }
 
 
@@ -179,9 +174,7 @@ void CTFBotManager::Update()
 
 void CTFBotManager::OnMapLoaded()
 {
-	// We load the bot names here because filesystem can be null if we do it in the constructor
-	if ( !m_bLoadedBotNames )
-		LoadBotNames();
+	LoadBotNames();
 
 	NextBotManager::OnMapLoaded();
 }
@@ -193,6 +186,7 @@ void CTFBotManager::OnRoundRestart()
 
 void CTFBotManager::OnLevelShutdown()
 {
+	m_BotNames.Purge();
 	m_flQuotaChangeTime = 0.0f;
 
 	if ( IsInOfflinePractice() )
@@ -235,16 +229,16 @@ void CTFBotManager::OnForceKickedBots( int count )
 
 bool CTFBotManager::IsAllBotTeam( int teamNum )
 {
-	CTeam *team = GetGlobalTeam( teamNum );
-	if ( team == nullptr )
+	CTeam *pTeam = GetGlobalTeam( teamNum );
+	if ( pTeam == nullptr )
 		return false;
 
-	if ( team->GetNumPlayers() > 0 )
+	if ( pTeam->GetNumPlayers() > 0 )
 	{
-		for ( int i=0; i<team->GetNumPlayers(); ++i )
+		for ( int i=0; i<pTeam->GetNumPlayers(); ++i )
 		{
-			CBasePlayer *player = team->GetPlayer( i );
-			if ( player->IsNetClient() && !player->IsFakeClient() )
+			CTFPlayer *pPlayer = ToTFPlayer( pTeam->GetPlayer( i ) );
+			if ( pPlayer && !pPlayer->IsBot() )
 				return false;
 		}
 	}
@@ -298,7 +292,7 @@ void CTFBotManager::MaintainBotQuota()
 		}
 		else
 		{
-			if ( player->GetTeamNumber() == TF_TEAM_RED || player->GetTeamNumber() == TF_TEAM_BLUE || player->GetTeamNumber() == TF_TEAM_MERCENARY  )
+			if ( player->GetTeamNumber() == TF_TEAM_RED || player->GetTeamNumber() == TF_TEAM_BLUE || player->GetTeamNumber() == TF_TEAM_MERCENARY )
 			{
 				++nHumansTeamed;
 			}
@@ -357,7 +351,7 @@ void CTFBotManager::MaintainBotQuota()
 				// pick a random color!
 				Vector m_vecPlayerColor = vec3_origin;
 
-				if ( TFGameRules() && TFGameRules()->IsDMGamemode() )
+				if ( TFGameRules()->IsDMGamemode() )
 				{
 					float flColors[ 3 ];
 
@@ -423,54 +417,54 @@ void CTFBotManager::MaintainBotQuota()
 	}
 }
 
-#define BOT_NAMES_FILE	"scripts/tf_bot_names.txt"
-
-void CTFBotManager::LoadBotNames()
+const char *CTFBotManager::GetRandomBotName()
 {
-	if ( !filesystem )
-		return;
+	static char szName[64];
+	if( m_BotNames.Count() == 0 )
+		return "Unnamed";
 
-	m_BotNamesFile = new KeyValues( "BotNames" );
-	if ( !m_BotNamesFile->LoadFromFile( filesystem, BOT_NAMES_FILE ) )
-	{
-		Warning( "CTFBotManager: Could not load %s", BOT_NAMES_FILE );
-		m_BotNamesFile->deleteThis();
-		m_BotNamesFile = NULL;
-		return;
-	}
+	static int nameIndex = RandomInt( 0, m_BotNames.Count() - 1 );
+	const char *pszName = STRING( m_BotNames[ ++nameIndex % m_BotNames.Count() ] );
+	Q_strncpy( szName, pszName, sizeof szName );
 
-	for ( KeyValues *pBotNames = m_BotNamesFile->GetFirstSubKey(); pBotNames != NULL; pBotNames = pBotNames->GetNextKey() )
-	{
-		m_BotNames.AddToTail( pBotNames );
-		continue;
-	}
-
-	m_bLoadedBotNames = true;
+	return szName;
 }
 
 void CTFBotManager::ReloadBotNames()
 {
 	m_BotNames.RemoveAll();
-	m_BotNamesFile->deleteThis();
-
 	LoadBotNames();
 }
 
-const char *CTFBotManager::GetRandomBotName()
+#define BOT_NAMES_FILE	"scripts/tf_bot_names.txt"
+
+bool CTFBotManager::LoadBotNames()
 {
-	if ( m_BotNames.Count() == 0 )
-		return "Unnamed";
+	VPROF_BUDGET( __FUNCTION__, VPROF_BUDGETGROUP_OTHER_FILESYSTEM );
 
-	const char *string;
+	if ( g_pFullFileSystem == nullptr )
+		return false;
 
-	int iName = RandomInt( 0, m_BotNames.Count() );
+	KeyValues *pBotNames = new KeyValues( "BotNames" );
+	if ( !pBotNames->LoadFromFile( g_pFullFileSystem, BOT_NAMES_FILE, "MOD" ) )
+	{
+		Warning( "CTFBotManager: Could not load %s", BOT_NAMES_FILE );
+		pBotNames->deleteThis();
+		return false;
+	}
 
-	if ( m_BotNames.IsValidIndex( iName ) )
-		string = m_BotNames[ iName ]->GetString();
-	else
-		string = "Unnamed";
-		
-	return string;
+	FOR_EACH_VALUE( pBotNames, pSubData )
+	{
+		if ( FStrEq( pSubData->GetString(), "" ) )
+			continue;
+
+		string_t iName = AllocPooledString( pSubData->GetString() );
+		if ( m_BotNames.Find( iName ) == m_BotNames.InvalidIndex() )
+			m_BotNames[ m_BotNames.AddToTail() ] = iName;
+	}
+
+	pBotNames->deleteThis();
+	return true;
 }
 
 void CC_ReloadBotNames( const CCommand &args )

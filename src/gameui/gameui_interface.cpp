@@ -43,6 +43,10 @@
 #include "IEngineVGUI.h"
 #include "video/ivideoservices.h"
 
+#include "vmainmenu.h"
+#include "VGenericConfirmation.h"
+#include "VFooterPanel.h"
+
 // vgui2 interface
 // note that GameUI project uses ..\vgui2\include, not ..\utils\vgui\include
 #include "vgui/Cursor.h"
@@ -62,11 +66,14 @@
 #include "game/server/iplayerinfo.h"
 #include "avi/iavi.h"
 
+#include <vgui/IInput.h>
+
 #include "basemodpanel.h"
 #include "basemodui.h"
 typedef BaseModUI::CBaseModPanel UI_BASEMOD_PANEL_CLASS;
 inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() { return UI_BASEMOD_PANEL_CLASS::GetSingleton(); }
 inline UI_BASEMOD_PANEL_CLASS & ConstructUiBaseModPanelClass() { return * new UI_BASEMOD_PANEL_CLASS(); }
+using namespace BaseModUI;
 
 ConVar of_pausegame( "of_pausegame", "0", FCVAR_ARCHIVE | FCVAR_REPLICATED, "If set, pauses whenever you open the in game menu." );;
 
@@ -573,7 +580,7 @@ void CGameUI::OnGameUIActivated()
 
 	// pause the server in case it is pausable
 	if ( of_pausegame.GetBool() )
-	engine->ClientCmd_Unrestricted( "setpause nomsg" );
+		engine->ClientCmd_Unrestricted( "setpause nomsg" );
 
 	SetSavedThisMenuSession( false );
 
@@ -858,6 +865,49 @@ bool CGameUI::ContinueProgressBar( float progressFraction )
 //-----------------------------------------------------------------------------
 void CGameUI::StopProgressBar(bool bError, const char *failureReason, const char *extendedReason)
 {
+	if ( bError )
+	{
+		bool bDatatable = false;
+		if ( failureReason )
+		{
+			if ( Q_strcmp( failureReason, "Server uses different class tables" ) == 0 )
+			{
+				bDatatable = true;
+			}
+		}
+
+		GenericConfirmation* confirmation = 
+			static_cast< GenericConfirmation* >( CBaseModPanel::GetSingleton().OpenWindow( WT_GENERICCONFIRMATION, NULL, true ) );
+
+		if ( !confirmation )
+			return;
+
+		GenericConfirmation::Data_t data;
+
+		data.pWindowTitle = "#GameUI_Disconnected";
+		if ( bDatatable )
+			data.pMessageText = "#GameUI_ErrorOutdatedBinaries";
+		else
+			data.pMessageText = failureReason;
+
+		data.bOkButtonEnabled = true;
+
+		confirmation->SetUsageData(data);
+
+		// none of this shit works to bring the dialog in focus immediately without the user clicking on it
+		/*
+		confirmation->SetZPos(999);
+		confirmation->OnMousePressed( MOUSE_LEFT );
+		confirmation->RequestFocus();
+		confirmation->MoveToFront();
+		vgui::ipanel()->MoveToFront(confirmation->GetVPanel());
+		vgui::input()->SetMouseCapture(confirmation->GetVPanel());
+		*/
+	}
+
+	// obsolete code
+
+	/*
 	if (!g_hLoadingDialog.Get())
 		return;
 
@@ -872,6 +922,7 @@ void CGameUI::StopProgressBar(bool bError, const char *failureReason, const char
 		g_hLoadingDialog->Close();
 		g_hLoadingDialog = NULL;
 	}
+	*/
 	// should update the background to be in a transition here
 }
 

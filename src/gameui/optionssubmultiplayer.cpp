@@ -389,15 +389,7 @@ COptionsSubMultiplayer::COptionsSubMultiplayer(vgui::Panel *parent) : vgui::Prop
 	importSprayImage->SetCommand("ImportSprayImage");
 
 	m_hImportSprayDialog = NULL;
-
-	m_pPrimaryColorSlider = new CCvarSlider( this, "Primary Color Slider", "#GameUI_PrimaryColor",
-		0.0f, 255.0f, "topcolor" );
-
-	m_pSecondaryColorSlider = new CCvarSlider( this, "Secondary Color Slider", "#GameUI_SecondaryColor",
-		0.0f, 255.0f, "bottomcolor" );
-
-	m_pHighQualityModelCheckBox = new CCvarToggleCheckButton( this, "High Quality Models", "#GameUI_HighModels", "cl_himodels" );
-
+	
 	m_pModelList = new CLabeledCommandComboBox( this, "Player model" );
 	m_ModelName[0] = 0;
 	InitModelList( m_pModelList );
@@ -496,16 +488,6 @@ COptionsSubMultiplayer::COptionsSubMultiplayer(vgui::Panel *parent) : vgui::Prop
 			m_pModelList->SetVisible( false );
 		}
 
-		if ( m_pPrimaryColorSlider )
-		{
-			m_pPrimaryColorSlider->SetVisible( false );
-		}
-
-		if ( m_pSecondaryColorSlider )
-		{
-			m_pSecondaryColorSlider->SetVisible( false );
-		}
-
 		// #GameUI_PlayerModel (from "Resource/OptionsSubMultiplayer.res")
 		pTempPanel = FindChildByName( "Label1" );
 
@@ -520,15 +502,6 @@ COptionsSubMultiplayer::COptionsSubMultiplayer(vgui::Panel *parent) : vgui::Prop
 		if ( pTempPanel )
 		{
 			pTempPanel->SetVisible( false );
-		}
-	}
-
-	// turn off the himodel stuff if the mod specifies "nohimodel" in the gameinfo.txt file
-	if ( ModInfo().NoHiModel() )
-	{
-		if ( m_pHighQualityModelCheckBox )
-		{
-			m_pHighQualityModelCheckBox->SetVisible( false );
 		}
 	}
 
@@ -1891,77 +1864,7 @@ void StripStringOutOfString( const char *pPattern, const char *pIn, char *pOut )
 
 void FindVMTFilesInFolder( const char *pFolder, const char *pFolderName, CLabeledCommandComboBox *cb, int &iCount, int &iInitialItem )
 {
-	ConVarRef cl_modelfile( "cl_playermodel" );
-	if ( !cl_modelfile.IsValid() )
-		return;
-
-	char directory[ 512 ];
-	Q_snprintf( directory, sizeof( directory ), "%s/*.*", pFolder );
-
-	FileFindHandle_t fh;
-
-	const char *fn = g_pFullFileSystem->FindFirst( directory, &fh );
-	const char *modelfile = cl_modelfile.GetString();
-
-	while ( fn )
-	{
-		if ( !stricmp( fn, ".") || !stricmp( fn, "..") )
-		{
-			fn = g_pFullFileSystem->FindNext( fh );
-			continue;
-		}
-
-		if ( g_pFullFileSystem->FindIsDirectory( fh ) )
-		{
-			char folderpath[512];
-
-			Q_snprintf( folderpath, sizeof( folderpath ), "%s/%s", pFolder, fn );
-
-			FindVMTFilesInFolder( folderpath, fn, cb, iCount, iInitialItem );
-			fn = g_pFullFileSystem->FindNext( fh );
-			continue;
-		}
-
-		if ( !strstr( fn, ".vmt" ) )
-		{
-			fn = g_pFullFileSystem->FindNext( fh );
-			continue;
-		}
-
-
-		char filename[ 512 ];
-		Q_snprintf( filename, sizeof(filename), "%s/%s", pFolder, fn );
-		if ( strlen( filename ) >= 4 )
-		{
-			filename[ strlen( filename ) - 4 ] = 0;
-			Q_strncat( filename, ".vmt", sizeof( filename ), COPY_ALL_CHARACTERS );
-			if ( g_pFullFileSystem->FileExists( filename ) )
-			{
-				char displayname[ 512 ];
-				char texturepath[ 512 ];
-				// strip off the extension
-				Q_strncpy( displayname, fn, sizeof( displayname ) );
-				StripStringOutOfString( MODEL_MATERIAL_BASE_FOLDER, filename, texturepath );
-				
-				displayname[ strlen( displayname ) - 4 ] = 0;
-				
-				cb->AddItem( displayname, texturepath + 1 ); // ignore the initial "/" in texture path
-
-				char realname[ 512 ];
-				Q_FileBase( modelfile, realname, sizeof( realname ) );
-				Q_FileBase( filename, filename, sizeof( filename ) );
-				
-				if (!stricmp(filename, realname))
-				{
-					iInitialItem = iCount;
-				}
-
-				++iCount;
-			}
-		}
-
-		fn = g_pFullFileSystem->FindNext( fh );
-	}
+	// stripped
 }
 
 //-----------------------------------------------------------------------------
@@ -2274,9 +2177,9 @@ void COptionsSubMultiplayer::OnTextChanged(vgui::Panel *panel)
 //-----------------------------------------------------------------------------
 void COptionsSubMultiplayer::OnSliderMoved(KeyValues *data)
 {
-    m_nTopColor = (int) m_pPrimaryColorSlider->GetSliderValue();
-    m_nBottomColor = (int) m_pSecondaryColorSlider->GetSliderValue();
-
+    m_nTopColor = 0;
+    m_nBottomColor = 0;
+	
 	RemapModel();
 	RedrawAdvCrosshairImage();
 }
@@ -2489,12 +2392,9 @@ void COptionsSubMultiplayer::OnResetData()
 //-----------------------------------------------------------------------------
 void COptionsSubMultiplayer::OnApplyChanges()
 {
-	m_pPrimaryColorSlider->ApplyChanges();
-	m_pSecondaryColorSlider->ApplyChanges();
 //	m_pModelList->ApplyChanges();
 	m_pLogoList->ApplyChanges();
     m_pLogoList->GetText(m_LogoName, sizeof(m_LogoName));
-	m_pHighQualityModelCheckBox->ApplyChanges();
 
 	for ( int i=0; i<m_cvarToggleCheckButtons.GetCount(); ++i )
 	{

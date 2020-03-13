@@ -1673,6 +1673,7 @@ CTFGameRules::CTFGameRules()
 	m_bHasTeamSpawns = false;
 	m_bHasCivilianSpawns = false;
 	m_bHasJuggernautSpawns = false;
+	m_bEntityLimitPrevented = false;
 
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
@@ -2548,6 +2549,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_bDomBlueThreshold = false;
 	m_bDomRedLeadThreshold = false;
 	m_bDomBlueLeadThreshold = false;
+	m_bEntityLimitPrevented = false;
 	
 	if ( IsArenaGamemode() )
 	{
@@ -3596,6 +3598,9 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		// Play( MineOddity );
 		
 		SpawnHalloweenBoss();
+
+		if ( !m_bEntityLimitPrevented )
+			EntityLimitPrevention();
 		
 		BaseClass::Think();
 	}
@@ -3603,9 +3608,11 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 	// this really only happens with >24 players on large maps such as tc_hydro	
 	void CTFGameRules::EntityLimitPrevention()
 	{
-		if ( engine->GetEntityCount() > 1950 )
+		if ( engine->GetEntityCount() > 2000 )
 		{
-			Warning("Entity count exceeded 1950, removing unnecessary entities...");
+			Warning("WARNING: Entity count exceeded 2000, removing unnecessary entities...");
+
+			m_bEntityLimitPrevented = true;
 
 			CBaseEntity *pEntity = NULL;
 			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "spotlight_end")) != NULL)
@@ -3621,27 +3628,21 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				UTIL_Remove(pEntity);
 			}
 
-			// if the server manages to somehow get more than 2000 entities after the previous killing, take desperate measures and kill more visual elements
-			if ( engine->GetEntityCount() > 2000 )
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_lightglow")) != NULL)
 			{
-				Warning("Entity count exceeded 2000!!!!! Removing more visual entities...");
-
-				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_lightglow")) != NULL)
-				{
-					UTIL_Remove(pEntity);
-				}
-				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_sprite")) != NULL)
-				{
-					UTIL_Remove(pEntity);
-				}
-				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "move_rope")) != NULL)
-				{
-					UTIL_Remove(pEntity);
-				}
-				while ((pEntity = gEntList.FindEntityByClassname(pEntity, "keyframe_rope")) != NULL)
-				{
-					UTIL_Remove(pEntity);
-				}
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "env_sprite")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "move_rope")) != NULL)
+			{
+				UTIL_Remove(pEntity);
+			}
+			while ((pEntity = gEntList.FindEntityByClassname(pEntity, "keyframe_rope")) != NULL)
+			{
+				UTIL_Remove(pEntity);
 			}
 		}
 	}	

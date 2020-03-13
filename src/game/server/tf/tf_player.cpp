@@ -551,9 +551,6 @@ void CTFPlayer::TFPlayerThink()
 	
 	TauntEffectThink();
 
-	if ( TFGameRules() )
-		TFGameRules()->EntityLimitPrevention();
-
 	// Check to see if we are in the air and taunting.  Stop if so.
 /*	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )
 	{

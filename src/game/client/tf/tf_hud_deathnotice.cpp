@@ -825,6 +825,10 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 			Q_strncpy( msg.szIcon, "d_taunt_spy", ARRAYSIZE( msg.szIcon ) );
 			msg.wzInfoText[0] = 0;
 			break;
+		case TF_DMG_CUSTOM_CROC:
+			Q_strncpy( msg.szIcon, "d_crocodile", ARRAYSIZE( msg.szIcon ) );
+			msg.wzInfoText[0] = 0;
+			break;
 		default:
 			break;
 		}

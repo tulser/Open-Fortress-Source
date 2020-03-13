@@ -349,7 +349,7 @@ static int64_t startTimestamp = time(0);
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
 #endif
 
-ConVar of_picmip( "of_picmip", "0", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.");
+ConVar of_picmip( "of_picmip", "-1", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.");
 ConVar of_prop_fading( "of_prop_fading", "1", FCVAR_ARCHIVE, "Enable or disable prop fading. Requires game restart when changed. Enabling this will disable the -makedevshots functions.");
 
 // Physics system
@@ -1348,7 +1348,7 @@ void CHLClient::PostInit()
 			else if ( iPicmip > 10 )
 				iPicmip = 10;
 
-			ConColorMsg( Color( 170, 255, 170, 255 ), "[Engine] Hijacking mat_picmip with a value of %i...\n", iPicmip );
+			DevMsg( "Hijacking mat_picmip with a value of %i...\n", iPicmip );
 
 			// hijack the convar's clamp values to use our own range
 			mat_picmip->SetMin( -10.0f );
@@ -1368,8 +1368,8 @@ void CHLClient::PostInit()
 
 	if ( !of_prop_fading.GetBool() )
 	{
-		ConColorMsg( Color( 170, 255, 170, 255 ), "[Engine] Disabling static prop fading because of_prop_fading is set to 0...\n" );
-		CommandLine()->AppendParm( "-makedevshots", NULL ); 
+		DevMsg ( "Disabling static prop fading because of_prop_fading is set to 0...\n" );
+		CommandLine()->AppendParm( "-makedevshots", NULL );
 		CommandLine()->AppendParm( "-usedevshotsfile", "nospf.txt" ); 
 	}
 }

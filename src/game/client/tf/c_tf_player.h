@@ -539,6 +539,8 @@ private:
 
 	// checks if this model can utilise gore
 	bool m_bGoreEnabled;
+	// dismemberment without blood
+	bool m_bFlesh;
 
 	// how many blood decals to spray out when we dismember a limb overtime
 	int m_iGoreDecalAmount;

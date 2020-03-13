@@ -551,6 +551,7 @@ private:
 	int m_iCurrentMiniRoundMask;
 	float m_flTimerMayExpireAt;
 	bool m_bStartedVote;
+	bool m_bEntityLimitPrevented;
 	
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 

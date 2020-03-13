@@ -98,10 +98,6 @@ private:
 	CLabeledCommandComboBox *m_pLogoList;
     char m_LogoName[128];
 
-    CCvarSlider *m_pPrimaryColorSlider;
-    CCvarSlider *m_pSecondaryColorSlider;
-	CCvarToggleCheckButton *m_pHighQualityModelCheckBox;
-
 	// Mod specific general checkboxes
 	vgui::Dar< CCvarToggleCheckButton * > m_cvarToggleCheckButtons;
 
