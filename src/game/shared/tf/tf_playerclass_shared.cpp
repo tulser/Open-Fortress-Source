@@ -59,12 +59,16 @@ BEGIN_NETWORK_TABLE_NOBASE( TFPlayerClassData_t, DT_PlayerClassData )
 	RecvPropInt( RECVINFO( m_nMaxArmor ) ),
 	
 	RecvPropArray3( RECVINFO_ARRAY(m_aWeapons), RecvPropInt( RECVINFO( m_aWeapons[0] ) ) ),
+	
+	RecvPropInt( RECVINFO( m_iWeaponCount ) ),
+	
 	RecvPropArray3( RECVINFO_ARRAY(m_aGrenades), RecvPropInt( RECVINFO( m_aGrenades[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_aAmmoMax), RecvPropInt( RECVINFO( m_aAmmoMax[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY(m_aBuildable), RecvPropInt( RECVINFO( m_aBuildable[0] ) ) ),
 
 	RecvPropInt( RECVINFO( m_nCapNumber) ),
 	RecvPropInt( RECVINFO( m_nMaxAirDashCount) ),
+	
 	RecvPropBool( RECVINFO( m_bDontDoAirwalk) ),
 	RecvPropBool( RECVINFO( m_bDontDoNewJump) ),
 	
@@ -92,6 +96,9 @@ BEGIN_NETWORK_TABLE_NOBASE( TFPlayerClassData_t, DT_PlayerClassData )
 	SendPropInt( SENDINFO( m_nMaxHealth ) ),
 	SendPropInt( SENDINFO( m_nMaxArmor ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_aWeapons), SendPropInt( SENDINFO_ARRAY(m_aWeapons) ) ),
+
+	SendPropInt( SENDINFO( m_iWeaponCount ) ),
+	
 	SendPropArray3( SENDINFO_ARRAY3(m_aGrenades), SendPropInt( SENDINFO_ARRAY(m_aGrenades) ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_aAmmoMax), SendPropInt( SENDINFO_ARRAY(m_aAmmoMax) ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_aBuildable), SendPropInt( SENDINFO_ARRAY(m_aBuildable) ) ),
@@ -128,6 +135,9 @@ BEGIN_SIMPLE_DATADESC( TFPlayerClassData_t )
 	DEFINE_FIELD( m_nMaxHealth, FIELD_INTEGER ),
 	DEFINE_FIELD( m_nMaxArmor, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_aWeapons, FIELD_INTEGER ),
+	
+	DEFINE_FIELD( m_iWeaponCount, FIELD_INTEGER ),
+	
 	DEFINE_AUTO_ARRAY( m_aGrenades, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_aAmmoMax, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_aBuildable, FIELD_INTEGER ),
@@ -191,7 +201,9 @@ TFPlayerClassData_t::TFPlayerClassData_t()
 	{
 		m_aWeapons.GetForModify(iWeapon) = TF_WEAPON_NONE;
 	}
-
+	
+	m_iWeaponCount = 0;
+	
 	for ( int iGrenade = 0; iGrenade < TF_PLAYER_GRENADE_COUNT; ++iGrenade )
 	{
 		m_aGrenades.GetForModify(iGrenade) = TF_WEAPON_NONE;
@@ -279,8 +291,11 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	char buf[32];
 	for ( i=0;i<TF_PLAYER_WEAPON_COUNT;i++ )
 	{
-		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );		
-		m_aWeapons.GetForModify(i) = GetWeaponId(pKeyValuesData->GetString(buf));
+		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );
+		int iID = GetWeaponId(pKeyValuesData->GetString(buf));
+		m_aWeapons.GetForModify(i) = iID;
+		if( iID != TF_WEAPON_NONE )
+			m_iWeaponCount++;
 	}
 
 	// Grenades.

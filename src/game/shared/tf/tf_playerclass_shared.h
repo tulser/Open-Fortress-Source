@@ -52,6 +52,9 @@ struct TFPlayerClassData_t
 	CNetworkVar( int, m_nMaxArmor );
 	
 	CNetworkArray( int, m_aWeapons, TF_PLAYER_WEAPON_COUNT );
+	
+	CNetworkVar( int, m_iWeaponCount );
+	
 	CNetworkArray( int, m_aGrenades, TF_PLAYER_GRENADE_COUNT );
 	CNetworkArray( int, m_aAmmoMax, TF_AMMO_COUNT );
 	CNetworkArray( int, m_aBuildable, TF_PLAYER_BUILDABLE_COUNT );

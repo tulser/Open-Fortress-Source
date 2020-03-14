@@ -1843,7 +1843,7 @@ int CTFPlayer::GetDesiredWeaponCount( TFPlayerClassData_t *pData )
 		}
 	}
 	
-	return pData->m_aWeapons.Count();
+	return pData->m_iWeaponCount;
 }
 
 int CTFPlayer::GetDesiredWeapon( int iWeapon, TFPlayerClassData_t *pData )
