@@ -74,11 +74,17 @@ void CTFHudPowerups::ApplySchemeSettings( IScheme *pScheme )
 //-----------------------------------------------------------------------------
 void CTFHudPowerups::FireGameEvent( IGameEvent * event )
 {
+	if( !event )
+		return;
 	const char *eventname = event->GetName();
 
 	if ( Q_strcmp( "add_powerup_timer", eventname ) == 0 )
 	{
 		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+		if( !pLocalPlayer )
+			return;
+
 		if ( event->GetInt("player") != pLocalPlayer->entindex() )
 			return;
 		
