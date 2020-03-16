@@ -40,6 +40,8 @@ public:
 		MAX_NAME_LEN = 256,
 		MAX_COMMAND_LEN = 256
 	};
+
+	int		m_iCurrentSelection;
 	
 private:
 	MESSAGE_FUNC_CHARPTR( OnTextChanged, "TextChanged", text );
@@ -52,7 +54,6 @@ private:
 	};
 
 	CUtlVector< COMMANDITEM >	m_Items;
-	int		m_iCurrentSelection;
 	int		m_iStartSelection;
 };
 

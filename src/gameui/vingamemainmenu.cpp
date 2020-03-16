@@ -219,6 +219,10 @@ void InGameMainMenu::OnCommand( const char *command )
 	{
 		CBaseModPanel::GetSingleton().OpenOptionsDialog( this );
 	}
+	else if (!Q_strcmp(command, "Customization")) //TODO: REMOVE THIS WHEN LOADOUT IS ADDED
+	{
+		CBaseModPanel::GetSingleton().OpenCustomizationDialog( this );
+	}	
 	else if( Q_stricmp( "#L4D360UI_Controller_Edit_Keys_Buttons", command ) == 0 )
 	{
 		FlyoutMenu::CloseActiveMenu();

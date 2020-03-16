@@ -198,7 +198,10 @@ void MainMenu::OnCommand( const char *command )
 	{
 		CBaseModPanel::GetSingleton().OpenOptionsDialog( this );
 	}
-	
+	else if (!Q_strcmp(command, "Customization"))
+	{
+		CBaseModPanel::GetSingleton().OpenCustomizationDialog( this ); //TODO: REMOVE THIS WHEN LOADOUT IS ADDED
+	}
 	else if (!Q_strcmp(command, "MultiplayerSettings"))
 	{
 		if ( ui_old_options_menu.GetBool() )

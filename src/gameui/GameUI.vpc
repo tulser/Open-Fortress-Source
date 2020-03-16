@@ -206,6 +206,8 @@ $Project "GameUI"
 				"optionssubportal.cpp" \
 				"optionssubvideo.cpp" \
 				"optionssubvoice.cpp" \
+				"customizationdialog.cpp" \			
+				"customizationdialogsub.cpp" \						
 				"panellistpanel.cpp" \
 				"playerlistdialog.cpp" \
 				"rungameengine.cpp" \

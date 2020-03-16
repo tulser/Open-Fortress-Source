@@ -18,6 +18,7 @@
 #include "OptionsSubKeyboard.h"
 #include "OptionsSubMouse.h"
 #include "optionsmousedialog.h"
+#include "customizationdialog.h"
 #include "CreateMultiplayerGameDialog.h"
 #include "PlayerListDialog.h"
 
@@ -206,6 +207,7 @@ namespace BaseModUI
 		void SetLastActiveUserId( int userId );
 		int GetLastActiveUserId();
 		void OpenOptionsDialog( Panel *parent );
+		void OpenCustomizationDialog(Panel *parent);
 		void OpenOptionsMouseDialog( Panel *parent );
 		void OpenKeyBindingsDialog( Panel *parent );
 		void OpenCreateMultiplayerGameDialog( Panel *parent );
@@ -252,6 +254,7 @@ namespace BaseModUI
 		bool m_LevelLoading;
 		vgui::HScheme m_UIScheme;
 		vgui::DHANDLE<COptionsDialog> m_hOptionsDialog;	// standalone options dialog - PC only
+		vgui::DHANDLE<CCustomizationDialog> m_hCustomizationDialog;	// standalone options dialog - PC only
 		vgui::DHANDLE<COptionsMouseDialog> m_hOptionsMouseDialog;	// standalone options dialog - PC only
 		vgui::DHANDLE<CCreateMultiplayerGameDialog> m_hCreateMultiplayerGameDialog;	// standalone options dialog - PC only	
 		vgui::DHANDLE<CPlayerListDialog> m_hPlayerListDialog;	// standalone options dialog - PC only	

@@ -1735,6 +1735,22 @@ void CBaseModPanel::OpenOptionsDialog( Panel *parent )
 }
 
 //=============================================================================
+void CBaseModPanel::OpenCustomizationDialog( Panel *parent )
+{
+	if ( IsPC() )
+	{			
+		if ( !m_hCustomizationDialog.Get() )
+		{
+			m_hCustomizationDialog = new CCustomizationDialog( parent );
+			BaseUI_PositionDialog(m_hCustomizationDialog);
+		}
+
+		m_hCustomizationDialog->Activate();
+	}
+}
+
+
+//=============================================================================
 void CBaseModPanel::OpenOptionsMouseDialog( Panel *parent )
 {
 	if ( IsPC() )
@@ -3621,6 +3637,7 @@ static char *g_rgValidCommands[] =
 	"OpenSaveGameDialog",
 	"OpenCustomMapsDialog",
 	"OpenOptionsDialog",
+	"OpenCustomizationDialog", // TODO: remove this when loadout is added!
 	"OpenBenchmarkDialog",
 	"OpenFriendsDialog",
 	"OpenLoadDemoDialog",
