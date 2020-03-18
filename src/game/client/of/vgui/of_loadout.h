@@ -252,6 +252,7 @@ public:
 	CTFLoadoutPanel();	 
 
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
+	virtual void ApplySettings( KeyValues* inResourceData );
 	virtual void OnCommand( const char *command );
 	virtual void OnKeyCodePressed( KeyCode code );
 	virtual void PerformLayout();

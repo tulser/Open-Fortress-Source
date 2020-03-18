@@ -61,6 +61,7 @@ void CTFModelPanel::ApplySettings( KeyValues *inResourceData )
 	{
 		m_vecDefPosition = Vector( pModelData->GetFloat( "origin_x", 0 ), pModelData->GetFloat( "origin_y", 0 ), pModelData->GetFloat( "origin_z", 0 ) );
 		m_vecDefAngles = QAngle( pModelData->GetFloat( "angles_x", 0 ), pModelData->GetFloat( "angles_y", 0 ), pModelData->GetFloat( "angles_z", 0 ) );
+		SetModelName(pModelData->GetString("modelname", "models/error.mdl"), pModelData->GetInt("skin", 0));
 	}
 }
 
@@ -136,7 +137,6 @@ CTFLoadoutPanel::CTFLoadoutPanel() : vgui::EditablePanel( NULL, "TFLoadout",
 	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );	
 	m_pItemHeader = new CTFLoadoutHeader( this, "ItemHeader" );
 	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
-	
 	
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
@@ -257,6 +257,13 @@ void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	m_bControlsLoaded = true;
 
 	SetVisible( false );
+}
+
+void CTFLoadoutPanel::ApplySettings( KeyValues* inResourceData )
+{
+	BaseClass::ApplySettings( inResourceData );
+	m_pClassModel->SetAnimationIndex( ACT_MERC_STAND_SUPERSHOTGUN );
+	m_pClassModel->Update();
 }
 
 //-----------------------------------------------------------------------------
