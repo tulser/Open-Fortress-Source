@@ -419,11 +419,11 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
 
 	SendPropBool( SENDINFO( m_iSpawnCounter ) ),
-//	SendPropBool( SENDINFO( m_bUpdateCosmetics ) ),
+	SendPropBool( SENDINFO( m_bUpdateCosmetics ) ),
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
-//	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
 
 END_SEND_TABLE()
 
@@ -519,7 +519,7 @@ CTFPlayer::CTFPlayer()
 	
 	m_bPuppet = false;
 	
-//	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
+	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
@@ -550,6 +550,9 @@ void CTFPlayer::TFPlayerThink()
 		UpdatePlayerColor();
 	
 	TauntEffectThink();
+
+	if ( TFGameRules() )
+		TFGameRules()->EntityLimitPrevention();
 
 	// Check to see if we are in the air and taunting.  Stop if so.
 /*	if ( GetGroundEntity() == NULL && m_Shared.InCond( TF_COND_TAUNTING ) )
@@ -611,7 +614,7 @@ CTFPlayer::~CTFPlayer()
 	DestroyRagdoll();
 	m_PlayerAnimState->Release();
 	
-//	kvDesiredCosmetics->deleteThis();
+	kvDesiredCosmetics->deleteThis();
 }
 
 
@@ -1032,7 +1035,7 @@ void CTFPlayer::InitialSpawn( void )
 
 	SetWeaponBuilder( NULL );
 	
-//	m_bUpdateCosmetics = !m_bUpdateCosmetics;
+	m_bUpdateCosmetics = !m_bUpdateCosmetics;
 	
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
@@ -1232,7 +1235,7 @@ void CTFPlayer::Spawn()
 	m_Shared.m_flNextLungeTime = 0.0f;
 
 	UpdatePlayerColor();
-/*
+
 	DevMsg("SPAWNED\n");
 	
 	m_iCosmetics.Purge();
@@ -1252,18 +1255,7 @@ void CTFPlayer::Spawn()
 	}
 	
 	m_bUpdateCosmetics = !m_bUpdateCosmetics;
-*/
-	
-	for( int i = 0; i < GetWearableCount(); i++)
-		m_Shared.RemoveHat(i);	
-	
-	if( GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
-	{
-		int iCosmetic = V_atoi(engine->GetClientConVarValue(entindex(), "of_mercenary_hat"));
-		if ( GetFlags() & FL_FAKECLIENT )
-			iCosmetic = random->RandomInt( 0, GetWearableCount() );
-		m_Shared.WearHat(iCosmetic);
-	}
+
 	// Gore
 	m_iGoreHead = 0;
 	m_iGoreLeftArm = 0;
@@ -1842,7 +1834,6 @@ int CTFPlayer::GetDesiredWeaponCount( TFPlayerClassData_t *pData )
 				return TFGameRules()->m_hLogicLoadout[i]->hWeaponNames.Count();
 		}
 	}
-	
 	return pData->m_iWeaponCount;
 }
 
@@ -3702,7 +3693,6 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 
 		data->deleteThis();
 	}
-	/*
 	else if( FStrEq( pcmd, "set_desired_cosmetic" ) )
 	{
 		DevMsg("Desired cosmetic set\n");
@@ -3725,7 +3715,6 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 		return true;
 	}
-	*/
 	/*	else if ( FStrEq( pcmd, "condump_on" ) )
 	{
 		if ( !PlayerHasPowerplay() )

@@ -888,7 +888,7 @@ int CalculateObjectCost( int iObjectType )
 		return 0;
 	}
 	
-	if ( of_infiniteammo.GetBool() == 1 )
+	if ( of_infiniteammo.GetBool() )
 	{
 		return 0;
 	}

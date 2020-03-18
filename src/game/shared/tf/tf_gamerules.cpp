@@ -463,6 +463,11 @@ void ResetLoadout( void )
 	{
 		KeyValues *pClass = new KeyValues( g_aPlayerClassNames_NonLocalized[i] );
 		pClass->SetString( "hat", "0" );
+		if( i == TF_CLASS_MERCENARY )
+		{
+			pClass->SetString( "chest", "11" );
+			pClass->SetString( "gloves", "15" );
+		}
 		pCosmetics->AddSubKey( pClass );
 	}
 	gLoadout->SaveToFile( filesystem, "cfg/loadout.cfg" );

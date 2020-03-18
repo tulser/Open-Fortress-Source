@@ -70,6 +70,8 @@ public:
 
 	virtual bool				IsAllowedToSwitchWeapons( void );
 
+	void	RefreshDesiredCosmetics();
+	
 	virtual void ClientThink();
 
 	// Deal with recording
@@ -296,6 +298,7 @@ private:
 public:
 
 	Vector				m_vecPlayerColor;	
+	CUtlVector<float> 	m_iCosmetics;
 	
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );
@@ -364,6 +367,10 @@ public:
 
 	QAngle	m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
+	
+	CNetworkVar( bool, m_bUpdateCosmetics );
+	
+	bool			bUpdatedCosmetics;
 
 	CNetworkHandle( C_TFItem, m_hItem );
 
@@ -539,8 +546,6 @@ private:
 
 	// checks if this model can utilise gore
 	bool m_bGoreEnabled;
-	// dismemberment without blood
-	bool m_bFlesh;
 
 	// how many blood decals to spray out when we dismember a limb overtime
 	int m_iGoreDecalAmount;

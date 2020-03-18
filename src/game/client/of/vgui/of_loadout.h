@@ -12,8 +12,211 @@
 #endif
 
 #include "tf_hud_statpanel.h"
+#include "tf_controls.h"
+#include "basemodelpanel.h"
 
-class CTFLoadoutPanel : public vgui::EditablePanel, public CGameEventListener
+enum
+{
+	BORDER_IDLE = 0,
+	BORDER_HOVEROVER,
+	BORDER_PRESSED,
+	BORDER_SELECTED,
+};
+
+class CTFEditableButtonFunc : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFEditableButtonFunc, vgui::EditablePanel );
+
+public:
+	CTFEditableButtonFunc(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void OnCursorExited();
+	virtual void OnCursorEntered();
+	virtual void OnMousePressed(vgui::MouseCode code);
+	virtual void OnMouseReleased(vgui::MouseCode code);
+};
+
+class CTFEditableButton : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFEditableButton, vgui::EditablePanel );
+
+public:
+	CTFEditableButton(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+
+	virtual void OnCursorExited();
+	virtual void OnCursorEntered();
+	virtual void OnMousePressed(vgui::MouseCode code);
+	virtual void OnMouseReleased(vgui::MouseCode code);
+	virtual void OnReleasedSelected();
+	virtual void OnReleasedUnselected();
+	
+	void	SetBorderType( int iBorder );
+	virtual void SetSelected( bool bSelected );
+public:
+	char	szBorderIdle[128];
+	char	szBorderHover[128];
+	char	szBorderPressed[128];
+	char	szBorderSelected[128];
+	
+	int		iCurrentBorder;
+	
+	bool	m_bSelected;
+	
+	CTFEditableButtonFunc	*pButton;
+};
+
+struct ItemTemplate_t
+{
+	char wide[8];
+	char tall[8];
+	char border_idle[64];
+	char border_hover[64];
+	char border_pressed[64];
+	char border_selected[64];
+	
+	char button_wide[8];
+	char button_tall[8];
+	char button_xpos[8];
+	char button_ypos[8];
+	char button_zpos[8];
+	
+	char extra_wide[8];
+	char extra_tall[8];
+	char extra_xpos[8];
+	char extra_ypos[8];
+	char extra_zpos[8];
+};
+
+class CTFItemSelection : public CTFEditableButton
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFItemSelection, CTFEditableButton );
+
+public:
+	CTFItemSelection(vgui::Panel *parent, const char *panelName, const int iID);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void OnReleasedSelected();
+	virtual void OnReleasedUnselected();	
+	virtual void Paint();
+	void	SetItemID( int iID );
+	virtual void SetSelected( bool bSelected );
+
+public:
+	int		iItemID;
+	char	szCommand[64];
+	bool	bParsedBPImage;
+	
+	CTFImagePanel	*pItemImage;
+};
+
+struct ItemListItem_t
+{
+	CTFItemSelection *pItemPanel;
+	int	def_xpos;
+	int def_ypos;
+};
+
+class CTFScrollableItemList : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFScrollableItemList, vgui::EditablePanel );
+public:
+	CTFScrollableItemList( vgui::Panel *parent, const char *panelName );
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void PerformLayout();
+	
+	void AddItem( int iID );
+	void ClearItemList( void );
+	
+	MESSAGE_FUNC( OnScrollBarSliderMoved, "ScrollBarSliderMoved" );
+	virtual void OnMouseWheeled(int delta);	// respond to mouse wheel events	
+
+public:
+	CUtlVector<ItemListItem_t> m_hItems;
+	vgui::ScrollBar *pScrollBar;
+	
+	CTFItemSelection *pSelectedItem;
+	
+	char szCategoryName[32];
+	
+	int iCollumnSpacing;
+	int iRowSpacing;
+	
+	int iElementWidth;
+	int iElementHeight;
+	
+	int iElementsPerRow;
+	int iElementsPerScroll;
+	
+	ItemTemplate_t t_ItemTemplate;
+};
+
+class CTFHeaderItem : public CTFEditableButton
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFHeaderItem, CTFEditableButton );
+
+public:
+	CTFHeaderItem(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void OnReleasedSelected();
+	virtual void OnReleasedUnselected();
+	virtual void PerformLayout();
+	virtual void SetSelected( bool bSelected );
+	void	SetConnectedPanel( const char *szConnectedPanel );
+	void CalculateBoxSize();
+public:
+	vgui::Panel		*pConnectedPanel;
+
+	int iBaseHeight;
+	vgui::HFont 	m_hTextFont;
+	CExLabel		*pLabel;
+};
+
+struct HeaderListItem_t
+{
+	HeaderListItem_t()
+	{
+		pHeaderItem = NULL;
+	}
+	CTFHeaderItem *pHeaderItem;
+	int	def_xpos;
+	int def_ypos;
+};
+
+class CTFLoadoutHeader : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFLoadoutHeader, vgui::EditablePanel );
+public:
+	CTFLoadoutHeader( vgui::Panel *parent, const char *panelName );
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void PerformLayout();
+	
+	void AddCategory( const char *szCategory );
+	void ClearCategoryList( void );
+	
+	MESSAGE_FUNC( OnScrollBarSliderMoved, "ScrollBarSliderMoved" );
+	virtual void OnMouseWheeled(int delta);	// respond to mouse wheel events	
+
+public:
+	CUtlVector<HeaderListItem_t> m_hCategories;
+	vgui::ScrollBar *pScrollBar;
+	
+	CTFHeaderItem *pSelectedHeader;
+
+	int iLastXPos;
+	
+	ItemTemplate_t t_ItemTemplate;
+};
+
+class CTFLoadoutPanel : public vgui::EditablePanel
 {
 private:
 	DECLARE_CLASS_SIMPLE( CTFLoadoutPanel, vgui::EditablePanel );
@@ -26,37 +229,22 @@ public:
 	virtual void OnKeyCodePressed( KeyCode code );
 	virtual void PerformLayout();
 	void ShowModal();
-	
-	virtual void FireGameEvent( IGameEvent *event );
+	void DrawClassModel();
+
 private:
-	MESSAGE_FUNC( OnActivate, "activate" );
-
-	void UpdateDialog();
-	void UpdateBarCharts();
-	void UpdateClassDetails();
-	void UpdateTip();
-
-	vgui::EditablePanel *m_pInteractiveHeaders;
-	vgui::EditablePanel *m_pNonInteractiveHeaders;
-	vgui::Label		*m_pTipLabel;
-	vgui::Label		*m_pTipText;
 
 	vgui::Button *m_pNextTipButton;
 	vgui::Button *m_pCloseButton;
+	
+	CUtlVector<CTFScrollableItemList*> m_pItemCategories;
+	CTFLoadoutHeader *m_pItemHeader;
+	CModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet
-	CUtlVector<ClassStats_t> m_aClassStats;			// stats data
-	int m_xStartLHBar;								// x min of bars in left hand bar chart
-	int m_xStartRHBar;								// x min of bars in right hand bar chart
-	int m_iBarMaxWidth;								// width of bars in bar charts
-	int m_iBarHeight;								// height of bars in bar charts
-
 };
-
 
 CTFLoadoutPanel *GLoadoutPanel();
 void DestroyLoadoutPanel();
-const char *FormatSecondsLoadout( int seconds );
 
 #endif // OF_LOADOUT_H
