@@ -34,6 +34,75 @@ using namespace vgui;
 
 CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
 
+DECLARE_BUILD_FACTORY( CTFModelPanel );
+
+CTFModelPanel::CTFModelPanel( vgui::Panel *pParent, const char *pszName )
+	: CBaseModelPanel( pParent, pszName )
+{
+	SetParent( pParent );
+	SetScheme( "ClientScheme" );
+	SetProportional( true );
+	SetVisible( true );
+	SetThumbnailSafeZone( false );
+
+	m_pStudioHdr = NULL;
+	m_iAnimationIndex = 0;
+}
+
+void CTFModelPanel::ApplySettings( KeyValues *inResourceData )
+{
+	BaseClass::ApplySettings( inResourceData );
+		
+	Color bgColor = inResourceData->GetColor( "bgcolor_override" );
+	SetBackgroundColor( bgColor );
+
+	KeyValues *pModelData = inResourceData->FindKey( "model" );
+	if( pModelData )
+	{
+		m_vecDefPosition = Vector( pModelData->GetFloat( "origin_x", 0 ), pModelData->GetFloat( "origin_y", 0 ), pModelData->GetFloat( "origin_z", 0 ) );
+		m_vecDefAngles = QAngle( pModelData->GetFloat( "angles_x", 0 ), pModelData->GetFloat( "angles_y", 0 ), pModelData->GetFloat( "angles_z", 0 ) );
+	}
+}
+
+void CTFModelPanel::OnThink()
+{
+	BaseClass::OnThink();
+
+	// TODO: autorotation?
+}
+
+void CTFModelPanel::Update()
+{
+	MDLHandle_t hSelectedMDL = g_pMDLCache->FindMDL( m_BMPResData.m_pszModelName );
+	g_pMDLCache->PreloadModel( hSelectedMDL );
+	SetMDL( hSelectedMDL );
+
+	if ( m_iAnimationIndex < m_BMPResData.m_aAnimations.Size() )
+	{
+		SetModelAnim( m_iAnimationIndex );
+	}
+
+	SetSkin( m_BMPResData.m_nSkin );
+}
+
+void CTFModelPanel::Paint()
+{
+	CMatRenderContextPtr pRenderContext( materials );
+
+	pRenderContext->SetIntRenderingParameter( INT_RENDERPARM_WRITE_DEPTH_TO_DESTALPHA, false );
+	
+	pRenderContext->SetFlashlightMode( false );
+
+	BaseClass::Paint();
+}
+
+void CTFModelPanel::SetModelName( const char* pszModelName, int nSkin )
+{
+	m_BMPResData.m_pszModelName = pszModelName;
+	m_BMPResData.m_nSkin = nSkin;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Returns the global stats summary panel
 //-----------------------------------------------------------------------------
@@ -66,7 +135,7 @@ CTFLoadoutPanel::CTFLoadoutPanel() : vgui::EditablePanel( NULL, "TFLoadout",
 {
 	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );	
 	m_pItemHeader = new CTFLoadoutHeader( this, "ItemHeader" );
-	m_pClassModel = new CModelPanel( this, "classmodelpanel" );
+	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
 	
 	
 	m_bControlsLoaded = false;

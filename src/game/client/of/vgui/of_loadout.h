@@ -13,7 +13,9 @@
 
 #include "tf_hud_statpanel.h"
 #include "tf_controls.h"
-#include "basemodelpanel.h"
+#include "basemodel_panel.h"
+
+class CStudioHdr;
 
 enum
 {
@@ -216,6 +218,31 @@ public:
 	ItemTemplate_t t_ItemTemplate;
 };
 
+namespace vgui
+{
+	class CTFModelPanel : public CBaseModelPanel
+	{
+		DECLARE_CLASS_SIMPLE( CTFModelPanel, CBaseModelPanel );
+
+	public:
+		CTFModelPanel( vgui::Panel *pParent, const char *pszName );
+
+		virtual void	ApplySettings( KeyValues *inResourceData );
+		virtual void	OnThink();
+		virtual void	Update();
+		virtual void	Paint();
+
+		virtual void	SetModelName( const char* pszModelName, int nSkin = 0 );
+		virtual void	SetAnimationIndex( int index ) { m_iAnimationIndex = index; };
+
+		Vector			m_vecDefPosition;
+		QAngle			m_vecDefAngles;
+
+		CStudioHdr		*m_pStudioHdr;
+		int				m_iAnimationIndex;
+	};
+}
+
 class CTFLoadoutPanel : public vgui::EditablePanel
 {
 private:
@@ -238,7 +265,7 @@ private:
 	
 	CUtlVector<CTFScrollableItemList*> m_pItemCategories;
 	CTFLoadoutHeader *m_pItemHeader;
-	CModelPanel *m_pClassModel;
+	CTFModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet

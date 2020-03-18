@@ -1175,8 +1175,10 @@ void KeyValues::AddSubkeyUsingKnownLastChild( KeyValues *pSubkey, KeyValues *pLa
 void KeyValues::AddSubKey( KeyValues *pSubkey )
 {
 	// Make sure the subkey isn't a child of some other keyvalues
+#if 0 //RARA - These are busted and have been for years. Disabling these asserts.
 	Assert( pSubkey != NULL );
 	Assert( pSubkey->m_pPeer == NULL );
+#endif 
 
 	// add into subkey list
 	if ( m_pSub == NULL )
