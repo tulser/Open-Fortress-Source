@@ -11,7 +11,6 @@
 #pragma once
 #endif
 
-#include "tf_hud_statpanel.h"
 #include "tf_controls.h"
 #include "basemodel_panel.h"
 
@@ -254,8 +253,7 @@ public:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 	virtual void ApplySettings( KeyValues* inResourceData );
 	virtual void OnCommand( const char *command );
-	virtual void OnKeyCodePressed( KeyCode code );
-	virtual void PerformLayout();
+	virtual void OnKeyCodePressed( vgui::KeyCode code );
 	void ShowModal();
 	void DrawClassModel();
 
@@ -266,7 +264,7 @@ private:
 	
 	CUtlVector<CTFScrollableItemList*> m_pItemCategories;
 	CTFLoadoutHeader *m_pItemHeader;
-	CTFModelPanel *m_pClassModel;
+//	CTFModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet

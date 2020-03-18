@@ -5572,7 +5572,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	int Clip = -1;
 	int Reserve = -1;
 
-	if ( !of_fullammo.GetBool() || m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
+	if( !of_fullammo.GetBool() || (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop) )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;

@@ -136,7 +136,7 @@ CTFLoadoutPanel::CTFLoadoutPanel() : vgui::EditablePanel( NULL, "TFLoadout",
 {
 	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );	
 	m_pItemHeader = new CTFLoadoutHeader( this, "ItemHeader" );
-	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
+//	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
 	
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
@@ -158,22 +158,24 @@ void CTFLoadoutPanel::ShowModal()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLoadoutPanel::PerformLayout()
+void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 {
-	BaseClass::PerformLayout();
+	BaseClass::ApplySettings( inResourceData );
 	
-	KeyValues *inResourceData = new KeyValues("ResourceData");
-	inResourceData->LoadFromFile( filesystem, "Resource/UI/Loadout.res" );
+	KeyValues *inNewResourceData = new KeyValues("ResourceData");
+	inNewResourceData->LoadFromFile( filesystem, "Resource/UI/Loadout.res" );
 	
-	if( !inResourceData )
-		return;
+	if( !inNewResourceData )
+		return;	
 	
 	if( !GetItemsGame() )
 		return;
-	
+
 	KeyValues *pCosmetics = GetItemsGame()->FindKey("Cosmetics");
 	if( !pCosmetics )
 		return;
+	
+	m_pItemHeader->ApplySettings(inNewResourceData->FindKey("ItemHeader"));
 	
 	m_pItemHeader->ClearCategoryList();
 	for( int i = 0; i < m_pItemCategories.Count(); i++ )
@@ -209,7 +211,7 @@ void CTFLoadoutPanel::PerformLayout()
 		{
 			hCategories.AddToTail(pLoop->GetString("region"));
 			CTFScrollableItemList *pNew = new CTFScrollableItemList( this, VarArgs("%sList",pLoop->GetString("region")) );
-			pNew->ApplySettings(inResourceData->FindKey("ListTemplate"));
+			pNew->ApplySettings(inNewResourceData->FindKey("ListTemplate"));
 			Q_strncpy(pNew->szCategoryName, pLoop->GetString("region"), sizeof(pNew->szCategoryName));
 			m_pItemCategories.AddToTail(pNew);
 			m_pItemCategories[m_pItemCategories.Count()-1]->AddItem(atoi(pLoop->GetName()));
@@ -228,7 +230,7 @@ void CTFLoadoutPanel::PerformLayout()
 				}
 			}
 		}
-	}
+	}	
 }
 
 //-----------------------------------------------------------------------------
@@ -257,13 +259,6 @@ void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	m_bControlsLoaded = true;
 
 	SetVisible( false );
-}
-
-void CTFLoadoutPanel::ApplySettings( KeyValues* inResourceData )
-{
-	BaseClass::ApplySettings( inResourceData );
-	m_pClassModel->SetAnimationIndex( ACT_MERC_STAND_SUPERSHOTGUN );
-	m_pClassModel->Update();
 }
 
 //-----------------------------------------------------------------------------

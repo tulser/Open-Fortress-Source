@@ -122,6 +122,7 @@
 #include "fmod_manager.h"
 #include "c_of_music_player.h"
 #include "tf_gamerules.h"
+#include "of_loadout.h"
 #endif
 #include "clientsteamcontext.h"
 #include "renamed_recvtable_compat.h"
@@ -1155,6 +1156,11 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	ParseSoundManifest();
 	FMODManager()->InitFMOD();
 #endif
+
+	CTFLoadoutPanel *pLoadoutPanel = GLoadoutPanel();
+	pLoadoutPanel->InvalidateLayout( false, true );
+	pLoadoutPanel->SetVisible( false );
+	pLoadoutPanel->MakePopup( false );
 
 	if (!view)
 	{
