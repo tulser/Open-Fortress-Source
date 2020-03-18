@@ -866,7 +866,7 @@ void CTFDMTeamMenu::Update(void)
 	
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if (pLocalPlayer && (pLocalPlayer->GetTeamNumber() != TEAM_UNASSIGNED))
+	if ( pLocalPlayer && (pLocalPlayer->GetTeamNumber() != TEAM_UNASSIGNED))
 	{
 		if (m_pCancelButton)
 		{
@@ -875,9 +875,11 @@ void CTFDMTeamMenu::Update(void)
 	}
 	else
 	{
-		if( TeamplayRoundBasedRules() )
-			TeamplayRoundBasedRules()->BroadcastSoundFFA( C_TFPlayer::GetLocalTFPlayer()->entindex(), GetGamemodeMessage() );
-		if (m_pCancelButton && m_pCancelButton->IsVisible())
+		if ( pLocalPlayer && TeamplayRoundBasedRules() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSoundFFA( pLocalPlayer->entindex(), GetGamemodeMessage() );
+		}
+		if ( m_pCancelButton && m_pCancelButton->IsVisible())
 		{
 			m_pCancelButton->SetVisible(false);
 		}
