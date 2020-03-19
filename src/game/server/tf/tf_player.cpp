@@ -1779,11 +1779,12 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	{
 		for ( int iWeapon = 0; iWeapon < GetDesiredWeaponCount( pData ); iWeapon++ )
 		{
-			if ( GetDesiredWeapon( iWeapon, pData ) != TF_WEAPON_NONE )
+			int iWeaponID = GetDesiredWeapon( iWeapon, pData );
+			if ( iWeaponID != TF_WEAPON_NONE )
 			{
-				int iWeaponID = GetDesiredWeapon( iWeapon, pData );
 				const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
-
+				if( !pszWeaponName )
+					continue;
 				pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
 				if ( pWeapon )
 				{
@@ -1798,7 +1799,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				else
 				{
 					pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
-
+					if (!Q_stricmp(pszWeaponName, ""))
+						continue;
 					if ( pWeapon )
 					{
 						pWeapon->DefaultTouch( this );
@@ -5583,7 +5585,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	int Clip = -1;
 	int Reserve = -1;
 
-	if ( !of_fullammo.GetBool() || m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
+	if( !of_fullammo.GetBool() || (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop) )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;

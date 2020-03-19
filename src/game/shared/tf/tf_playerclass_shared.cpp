@@ -285,6 +285,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	m_nMaxAirDashCount = pKeyValuesData->GetInt( "MaxAirDashCount" );
 	
 	m_nCapNumber = pKeyValuesData->GetInt( "CapMultiplier" );
+	m_iWeaponCount = pKeyValuesData->GetInt( "WeaponCount", 1 );
 	
 	// Weapons.
 	int i;
@@ -294,8 +295,6 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );
 		int iID = GetWeaponId(pKeyValuesData->GetString(buf));
 		m_aWeapons.GetForModify(i) = iID;
-		if( iID != TF_WEAPON_NONE )
-			m_iWeaponCount++;
 	}
 
 	// Grenades.
