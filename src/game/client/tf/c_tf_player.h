@@ -153,7 +153,6 @@ public:
 	void ClientPlayerRespawn( void );
 
 	virtual	void		BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed );
-
 	//void				LoadMapMusic( IBaseFileSystem *pFileSystem );
 	//void				PlayMapMusic( void );
 	//void				ReplayMapMusic(void);
@@ -357,6 +356,7 @@ private:
 public:
 
 	CTFPlayerShared m_Shared;
+	float 			m_flJumpSoundDelay;
 
 // Called by shared code.
 public:

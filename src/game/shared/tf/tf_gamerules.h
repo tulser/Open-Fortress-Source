@@ -78,6 +78,7 @@ extern void InitItemsGame();
 extern KeyValues* GetItemsGame();
 
 extern KeyValues* GetCosmetic( int iID );
+extern KeyValues* GetRespawnParticle( int iID );
 
 #ifdef CLIENT_DLL
 extern KeyValues* GetLoadout();

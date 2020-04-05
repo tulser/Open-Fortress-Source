@@ -963,7 +963,10 @@ void CTFPlayer::PrecachePlayerModels( void )
 			for ( KeyValues *pCosmetic = pCosmetics->GetFirstSubKey(); pCosmetic; pCosmetic = pCosmetic->GetNextKey() )
 			{
 				if ( pCosmetic )
-					PrecacheModel( pCosmetic->GetString( "Model" ) );
+				{
+					if( Q_stricmp(pCosmetic->GetString( "Model" ), "BLANK") )
+						PrecacheModel( pCosmetic->GetString( "Model" ) );
+				}
 			}
 		}
 	}	
@@ -1771,11 +1774,13 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 	{
 		for ( int iWeapon = 0; iWeapon < GetDesiredWeaponCount( pData ); iWeapon++ )
 		{
-			if ( GetDesiredWeapon( iWeapon, pData ) != TF_WEAPON_NONE )
+			int iWeaponID = GetDesiredWeapon( iWeapon, pData );
+			if ( iWeaponID != TF_WEAPON_NONE )
 			{
-				int iWeaponID = GetDesiredWeapon( iWeapon, pData );
+				DevMsg("Given weapon with id %d\n", iWeaponID);
 				const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
-
+				if( !pszWeaponName )
+					continue;
 				pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
 				if ( pWeapon )
 				{
@@ -1789,6 +1794,8 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				}
 				else
 				{
+					if (!Q_stricmp(pszWeaponName, ""))
+						continue;
 					pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
 
 					if ( pWeapon )

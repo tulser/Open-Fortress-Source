@@ -182,6 +182,7 @@ public:
 	virtual void ApplySettings( KeyValues *inResourceData );
 	virtual void DeleteVCDData( void );
 	virtual void DeleteModelData( void );
+	void PurgeAttachedModels( void );
 
 	virtual void SetFOV( int nFOV ){ m_nFOV = nFOV; }
 	virtual void SetPanelDirty( void ){ m_bPanelDirty = true; }

@@ -194,6 +194,7 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) : CBaseHudW
 	vgui::Panel *pParent = g_pClientMode->GetViewport();
 	SetParent( pParent );
 	m_bFadingOut = false;
+	SetScheme( "ClientScheme" );
 }
 
 //-----------------------------------------------------------------------------

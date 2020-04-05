@@ -442,6 +442,28 @@ KeyValues* GetCosmetic( int iID )
 	return pCosmetic;
 }
 
+KeyValues* GetRespawnParticle( int iID )
+{
+	if( !GetItemsGame() )
+		return NULL;
+	
+	KeyValues *pParticles = GetItemsGame()->FindKey("RespawnParticles");
+	if( !pParticles )
+		return NULL;
+	
+	KeyValues *pParticle = pParticles->FindKey( 
+#ifdef GAME_DLL
+	UTIL_VarArgs( "%d", iID ) 
+#else
+	VarArgs( "%d", iID ) 
+#endif
+	);
+	if( !pParticle )
+		return NULL;
+	
+	return pParticle;
+}
+
 #ifdef CLIENT_DLL
 
 KeyValues* gLoadout;

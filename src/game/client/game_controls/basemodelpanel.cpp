@@ -340,7 +340,12 @@ void CModelPanel::DeleteModelData( void )
 		m_hModel = NULL;
 		m_flFrameDistance = 0;
 	}
+	
+	PurgeAttachedModels();
+}
 
+void CModelPanel::PurgeAttachedModels()
+{
 	for ( int i = 0 ; i < m_AttachedModels.Count() ; i++ )
 	{
 		if ( m_AttachedModels[i].Get() )
@@ -348,7 +353,7 @@ void CModelPanel::DeleteModelData( void )
 			m_AttachedModels[i]->Remove();
 		}
 		m_AttachedModels.Remove( i );
-	}
+	}	
 }
 
 //-----------------------------------------------------------------------------

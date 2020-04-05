@@ -117,6 +117,8 @@ ConVar tf_taunt_first_person( "tf_taunt_first_person", "0", FCVAR_ARCHIVE | FCVA
 ConVar cl_quickzoom( "cl_quickzoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Softzoom on right click whenever avalible" );
 ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces death animation." );
 
+ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
+
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
 
@@ -2246,6 +2248,7 @@ class CProxyRage : public CResultProxy
 public:
 	void OnBind( void *pC_BaseEntity )
 	{
+		m_pResult->SetFloatValue( 1.0 );
 		Assert( m_pResult );
 
 		C_TFPlayer *pPlayer = NULL;
@@ -2441,6 +2444,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_angTauntEngViewAngles.Init();
 
 	m_flWaterImpactTime = 0.0f;
+	m_flJumpSoundDelay = 0.0f;
 
 	m_flWaterEntryTime = 0;
 	m_nOldWaterLevel = WL_NotInWater;
@@ -2592,7 +2596,7 @@ void C_TFPlayer::UpdateClientSideAnimation()
 	// Update the animation data. It does the local check here so this works when using
 	// a third-person camera (and we don't have valid player angles).
 	if ( this == C_TFPlayer::GetLocalTFPlayer() )
-		m_PlayerAnimState->Update( EyeAngles()[YAW], m_angEyeAngles[PITCH] );
+		m_PlayerAnimState->Update( EyeAngles()[YAW], EyeAngles()[PITCH] );
 	else
 		m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
 
@@ -4873,7 +4877,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	}
 	
 	// don't draw the respawn particle in first person
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && (!InFirstPersonView() || !IsLocalPlayer()) )
+	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
 	{
 		char pEffectName[32];
 		if ( m_Shared.GetSpawnEffects() < 10 )
@@ -5221,6 +5225,8 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 
 void C_TFPlayer::FireGameEvent( IGameEvent *event )
 {
+	if( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer() == this )
+		return;
 
 	const char *eventname = event->GetName();
 
@@ -5228,16 +5234,21 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 	{
 		if( !of_jumpsound.GetBool() )
 			return;
-
+		
 		if ( event->GetInt("playerid") != entindex() )
 			return;
 
+		if( gpGlobals->curtime < m_flJumpSoundDelay )
+			return;
+		
 		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
 			char jmpSound[128];
 			Q_snprintf(jmpSound, sizeof(jmpSound), GetPlayerClass()->GetJumpSound());
 			EmitSound( jmpSound );
 		}
+		
+		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 	}
 }
 

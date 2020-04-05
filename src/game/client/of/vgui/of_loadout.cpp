@@ -23,20 +23,160 @@
 #include "renderparm.h"
 #include "animation.h"
 #include "tf_controls.h"
+#include "cvartogglecheckbutton.h"
 
+#include "engine/ienginesound.h"
+#include "basemodelpanel.h"
 #include "tf_gamerules.h"
 #include "of_loadout.h"
 #include <convar.h>
 #include <vgui_controls/ScrollBarSlider.h>
+#include <vgui_controls/Slider.h>
 #include "fmtstr.h"
 
 using namespace vgui;
+
+// "Simple" function to convert Hue Saturation and Brightness to RGB
+// Hue goes from 0 to 360
+// Saturation and brightness goes from 0 to 1 ( float value which represents 0% to 100% )
+// Maybe we should try to do this with inline assembly code later?
+// Definetly beneficial for such a common function
+
+typedef struct {
+    double r;       // a fraction between 0 and 1
+    double g;       // a fraction between 0 and 1
+    double b;       // a fraction between 0 and 1
+} rgb;
+
+typedef struct {
+    double h;       // angle in degrees
+    double s;       // a fraction between 0 and 1
+    double v;       // a fraction between 0 and 1
+} hsv;
+
+static rgb   hsv2rgb(hsv in);
+static hsv   rgb2hsv(rgb in);
+
+hsv rgb2hsv(rgb in)
+{
+    hsv         out;
+    double      min, max, delta;
+
+    min = in.r < in.g ? in.r : in.g;
+    min = min  < in.b ? min  : in.b;
+
+    max = in.r > in.g ? in.r : in.g;
+    max = max  > in.b ? max  : in.b;
+
+    out.v = max;                                // v
+    delta = max - min;
+    if (delta < 0.00001)
+    {
+        out.s = 0;
+        out.h = 0; // undefined, maybe nan?
+        return out;
+    }
+    if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
+        out.s = (delta / max);                  // s
+    } else {
+        // if max is 0, then r = g = b = 0              
+        // s = 0, h is undefined
+        out.s = 0.0;
+        out.h = NAN;                            // its now undefined
+        return out;
+    }
+    if( in.r >= max )                           // > is bogus, just keeps compilor happy
+        out.h = ( in.g - in.b ) / delta;        // between yellow & magenta
+    else
+    if( in.g >= max )
+        out.h = 2.0 + ( in.b - in.r ) / delta;  // between cyan & yellow
+    else
+        out.h = 4.0 + ( in.r - in.g ) / delta;  // between magenta & cyan
+
+    out.h *= 60.0;                              // degrees
+
+    if( out.h < 0.0 )
+        out.h += 360.0;
+
+    return out;
+}
+
+rgb hsv2rgb(hsv in)
+{
+    double      hh, p, q, t, ff;
+    long        i;
+    rgb         out;
+
+    if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
+        out.r = in.v;
+        out.g = in.v;
+        out.b = in.v;
+        return out;
+    }
+    hh = in.h;
+    if(hh >= 360.0) hh = 0.0;
+    hh /= 60.0;
+    i = (long)hh;
+    ff = hh - i;
+    p = in.v * (1.0 - in.s);
+    q = in.v * (1.0 - (in.s * ff));
+    t = in.v * (1.0 - (in.s * (1.0 - ff)));
+
+    switch(i) {
+    case 0:
+        out.r = in.v;
+        out.g = t;
+        out.b = p;
+        break;
+    case 1:
+        out.r = q;
+        out.g = in.v;
+        out.b = p;
+        break;
+    case 2:
+        out.r = p;
+        out.g = in.v;
+        out.b = t;
+        break;
+
+    case 3:
+        out.r = p;
+        out.g = q;
+        out.b = in.v;
+        break;
+    case 4:
+        out.r = t;
+        out.g = p;
+        out.b = in.v;
+        break;
+    case 5:
+    default:
+        out.r = in.v;
+        out.g = p;
+        out.b = q;
+        break;
+    }
+    return out;     
+}
+
+Color HSBtoRGB( float iH, float iS, float iB )
+{
+	hsv in;
+	in.h = iH;
+	in.s = iS;
+	in.v = iB;
+	rgb out = hsv2rgb( in );
+	
+	Color vecCol;
+	vecCol.SetColor((int)(out.r * 255.0f),(int)(out.g * 255.0f),(int)(out.b * 255.0f), 255);
+	return vecCol;
+}
 
 CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
 
 DECLARE_BUILD_FACTORY( CTFModelPanel );
 
-CTFModelPanel::CTFModelPanel( vgui::Panel *pParent, const char *pszName )
+CTFModelPanel::CTFModelPanel( Panel *pParent, const char *pszName )
 	: CBaseModelPanel( pParent, pszName )
 {
 	SetParent( pParent );
@@ -131,15 +271,25 @@ void DestroyLoadoutPanel()
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFLoadoutPanel::CTFLoadoutPanel() : vgui::EditablePanel( NULL, "TFLoadout", 
-	vgui::scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
+CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout", 
+	scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
 {
-	m_pCloseButton = new vgui::Button( this, "CloseButton", "" );	
-	m_pItemHeader = new CTFLoadoutHeader( this, "ItemHeader" );
-//	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
+	m_pCloseButton = new Button( this, "CloseButton", "" );	
+	pCosmeticPanel = new EditablePanel( this, "CosmeticPanel" );
+	pVisualPanel = new EditablePanel( this, "VisualPanel" );
+	pParticleList = new CTFScrollablePanelList( pVisualPanel, "ParticleList" );
+	m_pItemHeader = new CTFLoadoutHeader( pCosmeticPanel, "ItemHeader" );
+	m_pClassModel = new CModelPanel( this, "classmodelpanel" );
 	
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
+	m_pSelectedOptions = NULL;
+	
+	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization01")->GetString("wave"), true, false );
+	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization02")->GetString("wave"), true, false );
+	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization03")->GetString("wave"), true, false );
+	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization04")->GetString("wave"), true, false );
+	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization05")->GetString("wave"), true, false );
 }
 
 //-----------------------------------------------------------------------------
@@ -155,6 +305,8 @@ void CTFLoadoutPanel::ShowModal()
 	MoveToFront();
 }
 
+extern ConVar of_respawn_particle;
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -168,6 +320,10 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 	if( !inNewResourceData )
 		return;	
 	
+	KeyValues *inCosmeticPanel = inNewResourceData->FindKey("CosmeticPanel");
+	if( !inCosmeticPanel )
+		return;
+	
 	if( !GetItemsGame() )
 		return;
 
@@ -175,7 +331,7 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 	if( !pCosmetics )
 		return;
 	
-	m_pItemHeader->ApplySettings(inNewResourceData->FindKey("ItemHeader"));
+	m_pItemHeader->ApplySettings(inCosmeticPanel->FindKey("ItemHeader"));
 	
 	m_pItemHeader->ClearCategoryList();
 	for( int i = 0; i < m_pItemCategories.Count(); i++ )
@@ -210,8 +366,8 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		else
 		{
 			hCategories.AddToTail(pLoop->GetString("region"));
-			CTFScrollableItemList *pNew = new CTFScrollableItemList( this, VarArgs("%sList",pLoop->GetString("region")) );
-			pNew->ApplySettings(inNewResourceData->FindKey("ListTemplate"));
+			CTFScrollableItemList *pNew = new CTFScrollableItemList( m_pItemHeader->GetParent(), VarArgs("%sList",pLoop->GetString("region")) );
+			pNew->ApplySettings(inCosmeticPanel->FindKey("ListTemplate"));
 			Q_strncpy(pNew->szCategoryName, pLoop->GetString("region"), sizeof(pNew->szCategoryName));
 			m_pItemCategories.AddToTail(pNew);
 			m_pItemCategories[m_pItemCategories.Count()-1]->AddItem(atoi(pLoop->GetName()));
@@ -230,7 +386,87 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 				}
 			}
 		}
-	}	
+	}
+	
+	KeyValues *inVisualPanel = inNewResourceData->FindKey("VisualPanel");
+	if( !inVisualPanel )
+		return;
+	
+	KeyValues *inParticleList = inVisualPanel->FindKey("ParticleList");
+	if( !inParticleList )
+		return;	
+
+	if( pParticleList )
+	{
+		pParticleList->ClearItemList();
+		
+		pParticleList->ApplySettings( inParticleList );
+		
+		KeyValues *kvTemp = new KeyValues("Resource");
+		
+		kvTemp->SetString( "fieldName", "ItemTemplate" );
+		kvTemp->SetString( "wide", "50" );
+		kvTemp->SetString( "tall", "50" );
+		kvTemp->SetString( "autoResize", "0" );
+		kvTemp->SetString( "pinCorner", "2" );
+		kvTemp->SetString( "visible", "1" );
+		kvTemp->SetString( "enabled", "1" );
+		kvTemp->SetString( "tabPosition", "0" );
+		kvTemp->SetString( "proportionalToParent", "1" );
+		kvTemp->SetString( "border_idle", "ItemOutlineIdle" );
+		kvTemp->SetString( "border_hover", "ItemOutlineHoverover" );
+		kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
+		kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
+		kvTemp->SetString( "command", "of_respawn_particle 0" );
+		
+		KeyValues *kvButtTemp = new KeyValues("Button");
+		kvButtTemp->SetString( "wide", "50" );
+		kvButtTemp->SetString( "tall", "50" );
+		kvButtTemp->SetString( "xpos", "c-25" );
+		kvButtTemp->SetString( "ypos", "c-25" );
+		kvButtTemp->SetString( "zpos", "10" );
+		kvButtTemp->SetString( "proportionalToParent", "1" );
+		
+		KeyValues *kvImageTemp = new KeyValues("ParticleImage");
+		kvImageTemp->SetString( "wide", "50" );
+		kvImageTemp->SetString( "tall", "50" );
+		kvImageTemp->SetString( "xpos", "c-25" );
+		kvImageTemp->SetString( "ypos", "c-25" );
+		kvImageTemp->SetString( "zpos", "5" );
+		kvImageTemp->SetString( "scaleImage", "1" );
+		kvImageTemp->SetString( "proportionalToParent", "1" );
+		
+		kvTemp->AddSubKey( kvButtTemp );
+		
+		for( int i = 1; i <= 35; i++ )
+		{
+			CTFCommandButton *pTemp = new CTFCommandButton( pParticleList, "Temp" );
+			kvTemp->SetString( "command", VarArgs( "of_respawn_particle %d", i ) );
+			kvTemp->SetString( "convref", "of_respawn_particle" );
+			kvTemp->SetString( "targetval", VarArgs( "%d", i ) );
+			pTemp->ApplySettings( kvTemp );
+			
+			pParticleList->AddItem( pTemp );
+
+			if( of_respawn_particle.GetInt() == i )
+			{
+				pTemp->SetSelected(true);
+				pParticleList->pSelectedItem = pTemp;
+			}
+			
+			KeyValues *pParticle = GetRespawnParticle( i );
+			if( pParticle )
+			{
+				kvImageTemp->SetString( "image", pParticle->GetString("backpack_icon") );
+				CTFImagePanel *pTempImage = new CTFImagePanel( pTemp, "ParticleImage" );
+				pTempImage->ApplySettings( kvImageTemp );
+			}
+			else
+			{
+				kvImageTemp->deleteThis();
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -250,7 +486,7 @@ void CTFLoadoutPanel::OnCommand( const char *command )
 //-----------------------------------------------------------------------------
 // Purpose: Applies scheme settings
 //-----------------------------------------------------------------------------
-void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
+void CTFLoadoutPanel::ApplySchemeSettings(IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
@@ -259,6 +495,9 @@ void CTFLoadoutPanel::ApplySchemeSettings(vgui::IScheme *pScheme)
 	m_bControlsLoaded = true;
 
 	SetVisible( false );
+	
+	if( !pVisualPanel )
+		return;
 }
 
 //-----------------------------------------------------------------------------
@@ -275,12 +514,28 @@ void CTFLoadoutPanel::OnKeyCodePressed( KeyCode code )
 	}
 }
 
+void CTFLoadoutPanel::OnThink()
+{
+	BaseClass::OnThink();
+
+	CModelPanel *pModelPanel = dynamic_cast<CModelPanel *>(FindChildByName( "classmodelpanel" ) );
+	if ( pModelPanel )
+	{
+		Vector vLocalColor;
+		vLocalColor.x = (float)of_color_r.GetInt() / 255.0f;
+		vLocalColor.y = (float)of_color_g.GetInt() / 255.0f;
+		vLocalColor.z = (float)of_color_b.GetInt() / 255.0f;
+		
+		pModelPanel->SetModelColor(vLocalColor);
+	}
+}
+
 CON_COMMAND( showloadoutdialog, "Shows the player stats dialog" )
 {
 	GLoadoutPanel()->ShowModal();
 }
 
-vgui::Panel *CTFItemSelection_Factory()
+Panel *CTFItemSelection_Factory()
 {
 	return new CTFItemSelection(NULL, NULL, 0);
 }
@@ -289,12 +544,14 @@ vgui::Panel *CTFItemSelection_Factory()
 // Purpose: 
 //-----------------------------------------------------------------------------
 
-CTFEditableButton::CTFEditableButton(vgui::Panel *parent, const char *panelName) : vgui::EditablePanel(parent, panelName)
+CTFEditableButton::CTFEditableButton(Panel *parent, const char *panelName) : EditablePanel(parent, panelName)
 {
 	pButton = new CTFEditableButtonFunc(this, "Button");
 	
 	m_bSelected = false;
-	vgui::ivgui()->AddTickSignal(GetVPanel());
+	ivgui()->AddTickSignal(GetVPanel());
+	if( parent )
+		AddActionSignalTarget( parent );
 }
 
 void CTFEditableButton::ApplySettings(KeyValues *inResourceData)
@@ -338,7 +595,7 @@ void CTFEditableButton::OnCursorExited()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFEditableButton::OnMousePressed(vgui::MouseCode code)
+void CTFEditableButton::OnMousePressed(MouseCode code)
 {
 	BaseClass::OnMousePressed(code);
 	if ( code == MOUSE_LEFT )
@@ -350,7 +607,7 @@ void CTFEditableButton::OnMousePressed(vgui::MouseCode code)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFEditableButton::OnMouseReleased(vgui::MouseCode code)
+void CTFEditableButton::OnMouseReleased(MouseCode code)
 {
 	BaseClass::OnMouseReleased(code);
 	if ( code == MOUSE_LEFT )
@@ -373,6 +630,8 @@ void CTFEditableButton::SetSelected( bool bSelected )
 	else
 		SetBorderType(BORDER_SELECTED);
 
+	// send a changed message
+	PostActionSignal(new KeyValues("SetSelected", "selected", bSelected));
 }
 
 void CTFEditableButton::OnReleasedSelected()
@@ -419,7 +678,7 @@ void CTFEditableButton::SetBorderType( int iBorder )
 	}
 }
 
-CTFEditableButtonFunc::CTFEditableButtonFunc(vgui::Panel *parent, const char *panelName) : vgui::EditablePanel(parent, panelName)
+CTFEditableButtonFunc::CTFEditableButtonFunc(Panel *parent, const char *panelName) : EditablePanel(parent, panelName)
 {
 	
 }
@@ -445,7 +704,7 @@ void CTFEditableButtonFunc::OnCursorExited()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFEditableButtonFunc::OnMousePressed(vgui::MouseCode code)
+void CTFEditableButtonFunc::OnMousePressed(MouseCode code)
 {
 	if( GetParent() )
 		GetParent()->OnMousePressed( code );
@@ -454,20 +713,82 @@ void CTFEditableButtonFunc::OnMousePressed(vgui::MouseCode code)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFEditableButtonFunc::OnMouseReleased(vgui::MouseCode code)
+void CTFEditableButtonFunc::OnMouseReleased(MouseCode code)
 {
 	if( GetParent() )
 		GetParent()->OnMouseReleased( code );
 }
 
+DECLARE_BUILD_FACTORY( CTFCommandButton );
 DECLARE_BUILD_FACTORY( CTFHeaderItem );
+DECLARE_BUILD_FACTORY( CTFHeaderImagePanel );
 DECLARE_BUILD_FACTORY_CUSTOM( CTFItemSelection, CTFItemSelection_Factory );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 
-CTFItemSelection::CTFItemSelection(vgui::Panel *parent, const char *panelName, const int iID) : CTFEditableButton(parent, panelName)
+CTFCommandButton::CTFCommandButton(Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
+{
+	szConvref[0] = '\0';
+	szTargetVal[0] = '\0';
+}
+
+void CTFCommandButton::ApplySettings(KeyValues *inResourceData)
+{
+	BaseClass::ApplySettings( inResourceData );
+
+	Q_strncpy(szCommand, inResourceData->GetString("command"), sizeof(szCommand));
+	Q_strncpy(szUnselectCommand, inResourceData->GetString("unselect_command"), sizeof(szUnselectCommand));
+	Q_strncpy(szConvref, inResourceData->GetString("convref"), sizeof(szConvref));
+	Q_strncpy(szTargetVal, inResourceData->GetString("targetval"), sizeof(szTargetVal));
+}
+
+void CTFCommandButton::PaintBackground()
+{
+	BaseClass::PaintBackground();
+
+	if( szConvref[0] == '\0' )
+	{
+		return;
+	}
+
+	ConVarRef var( szConvref );
+	if ( !var.IsValid() )
+		return;
+	
+	if( szTargetVal[0] == '\0' )
+	{
+		bool value = var.GetBool();
+		if( m_bSelected != value )
+			SetSelected( value );
+	}
+	else
+	{
+		bool value = !strcmp( szTargetVal, var.GetString() );
+		if( m_bSelected != value )
+			SetSelected( value );
+		DevMsg("Convar %s; Target:%s\nCurrent:%s", szConvref, szTargetVal, var.GetString());
+	}
+}
+
+void CTFCommandButton::OnReleasedSelected()
+{
+	PostActionSignal(new KeyValues("Command", "command", szUnselectCommand));
+	engine->ExecuteClientCmd( szUnselectCommand );
+}
+
+void CTFCommandButton::OnReleasedUnselected()
+{
+	PostActionSignal(new KeyValues("Command", "command", szCommand));
+	engine->ExecuteClientCmd( szCommand );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
+CTFItemSelection::CTFItemSelection(Panel *parent, const char *panelName, const int iID) : CTFEditableButton(parent, panelName)
 {
 	pItemImage = new CTFImagePanel(this, "ItemImage");
 	
@@ -521,6 +842,11 @@ void CTFItemSelection::OnReleasedUnselected()
 {
 	PostActionSignal(new KeyValues("Command", "command", szCommand));
 	engine->ExecuteClientCmd( szCommand );
+	
+	if( random->RandomInt( 0, 3 ) > 2 )
+	{
+		vgui::surface()->PlaySound( GetSoundscript( VarArgs( "Mercenary.PositiveVocalization0%d", random->RandomInt( 1, 5 ) ) )->GetString("wave") );
+	}
 }
 
 void CTFItemSelection::SetSelected( bool bSelected )
@@ -554,9 +880,9 @@ void CTFItemSelection::SetSelected( bool bSelected )
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFScrollableItemList::CTFScrollableItemList( vgui::Panel *parent, const char *panelName ) : vgui::EditablePanel( parent, panelName )
+CTFScrollableItemList::CTFScrollableItemList( Panel *parent, const char *panelName ) : EditablePanel( parent, panelName )
 {
-	pScrollBar = new vgui::ScrollBar( this, "ScrollBar", true );
+	pScrollBar = new ScrollBar( this, "ScrollBar", true );
 	pScrollBar->AddActionSignalTarget( this );
 	
 	pSelectedItem = NULL;
@@ -565,12 +891,12 @@ CTFScrollableItemList::CTFScrollableItemList( vgui::Panel *parent, const char *p
 void CTFScrollableItemList::ApplySettings(KeyValues *inResourceData)
 {
 	BaseClass::ApplySettings(inResourceData);
-	
+
 	iCollumnSpacing = inResourceData->GetInt( "CollumnSpacing" );
 	iRowSpacing = inResourceData->GetInt( "RowSpacing" );
 
 	KeyValues *kvItemNew = inResourceData->FindKey("ItemTemplate");
-	
+
 	if( kvItemNew )
 	{
 		Q_strncpy(t_ItemTemplate.wide, kvItemNew->GetString("wide"), sizeof(t_ItemTemplate.wide));
@@ -610,7 +936,6 @@ void CTFScrollableItemList::ApplySettings(KeyValues *inResourceData)
 void CTFScrollableItemList::PerformLayout()
 {
 	BaseClass::PerformLayout();
-	pScrollBar->SetRange( 0, GetTall() );
 
 	if ( pScrollBar->GetSlider() )
 	{
@@ -705,8 +1030,12 @@ void CTFScrollableItemList::AddItem( int iID )
 	
 	int w, h;
 	GetSize( w, h );
-	if( ( (iMultiFactor + iElementsPerScroll - 1) / iElementsPerScroll ) )
-		pScrollBar->SetRangeWindow( (h / ( (iMultiFactor + iElementsPerScroll - 1) / iElementsPerScroll )) - kvItemTemplate->GetInt("tall") );
+
+	int iWide, iTall;
+	pNewItem.pItemPanel->GetSize( iWide, iTall );
+	
+	pScrollBar->SetRange( 0, y + iTall + iCollumnSpacing );
+	pScrollBar->SetRangeWindow( h );
 	
 	if( GetLoadout() )
 	{
@@ -733,10 +1062,137 @@ void CTFScrollableItemList::ClearItemList()
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Constructor
+//-----------------------------------------------------------------------------
+CTFScrollablePanelList::CTFScrollablePanelList( Panel *parent, const char *panelName ) : EditablePanel( parent, panelName )
+{
+	pScrollBar = new ScrollBar( this, "ScrollBar", true );
+	pScrollBar->AddActionSignalTarget( this );
+	
+	pSelectedItem = NULL;
+	
+	iElementsPerRow = 1;
+	iElementsPerScroll = 1;
+}
+
+void CTFScrollablePanelList::ApplySettings(KeyValues *inResourceData)
+{
+	BaseClass::ApplySettings(inResourceData);
+
+	iCollumnSpacing = inResourceData->GetInt( "CollumnSpacing" );
+	iRowSpacing = inResourceData->GetInt( "RowSpacing" );
+
+	iElementWidth = inResourceData->GetInt( "element_width" );
+	iElementHeight = inResourceData->GetInt( "element_height" );
+	iElementsPerRow = ( inResourceData->GetInt("wide") - 30 ) / ( iElementWidth + iRowSpacing );
+	iElementsPerScroll = iElementsPerRow * (( inResourceData->GetInt("tall") ) / ( iElementHeight  + iCollumnSpacing ));
+}
+
+void CTFScrollablePanelList::PerformLayout()
+{
+	BaseClass::PerformLayout();
+
+	if ( pScrollBar->GetSlider() )
+	{
+		pScrollBar->GetSlider()->SetFgColor( pScrollBar->GetFgColor() );
+	}
+	if ( pScrollBar->GetButton(0) )
+	{
+		pScrollBar->GetButton(0)->SetFgColor( pScrollBar->GetFgColor() );
+	}
+	if ( pScrollBar->GetButton(1) )
+	{
+		pScrollBar->GetButton(1)->SetFgColor( pScrollBar->GetFgColor() );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Called when the scroll bar moves
+//-----------------------------------------------------------------------------
+void CTFScrollablePanelList::OnScrollBarSliderMoved()
+{
+	int nScrollAmount = pScrollBar->GetValue();
+	
+	for( int i = 0; i < m_hItems.Count(); i++ )
+	{
+		m_hItems[i].pPanel->SetPos( m_hItems[i].def_xpos, m_hItems[i].def_ypos - nScrollAmount );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// respond to mouse wheel events
+//-----------------------------------------------------------------------------
+void CTFScrollablePanelList::OnMouseWheeled(int delta)
+{
+	int val = pScrollBar->GetValue();
+	val -= (delta * 50);
+	pScrollBar->SetValue( val );
+}
+
+void CTFScrollablePanelList::OnSelectionChanged( Panel *panel )
+{
+	CTFEditableButton *pEditableButton = dynamic_cast<CTFEditableButton*>( panel );
+	
+	if( pEditableButton )
+	{
+		if( pEditableButton->m_bSelected )
+		{
+			if( pSelectedItem )
+			{
+				pSelectedItem->OnReleasedSelected();
+				pSelectedItem->SetSelected( false );
+			}
+			pSelectedItem = pEditableButton;
+		}
+		else if( pSelectedItem == pEditableButton )
+		{
+				pSelectedItem = NULL;
+		}
+	}
+}
+
+void CTFScrollablePanelList::AddItem( CTFEditableButton *pPanel )
+{
+	PanelListItem_t pNewItem;
+
+	pNewItem.pPanel = pPanel;
+	
+	int iWide, iTall;
+	pPanel->GetSize( iWide, iTall );
+
+	int iMultiFactor = m_hItems.Count();
+	int iRowFactor = iMultiFactor / iElementsPerRow;
+	int x = iCollumnSpacing + ( ( iCollumnSpacing + ( iElementWidth * 2 ) ) * ( iMultiFactor - ( iElementsPerRow * iRowFactor ) ) );
+	int y = iRowSpacing + ( ( iRowSpacing + ( iElementHeight * 2 ) ) * iRowFactor );
+
+	pNewItem.pPanel->SetPos(x,y);
+
+	pNewItem.def_xpos = x;
+	pNewItem.def_ypos = y;
+
+	m_hItems.AddToTail(pNewItem);
+
+	int w, h;
+	GetSize( w, h );
+
+	pScrollBar->SetRange( 0, y + iTall + iCollumnSpacing );
+	pScrollBar->SetRangeWindow( h );
+}
+
+void CTFScrollablePanelList::ClearItemList()
+{
+	for( int i = 0; i < m_hItems.Count(); i++ )
+	{
+		m_hItems[i].pPanel->DeletePanel();
+	}
+	m_hItems.Purge();
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 
-CTFHeaderItem::CTFHeaderItem(vgui::Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
+CTFHeaderItem::CTFHeaderItem(Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
 {
 	pLabel = new CExLabel(this, "Label", "");
 	iBaseHeight = -999;
@@ -750,7 +1206,7 @@ void CTFHeaderItem::ApplySettings(KeyValues *inResourceData)
 	if( inLabel )
 	{
 		pLabel->ApplySettings(inLabel);
-		vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( GetScheme() );
+		IScheme *pScheme = scheme()->GetIScheme( GetScheme() );
 		m_hTextFont = pScheme->GetFont( inLabel->GetString("font"), true );
 	}
 	SetConnectedPanel( inResourceData->GetString("panel") );
@@ -768,7 +1224,7 @@ void CTFHeaderItem::CalculateBoxSize()
 	int len = wcslen( szUnicode );
 	for ( int i=0;i<len;i++ )
 	{
-		textLen += vgui::surface()->GetCharacterWidth( m_hTextFont, szUnicode[i] );
+		textLen += surface()->GetCharacterWidth( m_hTextFont, szUnicode[i] );
 	}
 	
 	textLen += 20; // Padding
@@ -794,11 +1250,11 @@ void CTFHeaderItem::PerformLayout()
 
 void CTFHeaderItem::SetConnectedPanel( const char *szConnectedPanel )
 {
-	vgui::Panel *pContainer = GetParent();
+	Panel *pContainer = GetParent();
 	if( !pContainer )
 		return;
 	
-	vgui::Panel *pParent = pContainer->GetParent();
+	Panel *pParent = pContainer->GetParent();
 	if( !pParent )
 	{
 		pParent = GetParent();
@@ -808,6 +1264,17 @@ void CTFHeaderItem::SetConnectedPanel( const char *szConnectedPanel )
 		return;
 
 	pConnectedPanel = pParent->FindChildByName( szConnectedPanel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHeaderItem::OnMouseReleased(MouseCode code)
+{
+	if( m_bSelected )
+		return;
+
+	BaseClass::OnMouseReleased(code);
 }
 
 void CTFHeaderItem::OnReleasedSelected()
@@ -843,6 +1310,7 @@ void CTFHeaderItem::SetSelected( bool bSelected )
 			iBaseHeight = y;			
 		SetPos( x , iBaseHeight - 25 );
 	}
+
 	CTFLoadoutHeader *pHeaderList = dynamic_cast<CTFLoadoutHeader*>( GetParent() );
 	
 	if( pHeaderList )
@@ -866,9 +1334,9 @@ void CTFHeaderItem::SetSelected( bool bSelected )
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
-CTFLoadoutHeader::CTFLoadoutHeader( vgui::Panel *parent, const char *panelName ) : vgui::EditablePanel( parent, panelName )
+CTFLoadoutHeader::CTFLoadoutHeader( Panel *parent, const char *panelName ) : EditablePanel( parent, panelName )
 {
-	pScrollBar = new vgui::ScrollBar( this, "ScrollBar", false );
+	pScrollBar = new ScrollBar( this, "ScrollBar", false );
 	pScrollBar->AddActionSignalTarget( this );
 	
 	iLastXPos = 0;
@@ -884,7 +1352,6 @@ void CTFLoadoutHeader::ApplySettings(KeyValues *inResourceData)
 void CTFLoadoutHeader::PerformLayout()
 {
 	BaseClass::PerformLayout();
-	pScrollBar->SetRange( 0, GetTall() );
 
 	if ( pScrollBar->GetSlider() )
 	{
@@ -990,3 +1457,789 @@ void CTFLoadoutHeader::ClearCategoryList()
 	m_hCategories.Purge();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
+CTFHeaderImagePanel::CTFHeaderImagePanel(Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
+{
+	pImage = new CTFImagePanel(this, "Image");
+	iBaseX = -999;
+	iBaseY = -999;
+}
+
+void CTFHeaderImagePanel::ApplySettings(KeyValues *inResourceData)
+{
+	BaseClass::ApplySettings( inResourceData );
+	
+	iXAdj = inResourceData->GetInt( "XAdjustment", 0 );
+	iYAdj = inResourceData->GetInt( "YAdjustment", 0 );
+
+	KeyValues *inImage = inResourceData->FindKey("Image");
+	if( inImage )
+	{
+		pImage->ApplySettings(inImage);
+	}
+
+	SetConnectedPanel( inResourceData->GetString("panel") );
+
+	if( GLoadoutPanel() && !GLoadoutPanel()->m_pSelectedOptions )
+	{
+		SetSelected( true );
+	}
+}
+
+void CTFHeaderImagePanel::SetConnectedPanel( const char *szConnectedPanel )
+{
+	Panel *pParent = GetParent();
+	if( !pParent )
+		return;
+
+	pConnectedPanel = pParent->FindChildByName( szConnectedPanel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFHeaderImagePanel::OnMouseReleased(MouseCode code)
+{
+	if( m_bSelected )
+		return;
+
+	BaseClass::OnMouseReleased(code);
+}
+
+void CTFHeaderImagePanel::OnReleasedSelected()
+{
+	if( pConnectedPanel )
+		pConnectedPanel->SetVisible( false );
+	
+}
+
+void CTFHeaderImagePanel::OnReleasedUnselected()
+{
+	if( pConnectedPanel )
+		pConnectedPanel->SetVisible( true );
+}
+
+void CTFHeaderImagePanel::SetSelected( bool bSelected )
+{
+	BaseClass::SetSelected( bSelected );
+	
+	int x, y;
+	GetPos( x, y );	
+	
+	if( !bSelected )
+	{
+		if( iBaseX == -999 )
+			iBaseX = x;
+		
+		if( iBaseY == -999 )
+			iBaseY = y;
+		SetPos( iBaseX , iBaseY );
+	}
+	else
+	{
+		if( iBaseX == -999 )
+			iBaseX = x;
+		
+		if( iBaseY == -999 )
+			iBaseY = y;	
+
+		SetPos( iBaseX - iXAdj , iBaseY - iYAdj );
+	}
+	
+	if( GLoadoutPanel() )
+	{
+		if( bSelected )
+		{
+			if( GLoadoutPanel()->m_pSelectedOptions )
+			{
+				GLoadoutPanel()->m_pSelectedOptions->OnReleasedSelected();
+				GLoadoutPanel()->m_pSelectedOptions->SetSelected( false );
+			}
+			GLoadoutPanel()->m_pSelectedOptions = this;
+		}
+		else if( GLoadoutPanel()->m_pSelectedOptions == this )
+		{
+			GLoadoutPanel()->m_pSelectedOptions = NULL;
+		}
+	}
+}
+DECLARE_BUILD_FACTORY( CTFColorPanel );
+DECLARE_BUILD_FACTORY( CTFColorSlider );
+
+extern ConVar of_color_r;
+extern ConVar of_color_g;
+extern ConVar of_color_b;
+
+ConVar of_use_rgb("of_use_rgb", "0", FCVAR_CLIENTDLL | FCVAR_USERINFO | FCVAR_ARCHIVE );
+
+CTFColorPanel::CTFColorPanel(Panel *parent, const char *panelName) : EditablePanel(parent, panelName)
+{
+	pHue = new CTFColorSlider(this ,"Hue");
+	pSaturation = new CTFColorSlider(this ,"Saturation");
+	pBrightness = new CTFColorSlider(this ,"Brightness");
+
+	pHueEntry = new TextEntry(this, "HueEntry");
+	pHueEntry->AddActionSignalTarget(this);	
+	
+	pSaturationEntry = new TextEntry(this, "SaturationEntry");
+	pSaturationEntry->AddActionSignalTarget(this);	
+	
+	pBrightnessEntry = new TextEntry(this, "BrightnessEntry");
+	pBrightnessEntry->AddActionSignalTarget(this);
+
+	pRed = new CTFColorSlider(this ,"Red");
+	pGreen = new CTFColorSlider(this ,"Green");
+	pBlue = new CTFColorSlider(this ,"Blue");
+	
+	pRedEntry = new TextEntry(this, "RedEntry");
+	pRedEntry->AddActionSignalTarget(this);
+	
+	pGreenEntry = new TextEntry(this, "GreenEntry");
+	pGreenEntry->AddActionSignalTarget(this);
+	
+	pBlueEntry = new TextEntry(this, "BlueEntry");
+	pBlueEntry->AddActionSignalTarget(this);
+	
+	pHexEntry = new TextEntry(this, "HexEntry");
+	pHexEntry->AddActionSignalTarget(this);
+	
+	cHueS = Color( 255, 255, 255, 255 );
+	cHueB = Color( 255, 255, 255, 255 );
+	cHueBnoS = Color( 255, 255, 255, 255 );
+	
+	iCurrRed = 0;
+	iCurrGreen = 0;	
+	iCurrBlue = 0;	
+
+    pRGBToggle = new CCvarToggleCheckButton(
+        this,
+        "RGBToggle",
+        "Use RGB",
+        "of_use_rgb");
+	
+	bReset = false;
+	bRGBOn = false;
+	bUpdateHexValue = true;
+	
+	SetScheme( "ClientScheme" );
+}
+
+void CTFColorPanel::OnColorChanged( bool bTriggerChangeMessage, bool bUpdateHexValue )
+{
+	if( !bReset )
+		return;
+	
+	if( !of_use_rgb.GetBool() )
+	{
+		if( !pHue || !pSaturation || !pBrightness )
+			return;
+
+		float iH = pHue->GetValue();
+		float iS = pSaturation->GetValue() / 100.0f;
+		float iB = pBrightness->GetValue() / 100.0f;
+		
+		Color RGB = HSBtoRGB( iH, iS, iB );
+		cHueB = HSBtoRGB( iH, 1, iB );
+		cHueBnoS = HSBtoRGB( iH, 0, iB );
+		cHueS = HSBtoRGB( iH, iS, 1 );
+
+		int iRed, iGreen, iBlue, iAlpha;
+		RGB.GetColor(iRed, iGreen, iBlue, iAlpha);
+		
+		engine->ExecuteClientCmd( VarArgs("of_color_r %d", iRed) );
+		engine->ExecuteClientCmd( VarArgs("of_color_g %d", iGreen) );
+		engine->ExecuteClientCmd( VarArgs("of_color_b %d", iBlue) );
+		
+		iCurrRed = iRed;
+		iCurrGreen = iGreen;
+		iCurrBlue = iBlue;
+	}
+	else
+	{
+		if( !pRed || !pGreen || !pBlue )
+			return;
+
+		engine->ExecuteClientCmd( VarArgs("of_color_r %d", pRed->GetValue()) );
+		engine->ExecuteClientCmd( VarArgs("of_color_g %d", pGreen->GetValue()) );
+		engine->ExecuteClientCmd( VarArgs("of_color_b %d", pBlue->GetValue()) );
+
+		iCurrRed = pRed->GetValue();
+		iCurrGreen = pGreen->GetValue();
+		iCurrBlue = pBlue->GetValue();
+	}
+	
+	if( bTriggerChangeMessage )
+	{
+		OnControlModified( pHue );
+		OnControlModified( pSaturation );
+		OnControlModified( pBrightness );
+
+		OnControlModified( pRed );
+		OnControlModified( pGreen );
+		OnControlModified( pBlue );			
+	}
+	
+	if( bUpdateHexValue )
+	{
+		char szRedHex[3];
+		Q_snprintf( szRedHex, sizeof(szRedHex), of_color_r.GetInt() > 15 ? "%X" : "0%X", of_color_r.GetInt() );
+		
+		char szGreenHex[3];
+		Q_snprintf( szGreenHex, sizeof(szGreenHex), of_color_g.GetInt() > 15 ? "%X" : "0%X", of_color_g.GetInt() );
+		
+		char szBlueHex[3];
+		Q_snprintf( szBlueHex, sizeof(szBlueHex), of_color_b.GetInt() > 15 ? "%X" : "0%X", of_color_b.GetInt() );	
+		
+		pHexEntry->SetText(VarArgs("#%s%s%s", szRedHex, szGreenHex, szBlueHex ));		
+	}
+}
+
+static Color iFade[] = 
+{
+	Color( 255, 0, 0, 255 ),
+	Color( 255, 255, 0, 255 ),
+	Color( 0, 255, 0, 255 ),
+	Color( 0, 255, 255, 255 ),
+	Color( 0, 0, 255, 255 ),
+	Color( 255, 0, 255, 255 ),
+	Color( 255, 0, 0, 255 ),
+};
+
+void CTFColorPanel::RecalculateColorValues()
+{
+	if( pRed && pGreen && pBlue && pRedEntry && pGreenEntry && pBlueEntry )
+	{
+		pRed->SetVisible( of_use_rgb.GetBool() );
+		pGreen->SetVisible( of_use_rgb.GetBool() );
+		pBlue->SetVisible( of_use_rgb.GetBool() );
+		
+		pRedEntry->SetVisible( of_use_rgb.GetBool() );
+		pGreenEntry->SetVisible( of_use_rgb.GetBool() );
+		pBlueEntry->SetVisible( of_use_rgb.GetBool() );
+	}
+	
+	if( pHue && pSaturation && pBrightness && pHueEntry && pSaturationEntry && pBrightnessEntry )
+	{
+		pHue->SetVisible( !of_use_rgb.GetBool() );
+		pSaturation->SetVisible( !of_use_rgb.GetBool() );
+		pBrightness->SetVisible( !of_use_rgb.GetBool() );
+		
+		pHueEntry->SetVisible( !of_use_rgb.GetBool() );
+		pSaturationEntry->SetVisible( !of_use_rgb.GetBool() );
+		pBrightnessEntry->SetVisible( !of_use_rgb.GetBool() );
+	}
+	
+	Panel *pHueLabel = FindChildByName( "HueLabel" );
+	Panel *pSaturationLabel = FindChildByName( "SaturationLabel" );
+	Panel *pBrightnessLabel = FindChildByName( "BrightnessLabel" );
+
+	if( pHueLabel && pSaturationLabel && pBrightnessLabel )
+	{
+		pHueLabel->SetVisible( !of_use_rgb.GetBool() );
+		pSaturationLabel->SetVisible( !of_use_rgb.GetBool() );
+		pBrightnessLabel->SetVisible( !of_use_rgb.GetBool() );
+	}
+	
+	Panel *pRedLabel = FindChildByName( "RedLabel" );
+	Panel *pGreenLabel = FindChildByName( "GreenLabel" );
+	Panel *pBlueLabel = FindChildByName( "BlueLabel" );
+
+	if( pRedLabel && pGreenLabel && pBlueLabel )
+	{
+		pRedLabel->SetVisible( of_use_rgb.GetBool() );
+		pGreenLabel->SetVisible( of_use_rgb.GetBool() );
+		pBlueLabel->SetVisible( of_use_rgb.GetBool() );
+	}
+	
+	bRGBOn = of_use_rgb.GetBool();
+
+	if( bRGBOn )
+	{
+		bReset = false;
+
+		pRed->SetValue(of_color_r.GetInt(), false);
+		pGreen->SetValue(of_color_g.GetInt(), false);
+		pBlue->SetValue(of_color_b.GetInt(), false);
+
+		char buf[64];
+		Q_snprintf(buf, sizeof(buf), "%d", (int)of_color_r.GetInt() );
+		pRedEntry->SetText(buf);                               
+											   
+		Q_snprintf(buf, sizeof(buf), "%d", (int)of_color_g.GetInt() );
+		pGreenEntry->SetText(buf);                        
+											   
+		Q_snprintf(buf, sizeof(buf), "%d", (int)of_color_b.GetInt() );
+		pBlueEntry->SetText(buf);
+
+		bReset = true;
+	}
+	else
+	{
+		bReset = false;
+		rgb in;
+		
+		in.r = of_color_r.GetFloat() / 255;
+		in.g = of_color_g.GetFloat() / 255;
+		in.b = of_color_b.GetFloat() / 255;
+
+		hsv out = rgb2hsv( in );
+		
+		float iH = out.h;
+		float iS = out.s;
+		float iB = out.v;
+		
+		cHueB = HSBtoRGB( iH, 1, iB );
+		cHueBnoS = HSBtoRGB( iH, 0, iB );
+		cHueS = HSBtoRGB( iH, iS, 1 );
+		
+		char buf[64];
+		Q_snprintf(buf, sizeof(buf), "%d", (int)out.h);
+		pHueEntry->SetText(buf);
+		
+		Q_snprintf(buf, sizeof(buf), "%d",(int)(out.s * 100));
+		pSaturationEntry->SetText(buf);
+		
+		Q_snprintf(buf, sizeof(buf), "%d",(int)(out.v * 100));
+		pBrightnessEntry->SetText(buf);
+		
+		pHue->SetValue(out.h, false);
+		pSaturation->SetValue(out.s * 100, false);
+		pBrightness->SetValue(out.v * 100, false);
+		
+		bReset = true;
+	}
+	
+	char szRedHex[3];
+	Q_snprintf( szRedHex, sizeof(szRedHex), of_color_r.GetInt() > 15 ? "%X" : "0%X", of_color_r.GetInt() );
+	
+	char szGreenHex[3];
+	Q_snprintf( szGreenHex, sizeof(szGreenHex), of_color_g.GetInt() > 15 ? "%X" : "0%X", of_color_g.GetInt() );
+
+	char szBlueHex[3];
+	Q_snprintf( szBlueHex, sizeof(szBlueHex), of_color_b.GetInt() > 15 ? "%X" : "0%X", of_color_b.GetInt() );	
+
+	pHexEntry->SetText(VarArgs("#%s%s%s", szRedHex, szGreenHex, szBlueHex ));
+	
+	iCurrRed = of_color_r.GetInt();
+	iCurrGreen = of_color_g.GetInt();
+	iCurrBlue = of_color_b.GetInt();
+}
+
+void CTFColorPanel::PaintBackground()
+{
+	if( iCurrRed != of_color_r.GetInt() ||
+	iCurrGreen != of_color_g.GetInt() ||
+	iCurrBlue != of_color_b.GetInt() )
+		bReset = false;
+	
+	if( !bReset )
+		bRGBOn = !of_use_rgb.GetBool();
+
+	if( bRGBOn != of_use_rgb.GetBool() )
+	{	
+		RecalculateColorValues();
+	}
+
+	if( !of_use_rgb.GetBool() )
+	{
+		if( !pHue )
+			return;
+
+		int wide, tall;
+		pHue->GetSize( wide, tall );
+		int x,y;
+		pHue->GetPos( x, y );
+
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+		
+		for( int i = 0; i < 6; i++ )
+		{
+			int lastwide = x + ( wide * ( ( 1.0f / 6.0f ) * (i) ) );
+			int curwide = x + ( wide * ( ( 1.0f / 6.0f ) * (1 + i) ) );
+
+			vgui::surface()->DrawSetColor( iFade[i] );
+			vgui::surface()->DrawFilledRectFade( lastwide, y, curwide , y + tall, 255, 0, true );
+			
+			vgui::surface()->DrawSetColor( iFade[i+1] );
+			vgui::surface()->DrawFilledRectFade( lastwide, y, curwide , y + tall, 0, 255, true );
+		}
+
+		if( !pSaturation )
+			return;
+
+		pSaturation->GetSize( wide, tall );
+		pSaturation->GetPos( x, y );
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+
+		vgui::surface()->DrawSetColor( cHueBnoS );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 255, 0, true );
+		
+		vgui::surface()->DrawSetColor( cHueB );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 55, 255, true );
+		
+		if( !pBrightness )
+			return;
+
+		pBrightness->GetSize( wide, tall );
+		pBrightness->GetPos( x, y );
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+
+		vgui::surface()->DrawSetColor( Color( 0, 0, 0, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 255, 0, true );
+
+		vgui::surface()->DrawSetColor( cHueS );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 0, 255, true );
+	}
+	else
+	{
+		int wide, tall;
+		int x,y;
+		
+		int iRed = of_color_r.GetInt();
+		int iGreen = of_color_g.GetInt();
+		int iBlue = of_color_b.GetInt();
+
+		if( !pRed )
+			return;
+
+		pRed->GetSize( wide, tall );
+		pRed->GetPos( x, y );
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+
+		vgui::surface()->DrawSetColor( Color( 0, iGreen, iBlue, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 255, 0, true );
+
+		vgui::surface()->DrawSetColor( Color( 255, iGreen, iBlue, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 0, 255, true );
+		
+		if( !pGreen )
+			return;
+
+		pGreen->GetSize( wide, tall );
+		pGreen->GetPos( x, y );
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+		
+		vgui::surface()->DrawSetColor( Color( iRed, 0, iBlue, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 255, 0, true );
+
+		vgui::surface()->DrawSetColor( Color( iRed, 255, iBlue, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 0, 255, true );
+		
+		if( !pBlue )
+			return;
+
+		pBlue->GetSize( wide, tall );
+		pBlue->GetPos( x, y );
+		wide -= 31;
+		x += 7;
+		y += 5;
+		tall -= 10;
+
+		vgui::surface()->DrawSetColor( Color( iRed, iGreen, 0, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 255, 0, true );
+
+		vgui::surface()->DrawSetColor( Color( iRed, iGreen, 255, 255 ) );
+		vgui::surface()->DrawFilledRectFade( x, y, x + wide , y + tall, 0, 255, true );
+	}
+}
+
+void CTFColorPanel::OnThink()
+{
+	BaseClass::OnThink();
+}
+
+void CTFColorPanel::ApplySettings( KeyValues *inResourceData )
+{
+	BaseClass::ApplySettings( inResourceData );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFColorPanel::OnTextChanged(Panel *panel)
+{
+	if( !bReset )
+		return;
+
+    if( panel == pHueEntry )
+    {
+        char buf[64];
+        pHueEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0.0 && iValue <= 360)
+        {
+            pHue->SetValue(iValue, false);
+        }
+    }
+    else if( panel == pSaturationEntry )
+    {
+        char buf[64];
+        pSaturationEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0.0  && iValue <= 100)
+        {
+            pSaturation->SetValue(iValue, false);
+        }
+    }
+    else if( panel == pBrightnessEntry )
+    {
+        char buf[64];
+        pBrightnessEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0.0  && iValue <= 100)
+        {
+            pBrightness->SetValue(iValue, false);
+        }
+    }
+	else if( panel == pRedEntry )
+    {
+        char buf[64];
+        pRedEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0.0  && iValue <= 255)
+        {
+            pRed->SetValue(iValue, false);
+        }
+    }
+    else if( panel == pGreenEntry )
+    {
+        char buf[64];
+        pGreenEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0 && iValue <= 255)
+        {
+            pGreen->SetValue(iValue, false);
+        }
+    }
+    else if( panel == pBlueEntry )
+    {
+        char buf[64];
+        pBlueEntry->GetText(buf, 64);
+
+        int iValue = atoi(buf);
+        if (iValue >= 0 && iValue <= 255)
+        {
+            pBlue->SetValue(iValue, false);
+        }
+    }
+	else if( panel == pHexEntry )
+	{
+		bUpdateHexValue = false;
+
+		int i = 0;
+        char buf[64];
+        pHexEntry->GetText(buf, 64);
+		strupr(buf);
+		if( buf[0] == '#' )
+			i++;
+		
+		char szRedVal[2];
+		szRedVal[0] = buf[i];
+		szRedVal[1] = buf[i+1];
+		
+		char szGreenVal[2];
+		szGreenVal[0] = buf[i+2];
+		szGreenVal[1] = buf[i+3];	
+		
+		char szBlueVal[2];
+		szBlueVal[0] = buf[i+4];
+		szBlueVal[1] = buf[i+5];	
+		
+		int iRed = -1;
+		sscanf(szRedVal, "%X", &iRed);
+
+		int iGreen = -1;
+		sscanf(szGreenVal, "%X", &iGreen);
+
+		int iBlue = -1;
+		sscanf(szBlueVal, "%X", &iBlue);
+		
+		if( of_use_rgb.GetBool() )
+		{
+			pRed->SetValue(iRed, false);
+			OnControlModified( pRed );
+			
+			pGreen->SetValue(iGreen, false);
+			OnControlModified( pGreen );
+			
+			pBlue->SetValue(iBlue, false);
+			OnControlModified( pBlue );	
+		}
+		else
+		{
+			rgb in;
+			in.r = iRed ? (float)iRed / 255.0f : 0;
+			in.g = iGreen ? (float)iGreen / 255.0f : 0;
+			in.b = iBlue ? (float)iBlue / 255.0f : 0;
+			hsv out = rgb2hsv( in );
+			
+			pHue->SetValue(out.h, false);
+			OnControlModified( pHue );
+			
+			pSaturation->SetValue(out.s * 100, false);
+			OnControlModified( pSaturation );
+			
+			pBrightness->SetValue(out.v * 100, false);
+			OnControlModified( pBrightness );	
+		}
+		
+		bUpdateHexValue = true;
+	}
+}
+
+void CTFColorPanel::OnControlModified(Panel *panel)
+{
+    if( panel == pHue )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pHue->GetValue());
+		pHueEntry->SetText(buf);
+    }
+	else if( panel == pSaturation )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pSaturation->GetValue());
+		pSaturationEntry->SetText(buf);
+    }
+	else if( panel == pBrightness )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pBrightness->GetValue());
+		pBrightnessEntry->SetText(buf);
+    }
+	else if( panel == pRed )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pRed->GetValue());
+		pRedEntry->SetText(buf);
+    }
+	else if( panel == pGreen )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pGreen->GetValue());
+		pGreenEntry->SetText(buf);
+    }
+	else if( panel == pBlue )
+    {
+		char buf[64];
+		Q_snprintf(buf, sizeof( buf ), "%d", pBlue->GetValue());
+		pBlueEntry->SetText(buf);
+    }
+}
+
+CTFColorSlider::CTFColorSlider(Panel *parent, const char *panelName) : Slider(parent, panelName)
+{
+	pParent = dynamic_cast<CTFColorPanel*>(parent);
+	AddActionSignalTarget( this );
+	iSliderTextureID = -1;
+}
+
+void CTFColorSlider::SetValue(int value, bool bTriggerChangeMessage)
+{
+	BaseClass::SetValue(value, bTriggerChangeMessage);
+	
+	if( bTriggerChangeMessage )
+		PostActionSignal(new KeyValues("ControlModified"));
+	
+	bool bUpdateHex = true;
+	if( GetParent() )
+	{
+		CTFColorPanel *pParent = dynamic_cast<CTFColorPanel*>(GetParent());
+		bUpdateHex = pParent->ShouldUpdateHex();		
+	}
+	
+	if( pParent )
+	{
+		pParent->OnColorChanged(bTriggerChangeMessage, bUpdateHex);
+	}
+}
+
+void CTFColorSlider::ApplySettings(KeyValues *inResourceData)
+{
+	BaseClass::ApplySettings(inResourceData);
+	SetThumbWidth(15);
+	SetDragOnRepositionNob( true );
+
+	vgui::HScheme scheme = vgui::scheme()->GetScheme( "ClientScheme" );
+	vgui::IScheme *pScheme = vgui::scheme()->GetIScheme( scheme );
+	SetBorder( pScheme->GetBorder( inResourceData->GetString("border") ));
+
+	iSliderWidth = inResourceData->GetInt("thumbwidth", 0);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Draw the nob part of the slider.
+//-----------------------------------------------------------------------------
+void CTFColorSlider::DrawNob()
+{
+	// horizontal nob
+	int x, y;
+	int wide,tall;
+	GetTrackRect( x, y, wide, tall );
+	Color col = GetFgColor();
+#ifdef _X360
+	if(HasFocus())
+	{
+		col = m_DepressedBgColor;
+	}
+#endif
+	surface()->DrawSetColor(Color( 255, 255, 255, 255 ));
+
+	int iPanelWide, iPanelTall;
+	int iPanelX, iPanelY;
+	GetPos( iPanelX, iPanelY );
+	GetSize( iPanelWide, iPanelTall );
+//	int nobheight = iPanelTall;
+
+	// Set up the image ID's if they've somehow gone bad.
+	if( iSliderTextureID == -1 )
+		iSliderTextureID = surface()->CreateNewTextureID();
+	surface()->DrawSetTextureFile( iSliderTextureID, "vgui/loadout/color_slider", true, false );	
+	
+	vgui::surface()->DrawSetTexture(iSliderTextureID);
+	
+//	x, y, x + wide , y + tall
+	
+	surface()->DrawTexturedRect(
+		_nobPos[0], 
+		0, 
+		_nobPos[0] + iSliderWidth, 
+		iPanelTall);
+	/* border
+	if (_sliderBorder)
+	{
+		_sliderBorder->Paint(
+			_nobPos[0], 
+			y + tall / 2 - nobheight / 2, 
+			_nobPos[1], 
+			y + tall / 2 + nobheight / 2);
+	}*/
+}
+
+void CTFColorSlider::PaintBackground()
+{
+	BaseClass::BaseClass::PaintBackground();
+}

@@ -294,7 +294,7 @@ const char *COM_GetModDirectory()
 //-----------------------------------------------------------------------------
 CNewGameDialog::CNewGameDialog(vgui::Panel *parent, bool bCommentaryMode) : BaseClass(parent, "NewGameDialog")
 {
-	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
+	SetScheme("SwarmScheme");
 
 	SetDeleteSelfOnClose(true);
 	SetBounds(0, 0, 372, 160);

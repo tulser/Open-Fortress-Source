@@ -13,8 +13,11 @@
 
 #include "tf_controls.h"
 #include "basemodel_panel.h"
+#include <vgui_controls/Slider.h>
 
 class CStudioHdr;
+class CCvarToggleCheckButton;
+class CModelPanel;
 
 enum
 {
@@ -70,6 +73,25 @@ public:
 	CTFEditableButtonFunc	*pButton;
 };
 
+class CTFCommandButton : public CTFEditableButton
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFCommandButton, CTFEditableButton );
+
+public:
+	CTFCommandButton(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void OnReleasedSelected();
+	virtual void OnReleasedUnselected();
+	virtual void PaintBackground();
+public:
+	char	szCommand[128];
+	char	szUnselectCommand[128];
+	char	szConvref[128];
+	char	szTargetVal[128];
+};
+
 struct ItemTemplate_t
 {
 	char wide[8];
@@ -115,6 +137,49 @@ public:
 	CTFImagePanel	*pItemImage;
 };
 
+struct PanelListItem_t
+{
+	vgui::EditablePanel *pPanel;
+	int	def_xpos;
+	int def_ypos;
+};
+
+class CTFScrollablePanelList : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFScrollablePanelList, vgui::EditablePanel );
+public:
+	CTFScrollablePanelList( vgui::Panel *parent, const char *panelName );
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void PerformLayout();
+	
+	void AddItem( CTFEditableButton *pPanel );
+	void ClearItemList( void );
+	
+	MESSAGE_FUNC( OnScrollBarSliderMoved, "ScrollBarSliderMoved" );
+	MESSAGE_FUNC_PTR( OnSelectionChanged, "SetSelected", panel );
+	virtual void OnMouseWheeled(int delta);	// respond to mouse wheel events	
+
+public:
+	CUtlVector<PanelListItem_t> m_hItems;
+	vgui::ScrollBar *pScrollBar;
+	
+	CTFEditableButton *pSelectedItem;
+	
+	char szCategoryName[32];
+	
+	int iCollumnSpacing;
+	int iRowSpacing;
+	
+	int iElementWidth;
+	int iElementHeight;
+	
+	int iElementsPerRow;
+	int iElementsPerScroll;
+	
+	PanelListItem_t t_PanelTemplate;
+};
+
 struct ItemListItem_t
 {
 	CTFItemSelection *pItemPanel;
@@ -157,6 +222,32 @@ public:
 	ItemTemplate_t t_ItemTemplate;
 };
 
+class CTFHeaderImagePanel : public CTFEditableButton
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFHeaderImagePanel, CTFEditableButton );
+
+public:
+	CTFHeaderImagePanel(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+	virtual void OnReleasedSelected();
+	virtual void OnReleasedUnselected();
+	virtual void OnMouseReleased(vgui::MouseCode code);
+	virtual void SetSelected( bool bSelected );
+	void	SetConnectedPanel( const char *szConnectedPanel );
+public:
+	vgui::Panel		*pConnectedPanel;
+
+	int iBaseX;
+	int iBaseY;
+	
+	int iXAdj;
+	int iYAdj;
+	vgui::HFont 	m_hTextFont;
+	CTFImagePanel	*pImage;
+};
+
 class CTFHeaderItem : public CTFEditableButton
 {
 private:
@@ -169,6 +260,7 @@ public:
 	virtual void OnReleasedSelected();
 	virtual void OnReleasedUnselected();
 	virtual void PerformLayout();
+	virtual void OnMouseReleased(vgui::MouseCode code);
 	virtual void SetSelected( bool bSelected );
 	void	SetConnectedPanel( const char *szConnectedPanel );
 	void CalculateBoxSize();
@@ -216,7 +308,7 @@ public:
 	
 	ItemTemplate_t t_ItemTemplate;
 };
-
+class CTFColorPanel;
 namespace vgui
 {
 	class CTFModelPanel : public CBaseModelPanel
@@ -240,7 +332,78 @@ namespace vgui
 		CStudioHdr		*m_pStudioHdr;
 		int				m_iAnimationIndex;
 	};
+	
+	class CTFColorSlider : public Slider
+	{
+		DECLARE_CLASS_SIMPLE( CTFColorSlider, Slider );
+		public:
+			CTFColorSlider(Panel *parent, const char *panelName);
+			virtual void SetValue(int value, bool bTriggerChangeMessage = true); 
+			void SetValueRaw(int value, bool bTriggerChangeMessage = true); 
+			virtual void DrawNob();
+			virtual void PaintBackground();
+			virtual void ApplySettings( KeyValues *inResourceData );
+		private:
+			CTFColorPanel *pParent;
+			int iSliderTextureID;
+			int iSliderWidth;
+	};
 }
+
+class CTFColorPanel : public vgui::EditablePanel
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFColorPanel, vgui::EditablePanel );
+public:
+	CTFColorPanel(Panel *parent, const char *panelName);
+	void OnColorChanged( bool bTriggerChangeMessage = true, bool bUpdateHexValue = true );
+	virtual void PaintBackground();
+	virtual void OnThink();
+	virtual void ApplySettings( KeyValues *inResourceData );
+	bool ShouldUpdateHex(void){ return bUpdateHexValue; };
+	void RecalculateColorValues();
+private:
+	MESSAGE_FUNC_PTR( OnControlModified, "ControlModified", panel );
+    MESSAGE_FUNC_PTR( OnTextChanged, "TextChanged", panel );
+	MESSAGE_FUNC_PTR( OnCheckButtonChecked, "CheckButtonChecked", panel )
+	{
+		OnControlModified( panel );
+	}
+
+	vgui::CTFColorSlider *pHue;
+	vgui::CTFColorSlider *pSaturation;
+	vgui::CTFColorSlider *pBrightness;
+	
+	vgui::TextEntry *pHueEntry;
+	vgui::TextEntry *pSaturationEntry;
+	vgui::TextEntry *pBrightnessEntry;
+
+	vgui::CTFColorSlider *pRed;
+	vgui::CTFColorSlider *pGreen;
+	vgui::CTFColorSlider *pBlue;	
+	
+	vgui::TextEntry *pRedEntry;
+	vgui::TextEntry *pGreenEntry;
+	vgui::TextEntry *pBlueEntry;
+	
+	vgui::TextEntry *pHexEntry;
+	
+	Color cHueS;
+	Color cHueB;
+	Color cHueBnoS;
+
+	int iCurrRed;
+	int iCurrGreen;
+	int iCurrBlue;
+	
+	CCvarToggleCheckButton *pRGBToggle;
+	
+	bool bUpdateHexValue;
+	
+	bool bRGBOn;
+	
+	bool bReset;	
+};
 
 class CTFLoadoutPanel : public vgui::EditablePanel
 {
@@ -254,9 +417,10 @@ public:
 	virtual void ApplySettings( KeyValues* inResourceData );
 	virtual void OnCommand( const char *command );
 	virtual void OnKeyCodePressed( vgui::KeyCode code );
+	virtual void OnThink();
 	void ShowModal();
 	void DrawClassModel();
-
+	CModelPanel *GetClassModel(){ return m_pClassModel; };
 private:
 
 	vgui::Button *m_pNextTipButton;
@@ -264,10 +428,15 @@ private:
 	
 	CUtlVector<CTFScrollableItemList*> m_pItemCategories;
 	CTFLoadoutHeader *m_pItemHeader;
-//	CTFModelPanel *m_pClassModel;
+	vgui::EditablePanel *pCosmeticPanel;
+	vgui::EditablePanel *pVisualPanel;
+	CTFScrollablePanelList *pParticleList;
+	CModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet
+public:
+	CTFHeaderImagePanel *m_pSelectedOptions;
 };
 
 CTFLoadoutPanel *GLoadoutPanel();
