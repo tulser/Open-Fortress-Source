@@ -3991,20 +3991,21 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 			C_BaseEntity *pEntity = itEntity->m_pRenderable ? itEntity->m_pRenderable->GetIClientUnknown()->GetBaseEntity() : NULL;
 			if ( pEntity )
 			{
-				// disabled! causes issues with some post processing effects like DOF
-				/*
 				if ( pEntity->IsNPC() )
 				{
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
 					arrRenderEntsNpcsFirst[ numNpcs ++ ] = *itEntity;
 					arrBoneSetupNpcsLast[ numOpaqueEnts - numNpcs ] = pba;
-					
-					itEntity->m_pRenderable = NULL;		// We will render NPCs separately
-					itEntity->m_RenderHandle = NULL;
+
+					if ( DepthMode != DEPTH_MODE_SSA0 )
+					{
+						itEntity->m_pRenderable = NULL;		// We will render NPCs separately
+						itEntity->m_RenderHandle = NULL;
+					}
 					
 					continue;
 				}
-				else*/	if ( pEntity->GetBaseAnimating() )
+				if ( pEntity->GetBaseAnimating() )
 				{
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
 					arrBoneSetupNpcsLast[ numNonNpcsAnimating ++ ] = pba;
