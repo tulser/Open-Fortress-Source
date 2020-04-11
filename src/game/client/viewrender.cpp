@@ -4005,7 +4005,7 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 					
 					continue;
 				}
-				if ( pEntity->GetBaseAnimating() )
+				else if ( pEntity->GetBaseAnimating() )
 				{
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
 					arrBoneSetupNpcsLast[ numNonNpcsAnimating ++ ] = pba;
