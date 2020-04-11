@@ -2184,6 +2184,7 @@ class CProxyRage : public CResultProxy
 public:
 	void OnBind( void *pC_BaseEntity )
 	{
+		m_pResult->SetFloatValue( 1.0 );
 		Assert( m_pResult );
 
 		C_TFPlayer *pPlayer = NULL;
@@ -2376,6 +2377,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_angTauntEngViewAngles.Init();
 
 	m_flWaterImpactTime = 0.0f;
+	m_flJumpSoundDelay = 0.0f;
 
 	m_flWaterEntryTime = 0;
 	m_nOldWaterLevel = WL_NotInWater;
@@ -5120,6 +5122,8 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 
 void C_TFPlayer::FireGameEvent( IGameEvent *event )
 {
+	if( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer() == this )
+		return;
 
 	const char *eventname = event->GetName();
 
@@ -5130,6 +5134,9 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 
 		if ( event->GetInt("playerid") != entindex() )
 			return;
+		
+		if( gpGlobals->curtime < m_flJumpSoundDelay )
+			return;
 
 		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
@@ -5137,6 +5144,8 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 			Q_snprintf(jmpSound, sizeof(jmpSound), GetPlayerClass()->GetJumpSound());
 			EmitSound( jmpSound );
 		}
+
+		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 	}
 }
 
