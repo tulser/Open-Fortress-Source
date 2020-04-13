@@ -46,16 +46,6 @@ CEnginePatch g_EnginePatches[] =
         PATCH_REFERENCE,
         -1.0f
     },
-    // LZSS access violation fix
-	// Made by backwards
-    {
-        "LZSSExploit",
-        "\x55\x8B\xEC\x57\x8B\x7D\x08\x80\xBF\x18\x01\x00\x00\x00",
-        "?xxxxxxxxxxxxx",
-        0,
-		PATCH_IMMEDIATE,
-        "\xC3"
-    },
     // Example patch: Trigger "Map has too many brushes" error at 16384 brushes instead of 8192
     //{
     //    "BrushLimit",
@@ -72,7 +62,7 @@ CEnginePatch g_EnginePatches[] =
     //    "xxxxx????",
     //    5,
     //    PATCH_IMMEDIATE,
-    //    "\x00\x40\x00\x00"off
+    //    "\x00\x40\x00\x00"
     //}
 #elif __linux__
     // Prevent the culling of skyboxes at high FOVs
@@ -84,16 +74,6 @@ CEnginePatch g_EnginePatches[] =
         20,
         PATCH_REFERENCE,
         -1.0f
-    },
-	// LZSS access violation fix
-	// Made by backwards
-    {
-        "LZAAExploit",
-		"\x55\x89\xE5\x83\xEC\x28\x89\x5D\xF8\x8B\x5D\x0C\x89\x75\xFC\x80\xBB\x18",
-        "?xxxxxxxxxxxxxxxxx",
-        0,
-		PATCH_IMMEDIATE,
-        "\xC3"
     },
     // Example patch: Trigger "Map has too many brushes" error at 16384 brushes instead of 8192
     //{
@@ -232,7 +212,7 @@ void CEnginePatch::ApplyPatch()
 
             CEngineBinary::SetMemoryProtection(pMemory, m_iLength, MEM_READ|MEM_EXEC);
 
-            DevMsg("Engine patch \"%s\" applied successfully\n", m_sName);
+            DevLog("Engine patch \"%s\" applied successfully\n", m_sName);
         }
         else
         {
