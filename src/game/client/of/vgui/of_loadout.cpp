@@ -24,6 +24,7 @@
 #include "animation.h"
 #include "tf_controls.h"
 #include "cvartogglecheckbutton.h"
+#include "datacache/imdlcache.h"
 
 #include "engine/ienginesound.h"
 #include "basemodelpanel.h"
@@ -172,6 +173,10 @@ Color HSBtoRGB( float iH, float iS, float iB )
 	return vecCol;
 }
 
+extern ConVar of_color_r;
+extern ConVar of_color_g;
+extern ConVar of_color_b;
+
 CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
 
 DECLARE_BUILD_FACTORY( CTFModelPanel );
@@ -185,13 +190,18 @@ CTFModelPanel::CTFModelPanel( Panel *pParent, const char *pszName )
 	SetVisible( true );
 	SetThumbnailSafeZone( false );
 
-	m_pStudioHdr = NULL;
+	m_flParticleZOffset = 0.0f;
+	m_flLoopParticleAfter = 0.0f;
 	m_iAnimationIndex = 0;
 }
 
 void CTFModelPanel::ApplySettings( KeyValues *inResourceData )
 {
 	BaseClass::ApplySettings( inResourceData );
+	
+	m_bLoopParticle = inResourceData->GetBool( "particle_loop" );
+	m_flLoopTime = inResourceData->GetFloat( "particle_loop_time" );
+	m_flParticleZOffset = inResourceData->GetFloat( "particle_z_offset" );
 		
 	Color bgColor = inResourceData->GetColor( "bgcolor_override" );
 	SetBackgroundColor( bgColor );
@@ -231,10 +241,78 @@ void CTFModelPanel::Paint()
 	CMatRenderContextPtr pRenderContext( materials );
 
 	pRenderContext->SetIntRenderingParameter( INT_RENDERPARM_WRITE_DEPTH_TO_DESTALPHA, false );
-	
-	pRenderContext->SetFlashlightMode( false );
 
+	pRenderContext->SetFlashlightMode(false);
+	
+	if( m_bLoopParticle )
+	{
+		if( m_flLoopParticleAfter < gpGlobals->curtime )
+		{
+			SetParticleName(szLoopingParticle);
+		}
+	}
 	BaseClass::Paint();
+}
+
+// Update our Studio Hdr to our current model
+void CTFModelPanel::RefreshModel()
+{
+	studiohdr_t *pStudioHdr = m_RootMDL.m_MDL.GetStudioHdr();
+	if ( !pStudioHdr )
+		return;
+
+	CStudioHdr StudioHdr( pStudioHdr, g_pMDLCache );
+	m_StudioHdr = StudioHdr;
+}
+
+CStudioHdr *CTFModelPanel::GetModelPtr()
+{
+	RefreshModel();
+	return &m_StudioHdr;
+}
+
+// Most of the bodygroup stuff was copied over from c_BaseAnimating
+// The only stuff removed is Dynamic loading tests
+// The following comment is from that
+
+// SetBodygroup is not supported on pending dynamic models. Wait for it to load!
+// XXX TODO we could buffer up the group and value if we really needed to. -henryg
+
+void CTFModelPanel::SetBodygroup( int iGroup, int iValue )
+{
+
+	Assert( GetModelPtr() );
+	::SetBodygroup( GetModelPtr( ), m_RootMDL.m_MDL.m_nBody, iGroup, iValue );
+}
+
+int CTFModelPanel::GetBodygroup( int iGroup )
+{
+	Assert( GetModelPtr() );
+	return ::GetBodygroup( GetModelPtr( ), m_RootMDL.m_MDL.m_nBody, iGroup );
+}
+
+const char *CTFModelPanel::GetBodygroupName( int iGroup )
+{
+	Assert( GetModelPtr() );
+	return ::GetBodygroupName( GetModelPtr( ), iGroup );
+}
+
+int CTFModelPanel::FindBodygroupByName( const char *name )
+{
+	Assert( GetModelPtr() );
+	return ::FindBodygroupByName( GetModelPtr( ), name );
+}
+
+int CTFModelPanel::GetBodygroupCount( int iGroup )
+{
+	Assert( GetModelPtr() );
+	return ::GetBodygroupCount( GetModelPtr( ), iGroup );
+}
+
+int CTFModelPanel::GetNumBodyGroups( void )
+{
+	Assert( GetModelPtr() );
+	return ::GetNumBodyGroups( GetModelPtr( ) );
 }
 
 void CTFModelPanel::SetModelName( const char* pszModelName, int nSkin )
@@ -243,6 +321,39 @@ void CTFModelPanel::SetModelName( const char* pszModelName, int nSkin )
 	m_BMPResData.m_nSkin = nSkin;
 }
 
+extern ConVar of_tennisball;
+
+void CTFModelPanel::SetParticleName(const char* name)
+{
+	m_bUseParticle = true;
+
+	if (m_pData)
+	{
+		SafeDeleteParticleData(&m_pData);
+	}
+
+	m_pData = CreateParticleData(name);
+	if( m_bLoopParticle )
+	{
+		Q_strncpy( szLoopingParticle, name ,sizeof(szLoopingParticle) );
+		m_flLoopParticleAfter = gpGlobals->curtime + m_flLoopTime; 
+	}
+	// We failed at creating that particle for whatever reason, bail (!)
+	if (!m_pData) return;
+
+	CUtlVector<int> vecAttachments;
+
+	Vector vecParticleOffset( 0, 0, m_flParticleZOffset );
+	
+	m_pData->UpdateControlPoints( GetModelPtr(), &m_RootMDL.m_MDLToWorld, vecAttachments, 0, vecParticleOffset);
+	int iRed = of_tennisball.GetBool() ? 0 : of_color_r.GetInt();
+	int iGreen = of_tennisball.GetBool() ? 255 : of_color_g.GetInt();
+	int iBlue = of_tennisball.GetBool() ? 0 : of_color_b.GetInt();
+	
+	m_pData->SetParticleColor( GetModelPtr(), &m_RootMDL.m_MDLToWorld, iRed, iGreen, iBlue );
+
+	m_pData->m_bIsUpdateToDate = true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns the global stats summary panel
@@ -279,11 +390,13 @@ CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout",
 	pVisualPanel = new EditablePanel( this, "VisualPanel" );
 	pParticleList = new CTFScrollablePanelList( pVisualPanel, "ParticleList" );
 	m_pItemHeader = new CTFLoadoutHeader( pCosmeticPanel, "ItemHeader" );
-	m_pClassModel = new CModelPanel( this, "classmodelpanel" );
+	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
 	
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
 	m_pSelectedOptions = NULL;
+	m_bUpdateCosmetics = true;
+	m_bTennisball = false;
 	
 	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization01")->GetString("wave"), true, false );
 	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization02")->GetString("wave"), true, false );
@@ -427,14 +540,33 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		kvButtTemp->SetString( "zpos", "10" );
 		kvButtTemp->SetString( "proportionalToParent", "1" );
 		
-		KeyValues *kvImageTemp = new KeyValues("ParticleImage");
-		kvImageTemp->SetString( "wide", "50" );
-		kvImageTemp->SetString( "tall", "50" );
-		kvImageTemp->SetString( "xpos", "c-25" );
-		kvImageTemp->SetString( "ypos", "c-25" );
-		kvImageTemp->SetString( "zpos", "5" );
-		kvImageTemp->SetString( "scaleImage", "1" );
-		kvImageTemp->SetString( "proportionalToParent", "1" );
+		KeyValues *kvModelTemp = new KeyValues("ParticleModel");
+		kvModelTemp->SetString( "wide", "50" );
+		kvModelTemp->SetString( "tall", "50" );
+		kvModelTemp->SetString( "xpos", "c-25" );
+		kvModelTemp->SetString( "ypos", "c-25" );
+		kvModelTemp->SetString( "zpos", "6" );
+		kvModelTemp->SetString( "fov", "25" );
+		kvModelTemp->SetString( "render_texture", "0" );
+		kvModelTemp->SetString( "allow_rot", "1" );
+		kvModelTemp->SetString( "use_particle", "1" );
+		kvModelTemp->SetString( "particle_loop", "1" );
+		kvModelTemp->SetString( "proportionalToParent", "1" );
+		
+		KeyValues *kvModelModelTemp = new KeyValues("model");
+		kvModelModelTemp->SetString( "modelname", "models/player/mercenary.mdl" );
+		kvModelModelTemp->SetString( "force_pos", "1" );
+		kvModelModelTemp->SetString( "skin"	,"4" );
+		kvModelModelTemp->SetString( "origin_z"	,"-40" );
+		kvModelModelTemp->SetString( "origin_x", "450");
+		
+		KeyValues *kvModelAnimTemp = new KeyValues("animation");
+		kvModelAnimTemp->SetString( "name", "PRIMARY" );
+		kvModelAnimTemp->SetString( "activity", "ACT_MERC_STAND_SUPERSHOTGUN" );
+		kvModelAnimTemp->SetString( "default", "1" );
+		
+		kvModelModelTemp->AddSubKey( kvModelAnimTemp );
+		kvModelTemp->AddSubKey( kvModelModelTemp );
 		
 		kvTemp->AddSubKey( kvButtTemp );
 		
@@ -456,16 +588,34 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 			
 			KeyValues *pParticle = GetRespawnParticle( i );
 			if( pParticle )
-			{
-				kvImageTemp->SetString( "image", pParticle->GetString("backpack_icon") );
-				CTFImagePanel *pTempImage = new CTFImagePanel( pTemp, "ParticleImage" );
-				pTempImage->ApplySettings( kvImageTemp );
+			{	
+				kvModelTemp->SetString("particle_loop_time", pParticle->GetString("loop_time", "1.2") );
+				kvModelTemp->SetString("particle_z_offset", pParticle->GetString("particle_z_offset", "0") );
+				CTFModelPanel *pTempMDL = new CTFModelPanel( pTemp, "ParticleModel" );
+				pTempMDL->ApplySettings( kvModelTemp );
+				
+				char pEffectName[32];
+				pEffectName[0] = '\0';
+				if ( i < 10 )
+					Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", i );
+				else
+					Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", i );
+				if ( pEffectName[0] != '\0' )
+					Q_strncpy( pTempMDL->szLoopingParticle, pEffectName, sizeof(pTempMDL->szLoopingParticle) );
+				// Set the animation.
+				pTempMDL->SetModelName( "models/empty.mdl", 4 );
+				pTempMDL->Update();
 			}
 			else
 			{
-				kvImageTemp->deleteThis();
+				kvModelTemp->deleteThis();
 			}
 		}
+	}
+	
+	for ( int iClassIndex = 0; iClassIndex < TF_CLASS_COUNT_ALL; iClassIndex++ )
+	{
+		modelinfo->FindOrLoadModel( "models/player/mercenary.mdl" );
 	}
 }
 
@@ -514,19 +664,90 @@ void CTFLoadoutPanel::OnKeyCodePressed( KeyCode code )
 	}
 }
 
-void CTFLoadoutPanel::OnThink()
+void CTFLoadoutPanel::PerformLayout()
 {
-	BaseClass::OnThink();
+	BaseClass::PerformLayout();
 
-	CModelPanel *pModelPanel = dynamic_cast<CModelPanel *>(FindChildByName( "classmodelpanel" ) );
-	if ( pModelPanel )
+	// Set the animation.
+	m_pClassModel->SetAnimationIndex( ACT_MERC_STAND_SUPERSHOTGUN );
+	m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
+	m_pClassModel->Update();
+	
+	m_iCurrentParticle = of_respawn_particle.GetInt();
+}
+
+#define QUICK_CVAR(x) ConVar x(#x, "0", FCVAR_NONE);
+QUICK_CVAR(of_bodygroup)
+QUICK_CVAR(of_bodygroup_value)
+
+void CTFLoadoutPanel::PaintBackground()
+{
+	BaseClass::PaintBackground();
+
+	if( m_iCurrentParticle != of_respawn_particle.GetInt() )
 	{
-		Vector vLocalColor;
-		vLocalColor.x = (float)of_color_r.GetInt() / 255.0f;
-		vLocalColor.y = (float)of_color_g.GetInt() / 255.0f;
-		vLocalColor.z = (float)of_color_b.GetInt() / 255.0f;
+		m_iCurrentParticle = of_respawn_particle.GetInt();
+
+		KeyValues *pParticle = GetRespawnParticle( m_iCurrentParticle );
+		if( pParticle )
+		{
+			GetClassModel()->m_flParticleZOffset = pParticle->GetFloat( "particle_z_offset", 0.0f );
+		}
 		
-		pModelPanel->SetModelColor(vLocalColor);
+		char pEffectName[32];
+		pEffectName[0] = '\0';
+		if ( m_iCurrentParticle < 10 )
+			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_iCurrentParticle );
+		else
+			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_iCurrentParticle );
+		if ( pEffectName[0] != '\0' )
+			GetClassModel()->SetParticleName(pEffectName);
+		
+	}
+
+	if( of_tennisball.GetBool() != m_bTennisball )
+	{
+		m_bTennisball = of_tennisball.GetBool();
+		m_pClassModel->m_BMPResData.m_nSkin = m_bTennisball ? 6 : 4;
+		m_pClassModel->Update();
+	}
+
+	if( m_bUpdateCosmetics )
+	{
+		m_pClassModel->ClearMergeMDLs();
+		m_pClassModel->GetRootMDL();
+		for( int i = 0; i < m_pClassModel->GetNumBodyGroups(); i++ )
+		{
+			m_pClassModel->SetBodygroup(i, 0);
+		}
+		// Set the animation.
+		m_pClassModel->SetMergeMDL( "models/weapons/w_models/w_supershotgun.mdl", NULL, 2 );
+		for( int i = 0; i < m_iCosmetics.Count(); i++ )
+		{
+			KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
+			if( pCosmetic )
+			{
+				if( strcmp( pCosmetic->GetString("model"), "BLANK" ) && strcmp( pCosmetic->GetString("model"), "" ) )
+					GLoadoutPanel()->GetClassModel()->SetMergeMDL( pCosmetic->GetString("model"), NULL, 2 );
+
+				KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+				if( pBodygroups )
+				{
+					for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+					{
+						int m_Bodygroup = m_pClassModel->FindBodygroupByName( sub->GetName() );
+						if ( m_Bodygroup >= 0 )
+						{
+							m_pClassModel->SetBodygroup(m_Bodygroup, sub->GetInt());
+						}
+					}
+				}
+				
+			}
+		}
+		m_pClassModel->Update();
+		
+		m_bUpdateCosmetics = false;
 	}
 }
 
@@ -852,14 +1073,35 @@ void CTFItemSelection::OnReleasedUnselected()
 void CTFItemSelection::SetSelected( bool bSelected )
 {
 	BaseClass::SetSelected( bSelected );
-	
+
 	if( !bSelected )
-		Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d", iItemID), sizeof(szCommand));	
+		Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d", iItemID), sizeof(szCommand));
 	else
 		Q_strncpy(szCommand, VarArgs("loadout_unequip cosmetics mercenary %d", iItemID), sizeof(szCommand));
 
+	if( GLoadoutPanel() )
+	{
+		int iTemp;
+		iTemp = iItemID;
+		if( bSelected )
+		{
+			GLoadoutPanel()->m_iCosmetics.AddToTail( iTemp );
+		}
+		else
+		{
+			for( int i = 0; i < GLoadoutPanel()->m_iCosmetics.Count(); i++ )
+			{
+				if( iTemp == GLoadoutPanel()->m_iCosmetics[i] )
+				{
+					GLoadoutPanel()->m_iCosmetics.Remove( i );
+				}
+			}
+		}
+		GLoadoutPanel()->m_bUpdateCosmetics = true;
+	}
+
 	CTFScrollableItemList *pItemList = dynamic_cast<CTFScrollableItemList*>( GetParent() );
-	
+
 	if( pItemList )
 	{
 		if( bSelected )
@@ -1568,10 +1810,6 @@ void CTFHeaderImagePanel::SetSelected( bool bSelected )
 }
 DECLARE_BUILD_FACTORY( CTFColorPanel );
 DECLARE_BUILD_FACTORY( CTFColorSlider );
-
-extern ConVar of_color_r;
-extern ConVar of_color_g;
-extern ConVar of_color_b;
 
 ConVar of_use_rgb("of_use_rgb", "0", FCVAR_CLIENTDLL | FCVAR_USERINFO | FCVAR_ARCHIVE );
 

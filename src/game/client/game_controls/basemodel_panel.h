@@ -181,6 +181,7 @@ public:
 
 	studiohdr_t* GetStudioHdr( void ) { return m_RootMDL.m_MDL.GetStudioHdr(); }
 	void SetBody( unsigned int nBody ) { m_RootMDL.m_MDL.m_nBody = nBody; }
+	MDLData_t GetRootMDL() { return m_RootMDL; }
 
 	void		RotateYaw( float flDelta );
 	void		RotatePitch( float flDelta );
@@ -224,23 +225,26 @@ protected:
 	CPanelAnimationVar( bool, m_bDisableManipulation, "disable_manipulation", "0" );
 	CPanelAnimationVar( bool, m_bUseParticle, "use_particle", "0" );
 	CPanelAnimationVar( float, m_flMaxPitch, "max_pitch", "90" );
-
+	
+	virtual void PrePaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
+	virtual void PostPaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
+	
+public:
 	struct particle_data_t
 	{
 		~particle_data_t();
 
 		void UpdateControlPoints( CStudioHdr *pStudioHdr, matrix3x4_t *pWorldMatrix, const CUtlVector< int >& vecAttachments, int iDefaultBone = 0, const Vector& vecParticleOffset = vec3_origin );
-
+		void SetParticleColor( CStudioHdr *pStudioHdr, matrix3x4_t *pWorldMatrix, int iRed = 255, int iGreen = 255, int iBlue = 255 );
 		bool				m_bIsUpdateToDate;
 		CParticleCollection	*m_pParticleSystem;
 	};
+	
 	CUtlVector< particle_data_t* > m_particleList;
 
 	particle_data_t *CreateParticleData( const char *pszParticleName );
 	bool SafeDeleteParticleData( particle_data_t **pData );
 
-	virtual void PrePaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
-	virtual void PostPaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
 };
 
 #endif // BASEMODEL_PANEL_H

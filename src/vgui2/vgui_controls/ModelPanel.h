@@ -48,6 +48,19 @@ public:
 
 	CModelPanel( Panel *parent, const char *name );
 	virtual ~CModelPanel();
+	virtual void GetModelPos( float &x, float &y, float &z )
+	{
+		x = m_pModelInfo->m_vecOriginOffset.x;
+		y = m_pModelInfo->m_vecOriginOffset.y;
+		z = m_pModelInfo->m_vecOriginOffset.z;
+	}
+
+	virtual void SetModelPos( float x, float y, float z )
+	{
+		m_pModelInfo->m_vecOriginOffset.x = x;
+		m_pModelInfo->m_vecOriginOffset.y = y;
+		m_pModelInfo->m_vecOriginOffset.z = z;
+	}
 
 	CModelPanelModelInfo			*m_pModelInfo;
 };

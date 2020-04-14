@@ -4880,11 +4880,12 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
 	{
 		char pEffectName[32];
+		pEffectName[0] = '\0';
 		if ( m_Shared.GetSpawnEffects() < 10 )
 			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
 		else
 			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
-		if ( pEffectName )
+		if ( pEffectName[0] != '\0' )
 			m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );
 	}
 	

@@ -325,12 +325,29 @@ namespace vgui
 
 		virtual void	SetModelName( const char* pszModelName, int nSkin = 0 );
 		virtual void	SetAnimationIndex( int index ) { m_iAnimationIndex = index; };
+		void SetParticleName(const char* name);
+		void SetBodygroup( int iGroup, int iValue );
+		int GetBodygroup( int iGroup );
+
+		const char *GetBodygroupName( int iGroup );
+		int FindBodygroupByName( const char *name );
+		int GetBodygroupCount( int iGroup );
+		int GetNumBodyGroups( void );
 
 		Vector			m_vecDefPosition;
 		QAngle			m_vecDefAngles;
 
-		CStudioHdr		*m_pStudioHdr;
+		void			RefreshModel();
+		CStudioHdr		*GetModelPtr();
 		int				m_iAnimationIndex;
+		float			m_flParticleZOffset;
+		bool			m_bLoopParticle;
+		float			m_flLoopTime;
+		float			m_flLoopParticleAfter;
+		char			szLoopingParticle[128];
+	private:
+		CStudioHdr		m_StudioHdr;
+		particle_data_t *m_pData;
 	};
 	
 	class CTFColorSlider : public Slider
@@ -405,6 +422,11 @@ private:
 	bool bReset;	
 };
 
+struct t_CosmeticID
+{
+	int iID;
+};
+
 class CTFLoadoutPanel : public vgui::EditablePanel
 {
 private:
@@ -417,10 +439,11 @@ public:
 	virtual void ApplySettings( KeyValues* inResourceData );
 	virtual void OnCommand( const char *command );
 	virtual void OnKeyCodePressed( vgui::KeyCode code );
-	virtual void OnThink();
+	virtual void PerformLayout();
+	virtual void PaintBackground();
 	void ShowModal();
 	void DrawClassModel();
-	CModelPanel *GetClassModel(){ return m_pClassModel; };
+	vgui::CTFModelPanel *GetClassModel(){ return m_pClassModel; };
 private:
 
 	vgui::Button *m_pNextTipButton;
@@ -431,12 +454,16 @@ private:
 	vgui::EditablePanel *pCosmeticPanel;
 	vgui::EditablePanel *pVisualPanel;
 	CTFScrollablePanelList *pParticleList;
-	CModelPanel *m_pClassModel;
+	vgui::CTFModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet
+	bool m_bTennisball;
 public:
 	CTFHeaderImagePanel *m_pSelectedOptions;
+	CUtlVector<int> m_iCosmetics;
+	bool m_bUpdateCosmetics;
+	int m_iCurrentParticle;
 };
 
 CTFLoadoutPanel *GLoadoutPanel();

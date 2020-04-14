@@ -1459,11 +1459,15 @@ AnimationController::Value_t AnimationController::GetValue(ActiveAnimation_t& an
 	}
 	else if ( var == m_sModelPos )
 	{
-		float x, y, z;
-		panel->GetModelPos( x, y, z );
-		val.a = x;
-		val.b = y;
-		val.c = z;
+		CModelPanel *mdlpanel = dynamic_cast<CModelPanel *>(panel);
+		if( mdlpanel )
+		{
+			float x, y, z;
+			mdlpanel->GetModelPos( x, y, z );
+			val.a = x;
+			val.b = y;
+			val.c = z;
+		}
 	}
 	else if (var == m_sSize)
 	{
@@ -1557,7 +1561,9 @@ void AnimationController::SetValue(ActiveAnimation_t& anim, Panel *panel, UtlSym
 	}
 	else if ( var == m_sModelPos )
 	{
-		panel->SetModelPos( value.a, value.b, value.c );
+		CModelPanel *mdlpanel = dynamic_cast<CModelPanel *>(panel);
+		if( mdlpanel )
+			mdlpanel->SetModelPos( value.a, value.b, value.c );
 	}
 	else if (var == m_sSize)
 	{

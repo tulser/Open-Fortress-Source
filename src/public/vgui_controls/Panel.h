@@ -203,9 +203,6 @@ public:
 	void SetAlpha(int alpha);	// sets alpha modifier for panel and all child panels [0..255]
 	int GetAlpha();	// returns the current alpha
 
-	virtual void GetModelPos( float &x, float &y, float &z ){ return; };
-	virtual void SetModelPos( float x, float y, float z ){ return; };
-
 	// panel visibility
 	// invisible panels and their children do not drawn, updated, or receive input messages
 	virtual void SetVisible(bool state);
