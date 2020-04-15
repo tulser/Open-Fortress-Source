@@ -160,10 +160,8 @@ QueryResultType CTFBotSeekAndDestroy::ShouldRetreat( const INextBot *me ) const
 	if ( pPlayer )
 	{
 		CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-		if ( ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || pWeapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) ) )
+		if ( pWeapon && ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || pWeapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) ) )
 			return ANSWER_NO;
-		
-		return ANSWER_UNDEFINED;
 	}
 
 	return ANSWER_UNDEFINED;
