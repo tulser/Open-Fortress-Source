@@ -97,7 +97,7 @@ ActionResult<CTFBot> CTFBotDefendPoint::Update( CTFBot *me, float dt )
 			return Action<CTFBot>::SuspendFor( new CTFBotSeekAndDestroy( 15.0f ), "Going after an enemy" );*/ 
 
 		CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
-		if ( pWeapon && pWeapon->IsMeleeWeapon() || ( ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || pWeapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) ) ) )
+		if ( pWeapon && ( pWeapon->IsMeleeWeapon() || ( ( pWeapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || pWeapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) ) ) ) )
 		{
 			if ( !pWeapon->IsMeleeWeapon() )
 				return Action<CTFBot>::SuspendFor( new CTFBotSeekAndDestroy( 15.0f ), "Going after an enemy" );
