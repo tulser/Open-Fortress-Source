@@ -57,6 +57,7 @@ public:
 	virtual void OnMouseReleased(vgui::MouseCode code);
 	virtual void OnReleasedSelected();
 	virtual void OnReleasedUnselected();
+	void AddOnPressSound( char *szPressedSound );
 	
 	void	SetBorderType( int iBorder );
 	virtual void SetSelected( bool bSelected );
@@ -67,8 +68,11 @@ public:
 	char	szBorderSelected[128];
 	
 	int		iCurrentBorder;
+	int		m_iSoundChance;
 	
 	bool	m_bSelected;
+	
+	CUtlVector<char*> m_hPressedSounds;
 	
 	CTFEditableButtonFunc	*pButton;
 };
@@ -454,6 +458,7 @@ private:
 	vgui::EditablePanel *pCosmeticPanel;
 	vgui::EditablePanel *pVisualPanel;
 	CTFScrollablePanelList *pParticleList;
+	CTFScrollablePanelList *pAnnouncerList;
 	vgui::CTFModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode

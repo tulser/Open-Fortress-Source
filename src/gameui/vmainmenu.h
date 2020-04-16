@@ -36,10 +36,10 @@ public:
 	virtual void OnNotifyChildFocus( vgui::Panel* child );
 	virtual void OnFlyoutMenuClose( vgui::Panel* flyTo );
 	virtual void OnFlyoutMenuCancelled();
+	virtual void OnCommand(const char *command);
 
 protected:
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
-	virtual void OnCommand(const char *command);
 	virtual void OnKeyCodePressed(vgui::KeyCode code);
 	virtual void OnThink();
 	virtual void OnOpen();

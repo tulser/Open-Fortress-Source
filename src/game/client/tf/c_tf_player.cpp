@@ -34,6 +34,7 @@
 #include "c_te_effect_dispatch.h"
 #include "tf_fx_muzzleflash.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #include "view_scene.h"
 #include "ai_debug_shared.h"
 #include "c_baseobject.h"

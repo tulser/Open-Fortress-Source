@@ -10,6 +10,7 @@
 #include "nav_pathfind.h"
 #include "baseanimating.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #include "tf_gamestats.h"
 #include "KeyValues.h"
 #include "viewport_panel_names.h"

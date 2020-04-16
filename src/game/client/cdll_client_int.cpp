@@ -121,7 +121,7 @@
 #if defined( OPENFORTRESS_DLL )
 #include "fmod_manager.h"
 #include "c_of_music_player.h"
-#include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #include "of_loadout.h"
 #endif
 #include "clientsteamcontext.h"

@@ -266,6 +266,7 @@ void InGameMainMenu::OnCommand( const char *command )
 			data.bCancelButtonEnabled = true;
 
 			confirmation->SetUsageData(data);
+			confirmation->PushModalInputFocus();
 
 			NavigateFrom();
 		}

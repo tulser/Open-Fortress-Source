@@ -29,6 +29,7 @@
 #include "engine/ienginesound.h"
 #include "basemodelpanel.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #include "of_loadout.h"
 #include <convar.h>
 #include <vgui_controls/ScrollBarSlider.h>
@@ -389,6 +390,7 @@ CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout",
 	pCosmeticPanel = new EditablePanel( this, "CosmeticPanel" );
 	pVisualPanel = new EditablePanel( this, "VisualPanel" );
 	pParticleList = new CTFScrollablePanelList( pVisualPanel, "ParticleList" );
+	pAnnouncerList = new CTFScrollablePanelList( pVisualPanel, "AnnouncerList" );
 	m_pItemHeader = new CTFLoadoutHeader( pCosmeticPanel, "ItemHeader" );
 	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
 	
@@ -397,12 +399,6 @@ CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout",
 	m_pSelectedOptions = NULL;
 	m_bUpdateCosmetics = true;
 	m_bTennisball = false;
-	
-	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization01")->GetString("wave"), true, false );
-	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization02")->GetString("wave"), true, false );
-	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization03")->GetString("wave"), true, false );
-	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization04")->GetString("wave"), true, false );
-	enginesound->PrecacheSound( GetSoundscript("Mercenary.PositiveVocalization05")->GetString("wave"), true, false );
 }
 
 //-----------------------------------------------------------------------------
@@ -419,6 +415,7 @@ void CTFLoadoutPanel::ShowModal()
 }
 
 extern ConVar of_respawn_particle;
+extern ConVar of_announcer_override;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -531,6 +528,8 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
 		kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
 		kvTemp->SetString( "command", "of_respawn_particle 0" );
+		kvTemp->SetString( "sound_chances", "2" );
+		kvTemp->SetString( "pressed_sound", "Player.Spawn" );
 		
 		KeyValues *kvButtTemp = new KeyValues("Button");
 		kvButtTemp->SetString( "wide", "50" );
@@ -554,7 +553,7 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		kvModelTemp->SetString( "proportionalToParent", "1" );
 		
 		KeyValues *kvModelModelTemp = new KeyValues("model");
-		kvModelModelTemp->SetString( "modelname", "models/player/mercenary.mdl" );
+		kvModelModelTemp->SetString( "modelname", "models/empty.mdl" );
 		kvModelModelTemp->SetString( "force_pos", "1" );
 		kvModelModelTemp->SetString( "skin"	,"4" );
 		kvModelModelTemp->SetString( "origin_z"	,"-40" );
@@ -613,9 +612,83 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		}
 	}
 	
-	for ( int iClassIndex = 0; iClassIndex < TF_CLASS_COUNT_ALL; iClassIndex++ )
+	modelinfo->FindOrLoadModel( "models/player/mercenary.mdl" );
+	
+	KeyValues *inAnnouncerList = inVisualPanel->FindKey("AnnouncerList");
+	if( !inAnnouncerList )
+		return;	
+
+	if( pAnnouncerList )
 	{
-		modelinfo->FindOrLoadModel( "models/player/mercenary.mdl" );
+		pAnnouncerList->ClearItemList();
+		
+		pAnnouncerList->ApplySettings( inAnnouncerList );
+		
+		KeyValues *kvTemp = new KeyValues("Resource");
+		
+		kvTemp->SetString( "fieldName", "ItemTemplate" );
+		kvTemp->SetString( "wide", "50" );
+		kvTemp->SetString( "tall", "50" );
+		kvTemp->SetString( "autoResize", "0" );
+		kvTemp->SetString( "pinCorner", "2" );
+		kvTemp->SetString( "visible", "1" );
+		kvTemp->SetString( "enabled", "1" );
+		kvTemp->SetString( "tabPosition", "0" );
+		kvTemp->SetString( "proportionalToParent", "1" );
+		kvTemp->SetString( "border_idle", "ItemOutlineIdle" );
+		kvTemp->SetString( "border_hover", "ItemOutlineHoverover" );
+		kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
+		kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
+		kvTemp->SetString( "command", "of_announcer_override \"\"" );
+		
+		KeyValues *kvButtTemp = new KeyValues("Button");
+		kvButtTemp->SetString( "wide", "50" );
+		kvButtTemp->SetString( "tall", "50" );
+		kvButtTemp->SetString( "xpos", "c-25" );
+		kvButtTemp->SetString( "ypos", "c-25" );
+		kvButtTemp->SetString( "zpos", "10" );
+		kvButtTemp->SetString( "proportionalToParent", "1" );
+		
+		KeyValues *kvImageTemp = new KeyValues("AnnouncerImage");
+		kvImageTemp->SetString( "wide", "50" );
+		kvImageTemp->SetString( "tall", "50" );
+		kvImageTemp->SetString( "xpos", "c-25" );
+		kvImageTemp->SetString( "ypos", "c-25" );
+		kvImageTemp->SetString( "zpos", "6" );
+		kvImageTemp->SetString( "scaleImage", "1" );
+		kvImageTemp->SetString( "proportionalToParent", "1" );
+		
+		kvTemp->AddSubKey( kvButtTemp );
+		
+		KeyValues* pSupport = new KeyValues( "AnnouncerSupport" );
+		pSupport->LoadFromFile( filesystem, "scripts/announcer_support.txt" );
+		
+		for( KeyValues *pSub = pSupport->GetFirstSubKey(); pSub != NULL ; pSub = pSub->GetNextKey() )
+		{
+			CTFCommandButton *pTemp = new CTFCommandButton( pAnnouncerList, "Temp" );
+			kvTemp->SetString( "command", VarArgs( "of_announcer_override %s", pSub->GetName() ) );
+			kvTemp->SetString( "convref", "of_announcer_override" );
+			kvTemp->SetString( "targetval", VarArgs( "%s", pSub->GetName() ) );
+			pTemp->ApplySettings( kvTemp );
+			pTemp->AddOnPressSound( VarArgs( "%s.Deathmatch", pSub->GetName() ) );
+			pTemp->AddOnPressSound( VarArgs( "%s.Impressive", pSub->GetName() ) );
+			pTemp->AddOnPressSound( VarArgs( "%s.Excellent", pSub->GetName() ) );
+			pTemp->AddOnPressSound( VarArgs( "%s.Dominating", pSub->GetName() ) );
+			pTemp->AddOnPressSound( VarArgs( "%s.DMRoundStart", pSub->GetName() ) );
+			pTemp->AddOnPressSound( VarArgs( "%s.DMRoundPrepare", pSub->GetName() ) );
+			
+			kvImageTemp->SetString( "image", VarArgs( "../backpack/announcers/%s", pSub->GetName() ) );
+			CTFImagePanel *pTempImage = new CTFImagePanel( pTemp, "AnnouncerImage" );
+			pTempImage->ApplySettings( kvImageTemp );
+			
+			pAnnouncerList->AddItem( pTemp );
+
+			if( !Q_stricmp( of_announcer_override.GetString(), pSub->GetName() ) )
+			{
+				pTemp->SetSelected(true);
+				pAnnouncerList->pSelectedItem = pTemp;
+			}
+		}
 	}
 }
 
@@ -782,8 +855,17 @@ void CTFEditableButton::ApplySettings(KeyValues *inResourceData)
 	Q_strncpy(szBorderIdle, inResourceData->GetString("border_idle"), sizeof(szBorderIdle));
 	Q_strncpy(szBorderHover, inResourceData->GetString("border_hover"), sizeof(szBorderHover));
 	Q_strncpy(szBorderPressed, inResourceData->GetString("border_pressed"), sizeof(szBorderPressed));
-	Q_strncpy(szBorderSelected, inResourceData->GetString("border_selected"), sizeof(szBorderSelected));	
+	Q_strncpy(szBorderSelected, inResourceData->GetString("border_selected"), sizeof(szBorderSelected));
 	
+	char szPressedSound[64];
+	szPressedSound[0] = '\0';
+	Q_strncpy(szPressedSound, inResourceData->GetString("pressed_sound"), sizeof(szPressedSound));
+
+	if( szPressedSound[0] != '\0' )
+		AddOnPressSound( szPressedSound );
+	
+	m_iSoundChance = inResourceData->GetInt("sound_chances", 1);
+
 	SetBorder(scheme()->GetIScheme(GetScheme())->GetBorder(szBorderIdle));
 	
 	KeyValues *inItemButton = inResourceData->FindKey("Button");
@@ -791,6 +873,17 @@ void CTFEditableButton::ApplySettings(KeyValues *inResourceData)
 	{
 		pButton->ApplySettings(inItemButton);
 	}
+}
+
+void CTFEditableButton::AddOnPressSound( char *szPressedSound )
+{
+	int len = 128;
+
+	char *pName = new char[ len ];
+	V_strncpy( pName, szPressedSound, len );
+	m_hPressedSounds.AddToTail( pName );
+	
+	PrecacheUISoundScript( szPressedSound );
 }
 
 //-----------------------------------------------------------------------------
@@ -857,12 +950,27 @@ void CTFEditableButton::SetSelected( bool bSelected )
 
 void CTFEditableButton::OnReleasedSelected()
 {
-	
+
 }
 
 void CTFEditableButton::OnReleasedUnselected()
 {
-	
+	if( !m_hPressedSounds.Count() )
+		return;
+
+	if( random->RandomInt( 1, m_iSoundChance ) == 1 )
+	{
+		if( GetSoundScriptWave( m_hPressedSounds[ random->RandomInt( 0, m_hPressedSounds.Count() - 1 ) ] ) != NULL )
+		{
+			vgui::surface()->PlaySound
+			( 
+				GetSoundScriptWave
+				(
+					m_hPressedSounds[ random->RandomInt( 0, m_hPressedSounds.Count() - 1 ) ]
+				)
+			);
+		}
+	}
 }
 
 void CTFEditableButton::SetBorderType( int iBorder )
@@ -989,18 +1097,21 @@ void CTFCommandButton::PaintBackground()
 		bool value = !strcmp( szTargetVal, var.GetString() );
 		if( m_bSelected != value )
 			SetSelected( value );
-		DevMsg("Convar %s; Target:%s\nCurrent:%s", szConvref, szTargetVal, var.GetString());
 	}
 }
 
 void CTFCommandButton::OnReleasedSelected()
 {
+	BaseClass::OnReleasedSelected();
+	
 	PostActionSignal(new KeyValues("Command", "command", szUnselectCommand));
 	engine->ExecuteClientCmd( szUnselectCommand );
 }
 
 void CTFCommandButton::OnReleasedUnselected()
 {
+	BaseClass::OnReleasedUnselected();
+
 	PostActionSignal(new KeyValues("Command", "command", szCommand));
 	engine->ExecuteClientCmd( szCommand );
 }
@@ -1014,6 +1125,9 @@ CTFItemSelection::CTFItemSelection(Panel *parent, const char *panelName, const i
 	pItemImage = new CTFImagePanel(this, "ItemImage");
 	
 	SetItemID( iID );
+	
+	for( int i = 1; i <= 5; i++ )
+		AddOnPressSound( VarArgs( "Mercenary.PositiveVocalization0%d", i ) );
 }
 
 void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
@@ -1028,6 +1142,8 @@ void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
 
 	if( inResourceData->GetInt("ItemID") )
 		SetItemID( inResourceData->GetInt("ItemID") );
+	
+	m_iSoundChance = 4;
 }
 
 void CTFItemSelection::SetItemID( int iID )
@@ -1055,19 +1171,18 @@ void CTFItemSelection::Paint()
 
 void CTFItemSelection::OnReleasedSelected()
 {
+	BaseClass::OnReleasedSelected();
+
 	PostActionSignal(new KeyValues("Command", "command", szCommand));
 	engine->ExecuteClientCmd( szCommand );
 }
 
 void CTFItemSelection::OnReleasedUnselected()
 {
+	BaseClass::OnReleasedUnselected();
+
 	PostActionSignal(new KeyValues("Command", "command", szCommand));
 	engine->ExecuteClientCmd( szCommand );
-	
-	if( random->RandomInt( 0, 3 ) > 2 )
-	{
-		vgui::surface()->PlaySound( GetSoundscript( VarArgs( "Mercenary.PositiveVocalization0%d", random->RandomInt( 1, 5 ) ) )->GetString("wave") );
-	}
 }
 
 void CTFItemSelection::SetSelected( bool bSelected )
@@ -1521,6 +1636,8 @@ void CTFHeaderItem::OnMouseReleased(MouseCode code)
 
 void CTFHeaderItem::OnReleasedSelected()
 {
+	BaseClass::OnReleasedSelected();
+
 	if( pConnectedPanel )
 		pConnectedPanel->SetVisible( false );
 	
@@ -1528,6 +1645,8 @@ void CTFHeaderItem::OnReleasedSelected()
 
 void CTFHeaderItem::OnReleasedUnselected()
 {
+	BaseClass::OnReleasedUnselected();
+
 	if( pConnectedPanel )
 		pConnectedPanel->SetVisible( true );
 	
@@ -1669,7 +1788,11 @@ void CTFLoadoutHeader::AddCategory( const char *szCategory )
 	kvLabel->SetString("fgcolor", "TanLight" );
 	kvLabel->SetString("textAlignment", "right" );
 	kvLabel->SetString("proportionalToParent", "1" );
-	kvLabel->SetString("labelText", szCategory);
+	
+	wchar_t wszLocalized[32];
+	g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( VarArgs("#OF_Loadout_Region_%s", szCategory) ), 0 );
+	
+	kvLabel->SetWString("labelText", wszLocalized );
 	
 	kvHeaderTemplate->AddSubKey(kvButton);
 	kvHeaderTemplate->AddSubKey(kvLabel);
@@ -1753,6 +1876,8 @@ void CTFHeaderImagePanel::OnMouseReleased(MouseCode code)
 
 void CTFHeaderImagePanel::OnReleasedSelected()
 {
+	BaseClass::OnReleasedSelected();
+
 	if( pConnectedPanel )
 		pConnectedPanel->SetVisible( false );
 	
@@ -1760,6 +1885,8 @@ void CTFHeaderImagePanel::OnReleasedSelected()
 
 void CTFHeaderImagePanel::OnReleasedUnselected()
 {
+	BaseClass::OnReleasedUnselected();
+
 	if( pConnectedPanel )
 		pConnectedPanel->SetVisible( true );
 }

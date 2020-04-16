@@ -44,6 +44,7 @@
 #include "video/ivideoservices.h"
 
 #include "vmainmenu.h"
+#include "vingamemainmenu.h"
 #include "VGenericConfirmation.h"
 #include "VFooterPanel.h"
 
@@ -1209,7 +1210,26 @@ STUB_GAMEUI_FUNC(BonusMapDatabaseSave, void, , );
 STUB_GAMEUI_FUNC(BonusMapNumAdvancedCompleted, int, 0, );
 STUB_GAMEUI_FUNC(BonusMapNumMedals, void, , int piNumMedals[3]);
 STUB_GAMEUI_FUNC(ValidateStorageDevice, bool, false, int *pStorageDeviceValidated);
-STUB_GAMEUI_FUNC(OnConfirmQuit, void, , );
+void CGameUI::OnConfirmQuit()
+{
+	if( !engine->IsInGame() )
+	{
+		MainMenu *pMainMenu = static_cast< MainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_MAINMENU ) );
+		if ( pMainMenu )
+		{
+			pMainMenu->OnCommand( "QuitGame" );
+		}
+	}
+	else
+	{
+		InGameMainMenu *pInGameMainMenu = static_cast< InGameMainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_INGAMEMAINMENU ) );
+		if ( pInGameMainMenu )
+		{
+			pInGameMainMenu->OnCommand( "QuitGame" );
+		}
+		
+	}
+}
 STUB_GAMEUI_FUNC(IsMainMenuVisible, bool, false, );
 STUB_GAMEUI_FUNC(SetMainMenuOverride, void, , vgui::VPANEL panel);
 STUB_GAMEUI_FUNC(SendMainMenuCommand, void, , const char *pszCommand);

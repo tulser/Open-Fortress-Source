@@ -8,6 +8,7 @@
 #include "c_of_music_player.h"
 #include "c_tf_player.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #include "fmod_manager.h"
 
 // Imported from sounds	
