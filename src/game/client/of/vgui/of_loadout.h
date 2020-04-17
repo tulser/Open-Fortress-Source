@@ -181,6 +181,9 @@ public:
 	int iElementsPerRow;
 	int iElementsPerScroll;
 	
+	int	iLastX;
+	int	iLastY;
+	
 	PanelListItem_t t_PanelTemplate;
 };
 
@@ -222,6 +225,9 @@ public:
 	
 	int iElementsPerRow;
 	int iElementsPerScroll;
+	
+	int iLastX;
+	int iLastY;
 	
 	ItemTemplate_t t_ItemTemplate;
 };

@@ -1243,6 +1243,8 @@ CTFScrollableItemList::CTFScrollableItemList( Panel *parent, const char *panelNa
 	pScrollBar->AddActionSignalTarget( this );
 	
 	pSelectedItem = NULL;
+	iLastX = 0;
+	iLastY = 0;
 }
 
 void CTFScrollableItemList::ApplySettings(KeyValues *inResourceData)
@@ -1371,12 +1373,19 @@ void CTFScrollableItemList::AddItem( int iID )
 	kvItemTemplate->AddSubKey(kvItemImage);
 	
 	pNewItem.pItemPanel->ApplySettings(kvItemTemplate);
+
+	if( !iLastX )
+	{
+		iLastX = iCollumnSpacing;
+	}
+	if( !iLastY )
+	{
+		iLastY = iRowSpacing;
+	}
 	
-	int iMultiFactor = m_hItems.Count();
-	int iRowFactor = iMultiFactor / iElementsPerRow;
-	int x = iCollumnSpacing + ( ( iCollumnSpacing + ( iElementWidth * 2 ) ) * ( iMultiFactor - ( iElementsPerRow * iRowFactor ) ) );
-	int y = iRowSpacing + ( ( iRowSpacing + ( iElementHeight * 2 ) ) * iRowFactor );
-	
+	int x = iLastX;
+	int y = iLastY;
+
 	pNewItem.pItemPanel->SetPos(x,y);
 	pNewItem.pItemPanel->SetItemID(iID);
 
@@ -1384,15 +1393,25 @@ void CTFScrollableItemList::AddItem( int iID )
 	pNewItem.def_ypos = y;
 	
 	m_hItems.AddToTail(pNewItem);
-	
+
 	int w, h;
-	GetSize( w, h );
+	int gw, gh;
+	pNewItem.pItemPanel->GetSize( w, h );
+	GetSize( gw, gh );
+	
+	iLastX = iLastX + w + iCollumnSpacing;
+	
+	if( iLastX + w + iCollumnSpacing > gw )
+	{
+		iLastX = 0;
+		iLastY = iLastY + h + iRowSpacing;
+	}
 
 	int iWide, iTall;
 	pNewItem.pItemPanel->GetSize( iWide, iTall );
 	
 	pScrollBar->SetRange( 0, y + iTall + iCollumnSpacing );
-	pScrollBar->SetRangeWindow( h );
+	pScrollBar->SetRangeWindow( gh );
 	
 	if( GetLoadout() )
 	{
@@ -1430,6 +1449,9 @@ CTFScrollablePanelList::CTFScrollablePanelList( Panel *parent, const char *panel
 	
 	iElementsPerRow = 1;
 	iElementsPerScroll = 1;
+	
+	iLastX = 0;
+	iLastY = 0;
 }
 
 void CTFScrollablePanelList::ApplySettings(KeyValues *inResourceData)
@@ -1516,24 +1538,41 @@ void CTFScrollablePanelList::AddItem( CTFEditableButton *pPanel )
 	
 	int iWide, iTall;
 	pPanel->GetSize( iWide, iTall );
+	
+	if( !iLastX )
+	{
+		iLastX = iCollumnSpacing;
+	}
+	if( !iLastY )
+	{
+		iLastY = iRowSpacing;
+	}
 
-	int iMultiFactor = m_hItems.Count();
-	int iRowFactor = iMultiFactor / iElementsPerRow;
-	int x = iCollumnSpacing + ( ( iCollumnSpacing + ( iElementWidth * 2 ) ) * ( iMultiFactor - ( iElementsPerRow * iRowFactor ) ) );
-	int y = iRowSpacing + ( ( iRowSpacing + ( iElementHeight * 2 ) ) * iRowFactor );
+	int x = iLastX;
+	int y = iLastY;
 
 	pNewItem.pPanel->SetPos(x,y);
 
 	pNewItem.def_xpos = x;
 	pNewItem.def_ypos = y;
-
+	
 	m_hItems.AddToTail(pNewItem);
 
 	int w, h;
-	GetSize( w, h );
+	int gw, gh;
+	pNewItem.pPanel->GetSize( w, h );
+	GetSize( gw, gh );
+	
+	iLastX = iLastX + w + iCollumnSpacing;
+	
+	if( iLastX + w + iCollumnSpacing > gw )
+	{
+		iLastX = 0;
+		iLastY = iLastY + h + iRowSpacing;
+	}
 
 	pScrollBar->SetRange( 0, y + iTall + iCollumnSpacing );
-	pScrollBar->SetRangeWindow( h );
+	pScrollBar->SetRangeWindow( gh );
 }
 
 void CTFScrollablePanelList::ClearItemList()

@@ -3273,14 +3273,17 @@ void C_TFPlayer::UpdateWearables( void )
 		{
 			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
 			
-			int iVisibleTeam = GetTeamNumber();
-			if ( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() )
+			if( handle )
 			{
-				iVisibleTeam = m_Shared.GetDisguiseTeam();
+				int iVisibleTeam = GetTeamNumber();
+				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				handle->m_nSkin = iVisibleTeam - 2;
+
+				m_hCosmetic.AddToTail(handle);
 			}
-			handle->m_nSkin = iVisibleTeam - 2;
-			
-			m_hCosmetic.AddToTail( handle );
 		}
 	}
 }
