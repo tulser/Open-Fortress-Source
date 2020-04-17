@@ -17,7 +17,6 @@ class CCommand;
 class CUserCmd;
 class CBasePlayer;
 
-
 void ClientActive( edict_t *pEdict, bool bLoadGame );
 void ClientPutInServer( edict_t *pEdict, const char *playername );
 void ClientCommand( CBasePlayer *pSender, const CCommand &args );

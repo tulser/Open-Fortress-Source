@@ -636,6 +636,9 @@ CBasePlayer::CBasePlayer( )
 	m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
 
 	m_flLastObjectiveTime = -1.f;
+
+	m_iStringcmds = 0;
+	m_fStringcmdsResetTime = 0.0f;
 }
 
 CBasePlayer::~CBasePlayer( )

@@ -1118,6 +1118,9 @@ public:
 	float					m_flSideMove;
 	int						m_nNumCrateHudHints;
 
+	int						m_iStringcmds; // how many stringcmds we have sent
+	float					m_fStringcmdsResetTime;
+
 private:
 
 	// Used in test code to teleport the player to random locations in the map.

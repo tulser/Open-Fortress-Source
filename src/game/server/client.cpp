@@ -111,6 +111,8 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
 
 ConVar	sv_allow_all_servercommands( "sv_allow_all_servercommands", "0", FCVAR_NONE, "Allow usage of all commands by a point_servercommand (no blacklist). Can be maliciously abused!" );
 
+ConVar sv_quota_stringcmdspersecond( "sv_quota_stringcmdspersecond", "40", FCVAR_NONE, "How many string commands per second clients are allowed to submit, 0 to disallow all string commands." );
+
 void ClientKill( edict_t *pEdict, const Vector &vecForce, bool bExplode = false )
 {
 	CBasePlayer *pPlayer = static_cast<CBasePlayer*>( GetContainingEntity( pEdict ) );
@@ -1625,6 +1627,20 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	// Is the client spawned yet?
 	if ( !pPlayer )
 		return;
+
+	if ( pPlayer->m_fStringcmdsResetTime < gpGlobals->curtime )
+	{
+		pPlayer->m_fStringcmdsResetTime = gpGlobals->curtime + 1.0f;
+		pPlayer->m_iStringcmds = 0;
+	}
+	else
+	{
+		pPlayer->m_iStringcmds += 1;
+		if ( pPlayer->m_iStringcmds > sv_quota_stringcmdspersecond.GetInt() )
+		{
+			engine->ServerCommand( UTIL_VarArgs( "kickid %d %s;", pPlayer->GetUserID(), "Too many string cmds per second" ) );
+		}
+	}
 
 	MDLCACHE_CRITICAL_SECTION();
 
