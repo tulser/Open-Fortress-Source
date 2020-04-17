@@ -53,7 +53,7 @@ CCustomizationDialog::CCustomizationDialog(vgui::Panel *parent) : PropertyDialog
 	// debug timing code, this function takes too long
 //	double s4 = system()->GetCurrentTime();
 
-	SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
+	SetScheme("SwarmScheme");
 
 	SetTitle("#TF_Mercenary", true);
 	

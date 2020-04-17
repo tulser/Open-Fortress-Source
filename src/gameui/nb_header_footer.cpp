@@ -103,6 +103,8 @@ int CASW_Background_Movie::SetTextureMaterial()
 	return m_nTextureID;
 }
 
+extern KeyValues* BackgroundSettings();
+
 void CASW_Background_Movie::Update()
 {
 	if ( !m_bEnabled )
@@ -115,15 +117,31 @@ void CASW_Background_Movie::Update()
 	if( nGameState != m_nLastGameState ) 
 	{
 		const char *pFilename = NULL;
+		
+		pFilename = "media/background01.bik";
 
-		int nChosenMovie = RandomInt( 0, 4 );
-		switch( nChosenMovie ) {
-			case 0: pFilename = "media/background01.bik"; break;
-			default:
-			case 1: pFilename = "media/background02.bik"; break;
-			case 2: pFilename = "media/background03.bik"; break;
-			case 3: pFilename = "media/background04.bik"; break;
-			case 4: pFilename = "media/background05.bik"; break;
+		if( BackgroundSettings() )
+		{
+			KeyValues *inMainMenuSettings = BackgroundSettings()->FindKey("main_menu");
+			if( inMainMenuSettings )
+			{
+				int nChosenMovie = RandomInt( 1, inMainMenuSettings->GetInt( "background_count", 1 ) );
+				
+				int i = 0;
+				
+				for( KeyValues *pSub = inMainMenuSettings->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+				{
+					if( !Q_strcmp(pSub->GetName(), "background_count") )
+						continue;
+
+					i++;
+					if( nChosenMovie == i )
+					{
+						pFilename = pSub->GetString();
+						break;
+					}
+				}
+			}
 		}
 
 		if( pFilename ) {

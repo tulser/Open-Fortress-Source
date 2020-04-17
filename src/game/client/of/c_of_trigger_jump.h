@@ -22,6 +22,8 @@ public:
 	CNetworkVar( Vector, m_vecTarget );
 	CNetworkVar( float, m_flApexBoost );
 	CNetworkVar( int, m_iSound );
+	
+	CNetworkVar( bool, m_bNoCompensation );
 };
 
 extern C_EntityClassList< C_OFDTriggerJump > g_TriggerJumpList;

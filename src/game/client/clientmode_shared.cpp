@@ -1511,7 +1511,12 @@ const char* ClientModeShared::GetAnnouncer()
 			strcpy(szDefaultAnnouncer, AnnouncerEntity()->szAnnouncer);
 		}
 	}
-	if ( strcmp(of_announcer_override.GetString(), "") && strcmp( of_announcer_override.GetString(), "none" ) )
+	
+	char szAnnouncerConvar[32];
+	Q_strncpy( szAnnouncerConvar, of_announcer_override.GetString(), sizeof(szAnnouncerConvar) );
+	strlwr( szAnnouncerConvar );
+	
+	if ( strcmp( szAnnouncerConvar, "" ) && strcmp( szAnnouncerConvar, "none" ) )
 	{
 // 		TODO: Try to save the Default Announcer settings somwhere so we dont need to read it all the time
 		KeyValues* pSupport = new KeyValues( "AnnouncerSupport" );

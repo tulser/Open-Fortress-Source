@@ -7,6 +7,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_OFDTriggerJump, DT_OFDTriggerJump, COFDTriggerJump )
 	RecvPropVector( RECVINFO( m_vecTarget ) ),
 	RecvPropFloat( RECVINFO( m_flApexBoost ) ),
 	RecvPropInt( RECVINFO( m_iSound ) ),
+	RecvPropBool( RECVINFO( m_bNoCompensation ) ),
 END_RECV_TABLE()
 
 

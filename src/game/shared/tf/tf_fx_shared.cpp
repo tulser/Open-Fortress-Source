@@ -262,9 +262,9 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 		if ( bNoSpread )
 		{
 			int iIndex = iBullet;
-			while ( iIndex > 9 )
+			while ( iIndex > 18 )
 			{
-				iIndex -= 10;
+				iIndex -= 17;
 			}
 
 			x = 0.5f * g_vecFixedPattern[iIndex].x;

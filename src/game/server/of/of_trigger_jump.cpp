@@ -11,7 +11,7 @@ BEGIN_DATADESC( COFDTriggerJump )
 	DEFINE_KEYFIELD( m_iSound, FIELD_INTEGER, "do_bounce_sound" ),
 	DEFINE_KEYFIELD( m_flApexBoost, FIELD_FLOAT, "apex_height_boost" ),
 	DEFINE_KEYFIELD( m_iSoftLanding, FIELD_INTEGER, "soft_landing" ),
-
+	DEFINE_KEYFIELD( m_bNoCompensation, FIELD_BOOLEAN, "no_compensation" ),
 	DEFINE_OUTPUT( m_OnJump, "OnJump" ), 
 END_DATADESC()
 
@@ -19,6 +19,7 @@ IMPLEMENT_SERVERCLASS_ST( COFDTriggerJump, DT_OFDTriggerJump )
 	SendPropVector( SENDINFO( m_vecTarget ), 0, SPROP_COORD ),
 	SendPropFloat( SENDINFO( m_flApexBoost ), 0, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO( m_iSound ), 3, SPROP_UNSIGNED ),
+	SendPropBool( SENDINFO( m_bNoCompensation ) ),
 END_SEND_TABLE()
  
 LINK_ENTITY_TO_CLASS( ofd_trigger_jump, COFDTriggerJump );
@@ -29,6 +30,7 @@ COFDTriggerJump::COFDTriggerJump( void )
 	m_pTarget = NULL;
 	m_vecTarget = vec3_origin;
 	m_iSoftLanding = 0;
+	m_bNoCompensation = false;
 }
 
 void COFDTriggerJump::Spawn( void )

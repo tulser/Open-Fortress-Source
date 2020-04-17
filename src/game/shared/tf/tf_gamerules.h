@@ -63,30 +63,6 @@ enum
 	GUN_GAME = 6,
 };
 
-extern void ParseSoundManifest( void );
-extern void ParseLevelSoundManifest( void );
-extern KeyValues *GetSoundscript( const char *szSoundScript );
-
-extern KeyValues* GlobalSoundManifest();
-extern void InitGlobalSoundManifest();
-
-extern KeyValues* LevelSoundManifest();
-extern void InitLevelSoundManifest();
-
-extern void ParseItemsGame( void );
-extern void InitItemsGame();
-extern KeyValues* GetItemsGame();
-
-extern KeyValues* GetCosmetic( int iID );
-
-#ifdef CLIENT_DLL
-extern KeyValues* GetLoadout();
-extern void ParseLoadout( void );
-extern void ResetLoadout( void );
-#endif
-
-extern void CheckGlobalSounManifest( void );
-
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
 {
 public:

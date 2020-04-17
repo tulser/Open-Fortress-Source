@@ -15,7 +15,7 @@
 #include "gameui_util.h"
 #include "KeyValues.h"
 #include "fmtstr.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "GameUI_Interface.h"
 #include "loadingtippanel.h"
 #include "tf_tips.h"
@@ -511,6 +511,8 @@ bool LoadingProgress::ShouldShowPosterForLevel( KeyValues *pMissionInfo, KeyValu
 	return ( m_pDefaultPosterDataKV != NULL );
 }
 
+extern KeyValues* BackgroundSettings();
+
 //=============================================================================
 void LoadingProgress::SetupPoster( void )
 {	
@@ -527,22 +529,32 @@ void LoadingProgress::SetupPoster( void )
 		bool bIsWidescreen = mat_xbox_iswidescreen.GetBool();
 #endif
 
-#ifdef GAMEIU_MULTI_LOADSCREENS
 		const char *pszPosterImage = NULL;
-		int nChosenLoadingImage = RandomInt( 1, 5 );
-		switch( nChosenLoadingImage )
+		pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01";
+		
+		if( BackgroundSettings() )
 		{
-			case 1: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01"; break;
-			case 2: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background02_widescreen" : "../console/background02"; break;
-			case 3: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background03_widescreen" : "../console/background03"; break;
-			case 4: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background04_widescreen" : "../console/background04"; break;
-			case 5: pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background05_widescreen" : "../console/background05"; break;
+			KeyValues *inLoadingSettings = BackgroundSettings()->FindKey("loading");
+			if( inLoadingSettings )
+			{
+				int nChosenLoadingImage = RandomInt( 1, inLoadingSettings->GetInt( "background_count", 1 ) );
+				
+				int i = 0;
+				
+				for( KeyValues *pSub = inLoadingSettings->GetFirstValue(); pSub; pSub = pSub->GetNextValue() )
+				{
+					if( !Q_strcmp(pSub->GetName(), "background_count") )
+						continue;
+
+					i++;
+					if( nChosenLoadingImage == i )
+					{
+						pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? VarArgs( "%s_widescreen", pSub->GetString() ) : pSub->GetString();
+						break;
+					}
+				}
+			}
 		}
-
-#else
-		const char *pszPosterImage =  pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01";
-#endif
-
 		// if the image was cached this will just hook it up, otherwise it will load it
 		pPoster->SetImage( pszPosterImage );
 	}

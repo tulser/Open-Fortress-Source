@@ -67,7 +67,14 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 	vecTargetVel.z = flGravity * time1;
 
 	Vector vecFinal = vecTargetVel;
-
+	
+	if( m_bNoCompensation )
+	{
+		Vector vecCurrentVel = pOther->GetAbsVelocity();
+		vecTargetVel.x += vecCurrentVel.x;
+		vecTargetVel.y += vecCurrentVel.y;
+	}
+	
 	pOther->SetGroundEntity( NULL );
 
 	if ( vecFinal.IsValid() )

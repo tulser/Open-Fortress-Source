@@ -432,8 +432,8 @@ public:
 	
 public:
 	CNetworkVector( m_vecPlayerColor );
-//	CUtlVector<float> m_iCosmetics;
-//	KeyValues *kvDesiredCosmetics;
+	CUtlVector<float> m_iCosmetics;
+	KeyValues *kvDesiredCosmetics;
 	CTFPlayerShared m_Shared;
 	int	    item_list;			// Used to keep track of which goalitems are 
 								// affecting the player at any time.

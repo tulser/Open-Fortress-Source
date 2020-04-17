@@ -58,7 +58,7 @@ COptionsDialog::COptionsDialog(vgui::Panel *parent, OptionsDialogTabStyle iTabSt
 
 	if ( iTabStyle == OPTIONS_DIALOG_ALL_TABS )
 	{
-		SetScheme(vgui::scheme()->LoadSchemeFromFileEx(0, "resource/GameUIScheme.res", "SwarmScheme"));
+		SetScheme( "SwarmScheme" );
 
 		SetTitle("#GameUI_Options", true);
 	

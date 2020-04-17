@@ -10,6 +10,7 @@
 #include "animation.h"
 #include "vgui/IInput.h"
 #include "matsys_controls/manipulator.h"
+#include "effect_dispatch_data.h"
 
 using namespace vgui;
 DECLARE_BUILD_FACTORY( CBaseModelPanel );
@@ -743,6 +744,32 @@ void CBaseModelPanel::particle_data_t::UpdateControlPoints( CStudioHdr *pStudioH
 	m_bIsUpdateToDate = true;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Allocate particle data
+//-----------------------------------------------------------------------------
+void CBaseModelPanel::particle_data_t::SetParticleColor( CStudioHdr *pStudioHdr, matrix3x4_t *pWorldMatrix, int iRed, int iGreen, int iBlue )
+{
+	if ( m_pParticleSystem )
+	{
+		Vector vecParticleOffset( iRed, iGreen, iBlue );
+		vecParticleOffset /= 255.0f;
+
+		// Update control points which is updating the position of the particles
+		matrix3x4_t matAttachToWorld;
+		Vector vecPosition, vecForward, vecRight, vecUp;
+
+		const mstudioattachment_t& attach = pStudioHdr->pAttachment( CUSTOM_COLOR_CP1 ); 
+		MatrixMultiply( pWorldMatrix[ attach.localbone ], attach.local, matAttachToWorld );
+
+		MatrixVectors( matAttachToWorld, &vecForward, &vecRight, &vecUp );
+		MatrixPosition( matAttachToWorld, vecPosition );
+
+		m_pParticleSystem->SetControlPointOrientation( CUSTOM_COLOR_CP1, vecForward, vecRight, vecUp );
+		m_pParticleSystem->SetControlPoint( CUSTOM_COLOR_CP1, vecParticleOffset );
+	}
+
+	m_bIsUpdateToDate = true;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Allocate particle data
@@ -826,12 +853,15 @@ void CBaseModelPanel::PostPaint3D( IMatRenderContext *pRenderContext )
 
 	FOR_EACH_VEC( m_particleList, i )
 	{
-		if ( m_particleList[i]->m_bIsUpdateToDate )
-		{
+//		Particles are set to not be up to date every paint cycle
+//		in what scenario would this work??
+//		commented out
+//		if ( m_particleList[i]->m_bIsUpdateToDate )
+//		{
 			m_particleList[i]->m_pParticleSystem->Simulate( gpGlobals->frametime, false );
 			m_particleList[i]->m_pParticleSystem->Render( pRenderContext );
 			m_particleList[i]->m_bIsUpdateToDate = false;
-		}
+//		}
 	}
 
 	pRenderContext->MatrixMode( MATERIAL_MODEL );

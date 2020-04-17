@@ -492,19 +492,7 @@ enum RetroMode
 };
 
 
-const Vector g_vecFixedPattern[] =
-{
-	Vector( 0, 0, 0 ),
-	Vector( 1, 0, 0 ),
-	Vector( -1, 0, 0 ),
-	Vector( 0, -1, 0 ),
-	Vector( 0, 1, 0 ),
-	Vector( 0.85, -0.85, 0 ),
-	Vector( 0.85, 0.85, 0 ),
-	Vector( -0.85, -0.85, 0 ),
-	Vector( -0.85, 0.85, 0 ),
-	Vector( 0, 0, 0 ),
-};
+extern const Vector g_vecFixedPattern[];
 
 extern const char *g_aWeaponNames[];
 extern int g_aWeaponDamageTypes[];
