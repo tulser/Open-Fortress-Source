@@ -181,6 +181,22 @@ void *GetGameInterface(const char *dll, const char *name)
 	CreateInterfaceFn factory = Sys_GetFactory(module);
 	return factory(name, nullptr);
 }
+	
+KeyValues* gBackgroundSettings;
+KeyValues* BackgroundSettings()
+{
+	return gBackgroundSettings;
+}
+
+void InitBackgroundSettings()
+{
+	if( gBackgroundSettings )
+	{
+		gBackgroundSettings->deleteThis();
+	}
+	gBackgroundSettings = new KeyValues( "MenuBackgrounds" );
+	gBackgroundSettings->LoadFromFile( g_pFullFileSystem, "scripts/menu_backgrounds.txt" );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Initialization
@@ -253,6 +269,8 @@ void CGameUI::Initialize( CreateInterfaceFn factory )
 
 	vgui::VPANEL rootpanel = enginevguifuncs->GetPanel( PANEL_GAMEUIDLL );
 	factoryBasePanel.SetParent( rootpanel );
+	
+	InitBackgroundSettings();
 }
 
 void CGameUI::PostInit()
