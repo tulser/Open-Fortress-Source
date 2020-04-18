@@ -1628,17 +1628,20 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	if ( !pPlayer )
 		return;
 
-	if ( pPlayer->m_fStringcmdsResetTime < gpGlobals->curtime )
+	if ( pPlayer->IsConnected() )
 	{
-		pPlayer->m_fStringcmdsResetTime = gpGlobals->curtime + 1.0f;
-		pPlayer->m_iStringcmds = 0;
-	}
-	else
-	{
-		pPlayer->m_iStringcmds += 1;
-		if ( pPlayer->m_iStringcmds > sv_quota_stringcmdspersecond.GetInt() )
+		if ( pPlayer->m_fStringcmdsResetTime < gpGlobals->curtime )
 		{
-			engine->ServerCommand( UTIL_VarArgs( "kickid %d %s;", pPlayer->GetUserID(), "Too many string cmds per second" ) );
+			pPlayer->m_fStringcmdsResetTime = gpGlobals->curtime + 1.0f;
+			pPlayer->m_iStringcmds = 0;
+		}
+		else
+		{
+			pPlayer->m_iStringcmds += 1;
+			if ( pPlayer->m_iStringcmds > sv_quota_stringcmdspersecond.GetInt() )
+			{
+				engine->ServerCommand( UTIL_VarArgs( "kickid %d %s;", pPlayer->GetUserID(), "Too many string cmds per second" ) );
+			}
 		}
 	}
 
