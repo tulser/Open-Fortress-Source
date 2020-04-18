@@ -11,7 +11,7 @@
 #include "tf_shareddefs.h"
 
 #include "ienginevgui.h"
-#include "engine/ienginesound.h"
+#include "engine/IEngineSound.h"
 
 #include "tier0/memdbgon.h"
 
