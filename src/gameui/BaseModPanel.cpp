@@ -2,7 +2,7 @@
 #include "basemodpanel.h"
 #include "./GameUI/IGameUI.h"
 #include "ienginevgui.h"
-#include "engine/ienginesound.h"
+#include "engine/IEngineSound.h"
 #include "EngineInterface.h"
 #include "tier0/dbg.h"
 #include "ixboxsystem.h"

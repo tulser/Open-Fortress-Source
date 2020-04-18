@@ -26,7 +26,7 @@
 #include "cvartogglecheckbutton.h"
 #include "datacache/imdlcache.h"
 
-#include "engine/ienginesound.h"
+#include "engine/IEngineSound.h"
 #include "basemodelpanel.h"
 #include "tf_gamerules.h"
 #include "of_shared_schemas.h"
