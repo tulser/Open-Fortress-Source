@@ -711,6 +711,10 @@ void C_TFRagdoll::DismemberHead()
 void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 {
 	int m_LeftArmBodygroup = FindBodygroupByName( "leftarm" );
+	int m_LeftHandBodygroup = FindBodygroupByName( "lefthand" );
+	
+	if ( m_LeftHandBodygroup >= 0 )
+		SetBodygroup( m_LeftHandBodygroup, 1 );
 
 	int iAttach;
 
@@ -765,7 +769,11 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 void C_TFRagdoll::DismemberRightArm( bool bLevel )
 {
 	int m_RightArmBodygroup = FindBodygroupByName( "rightarm" );
-
+	int m_RightHandBodygroup = FindBodygroupByName( "righthand" );
+	
+	if ( m_RightHandBodygroup >= 0 )
+		SetBodygroup( m_RightHandBodygroup, 1 );
+	
 	int iAttach;
 
 	if ( bLevel )
@@ -1658,6 +1666,13 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+// Purpose: Used for spy invisiblity material
+//-----------------------------------------------------------------------------
+class CInvisProxy : public CSpyInvisProxy
+{
+};
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 CSpyInvisProxy::CSpyInvisProxy( void )
@@ -1813,6 +1828,9 @@ IMaterial *CSpyInvisProxy::GetMaterial()
 }
 
 EXPOSE_INTERFACE( CSpyInvisProxy, IMaterialProxy, "spy_invis" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+// Dummy to support live tf2 invis stuff, since drew keeps putting "invis" in his items instead of "spy_invis"
+EXPOSE_INTERFACE( CInvisProxy, IMaterialProxy, "invis" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
 // Purpose: Used for invulnerability material
