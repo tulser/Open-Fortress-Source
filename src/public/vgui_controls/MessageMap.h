@@ -135,8 +135,9 @@ struct MessageMapItem_t
 #if defined( VGUI_USEKEYBINDINGMAPS )
 
 #define DECLARE_CLASS_SIMPLE( className, baseClassName ) \
-	typedef baseClassName BaseClass; \
 	typedef className ThisClass;	\
+protected:							\
+	typedef baseClassName BaseClass; \
 public:								\
 	DECLARE_PANELMESSAGEMAP( className ); \
 	DECLARE_PANELANIMATION( className ); \
