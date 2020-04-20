@@ -1625,7 +1625,7 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	const char *pCmd = args[0];
 
 	// Is the client spawned yet?
-	if ( !pPlayer )
+	if ( !pPlayer || !pCmd )
 		return;
 
 	if ( pPlayer->IsConnected() )

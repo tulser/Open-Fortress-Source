@@ -3615,7 +3615,6 @@ void CClientShadowMgr::UpdateProjectedTexture( ClientShadowHandle_t handle, bool
 //-----------------------------------------------------------------------------
 void CClientShadowMgr::ComputeBoundingSphere( IClientRenderable* pRenderable, Vector& origin, float& radius )
 {
-	Assert( pRenderable );
 	Vector mins, maxs;
 	pRenderable->GetShadowRenderBounds( mins, maxs, GetActualShadowCastType( pRenderable ) );
 	Vector size;
@@ -3848,7 +3847,7 @@ void CClientShadowMgr::AddShadowToReceiver( ClientShadowHandle_t handle,
 	IClientRenderable* pSourceRenderable = ClientEntityList().GetClientRenderableFromHandle( shadow.m_Entity );
 
 	// NOTE: if pSourceRenderable == NULL, the source is probably a flashlight since there is no entity.
-	if (pSourceRenderable == pRenderable)
+	if ( !pSourceRenderable || pSourceRenderable == pRenderable)
 		return;
 
 	// Don't bother if this renderable doesn't receive shadows or light from flashlights

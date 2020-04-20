@@ -215,6 +215,9 @@ void CVoiceStatus::DrawHeadLabels()
 
 	CMatRenderContextPtr pRenderContext( materials );
 
+	if ( !pRenderContext )
+		return;
+
 	for(int i=0; i < VOICE_MAX_PLAYERS; i++)
 	{
 		if ( !m_VoicePlayers[i] )
@@ -253,30 +256,33 @@ void CVoiceStatus::DrawHeadLabels()
 
 		pRenderContext->Bind( pPlayer->GetHeadLabelMaterial() );
 		IMesh *pMesh = pRenderContext->GetDynamicMesh();
-		CMeshBuilder meshBuilder;
-		meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
+		if ( pMesh )
+		{
+			CMeshBuilder meshBuilder;
+			meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
 
-		meshBuilder.Color3f( 1.0, 1.0, 1.0 );
-		meshBuilder.TexCoord2f( 0,0,0 );
-		meshBuilder.Position3fv( (vOrigin + (vRight * -flSize) + (vUp * flSize)).Base() );
-		meshBuilder.AdvanceVertex();
+			meshBuilder.Color3f( 1.0, 1.0, 1.0 );
+			meshBuilder.TexCoord2f( 0,0,0 );
+			meshBuilder.Position3fv( (vOrigin + (vRight * -flSize) + (vUp * flSize)).Base() );
+			meshBuilder.AdvanceVertex();
 
-		meshBuilder.Color3f( 1.0, 1.0, 1.0 );
-		meshBuilder.TexCoord2f( 0,1,0 );
-		meshBuilder.Position3fv( (vOrigin + (vRight * flSize) + (vUp * flSize)).Base() );
-		meshBuilder.AdvanceVertex();
+			meshBuilder.Color3f( 1.0, 1.0, 1.0 );
+			meshBuilder.TexCoord2f( 0,1,0 );
+			meshBuilder.Position3fv( (vOrigin + (vRight * flSize) + (vUp * flSize)).Base() );
+			meshBuilder.AdvanceVertex();
 
-		meshBuilder.Color3f( 1.0, 1.0, 1.0 );
-		meshBuilder.TexCoord2f( 0,1,1 );
-		meshBuilder.Position3fv( (vOrigin + (vRight * flSize) + (vUp * -flSize)).Base() );
-		meshBuilder.AdvanceVertex();
+			meshBuilder.Color3f( 1.0, 1.0, 1.0 );
+			meshBuilder.TexCoord2f( 0,1,1 );
+			meshBuilder.Position3fv( (vOrigin + (vRight * flSize) + (vUp * -flSize)).Base() );
+			meshBuilder.AdvanceVertex();
 
-		meshBuilder.Color3f( 1.0, 1.0, 1.0 );
-		meshBuilder.TexCoord2f( 0,0,1 );
-		meshBuilder.Position3fv( (vOrigin + (vRight * -flSize) + (vUp * -flSize)).Base() );
-		meshBuilder.AdvanceVertex();
-		meshBuilder.End();
-		pMesh->Draw();
+			meshBuilder.Color3f( 1.0, 1.0, 1.0 );
+			meshBuilder.TexCoord2f( 0,0,1 );
+			meshBuilder.Position3fv( (vOrigin + (vRight * -flSize) + (vUp * -flSize)).Base() );
+			meshBuilder.AdvanceVertex();
+			meshBuilder.End();
+			pMesh->Draw();
+		}
 	}
 }
 

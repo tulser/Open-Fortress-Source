@@ -5376,16 +5376,19 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 	{
 		CTFPlayer *pTFVictim = ToTFPlayer(pVictim);
 		CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
-		if ( pTFVictim != pTFAttacker )
-			pTFVictim->GotKilled();
-		
-		if ( pTFVictim != pTFAttacker && pTFAttacker->last_kill > ( gpGlobals->curtime - 2.0f ) && TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+		if ( pTFAttacker )
 		{
-			TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFAttacker->entindex(), "Excellent" ); // 2 kills in 2 seconds
-			pTFAttacker->last_kill = 0; // reset it so that it doesnt play multiple times if we kill for example 3 enemies within 2 seconds
+			if ( pTFVictim != pTFAttacker )
+				pTFVictim->GotKilled();
+		
+			if ( pTFVictim != pTFAttacker && pTFAttacker->last_kill > ( gpGlobals->curtime - 2.0f ) && TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+			{
+				TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFAttacker->entindex(), "Excellent" ); // 2 kills in 2 seconds
+				pTFAttacker->last_kill = 0; // reset it so that it doesnt play multiple times if we kill for example 3 enemies within 2 seconds
+			}
+			else
+				pTFAttacker->last_kill = gpGlobals->curtime;
 		}
-		else
-			pTFAttacker->last_kill = gpGlobals->curtime;
 		
 		// Custom death handlers
 		const char *pszCustomDeath = "customdeath:none";
