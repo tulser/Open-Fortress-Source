@@ -442,6 +442,11 @@ void CTFWeaponBase::FallInit( void )
 
 }
 
+#ifdef CLIENT_DLL
+	#define SHARED_VarArgs VarArgs
+#else
+	#define SHARED_VarArgs UTIL_VarArgs
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  :  - 
@@ -474,183 +479,107 @@ void CTFWeaponBase::Precache()
 
 	if ( pTFInfo->m_szMuzzleFlashParticleEffect && pTFInfo->m_szMuzzleFlashParticleEffect[0] )
 	{
-		PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffect );
-	}
+		if(pTFInfo->m_bTeamColorMuzzleFlash)
+		{
+			DevMsg("%s\n%s\n%s\n", pTFInfo->m_szMuzzleFlashParticleEffectRed, pTFInfo->m_szMuzzleFlashParticleEffectBlue, pTFInfo->m_szMuzzleFlashParticleEffectDM);
+			PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffectRed );
+			PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffectBlue );
+			PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffectDM );
+		}
+		else
+			PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffect );
+	}	
 
 	if ( pTFInfo->m_szExplosionEffect && pTFInfo->m_szExplosionEffect[0] )
 	{
-		PrecacheParticleSystem( pTFInfo->m_szExplosionEffect );
 		if( pTFInfo->m_bTeamExplosion )
 		{
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionEffect, "_red") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffect, "_red") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionEffect, "_blue") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffect, "_blue") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionEffect, "_dm") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffect, "_dm") );
 		}
+		else
+			PrecacheParticleSystem( pTFInfo->m_szExplosionEffect );
 	}
 
 	if ( pTFInfo->m_szExplosionPlayerEffect && pTFInfo->m_szExplosionPlayerEffect[0] )
 	{
-		PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffect );
 		if( pTFInfo->m_bTeamExplosion )
 		{
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_red") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_red") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_blue") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_blue") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_dm") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffect, "_dm") );
 		}
+		else
+			PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffect );
 	}
 
 	if ( pTFInfo->m_szExplosionWaterEffect && pTFInfo->m_szExplosionWaterEffect[0] )
 	{
-		PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffect );
 		if( pTFInfo->m_bTeamExplosion )
 		{
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_red") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffect, "_red") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_blue") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffect, "_blue") );
 			PrecacheParticleSystem( 
-#ifdef GAME_DLL
-			UTIL_VarArgs
-#else
-			VarArgs
-#endif
-			("%s%s", pTFInfo->m_szExplosionWaterEffect, "_dm") );
+			SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffect, "_dm") );
 		}
+		else
+			PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffect );
 	}
 	
 	if( pTFInfo->m_bDropBomblets )
 	{
 		if ( pTFInfo->m_szExplosionEffectBomblets && pTFInfo->m_szExplosionEffectBomblets[0] )
 		{
-			PrecacheParticleSystem( pTFInfo->m_szExplosionEffectBomblets );
 			if( pTFInfo->m_bTeamExplosion )
 			{
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_red") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_red") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_blue") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_blue") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_dm") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionEffectBomblets, "_dm") );
 			}
+			else
+				PrecacheParticleSystem( pTFInfo->m_szExplosionEffectBomblets );
 		}
 
 		if ( pTFInfo->m_szExplosionPlayerEffectBomblets && pTFInfo->m_szExplosionPlayerEffectBomblets[0] )
 		{
-			PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffectBomblets );
 			if( pTFInfo->m_bTeamExplosion )
 			{
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_red") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_red") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_blue") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_blue") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_dm") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionPlayerEffectBomblets, "_dm") );
 			}
+			else
+				PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffectBomblets );
 		}
 
 		if ( pTFInfo->m_szExplosionWaterEffectBomblets && pTFInfo->m_szExplosionWaterEffectBomblets[0] )
 		{
-			PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffectBomblets );
 			if( pTFInfo->m_bTeamExplosion )
 			{
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_red") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_red") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_blue") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_blue") );
 				PrecacheParticleSystem( 
-#ifdef GAME_DLL
-				UTIL_VarArgs
-#else
-				VarArgs
-#endif
-				("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_dm") );
+				SHARED_VarArgs("%s%s", pTFInfo->m_szExplosionWaterEffectBomblets, "_dm") );
 			}
+			else
+				PrecacheParticleSystem( pTFInfo->m_szExplosionWaterEffectBomblets );
 		}		
 	}
 
@@ -2121,6 +2050,27 @@ const char *CTFWeaponBase::GetMuzzleFlashModel( void )
 const char *CTFWeaponBase::GetMuzzleFlashParticleEffect( void )
 { 
 	const char *pszPEffect = GetTFWpnData().m_szMuzzleFlashParticleEffect;
+	
+	if(GetTFWpnData().m_bTeamColorMuzzleFlash)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
+		if( pPlayer )
+		{
+			switch( pPlayer->GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+					pszPEffect = GetTFWpnData().m_szMuzzleFlashParticleEffectRed;
+					break;
+				case TF_TEAM_BLUE:
+					pszPEffect = GetTFWpnData().m_szMuzzleFlashParticleEffectBlue;
+					break;
+				default:
+				case TF_TEAM_MERCENARY:
+					pszPEffect = GetTFWpnData().m_szMuzzleFlashParticleEffectDM;
+					break;
+			}
+		}
+	}
 
 	if ( Q_strlen( pszPEffect ) > 0 )
 	{
@@ -2313,6 +2263,8 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 	const char *pszMuzzleFlashEffect = NULL;
 	const char *pszMuzzleFlashModel = GetMuzzleFlashModel();
 	const char *pszMuzzleFlashParticleEffect = GetMuzzleFlashParticleEffect();
+	
+	CTFPlayer *pOwner = ToTFPlayer(GetOwnerEntity());
 
 	// Pick the right muzzleflash (3rd / 1st person)
 	CBasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
@@ -2346,6 +2298,12 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 			muzzleFlashData.m_vAngles = angAngles;
 			muzzleFlashData.m_hEntity = pAttachEnt->GetRefEHandle();
 			muzzleFlashData.m_nAttachmentIndex = iMuzzleFlashAttachment;
+			
+			if( pOwner )
+			{
+				muzzleFlashData.m_bCustomColors = true;
+				muzzleFlashData.m_CustomColors.m_vecColor1 = pOwner->m_vecPlayerColor;
+			}
 			//muzzleFlashData.m_nHitBox = GetDODWpnData().m_iMuzzleFlashType;
 			//muzzleFlashData.m_flMagnitude = GetDODWpnData().m_flMuzzleFlashScale;
 			muzzleFlashData.m_flMagnitude = 0.2;
@@ -2374,7 +2332,10 @@ void CTFWeaponBase::CreateMuzzleFlashEffects(C_BaseEntity *pAttachEnt, int nInde
 
 		if ( pszMuzzleFlashParticleEffect && !of_beta_muzzleflash.GetBool() ) 
 		{
-			DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
+			if( pOwner )
+				DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle", pOwner->m_vecPlayerColor, pOwner->m_vecPlayerColor, true );
+			else
+				DispatchParticleEffect( pszMuzzleFlashParticleEffect, PATTACH_POINT_FOLLOW, pAttachEnt, "muzzle" );
 		}
 	}
 }

@@ -271,6 +271,17 @@ void ParseItemsGame( void )
 	InitItemsGame();
 	
 	GetItemsGame()->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+	
+	KeyValues *pCosmetics = GetItemsGame()->FindKey("Cosmetics");
+	if( pCosmetics )
+	{
+		int i = 0;
+		FOR_EACH_SUBKEY( pCosmetics, kvSubKey )
+		{
+			i++;
+		}
+		GetItemsGame()->SetInt("cosmetic_count", i);
+	}
 }
 
 KeyValues* GetCosmetic( int iID )

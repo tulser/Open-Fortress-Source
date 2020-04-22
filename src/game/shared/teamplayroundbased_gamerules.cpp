@@ -2897,7 +2897,7 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 
 			if ( m_iRoundState != GR_STATE_PREROUND || ( TFGameRules()->IsDMGamemode() ) )
 			{
-					// If the player hasn't been dead the minimum respawn time, he
+				// If the player hasn't been dead the minimum respawn time, he
 				// waits until the next wave.
 				if ( bTeam && !HasPassedMinRespawnTime( pPlayer ) )
 					continue;
@@ -2916,7 +2916,6 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 			
 			}
 		}
-
 		// Respawn this player
 		pPlayer->ForceRespawn();
 		iPlayersSpawned++;

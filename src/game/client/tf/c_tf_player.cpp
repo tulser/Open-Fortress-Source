@@ -120,8 +120,37 @@ ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces dea
 
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
 
+ConVar desired_cosmetic_loadout( "_desired_cosmetic_loadout", "", FCVAR_USERINFO );
+ConVar attempt_to_update_cosmetics( "_attempt_to_update_cosmetics", "", FCVAR_USERINFO );
+
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
+
+void RefreshDesiredCosmetics( int iClass )
+{
+	if( GetLoadout() )
+	{
+		KeyValues *pCosmetics = GetLoadout()->FindKey("Cosmetics");
+		if( pCosmetics )
+		{
+			KeyValues *pClass = pCosmetics->FindKey( g_aPlayerClassNames_NonLocalized[iClass] );
+			if( pClass )
+			{
+				KeyValues *pHat = pClass->GetFirstValue();
+				char szCommand[128];
+				szCommand[0] = '\0';
+				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
+				{
+					if( szCommand[0] != '\0' )
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s", szCommand, pHat->GetString() );
+					else
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
+				}
+				desired_cosmetic_loadout.SetValue(szCommand);
+			}
+		}
+	}
+}
 
 // --------------------------------------------------------------------
 // Purpose: Cycle through the aim & move modes.
@@ -166,9 +195,11 @@ void LoadoutEquip( const CCommand& args )
 	pClass->SetString( szRegion, args[3] );
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 	
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if( pLocalPlayer )
-		pLocalPlayer->RefreshDesiredCosmetics();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( pPlayer && !Q_strcmp(pPlayer->GetPlayerClass()->GetName(), args[1]) )
+	{
+		RefreshDesiredCosmetics(pPlayer->GetPlayerClass()->GetClassIndex());
+	}
 }
 static ConCommand loadout_equip("loadout_equip", LoadoutEquip );
 
@@ -212,9 +243,11 @@ void LoadoutUnEquip( const CCommand& args )
 	pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 	
-	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if( pLocalPlayer )
-		pLocalPlayer->RefreshDesiredCosmetics();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( pPlayer && !Q_strcmp(pPlayer->GetPlayerClass()->GetName(), args[1]) )
+	{
+		RefreshDesiredCosmetics(pPlayer->GetPlayerClass()->GetClassIndex());
+	}
 }
 static ConCommand loadout_unequip("loadout_unequip", LoadoutUnEquip );
 
@@ -2455,6 +2488,7 @@ C_TFPlayer::C_TFPlayer() :
 	m_bIsDisplayingNemesisIcon = false;
 
 	m_bWasTaunting = false;
+	bInitialSpawn = false;
 
 	//m_bPlayingMusic = false;
 	//m_fMusicDuration = 0.0f;
@@ -2470,13 +2504,13 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
-	
+
 	ListenForGameEvent( "player_jump" );
+	ListenForGameEvent( "force_cosmetic_refresh" );
 
 	//LoadMapMusic(::filesystem);
 
 	m_blinkTimer.Invalidate();
-
 }
 
 C_TFPlayer::~C_TFPlayer()
@@ -2686,7 +2720,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		RefreshDesiredCosmetics();
 		
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 
@@ -2720,8 +2753,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( m_iOldSpawnCounter != m_iSpawnCounter )
 	{
-		if ( IsLocalPlayer() )
-			RefreshDesiredCosmetics();
 		ClientPlayerRespawn();
 
 		bJustSpawned = true;
@@ -3059,7 +3090,6 @@ void C_TFPlayer::OnPlayerClassChange( void )
 		char szCmd[128];
 		Q_snprintf( szCmd, sizeof(szCmd), "exec %s.cfg \n", GetPlayerClass()->GetName() );
 		engine->ExecuteClientCmd( szCmd );
-		RefreshDesiredCosmetics();
 	}
 
 	// Init the anim movement vars
@@ -3515,30 +3545,6 @@ void C_TFPlayer::HandleTaunting( void )
 	}
 }
 
-void C_TFPlayer::RefreshDesiredCosmetics()
-{	
-	engine->ExecuteClientCmd( "clear_desired_cosmetics" );
-	
-	if( GetLoadout() )
-	{
-		KeyValues *pCosmetics = GetLoadout()->FindKey("Cosmetics");
-		if( pCosmetics )
-		{
-			KeyValues *pClass = pCosmetics->FindKey( GetPlayerClass()->GetName() );
-			if( pClass )
-			{
-				KeyValues *pHat = pClass->GetFirstValue();
-				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
-				{
-					char szCommand[128];
-					Q_snprintf( szCommand, sizeof( szCommand ), "set_desired_cosmetic %s %s", GetPlayerClass()->GetName(), pHat->GetString() );
-					engine->ExecuteClientCmd( szCommand );
-				}
-			}
-		}
-	}
-}
-
 void C_TFPlayer::ClientThink()
 {
 	// Pass on through to the base class.
@@ -3547,7 +3553,7 @@ void C_TFPlayer::ClientThink()
 	UpdateIDTarget();
 
 	UpdateLookAt();
-
+	
 	// Handle invisibility.
 	m_Shared.InvisibilityThink();
 
@@ -3610,6 +3616,7 @@ void C_TFPlayer::ClientThink()
 	{
 		UpdateWearables();
 		bUpdatedCosmetics = m_bUpdateCosmetics;
+		attempt_to_update_cosmetics.SetValue("0");
 	}
 	
 	if ( m_pSaveMeEffect )
@@ -4822,7 +4829,6 @@ void C_TFPlayer::LoadMapMusic( IBaseFileSystem *pFileSystem )
 
 	if ( !pMusicSub )
 	{
-		Warning( "Missing section 'music_data' from %s.", mapFilename );
 		pMusicValues->deleteThis();
 		m_bPlayingMusic = true;
 		return;
@@ -4879,7 +4885,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 	{
 		SetBodygroup( i, 0 );
 	}
-	
+
 	if ( IsLocalPlayer() )
 	{
 		// Dod called these, not sure why
@@ -4895,7 +4901,10 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		ResetToneMapping(1.0);
 
 		// Release the duck toggle key
-		KeyUp( &in_ducktoggle, NULL ); 
+		KeyUp( &in_ducktoggle, NULL );
+		
+		RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
+		attempt_to_update_cosmetics.SetValue("1");
 	}
 	
 	// don't draw the respawn particle in first person
@@ -5275,6 +5284,19 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 		}
 
 		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
+	}
+	else if ( Q_strcmp( "force_cosmetic_refresh", eventname ) == 0 )
+	{
+		Msg("Fug\n");
+		if ( event->GetInt("playerid") != entindex() )
+			return;
+		Msg("Dis\n");
+		if( IsLocalPlayer() )
+		{
+			Msg("Shid\n");
+			RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
+			attempt_to_update_cosmetics.SetValue("1");
+		}
 	}
 }
 

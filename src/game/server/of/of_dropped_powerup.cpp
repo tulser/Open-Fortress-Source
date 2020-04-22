@@ -143,3 +143,32 @@ unsigned int CTFDroppedPowerup::PhysicsSolidMaskForEntity( void ) const
 { 
 	return BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_DEBRIS;
 }
+
+
+const char* CTFDroppedPowerup::GetPowerupDroppedLine( void )
+{
+	switch ( m_iPowerupID )
+	{
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "CritsDropped";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "InvisibilityDropped";
+		break;
+		case TF_COND_SHIELD:
+		return "ShieldDropped";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "UberDropped";
+		break;
+		case TF_COND_HASTE:
+		return "HasteDropped";
+		break;
+		case TF_COND_BERSERK:
+		return "BerserkDropped";
+		break;
+	}
+	return "None";
+}

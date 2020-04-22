@@ -35,6 +35,7 @@ DEFINE_KEYFIELD( m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow" ),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CCondPowerup, DT_CondPowerup )
+SendPropInt( SENDINFO( m_iCondition ) ),
 SendPropBool( SENDINFO( m_bDisableShowOutline ) ),
 SendPropBool( SENDINFO( m_bRespawning) ),
 SendPropBool( SENDINFO( bInitialDelay ) ),
@@ -169,9 +170,25 @@ const char* CCondPowerup::GetPowerupPickupLineSelf( void )
 {
 	switch ( m_iCondition )
 	{
-		case TF_COND_INVULNERABLE:
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "CritTakenSelf";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "InvisibilityTakenSelf";
+		break;
 		case TF_COND_SHIELD:
 		return "ShieldTakenSelf";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "UberTakenSelf";
+		break;
+		case TF_COND_HASTE:
+		return "HasteTakenSelf";
+		break;
+		case TF_COND_BERSERK:
+		return "BerserkTakenSelf";
 		break;
 	}
 	return "None";
@@ -185,18 +202,21 @@ const char* CCondPowerup::GetPowerupPickupLine( void )
 		case TF_COND_CRIT_POWERUP:
 		return "CritTaken";
 		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "InvisibilityTaken";
+		break;
 		case TF_COND_SHIELD:
 		return "ShieldTaken";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "UberTaken";
 		break;
 		case TF_COND_HASTE:
 		return "HasteTaken";
 		break;
 		case TF_COND_BERSERK:
 		return "BerserkTaken";
-		break;
-		case TF_COND_INVIS_POWERUP:
-		case TF_COND_STEALTHED:
-		return "InvisibilityTaken";
 		break;
 	}
 	return "None";
@@ -217,9 +237,14 @@ const char* CCondPowerup::GetPowerupPickupSound( void )
 		case TF_COND_BERSERK:
 		return "Powerup.Berserk";
 		break;
-		case TF_COND_INVULNERABLE:
 		case TF_COND_SHIELD:
 		return "Powerup.Shield";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "Powerup.Uber";
+		break;
+		case TF_COND_HASTE:
+		return "Powerup.Haste";
 		break;
 	}
 	return "None";
@@ -246,8 +271,16 @@ const char* CCondPowerup::GetPowerupRespawnLine( void )
 		return "Invisibility";
 		break;
 		case TF_COND_SHIELD:
-		case TF_COND_INVULNERABLE:
 		return "Shield";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "Uber";
+		break;
+		case TF_COND_HASTE:
+		return "Haste";
+		break;
+		case TF_COND_BERSERK:
+		return "Berserk";
 		break;
 	}
 	return "None";

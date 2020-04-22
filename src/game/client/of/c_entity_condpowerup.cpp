@@ -29,6 +29,7 @@ public:
 	void	ClientThink( void );
 	void	Spawn( void );
 	int		DrawModel( int flags );
+	const char *GetPowerupIncomingLine( void );
 
 private:
 
@@ -39,15 +40,16 @@ private:
 		CGlowObject		   *m_pGlowEffect;
 		void	UpdateGlowEffect( void );
 		void	DestroyGlowEffect( void );
+		int		iTeamNum;
+		int		m_iCondition;
 		bool	m_bDisableShowOutline;
 		bool	m_bRespawning;
 		bool	bInitialDelay;
 		bool	bWarningTriggered;
-		int		iTeamNum;
 		bool	m_bShouldGlow;
-		float				fl_RespawnTime;
-		float				m_flRespawnTick;
-		float				fl_RespawnDelay;
+		float	fl_RespawnTime;
+		float	m_flRespawnTick;
+		float	fl_RespawnDelay;
 		
 		
 	IMaterial	*m_pReturnProgressMaterial_Empty;		// For labels above players' heads.
@@ -71,6 +73,7 @@ RecvPropBool( RECVINFO( bInitialDelay ) ),
 RecvPropTime( RECVINFO( fl_RespawnTime ) ),
 RecvPropTime( RECVINFO( m_flRespawnTick ) ),
 RecvPropTime( RECVINFO( fl_RespawnDelay ) ),
+RecvPropInt( RECVINFO( m_iCondition ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -94,7 +97,7 @@ void C_CondPowerup::ClientThink( void )
 {
 	if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
 	{
-		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, "PowerupsIncoming" );
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupIncomingLine() );
 		bWarningTriggered = true;
 	}
 	else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
@@ -352,4 +355,32 @@ int C_CondPowerup::DrawModel( int flags )
 	}
 
 	return nRetVal;
+}
+
+const char *C_CondPowerup::GetPowerupIncomingLine( void )
+{
+	switch ( m_iCondition )
+	{
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "CritsIncoming";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "InvisibilityIncoming";
+		break;
+		case TF_COND_SHIELD:
+		return "ShieldIncoming";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "UberIncoming";
+		break;
+		case TF_COND_HASTE:
+		return "HasteIncoming";
+		break;
+		case TF_COND_BERSERK:
+		return "BerserkIncoming";
+		break;
+	}
+	return "PowerupsIncoming";
 }

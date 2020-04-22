@@ -425,6 +425,9 @@ const char *C_WeaponSpawner::GetSuperWeaponsIncomingLine( void )
 		case TF_WEAPON_GIB:
 		return "GIBIncoming";
 		break;
+		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
+		return "QuadIncoming";
+		break;		
 	}
 	return "SuperWeaponsIncoming";
 }

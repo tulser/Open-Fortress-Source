@@ -283,6 +283,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
+	
+	m_iDesiredPlayerClass = 0;
 
 #ifdef CLIENT_DLL
 	m_iDisguiseWeaponModelIndex = -1;
@@ -1378,16 +1380,16 @@ void CTFPlayerShared::OnAddShield( void )
 		switch( m_pOuter->GetTeamNumber() )
 		{
 		case TF_TEAM_BLUE:
-			pEffectName = "effects/invuln_overlay_blue";
+			pEffectName = "effects/shield_overlay_blue";
 			break;
 		case TF_TEAM_RED:
-			pEffectName =  "effects/invuln_overlay_red";
+			pEffectName =  "effects/shield_overlay_red";
 			break;
 		case TF_TEAM_MERCENARY:
-			pEffectName = "effects/invuln_overlay_mercenary";
+			pEffectName = "effects/shield_overlay_dm";
 			break;
 		default:
-			pEffectName = "effects/invuln_overlay_blue";
+			pEffectName = "effects/shield_overlay_blue";
 			break;
 		}
 

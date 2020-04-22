@@ -2403,6 +2403,7 @@ typedef enum
 	ACT_MERC_JUMP_START_DYNAMITE,
 	ACT_MERC_JUMP_FLOAT_DYNAMITE,
 	ACT_MERC_JUMP_LAND_DYNAMITE,	
+	ACT_MERC_LOADOUT,
 	
 	// this is the end of the global activities, private per-monster activities start here.
 	LAST_SHARED_ACTIVITY,

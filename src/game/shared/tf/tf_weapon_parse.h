@@ -138,6 +138,7 @@ public:
 	bool	m_bLoadsManualy;
 	bool	m_bNoSniperCharge;
 	bool	m_bAlwaysDrop;
+	bool 	m_bCanSoftZoom;
 	
 	int		m_iContinuousFireDamageIncrease;
 	float	m_flContinuousFireBlastRadiusIncrease;
@@ -168,6 +169,11 @@ public:
 	char	m_szMuzzleFlashModel[128];
 	float	m_flMuzzleFlashModelDuration;
 	char	m_szMuzzleFlashParticleEffect[128];
+	
+	bool 	m_bTeamColorMuzzleFlash;
+	char	m_szMuzzleFlashParticleEffectRed[128];
+	char	m_szMuzzleFlashParticleEffectBlue[128];
+	char	m_szMuzzleFlashParticleEffectDM[128];
 
 	// Tracer
 	char	m_szTracerEffect[128];

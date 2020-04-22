@@ -169,7 +169,7 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	void SendReloadEvents();
 
 	virtual bool CanDrop( void ) { return false; }
-	virtual bool CanSoftZoom( void ) { return true; }
+	virtual bool CanSoftZoom( void ) { return GetTFWpnData().m_bCanSoftZoom; }
 
 	// Sound.
 	bool PlayEmptySound();

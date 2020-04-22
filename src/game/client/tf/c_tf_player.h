@@ -69,8 +69,6 @@ public:
 	virtual bool CreateMove( float flInputSampleTime, CUserCmd *pCmd );
 
 	virtual bool				IsAllowedToSwitchWeapons( void );
-
-	void	RefreshDesiredCosmetics();
 	
 	virtual void ClientThink();
 
@@ -319,6 +317,7 @@ private:
 	CNewParticleEffect	*m_pTeleporterEffect;
 	bool				m_bToolRecordingVisibility;
 
+	int					bInitialSpawn;
 	int					m_iOldState;
 	int					m_iOldSpawnCounter;
 

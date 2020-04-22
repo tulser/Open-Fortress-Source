@@ -2566,6 +2566,7 @@ void ActivityList_RegisterSharedActivities( void )
 	REGISTER_SHARED_ACTIVITY(ACT_MERC_JUMP_START_DYNAMITE);
 	REGISTER_SHARED_ACTIVITY(ACT_MERC_JUMP_FLOAT_DYNAMITE);
 	REGISTER_SHARED_ACTIVITY(ACT_MERC_JUMP_LAND_DYNAMITE);
+	REGISTER_SHARED_ACTIVITY(ACT_MERC_LOADOUT);
 
 	AssertMsg( g_HighestActivity == LAST_SHARED_ACTIVITY - 1, "Not all activities from ai_activity.h registered in activitylist.cpp" ); 
 } 

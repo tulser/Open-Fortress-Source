@@ -46,6 +46,7 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bLoadsManualy = false;
 	m_bNoSniperCharge = false;
 	m_bAlwaysDrop = false;
+	m_bCanSoftZoom = true;
 	
 	szScoutViewModel[0] = 0;
 	szSoldierViewModel[0] = 0;
@@ -67,7 +68,13 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_szMuzzleFlashModel[0] = '\0';
 	m_flMuzzleFlashModelDuration = 0;
 	m_szMuzzleFlashParticleEffect[0] = '\0';
-
+	
+	m_bTeamColorMuzzleFlash = false;
+	
+	m_szMuzzleFlashParticleEffectRed[0] = '\0';
+	m_szMuzzleFlashParticleEffectBlue[0] = '\0';
+	m_szMuzzleFlashParticleEffectDM[0] = '\0';
+	
 	m_szTracerEffect[0] = '\0';
 
 	m_szBrassModel[0] = '\0';
@@ -327,6 +334,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
 	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
 	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
+	m_bCanSoftZoom = ( pKeyValuesData->GetInt( "CanSoftZoom", 1 ) != 0 );
+	
 	m_bCanShieldCharge = ( pKeyValuesData->GetInt( "CanShieldCharge", 0 ) != 0 );
 	
 	m_flChargeDuration = pKeyValuesData->GetFloat( "ChargeDuration", 0.0f );
@@ -377,9 +386,17 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 
 	const char *pszMuzzleFlashParticleEffect = pKeyValuesData->GetString( "MuzzleFlashParticleEffect", NULL );
 
+	m_bTeamColorMuzzleFlash = pKeyValuesData->GetBool("TeamColorMuzzleFlash");
+	
 	if ( pszMuzzleFlashParticleEffect )
 	{
 		Q_strncpy( m_szMuzzleFlashParticleEffect, pszMuzzleFlashParticleEffect, sizeof( m_szMuzzleFlashParticleEffect ) );
+		if( m_bTeamColorMuzzleFlash )
+		{
+			Q_snprintf( m_szMuzzleFlashParticleEffectRed, sizeof(m_szMuzzleFlashParticleEffectRed), "%s_red", pKeyValuesData->GetString( "MuzzleFlashParticleEffect", NULL ));
+			Q_snprintf( m_szMuzzleFlashParticleEffectBlue, sizeof(m_szMuzzleFlashParticleEffectBlue), "%s_blue", pKeyValuesData->GetString( "MuzzleFlashParticleEffect", NULL ));
+			Q_snprintf( m_szMuzzleFlashParticleEffectDM, sizeof(m_szMuzzleFlashParticleEffectDM), "%s_dm", pKeyValuesData->GetString( "MuzzleFlashParticleEffect", NULL ));
+		}
 	}
 
 	// Tracer particle effect

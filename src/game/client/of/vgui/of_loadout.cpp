@@ -561,7 +561,7 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 		
 		KeyValues *kvModelAnimTemp = new KeyValues("animation");
 		kvModelAnimTemp->SetString( "name", "PRIMARY" );
-		kvModelAnimTemp->SetString( "activity", "ACT_MERC_STAND_SUPERSHOTGUN" );
+		kvModelAnimTemp->SetString( "activity", "ACT_MERC_LOADOUT" );
 		kvModelAnimTemp->SetString( "default", "1" );
 		
 		kvModelModelTemp->AddSubKey( kvModelAnimTemp );
@@ -742,7 +742,7 @@ void CTFLoadoutPanel::PerformLayout()
 	BaseClass::PerformLayout();
 
 	// Set the animation.
-	m_pClassModel->SetAnimationIndex( ACT_MERC_STAND_SUPERSHOTGUN );
+	m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
 	m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
 	m_pClassModel->Update();
 	

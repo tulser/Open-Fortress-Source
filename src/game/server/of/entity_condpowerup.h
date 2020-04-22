@@ -42,7 +42,7 @@ public:
 	}	
 	
 	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
-	int m_iCondition;
+	CNetworkVar(int, m_iCondition);
 	float m_flCondDuration;
 	string_t m_iszPowerupModel;
 	string_t m_iszPowerupModelOLD;

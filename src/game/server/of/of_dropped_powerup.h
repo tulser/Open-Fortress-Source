@@ -36,6 +36,8 @@ public:
 	CNetworkVar( float, m_flDespawnTime );
 	char  szTimerIcon[128];
 	void  SetInitialVelocity( Vector &vecVelocity );
+	
+	const char* GetPowerupDroppedLine( void );
 
 private:
 
