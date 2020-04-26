@@ -2034,6 +2034,8 @@ public:
 			while( pOwner && pOwner->GetItemTintColorOwner() != NULL )
 			{
 				pOwner = pOwner->GetItemTintColorOwner();
+				if( pOwner == pOwner->GetItemTintColorOwner() )
+					break;
 			}
 			if ( pOwner )
 			{
