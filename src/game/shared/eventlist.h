@@ -93,6 +93,8 @@ typedef enum
 	//event for magazine ejection
 	AE_CL_MAG_EJECT,
 	AE_CL_MAG_EJECT2,
+	
+	AE_CL_STOP_PARTICLE_EFFECT,
 
 	LAST_SHARED_ANIMEVENT
 } Animevent;

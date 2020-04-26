@@ -99,7 +99,7 @@ void CWeaponSpawner::Spawn( void )
 		
 			char szMapName[128];
 			Q_snprintf( szMapName, sizeof(szMapName), "maps/%s_mapdata.txt" , STRING(gpGlobals->mapname) );
-			if ( filesystem->FileExists( szMapName, "MOD" ) )
+			if ( filesystem->FileExists( szMapName, "GAME" ) )
 			{
 				KeyValues* pMapData = new KeyValues( "MapData" );
 				pMapData->LoadFromFile( filesystem, szMapName );

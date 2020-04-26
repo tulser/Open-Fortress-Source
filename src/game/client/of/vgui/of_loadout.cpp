@@ -178,7 +178,7 @@ extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
 
-CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
+
 
 DECLARE_BUILD_FACTORY( CTFModelPanel );
 
@@ -359,6 +359,7 @@ void CTFModelPanel::SetParticleName(const char* name)
 //-----------------------------------------------------------------------------
 // Purpose: Returns the global stats summary panel
 //-----------------------------------------------------------------------------
+CTFLoadoutPanel *g_pTFLoadoutPanel = NULL;
 CTFLoadoutPanel *GLoadoutPanel()
 {
 	if ( NULL == g_pTFLoadoutPanel )
@@ -399,6 +400,7 @@ CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout",
 	m_pSelectedOptions = NULL;
 	m_bUpdateCosmetics = true;
 	m_bTennisball = false;
+	m_bParsedParticles = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -422,6 +424,7 @@ extern ConVar of_announcer_override;
 //-----------------------------------------------------------------------------
 void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 {
+	InitLoadoutHandle();
 	BaseClass::ApplySettings( inResourceData );
 	
 	KeyValues *inNewResourceData = new KeyValues("ResourceData");
@@ -502,116 +505,119 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 	if( !inVisualPanel )
 		return;
 	
-	KeyValues *inParticleList = inVisualPanel->FindKey("ParticleList");
-	if( !inParticleList )
-		return;	
-
-	if( pParticleList )
+	if( !m_bParsedParticles )
 	{
-		pParticleList->ClearItemList();
-		
-		pParticleList->ApplySettings( inParticleList );
-		
-		KeyValues *kvTemp = new KeyValues("Resource");
-		
-		kvTemp->SetString( "fieldName", "ItemTemplate" );
-		kvTemp->SetString( "wide", "50" );
-		kvTemp->SetString( "tall", "50" );
-		kvTemp->SetString( "autoResize", "0" );
-		kvTemp->SetString( "pinCorner", "2" );
-		kvTemp->SetString( "visible", "1" );
-		kvTemp->SetString( "enabled", "1" );
-		kvTemp->SetString( "tabPosition", "0" );
-		kvTemp->SetString( "proportionalToParent", "1" );
-		kvTemp->SetString( "border_idle", "ItemOutlineIdle" );
-		kvTemp->SetString( "border_hover", "ItemOutlineHoverover" );
-		kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
-		kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
-		kvTemp->SetString( "command", "of_respawn_particle 0" );
-		kvTemp->SetString( "sound_chances", "2" );
-		kvTemp->SetString( "pressed_sound", "Player.Spawn" );
-		
-		KeyValues *kvButtTemp = new KeyValues("Button");
-		kvButtTemp->SetString( "wide", "50" );
-		kvButtTemp->SetString( "tall", "50" );
-		kvButtTemp->SetString( "xpos", "c-25" );
-		kvButtTemp->SetString( "ypos", "c-25" );
-		kvButtTemp->SetString( "zpos", "10" );
-		kvButtTemp->SetString( "proportionalToParent", "1" );
-		
-		KeyValues *kvModelTemp = new KeyValues("ParticleModel");
-		kvModelTemp->SetString( "wide", "50" );
-		kvModelTemp->SetString( "tall", "50" );
-		kvModelTemp->SetString( "xpos", "c-25" );
-		kvModelTemp->SetString( "ypos", "c-25" );
-		kvModelTemp->SetString( "zpos", "6" );
-		kvModelTemp->SetString( "fov", "25" );
-		kvModelTemp->SetString( "render_texture", "0" );
-		kvModelTemp->SetString( "allow_rot", "1" );
-		kvModelTemp->SetString( "use_particle", "1" );
-		kvModelTemp->SetString( "particle_loop", "1" );
-		kvModelTemp->SetString( "proportionalToParent", "1" );
-		
-		KeyValues *kvModelModelTemp = new KeyValues("model");
-		kvModelModelTemp->SetString( "modelname", "models/empty.mdl" );
-		kvModelModelTemp->SetString( "force_pos", "1" );
-		kvModelModelTemp->SetString( "skin"	,"4" );
-		kvModelModelTemp->SetString( "origin_z"	,"-40" );
-		kvModelModelTemp->SetString( "origin_x", "450");
-		
-		KeyValues *kvModelAnimTemp = new KeyValues("animation");
-		kvModelAnimTemp->SetString( "name", "PRIMARY" );
-		kvModelAnimTemp->SetString( "activity", "ACT_MERC_LOADOUT" );
-		kvModelAnimTemp->SetString( "default", "1" );
-		
-		kvModelModelTemp->AddSubKey( kvModelAnimTemp );
-		kvModelTemp->AddSubKey( kvModelModelTemp );
-		
-		kvTemp->AddSubKey( kvButtTemp );
-		
-		for( int i = 1; i <= 35; i++ )
-		{
-			CTFCommandButton *pTemp = new CTFCommandButton( pParticleList, "Temp" );
-			kvTemp->SetString( "command", VarArgs( "of_respawn_particle %d", i ) );
-			kvTemp->SetString( "convref", "of_respawn_particle" );
-			kvTemp->SetString( "targetval", VarArgs( "%d", i ) );
-			pTemp->ApplySettings( kvTemp );
-			
-			pParticleList->AddItem( pTemp );
+		m_bParsedParticles = true;
+		KeyValues *inParticleList = inVisualPanel->FindKey("ParticleList");
+		if( !inParticleList )
+			return;	
 
-			if( of_respawn_particle.GetInt() == i )
-			{
-				pTemp->SetSelected(true);
-				pParticleList->pSelectedItem = pTemp;
-			}
+		if( pParticleList )
+		{
+			pParticleList->ClearItemList();
 			
-			KeyValues *pParticle = GetRespawnParticle( i );
-			if( pParticle )
-			{	
-				kvModelTemp->SetString("particle_loop_time", pParticle->GetString("loop_time", "1.2") );
-				kvModelTemp->SetString("particle_z_offset", pParticle->GetString("particle_z_offset", "0") );
-				CTFModelPanel *pTempMDL = new CTFModelPanel( pTemp, "ParticleModel" );
-				pTempMDL->ApplySettings( kvModelTemp );
-				
-				char pEffectName[32];
-				pEffectName[0] = '\0';
-				if ( i < 10 )
-					Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", i );
-				else
-					Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", i );
-				if ( pEffectName[0] != '\0' )
-					Q_strncpy( pTempMDL->szLoopingParticle, pEffectName, sizeof(pTempMDL->szLoopingParticle) );
-				// Set the animation.
-				pTempMDL->SetModelName( "models/empty.mdl", 4 );
-				pTempMDL->Update();
-			}
-			else
+			pParticleList->ApplySettings( inParticleList );
+			
+			KeyValues *kvTemp = new KeyValues("Resource");
+			
+			kvTemp->SetString( "fieldName", "ItemTemplate" );
+			kvTemp->SetString( "wide", "50" );
+			kvTemp->SetString( "tall", "50" );
+			kvTemp->SetString( "autoResize", "0" );
+			kvTemp->SetString( "pinCorner", "2" );
+			kvTemp->SetString( "visible", "1" );
+			kvTemp->SetString( "enabled", "1" );
+			kvTemp->SetString( "tabPosition", "0" );
+			kvTemp->SetString( "proportionalToParent", "1" );
+			kvTemp->SetString( "border_idle", "ItemOutlineIdle" );
+			kvTemp->SetString( "border_hover", "ItemOutlineHoverover" );
+			kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
+			kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
+			kvTemp->SetString( "command", "of_respawn_particle 0" );
+			kvTemp->SetString( "sound_chances", "2" );
+			kvTemp->SetString( "pressed_sound", "Player.Spawn" );
+			
+			KeyValues *kvButtTemp = new KeyValues("Button");
+			kvButtTemp->SetString( "wide", "50" );
+			kvButtTemp->SetString( "tall", "50" );
+			kvButtTemp->SetString( "xpos", "c-25" );
+			kvButtTemp->SetString( "ypos", "c-25" );
+			kvButtTemp->SetString( "zpos", "10" );
+			kvButtTemp->SetString( "proportionalToParent", "1" );
+			
+			KeyValues *kvModelTemp = new KeyValues("ParticleModel");
+			kvModelTemp->SetString( "wide", "50" );
+			kvModelTemp->SetString( "tall", "50" );
+			kvModelTemp->SetString( "xpos", "c-25" );
+			kvModelTemp->SetString( "ypos", "c-25" );
+			kvModelTemp->SetString( "zpos", "6" );
+			kvModelTemp->SetString( "fov", "25" );
+			kvModelTemp->SetString( "render_texture", "0" );
+			kvModelTemp->SetString( "allow_rot", "1" );
+			kvModelTemp->SetString( "use_particle", "1" );
+			kvModelTemp->SetString( "particle_loop", "1" );
+			kvModelTemp->SetString( "proportionalToParent", "1" );
+			
+			KeyValues *kvModelModelTemp = new KeyValues("model");
+			kvModelModelTemp->SetString( "modelname", "models/empty.mdl" );
+			kvModelModelTemp->SetString( "force_pos", "1" );
+			kvModelModelTemp->SetString( "skin"	,"4" );
+			kvModelModelTemp->SetString( "origin_z"	,"-40" );
+			kvModelModelTemp->SetString( "origin_x", "450");
+			
+			KeyValues *kvModelAnimTemp = new KeyValues("animation");
+			kvModelAnimTemp->SetString( "name", "PRIMARY" );
+			kvModelAnimTemp->SetString( "activity", "ACT_MERC_LOADOUT" );
+			kvModelAnimTemp->SetString( "default", "1" );
+			
+			kvModelModelTemp->AddSubKey( kvModelAnimTemp );
+			kvModelTemp->AddSubKey( kvModelModelTemp );
+			
+			kvTemp->AddSubKey( kvButtTemp );
+			
+			for( int i = 1; i <= 36; i++ )
 			{
-				kvModelTemp->deleteThis();
+				CTFCommandButton *pTemp = new CTFCommandButton( pParticleList, "Temp" );
+				kvTemp->SetString( "command", VarArgs( "of_respawn_particle %d", i ) );
+				kvTemp->SetString( "convref", "of_respawn_particle" );
+				kvTemp->SetString( "targetval", VarArgs( "%d", i ) );
+				pTemp->ApplySettings( kvTemp );
+				
+				pParticleList->AddItem( pTemp );
+
+				if( of_respawn_particle.GetInt() == i )
+				{
+					pTemp->SetSelected(true);
+					pParticleList->pSelectedItem = pTemp;
+				}
+				
+				KeyValues *pParticle = GetRespawnParticle( i );
+				if( pParticle )
+				{	
+					kvModelTemp->SetString("particle_loop_time", pParticle->GetString("loop_time", "1.2") );
+					kvModelTemp->SetString("particle_z_offset", pParticle->GetString("particle_z_offset", "0") );
+					CTFModelPanel *pTempMDL = new CTFModelPanel( pTemp, "ParticleModel" );
+					pTempMDL->ApplySettings( kvModelTemp );
+					
+					char pEffectName[32];
+					pEffectName[0] = '\0';
+					if ( i < 10 )
+						Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", i );
+					else
+						Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", i );
+					if ( pEffectName[0] != '\0' )
+						Q_strncpy( pTempMDL->szLoopingParticle, pEffectName, sizeof(pTempMDL->szLoopingParticle) );
+					// Set the animation.
+					pTempMDL->SetModelName( "models/empty.mdl", 4 );
+					pTempMDL->Update();
+				}
+				else
+				{
+					kvModelTemp->deleteThis();
+				}
 			}
 		}
 	}
-	
 	modelinfo->FindOrLoadModel( "models/player/mercenary.mdl" );
 	
 	KeyValues *inAnnouncerList = inVisualPanel->FindKey("AnnouncerList");
@@ -1435,6 +1441,9 @@ void CTFScrollableItemList::ClearItemList()
 		m_hItems[i].pItemPanel->DeletePanel();
 	}
 	m_hItems.Purge();
+
+	iLastX = 0;
+	iLastY = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1582,6 +1591,9 @@ void CTFScrollablePanelList::ClearItemList()
 		m_hItems[i].pPanel->DeletePanel();
 	}
 	m_hItems.Purge();
+	
+	iLastX = 0;
+	iLastY = 0;
 }
 
 //-----------------------------------------------------------------------------

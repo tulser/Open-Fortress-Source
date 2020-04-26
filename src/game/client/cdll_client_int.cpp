@@ -1366,6 +1366,16 @@ void CHLClient::PostInit()
 		}
 	}
 
+	ConVar *cl_updaterate = NULL;
+	cl_updaterate = g_pCVar->FindVar( "cl_updaterate" );
+	if( cl_updaterate )
+		cl_updaterate->SetDefault( "66" );
+	
+	ConVar *cl_cmdrate = NULL;
+	cl_cmdrate = g_pCVar->FindVar( "cl_cmdrate" );
+	if( cl_cmdrate )
+		cl_cmdrate->SetDefault( "67" );
+	
 	// Why is the of_prop_fading convar here? Prop fading cannot be disabled without engine access,
 	// However the -makedevshots does disable prop fading in the engine
 	// Therefore I added this param to cancel out any -makedevshots behaviour

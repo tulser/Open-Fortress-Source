@@ -9,6 +9,7 @@
 #include "KeyValues.h"
 #include "filesystem.h"
 #include "tf_shareddefs.h"
+#include "of_shared_schemas.h"
 
 #include "ienginevgui.h"
 #include "engine/IEngineSound.h"
@@ -17,6 +18,7 @@
 
 #ifdef CLIENT_DLL
 	#define SHARED_ARGS VarArgs
+	#include "of_loadout.h"
 #else
 	#define SHARED_ARGS UTIL_VarArgs
 #endif
@@ -112,14 +114,14 @@ void ParseLevelSoundManifest( void )
 #endif
 	, mapname, sizeof( mapname ) );
 	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
-	if( !filesystem->FileExists( mapsounds , "MOD" ) )
+	if( !filesystem->FileExists( mapsounds , "GAME" ) )
 	{
 		DevMsg( "%s not present, not parsing", mapsounds );
 		return;
 	}
 	DevMsg("%s\n", mapsounds);
 	KeyValues *pSoundFile = new KeyValues( "level_sounds" );
-	pSoundFile->LoadFromFile( filesystem, mapsounds );
+	pSoundFile->LoadFromFile( filesystem, mapsounds, "GAME" );
 
 	if( pSoundFile )
 	{
@@ -151,7 +153,7 @@ KeyValues* GetSoundscript( const char *szSoundScript )
 	, mapname, sizeof( mapname ) );
 	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
 			
-	if( filesystem->FileExists( mapsounds , "MOD" ) )
+	if( filesystem->FileExists( mapsounds , "GAME" ) )
 	{
 		pSound = LevelSoundManifest()->FindKey( szSoundScript );
 		if( !pSound )
@@ -284,6 +286,17 @@ void ParseItemsGame( void )
 	}
 }
 
+void ReloadItemsSchema()
+{
+	InitItemsGame();
+	ParseItemsGame();
+#ifdef CLIENT_DLL
+	GLoadoutPanel()->InvalidateLayout( false, true );
+#endif
+}
+
+static ConCommand schema_reload_items_game( "schema_reload_items_game", ReloadItemsSchema, "Reloads the items game.", FCVAR_NONE );
+
 KeyValues* GetCosmetic( int iID )
 {
 	if( !GetItemsGame() )
@@ -324,6 +337,24 @@ KeyValues* GetLoadout()
 	return gLoadout;
 }
 
+KeyValues* GetCosmeticLoadoutForClass( int iClass )
+{
+	if( iClass > TF_CLASS_JUGGERNAUT )
+		return NULL;
+
+	if( !GetLoadout() )
+		return NULL;
+	
+	KeyValues *kvCosmetics = GetLoadout()->FindKey("Cosmetics");
+	if( !kvCosmetics )
+		return NULL;
+	
+	KeyValues *kvClass = kvCosmetics->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
+	
+	return kvClass;
+	
+}
+
 void ResetLoadout( void )
 {
 	if( gLoadout )
@@ -357,6 +388,45 @@ void ParseLoadout( void )
 	{
 		gLoadout = new KeyValues( "Loadout" );
 		GetLoadout()->LoadFromFile( filesystem, "cfg/loadout.cfg" );
+	}
+}
+
+CTFLoadoutHandler *gLoadoutHandle;
+CTFLoadoutHandler *GetLoadoutHandle()
+{
+	return gLoadoutHandle;
+}
+
+void InitLoadoutHandle()
+{
+	gLoadoutHandle = new CTFLoadoutHandler();
+}
+
+extern const char *g_aLoadoutConvarNames[];
+
+CTFLoadoutHandler::CTFLoadoutHandler()
+{
+	gLoadoutHandle = this;
+	for( int i = TF_CLASS_UNDEFINED + 1; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		char szCommand[128];
+		szCommand[0] = '\0';
+
+		KeyValues *kvClass = GetCosmeticLoadoutForClass( i );
+		if( kvClass )
+		{
+			for( KeyValues *sub = kvClass->GetFirstValue(); sub != NULL; sub = sub->GetNextValue() )
+			{
+				if( szCommand[0] == '\0' )
+					Q_snprintf( szCommand, sizeof(szCommand), "%s", sub->GetString() );
+				else
+					Q_snprintf( szCommand, sizeof(szCommand), "%s %s", szCommand, sub->GetString() );
+			}
+		}
+		ConVar *pLol = new ConVar( g_aLoadoutConvarNames[i], "", FCVAR_USERINFO );
+		pLol->SetValue(szCommand);
+		
+		m_hClassLoadouts.AddToTail( pLol );
 	}
 }
 #endif

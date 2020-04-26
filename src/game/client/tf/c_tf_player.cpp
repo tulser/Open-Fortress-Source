@@ -109,7 +109,7 @@ ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "
 
 static ConVar cl_fp_ragdoll( "cl_fp_ragdoll", "0", FCVAR_ARCHIVE, "Enable first person ragdolls." );
 
-ConVar of_respawn_particle( "of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch", true, 1, true, 35 );
+ConVar of_respawn_particle( "of_respawn_particle", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Particle that plays when you spawn in Deathmatch", true, 1, true, 36 );
 
 ConVar of_critglow_saturation( "of_critglow_saturation", "0.1", FCVAR_ARCHIVE | FCVAR_USERINFO, "How Saturated the critglow in deathmatch is." );
 
@@ -120,11 +120,10 @@ ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces dea
 
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
 
-ConVar desired_cosmetic_loadout( "_desired_cosmetic_loadout", "", FCVAR_USERINFO );
-ConVar attempt_to_update_cosmetics( "_attempt_to_update_cosmetics", "", FCVAR_USERINFO );
-
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
+
+extern const char *g_aLoadoutConvarNames[];
 
 void RefreshDesiredCosmetics( int iClass )
 {
@@ -146,7 +145,11 @@ void RefreshDesiredCosmetics( int iClass )
 					else
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
 				}
-				desired_cosmetic_loadout.SetValue(szCommand);
+				ConVarRef var( g_aLoadoutConvarNames[iClass] );
+				if ( var.IsValid() )
+				{
+					var.SetValue(szCommand);
+				}
 			}
 		}
 	}
@@ -194,12 +197,8 @@ void LoadoutEquip( const CCommand& args )
 	
 	pClass->SetString( szRegion, args[3] );
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
-	
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if( pPlayer && !Q_strcmp(pPlayer->GetPlayerClass()->GetName(), args[1]) )
-	{
-		RefreshDesiredCosmetics(pPlayer->GetPlayerClass()->GetClassIndex());
-	}
+
+	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
 }
 static ConCommand loadout_equip("loadout_equip", LoadoutEquip );
 
@@ -243,11 +242,7 @@ void LoadoutUnEquip( const CCommand& args )
 	pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 	
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if( pPlayer && !Q_strcmp(pPlayer->GetPlayerClass()->GetName(), args[1]) )
-	{
-		RefreshDesiredCosmetics(pPlayer->GetPlayerClass()->GetClassIndex());
-	}
+	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
 }
 static ConCommand loadout_unequip("loadout_unequip", LoadoutUnEquip );
 
@@ -741,53 +736,44 @@ void C_TFRagdoll::DismemberHead()
 	}
 }
 
-void C_TFRagdoll::DismemberLeftArm( bool bLevel )
+void C_TFRagdoll::DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone )
 {
-	int m_LeftArmBodygroup = FindBodygroupByName( "leftarm" );
-	int m_LeftHandBodygroup = FindBodygroupByName( "lefthand" );
-	
-	if ( m_LeftHandBodygroup >= 0 )
-		SetBodygroup( m_LeftHandBodygroup, 1 );
+	int m_Bodygroup = FindBodygroupByName( szBodyPart );
 
-	int iAttach;
-
+	// Bodygroup 1 is reserved for blank models
+	// So if we're already blank, don't change it
 	if ( bLevel )
 	{
-		m_iGoreLeftArm = 3;
-
-		if ( m_LeftArmBodygroup >= 0 )
-			SetBodygroup( m_LeftArmBodygroup, 3 );
-
-		iAttach = LookupBone( "bip_upperArm_L" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_L" );
-		}
+		if ( m_Bodygroup >= 0 && GetBodygroup(m_Bodygroup) != 1 )
+			SetBodygroup( m_Bodygroup, 3 );
 	}
 	else
 	{
-		m_iGoreLeftArm = 2;
-
-		if ( m_LeftArmBodygroup >= 0 )
-			SetBodygroup( m_LeftArmBodygroup, 2 );
-
-		iAttach = LookupBone( "bip_lowerArm_L" );
-
-		if ( iAttach != -1 )
+		if ( m_Bodygroup >= 0 && GetBodygroup(m_Bodygroup) != 1 )
+			SetBodygroup( m_Bodygroup, 2 );
+	}
+/*
+	for( int i = 0; i < m_hCosmetic.Count(); i++ )
+	{
+		m_Bodygroup = m_hCosmetic[i].Get()->FindBodygroupByName( szBodyPart );
+		
+		// Forward the bodygroup to the cosmetics regardless if the bodygroup is already blank
+		if( m_Bodygroup >= 0 )
 		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_L" );
+			m_hCosmetic[i].Get()->SetBodygroup( m_Bodygroup, bLevel + 2 );
 		}
+	}
+*/
+	int iAttach = LookupBone( szParticleBone );
+
+	if ( iAttach != -1 )
+	{
+		// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
+		ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, szParticleBone );
+		ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, szParticleBone );
+		ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, szParticleBone );
+		ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, szParticleBone );
+		ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, szParticleBone );
 	}
 
 	if ( iAttach != -1 )
@@ -797,172 +783,54 @@ void C_TFRagdoll::DismemberLeftArm( bool bLevel )
 
 		EmitSound( "Flesh_Bloody.ImpactHard" );
 	}
+}
+
+void C_TFRagdoll::DismemberLeftArm( bool bLevel )
+{
+	DismemberBase( "leftarm", bLevel, true, bLevel ? "bip_upperArm_L" : "bip_lowerArm_L" );
+	int m_HandBodygroup = FindBodygroupByName( "lefthand" );
+	
+	if ( m_HandBodygroup >= 0 )
+		SetBodygroup( m_HandBodygroup, 1 );
+
+	if ( bLevel )
+		m_iGoreLeftArm = 3;
+	else
+		m_iGoreLeftArm = 2;
 }
 
 void C_TFRagdoll::DismemberRightArm( bool bLevel )
 {
-	int m_RightArmBodygroup = FindBodygroupByName( "rightarm" );
-	int m_RightHandBodygroup = FindBodygroupByName( "righthand" );
+	DismemberBase( "rightarm", bLevel, true, bLevel ? "bip_upperArm_R" : "bip_lowerArm_R" );
+	int m_HandBodygroup = FindBodygroupByName( "righthand" );
 	
-	if ( m_RightHandBodygroup >= 0 )
-		SetBodygroup( m_RightHandBodygroup, 1 );
-	
-	int iAttach;
+	if ( m_HandBodygroup >= 0 )
+		SetBodygroup( m_HandBodygroup, 1 );
 
 	if ( bLevel )
-	{
 		m_iGoreRightArm = 3;
-
-		if ( m_RightArmBodygroup >= 0 )
-			SetBodygroup( m_RightArmBodygroup, 3 );
-
-		iAttach = LookupBone( "bip_upperArm_R" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_upperArm_R" );
-		}
-	}
 	else
-	{
 		m_iGoreRightArm = 2;
-
-		if ( m_RightArmBodygroup >= 0 )
-			SetBodygroup( m_RightArmBodygroup, 2 );
-
-		iAttach = LookupBone( "bip_lowerArm_R" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_lowerArm_R" );
-		}
-	}
-
-	if ( iAttach != -1 )
-	{
-		m_iGoreDecalAmount += 4;
-		m_iGoreDecalBone = iAttach;
-
-		EmitSound( "Flesh_Bloody.ImpactHard" );
-	}
 }
 
 void C_TFRagdoll::DismemberLeftLeg( bool bLevel )
 {
-	int m_LeftLegBodygroup = FindBodygroupByName( "leftleg" );
-
-	int iAttach;
+	DismemberBase( "leftleg", bLevel, true, bLevel ? "bip_knee_L" : "bip_foot_L" );
 
 	if ( bLevel )
-	{
 		m_iGoreLeftLeg = 3;
-
-		if ( m_LeftLegBodygroup >= 0 )
-			SetBodygroup( m_LeftLegBodygroup, 3 );
-
-		iAttach = LookupBone( "bip_knee_L" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_L" );
-		}
-	}
 	else
-	{
 		m_iGoreLeftLeg = 2;
-
-		if ( m_LeftLegBodygroup >= 0 )
-			SetBodygroup( m_LeftLegBodygroup, 2 );
-
-		iAttach = LookupBone( "bip_foot_L" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_L" );
-		}
-	}
-
-	if ( iAttach != -1 )
-	{
-		m_iGoreDecalAmount += 4;
-		m_iGoreDecalBone = iAttach;
-
-		EmitSound( "Flesh_Bloody.ImpactHard" );
-	}
 }
 
 void C_TFRagdoll::DismemberRightLeg( bool bLevel )
 {
-	int m_RightLegBodygroup = FindBodygroupByName( "rightleg" );
-
-	int iAttach;
+	DismemberBase( "rightleg", bLevel, true, bLevel ? "bip_knee_R" : "bip_foot_R" );
 
 	if ( bLevel )
-	{
 		m_iGoreRightLeg = 3;
-
-		if ( m_RightLegBodygroup >= 0 )
-			SetBodygroup( m_RightLegBodygroup, 3 );
-
-		iAttach = LookupBone( "bip_knee_R" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_knee_R" );
-		}
-	}
 	else
-	{
 		m_iGoreRightLeg = 2;
-
-		if ( m_RightLegBodygroup >= 0 )
-			SetBodygroup( m_RightLegBodygroup, 2 );
-
-		iAttach = LookupBone( "bip_foot_R" );
-
-		if ( iAttach != -1 )
-		{
-			// I'm too lazy to make a new particle which is less bloody than blood_decap, but whatever, this works
-			ParticleProp()->Create( "blood_decap_arterial_spray", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_mist", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_goop", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "env_sawblood_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-			ParticleProp()->Create( "blood_impact_red_01_chunk", PATTACH_BONE_FOLLOW, "bip_foot_R" );
-		}
-	}
-
-	if ( iAttach != -1 )
-	{
-		m_iGoreDecalAmount += 4;
-		m_iGoreDecalBone = iAttach;
-
-		EmitSound( "Flesh_Bloody.ImpactHard" );
-	}
 }
 
 void C_TFRagdoll::InitDismember()
@@ -1074,85 +942,85 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 
 	if ( m_bGoreEnabled )
 	{
-	switch ( pTrace->hitgroup )
-	{
-		case HITGROUP_HEAD:
-			if ( m_iGoreHead == 3 )
-			{
+		switch ( pTrace->hitgroup )
+		{
+			case HITGROUP_HEAD:
+				if ( m_iGoreHead == 3 )
+				{
+					break;
+				}
+				else if ( m_iGoreHead == 2 )
+				{
+					break;
+				}
+				else
+				{
+					DismemberHead();
+					break;
+				}
+			case HITGROUP_LEFTARM:
+				if ( m_iGoreLeftArm == 3 )
+				{
+					break;
+				}
+				else if ( m_iGoreLeftArm == 2 )
+				{
+					DismemberLeftArm( true );
+					break;
+				}
+				else
+				{
+					DismemberLeftArm( false );
+					break;
+				}
+			case HITGROUP_RIGHTARM:
+				if ( m_iGoreRightArm == 3 )
+				{
+					break;
+				}
+				else if ( m_iGoreRightArm == 2 )
+				{
+					DismemberRightArm( true );
+					break;
+				}
+				else
+				{
+					DismemberRightArm( false );
+					break;
+				}
+			case HITGROUP_LEFTLEG:
+				if ( m_iGoreLeftLeg == 3 )
+				{
+					break;
+				}
+				else if ( m_iGoreLeftLeg == 2 )
+				{
+					DismemberLeftLeg( true );
+					break;
+				}
+				else
+				{
+					DismemberLeftLeg( false );
+					break;
+				}
+			case HITGROUP_RIGHTLEG:
+				if ( m_iGoreRightLeg == 3 )
+				{
+					break;
+				}
+				else if ( m_iGoreRightLeg == 2 )
+				{
+					DismemberRightLeg( true );
+					break;
+				}
+				else
+				{
+					DismemberRightLeg( false );
+					break;
+				}
+			default:
 				break;
 			}
-			else if ( m_iGoreHead == 2 )
-			{
-				break;
-			}
-			else
-			{
-				DismemberHead();
-				break;
-			}
-		case HITGROUP_LEFTARM:
-			if ( m_iGoreLeftArm == 3 )
-			{
-				break;
-			}
-			else if ( m_iGoreLeftArm == 2 )
-			{
-				DismemberLeftArm( true );
-				break;
-			}
-			else
-			{
-				DismemberLeftArm( false );
-				break;
-			}
-		case HITGROUP_RIGHTARM:
-			if ( m_iGoreRightArm == 3 )
-			{
-				break;
-			}
-			else if ( m_iGoreRightArm == 2 )
-			{
-				DismemberRightArm( true );
-				break;
-			}
-			else
-			{
-				DismemberRightArm( false );
-				break;
-			}
-		case HITGROUP_LEFTLEG:
-			if ( m_iGoreLeftLeg == 3 )
-			{
-				break;
-			}
-			else if ( m_iGoreLeftLeg == 2 )
-			{
-				DismemberLeftLeg( true );
-				break;
-			}
-			else
-			{
-				DismemberLeftLeg( false );
-				break;
-			}
-		case HITGROUP_RIGHTLEG:
-			if ( m_iGoreRightLeg == 3 )
-			{
-				break;
-			}
-			else if ( m_iGoreRightLeg == 2 )
-			{
-				DismemberRightLeg( true );
-				break;
-			}
-			else
-			{
-				DismemberRightLeg( false );
-				break;
-			}
-		default:
-			break;
-		}
 	}
 
 	if ( iDamageType == DMG_BLAST )
@@ -1167,8 +1035,8 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 				vecDir *= 2999999;
 			pPhysicsObject->ApplyForceCenter( vecDir );
 		}
-
-		DismemberRandomLimbs();
+		if ( m_bGoreEnabled )
+			DismemberRandomLimbs();
 	}
 	else
 	{
@@ -1452,6 +1320,32 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	// must think immediately for dismemberment
 	SetNextClientThink( gpGlobals->curtime + 0.1f );
 
+	if( !of_disable_cosmetics.GetBool() && pPlayer )
+	{
+		for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+		{
+			if ( pPlayer->m_iCosmetics[i] )
+			{
+				KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+				if( !pCosmetic )
+					continue;
+
+				if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+				{
+					CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+					
+					if( handle )
+					{
+						int iVisibleTeam = m_iTeam;
+						handle->m_nSkin = iVisibleTeam - 2;
+						
+						m_hCosmetic.AddToTail(handle);
+					}
+				}
+			}
+		}
+	}
+
 	// Birthday mode.
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
 	{
@@ -1678,6 +1572,17 @@ void C_TFRagdoll::EndFadeOut()
 	ClearRagdoll();
 	SetRenderMode( kRenderNone );
 	UpdateVisibility();
+	
+	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
+	{
+		if ( m_hCosmetic[i] )
+		{
+			m_hCosmetic[i]->SetNextClientThink( CLIENT_THINK_NEVER );
+			m_hCosmetic[i]->SetRenderMode( kRenderNone );
+			m_hCosmetic[i]->UpdateVisibility();
+		}
+	}
+	m_hCosmetic.Purge();
 }
 
 //-----------------------------------------------------------------------------
@@ -1896,14 +1801,14 @@ public:
 			}
 			else if ( pCosmetic )
 			{
-				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+				pPlayer = dynamic_cast<C_TFPlayer*>(pCosmetic->GetMoveParent());
 			}
 			else
 			{
 				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
 				if ( pVM )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pPlayer = dynamic_cast<C_TFPlayer*>(pVM->GetOwner());
 				}
 				else
 				{
@@ -2125,7 +2030,11 @@ public:
 
 		if ( vecColor == vec3_origin )
 		{
-			C_BaseEntity *pOwner = pEntity->GetItemTintColorOwner();
+			C_BaseEntity *pOwner = pEntity->GetItemTintColorOwner(); ;
+			while( pOwner && pOwner->GetItemTintColorOwner() != NULL )
+			{
+				pOwner = pOwner->GetItemTintColorOwner();
+			}
 			if ( pOwner )
 			{
 				vecColor = pOwner->GetItemTintColor();
@@ -2193,18 +2102,18 @@ public:
 			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
 			if ( pWeapon )
 			{
-				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+				pPlayer = dynamic_cast< C_TFPlayer* >(pWeapon->GetOwner());
 			}
 			else if ( pCosmetic )
 			{
-				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+				pPlayer = dynamic_cast< C_TFPlayer* >(pCosmetic->GetMoveParent());
 			}
 			else
 			{
 				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
 				if ( pVM )
 				{
-					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+					pPlayer = dynamic_cast< C_TFPlayer* >(pVM->GetOwner());
 				}
 				else
 				{
@@ -2259,7 +2168,7 @@ public:
 			}
 			else if ( pCosmetic )
 			{
-				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+				pPlayer = dynamic_cast< C_TFPlayer* >(pCosmetic->GetMoveParent());
 			}
 			else
 			{
@@ -2323,7 +2232,7 @@ public:
 			}
 			else if ( pCosmetic )
 			{
-				pPlayer = (C_TFPlayer*)pCosmetic->GetMoveParent();
+				pPlayer = dynamic_cast< C_TFPlayer* >(pCosmetic->GetMoveParent());
 			}
 			else
 			{
@@ -2504,6 +2413,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bWaterExitEffectActive = false;
 
 	m_bUpdateObjectHudState = false;
+	
+	bUpdatedCosmetics = false;
 
 	ListenForGameEvent( "player_jump" );
 	ListenForGameEvent( "force_cosmetic_refresh" );
@@ -3281,6 +3192,10 @@ void C_TFPlayer::UpdateSpyMask( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateWearables( void )
 {
+	for( int i = 0; i < GetNumBodyGroups(); i++ )
+	{
+		SetBodygroup( i, 0 );
+	}	
 	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
 	{
 		if ( m_hCosmetic[i] )
@@ -3616,7 +3531,6 @@ void C_TFPlayer::ClientThink()
 	{
 		UpdateWearables();
 		bUpdatedCosmetics = m_bUpdateCosmetics;
-		attempt_to_update_cosmetics.SetValue("0");
 	}
 	
 	if ( m_pSaveMeEffect )
@@ -4904,7 +4818,6 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		KeyUp( &in_ducktoggle, NULL );
 		
 		RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
-		attempt_to_update_cosmetics.SetValue("1");
 	}
 	
 	// don't draw the respawn particle in first person
@@ -5284,19 +5197,6 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 		}
 
 		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
-	}
-	else if ( Q_strcmp( "force_cosmetic_refresh", eventname ) == 0 )
-	{
-		Msg("Fug\n");
-		if ( event->GetInt("playerid") != entindex() )
-			return;
-		Msg("Dis\n");
-		if( IsLocalPlayer() )
-		{
-			Msg("Shid\n");
-			RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
-			attempt_to_update_cosmetics.SetValue("1");
-		}
 	}
 }
 

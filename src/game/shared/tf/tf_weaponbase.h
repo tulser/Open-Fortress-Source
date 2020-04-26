@@ -141,17 +141,17 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool CanHolster( void ) const;
 	virtual bool Deploy( void );
 	virtual bool ReloadOrSwitchWeapons( void );
-	virtual int				GetSlot( void ) const;
-	virtual int				GetPosition( void ) const;
-	virtual int				GetDamage( void ) const;
-	virtual bool			CanSecondaryAttack( void ) const;
-	virtual bool			CanDropManualy( void ) const;
-	virtual bool			DontAutoEquip( void ) const;
-	virtual bool 			LoadsManualy( void ) const;
-	virtual int 			GetDefaultClip1( void ) const;
+	virtual int	 GetSlot( void ) const;
+	virtual int	 GetPosition( void ) const;
+	virtual int	 GetDamage( void ) const;
+	virtual bool CanSecondaryAttack( void ) const;
+	virtual bool CanDropManualy( void ) const;
+	virtual bool DontAutoEquip( void ) const;
+	virtual bool LoadsManualy( void ) const;
+	virtual int  GetDefaultClip1( void ) const;
 	
 	virtual void PlayWeaponShootSound( void );
-	virtual bool	PrimaryAttackSwapsActivities(void) { return GetTFWpnData().m_bSwapFireAnims; }
+	virtual bool PrimaryAttackSwapsActivities(void) { return GetTFWpnData().m_bSwapFireAnims; }
 	
 	// Attacks.
 	virtual void PrimaryAttack();
@@ -292,7 +292,6 @@ public:
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );
-	virtual void CritEffectThink( void );
 #endif // CLIENT_DLL
 
 	// Reloads.
@@ -329,8 +328,6 @@ protected:
 
 #ifdef CLIENT_DLL
 	bool m_bOldResetParity;
-public:
-	CNewParticleEffect	*m_pCritEffect;
 #endif
 protected:
 	CNetworkVar(	bool,	m_bReloadedThroughAnimEvent );

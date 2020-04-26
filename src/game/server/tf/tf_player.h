@@ -450,8 +450,6 @@ public:
 	float radsuit_finished;
 
 	int m_flNextTimeCheck;		// Next time the player can execute a "timeleft" command
-	
-	float m_flUpdateCosmetics;
 
 	// TEAMFORTRESS VARIABLES
 	int		no_sentry_message;

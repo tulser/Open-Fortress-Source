@@ -151,9 +151,9 @@ int C_PlayerAttachedModel::DrawModel( int flags )
 
 	int ret = BaseClass::DrawModel( flags );
 	
-	C_TFPlayer *pLocalPlayer =(C_TFPlayer *) GetMoveParent();
+	C_TFPlayer *pLocalPlayer = dynamic_cast<C_TFPlayer*>(GetMoveParent());
 	
-	if ( pLocalPlayer->m_Shared.InCondUber() )
+	if ( pLocalPlayer && pLocalPlayer->m_Shared.InCondUber() )
 	{
 		
 		// Force the invulnerable material

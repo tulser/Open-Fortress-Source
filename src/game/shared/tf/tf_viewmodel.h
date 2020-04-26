@@ -68,8 +68,6 @@ private:
 	CTFViewModel( const CTFViewModel & ); // not defined, not accessible
 
 	QAngle m_vLoweredWeaponOffset;
-public:
-	CNewParticleEffect	*m_pCritEffect;
 #endif
 };
 

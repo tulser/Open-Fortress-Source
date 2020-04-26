@@ -36,6 +36,8 @@ extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
 
+typedef CHandle<C_PlayerAttachedModel>	CosmeticHandle;
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -420,7 +422,6 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
-	typedef CHandle<C_PlayerAttachedModel>	CosmeticHandle;
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
 	
 	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
@@ -499,6 +500,7 @@ public:
 	void InitDismember( void );
 
 	void DismemberHead( );
+	void DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone );
 	void DismemberLeftArm( bool bLevel );
 	void DismemberRightArm( bool bLevel );
 	void DismemberLeftLeg( bool bLevel );
@@ -556,6 +558,8 @@ private:
 	// takedamageinfo.h
 	//int				m_bitsDamageType;
 	int				m_iDamageCustom;
+	
+	CUtlVector<CosmeticHandle>		m_hCosmetic;
 };
 
 inline C_TFPlayer* ToTFPlayer( C_BaseEntity *pEntity )

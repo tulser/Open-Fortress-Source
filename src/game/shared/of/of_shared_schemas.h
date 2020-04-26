@@ -32,6 +32,20 @@ extern KeyValues* GetRespawnParticle( int iID );
 extern KeyValues* GetLoadout();
 extern void ParseLoadout( void );
 extern void ResetLoadout( void );
+
+typedef CHandle<ConVar>	ConVarHandle;
+
+class CTFLoadoutHandler
+{
+public:
+	CTFLoadoutHandler();
+	CUtlVector<ConVar*> m_hClassLoadouts;
+};
+
+extern CTFLoadoutHandler *GetLoadoutHandle();
+
+extern void InitLoadoutHandle();
+
 #endif
 
 extern void CheckGlobalSounManifest( void );

@@ -470,6 +470,9 @@ private:
 	bool m_bInteractive;							// are we in interactive mode
 	bool m_bControlsLoaded;							// have we loaded controls yet
 	bool m_bTennisball;
+	
+	bool m_bParsedParticles; // this is only used so that particles dont crash 
+							 // the memory when we reload the panel
 public:
 	CTFHeaderImagePanel *m_pSelectedOptions;
 	CUtlVector<int> m_iCosmetics;
@@ -477,7 +480,7 @@ public:
 	int m_iCurrentParticle;
 };
 
-CTFLoadoutPanel *GLoadoutPanel();
+extern CTFLoadoutPanel *GLoadoutPanel();
 void DestroyLoadoutPanel();
 
 #endif // OF_LOADOUT_H

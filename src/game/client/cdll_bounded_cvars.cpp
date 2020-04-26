@@ -54,8 +54,6 @@ public:
 static CBoundedCvar_Predict cl_predict_var;
 ConVar_ServerBounded *cl_predict = &cl_predict_var;
 
-
-
 // ------------------------------------------------------------------------------------------ //
 // cl_interp_ratio.
 // ------------------------------------------------------------------------------------------ //
@@ -65,7 +63,7 @@ class CBoundedCvar_InterpRatio : public ConVar_ServerBounded
 public:
 	CBoundedCvar_InterpRatio() :
 	  ConVar_ServerBounded( "cl_interp_ratio", 
-		  "2.0", 
+		  "1.0", 
 		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
 		  "Sets the interpolation amount (final amount is cl_interp_ratio / cl_updaterate)." )
 	  {

@@ -1147,6 +1147,7 @@ void CTFPlayerShared::OnAddDisguising( void )
 void CTFPlayerShared::OnAddDisguised( void )
 {
 #ifdef CLIENT_DLL
+	UpdateCritParticle();
 	if ( m_pOuter->m_pDisguisingEffect )
 	{
 		// turn off disguising particles
@@ -1169,12 +1170,105 @@ void CTFPlayerShared::OnDisguiseChanged( void )
 }
 #endif
 
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::UpdateCritParticle()
+{
+	if( m_pOuter->m_Shared.InCondCrit()  // We need to be critboosted in the first place
+	&& !m_pOuter->m_Shared.InCondInvis() // And we cant be invisible
+	)
+	{
+		CBaseEntity *pTarget = NULL;
+		// Use GetRenderedWeaponModel() instead?
+		if ( m_pOuter->IsLocalPlayer() )
+			pTarget = m_pOuter->GetViewModel(0);
+		else
+			pTarget = m_pOuter->GetActiveWeapon();
+
+		if ( pTarget )
+		{
+			char *pEffect = NULL;
+			
+			int iTeam = (InCond( TF_COND_DISGUISED ) && !m_pOuter->IsLocalPlayer()) ? GetDisguiseTeam() : m_pOuter->GetTeamNumber();
+
+			if ( m_pOuter->IsLocalPlayer() )
+			{
+				// Get the viewmodel and use it instead
+				switch( iTeam )
+				{
+					case TF_TEAM_BLUE:
+						pEffect = "critgun_firstperson_weaponmodel_blu";
+						break;
+					case TF_TEAM_RED:
+						pEffect = "critgun_firstperson_weaponmodel_red";
+						break;
+					default:
+					case TF_TEAM_MERCENARY:
+						pEffect = "critgun_firstperson_weaponmodel_dm";
+						break;
+				}
+			}
+			else
+			{
+				switch( iTeam )
+				{
+					case TF_TEAM_BLUE:
+						pEffect = "critgun_weaponmodel_blu";
+						break;
+					case TF_TEAM_RED:
+						pEffect = "critgun_weaponmodel_red";
+						break;
+					default:
+					case TF_TEAM_MERCENARY:
+						pEffect = "critgun_weaponmodel_dm";
+						break;
+				}
+			}
+
+			if ( !m_pCritBoostEffect )
+			{
+				m_pCritBoostEffect = pTarget->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW );
+
+				if ( m_pOuter->IsLocalPlayer() )
+				{
+					if ( m_pCritBoostEffect )
+					{
+						ClientLeafSystem()->SetRenderGroup( m_pCritBoostEffect->RenderHandle(), RENDER_GROUP_VIEW_MODEL_TRANSLUCENT );
+					}
+				}
+			}
+			else
+				m_pCritBoostEffect->StartEmission();
+			
+			if( m_pCritBoostEffect )
+				UpdateParticleColor( m_pCritBoostEffect );
+		}
+	}
+	else
+	{
+		if ( m_pCritBoostEffect )
+		{
+			if ( m_pCritBoostEffect->GetOwner() )
+				m_pCritBoostEffect->GetOwner()->ParticleProp()->StopEmission( m_pCritBoostEffect );
+			else
+				m_pCritBoostEffect->StopEmission();
+
+			m_pCritBoostEffect = NULL;
+		}
+	}
+}
+#endif
+
 void CTFPlayerShared::OnAddCritBoosted( void )
 {
 #ifndef CLIENT_DLL
 	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
 	if ( pTFPlayer )
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
+#else
+	UpdateCritParticle();
 #endif
 }
 
@@ -1187,6 +1281,8 @@ void CTFPlayerShared::OnRemoveCritBoosted( void )
 		CFmtStrN<128> modifiers( "inpowerup:yes");
 		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
 	}
+#else
+	UpdateCritParticle();
 #endif
 }
 void CTFPlayerShared::OnAddBerserk( void )
@@ -1531,7 +1627,7 @@ void CTFPlayerShared::OnAddStealthed( void )
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Player.Spy_Cloak" );
 	m_pOuter->RemoveAllDecals();
-#else
+	UpdateCritParticle();
 #endif
 
 	m_flInvisChangeCompleteTime = gpGlobals->curtime + tf_spy_invis_time.GetFloat();
@@ -1564,6 +1660,7 @@ void CTFPlayerShared::OnRemoveStealthed( void )
 {
 #ifdef CLIENT_DLL
 	m_pOuter->EmitSound( "Player.Spy_UnCloak" );
+	UpdateCritParticle();
 #endif
 
 	m_pOuter->HolsterOffHandWeapon();
@@ -1598,7 +1695,7 @@ void CTFPlayerShared::OnRemoveDisguising( void )
 void CTFPlayerShared::OnRemoveDisguised( void )
 {
 #ifdef CLIENT_DLL
-
+	UpdateCritParticle();
 	// if local player is on the other team, reset the model of this player
 	CTFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 

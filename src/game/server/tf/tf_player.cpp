@@ -506,8 +506,6 @@ CTFPlayer::CTFPlayer()
 
 	m_pPlayerAISquad = 0;
 	
-	m_flUpdateCosmetics = 0.0f;
-	
   	m_bTransition = false;
 	
     ConVarRef scissor( "r_flashlightscissor" );
@@ -521,6 +519,8 @@ CTFPlayer::CTFPlayer()
 	m_bHauling = false;
 	
 	m_bPuppet = false;
+	
+	m_bUpdateCosmetics = false;
 	
 	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	
@@ -552,17 +552,6 @@ void CTFPlayer::TFPlayerThink()
 	if ( of_dynamic_color_update.GetBool() )
 		UpdatePlayerColor();
 
-	if( m_Shared.InCond( TF_COND_SPAWNPROTECT ) 
-	|| m_flUpdateCosmetics > gpGlobals->curtime )
-	{
-		if( atoi( engine->GetClientConVarValue( entindex(), "_attempt_to_update_cosmetics" ) ) )
-		{
-			DevMsg("Bruh\n");
-			UpdateCosmetics();
-			if( IsFakeClient() )
-				engine->SetFakeClientConVarValue( edict(), "_attempt_to_update_cosmetics", "0" );
-		}
-	}
 	TauntEffectThink();
 
 	if ( TFGameRules() )
@@ -1052,8 +1041,6 @@ void CTFPlayer::InitialSpawn( void )
 
 	SetWeaponBuilder( NULL );
 	
-	m_bUpdateCosmetics = !m_bUpdateCosmetics;
-	
 	m_iMaxSentryKills = 0;
 	CTF_GameStats.Event_MaxSentryKills( this, 0 );
 
@@ -1251,9 +1238,7 @@ void CTFPlayer::Spawn()
 	m_Shared.m_flNextLungeTime = 0.0f;
 
 	UpdatePlayerColor();
-	if( IsFakeClient() )
-		engine->SetFakeClientConVarValue( edict(), "_attempt_to_update_cosmetics", "1" );
-	m_flUpdateCosmetics = gpGlobals->curtime + 1.0f;
+	UpdateCosmetics();
 
 	// Gore
 	m_iGoreHead = 0;
@@ -1315,7 +1300,7 @@ void CTFPlayer::UpdateCosmetics()
 
 		char szDesired[64] = { '\0' };
 		if( !IsFakeClient() )
-			Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_desired_cosmetic_loadout" ), sizeof(szDesired));
+			Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_Mercenary_cosmetic_loadout" ), sizeof(szDesired));
 		else
 		{
 			int iCosmeticCount = random->RandomInt( 0, 5 );
@@ -1339,7 +1324,6 @@ void CTFPlayer::UpdateCosmetics()
 				continue;
 			
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
-			Msg("%s %s\n", pCosmetic->GetName(), szRegion );
 			if( kvDesiredCosmetics )
 				kvDesiredCosmetics->SetString( szRegion, args[i] );
 		}
@@ -1347,7 +1331,6 @@ void CTFPlayer::UpdateCosmetics()
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
-			DevMsg("SERVER: Add Cosmetic to tail: %f\n", pHat->GetFloat());
 			m_iCosmetics.AddToTail(pHat->GetFloat());
 			NetworkStateChanged();
 		}
@@ -1417,14 +1400,7 @@ void CTFPlayer::Regenerate( void )
 	RestockSpecialEffects( 1.0f );
 	
 	UpdatePlayerColor();
-	IGameEvent *event = gameeventmanager->CreateEvent( "force_cosmetic_refresh" );
-	if ( event )
-	{
-		event->SetInt( "playerid", entindex() );
-		gameeventmanager->FireEvent( event );
-	}
-
-	m_flUpdateCosmetics = gpGlobals->curtime + 0.5f;
+	UpdateCosmetics();
 	
 	m_bRegenerating = false;
 	if ( iCurrentHealth > GetHealth() )

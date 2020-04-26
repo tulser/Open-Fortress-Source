@@ -164,6 +164,7 @@ public:
 
 #ifdef CLIENT_DLL
 	void	OnDisguiseChanged( void );
+	void 	UpdateCritParticle( void );
 	void	RecalcDisguiseWeapon( void );
 	int		GetDisguiseWeaponModelIndex( void ) { return m_iDisguiseWeaponModelIndex; }
 	CTFWeaponInfo *GetDisguiseWeaponInfo( void );
@@ -344,6 +345,8 @@ private:
 	float					m_flDisguiseHealFraction;	// Same for disguised healing
 
 	float m_flInvulnerableOffTime;
+#else
+	CNewParticleEffect	*m_pCritBoostEffect;
 #endif
 
 	// Burn handling

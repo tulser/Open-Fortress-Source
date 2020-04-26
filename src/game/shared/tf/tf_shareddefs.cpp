@@ -54,11 +54,11 @@ int GetWearableCount( void )
 	if ( !filesystem )
 		return 0;
 
-	if ( !filesystem->FileExists( "scripts/items/items_game.txt" , "MOD" ) )
+	if ( !filesystem->FileExists( "scripts/items/items_game.txt" , "GAME" ) )
 			Error( "Error! items_games.txt is missing. Your game likely didn't download or update properly.\nGo to the open_fortress/scripts/items/ folder and delete the items_games.txt file, and cleanup & update the SVN again." );
 
 	KeyValues* pItemsGame = new KeyValues( "items_game" );
-	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt", "GAME" );
 	if ( pItemsGame )
 	{
 		KeyValues* pCosmetics = pItemsGame->FindKey( "Cosmetics" );
@@ -155,6 +155,23 @@ const char *g_aPlayerClassNames_NonLocalized[] =
 	"Mercenary",
 	"Civilian",
 	"Juggernaut",
+};
+
+const char *g_aLoadoutConvarNames[] =
+{
+	"_Undefined_cosmetic_loadout",
+	"_Scout_cosmetic_loadout",
+	"_Sniper_cosmetic_loadout",
+	"_Soldier_cosmetic_loadout",
+	"_Demoman_cosmetic_loadout",
+	"_Medic_cosmetic_loadout",
+	"_Heavy_cosmetic_loadout",
+	"_Pyro_cosmetic_loadout",
+	"_Spy_cosmetic_loadout",
+	"_Engineer_cosmetic_loadout",
+	"_Mercenary_cosmetic_loadout",
+	"_Civilian_cosmetic_loadout",
+	"_Juggernaut_cosmetic_loadout",
 };
 
 const char *g_aPlayerMutatorNames[] =

@@ -33,12 +33,10 @@ public:
 	void	ApplyBoneMatrixTransform( matrix3x4_t& transform );
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return (C_BaseEntity *)GetMoveParent(); }
 	virtual int DrawModel( int flags );
-	int						DrawOverriddenViewmodel( int flags );
+	int		DrawOverriddenViewmodel( int flags );
 
 	bool	ShouldDraw( void );
 	virtual int		GetSkin( void );
-
-
 
 	bool	m_bSpyMask;
 

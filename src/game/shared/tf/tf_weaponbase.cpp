@@ -248,20 +248,7 @@ CTFWeaponBase::CTFWeaponBase()
 
 CTFWeaponBase::~CTFWeaponBase()
 {
-#ifdef CLIENT_DLL
-	ParticleProp()->StopEmission( m_pCritEffect );	
-	m_pCritEffect = NULL;		
-	
-	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
-	if ( !pOwner )
-		return;
-	CTFViewModel *ViewModel = dynamic_cast<CTFViewModel*>(pOwner->GetViewModel( 0 ));
-	if ( ViewModel )
-	{
-		ViewModel->ParticleProp()->StopEmission( m_pCritEffect );
-		ViewModel->m_pCritEffect = NULL;			
-	}
-#else
+#ifndef CLIENT_DLL
 	CTFPlayer *pTFOwner = ToTFPlayer( GetOwner() );
 	if ( !pTFOwner )
 		return;
@@ -811,6 +798,12 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 		m_hMuzzleFlashModel[1]->Release();
 	if ( m_hMuzzleFlashModel[0] ) 
 		m_hMuzzleFlashModel[0]->Release();
+	
+	if( pOwner && pOwner->GetViewModel( m_nViewModelIndex ) )
+		pOwner->GetViewModel( m_nViewModelIndex )->ParticleProp()->StopEmission();
+	
+	if( pOwner )
+		pOwner->m_Shared.UpdateCritParticle();
 #endif
 
 	// Negates the effects of long reloads not letting you fire after you've re-drawn your weapon
@@ -855,14 +848,19 @@ bool CTFWeaponBase::CanHolster( void ) const
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Deploy( void )
 {
+	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 #ifndef CLIENT_DLL
 	if ( m_iAltFireHint )
 	{
-		CBasePlayer *pPlayer = GetPlayerOwner();
 		if ( pPlayer )
 		{
 			pPlayer->StartHintTimer( m_iAltFireHint );
 		}
+	}
+#else
+	if ( pPlayer )
+	{
+		pPlayer->m_Shared.UpdateCritParticle();
 	}
 #endif
 
@@ -876,7 +874,6 @@ bool CTFWeaponBase::Deploy( void )
 		// Don't override primary attacks that are already further out than this. This prevents
 		// people exploiting weapon switches to allow weapons to fire faster.
 		float flDeployTime = 0.67;
-		CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 		if( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HASTE ) )
 		{
 			flDeployTime *= of_haste_drawtime_multiplier.GetFloat();
@@ -1543,90 +1540,6 @@ void CTFWeaponBase::ItemPreFrame( void )
 {
 	BaseClass::ItemPreFrame();
 }
-
-#ifdef CLIENT_DLL
-void CTFWeaponBase::CritEffectThink( void )
-{
-	C_TFPlayer *pPlayer = ToTFPlayer( GetOwner() );
-	if( !pPlayer )
-		return;
-	
-	CTFViewModel *ViewModel = dynamic_cast<CTFViewModel*>(pPlayer->GetViewModel( 0 ));
-	
-	if( pPlayer->m_Shared.InCondCrit() && !pPlayer->m_Shared.InCondInvis() && (( !m_pCritEffect && !ShouldDrawUsingViewModel() ) 
-		|| ( ShouldDrawUsingViewModel() && ViewModel && !ViewModel->m_pCritEffect ) ) )
-	{
-		char *pEffect = NULL;
-
-		if ( ShouldDrawUsingViewModel() )
-		{
-			if ( ViewModel )
-			{
-				// Get the viewmodel and use it instead
-				switch( pPlayer->GetTeamNumber() )
-				{
-				case TF_TEAM_BLUE:
-					pEffect = "critgun_firstperson_weaponmodel_blu";
-					break;
-				case TF_TEAM_RED:
-					pEffect = "critgun_firstperson_weaponmodel_red";
-					break;
-				case TF_TEAM_MERCENARY:
-					pEffect = "critgun_firstperson_weaponmodel_dm";
-					break;
-					default:
-					pEffect = "critgun_firstperson_weaponmodel_dm";
-					break;
-				}
-			}
-		}
-		else
-		{
-			switch( pPlayer->GetTeamNumber() )
-			{
-			case TF_TEAM_BLUE:
-				pEffect = "critgun_weaponmodel_blu";
-				break;
-			case TF_TEAM_RED:
-				pEffect = "critgun_weaponmodel_red";
-				break;
-			case TF_TEAM_MERCENARY:
-				pEffect = "critgun_weaponmodel_dm";
-				break;
-			default:
-				pEffect = "critgun_weaponmodel_dm";
-				break;
-			}
-		}
-
-		if ( pEffect )
-		{
-			if ( ShouldDrawUsingViewModel() && ViewModel )
-			{
-				pPlayer->m_Shared.UpdateParticleColor( ViewModel->m_pCritEffect = ViewModel->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
-			}
-			else
-				pPlayer->m_Shared.UpdateParticleColor( m_pCritEffect = ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW ) );
-		}
-	}
-	else if ( !pPlayer->m_Shared.InCondCrit() || pPlayer->m_Shared.InCondInvis() )
-	{
-		if( m_pCritEffect )
-		{
-			ParticleProp()->StopEmission( m_pCritEffect );
-			m_pCritEffect = NULL;
-		}
-		if ( ViewModel )
-		{
-			if ( ViewModel->m_pCritEffect )
-			{
-				ViewModel->ParticleProp()->StopEmission( m_pCritEffect );
-				ViewModel->m_pCritEffect = NULL;
-			}			
-		}
-	}	
-}
-#endif
 
 void CTFWeaponBase::SoftZoomCheck( void )
 {
@@ -2439,17 +2352,7 @@ void CTFWeaponBase::OnPreDataChanged( DataUpdateType_t type )
 // ----------------------------------------------------------------------------
 void CTFWeaponBase::OnDataChanged( DataUpdateType_t type )
 {
-	BaseClass::OnDataChanged( type );
-
-#ifdef CLIENT_DLL
-	if( !IsEffectActive( EF_NODRAW ) )
-		CritEffectThink();
-	else
-	{
-		ParticleProp()->StopEmission( m_pCritEffect );	
-		m_pCritEffect = NULL;		
-	}
-#endif		
+	BaseClass::OnDataChanged( type );	
 	
 	if ( GetPredictable() && !ShouldPredict() )
 	{
@@ -3147,8 +3050,85 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 		return true;
 	}
 	break;
+	case AE_CL_CREATE_PARTICLE_EFFECT:
+	{
+		if( pViewModel )
+		{
+			int iAttachment = -1;
+			int iAttachType = PATTACH_ABSORIGIN_FOLLOW;
+			char token[256];
+			char szParticleEffect[256];
+
+			// Get the particle effect name
+			const char *p = options;
+			p = nexttoken( token, p, ' ', sizeof(token) );
+
+			const char* mtoken = ModifyEventParticles( token );
+			if ( !mtoken || mtoken[0] == '\0' )
+				return false;
+			Q_strncpy( szParticleEffect, mtoken, sizeof(szParticleEffect) );
+
+			// Get the attachment type
+			p = nexttoken( token, p, ' ', sizeof(token) );
+
+			iAttachType = GetAttachTypeFromString( token );
+			if ( iAttachType == -1 )
+			{
+				Warning("Invalid attach type specified for particle effect anim event. Trying to spawn effect '%s' with attach type of '%s'\n", szParticleEffect, token );
+				return false;
+			}
+
+			// Get the attachment point index
+			p = nexttoken( token, p, ' ', sizeof(token) );
+			if ( token[0] )
+			{
+				iAttachment = atoi(token);
+
+				// See if we can find any attachment points matching the name
+				if ( token[0] != '0' && iAttachment == 0 )
+				{
+					iAttachment = pViewModel->LookupAttachment( token );
+					if ( iAttachment <= 0 )
+					{
+						Warning( "Failed to find attachment point specified for particle effect anim event. Trying to spawn effect '%s' on attachment named '%s'\n", szParticleEffect, token );
+						return false;
+					}
+				}
+			}
+
+			// Spawn the particle effect
+			CTFPlayer *pPlayer = GetTFPlayerOwner();
+			if( pPlayer )
+				pPlayer->m_Shared.UpdateParticleColor(pViewModel->ParticleProp()->Create( szParticleEffect, (ParticleAttachment_t)iAttachType, iAttachment ));
+			else
+				pViewModel->ParticleProp()->Create( szParticleEffect, (ParticleAttachment_t)iAttachType, iAttachment );
+		}
+	}
+	break;	
+	case AE_CL_STOP_PARTICLE_EFFECT:
+	{
+		if( pViewModel )
+		{
+			char token[256];
+			char szParticleEffect[256];
+
+			// Get the particle effect name
+			const char *p = options;
+			p = nexttoken( token, p, ' ', sizeof(token) );
+
+			const char* mtoken = ModifyEventParticles( token );
+			if ( !mtoken || mtoken[0] == '\0' )
+				return false;
+			Q_strncpy( szParticleEffect, mtoken, sizeof(szParticleEffect) );
+
+			pViewModel->ParticleProp()->StopParticlesNamed( szParticleEffect );
+		}
+	}
+	break;
 	case AE_CL_BODYGROUP_SET_VALUE:
 	{
+		if( pViewModel )
+		{
 			DevMsg("AE_CL_BODYGROUP_SET_VALUE event fired \n");
 			int value;
 			char token[256];
@@ -3164,11 +3144,17 @@ bool CTFWeaponBase::OnFireEvent( C_BaseViewModel *pViewModel, const Vector& orig
 			p = nexttoken( token, p, ' ', sizeof(token) );
 			value = token[0] ? atoi( token ) : 0;
 
-			int index = FindBodygroupByName( szBodygroupName );
+			int index = pViewModel->FindBodygroupByName( szBodygroupName );
+			if ( index >= 0 )
+			{
+				pViewModel->SetBodygroup( index, value );
+			}
+			index = FindBodygroupByName( szBodygroupName );
 			if ( index >= 0 )
 			{
 				SetBodygroup( index, value );
 			}
+		}
 	}
 	break;
 	}
