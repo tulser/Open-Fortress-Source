@@ -420,7 +420,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
 
 	SendPropBool( SENDINFO( m_iSpawnCounter ) ),
-	SendPropBool( SENDINFO( m_bUpdateCosmetics ) ),
+	SendPropInt( SENDINFO( m_iUpdateCosmetics ), 32, SPROP_UNSIGNED ),
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
@@ -520,7 +520,7 @@ CTFPlayer::CTFPlayer()
 	
 	m_bPuppet = false;
 	
-	m_bUpdateCosmetics = false;
+	m_iUpdateCosmetics = 0;
 	
 	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	
@@ -1340,7 +1340,9 @@ void CTFPlayer::UpdateCosmetics()
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	}
 	
-	m_bUpdateCosmetics = !m_bUpdateCosmetics;	
+	m_iUpdateCosmetics++;
+	if( m_iUpdateCosmetics < 0 )
+		m_iUpdateCosmetics = 0;
 }
 
 void CTFPlayer::ClearSlots()

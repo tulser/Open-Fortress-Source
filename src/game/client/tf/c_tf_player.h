@@ -369,9 +369,9 @@ public:
 	QAngle	m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
 	
-	CNetworkVar( bool, m_bUpdateCosmetics );
+	CNetworkVar( int, m_iUpdateCosmetics );
 	
-	bool			bUpdatedCosmetics;
+	int iUpdatedCosmetics;
 
 	CNetworkHandle( C_TFItem, m_hItem );
 

@@ -2341,7 +2341,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFNonLocalPlayerExclusive) ),
 
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
-	RecvPropInt( RECVINFO( m_bUpdateCosmetics ) ),
+	RecvPropInt( RECVINFO( m_iUpdateCosmetics ) ),
 	//
 	RecvPropInt( RECVINFO( m_iAccount ) ),
 
@@ -2416,7 +2416,7 @@ C_TFPlayer::C_TFPlayer() :
 
 	m_bUpdateObjectHudState = false;
 	
-	bUpdatedCosmetics = false;
+	iUpdatedCosmetics = 0;
 
 	ListenForGameEvent( "player_jump" );
 	ListenForGameEvent( "force_cosmetic_refresh" );
@@ -3528,11 +3528,11 @@ void C_TFPlayer::ClientThink()
 		UpdatePlayerAttachedModels();
 		m_bUpdatePlayerAttachments = false;
 	}
-	
-	if( m_bUpdateCosmetics != bUpdatedCosmetics )
+
+	if( iUpdatedCosmetics != m_iUpdateCosmetics || m_hCosmetic.Count() != m_iCosmetics.Count() || (of_disable_cosmetics.GetBool() && m_hCosmetic.Count() > 0 ) )
 	{
 		UpdateWearables();
-		bUpdatedCosmetics = m_bUpdateCosmetics;
+		iUpdatedCosmetics = m_iUpdateCosmetics;
 	}
 	
 	if ( m_pSaveMeEffect )

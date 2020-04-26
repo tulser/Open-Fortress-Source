@@ -242,23 +242,6 @@ END_SEND_TABLE()
 
 #endif
 
-void ReParseActiveWeapon( void )
-{
-#ifdef GAME_DLL
-	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
-#else
-	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-#endif
-	if ( !pPlayer )
-		return;
-	
-	if( !pPlayer->m_Shared.GetActiveTFWeapon() )
-		return;
-		
-	pPlayer->m_Shared.GetActiveTFWeapon()->ParseWeaponScript( true );
-}
-static ConCommand schema_reload_active_weapon( "schema_reload_active_weapon", ReParseActiveWeapon, "Re-Parses Your current weapon", FCVAR_CHEAT );
-
 // --------------------------------------------------------------------------------------------------- //
 // Shared CTFPlayer implementation.
 // --------------------------------------------------------------------------------------------------- //

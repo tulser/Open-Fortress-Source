@@ -9,6 +9,11 @@
 #include "KeyValues.h"
 #include "filesystem.h"
 #include "tf_shareddefs.h"
+#if GAME_DLL
+#include "tf_player.h"
+#else
+#include "c_tf_player.h"
+#endif
 #include "of_shared_schemas.h"
 
 #include "ienginevgui.h"
@@ -292,10 +297,17 @@ void ReloadItemsSchema()
 	ParseItemsGame();
 #ifdef CLIENT_DLL
 	GLoadoutPanel()->InvalidateLayout( false, true );
+	engine->ExecuteClientCmd( "schema_reload_items_game_server" );
 #endif
 }
 
-static ConCommand schema_reload_items_game( "schema_reload_items_game", ReloadItemsSchema, "Reloads the items game.", FCVAR_NONE );
+static ConCommand schema_reload_items_game( 
+#ifdef CLIENT_DLL
+"schema_reload_items_game",
+#else
+"schema_reload_items_game_server",
+#endif
+ ReloadItemsSchema, "Reloads the items game.", FCVAR_NONE );
 
 KeyValues* GetCosmetic( int iID )
 {

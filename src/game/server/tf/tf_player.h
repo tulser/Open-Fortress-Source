@@ -650,7 +650,7 @@ private:
 	bool				m_bSeenRoundInfo;
 	bool				m_bRegenerating;
 	
-	CNetworkVar( bool, m_bUpdateCosmetics );
+	CNetworkVar( int, m_iUpdateCosmetics );
 
 	// Items.
 	CNetworkHandle( CTFItem, m_hItem );

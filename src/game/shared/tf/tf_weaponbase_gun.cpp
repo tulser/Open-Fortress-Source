@@ -802,7 +802,32 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
-	vecSrc +=  vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+	
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+
+	int iQuakeCvar = 0;
+	
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
+	Vector vecOffset( 16.0f, 8.0f, -6.0f );	
+
+	if ( bCenter || iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		if ( bCenter || iQuakeCvar )
+			vecOffset.z = 0.0f;
+		else
+			vecOffset.z = 8.0f;
+	}
+	
+	vecSrc +=  vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
 	
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
 		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
@@ -838,7 +863,32 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
-	vecSrc += vecForward * 16.0f + vecRight * 8.0f + vecUp * -6.0f;
+	
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+
+	int iQuakeCvar = 0;
+	
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
+	Vector vecOffset( 16.0f, 8.0f, -6.0f );	
+
+	if ( bCenter || iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	
+	if ( pPlayer->GetFlags() & FL_DUCKING )
+	{
+		if ( bCenter || iQuakeCvar )
+			vecOffset.z = 0.0f;
+		else
+			vecOffset.z = 8.0f;
+	}
+	
+	vecSrc +=  vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
 
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + vecRight;
 
