@@ -96,9 +96,9 @@ END_DATADESC()
 
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
-#else
-extern ConVar of_infiniteammo;
 #endif
+
+extern ConVar of_infiniteammo;
 
 void CTFFlameThrower::Precache( void )
 {
@@ -214,8 +214,13 @@ void CTFFlameThrower::ItemPostFrame()
 		return;
 
 	int iAmmo = ReserveAmmo();
-
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && !( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo > 0 && CanPerformSecondaryAttack() )
+	
+	// TODO: add a delay here
+	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK && CanPerformSecondaryAttack() )
+	{
+		SecondaryAttack();
+	}
+	else if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && ((!( pOwner->m_nButtons & IN_ATTACK2 ) && CanPerformSecondaryAttack()) || iAmmo < TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK) && iAmmo > 0 )
 	{
 		PrimaryAttack();
 	}
@@ -225,12 +230,6 @@ void CTFFlameThrower::ItemPostFrame()
 		pOwner->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_POST );
 		m_iWeaponState = FT_STATE_IDLE;
 		m_bCritFire = false;
-	}
-
-	// TODO: add a delay here
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && !( pOwner->m_nButtons & IN_ATTACK ) && iAmmo >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK && CanPerformSecondaryAttack() )
-	{
-		SecondaryAttack();
 	}
 
 	BaseClass::ItemPostFrame();
@@ -270,7 +269,7 @@ void CTFFlameThrower::PrimaryAttack()
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return;
 
-	if ( !CanPerformSecondaryAttack() )
+	if ( !CanPerformSecondaryAttack() && ReserveAmmo() >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK )
 		return;
 
 	// Get the player owning the weapon.
@@ -319,7 +318,7 @@ void CTFFlameThrower::PrimaryAttack()
 
 			SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 
-			m_flStartFiringTime = gpGlobals->curtime + 0.16;	// 5 frames at 30 fps
+			m_flStartFiringTime = gpGlobals->curtime;
 
 			m_iWeaponState = FT_STATE_STARTFIRING;
 		}
@@ -496,7 +495,7 @@ void CTFFlameThrower::SecondaryAttack()
 	if ( !pOwner )
 		return;
 
-	if ( !CanAttack() )
+	if ( !CanPerformSecondaryAttack() )
 	{
 		/*
 #if defined ( CLIENT_DLL )
@@ -506,13 +505,13 @@ void CTFFlameThrower::SecondaryAttack()
 		m_iWeaponState = FT_STATE_IDLE;
 		return;
 	}
-#ifdef GAME_DLL
+
 	if( !of_infiniteammo.GetBool() )
-#endif
-	m_iReserveAmmo = m_iReserveAmmo - TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
+		m_iReserveAmmo = m_iReserveAmmo - TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
 
 	float flFiringInterval = GetFireRate();
 	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
+	m_flNextPrimaryAttack = gpGlobals->curtime + flFiringInterval;
 
 #if defined ( CLIENT_DLL )
 	StopFlame();

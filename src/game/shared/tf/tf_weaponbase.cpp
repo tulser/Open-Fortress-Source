@@ -814,6 +814,7 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 		// Reset next weapon attack times (based on reloading).
 		m_flNextPrimaryAttack = gpGlobals->curtime;
+		m_flNextSecondaryAttack = gpGlobals->curtime;
 		
 		// Reset the idle time
 		SetWeaponIdleTime( gpGlobals->curtime );
@@ -865,6 +866,7 @@ bool CTFWeaponBase::Deploy( void )
 #endif
 
 	float flOriginalPrimaryAttack = m_flNextPrimaryAttack;
+	float flOriginalSecondaryAttack = m_flNextSecondaryAttack;
 
 	bool bDeploy = BaseClass::Deploy();
 
@@ -884,7 +886,8 @@ bool CTFWeaponBase::Deploy( void )
 			}
 		}
 		m_flNextPrimaryAttack = max( flOriginalPrimaryAttack, gpGlobals->curtime + flDeployTime );
-
+		m_flNextSecondaryAttack = max( flOriginalSecondaryAttack, gpGlobals->curtime + flDeployTime );
+		
 		if (!pPlayer)
 			return false;
 
@@ -1130,6 +1133,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 		if ( ( (GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false ) && ( g_pGameRules->SwitchToNextBestWeapon( pOwner, this ) ) )
 		{
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.3;
+			m_flNextSecondaryAttack = gpGlobals->curtime + 0.3;
 			return true;
 		}
 	}
@@ -1446,6 +1450,7 @@ void CTFWeaponBase::SetReloadTimer( float flReloadTime )
 
 	// Set next weapon attack times (based on reloading).
 	m_flNextPrimaryAttack = flTime;
+	m_flNextSecondaryAttack = flTime;
 
 	// Don't push out secondary attack, because our secondary fire
 	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
@@ -1490,6 +1495,7 @@ void CTFWeaponBase::SendReloadEvents()
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemBusyFrame( void )
 {
+	DevMsg("%f\n", m_flNextPrimaryAttack - gpGlobals->curtime < 0 ? 0.0f : m_flNextPrimaryAttack - gpGlobals->curtime);
 	// Call into the base ItemBusyFrame.
 	BaseClass::ItemBusyFrame();
 
@@ -1530,6 +1536,7 @@ void CTFWeaponBase::ItemBusyFrame( void )
 				
 				pPlayer->m_flNextAttack = gpGlobals->curtime;
 				m_flNextPrimaryAttack = gpGlobals->curtime;
+				m_flNextSecondaryAttack = gpGlobals->curtime;
 				SetWeaponIdleTime( gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeIdle );
 			}
 		}
@@ -1592,7 +1599,7 @@ void CTFWeaponBase::SoftZoomCheck( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemPostFrame( void )
 {
-	
+	DevMsg("%f\n", m_flNextPrimaryAttack - gpGlobals->curtime < 0 ? 0.0f : m_flNextPrimaryAttack - gpGlobals->curtime);
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 	{

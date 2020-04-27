@@ -1788,7 +1788,9 @@ void CTFLoadoutHeader::OnScrollBarSliderMoved()
 	
 	for( int i = 0; i < m_hCategories.Count(); i++ )
 	{
-		m_hCategories[i].pHeaderItem->SetPos( m_hCategories[i].def_xpos, m_hCategories[i].def_ypos - nScrollAmount );
+		int x, y;
+		m_hCategories[i].pHeaderItem->GetPos( x, y );
+		m_hCategories[i].pHeaderItem->SetPos( m_hCategories[i].def_xpos - nScrollAmount, y );
 	}
 }
 
@@ -1862,6 +1864,10 @@ void CTFLoadoutHeader::AddCategory( const char *szCategory )
 	int w, h;
 	pNewItem.pHeaderItem->GetSize( w, h );
 	iLastXPos += w;
+	
+	GetSize( w, h );
+	pScrollBar->SetRange( 0, iLastXPos );
+	pScrollBar->SetRangeWindow( w );
 }
 
 void CTFLoadoutHeader::ClearCategoryList()

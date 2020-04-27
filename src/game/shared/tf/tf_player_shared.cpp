@@ -1164,19 +1164,18 @@ void CTFPlayerShared::UpdateCritParticle()
 	)
 	{
 		CBaseEntity *pTarget = NULL;
-		// Use GetRenderedWeaponModel() instead?
-		if ( m_pOuter->IsLocalPlayer() )
+		if( m_pOuter->IsLocalPlayer() )
 			pTarget = m_pOuter->GetViewModel(0);
 		else
 			pTarget = m_pOuter->GetActiveWeapon();
 
-		if ( pTarget )
+		if( pTarget )
 		{
 			char *pEffect = NULL;
 			
 			int iTeam = (InCond( TF_COND_DISGUISED ) && !m_pOuter->IsLocalPlayer()) ? GetDisguiseTeam() : m_pOuter->GetTeamNumber();
 
-			if ( m_pOuter->IsLocalPlayer() )
+			if( m_pOuter->IsLocalPlayer() )
 			{
 				// Get the viewmodel and use it instead
 				switch( iTeam )
@@ -1210,18 +1209,8 @@ void CTFPlayerShared::UpdateCritParticle()
 				}
 			}
 
-			if ( !m_pCritBoostEffect )
-			{
+			if( !m_pCritBoostEffect )
 				m_pCritBoostEffect = pTarget->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW );
-
-				if ( m_pOuter->IsLocalPlayer() )
-				{
-					if ( m_pCritBoostEffect )
-					{
-						ClientLeafSystem()->SetRenderGroup( m_pCritBoostEffect->RenderHandle(), RENDER_GROUP_VIEW_MODEL_TRANSLUCENT );
-					}
-				}
-			}
 			else
 				m_pCritBoostEffect->StartEmission();
 			
@@ -1231,9 +1220,9 @@ void CTFPlayerShared::UpdateCritParticle()
 	}
 	else
 	{
-		if ( m_pCritBoostEffect )
+		if( dynamic_cast<CNewParticleEffect *>( m_pCritBoostEffect ) )
 		{
-			if ( m_pCritBoostEffect->GetOwner() )
+			if( m_pCritBoostEffect->GetOwner() )
 				m_pCritBoostEffect->GetOwner()->ParticleProp()->StopEmission( m_pCritBoostEffect );
 			else
 				m_pCritBoostEffect->StopEmission();
