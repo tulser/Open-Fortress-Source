@@ -1568,21 +1568,20 @@ void C_TFRagdoll::StartFadeOut( float fDelay )
 
 void C_TFRagdoll::EndFadeOut()
 {
-	SetNextClientThink( CLIENT_THINK_NEVER );
-	ClearRagdoll();
-	SetRenderMode( kRenderNone );
-	UpdateVisibility();
-	
 	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
 	{
 		if ( m_hCosmetic[i] )
 		{
 			m_hCosmetic[i]->SetNextClientThink( CLIENT_THINK_NEVER );
-			m_hCosmetic[i]->SetRenderMode( kRenderNone );
-			m_hCosmetic[i]->UpdateVisibility();
+			m_hCosmetic[i]->Release();
 		}
 	}
 	m_hCosmetic.Purge();
+
+	SetNextClientThink( CLIENT_THINK_NEVER );
+	ClearRagdoll();
+	SetRenderMode( kRenderNone );
+	UpdateVisibility();
 }
 
 //-----------------------------------------------------------------------------
