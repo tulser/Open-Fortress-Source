@@ -1495,7 +1495,6 @@ void CTFWeaponBase::SendReloadEvents()
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemBusyFrame( void )
 {
-	DevMsg("%f\n", m_flNextPrimaryAttack - gpGlobals->curtime < 0 ? 0.0f : m_flNextPrimaryAttack - gpGlobals->curtime);
 	// Call into the base ItemBusyFrame.
 	BaseClass::ItemBusyFrame();
 
@@ -1599,7 +1598,6 @@ void CTFWeaponBase::SoftZoomCheck( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemPostFrame( void )
 {
-	DevMsg("%f\n", m_flNextPrimaryAttack - gpGlobals->curtime < 0 ? 0.0f : m_flNextPrimaryAttack - gpGlobals->curtime);
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 	{

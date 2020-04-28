@@ -1124,15 +1124,17 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 		SetModelIndex( nModelIndex );
 
-		if ( m_iTeam == TF_TEAM_RED )
+		int iVisibleTeam = m_iTeam < TF_TEAM_RED ? TF_TEAM_MERCENARY : m_iTeam;
+		
+		if ( iVisibleTeam == TF_TEAM_RED )
 		{
 			m_nSkin = 0;
 		}
-		else if ( m_iTeam == TF_TEAM_BLUE )
+		else if ( iVisibleTeam == TF_TEAM_BLUE )
 		{
 			m_nSkin = 1;
 		}
-		else if ( m_iTeam == TF_TEAM_MERCENARY ) //mercenary
+		else if ( iVisibleTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
 			if ( of_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
 				m_nSkin = 6;
@@ -1193,6 +1195,32 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 
 		m_nBody = pPlayer->GetBody();
+		
+		if( !of_disable_cosmetics.GetBool() )
+		{
+			for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+			{
+				if ( pPlayer->m_iCosmetics[i] )
+				{
+					KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+					if( !pCosmetic )
+						continue;
+
+					if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+					{
+						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+						
+						if( handle )
+						{
+							int iVisibleTeam = m_iTeam < TF_TEAM_RED ? TF_TEAM_MERCENARY : m_iTeam;
+							handle->m_nSkin = iVisibleTeam - 2;
+							
+							m_hCosmetic.AddToTail(handle);
+						}
+					}
+				}
+			}
+		}
 	}
 	else
 	{
@@ -1202,8 +1230,8 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		SetAbsVelocity( m_vecRagdollVelocity );
 
 		Interp_Reset( GetVarMapping() );
-	}
-
+	}	
+	
 	bool bPlayDeathAnim = false;
 	int iRandom = random->RandomInt( 0 , 3 ); // 25% chance to play
 
@@ -1320,32 +1348,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	// must think immediately for dismemberment
 	SetNextClientThink( gpGlobals->curtime + 0.1f );
 
-	if( !of_disable_cosmetics.GetBool() && pPlayer )
-	{
-		for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
-		{
-			if ( pPlayer->m_iCosmetics[i] )
-			{
-				KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
-				if( !pCosmetic )
-					continue;
-
-				if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
-				{
-					CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-					
-					if( handle )
-					{
-						int iVisibleTeam = m_iTeam;
-						handle->m_nSkin = iVisibleTeam - 2;
-						
-						m_hCosmetic.AddToTail(handle);
-					}
-				}
-			}
-		}
-	}
-
 	// Birthday mode.
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
 	{
@@ -1420,8 +1422,8 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			{
 				bCreateRagdoll = false;
 			}
-		}
-
+		}	
+		
 		if ( bCreateRagdoll )
 		{
 			if ( m_bGib )
@@ -1435,6 +1437,21 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 				if ( of_gore.GetBool() && m_bGoreEnabled )
 				{
 					InitDismember();
+				}
+			}
+		}
+		C_TFPlayer *pPlayer = NULL;
+		if ( hPlayer )
+		{
+			pPlayer = dynamic_cast<C_TFPlayer*>( hPlayer.Get() );
+		}
+		if( pPlayer )
+		{
+			for ( int i = 0; i < pPlayer->m_hCosmetic.Count(); i++ )
+			{
+				if ( pPlayer->m_hCosmetic[i] )
+				{
+					pPlayer->m_hCosmetic[i]->Release();
 				}
 			}
 		}
@@ -1577,7 +1594,6 @@ void C_TFRagdoll::EndFadeOut()
 		}
 	}
 	m_hCosmetic.Purge();
-
 	SetNextClientThink( CLIENT_THINK_NEVER );
 	ClearRagdoll();
 	SetRenderMode( kRenderNone );
