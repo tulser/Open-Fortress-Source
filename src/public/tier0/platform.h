@@ -379,8 +379,16 @@ FIXME: Enable this when we no longer fear change =)
 #else
 typedef unsigned int DWORD;
 #endif
+typedef long LONG;
+typedef DWORD COLORREF;
+typedef unsigned int UINT;
+typedef size_t SIZE_T;
+typedef const char* LPCSTR;
 typedef unsigned short WORD;
 typedef void * HINSTANCE;
+typedef void * HANDLE;
+typedef HANDLE WHANDLE;
+typedef time_t SYSTEMTIME;
 #define _MAX_PATH PATH_MAX
 #define __cdecl
 #define __stdcall
@@ -748,6 +756,44 @@ typedef void * HINSTANCE;
 
 typedef uint32 HMODULE;
 typedef void *HANDLE;
+
+typedef struct tagBITMAPINFOHEADER {
+  DWORD biSize;
+  LONG  biWidth;
+  LONG  biHeight;
+  WORD  biPlanes;
+  WORD  biBitCount;
+  DWORD biCompression;
+  DWORD biSizeImage;
+  LONG  biXPelsPerMeter;
+  LONG  biYPelsPerMeter;
+  DWORD biClrUsed;
+  DWORD biClrImportant;
+} BITMAPINFOHEADER, *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
+
+typedef struct tagRGBQUAD {
+  BYTE rgbBlue;
+  BYTE rgbGreen;
+  BYTE rgbRed;
+  BYTE rgbReserved;
+} RGBQUAD;
+
+#define RGB( r, g, b ) (r << 16) + (g << 8) + (b << 8);
+
+#define Sys_RegisterWindowMessage( x ) return NULL;
+#define Sys_PostMessage( a, b, c, d) return NULL;
+#define GetSystemTime( vtime ) vtime = time(NULL)
+
+typedef struct tagBITMAPINFO {
+  BITMAPINFOHEADER bmiHeader;
+  RGBQUAD          bmiColors[1];
+} BITMAPINFO, *LPBITMAPINFO, *PBITMAPINFO;
+
+typedef struct tagHGLOBAL {
+  UINT uFlags;
+  SIZE_T dwBytes;
+} HGLOBAL;
+
 #endif
 
 //-----------------------------------------------------------------------------

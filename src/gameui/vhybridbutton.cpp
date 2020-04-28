@@ -6,7 +6,7 @@
 
 #include "cbase.h"
 #include "VHybridButton.h"
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "VFooterPanel.h"
 #include "VFlyoutMenu.h"
 #include "EngineInterface.h"

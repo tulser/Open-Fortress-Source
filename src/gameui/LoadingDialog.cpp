@@ -8,7 +8,7 @@
 
 #include "LoadingDialog.h"
 #include "EngineInterface.h"
-#include "igameuifuncs.h"
+#include "IGameUIFuncs.h"
 
 #include <vgui/IInput.h>
 #include <vgui/ISurface.h>
@@ -24,7 +24,7 @@
 
 #include "GameUI_Interface.h"
 #include "ModInfo.h"
-#include "basepanel.h"
+#include "BasePanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>

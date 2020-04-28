@@ -7,8 +7,9 @@
 
 #undef fopen
 
-#if !defined( _X360 )
+#if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h> // SRC only!!
+#include <io.h>
 #endif
 
 #include "OptionsSubMultiplayer.h"
@@ -36,10 +37,10 @@
 #include "CvarToggleCheckButton.h"
 #include "CvarSlider.h"
 #include "LabeledCommandComboBox.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "EngineInterface.h"
 #include "BitmapImagePanel.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "ModInfo.h"
 #include "tier1/convar.h"
 
@@ -57,7 +58,6 @@
 
 #include "bitmap/tgawriter.h"
 #include "ivtex.h"
-#include <io.h>
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"

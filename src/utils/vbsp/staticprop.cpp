@@ -14,7 +14,7 @@
 #include "VPhysics_Interface.h"
 #include "Studio.h"
 #include "byteswap.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "CollisionUtils.h"
 #include <float.h>
 #include "CModel.h"

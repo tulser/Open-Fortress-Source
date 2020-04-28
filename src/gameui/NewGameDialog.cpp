@@ -21,7 +21,7 @@
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/Frame.h"
 #include "vgui_controls/ControllerMap.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "ModInfo.h"
 #include "tier1/convar.h"
 #include "GameUI_Interface.h"

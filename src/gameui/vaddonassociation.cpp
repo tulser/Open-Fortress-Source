@@ -5,7 +5,7 @@
 //=====================================================================================//
 #include "cbase.h"
 #include <tier0/platform.h>
-#ifdef IS_WINDOWS_PC
+#if defined( WIN32 ) && !defined( _X360 )
 #include "windows.h"
 #endif
 #include "VAddonAssociation.h"

@@ -9,7 +9,7 @@
 #include "ModInfo.h"
 #include "KeyValues.h"
 #include "vgui_controls/Controls.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "EngineInterface.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

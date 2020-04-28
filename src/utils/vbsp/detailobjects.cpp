@@ -22,7 +22,7 @@
 #include "vstdlib/random.h"
 #include "builddisp.h"
 #include "disp_vbsp.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "CollisionUtils.h"
 #include <float.h>
 #include "UtlLinkedList.h"

@@ -12,7 +12,7 @@
 #include "vrad.h"
 #include "Bsplib.h"
 #include "GameBSPFile.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "utlvector.h"
 #include "CModel.h"
 #include "studio.h"

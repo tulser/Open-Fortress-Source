@@ -13,8 +13,9 @@
 
 #undef fopen
 
-#if !defined( _X360 )
+#if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h> // SRC only!!
+#include <io.h>
 #endif
 
 #include "customizationdialogsub.h"
@@ -32,7 +33,7 @@
 #include <vgui_controls/ImagePanel.h>
 #include <vgui_controls/FileOpenDialog.h>
 #include <vgui_controls/MessageBox.h>
-#include <vgui/IVgui.h>
+#include <vgui/IVGui.h>
 #include <vgui/ILocalize.h>
 #include <vgui/IPanel.h>
 #include <vgui_controls/MessageBox.h>
@@ -41,20 +42,19 @@
 #include "CvarToggleCheckButton.h"
 #include "CvarSlider.h"
 #include "LabeledCommandComboBox.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "EngineInterface.h"
 #include "BitmapImagePanel.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "ModInfo.h"
 #include "tier1/convar.h"
 
-#include "materialsystem/IMaterial.h"
-#include "materialsystem/IMesh.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imesh.h"
 #include "materialsystem/imaterialvar.h"
 #include <setjmp.h>
 
 #include "ivtex.h"
-#include <io.h>
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"

@@ -22,7 +22,7 @@
 #include "vgui_controls/Label.h"
 #include "vgui_controls/TextImage.h"
 
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "cdll_util.h"
 #include "vgui/ISurface.h"
 #include "VAchievements.h"

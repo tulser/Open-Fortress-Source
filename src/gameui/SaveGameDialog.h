@@ -35,7 +35,7 @@ protected:
 };
 
 #define SAVE_NUM_ITEMS 4
-
+	
 //
 //
 //
@@ -52,7 +52,7 @@ public:
 	virtual void	OnDoneScanningSaveGames( void );
 
 private:
-	friend class CAsyncCtxSaveGame;
+	//friend class CAsyncCtxSaveGame;
 	void			InitiateSaving();
 	void			SaveCompleted( CAsyncCtxSaveGame *pCtx );
 

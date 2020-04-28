@@ -16,7 +16,7 @@ using namespace vgui;
 #include <vgui_controls/Label.h>
 #include <vgui_controls/TextEntry.h>
 
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "PanelListPanel.h"
 #include "ScriptObject.h"
 #include "tier1/convar.h"

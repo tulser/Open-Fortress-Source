@@ -11,7 +11,7 @@
 
 #include "vrad.h"
 #include "mathlib/vector.h"
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include "utlvector.h"
 #include "GameBSPFile.h"
 #include "BSPTreeData.h"

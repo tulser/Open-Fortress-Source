@@ -12,7 +12,7 @@
 #include "vgui_controls/Button.h"
 #include "vgui_controls/PHandle.h"
 #include "vgui_controls/MenuItem.h"
-#include "vgui_controls/messagedialog.h"
+#include "vgui_controls/MessageDialog.h"
 #include "tier1/utllinkedlist.h"
 #include "OptionsDialog.h"
 #include "OptionsSubKeyboard.h"

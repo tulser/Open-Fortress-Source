@@ -1,5 +1,5 @@
 #include "cbase.h"
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "./GameUI/IGameUI.h"
 #include "ienginevgui.h"
 #include "engine/IEngineSound.h"
@@ -8,9 +8,9 @@
 #include "ixboxsystem.h"
 #include "GameUI_Interface.h"
 #include "game/client/IGameClientExports.h"
-#include "gameui/igameconsole.h"
+#include "GameUI/IGameConsole.h"
 #include "inputsystem/iinputsystem.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 //#include "filesystem/IXboxInstaller.h"
 #include "tier2/renderutils.h"
 #include "vgui_video_player.h"
@@ -20,7 +20,7 @@
 #endif
 
 // BaseModUI High-level windows
-#include "playerlistdialog.h"
+#include "PlayerListDialog.h"
 #include "VTransitionScreen.h"
 //#include "VAchievements.h"
 #include "vaddonassociation.h"

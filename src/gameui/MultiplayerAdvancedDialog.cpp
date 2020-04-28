@@ -24,7 +24,7 @@
 #include "ScriptObject.h"
 #include <vgui/IInput.h>
 
-#include "FileSystem.h"
+#include "filesystem.h"
 
 
 // memdbgon must be the last include file in a .cpp file!!!

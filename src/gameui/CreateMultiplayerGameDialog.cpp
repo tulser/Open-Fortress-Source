@@ -20,7 +20,7 @@ using namespace vgui;
 
 #include <vgui/ILocalize.h>
 
-#include "FileSystem.h"
+
 #include <KeyValues.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -55,6 +55,9 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 	AddPage(m_pGameplayPage, "#GameUI_Game");
 
 	// create KeyValues object to load/save config options
+
+	// TODO fix up
+#if defined( WIN32 ) && !defined( _X360 )
 	m_pSavedData = new KeyValues( "ServerConfig" );
 
 	// load the config data
@@ -68,6 +71,7 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 			m_pServerPage->SetMap(startMap);
 		}
 	}
+#endif
 
 	if ( m_bBotsEnabled )
 	{
@@ -114,6 +118,7 @@ bool CCreateMultiplayerGameDialog::OnOK(bool applyOnly)
 	Q_strncpy(szHostName, m_pGameplayPage->GetHostName(), sizeof( szHostName ));
 	Q_strncpy(szPassword, m_pGameplayPage->GetPassword(), sizeof( szPassword ));
 
+#if defined( WIN32 ) && !defined( _X360 )
 	// save the config data
 	if (m_pSavedData)
 	{
@@ -130,6 +135,7 @@ bool CCreateMultiplayerGameDialog::OnOK(bool applyOnly)
 		// save config to a file
 		m_pSavedData->SaveToFile( g_pFullFileSystem, "ServerConfig.vdf", "GAME" );
 	}
+#endif
 
 	char szMapCommand[1024];
 

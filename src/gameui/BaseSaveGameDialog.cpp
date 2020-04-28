@@ -6,7 +6,7 @@
 
 
 #include "BaseSaveGameDialog.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "savegame_version.h"
 #include "vgui_controls/PanelListPanel.h"
 #include "vgui_controls/Label.h"
@@ -16,7 +16,7 @@
 #include "tier1/utlbuffer.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #include "MouseMessageForwardingPanel.h"
 

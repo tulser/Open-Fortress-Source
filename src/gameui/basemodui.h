@@ -7,7 +7,7 @@
 #ifndef __BASEMOD360UI_H__
 #define __BASEMOD360UI_H__
 
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "basemodframe.h"
 #include "UIGameData.h"
 #include "GameUI_Interface.h"

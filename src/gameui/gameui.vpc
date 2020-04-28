@@ -115,28 +115,28 @@ $Project "GameUI"
 
 		$File	"vachievements.h"		
 		$File	"vaddonassociation.h"
-		$File	"vaddons.h"
-		$File	"vattractscreen.h"
-		$File	"vaudio.h"
-		$File	"vaudiovideo.h"
+		$File	"VAddons.h"
+		$File	"VAttractScreen.h"
+		$File	"VAudio.h"
+		$File	"VAudioVideo.h"
 		$File	"vcustomcampaigns.h"
 		$File	"vdropdownmenu.h"
-		$File	"vflyoutmenu.h"
-		$File	"vfooterpanel.h"
-		$File	"vgenericconfirmation.h"
-		$File	"vgenericpanellist.h"
+		$File	"VFlyoutMenu.h"
+		$File	"VFooterPanel.h"
+		$File	"VGenericConfirmation.h"
+		$File	"VGenericPanelList.h"
 		$File	"vgetlegacydata.h"
 		$File	"vhybridbutton.h"
-		$File	"vingamemainmenu.h"
+		$File	"VInGameMainMenu.h"
 		$File	"vkeyboard.h"
-		$File	"vkeyboardmouse.h"
-		$File	"vloadingprogress.h"
-		$File	"vmainmenu.h"
-		$File	"vmultiplayer.h"
+		$File	"VKeyboardMouse.h"
+		$File	"VLoadingProgress.h"
+		$File	"VMainMenu.h"
+		$File	"VMultiplayer.h"
 		$File	"vmouse.h"
 		$File	"vslidercontrol.h"
-		$File	"vtransitionscreen.h"
-		$File	"vvideo.h"
+		$File	"VTransitionScreen.h"
+		$File	"VVideo.h"
 		
 		$File	"basemodframe.cpp"
 		$File	"BaseModPanel.cpp"
@@ -144,79 +144,79 @@ $Project "GameUI"
 		$File	"optionsmousedialog.cpp"
 		$File	"vachievements.cpp"
 		$File	"vaddonassociation.cpp"
-		$File	"vaddons.cpp"
-		$File	"vattractscreen.cpp"
-		$File	"vaudio.cpp"
-		$File	"vaudiovideo.cpp"
+		$File	"VAddons.cpp"
+		$File	"VAttractScreen.cpp"
+		$File	"VAudio.cpp"
+		$File	"VAudioVideo.cpp"
 		$File	"vcustomcampaigns.cpp"
 		$File	"vdropdownmenu.cpp"
-		$File	"vflyoutmenu.cpp"
-		$File	"vfooterpanel.cpp"
-		$File	"vgenericconfirmation.cpp"
-		$File	"vgenericpanellist.cpp"
+		$File	"VFlyoutMenu.cpp"
+		$File	"VFooterPanel.cpp"
+		$File	"VGenericConfirmation.cpp"
+		$File	"VGenericPanelList.cpp"
 		$File	"vgetlegacydata.cpp"
 		$File	"vhybridbutton.cpp"
-		$File	"vingamemainmenu.cpp"
+		$File	"VInGameMainMenu.cpp"
 		$File	"vkeyboard.cpp"
 		$File	"vkeyboardmouse.cpp"
-		$File	"vloadingprogress.cpp"
-		$File	"vmainmenu.cpp"
-		$File	"vmultiplayer.cpp"
+		$File	"VLoadingProgress.cpp"
+		$File	"VMainMenu.cpp"
+		$File	"VMultiplayer.cpp"
 		$File	"vmenubackground.cpp"
 		$File	"vmouse.cpp"
 		$File	"vslidercontrol.cpp"
-		$File	"vtransitionscreen.cpp"
-		$File	"vvideo.cpp"
+		$File	"VTransitionScreen.cpp"
+		$File	"VVideo.cpp"
 		$File	"UI_Shared.cpp"
 		$File	"UIGameData.cpp"
 
-		$File	"backgroundmenubutton.cpp" \
-				"basesavegamedialog.cpp" \
-				"bitmapimagepanel.cpp" \
-				"commandcheckbutton.cpp" \
-				"contentcontroldialog.cpp" \
-				"createmultiplayergamebotpage.cpp" \
-				"createmultiplayergamedialog.cpp" \
-				"createmultiplayergamegameplaypage.cpp" \
-				"createmultiplayergameserverpage.cpp" \
-				"customtabexplanationdialog.cpp" \
-				"cvarnegatecheckbutton.cpp" \
+		$File	"BackgroundMenuButton.cpp" \
+				"BaseSaveGameDialog.cpp" \
+				"BitmapImagePanel.cpp" \
+				"CommandCheckButton.cpp" \
+				"ContentControlDialog.cpp" \
+				"CreateMultiplayerGameBotPage.cpp" \
+				"CreateMultiplayerGameDialog.cpp" \
+				"CreateMultiplayerGameGameplayPage.cpp" \
+				"CreateMultiplayerGameServerPage.cpp" \
+				"CustomTabExplanationDialog.cpp" \
+				"CvarNegateCheckButton.cpp" \
 				"cvarslider.cpp" \
-				"cvartextentry.cpp" \
-				"cvartogglecheckbutton.cpp" \
-				"gameconsole.cpp" \
-				"gameconsoledialog.cpp" \
-				"gameui_interface.cpp" \
+				"CvarTextEntry.cpp" \
+				"CvarToggleCheckButton.cpp" \
+				"GameConsole.cpp" \
+				"GameConsoleDialog.cpp" \
+				"GameUI_Interface.cpp" \
 				"gameui_util.cpp" \
-				"keytogglecheckbutton.cpp" \
-				"labeledcommandcombobox.cpp" \
-				"loadingdialog.cpp" \
-				"loadingtippanel.cpp" \
+				"KeyToggleCheckButton.cpp" \
+				"LabeledCommandComboBox.cpp" \
+				"LoadingDialog.cpp" \
+				"loadingtippanel.cpp" \P
 				"logofile.cpp" \
-				"modinfo.cpp" \
-				"mousemessageforwardingpanel.cpp" \
-				"multiplayeradvanceddialog.cpp" \
-				"optionsdialog.cpp" \
-				"optionssubaudio.cpp" \
-				"optionssubdifficulty.cpp" \
-				"optionssubgame.cpp" \
-				"optionssubkeyboard.cpp" \
-				"optionssubmouse.cpp" \
+				"ModInfo.cpp" \
+				"MouseMessageForwardingPanel.cpp" \
+				"MultiplayerAdvancedDialog.cpp" \
+				"OptionsDialog.cpp" \
+				"OptionsSubAudio.cpp" \
+				"OptionsSubDifficulty.cpp" \
+				"OptionsSubGame.cpp" \
+				"OptionsSubKeyboard.cpp" \
+				"OptionsSubMouse.cpp" \
 				"optionssubmultiplayer.cpp" \
 				"optionssubportal.cpp" \
-				"optionssubvideo.cpp" \
+				"OptionsSubVideo.cpp" \
 				"optionssubvoice.cpp" \
 				"customizationdialog.cpp" \			
 				"customizationdialogsub.cpp" \						
-				"panellistpanel.cpp" \
-				"playerlistdialog.cpp" \
+				"PanelListPanel.cpp" \
+				"PlayerListDialog.cpp" \
 				"rungameengine.cpp" \
-				"scriptobject.cpp" \
+				"ScriptObject.cpp" \
 				"sys_utils.cpp" \
 				"textentrybox.cpp" \
 				"urlbutton.cpp" \
 				"vcontrolslistpanel.cpp" \
-				"vguisystemmoduleloader.cpp" \
+				"VGuiSystemModuleLoader.cpp" \
 				"$SRCDIR\common\language.cpp" \
 				"$SRCDIR\public\crtmemdebug.cpp" \
 				"$SRCDIR\public\filesystem_helpers.cpp" \

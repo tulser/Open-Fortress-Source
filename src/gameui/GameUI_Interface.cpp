@@ -5,23 +5,23 @@
 // $NoKeywords: $
 //===========================================================================//
 
-#if !defined( _X360 )
+#if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h>
+#include "Sys_Utils.h"
+#include <direct.h>
+#include <io.h>
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
-#include <io.h>
 #include <tier0/dbg.h>
-#include <direct.h>
 
 #ifdef SendMessage
 #undef SendMessage
 #endif
 																
-#include "FileSystem.h"
+#include "filesystem.h"
 #include "GameUI_Interface.h"
-#include "Sys_Utils.h"
 #include "string.h"
 #include "tier0/icommandline.h"
 
@@ -29,7 +29,7 @@
 #include "EngineInterface.h"
 
 #include "VGuiSystemModuleLoader.h"
-#include "bitmap/TGALoader.h"
+#include "bitmap/tgaloader.h"
 
 #include "GameConsole.h"
 #include "LoadingDialog.h"
@@ -40,11 +40,11 @@
 #include "ixboxsystem.h"
 #include "iachievementmgr.h"
 #include "IGameUIFuncs.h"
-#include "IEngineVGUI.h"
+#include "ienginevgui.h"
 #include "video/ivideoservices.h"
 
-#include "vmainmenu.h"
-#include "vingamemainmenu.h"
+#include "VMainMenu.h"
+#include "VInGameMainMenu.h"
 #include "VGenericConfirmation.h"
 #include "VFooterPanel.h"
 
@@ -69,7 +69,7 @@
 
 #include <vgui/IInput.h>
 
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "basemodui.h"
 typedef BaseModUI::CBaseModPanel UI_BASEMOD_PANEL_CLASS;
 inline UI_BASEMOD_PANEL_CLASS & GetUiBaseModPanelClass() { return UI_BASEMOD_PANEL_CLASS::GetSingleton(); }
@@ -378,6 +378,7 @@ void CGameUI::PlayGameStartupSound()
 	// did we find any?
 	if ( fileNames.Count() > 0 )
 	{
+#if defined( WIN32 ) && !defined( _X360 )
 		SYSTEMTIME SystemTime;
 		GetSystemTime( &SystemTime );
 		int index = SystemTime.wMilliseconds % fileNames.Count();
@@ -391,6 +392,7 @@ void CGameUI::PlayGameStartupSound()
 
 			engine->ClientCmd_Unrestricted( found );
 		}
+#endif
 
 		fileNames.PurgeAndDeleteElements();
 	}

@@ -14,7 +14,7 @@
 #include "vGenericConfirmation.h"
 #include "VAddons.h"
 //#include "VQuickJoin.h"
-//#include "basemodpanel.h"
+//#include "BaseModPanel.h"
 //#include "UIGameData.h"
 //#include "VGameSettings.h"
 //#include "VSteamCloudConfirmation.h"
@@ -24,7 +24,7 @@
 #include "VGuiSystemModuleLoader.h"
 //#include "VAttractScreen.h"
 #include "gamemodes.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #include "vgui/ILocalize.h"
 #include "vgui_controls/Label.h"

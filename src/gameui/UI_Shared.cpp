@@ -12,7 +12,7 @@
 #include "VFlyoutMenu.h"
 #include "vGenericConfirmation.h"
 #include "VGuiSystemModuleLoader.h"
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #include "ienginevgui.h"
 #include "basepanel.h"

@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <memory.h>
-#if !defined( _X360 )
+#if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h>
 #endif
 
@@ -98,7 +98,7 @@ void CContentControlDialog::Activate()
 void CContentControlDialog::ResetPassword()
 {
 	// Set initial value
-#ifndef _XBOX
+#if defined( WIN32 ) && !defined( _X360 )
 	HKEY key;
 	if ( ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Valve\\Half-Life\\Settings", 0, KEY_READ, &key))
 	{
@@ -207,7 +207,7 @@ void CContentControlDialog::OnClose()
 void CContentControlDialog::WriteToken( const char *str )
 {
 	// Set initial value
-#ifndef _XBOX
+#if defined( WIN32 ) && !defined( _X360 )
 	HKEY key;
 	if ( ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Valve\\Half-Life\\Settings", 0, KEY_WRITE, &key))
 	{

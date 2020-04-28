@@ -6,14 +6,14 @@
 //
 //=============================================================================//
 
-#if !defined( _X360 )
+#if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h>
 #endif
 #include <stdio.h>
-#include "UtlBuffer.h"
+#include "utlbuffer.h"
 #include <vgui/VGUI.h>
 #include <vgui_controls/Controls.h>
-#include "FileSystem.h"
+#include "filesystem.h"
 
 #if defined( _X360 )
 #include "xbox/xbox_win32stubs.h"
@@ -80,6 +80,8 @@ must be multiples of sixteen
 */
 int GrabMip ( HANDLE hdib, unsigned char *lump_p, char *lumpname, COLORREF crf, int *width, int *height)
 {
+	return 0;
+#if 0
 	int             i,x,y,xl,yl,xh,yh,w,h;
 	unsigned char   *screen_p, *source;
 	miptex_t		*qtex;
@@ -192,6 +194,7 @@ int GrabMip ( HANDLE hdib, unsigned char *lump_p, char *lumpname, COLORREF crf, 
 	*lump_p++  = (unsigned char)((crf >> 16) & 0xFF);
 
 	return lump_p - lump_start;
+#endif
 }
 
 

@@ -7,7 +7,7 @@
 #include "cbase.h"
 #include <ctype.h>
 #include "basemodframe.h"
-#include "basemodpanel.h"
+#include "BaseModPanel.h"
 #include "EngineInterface.h"
 
 #include "VFooterPanel.h"
@@ -21,12 +21,12 @@
 #include "vgui/IInput.h"
 #include "vgui_controls/Tooltip.h"
 #include "vgui_controls/ImagePanel.h"
-#include "vgui/ilocalize.h"
+#include "vgui/ILocalize.h"
 
 #include "filesystem.h"
 #include "fmtstr.h"
 #include "cdll_util.h"
-#include "materialsystem\itexture.h"
+#include "materialsystem/itexture.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

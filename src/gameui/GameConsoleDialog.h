@@ -13,7 +13,7 @@
 
 #include "vgui_controls/consoledialog.h"
 #include <Color.h>
-#include "UtlVector.h"
+#include "utlvector.h"
 #include "EngineInterface.h"
 #include "vgui_controls/Frame.h"
 
