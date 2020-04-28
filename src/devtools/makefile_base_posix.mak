@@ -80,6 +80,11 @@ COPY_DLL_TO_SRV = 0
 # http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
 LDFLAGS += -Wl,--build-id
 
+# OPEN FORTRESS LINKER PATH.
+# Simulates Windows linker searchpath for fmod and discord shared libs.
+# Replaces the much hackier `ldproxy` :)
+LDFLAGS += -Wl,-rpath,'$$ORIGIN'
+
 #
 # If we should be running in a chroot, check to see if we are. If not, then prefix everything with the 
 # required chroot
