@@ -51,6 +51,7 @@ public:
 	vgui::VPANEL GetVPanel( void ) { return BaseClass::GetVPanel(); }
 	virtual bool IsVisible() { return BaseClass::IsVisible(); }
 	virtual void SetParent( vgui::VPANEL parent ) { BaseClass::SetParent( parent ); }
+	virtual int GetTeamNumber( void ){ return m_iTeam; };
 
 protected:
 

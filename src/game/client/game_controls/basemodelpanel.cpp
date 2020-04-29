@@ -197,6 +197,15 @@ void CModelPanel::SetSkin( int nSkin )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+void CModelPanel::SetAttachmentsSkin( int nSkin )
+{
+	for( int i = 0; i < m_pModelInfo->m_AttachedModelsInfo.Count(); i++ )
+		m_pModelInfo->m_AttachedModelsInfo[i]->m_nSkin = nSkin;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CModelPanel::SetDefaultAnimation( const char *pszName )
 {
 	if ( m_pModelInfo )

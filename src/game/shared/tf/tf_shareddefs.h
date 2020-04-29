@@ -133,9 +133,7 @@ enum
 //-----------------------------------------------------------------------------
 // TF-specific viewport panels
 //-----------------------------------------------------------------------------
-#define PANEL_CLASS_BLUE		"class_blue"
-#define PANEL_CLASS_RED			"class_red"
-#define PANEL_CLASS_MERCENARY	"class_mercenary"
+#define PANEL_CLASS				"class"
 #define PANEL_MAPINFO			"mapinfo"
 #define PANEL_ROUNDINFO			"roundinfo"
 #define PANEL_DMTEAMSELECT      "dmteamselect"

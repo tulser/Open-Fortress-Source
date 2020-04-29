@@ -110,9 +110,7 @@ enum sdkteams_e
 
 	#if defined ( SDK_USE_TEAMS )
 		//Tony; using teams with classes, so make sure the team class panel names are defined.
-		#define PANEL_CLASS_BLUE		"class_blue"
-		#define PANEL_CLASS_RED			"class_red"
-		#define PANEL_CLASS_MERCENARY	"class_mercenary"
+		#define PANEL_CLASS		"class"
 
 		extern const char *pszTeamBlueClasses[];
 		extern const char *pszTeamRedClasses[];

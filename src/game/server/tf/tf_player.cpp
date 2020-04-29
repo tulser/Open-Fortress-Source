@@ -1303,6 +1303,7 @@ void CTFPlayer::UpdateCosmetics()
 			Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_Mercenary_cosmetic_loadout" ), sizeof(szDesired));
 		else
 		{
+			//Q_strncpy(szDesired,"0 25 27 13 40 17 28", sizeof(szDesired));
 			int iCosmeticCount = random->RandomInt( 0, 5 );
 			int iMaxCosNum = GetItemsGame() ? GetItemsGame()->GetInt("cosmetic_count", 5 ) : 5;
 			for( int i = 0; i < iCosmeticCount; i++ )
@@ -2764,7 +2765,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 			if ( of_forceclass.GetBool() ) 
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 			else
-				ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+				ShowViewPortPanel( PANEL_CLASS );
 
 			if ( !of_allowteams.GetBool() ) 
 				return;
@@ -2862,20 +2863,20 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 			{
 				ChangeTeam( TF_TEAM_RED, false );
 				if( !of_forceclass.GetBool() )
-					ShowViewPortPanel( PANEL_CLASS_RED );
+					ShowViewPortPanel( PANEL_CLASS );
 			}
 			else if ( GetTeamNumber() != TF_TEAM_BLUE &&
 				TFGameRules()->GetInfectionRoundTimer() && !TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 			{
 				ChangeTeam( TF_TEAM_BLUE, false );
 				if( !of_forcezombieclass.GetBool() )
-					ShowViewPortPanel( PANEL_CLASS_BLUE );
+					ShowViewPortPanel( PANEL_CLASS );
 			}
 			else
 			{
 				ChangeTeam( TF_TEAM_RED, false );
 				if( !of_forceclass.GetBool() )
-					ShowViewPortPanel( PANEL_CLASS_RED );
+					ShowViewPortPanel( PANEL_CLASS );
 			}
 
 			if ( ( GetTeamNumber() == TF_TEAM_RED && of_forceclass.GetBool() ) 
@@ -2904,21 +2905,11 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		if ( TFGameRules()->IsDMGamemode() )
 		{
 			if ( of_forceclass.GetBool() == 0 )
-				if ( iTeam == TF_TEAM_RED )
-					ShowViewPortPanel( PANEL_CLASS_RED );
-				else if ( iTeam == TF_TEAM_BLUE )
-					ShowViewPortPanel( PANEL_CLASS_BLUE );
-				else if ( iTeam == TF_TEAM_MERCENARY )
-					ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+				ShowViewPortPanel( PANEL_CLASS );
 		}
 		else
 		{
-			if ( iTeam == TF_TEAM_RED ) 
-				ShowViewPortPanel( PANEL_CLASS_RED );
-			else if ( iTeam == TF_TEAM_BLUE )
-				ShowViewPortPanel( PANEL_CLASS_BLUE );
-			else if ( iTeam == TF_TEAM_MERCENARY )
-				ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+			ShowViewPortPanel( PANEL_CLASS );
 		}
 	}	
 }
@@ -3588,23 +3579,7 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 		}
 		else if ( IsPlayerClass( TF_CLASS_UNDEFINED ) )
 		{
-			switch( GetTeamNumber() )
-			{
-			case TF_TEAM_RED:
-				ShowViewPortPanel( PANEL_CLASS_RED, true );
-				break;
-
-			case TF_TEAM_BLUE:
-				ShowViewPortPanel( PANEL_CLASS_BLUE, true );
-				break;
-
-			case TF_TEAM_MERCENARY:
-				ShowViewPortPanel( PANEL_CLASS_MERCENARY, true );
-				break;				
-				
-			default:
-				break;
-			}
+			ShowViewPortPanel( PANEL_CLASS, true );
 		}
 		return true;
 	}
@@ -9625,14 +9600,14 @@ bool CTFPlayer::ShouldAnnouceAchievement( void )
 void CTFPlayer::UpdatePlayerColor ( void )
 {
 	// bots have their own system so dont do this
-	if ( IsFakeClient() )
-		return;
 	
 	Vector vecNewColor;
 	switch( GetTeamNumber() )
 	{
 		default:
 		case TF_TEAM_MERCENARY:
+			if ( IsFakeClient() )
+				return;
 			vecNewColor.x = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_r" ) ) / 255.0f;
 			vecNewColor.y = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_g" ) ) / 255.0f;
 			vecNewColor.z = V_atoi( engine->GetClientConVarValue( entindex(), "of_color_b" ) ) / 255.0f;

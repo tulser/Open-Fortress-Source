@@ -192,6 +192,7 @@ public:
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
 
 	void	SetSkin( int nSkin );
+	void	SetAttachmentsSkin( int nSkin );
 	void	SetDefaultAnimation( const char *pszName );
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
 	

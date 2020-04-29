@@ -332,9 +332,7 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 				return;
 			}
 
-			gViewPortInterface->ShowPanel(PANEL_CLASS_RED, false);
-			gViewPortInterface->ShowPanel(PANEL_CLASS_BLUE, false);
-			gViewPortInterface->ShowPanel(PANEL_CLASS_MERCENARY, false);
+			gViewPortInterface->ShowPanel(PANEL_CLASS, false);
 
 			engine->CheckPoint("TeamMenu");
 
@@ -796,9 +794,7 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 			return;
 		}
 
-		gViewPortInterface->ShowPanel(PANEL_CLASS_RED, false);
-		gViewPortInterface->ShowPanel(PANEL_CLASS_BLUE, false);
-		gViewPortInterface->ShowPanel(PANEL_CLASS_MERCENARY, false);
+		gViewPortInterface->ShowPanel(PANEL_CLASS, false);
 
 		engine->CheckPoint("TeamMenu");
 		Activate();

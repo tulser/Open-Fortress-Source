@@ -129,6 +129,7 @@ CTFFlameThrower::CTFFlameThrower()
 	m_pFiringLoop = NULL;
 	m_bFiringLoopCritical = false;
 	m_pPilotLightSound = NULL;
+	m_pFireParticle = NULL;
 #endif
 }
 
@@ -139,7 +140,6 @@ CTFFlameThrower::~CTFFlameThrower()
 {
 	DestroySounds();
 }
-
 
 void CTFFlameThrower::DestroySounds( void )
 {
@@ -925,25 +925,18 @@ void CTFFlameThrower::StopFlame( bool bAbrupt /* = false */ )
 					pszTeamName = "dm";
 					break;
 			}
-			char pszParticleEffect[32];
 			if ( pLocalPlayer && pLocalPlayer == GetOwner() )
 			{
 				if ( pLocalPlayer->GetViewModel() )
 				{
-					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( "flamethrower_underwater" );
-					Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_%s", pszTeamName );
-					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( pszParticleEffect );
-					Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_crit_%s", pszTeamName );
-					pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed( pszParticleEffect );
+					pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission( m_pFireParticle );
+					m_pFireParticle = NULL;
 				}
 			}
 			else
 			{
-				ParticleProp()->StopParticlesNamed( "flamethrower_underwater" );
-				Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_%s", pszTeamName );
-				ParticleProp()->StopParticlesNamed( pszParticleEffect );
-				Q_snprintf( pszParticleEffect, sizeof(pszParticleEffect), "flamethrower_crit_%s", pszTeamName );
-				ParticleProp()->StopParticlesNamed( pszParticleEffect );
+				ParticleProp()->StopEmission( m_pFireParticle );
+				m_pFireParticle = NULL;
 			}
 		}
 	}
@@ -1041,14 +1034,18 @@ void CTFFlameThrower::RestartParticleEffect( void )
 	{
 		if ( pLocalPlayer->GetViewModel() )
 		{
-			pLocalPlayer->GetViewModel()->ParticleProp()->StopParticlesNamed(pszParticleEffect);
-			pOwner->m_Shared.UpdateParticleColor ( pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" ) );
+			pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission(m_pFireParticle);
+			m_pFireParticle = pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" ) ;
+			pOwner->m_Shared.UpdateParticleColor ( m_pFireParticle );
+			pLocalPlayer->GetViewModel()->ParticleProp()->AddControlPoint( m_pFireParticle, 2, pOwner, PATTACH_ABSORIGIN_FOLLOW );
 		}
 	}
 	else
 	{
-		ParticleProp()->StopParticlesNamed(pszParticleEffect);
-		pOwner->m_Shared.UpdateParticleColor ( ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" ) );
+		ParticleProp()->StopEmission(m_pFireParticle);
+		m_pFireParticle = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "muzzle" );
+		pOwner->m_Shared.UpdateParticleColor ( m_pFireParticle );
+		ParticleProp()->AddControlPoint( m_pFireParticle, 2, pOwner, PATTACH_ABSORIGIN_FOLLOW );
 	}
 	m_bFlameEffects = true;
 }

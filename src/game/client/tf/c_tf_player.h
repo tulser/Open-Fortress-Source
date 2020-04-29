@@ -423,6 +423,8 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
+	int								iCosmeticCount;
+	
 	
 	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
 	virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);

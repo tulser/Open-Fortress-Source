@@ -20,7 +20,7 @@
 #include "tf_controls.h"
 #include "tf_gamerules.h"
 #include "basemodelpanel.h"
-#include "imagemouseoverbutton.h"
+#include "of_imagemouseoverbutton.h"
 #include "IconPanel.h"
 #include <vgui_controls/CheckButton.h>
 #include "GameEventListener.h"
@@ -33,11 +33,11 @@ using namespace vgui;
 extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
-
+extern ConVar of_tennisball;
 //-----------------------------------------------------------------------------
 // This is the entire info panel for the specific class
 //-----------------------------------------------------------------------------
-class CTFClassInfoPanel : public vgui::EditablePanel
+class CTFClassInfoPanel : public vgui::EditablePanel, public CGameEventListener
 {
 private:
 	DECLARE_CLASS_SIMPLE( CTFClassInfoPanel, vgui::EditablePanel );
@@ -45,6 +45,7 @@ private:
 public:
 	CTFClassInfoPanel( vgui::Panel *parent, const char *panelName ) : vgui::EditablePanel( parent, panelName )
 	{
+		ListenForGameEvent( "localplayer_changeteam" );
 	}
 
 	virtual void SetVisible( bool state )
@@ -74,6 +75,48 @@ public:
 
 		BaseClass::SetVisible( state );
 	}
+
+	virtual void FireGameEvent( IGameEvent * event )
+	{
+		if ( FStrEq( "localplayer_changeteam", event->GetName() ) )
+		{
+			CModelPanel *pModelPanel = dynamic_cast<CModelPanel *>(FindChildByName( "classModel" ) );
+			if ( pModelPanel )
+			{
+				C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+				int iVisibleTeam = pPlayer ? pPlayer->GetTeamNumber() : GetTeamNumber();
+				
+				switch( iVisibleTeam )
+				{
+					case TF_TEAM_RED:
+					pModelPanel->SetSkin( 0 );
+					break;
+					case TF_TEAM_BLUE:
+					pModelPanel->SetSkin( 1 );
+					break;
+					default:
+					case TF_TEAM_MERCENARY:
+					// this is really hacky, if the name is merc, do brightskins
+					if ( of_tennisball.GetBool() && Q_stricmp(GetName(),"mercenary") )
+						pModelPanel->SetSkin( 6 );
+					else
+						pModelPanel->SetSkin( 4 );
+					break;						
+				}
+
+				pModelPanel->SetAttachmentsSkin( iVisibleTeam - 2 );
+			}
+		}
+	}
+	
+	virtual int GetTeamNumber( void )
+	{
+		CClassMenu *pParent = dynamic_cast<CClassMenu*>(GetParent());
+		if( pParent )
+			return pParent->GetTeamNumber();
+		else
+			return TF_TEAM_RED;
+	}
 };
 
 
@@ -100,21 +143,41 @@ public:
 
 	virtual void OnClose();
 	virtual void ShowPanel( bool bShow );
-	virtual void UpdateClassCounts( void ){}
 	
 	virtual bool AffectedByDrawHUD( void ){ return false; }
 
+	virtual const char *GetName( void )
+	{ 
+		return PANEL_CLASS; 
+	}
+	
+	virtual int GetTeamNumber( void )
+	{
+		switch( GetLocalPlayerTeam() )
+		{
+			case TF_TEAM_RED:
+			case TF_TEAM_BLUE:
+			case TF_TEAM_MERCENARY:
+				return GetLocalPlayerTeam();
+				break;
+			default:
+				return TF_TEAM_MERCENARY;
+			break;
+		}
+	}
+	virtual void UpdateClassCounts( void ){ UpdateNumClassLabels( GetTeamNumber() ); }
+	
 protected:
 	virtual void ApplySchemeSettings( IScheme *pScheme );
 	virtual void OnKeyCodePressed( KeyCode code );
-	virtual CImageMouseOverButton<CTFClassInfoPanel> *GetCurrentClassButton();
+	virtual CTFImageMouseOverButton<CTFClassInfoPanel> *GetCurrentClassButton();
 	virtual void OnKeyCodeReleased( vgui::KeyCode code );
 	virtual void OnThink();
 	virtual void UpdateNumClassLabels( int iTeam );
 
 protected:
 
-	CImageMouseOverButton<CTFClassInfoPanel> *m_pClassButtons[TF_CLASS_MENU_BUTTONS];
+	CTFImageMouseOverButton<CTFClassInfoPanel> *m_pClassButtons[TF_CLASS_MENU_BUTTONS];
 	CTFClassInfoPanel *m_pClassInfoPanel;
 
 private:
@@ -132,229 +195,6 @@ private:
 	CExLabel *m_pCountLabel;
 #endif
 };
-
-//-----------------------------------------------------------------------------
-// Purpose: Draws the blue class menu
-//-----------------------------------------------------------------------------
-
-class CTFClassMenu_Blue : public CTFClassMenu
-{
-private:
-	DECLARE_CLASS_SIMPLE( CTFClassMenu_Blue, CTFClassMenu );
-
-public:
-	CTFClassMenu_Blue( IViewPort *pViewPort ) : BaseClass( pViewPort )
-	{
-		m_pClassButtons[TF_CLASS_SCOUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "scout_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SOLDIER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "soldier_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MERCENARY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "mercenary_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_PYRO] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "pyro_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_DEMOMAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "demoman_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MEDIC] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "medic_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_HEAVYWEAPONS] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "heavyweapons_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SNIPER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "sniper_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_blue", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_JUGGERNAUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "juggernaut_blue", m_pClassInfoPanel );
-	}
-
-	virtual void ApplySchemeSettings( IScheme *pScheme )
-	{
-		BaseClass::ApplySchemeSettings( pScheme );
-
-		LoadControlSettings( "Resource/UI/Classmenu_blue.res" );
-
-		for( int i = 0; i < GetChildCount(); i++ ) 
-		{
-			CImageMouseOverButton<CTFClassInfoPanel> *button = dynamic_cast<CImageMouseOverButton<CTFClassInfoPanel> *>( GetChild( i ) );
-
-			if ( button )
-			{
-				button->SetPreserveArmedButtons( true );
-				button->SetUpdateDefaultButtons( true );
-			}
-		}
-	}
-
-	virtual void ShowPanel( bool bShow )
-	{
-		if ( bShow )
-		{
-			// make sure the Red class menu isn't open
-			if ( gViewPortInterface )
-			{
-				gViewPortInterface->ShowPanel( PANEL_CLASS_RED, false );
-				gViewPortInterface->ShowPanel( PANEL_CLASS_MERCENARY, false );
-			}
-		}
-
-		BaseClass::ShowPanel( bShow );
-	}
-
-	virtual const char *GetName( void )
-	{ 
-		return PANEL_CLASS_BLUE; 
-	}
-
-	virtual int GetTeamNumber( void )
-	{
-		return TF_TEAM_BLUE;
-	}
-
-	virtual void UpdateClassCounts( void ){ UpdateNumClassLabels( TF_TEAM_BLUE ); }
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Draws the red class menu
-//-----------------------------------------------------------------------------
-
-
-class CTFClassMenu_Red : public CTFClassMenu
-{
-private:
-	DECLARE_CLASS_SIMPLE( CTFClassMenu_Red, CTFClassMenu );
-
-public:
-	CTFClassMenu_Red( IViewPort *pViewPort ) : BaseClass( pViewPort )
-	{
-		m_pClassButtons[TF_CLASS_SCOUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "scout_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SOLDIER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "soldier_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MERCENARY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "mercenary_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_PYRO] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "pyro_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_DEMOMAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "demoman_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MEDIC] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "medic_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_HEAVYWEAPONS] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "heavyweapons_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SNIPER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "sniper_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_red", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_JUGGERNAUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "juggernaut_red", m_pClassInfoPanel );
-	}
-
-	virtual void ApplySchemeSettings( IScheme *pScheme )
-	{
-		BaseClass::ApplySchemeSettings( pScheme );
-
-		LoadControlSettings( "Resource/UI/Classmenu_red.res" );
-
-		for( int i = 0; i < GetChildCount(); i++ ) 
-		{
-			CImageMouseOverButton<CTFClassInfoPanel> *button = dynamic_cast<CImageMouseOverButton<CTFClassInfoPanel> *>( GetChild( i ) );
-
-			if ( button )
-			{
-				button->SetPreserveArmedButtons( true );
-				button->SetUpdateDefaultButtons( true );
-			}
-		}
-	}
-
-	virtual void ShowPanel( bool bShow )
-	{
-		if ( bShow )
-		{
-			// make sure the Red class menu isn't open
-			if ( gViewPortInterface )
-			{
-				gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, false );
-				gViewPortInterface->ShowPanel( PANEL_CLASS_MERCENARY, false );
-			}
-		}
-
-		BaseClass::ShowPanel( bShow );
-	}
-
-	virtual const char *GetName( void )
-	{ 
-		return PANEL_CLASS_RED;
-	}
-
-	virtual int GetTeamNumber( void )
-	{
-		return TF_TEAM_RED;
-	}
-
-	virtual void UpdateClassCounts( void ){ UpdateNumClassLabels( TF_TEAM_RED ); }
-};
-
-//-----------------------------------------------------------------------------
-// Purpose: Draws the red class menu
-//-----------------------------------------------------------------------------
-
-
-
-class CTFClassMenu_Mercenary : public CTFClassMenu
-{
-private:
-	DECLARE_CLASS_SIMPLE( CTFClassMenu_Mercenary, CTFClassMenu );
-
-public:
-	CTFClassMenu_Mercenary( IViewPort *pViewPort ) : BaseClass( pViewPort )
-	{
-		m_pClassButtons[TF_CLASS_SCOUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "scout_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SOLDIER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "soldier_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MERCENARY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "mercenary_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_PYRO] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "pyro_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_DEMOMAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "demoman_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_MEDIC] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "medic_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_HEAVYWEAPONS] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "heavyweapons_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SNIPER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "sniper_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_ENGINEER] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "engineer_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_SPY] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "spy_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_RANDOM] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "randompc_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_CIVILIAN] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "civilian_mercenary", m_pClassInfoPanel );
-		m_pClassButtons[TF_CLASS_JUGGERNAUT] = new CImageMouseOverButton<CTFClassInfoPanel>( this, "juggernaut_mercenary", m_pClassInfoPanel );
-	}
-
-	virtual void ApplySchemeSettings( IScheme *pScheme )
-	{
-		BaseClass::ApplySchemeSettings( pScheme );
-
-		LoadControlSettings( "Resource/UI/Classmenu_mercenary.res" );
-
-		for( int i = 0; i < GetChildCount(); i++ ) 
-		{
-			CImageMouseOverButton<CTFClassInfoPanel> *button = dynamic_cast<CImageMouseOverButton<CTFClassInfoPanel> *>( GetChild( i ) );
-
-			if ( button )
-			{
-				button->SetPreserveArmedButtons( true );
-				button->SetUpdateDefaultButtons( true );
-			}
-		}
-	}
-
-	virtual void ShowPanel( bool bShow )
-	{
-		if ( bShow )
-		{
-			// make sure the Red and Blue class menu isn't open
-			if ( gViewPortInterface )
-			{
-				gViewPortInterface->ShowPanel( PANEL_CLASS_BLUE, false );
-				gViewPortInterface->ShowPanel( PANEL_CLASS_RED, false );
-			}
-		}
-
-		BaseClass::ShowPanel( bShow );
-	}
-
-	virtual const char *GetName( void )
-	{ 
-		return PANEL_CLASS_MERCENARY;
-	}
-
-	virtual int GetTeamNumber( void )
-	{
-		return TF_TEAM_MERCENARY;
-	}
-
-	virtual void UpdateClassCounts( void ){ UpdateNumClassLabels( TF_TEAM_MERCENARY ); }
-};
-
 
 #endif // TF_CLASSMENU_H
 

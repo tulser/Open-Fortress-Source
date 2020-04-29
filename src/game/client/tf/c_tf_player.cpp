@@ -1136,7 +1136,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 		else if ( iVisibleTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			if ( of_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
+			if ( of_tennisball.GetBool() && m_iClass == TF_CLASS_MERCENARY )
 				m_nSkin = 6;
 			else
 				m_nSkin = 4;
@@ -2432,6 +2432,8 @@ C_TFPlayer::C_TFPlayer() :
 	m_bUpdateObjectHudState = false;
 	
 	iUpdatedCosmetics = 0;
+	
+	iCosmeticCount = 0;
 
 	ListenForGameEvent( "player_jump" );
 	ListenForGameEvent( "force_cosmetic_refresh" );
@@ -3209,6 +3211,7 @@ void C_TFPlayer::UpdateSpyMask( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateWearables( void )
 {
+	DevMsg("Triggered Update Wearables\n");
 	for( int i = 0; i < GetNumBodyGroups(); i++ )
 	{
 		SetBodygroup( i, 0 );
@@ -3219,24 +3222,26 @@ void C_TFPlayer::UpdateWearables( void )
 			m_hCosmetic[i].Get()->Release();
 	}
 	m_hCosmetic.Purge();
+	iCosmeticCount = 0;
 
 	if( of_disable_cosmetics.GetBool() )
 		return;
 
 	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
 	{
+		DevMsg("Mismatching cosmetic count\n");
 		return;
 	}
+
 	for( int i = 0; i < m_iCosmetics.Count(); i++ )
 	{
-		if( m_iCosmetics[i] == 0 )
-		{
-			continue;
-		}
+		iCosmeticCount++;
 		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
 		if( !pCosmetic )
+		{
+			DevMsg("Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
 			continue;
-
+		}
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
 		if( pBodygroups )
 		{
@@ -3264,6 +3269,10 @@ void C_TFPlayer::UpdateWearables( void )
 
 				m_hCosmetic.AddToTail(handle);
 			}
+		}
+		else
+		{
+			DevMsg("Blank model\n");
 		}
 	}
 }
@@ -3544,7 +3553,9 @@ void C_TFPlayer::ClientThink()
 		m_bUpdatePlayerAttachments = false;
 	}
 
-	if( iUpdatedCosmetics != m_iUpdateCosmetics || m_hCosmetic.Count() != m_iCosmetics.Count() || (of_disable_cosmetics.GetBool() && m_hCosmetic.Count() > 0 ) )
+//	DevMsg("Cosmetic ents:%d, Desired cosmetics: %d\n", m_hCosmetic.Count(), m_iCosmetics.Count() );
+	
+	if( ( !of_disable_cosmetics.GetBool() && iCosmeticCount != m_iCosmetics.Count() ) || iUpdatedCosmetics != m_iUpdateCosmetics || (of_disable_cosmetics.GetBool() && m_hCosmetic.Count() > 0 ) )
 	{
 		UpdateWearables();
 		iUpdatedCosmetics = m_iUpdateCosmetics;
