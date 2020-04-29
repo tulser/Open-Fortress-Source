@@ -247,7 +247,7 @@ public:
 
 	bool IsMapInMapCycle( const char *pszName );
 
-	virtual bool IsManualMapChangeOkay( const char **pszReason ) OVERRIDE;
+	virtual bool IsManualMapChangeOkay( const char **pszReason ) override;
 
 	CUtlVector<char*>& GetMapList() { return m_MapList; }
 

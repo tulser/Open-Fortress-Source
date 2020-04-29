@@ -226,8 +226,8 @@ protected:
 	CPanelAnimationVar( bool, m_bUseParticle, "use_particle", "0" );
 	CPanelAnimationVar( float, m_flMaxPitch, "max_pitch", "90" );
 	
-	virtual void PrePaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
-	virtual void PostPaint3D( IMatRenderContext *pRenderContext ) OVERRIDE;
+	virtual void PrePaint3D( IMatRenderContext *pRenderContext ) override;
+	virtual void PostPaint3D( IMatRenderContext *pRenderContext ) override;
 	
 public:
 	struct particle_data_t

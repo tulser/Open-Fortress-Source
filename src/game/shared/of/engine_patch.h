@@ -12,8 +12,8 @@ class CEngineBinary : public CAutoGameSystem
 public:
     CEngineBinary();
 
-    bool Init() OVERRIDE;
-    void PostInit() OVERRIDE;
+    bool Init() override;
+    void PostInit() override;
 
     static inline bool DataCompare(const char*, const char*, const char*);
     static void* FindPattern(const char*, const char*, size_t = 0);
