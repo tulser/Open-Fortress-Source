@@ -435,7 +435,7 @@ void CTFSuperRocketLauncher::SwitchHomingModes()
 	
 	m_bHoming = !m_bHoming;
 	
-	DevMsg("Switched modes to %d\n", m_bHoming);
+	DevMsg("Switched modes to %s\n", m_bHoming ? "homing" : "non-homing");
 	
 	for ( int i = 0; i < count; i++ )
 	{

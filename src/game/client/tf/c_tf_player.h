@@ -500,7 +500,7 @@ public:
 	void InitDismember( void );
 
 	void DismemberHead( );
-	void DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone );
+	void DismemberBase( char const *szBodyPart, bool bLevel, bool bBloodEffects, char const *szParticleBone );
 	void DismemberLeftArm( bool bLevel );
 	void DismemberRightArm( bool bLevel );
 	void DismemberLeftLeg( bool bLevel );

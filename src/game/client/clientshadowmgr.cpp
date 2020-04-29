@@ -2134,7 +2134,7 @@ ClientShadowHandle_t CClientShadowMgr::CreateProjectedTexture( ClientEntityHandl
 	{
 		pShadowMaterial = NULL;		// these materials aren't used for shadow depth texture shadows.
 		pShadowModelMaterial = NULL;
-		pShadowProxyData = (void*)h;
+		pShadowProxyData = (void*)(uintp)h;
 	}
 #else
 	if( flags & SHADOW_FLAGS_USE_DEPTH_TEXTURE )
@@ -2855,7 +2855,7 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	Vector boxSize;
 	VectorSubtract( maxs, mins, boxSize );
 	
-	Vector yvec;
+	Vector yvec(0.0f, 0.0f, 0.0f);
 	float fProjMax = 0.0f;
 	for( int i = 0; i != 3; ++i )
 	{

@@ -185,7 +185,7 @@ void CTFHudKills::OnThink()
 			}
 			
 			char szTmp[64];
-			char *szPlacement = bLocalTop ? "top" : "";
+			char const *szPlacement = bLocalTop ? "top" : "";
 			
 			Q_snprintf( szTmp, sizeof( szTmp ), "%splayername", szPlacement );
 			

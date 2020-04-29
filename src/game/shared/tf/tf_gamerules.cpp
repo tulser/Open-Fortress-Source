@@ -664,14 +664,8 @@ CTFLogicGG::CTFLogicGG()
 
 bool CTFLogicGG::KeyValue( const char *szKeyName, const char *szValue )
 {
-	const char *pszSrc = NULL;
 	if ( !Q_strncmp( szKeyName, "WeaponName", 10 ) )
-	{
-		char pTmp[128];
-		pszSrc = szKeyName + 10;
-		Q_snprintf( pTmp, sizeof(pszSrc), pszSrc );
-		pWeaponsData->SetString( pTmp, szValue );
-	}
+		pWeaponsData->SetString( szKeyName + 10, szValue );
 	else
 		BaseClass::KeyValue( szKeyName, szValue );
 	
@@ -4858,7 +4852,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
 					&& !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 				{
-					DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
+					DevMsg( "VoteController: Team fraglimit is 80%%, begin nextlevel voting... \n" );
 					m_bStartedVote = true;
 					//engine->ServerCommand( "callvote nextlevel" );
 					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -4886,7 +4880,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					// one of our players is at 80% of the fragcount, start voting for next map
 					if ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 					{
-						DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
+						DevMsg( "VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n" );
 						m_bStartedVote = true;
 						//engine->ServerCommand( "callvote nextlevel" );
 						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];

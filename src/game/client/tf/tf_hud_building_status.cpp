@@ -686,18 +686,12 @@ void CBuildingStatusItem_SentryGun::PerformLayout( void )
 	m_pSentryIcons[0]->SetVisible( false );
 	m_pSentryIcons[1]->SetVisible( false );
 	m_pSentryIcons[2]->SetVisible( false );
-	if ( iUpgradeLevel > 3 )
-		m_pSentryIcons[3]->SetVisible( true );
-	else
-		m_pSentryIcons[iUpgradeLevel-1]->SetVisible( true );
+	m_pSentryIcons[iUpgradeLevel-1]->SetVisible( true );
 
 	m_pUpgradeIcons[0]->SetVisible(false);
 	m_pUpgradeIcons[1]->SetVisible(false);
 	m_pUpgradeIcons[2]->SetVisible(false);
-	if ( iUpgradeLevel > 3 )
-		m_pUpgradeIcons[3]->SetVisible( true );
-	else
-		m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
+	m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
 
 	// upgrade progress
 	int iMetal = pSentrygun->GetUpgradeMetal();
@@ -799,10 +793,7 @@ void CBuildingStatusItem_Dispenser::PerformLayout( void )
 	m_pUpgradeIcons[0]->SetVisible(false);
 	m_pUpgradeIcons[1]->SetVisible(false);
 	m_pUpgradeIcons[2]->SetVisible(false);
-	if ( iUpgradeLevel > 3 )
-		m_pUpgradeIcons[3]->SetVisible( true );
-	else
-		m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
+	m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
 
 	// upgrade progress
 	int iMetal = pDispenser->GetUpgradeMetal();
@@ -897,10 +888,7 @@ void CBuildingStatusItem_TeleporterEntrance::PerformLayout( void )
 	m_pUpgradeIcons[0]->SetVisible(false);
 	m_pUpgradeIcons[1]->SetVisible(false);
 	m_pUpgradeIcons[2]->SetVisible(false);
-	if ( iUpgradeLevel > 3 )
-		m_pUpgradeIcons[3]->SetVisible( true );
-	else
-		m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
+	m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
 
 	// upgrade progress
 	int iMetal = pTeleporter->GetUpgradeMetal();
@@ -942,10 +930,7 @@ void CBuildingStatusItem_TeleporterExit::PerformLayout( void )
 	m_pUpgradeIcons[0]->SetVisible(false);
 	m_pUpgradeIcons[1]->SetVisible(false);
 	m_pUpgradeIcons[2]->SetVisible(false);
-	if ( iUpgradeLevel > 3 )
-		m_pUpgradeIcons[3]->SetVisible( true );
-	else
-		m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
+	m_pUpgradeIcons[iUpgradeLevel-1]->SetVisible( true );
 
 	// upgrade progress
 	int iMetal = pTeleporter->GetUpgradeMetal();
