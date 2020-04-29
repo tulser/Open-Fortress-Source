@@ -10,7 +10,7 @@
 #include "CvarSlider.h"
 #include "EngineInterface.h"
 #include "BasePanel.h"
-#include "igameuifuncs.h"
+#include "IGameUIFuncs.h"
 #include "modes.h"
 #include "materialsystem/materialsystem_config.h"
 #include "filesystem.h"

@@ -191,7 +191,7 @@ $Project "GameUI"
 				"KeyToggleCheckButton.cpp" \
 				"LabeledCommandComboBox.cpp" \
 				"LoadingDialog.cpp" \
-				"loadingtippanel.cpp" \P
+				"loadingtippanel.cpp" \
 				"logofile.cpp" \
 				"ModInfo.cpp" \
 				"MouseMessageForwardingPanel.cpp" \
@@ -202,10 +202,10 @@ $Project "GameUI"
 				"OptionsSubGame.cpp" \
 				"OptionsSubKeyboard.cpp" \
 				"OptionsSubMouse.cpp" \
-				"optionssubmultiplayer.cpp" \
-				"optionssubportal.cpp" \
+				"OptionsSubMultiplayer.cpp" \
+				"OptionsSubPortal.cpp" \
 				"OptionsSubVideo.cpp" \
-				"optionssubvoice.cpp" \
+				"OptionsSubVoice.cpp" \
 				"customizationdialog.cpp" \			
 				"customizationdialogsub.cpp" \						
 				"PanelListPanel.cpp" \
@@ -214,8 +214,8 @@ $Project "GameUI"
 				"ScriptObject.cpp" \
 				"sys_utils.cpp" \
 				"textentrybox.cpp" \
-				"urlbutton.cpp" \
-				"vcontrolslistpanel.cpp" \
+				"URLButton.cpp" \
+				"VControlsListPanel.cpp" \
 				"VGuiSystemModuleLoader.cpp" \
 				"$SRCDIR\common\language.cpp" \
 				"$SRCDIR\public\crtmemdebug.cpp" \
@@ -231,7 +231,7 @@ $Project "GameUI"
 				}
 			}
 		}
-		$File	"optionssubHL2CE.cpp"
+		$File	"OptionsSubHL2CE.cpp"
 	}
 
 	$Folder	"Precompiled Header"

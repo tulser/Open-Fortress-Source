@@ -9,7 +9,7 @@
 #include "IRunGameEngine.h"
 #include "EngineInterface.h"
 #include "tier1/strtools.h"
-#include "igameuifuncs.h"
+#include "IGameUIFuncs.h"
 #include "tier1/convar.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

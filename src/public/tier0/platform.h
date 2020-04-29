@@ -388,7 +388,7 @@ typedef unsigned short WORD;
 typedef void * HINSTANCE;
 typedef void * HANDLE;
 typedef HANDLE WHANDLE;
-typedef time_t SYSTEMTIME;
+#define CAsyncCtxSaveGame void;
 #define _MAX_PATH PATH_MAX
 #define __cdecl
 #define __stdcall
@@ -783,6 +783,13 @@ typedef struct tagRGBQUAD {
 #define Sys_RegisterWindowMessage( x ) return NULL;
 #define Sys_PostMessage( a, b, c, d) return NULL;
 #define GetSystemTime( vtime ) vtime = time(NULL)
+
+enum {
+	SYS_NO_ERROR = 0,
+	SYS_ERROR_INVALID_HANDLE,
+};
+
+#define Sys_SetLastError( type ) return NULL;
 
 typedef struct tagBITMAPINFO {
   BITMAPINFOHEADER bmiHeader;
