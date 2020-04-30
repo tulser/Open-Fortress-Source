@@ -302,9 +302,9 @@ public:
 	SectionedListPanelHeader(SectionedListPanel *parent, const wchar_t *name, int sectionID);
 	virtual ~SectionedListPanelHeader() {}
 
-	virtual void ApplySchemeSettings(IScheme *pScheme) OVERRIDE;
-	virtual void Paint() OVERRIDE;
-	virtual void PerformLayout() OVERRIDE;
+	virtual void ApplySchemeSettings(IScheme *pScheme) override;
+	virtual void Paint() override;
+	virtual void PerformLayout() override;
 
 	void SetColor(Color col);
 	void SetDividerColor(Color col );

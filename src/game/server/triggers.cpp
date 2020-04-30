@@ -2641,8 +2641,8 @@ class CTriggerTeleportRelative : public CBaseTrigger
 public:
 	DECLARE_CLASS(CTriggerTeleportRelative, CBaseTrigger);
 
-	virtual void Spawn( void ) OVERRIDE;
-	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+	virtual void Spawn( void ) override;
+	virtual void Touch( CBaseEntity *pOther ) override;
 
 	Vector m_TeleportOffset;
 
