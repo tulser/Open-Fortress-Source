@@ -261,11 +261,13 @@ public:
 protected:
 	virtual void GoToIntermission( void );
 	virtual void LoadMapCycleFile( void );
+	virtual void FilterMapCycle( int iPlayerCount ); // Pick maps that are playercount-appropriate. TODO: Public?
 	void ChangeLevelToMap( const char *pszMap );
 
 	float m_flIntermissionEndTime;
 	static int m_nMapCycleTimeStamp;
 	static int m_nMapCycleindex;
+	static int m_nPlayerCount;
 	static CUtlVector<char*> m_MapList;
 
 	float m_flTimeLastMapChangeOrPlayerWasConnected;

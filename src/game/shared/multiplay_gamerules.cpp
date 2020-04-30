@@ -152,8 +152,10 @@ ConVar nextlevel( "nextlevel",
 #endif
 
 #ifndef CLIENT_DLL
+//NOTE: This is some baller syntax for setting default values for the struct
 int CMultiplayRules::m_nMapCycleTimeStamp = 0;
 int CMultiplayRules::m_nMapCycleindex = 0;
+int CMultiplayRules::m_nPlayerCount = 0;
 CUtlVector<char*> CMultiplayRules::m_MapList;
 #endif
 
@@ -1214,6 +1216,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		else
 		{
 			// If map cycle file has changed or this is the first time through ...
+			// NOTE: Shouldn't ever be the first time through, as the constructor calls LoadMapCycleFile();
 			if ( m_nMapCycleTimeStamp != nMapCycleTimeStamp )
 			{
 				// Reload
