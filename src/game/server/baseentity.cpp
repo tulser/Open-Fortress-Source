@@ -6917,7 +6917,7 @@ void CBaseEntity::InputFireOutput( inputdata_t& inputdata )
 {
 	char sParameter[MAX_PATH];
 	Q_strncpy( sParameter, inputdata.value.String(), sizeof(sParameter) );
-	if ( sParameter )
+	if ( *sParameter )
 	{
 		int iter = 0;
 		char *data[5] = {sParameter};

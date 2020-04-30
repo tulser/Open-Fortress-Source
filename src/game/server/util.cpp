@@ -1384,7 +1384,7 @@ static void SetMinMaxSize (CBaseEntity *pEnt, const Vector& mins, const Vector& 
 		{
 			Error("%i/%s - %s:  backwards mins/maxs: %s\n\nIf you are getting this error on a dedicated server, your server is likely not mounting Team Fortress 2 correctly.\nMake sure to specify full paths to TF2 in the gameinfo.txt.", pEnt->entindex(),
 				STRING( pEnt->GetEntityName() ),
-				pEnt->GetClassname(), pEnt->GetModelName() );
+				pEnt->GetClassname(), STRING( pEnt->GetModelName() ) );
 		}
 	}
 

@@ -50,7 +50,6 @@
 #include "trigger_area_capture.h"
 #include "triggers.h"
 #include "tf_weapon_medigun.h"
-#include "hl2orange.spa.h"
 #include "te_tfblood.h"
 #include "activitylist.h"
 #include "steam/steam_api.h"
@@ -61,13 +60,10 @@
 #include "tf_powerup.h"
 #include "ai_basenpc.h"
 #include "AI_Criteria.h"
-#include "npc_barnacle.h"
 #include "IVehicle.h"
-#include "prop_combine_ball.h"
 #include "datacache/imdlcache.h"
 #include "ai_interactions.h"
 #include "ai_squad.h"
-#include "npc_alyx_episodic.h"
 #include "player_pickup.h"
 #include "eventqueue.h"
 #include "ammodef.h"
@@ -79,6 +75,7 @@
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
 #include "of_dropped_powerup.h"
+#include "soundenvelope.h"
 
 #include "dt_utlvector_send.h"
 
@@ -504,9 +501,7 @@ CTFPlayer::CTFPlayer()
 	
 	m_iAccount = 0;
 
-	m_pPlayerAISquad = 0;
-	
-  	m_bTransition = false;
+	m_bTransition = false;
 	
     ConVarRef scissor( "r_flashlightscissor" );
     scissor.SetValue( "0" );
@@ -1264,7 +1259,6 @@ void CTFPlayer::Spawn()
 		else
 			SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_RESPAWN );
 	}
-	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
 	m_bGotKilled = false;
 	m_bDied = false;
 
@@ -2366,7 +2360,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 		if ( !pSpot )
 		{
 			Warning( "Player Spawn: no valid spawn point was found for class %s on team %i found, even though at least one spawn entity exists.\n", 
-				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName, GetTeamNumber() );
+				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName.Get(), GetTeamNumber() );
 
 			pSpot = CBaseEntity::Instance( INDEXENT(0) );
 		}
@@ -2903,13 +2897,14 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 
 		if ( TFGameRules()->IsDMGamemode() )
 		{
-			if ( of_forceclass.GetBool() == 0 )
+			if ( of_forceclass.GetBool() == 0 ){
 				if ( iTeam == TF_TEAM_RED )
 					ShowViewPortPanel( PANEL_CLASS_RED );
 				else if ( iTeam == TF_TEAM_BLUE )
 					ShowViewPortPanel( PANEL_CLASS_BLUE );
 				else if ( iTeam == TF_TEAM_MERCENARY )
 					ShowViewPortPanel( PANEL_CLASS_MERCENARY );
+			}
 		}
 		else
 		{
@@ -3343,7 +3338,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
+const Vector CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
 {
 	if ( !weapon )
 		return GetAbsOrigin();
@@ -3359,7 +3354,7 @@ const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
+const Vector CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
 {
 	float initVel = charge * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) + TF_PIPEBOMB_MIN_CHARGE_VEL;
 	//CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
@@ -3370,7 +3365,7 @@ const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
+const Vector CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
 {
 	Vector vecForward, vecRight, vecUp;
 	QAngle angles( pitch, yaw, 0.0f );
@@ -7792,6 +7787,8 @@ void CTFPlayer::OnBurnOther( CTFPlayer *pTFPlayerVictim )
 		}
 	}
 
+	//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+	#if 0
 	// see if we've burned enough players in time window to satisfy achievement
 	if ( m_aBurnOtherTimes.Count() >= ACHIEVEMENT_BURN_VICTIMS )
 	{
@@ -7800,6 +7797,7 @@ void CTFPlayer::OnBurnOther( CTFPlayer *pTFPlayerVictim )
 		WRITE_BYTE( ACHIEVEMENT_TF_BURN_PLAYERSINMINIMIMTIME );
 		MessageEnd();
 	}
+	#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -8668,7 +8666,7 @@ void CTFPlayer::TauntEffectThink()
 			if ( tr.fraction < 1.0f )
 			{
 				CBaseEntity *pEntity = tr.m_pEnt;
-				if ( pEntity && pEntity->IsPlayer() || pEntity->IsNPC() && ( !InSameTeam( pEntity ) || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY || pEntity->GetTeamNumber() == TEAM_UNASSIGNED ) )
+				if ( ( pEntity && pEntity->IsPlayer() || pEntity->IsNPC() ) && ( !InSameTeam( pEntity ) || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY || pEntity->GetTeamNumber() == TEAM_UNASSIGNED ) )
 				{
 					Vector vecForce, vecDamagePos;
 					QAngle angForce( -45, angShot[YAW], 0 );
@@ -9777,363 +9775,6 @@ void CTFPlayer::AddAccount( int amount, bool bTrackChange )
 		m_iAccount = 16000;
 }
 
-ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
-ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-bool CTFPlayer::CommanderFindGoal( commandgoal_t *pGoal )
-{
-	CAI_BaseNPC *pAllyNpc;
-	trace_t	tr;
-	Vector	vecTarget;
-	Vector	forward;
-
-	EyeVectors( &forward );
-	
-	//---------------------------------
-	// MASK_SHOT on purpose! So that you don't hit the invisible hulls of the NPCs.
-	CTraceFilterSkipTwoEntities filter( this, PhysCannonGetHeldEntity( GetActiveWeapon() ), COLLISION_GROUP_INTERACTIVE_DEBRIS );
-
-	UTIL_TraceLine( EyePosition(), EyePosition() + forward * MAX_COORD_RANGE, MASK_SHOT, &filter, &tr );
-
-	if( !tr.DidHitWorld() )
-	{
-		CUtlVector<CAI_BaseNPC *> Allies;
-		AISquadIter_t iter;
-		for ( pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-		{
-			if ( pAllyNpc->IsCommandable() )
-				Allies.AddToTail( pAllyNpc );
-		}
-
-		for( int i = 0 ; i < Allies.Count() ; i++ )
-		{
-			if( Allies[ i ]->IsValidCommandTarget( tr.m_pEnt ) )
-			{
-				pGoal->m_pGoalEntity = tr.m_pEnt;
-				return true;
-			}
-		}
-	}
-
-	if( tr.fraction == 1.0 || (tr.surface.flags & SURF_SKY) )
-	{
-		// Move commands invalid against skybox.
-		pGoal->m_vecGoalLocation = tr.endpos;
-		return false;
-	}
-
-	if ( tr.m_pEnt->IsNPC() && ((CAI_BaseNPC *)(tr.m_pEnt))->IsCommandable() )
-	{
-		pGoal->m_vecGoalLocation = tr.m_pEnt->GetAbsOrigin();
-	}
-	else
-	{
-		vecTarget = tr.endpos;
-
-		Vector mins( -16, -16, 0 );
-		Vector maxs( 16, 16, 0 );
-
-		// Back up from whatever we hit so that there's enough space at the 
-		// target location for a bounding box.
-		// Now trace down. 
-		//UTIL_TraceLine( vecTarget, vecTarget - Vector( 0, 0, 8192 ), MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
-		UTIL_TraceHull( vecTarget + tr.plane.normal * 24,
-						vecTarget - Vector( 0, 0, 8192 ),
-						mins,
-						maxs,
-						MASK_SOLID_BRUSHONLY,
-						this,
-						COLLISION_GROUP_NONE,
-						&tr );
-
-
-		if ( !tr.startsolid )
-			pGoal->m_vecGoalLocation = tr.endpos;
-		else
-			pGoal->m_vecGoalLocation = vecTarget;
-	}
-
-	pAllyNpc = GetSquadCommandRepresentative();
-	if ( !pAllyNpc )
-		return false;
-
-	vecTarget = pGoal->m_vecGoalLocation;
-	if ( !pAllyNpc->FindNearestValidGoalPos( vecTarget, &pGoal->m_vecGoalLocation ) )
-		return false;
-
-	return ( ( vecTarget - pGoal->m_vecGoalLocation ).LengthSqr() < Square( 15*12 ) );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CAI_BaseNPC *CTFPlayer::GetSquadCommandRepresentative()
-{
-	if ( m_pPlayerAISquad != NULL )
-	{
-		CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember();
-		
-		if ( pAllyNpc )
-		{
-			return pAllyNpc->GetSquadCommandRepresentative();
-		}
-	}
-
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetNumSquadCommandables()
-{
-	AISquadIter_t iter;
-	int c = 0;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() )
-			c++;
-	}
-	return c;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetNumSquadCommandableMedics()
-{
-	AISquadIter_t iter;
-	int c = 0;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() && pAllyNpc->IsMedic() )
-			c++;
-	}
-	return c;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void CTFPlayer::CommanderUpdate()
-{
-	CAI_BaseNPC *pCommandRepresentative = GetSquadCommandRepresentative();
-	bool bFollowMode = false;
-	if ( pCommandRepresentative )
-	{
-		bFollowMode = ( pCommandRepresentative->GetCommandGoal() == vec3_invalid );
-
-		// set the variables for network transmission (to show on the hud)
-		m_HL2Local.m_iSquadMemberCount = GetNumSquadCommandables();
-		m_HL2Local.m_iSquadMedicCount = GetNumSquadCommandableMedics();
-		m_HL2Local.m_fSquadInFollowMode = bFollowMode;
-
-		// debugging code for displaying extra squad indicators
-		/*
-		char *pszMoving = "";
-		AISquadIter_t iter;
-		for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-		{
-			if ( pAllyNpc->IsCommandMoving() )
-			{
-				pszMoving = "<-";
-				break;
-			}
-		}
-
-		NDebugOverlay::ScreenText(
-			0.932, 0.919, 
-			CFmtStr( "%d|%c%s", GetNumSquadCommandables(), ( bFollowMode ) ? 'F' : 'S', pszMoving ),
-			255, 128, 0, 128,
-			0 );
-		*/
-
-	}
-	else
-	{
-		m_HL2Local.m_iSquadMemberCount = 0;
-		m_HL2Local.m_iSquadMedicCount = 0;
-		m_HL2Local.m_fSquadInFollowMode = true;
-	}
-
-	if ( m_QueuedCommand != CC_NONE && ( m_QueuedCommand == CC_FOLLOW || gpGlobals->realtime - m_RealTimeLastSquadCommand >= player_squad_double_tap_time.GetFloat() ) )
-	{
-		CommanderExecute( m_QueuedCommand );
-		m_QueuedCommand = CC_NONE;
-	}
-	else if ( !bFollowMode && pCommandRepresentative && m_CommanderUpdateTimer.Expired() && player_squad_transient_commands.GetBool() )
-	{
-		m_CommanderUpdateTimer.Set(2.5);
-
-		if ( pCommandRepresentative->ShouldAutoSummon() )
-			CommanderExecute( CC_FOLLOW );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//
-// bHandled - indicates whether to continue delivering this order to
-// all allies. Allows us to stop delivering certain types of orders once we find
-// a suitable candidate. (like picking up a single weapon. We don't wish for
-// all allies to respond and try to pick up one weapon).
-//----------------------------------------------------------------------------- 
-bool CTFPlayer::CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies )
-{
-	if ( goal.m_pGoalEntity )
-	{
-		return pNpc->TargetOrder( goal.m_pGoalEntity, Allies, numAllies );
-	}
-	else if ( pNpc->IsInPlayerSquad() )
-	{
-		pNpc->MoveOrder( goal.m_vecGoalLocation, Allies, numAllies );
-	}
-	
-	return true;
-}
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-void CTFPlayer::CommanderExecute( CommanderCommand_t command )
-{
-	CAI_BaseNPC *pPlayerSquadLeader = GetSquadCommandRepresentative();
-
-	if ( !pPlayerSquadLeader )
-	{
-		EmitSound( "HL2Player.UseDeny" );
-		return;
-	}
-
-	int i;
-	CUtlVector<CAI_BaseNPC *> Allies;
-	commandgoal_t goal;
-
-	if ( command == CC_TOGGLE )
-	{
-		if ( pPlayerSquadLeader->GetCommandGoal() != vec3_invalid )
-			command = CC_FOLLOW;
-		else
-			command = CC_SEND;
-	}
-	else
-	{
-		if ( command == CC_FOLLOW && pPlayerSquadLeader->GetCommandGoal() == vec3_invalid )
-			return;
-	}
-
-	if ( command == CC_FOLLOW )
-	{
-		goal.m_pGoalEntity = this;
-		goal.m_vecGoalLocation = vec3_invalid;
-	}
-	else
-	{
-		goal.m_pGoalEntity = NULL;
-		goal.m_vecGoalLocation = vec3_invalid;
-
-		// Find a goal for ourselves.
-		if( !CommanderFindGoal( &goal ) )
-		{
-			EmitSound( "HL2Player.UseDeny" );
-			return; // just keep following
-		}
-	}
-
-#ifdef _DEBUG
-	if( goal.m_pGoalEntity == NULL && goal.m_vecGoalLocation == vec3_invalid )
-	{
-		DevMsg( 1, "**ERROR: Someone sent an invalid goal to CommanderExecute!\n" );
-	}
-#endif // _DEBUG
-
-	AISquadIter_t iter;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() )
-			Allies.AddToTail( pAllyNpc );
-	}
-
-	//---------------------------------
-	// If the trace hits an NPC, send all ally NPCs a "target" order. Always
-	// goes to targeted one first
-#ifdef DBGFLAG_ASSERT
-	int nAIs = g_AI_Manager.NumAIs();
-#endif
-	CAI_BaseNPC * pTargetNpc = (goal.m_pGoalEntity) ? goal.m_pGoalEntity->MyNPCPointer() : NULL;
-	
-	bool bHandled = false;
-	if( pTargetNpc )
-	{
-		bHandled = !CommanderExecuteOne( pTargetNpc, goal, Allies.Base(), Allies.Count() );
-	}
-	
-	for ( i = 0; !bHandled && i < Allies.Count(); i++ )
-	{
-		if ( Allies[i] != pTargetNpc && Allies[i]->IsPlayerAlly() )
-		{
-			bHandled = !CommanderExecuteOne( Allies[i], goal, Allies.Base(), Allies.Count() );
-		}
-		Assert( nAIs == g_AI_Manager.NumAIs() ); // not coded to support mutating set of NPCs
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Enter/exit commander mode, manage ally selection.
-//-----------------------------------------------------------------------------
-void CTFPlayer::CommanderMode()
-{
-	float commandInterval = gpGlobals->realtime - m_RealTimeLastSquadCommand;
-	m_RealTimeLastSquadCommand = gpGlobals->realtime;
-	if ( commandInterval < player_squad_double_tap_time.GetFloat() )
-	{
-		m_QueuedCommand = CC_FOLLOW;
-	}
-	else
-	{
-		m_QueuedCommand = (player_squad_transient_commands.GetBool()) ? CC_SEND : CC_TOGGLE;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity )
-{
-	CAI_BaseNPC *pAttacker = pAttackerEntity->MyNPCPointer();
-	if ( pAttacker )
-	{
-		const Vector &origin = GetAbsOrigin();
-		for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
-		{
-			const float NEAR_Z = 12*12;
-			const float NEAR_XY_SQ = Square( 50*12 );
-			CAI_BaseNPC *pNpc = g_AI_Manager.AccessAIs()[i];
-			if ( pNpc->IsPlayerAlly() )
-			{
-				const Vector &originNpc = pNpc->GetAbsOrigin();
-				if ( fabsf( originNpc.z - origin.z ) < NEAR_Z )
-				{
-					if ( (originNpc.AsVector2D() - origin.AsVector2D()).LengthSqr() < NEAR_XY_SQ )
-					{
-						pNpc->OnFriendDamaged( this, pAttacker );
-					}
-				}
-			}
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Notification of a player's npc ally in the players squad being killed
-//-----------------------------------------------------------------------------
-void CTFPlayer::OnSquadMemberKilled( inputdata_t &data )
-{
-	// send a message to the client, to notify the hud of the loss
-	CSingleUserRecipientFilter user( this );
-	user.MakeReliable();
-	UserMessageBegin( user, "SquadMemberDied" );
-	MessageEnd();
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : CBaseEntity
@@ -10141,21 +9782,6 @@ void CTFPlayer::OnSquadMemberKilled( inputdata_t &data )
 bool CTFPlayer::IsHoldingEntity( CBaseEntity *pEnt )
 {
 	return PlayerPickupControllerIsHoldingEntity( m_hUseEntity, pEnt );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Notifies Alyx that player has put a combine ball into a socket so she can comment on it.
-// Input  : pCombineBall - ball the was socketed
-//-----------------------------------------------------------------------------
-void CTFPlayer::CombineBallSocketed( CPropCombineBall *pCombineBall )
-{
-#ifdef HL2_EPISODIC
-	CNPC_Alyx *pAlyx = CNPC_Alyx::GetAlyx();
-	if ( pAlyx )
-	{
-		pAlyx->CombineBallSocketed( pCombineBall->NumBounces() );
-	}
-#endif
 }
 
 void CTFPlayer::StartWaterDeathSounds( void )

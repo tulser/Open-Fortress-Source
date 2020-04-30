@@ -763,7 +763,7 @@ CTFPlayer *CTFBotMedicHeal::SelectPatient( CTFBot *actor, CTFPlayer *currPatient
 				pBestPatient = ToTFPlayer( pMedigun->GetHealTarget() );
 		}
 
-		if ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
+		if ( ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
 			return pBestPatient;
 	}
 

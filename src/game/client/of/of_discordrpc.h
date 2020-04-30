@@ -11,7 +11,6 @@
 #endif
 
 #include "GameEventListener.h"
-#include "hl2orange.spa.h"
 #include "discord_rpc.h"
 
 #define DISCORD_FIELD_SIZE 128

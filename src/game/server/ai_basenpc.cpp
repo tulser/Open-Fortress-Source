@@ -70,11 +70,6 @@
 #include "checksum_crc.h"
 #include "iservervehicle.h"
 #include "filters.h"
-#if TRUE //def HL2_DLL
-#include "npc_bullseye.h"
-#include "hl2_player.h"
-#include "weapon_physcannon.h"
-#endif
 #include "waterbullet.h"
 #include "in_buttons.h"
 #include "eventlist.h"
@@ -90,14 +85,6 @@
 #ifdef SecobMod__Enable_Fixed_Multiplayer_AI
 #include "ilagcompensationmanager.h" 
 #endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
-#if TRUE //def HL2_EPISODIC
-#include "npc_alyx_episodic.h"
-#endif
-
-#ifdef PORTAL
-	#include "prop_portal_shared.h"
-#endif
 
 #include "env_debughistory.h"
 #include "collisionutils.h"
@@ -662,37 +649,6 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 void CAI_BaseNPC::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize, bool bCalledByLevelDesigner )
 {
 	BaseClass::Ignite( flFlameLifetime, bNPCOnly, flSize, bCalledByLevelDesigner );
-
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		#if TRUE //def HL2_EPISODIC 
-		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
-		if ( pPlayer && pPlayer->IRelationType( this ) != D_LI ) 
-		{ 
-			CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx(); 
-
-			if ( alyx ) 
-			{ 
-				alyx->EnemyIgnited( this ); 
-			} 
-		} 
-		#endif //HL2_EPISODIC
-#else
-	#if TRUE //def HL2_EPISODIC
-	if ( AI_IsSinglePlayer() )
-	{
-		CBasePlayer *pPlayer = AI_GetSinglePlayer();
-		if ( pPlayer->IRelationType( this ) != D_LI )
-		{
-			CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx();
-
-			if ( alyx )
-			{
-				alyx->EnemyIgnited( this );
-			}
-		}
-	}
-	#endif //HL2_EPISODIC
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 }
 
 //-----------------------------------------------------------------------------
@@ -1610,21 +1566,6 @@ void CAI_BaseNPC::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::FireBullets( const FireBulletsInfo_t &info )
 {
-#if TRUE //def HL2_DLL
-	// If we're shooting at a bullseye, become perfectly accurate if the bullseye demands it
-	if ( GetEnemy() && GetEnemy()->Classify() == CLASS_BULLSEYE )
-	{
-		CNPC_Bullseye *pBullseye = dynamic_cast<CNPC_Bullseye*>(GetEnemy()); 
-		if ( pBullseye && pBullseye->UsePerfectAccuracy() )
-		{
-			FireBulletsInfo_t accurateInfo = info;
-			accurateInfo.m_vecSpread = vec3_origin;
-			BaseClass::FireBullets( accurateInfo );
-			return;
-		}
-	}
-#endif
-
 	BaseClass::FireBullets( info );
 }
 
@@ -6076,42 +6017,6 @@ void CAI_BaseNPC::CheckTarget( CBaseEntity *pTarget )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Creates a bullseye of limited lifespan at the provided position
-// Input  : vecOrigin - Where to create the bullseye
-//			duration - The lifespan of the bullseye
-// Output : A BaseNPC pointer to the bullseye
-//
-// NOTES  :	It is the caller's responsibility to set up relationships with
-//			this bullseye!
-//-----------------------------------------------------------------------------
-CAI_BaseNPC *CAI_BaseNPC::CreateCustomTarget( const Vector &vecOrigin, float duration )
-{
-#if TRUE //def HL2_DLL
-	CNPC_Bullseye *pTarget = (CNPC_Bullseye*)CreateEntityByName( "npc_bullseye" );
-
-	ASSERT( pTarget != NULL );
-
-	// Build a nonsolid bullseye and place it in the desired location
-	// The bullseye must take damage or the SetHealth 0 call will not be able
-	pTarget->AddSpawnFlags( SF_BULLSEYE_NONSOLID );
-	pTarget->SetAbsOrigin( vecOrigin );
-	pTarget->Spawn();
-
-	// Set it up to remove itself, unless told to be infinite (-1)
-	if( duration > -1 )
-	{
-		variant_t value;
-		value.SetFloat(0);
-		g_EventQueue.AddEvent( pTarget, "SetHealth", value, duration, this, this );
-	}
-
-	return pTarget;
-#else
-	return NULL;
-#endif// HL2_DLL
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : eNewActivity - 
 // Output : Activity
@@ -7917,7 +7822,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		if (!pEnemy || !pEnemy->IsAlive())
 		{
 			if ( pEnemy )
+			{
 				DbgEnemyMsg( this, "    %s rejected: dead\n", pEnemy->GetDebugName() );
+			}
 			continue;
 		}
 		
@@ -7991,8 +7898,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		if (bBestUnreachable && !bUnreachable)
 		{
 			DbgEnemyMsg( this, "    %s accepted (1)\n", pEnemy->GetDebugName() );
-			if ( pBestEnemy )
+			if ( pBestEnemy ) {
 				DbgEnemyMsg( this, "    (%s displaced)\n", pBestEnemy->GetDebugName() );
+			}
 
 			iBestPriority	 = IRelationPriority ( pEnemy );
 			iBestDistSq		 = (pEnemy->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr();
@@ -8005,8 +7913,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		else if ( IRelationPriority( pEnemy ) > iBestPriority )
 		{
 			DbgEnemyMsg( this, "    %s accepted\n", pEnemy->GetDebugName() );
-			if ( pBestEnemy )
+			if ( pBestEnemy ) {
 				DbgEnemyMsg( this, "    (%s displaced due to priority, %d > %d )\n", pBestEnemy->GetDebugName(), IRelationPriority( pEnemy ), iBestPriority );
+			}
 			// this entity is disliked MORE than the entity that we
 			// currently think is the best visible enemy. No need to do
 			// a distance check, just get mad at this one for now.
@@ -8139,8 +8048,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 			}
 
 			DbgEnemyMsg( this, "    %s accepted\n", pEnemy->GetDebugName() );
-			if ( pBestEnemy )
+			if ( pBestEnemy ) {
 				DbgEnemyMsg( this, "    (%s displaced due to distance/visibility)\n", pBestEnemy->GetDebugName() );
+			}
 			fBestSeen		 = fCurSeen;
 			fBestVisible	 = fCurVisible;
 			iBestDistSq		 = iDistSq;
@@ -8234,6 +8144,7 @@ Activity CAI_BaseNPC::GetCoverActivity( CAI_Hint *pHint )
 float CAI_BaseNPC::CalcIdealYaw( const Vector &vecTarget )
 {
 	Vector	vecProjection;
+	vecProjection.z = 0;
 
 	// strafing npc needs to face 90 degrees away from its goal
 	if ( GetNavigator()->GetMovementActivity() == ACT_STRAFE_LEFT )
@@ -9952,15 +9863,6 @@ Vector CAI_BaseNPC::GetActualShootTrajectory( const Vector &shootOrigin )
 
 	// Apply appropriate accuracy.
 	bool bUsePerfectAccuracy = false;
-	if ( GetEnemy() && GetEnemy()->Classify() == CLASS_BULLSEYE )
-	{
-		CNPC_Bullseye *pBullseye = dynamic_cast<CNPC_Bullseye*>(GetEnemy()); 
-		if ( pBullseye && pBullseye->UsePerfectAccuracy() )
-		{
-			bUsePerfectAccuracy = true;
-		}
-	}
-
 	if ( !bUsePerfectAccuracy )
 	{
 		manipulator.ApplySpread( GetAttackSpread( GetActiveWeapon(), GetEnemy() ), GetSpreadBias( GetActiveWeapon(), GetEnemy() ) );
@@ -12000,28 +11902,6 @@ void CAI_BaseNPC::CleanupScriptsOnTeleport( bool bEnrouteAsWell )
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt)
 {
-#if TRUE //def HL2_DLL
-	if ( interactionType == g_interactionBarnacleVictimGrab )
-	{
-		// Make the victim stop thinking so they're as good as dead without 
-		// shocking the system by destroying the entity.
-		StopLoopingSounds();
-		BarnacleDeathSound();
- 		SetThink( NULL );
-
-		// Gag the NPC so they won't talk anymore
-		AddSpawnFlags( SF_NPC_GAG );
-
-		// Drop any weapon they're holding
-		if ( GetActiveWeapon() )
-		{
-			Weapon_Drop( GetActiveWeapon() );
-		}
-
-		return true;
-	}
-#endif // HL2_DLL
-
 	return BaseClass::HandleInteraction( interactionType, data, sourceEnt );
 }
 

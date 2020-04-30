@@ -54,7 +54,6 @@
 	#include "tier0/icommandline.h"
 	#include "activitylist.h"
 	#include "AI_ResponseSystem.h"
-	#include "hl2orange.spa.h"
 	#include "hltvdirector.h"
 	#include "globalstate.h"
     #include "igameevents.h"
@@ -4764,7 +4763,8 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 				// if we just got 10 kills with one sentry, tell the owner's client, which will award achievement if it doesn't have it already
 				if ( iKills == 10 )
 				{
-					pOwner->AwardAchievement( ACHIEVEMENT_TF_GET_TURRETKILLS );
+					//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+					//pOwner->AwardAchievement( ACHIEVEMENT_TF_GET_TURRETKILLS );
 				}
 			}
 		}

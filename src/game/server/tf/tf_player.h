@@ -14,8 +14,6 @@
 #include "tf_weaponbase_gun.h"
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
-#include "hl2_playerlocaldata.h"
-#include "hl2_player.h"
 #include "trigger_area_capture.h"
 #include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
@@ -94,13 +92,6 @@ private:
 
 
 #define ARMOR_DECAY_TIME 3.5f
-
-enum HL2PlayerPhysFlag_e
-{
-	// 1 -- 5 are used by enum PlayerPhysFlag_e in player.h
-
-	PFLAG_ONBARNACLE	= ( 1<<6 )		// player is hangning from the barnalce
-};
 
 class IPhysicsPlayerController;
 class CLogicPlayerProxy;
@@ -260,7 +251,7 @@ public:
 	virtual void		ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis );
 	virtual float		GetHeldObjectMass( IPhysicsObject *pHeldObject );
 	
-	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }
+	virtual bool		IsFollowingPhysics( void ) { return /*(m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0*/ false; }
 	void				InputForceDropPhysObjects( inputdata_t &data );
 
 	void				DropZombieAmmoHealth( void );
@@ -491,9 +482,9 @@ public:
 	int 				GetDesiredWeaponCount( TFPlayerClassData_t *pData );
 	int 				GetDesiredWeapon( int iWeapon, TFPlayerClassData_t *pData );
 	
-	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
-	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
-	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+	const Vector		EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	const Vector		EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	const Vector		EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
 
 	bool				IsCapturingPoint( void );
 
@@ -772,38 +763,8 @@ public:
 	// this is true if the player who died results in a victory (payload override gamemode)
 	bool	m_bWinDeath;
 
-	// Commander Mode for controller NPCs
-	enum CommanderCommand_t
-	{
-		CC_NONE,
-		CC_TOGGLE,
-		CC_FOLLOW,
-		CC_SEND,
-	};
-
-	virtual void CommanderMode();
-	void CommanderUpdate();
-	void CommanderExecute( CommanderCommand_t command = CC_TOGGLE );
-	bool CommanderFindGoal( commandgoal_t *pGoal );
-	void NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity );
-	CAI_BaseNPC *GetSquadCommandRepresentative();
-	int GetNumSquadCommandables();
-	int GetNumSquadCommandableMedics();
-	bool CommanderExecuteOne(CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies);
-	void OnSquadMemberKilled(inputdata_t &data);
-
-	CAI_Squad *			m_pPlayerAISquad;
-	CSimpleSimTimer		m_CommanderUpdateTimer;
-	float				m_RealTimeLastSquadCommand;
-	CommanderCommand_t	m_QueuedCommand;
-
 	CSoundPatch *m_sndLeeches;
 	CSoundPatch *m_sndWaterSplashes;
-
-	// This player's HL2 specific data that should only be replicated to 
-	//  the player and not to other players.
-	CNetworkVarEmbedded( CHL2PlayerLocalData, m_HL2Local );
-	///==HL2 PORT END==///
 };
 
 //-----------------------------------------------------------------------------

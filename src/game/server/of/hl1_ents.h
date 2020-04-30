@@ -13,7 +13,7 @@
 
 /**********************
 	    Pendulum
-/**********************/
+***********************/
 
 class CPendulum : public CBaseToggle
 {

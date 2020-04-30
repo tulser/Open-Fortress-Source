@@ -13,7 +13,6 @@
 #include "usermessages.h"
 #include "player_resource.h"
 #include "team.h"
-#include "hl2orange.spa.h"
 #include "NextBotManager.h"
 
 // Must run with -gamestats to be able to turn on/off stats with ConVar below.
@@ -409,6 +408,8 @@ void CTFGameStats::Event_PlayerForceRespawn( CTFPlayer *pPlayer )
 //-----------------------------------------------------------------------------
 void CTFGameStats::Event_PlayerLeachedHealth( CTFPlayer *pPlayer, bool bDispenserHeal, float amount ) 
 {
+	//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+	#if 0
 	if ( !bDispenserHeal )
 	{
 		// If this was a heal by enemy medic and the first such heal that the server is aware of for this player,
@@ -422,6 +423,7 @@ void CTFGameStats::Event_PlayerLeachedHealth( CTFPlayer *pPlayer, bool bDispense
 			MessageEnd();
 		}
 	}
+	#endif
 
 	IncrementStat( pPlayer, TFSTAT_HEALTHLEACHED, (int) amount );
 }

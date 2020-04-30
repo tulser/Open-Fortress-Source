@@ -1148,7 +1148,6 @@ public:
 	void				SetTarget( CBaseEntity *pTarget );
 	void				CheckTarget( CBaseEntity *pTarget );
 	float				GetAcceptableTimeSeenEnemy( void )		{ return m_flAcceptableTimeSeenEnemy; }
-	virtual	CAI_BaseNPC *CreateCustomTarget( const Vector &vecOrigin, float duration = -1 );
 
 	void				SetDeathPose( const int &iDeathPose ) { m_iDeathPose = iDeathPose; }
 	void				SetDeathPoseFrame( const int &iDeathPoseFrame ) { m_iDeathFrame = iDeathPoseFrame; }

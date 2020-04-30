@@ -81,7 +81,6 @@
 #include "gamestats.h"
 #include "ixboxsystem.h"
 #include "engine/imatchmaking.h"
-#include "hl2orange.spa.h"
 #include "particle_parse.h"
 #ifndef NO_STEAM
 #include "steam/steam_gameserver.h"
@@ -2273,35 +2272,14 @@ void UpdateRichPresence ( void )
 	// Get presence data based on the game we're playing
 	uint iGameID, iChapterIndex, iChapterID, iGamePresenceID;
 	iGameID = iChapterIndex = iChapterID = iGamePresenceID = 0;
-	if ( Q_stristr( modDir, "hl2" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_HALF_LIFE_2;
-		iChapterID		= CONTEXT_CHAPTER_HL2;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_HL2_INGAME;
-	}
-	else if ( Q_stristr( modDir, "episodic" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_EPISODE_ONE;
-		iChapterID		= CONTEXT_CHAPTER_EP1;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_EP1_INGAME;
-	}
-	else if ( Q_stristr( modDir, "ep2" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_EPISODE_TWO;
-		iChapterID		= CONTEXT_CHAPTER_EP2;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_EP2_INGAME;
-	}
-	else if ( Q_stristr( modDir, "portal" ) )
-	{
-		iGameID			= CONTEXT_GAME_GAME_PORTAL;
-		iChapterID		= CONTEXT_CHAPTER_PORTAL;
-		iChapterIndex	= g_nCurrentChapterIndex - 1;
-		iGamePresenceID = CONTEXT_PRESENCE_PORTAL_INGAME;
-	}
-	else
+	// if ( Q_stristr( modDir, "portal" ) )
+	// {
+		// iGameID			= CONTEXT_GAME_GAME_PORTAL;
+		// iChapterID		= CONTEXT_CHAPTER_PORTAL;
+		// iChapterIndex	= g_nCurrentChapterIndex - 1;
+		// iGamePresenceID = CONTEXT_PRESENCE_PORTAL_INGAME;
+	// }
+	// else
 	{
 		Warning( "UpdateRichPresence failed in GameInterface. Didn't recognize -game parameter." );
 	}

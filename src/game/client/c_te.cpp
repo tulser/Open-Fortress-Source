@@ -124,7 +124,6 @@ void TE_DispatchEffect( IRecipientFilter& filter, float delay, KeyValues *pKeyVa
 void TE_PhysicsProp( IRecipientFilter& filter, float delay,
 	int modelindex, int skin, const Vector& pos, const QAngle &angles, const Vector& vel, bool breakmodel, int effects );
 void TE_PhysicsProp( IRecipientFilter& filter, float delay, KeyValues *pKeyValues );
-void TE_ConcussiveExplosion( IRecipientFilter& filter, float delay, KeyValues *pKeyValues );
 void TE_ClientProjectile( IRecipientFilter& filter, float delay,
 	 const Vector* vecOrigin, const Vector* vecVelocity, int modelindex, int lifetime, CBaseEntity *pOwner );
 
@@ -666,10 +665,6 @@ public:
 
 		case TE_EXPLOSION:
 			TE_Explosion( filter, 0.0f, pKeyValues );
-			break;
-
-		case TE_CONCUSSIVE_EXPLOSION:
-			TE_ConcussiveExplosion( filter, 0.0f, pKeyValues );
 			break;
 		}
 

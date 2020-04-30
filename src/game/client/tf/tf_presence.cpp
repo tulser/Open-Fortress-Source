@@ -53,7 +53,8 @@ struct s_PresenceTranslation
 
 // Only presence IDs can be searched by id number, because they're guaranteed to be unique
 static s_PresenceTranslation s_PresenceIds[] = {
-	{	CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO",				},
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+/*	{	CONTEXT_SCENARIO,				 			"CONTEXT_SCENARIO",				},
 	{	PROPERTY_CAPS_OWNED,			 			"PROPERTY_CAPS_OWNED",			},
 	{	PROPERTY_CAPS_TOTAL,			 			"PROPERTY_CAPS_TOTAL",			},
 	{	PROPERTY_FLAG_CAPTURE_LIMIT,	 			"PROPERTY_FLAG_CAPTURE_LIMIT",	},
@@ -69,10 +70,13 @@ static s_PresenceTranslation s_PresenceIds[] = {
 	{	X_CONTEXT_GAME_MODE,					  	"CONTEXT_GAME_MODE",			},
 	{	X_CONTEXT_GAME_TYPE,					  	"CONTEXT_GAME_TYPE",			},
 #endif
+*/
 };
 
 // Presence values cannot be searched by id number, because they are not unique
 static s_PresenceTranslation s_PresenceValues[] = {
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+/*
 	{	SESSION_MATCH_QUERY_PLAYER_MATCH,			"SESSION_MATCH_QUERY_PLAYER_MATCH",			},
 	{	CONTEXT_GAME_MODE_MULTIPLAYER,	 			"CONTEXT_GAME_MODE_MULTIPLAYER",			},
 	{	CONTEXT_SCENARIO_CTF_2FORT,		 			"CONTEXT_SCENARIO_CTF_2FORT",				},
@@ -89,7 +93,7 @@ static s_PresenceTranslation s_PresenceValues[] = {
 	{	XSESSION_CREATE_SYSTEMLINK,				  	"SESSION_CREATE_SYSTEMLINK",				},
 	{	X_CONTEXT_GAME_TYPE_STANDARD,			  	"CONTEXT_GAME_TYPE_STANDARD",				},
 	{	X_CONTEXT_GAME_TYPE_RANKED,				  	"CONTEXT_GAME_TYPE_RANKED",					},
-#endif
+#endif*/
 };
 
 //-----------------------------------------------------------------------------
@@ -116,6 +120,9 @@ void CTF_Presence::GetPropertyDisplayString( uint id, uint value, char *pOutput,
 
 	switch( id )
 	{
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+// Okay I'll admit, this is just some weird matchmaking garbo. Still disabled tho
+#if 0
 #if defined( _X360 )
 	case X_CONTEXT_GAME_TYPE:
 		switch( value )
@@ -167,7 +174,7 @@ void CTF_Presence::GetPropertyDisplayString( uint id, uint value, char *pOutput,
 			break;
 		}
 		break;
-
+#endif // 0
 	default:
 		pDisplayString = "Unknown";
 		break;
@@ -222,11 +229,11 @@ uint CTF_Presence::GetPresenceID( const char *pIDName )
 void CTF_Presence::LevelInitPreEntity( void )
 {
 	m_bIsInCommentary = false;
-	const char *pMapName = MapName();
+	/*const char *pMapName = MapName();
 	if ( pMapName )
 	{
 		UserSetContext( XBX_GetPrimaryUserId(), CONTEXT_SCENARIO, GetMapID( pMapName ), true );
-	}
+	}*/
 }
 
 
@@ -274,6 +281,9 @@ void CTF_Presence::SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, C
 	}
 #endif
 
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+// Okay I'll admit, this is matchmaking, and not achievements. but its unused so whatever.
+#if 0
 	for ( int i = 0; i < properties.Count(); ++i )
 	{
 		XUSER_PROPERTY &prop = properties[i];
@@ -311,6 +321,7 @@ void CTF_Presence::SetupGameProperties( CUtlVector< XUSER_CONTEXT > &contexts, C
 
 		}
 	}
+#endif
 }
 
 
@@ -368,6 +379,8 @@ void CTF_Presence::FireGameEvent( IGameEvent *event )
 
 
 	}
+	//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+#if 0
 	else if ( !Q_stricmp( "controlpoint_initialized", eventname ) )
 	{
 		int nPoints = ObjectiveResource()->GetNumControlPoints();
@@ -445,6 +458,7 @@ void CTF_Presence::FireGameEvent( IGameEvent *event )
 #endif
 		}
 	}
+#endif // 0
 	else if ( !Q_stricmp( "playing_commentary", eventname ) )
 	{
 		m_bIsInCommentary = true;
@@ -453,6 +467,8 @@ void CTF_Presence::FireGameEvent( IGameEvent *event )
 		UserSetContext( XBX_GetPrimaryUserId(), X_CONTEXT_GAME_MODE, CONTEXT_GAME_MODE_SINGLEPLAYER, true );
 #endif
 	}
+
+	
 }
 
 

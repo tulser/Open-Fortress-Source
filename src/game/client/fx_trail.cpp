@@ -61,18 +61,11 @@ void C_ParticleTrail::OnDataChanged(DataUpdateType_t updateType)
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		Start( ParticleMgr(), NULL );
+		CParticleMgr *pParticleMgr = ParticleMgr();
+		
+		if( pParticleMgr->AddEffect( &m_ParticleEffect, this ) == false )
+			return;
+
+		m_pParticleMgr = pParticleMgr;
 	}
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void C_ParticleTrail::Start( CParticleMgr *pParticleMgr, IPrototypeArgAccess *pArgs )
-{
-	if( pParticleMgr->AddEffect( &m_ParticleEffect, this ) == false )
-		return;
-
-	m_pParticleMgr = pParticleMgr;
-}
-

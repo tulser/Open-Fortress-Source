@@ -65,13 +65,11 @@
 #include "env_debughistory.h"
 #include "fogcontroller.h"
 #include "gameinterface.h"
-#include "hl2orange.spa.h"
 #include "dt_utlvector_send.h"
 #include "vote_controller.h"
 #include "ai_speech.h"
 #include "tf_shareddefs.h"
 #include "info_camera_link.h"
-#include "script_intro.h"
 #include "point_camera.h"
 
 #if defined USES_ECON_ITEMS
@@ -86,21 +84,11 @@
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
-#if defined (HL2_DLL) || defined (OPENFORTRESS_DLL)
-#include "combine_mine.h"
-#include "weapon_physcannon.h"
-#endif
-
 ConVar autoaim_max_dist( "autoaim_max_dist", "2160" ); // 2160 = 180 feet
 ConVar autoaim_max_deflect( "autoaim_max_deflect", "0.99" );
 
-#ifdef CSTRIKE_DLL
-ConVar	spec_freeze_time( "spec_freeze_time", "5.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
-ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.7", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
-#else
 ConVar	spec_freeze_time( "spec_freeze_time", "4.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time spend frozen in observer freeze cam." );
 ConVar	spec_freeze_traveltime( "spec_freeze_traveltime", "0.4", FCVAR_CHEAT | FCVAR_REPLICATED, "Time taken to zoom in to frame a target in observer freeze cam.", true, 0.01, false, 0 );
-#endif
 
 ConVar sv_bonus_challenge( "sv_bonus_challenge", "0", FCVAR_REPLICATED, "Set to values other than 0 to select a bonus map challenge type." );
 
@@ -674,23 +662,6 @@ void CBasePlayer::SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs,
 {
     int area = pViewEntity ? pViewEntity->NetworkProp()->AreaNum() : NetworkProp()->AreaNum();
     PointCameraSetupVisibility( this, area, pvs, pvssize );
-
-    // If the intro script is playing, we want to get it's visibility points
-    if ( g_hIntroScript )
-    {
-        Vector vecOrigin;
-        CBaseEntity *pCamera;
-        if ( g_hIntroScript->GetIncludedPVSOrigin( &vecOrigin, &pCamera ) )
-        {
-            // If it's a point camera, turn it on
-            CPointCamera *pPointCamera = dynamic_cast< CPointCamera* >(pCamera); 
-            if ( pPointCamera )
-            {
-                pPointCamera->SetActive( true );
-            }
-            engine->AddOriginToPVS( vecOrigin );
-        }
-    }
 
 	// If we have a viewentity, we don't add the player's origin.
 	if ( pViewEntity )
@@ -2869,11 +2840,6 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 
 	if ( checkEnable )
 	{
-		// Allowing picking up of bouncebombs.
-		CBounceBomb *pBomb = dynamic_cast<CBounceBomb*>(pObject);
-		if( pBomb )
-			return true;
-
 		// Allow pickup of phys props that are motion enabled on player pickup
 		CPhysicsProp *pProp = dynamic_cast<CPhysicsProp*>(pObject);
 		CPhysBox *pBox = dynamic_cast<CPhysBox*>(pObject);

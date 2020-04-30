@@ -4,7 +4,6 @@
 //
 //=============================================================================
 
-
 #include "cbase.h"
 
 #ifdef CLIENT_DLL
@@ -16,6 +15,9 @@
 #include "c_tf_player.h"
 
 CAchievementMgr g_AchievementMgrTF;	// global achievement mgr for TF
+
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+#if 0
 
 bool CheckWinNoEnemyCaps( IGameEvent *event, int iRole );
 
@@ -110,7 +112,7 @@ class CAchievementTFPlayGameEveryMap : public CTFAchievementFullRound
 		static const char *szComponents[] =
 		{
 			"dm_skate", "dm_wiseau", "dm_backfort", "dm_congo", "dm_2fort"
-		};		
+		};
 		m_pszComponentNames = szComponents;
 		m_iNumComponents = ARRAYSIZE( szComponents );
 		SetGoal( m_iNumComponents );
@@ -558,3 +560,5 @@ bool IsLocalTFPlayerClass( int iClass )
 
 
 #endif // CLIENT_DLL
+
+#endif // 0

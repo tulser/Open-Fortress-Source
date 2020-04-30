@@ -166,7 +166,6 @@ private:
 	void		GetSortedDismountNodeList( const Vector &org, float radius, CFuncLadder *ladder, CUtlRBTree< NearbyDismount_t, int >& list );
 
 	LadderMove_t *GetLadderMove();
-	//CHL2_Player	*GetHL2Player();
 	CTFPlayer	*GetTFPlayer();
 
 	void		SetLadder( CFuncLadder *ladder );
@@ -1858,7 +1857,6 @@ void CTFGameMovement::PlayerRoughLandingEffects( float fvol )
 //-----------------------------------------------------------------------------
 inline CTFPlayer	*CTFGameMovement::GetTFPlayer()
 {
-//	return static_cast< CHL2_Player * >( player );
 	return ToTFPlayer( player );
 }
 
@@ -1868,7 +1866,6 @@ inline CTFPlayer	*CTFGameMovement::GetTFPlayer()
 //-----------------------------------------------------------------------------
 inline LadderMove_t *CTFGameMovement::GetLadderMove()
 {
-//	CHL2_Player *p = GetHL2Player();
 	CTFPlayer *p = GetTFPlayer();
 	if ( !p )
 	{

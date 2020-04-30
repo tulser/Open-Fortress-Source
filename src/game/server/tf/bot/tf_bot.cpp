@@ -2723,29 +2723,29 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 		int count = Clamp( Q_atoi( args.Arg( 1 ) ), 1, gpGlobals->maxClients );
 		for ( int i = 0; i < count; ++i )
 		{
-			char szBotName[32];
+			char const *szBotName;
 			if ( args.ArgC() > 4 )
-				Q_snprintf( szBotName, 32, args.Arg( 4 ) );
+				szBotName = args.Arg( 4 );
 			else
-				Q_strcpy( szBotName, TheTFBots().GetRandomBotName() );
+				szBotName = TheTFBots().GetRandomBotName();
 
 			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( szBotName );
 			if ( bot == nullptr )
 				return;
 
-			char szTeam[10];
+			char const *szTeam;
 			if ( args.ArgC() > 2 )
 			{
 				if ( IsTeamName( args.Arg( 2 ) ) )
-					Q_snprintf( szTeam, 10, args.Arg( 2 ) );
+					szTeam = args.Arg( 2 );
 				else
 				{
 					Warning( "Invalid argument '%s'\n", args.Arg( 2 ) );
-					Q_snprintf( szTeam, 5, "auto" );
+					szTeam = "auto";
 				}
 			}
 			else
-				Q_snprintf( szTeam, 5, "auto" );
+				szTeam = "auto";
 
 			bot->HandleCommand_JoinTeam( szTeam );
 
@@ -2766,7 +2766,7 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 				bot->m_vecPlayerColor = m_vecPlayerColor;
 			}
 
-			char szClassName[32];
+			const char *szClassName;
 
 			const char *szForceClassName = tf_bot_force_class.GetString();
 			if ( !FStrEq( szForceClassName, "" ) )
@@ -2774,24 +2774,24 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 				// BOTTODO: Mercenary and Civilian
 				const int iClassIdx = GetClassIndexFromString( szForceClassName, TF_CLASS_CIVILIAN );
 				if ( iClassIdx != TF_CLASS_UNDEFINED )
-					Q_snprintf( szClassName, 32, szForceClassName );
+					szClassName = szForceClassName;
 				else 
-					Q_snprintf( szClassName, 7, "random" );
+					szClassName = "random";
 			}
 			else
 			{
 				if ( args.ArgC() > 3 )
 				{
 					if ( IsPlayerClassName( args.Arg( 3 ) ) )
-						Q_snprintf( szClassName, 32, args.Arg( 3 ) );
+						szClassName = args.Arg( 3 );
 					else
 					{
 						Warning( "Invalid argument '%s'\n", args.Arg( 3 ) );
-						Q_snprintf( szClassName, 7, "random" );
+						szClassName = "random";
 					}
 				}
 				else
-					Q_snprintf( szClassName, 7, "random" );
+					szClassName = "random";
 			}
 
 			bot->HandleCommand_JoinClass( szClassName );

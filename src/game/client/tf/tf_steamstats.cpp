@@ -24,6 +24,8 @@ struct StatMap_t
 
 // subset of stats which we store in Steam
 StatMap_t g_SteamStats[] = { 
+//NOTE: I (Nopey) have disabled achievements. Just search for NOPEY_NO_ACHIEVE
+/*
 		{ "iNumberOfKills", TFSTAT_KILLS, PROPERTY_KILLS },
 		{ "iDamageDealt", TFSTAT_DAMAGE, PROPERTY_DAMAGE_DEALT },
 		{ "iPlayTime", TFSTAT_PLAYTIME, PROPERTY_PLAY_TIME },
@@ -41,8 +43,9 @@ StatMap_t g_SteamStats[] = {
 		{ "iHealthPointsLeached", TFSTAT_HEALTHLEACHED, PROPERTY_HEALTH_POINTS_LEACHED },
 		{ "iBuildingsBuilt", TFSTAT_BUILDINGSBUILT, PROPERTY_BUILDINGS_BUILT },
 		{ "iSentryKills", TFSTAT_MAXSENTRYKILLS, PROPERTY_SENTRY_KILLS },
-		{ "iNumTeleports", TFSTAT_TELEPORTS, PROPERTY_TELEPORTS } };
-
+		{ "iNumTeleports", TFSTAT_TELEPORTS, PROPERTY_TELEPORTS }
+*/
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -215,8 +218,8 @@ void CTFSteamStats::ReportLiveStats()
 	for ( int i = 0; i < ARRAYSIZE( g_SteamStats ); ++i )
 	{
 		// Points scored is looked up by the stats reporting function
-		if ( g_SteamStats[i].iLiveStat == PROPERTY_POINTS_SCORED )
-			continue;
+		// if ( g_SteamStats[i].iLiveStat == PROPERTY_POINTS_SCORED )
+			// continue;
 
 		presence->SetStat( g_SteamStats[i].iLiveStat, statsTotals[i], XUSER_DATA_TYPE_INT32 );
 	}
