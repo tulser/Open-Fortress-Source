@@ -445,7 +445,7 @@ int AliasToWeaponID( const char *alias )
 	return TF_WEAPON_NONE;
 }
 
-int g_aWeaponDamageTypes[] =
+uint g_aWeaponDamageTypes[] =
 {
 	DMG_GENERIC,	// TF_WEAPON_NONE
 
@@ -543,7 +543,7 @@ int g_aWeaponDamageTypes[] =
 	TF_DMG_SENTINEL_VALUE
 };
 
-int g_aGrenadeDamageTypes[] =
+uint g_aGrenadeDamageTypes[] =
 {
 	DMG_GENERIC,	// TF_GRENADE_NONE
 

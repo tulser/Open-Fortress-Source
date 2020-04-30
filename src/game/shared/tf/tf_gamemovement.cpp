@@ -668,9 +668,7 @@ bool CTFGameMovement::CheckJumpButton()
 	{
 		if ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
-			char jmpSound[128];
-			Q_snprintf(jmpSound, sizeof(jmpSound), m_pTFPlayer->GetPlayerClass()->GetJumpSound());
-			m_pTFPlayer->EmitSound( jmpSound );
+			m_pTFPlayer->EmitSound( m_pTFPlayer->GetPlayerClass()->GetJumpSound() );
 		}
 		m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 	}

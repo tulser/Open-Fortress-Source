@@ -736,7 +736,7 @@ void C_TFRagdoll::DismemberHead()
 	}
 }
 
-void C_TFRagdoll::DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone )
+void C_TFRagdoll::DismemberBase( char const *szBodyPart, bool bLevel, bool bBloodEffects, char const *szParticleBone )
 {
 	int m_Bodygroup = FindBodygroupByName( szBodyPart );
 
@@ -5219,9 +5219,7 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 		
 		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
-			char jmpSound[128];
-			Q_snprintf(jmpSound, sizeof(jmpSound), GetPlayerClass()->GetJumpSound());
-			EmitSound( jmpSound );
+			EmitSound( GetPlayerClass()->GetJumpSound() );
 		}
 
 		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;

@@ -493,9 +493,9 @@ enum RetroMode
 extern const Vector g_vecFixedPattern[];
 
 extern const char *g_aWeaponNames[];
-extern int g_aWeaponDamageTypes[];
+extern uint g_aWeaponDamageTypes[];
 extern const char *g_aGrenadeNames[];
-extern int g_aGrenadeDamageTypes[];
+extern uint g_aGrenadeDamageTypes[];
 
 int GetWeaponId( const char *pszWeaponName );
 #ifdef GAME_DLL
