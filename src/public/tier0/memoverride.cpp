@@ -1652,6 +1652,6 @@ namespace _NATIVE_STARTUP_NAMESPACE
 
 #endif // _MSC_VER >= 1400
 
-#endif // !STEAM && !NO_MALLOC_override
+#endif // !STEAM && !NO_MALLOC_OVERRIDE
 
 #endif // _WIN32
