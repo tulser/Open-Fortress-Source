@@ -7,7 +7,7 @@
 #include "cbase.h"
 #include "VAudio.h"
 #include "VFooterPanel.h"
-#include "VDropDownMenu.h"
+#include "vdropdownmenu.h"
 #include "VSliderControl.h"
 #include "VHybridButton.h"
 #include "EngineInterface.h"

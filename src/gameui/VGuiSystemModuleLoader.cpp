@@ -7,7 +7,9 @@
 #include <stdio.h>
 
 #include "VGuiSystemModuleLoader.h"
-#include "Sys_Utils.h"
+#ifdef _WIN32
+#include "sys_utils.h"
+#endif
 #include "IVGuiModule.h"
 #include "ServerBrowser/IServerBrowser.h"
 

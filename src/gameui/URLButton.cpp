@@ -6,7 +6,7 @@
 //=============================================================================//
 
 #include <stdio.h>
-#include <UtlSymbol.h>
+#include <utlsymbol.h>
 
 #include <vgui/IBorder.h>
 #include <vgui/IInput.h>

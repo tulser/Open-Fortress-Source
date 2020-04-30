@@ -212,7 +212,7 @@ $Project "GameUI"
 				"PlayerListDialog.cpp" \
 				"rungameengine.cpp" \
 				"ScriptObject.cpp" \
-				"sys_utils.cpp" \
+				"sys_utils.cpp" [$WIN32] \
 				"textentrybox.cpp" \
 				"URLButton.cpp" \
 				"VControlsListPanel.cpp" \

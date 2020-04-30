@@ -4,8 +4,8 @@
 #include "vgui_controls/ImagePanel.h"
 #include <vgui/ISurface.h>
 #include "vgui_video_player.h"
-#include "VGUIMatSurface/IMatSystemSurface.h"
-#include "engineinterface.h"
+#include "VGuiMatSurface/IMatSystemSurface.h"
+#include "EngineInterface.h"
 #include "BaseModPanel.h"
 
 #include "../game/shared/hl2ce/steamworks_stuff.h"

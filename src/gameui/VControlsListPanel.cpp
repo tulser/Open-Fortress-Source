@@ -5,7 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#include "vcontrolslistpanel.h"
+#include "VControlsListPanel.h"
 #include "GameUI_Interface.h"
 #include "EngineInterface.h"
 

@@ -8,7 +8,7 @@
 #if defined( WIN32 ) && !defined( _X360 )
 #include "windows.h"
 #endif
-#include "VAddonAssociation.h"
+#include "vaddonassociation.h"
 #include "VGenericConfirmation.h"
 
 #include "EngineInterface.h"

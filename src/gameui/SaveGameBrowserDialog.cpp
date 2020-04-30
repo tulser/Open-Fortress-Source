@@ -6,7 +6,7 @@
 
 #include "cbase.h"
 #include "BasePanel.h"
-#include "SavegameDialog.h"
+#include "SaveGameDialog.h"
 
 #include "winlite.h"		// FILETIME
 #include "vgui/ILocalize.h"

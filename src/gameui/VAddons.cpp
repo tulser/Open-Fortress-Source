@@ -28,7 +28,7 @@
 #include "vgui_controls/Label.h"
 #include "vgui_controls/TextImage.h"
 #include "utlbuffer.h"
-#include "hllib\HLLib.h"
+#include "hllib/HLLib.h"
 #include "tier2/fileutils.h"
 #include "nb_header_footer.h"
 #include "nb_button.h"

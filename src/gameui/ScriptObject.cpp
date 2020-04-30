@@ -333,9 +333,9 @@ void CScriptObject::WriteToFile( FileHandle_t fp )
 	case O_NUMBER:
 		fVal = fcurValue;
 		if ( fMin != -1.0 )
-			fVal = __max( fVal, fMin );
+			fVal = maxval( fVal, fMin );
 		if ( fMax != -1.0 )
-			fVal = __min( fVal, fMax );
+			fVal = minval( fVal, fMax );
 		g_pFullFileSystem->FPrintf( fp, "\"%f\"\r\n", fVal );
 		break;
 	case O_STRING:
@@ -365,9 +365,9 @@ void CScriptObject::WriteToFile( FileHandle_t fp )
 	case O_SLIDER:
 		fVal = fcurValue;
 		if ( fMin != -1.0 )
-			fVal = __max( fVal, fMin );
+			fVal = maxval( fVal, fMin );
 		if ( fMax != -1.0 )
-			fVal = __min( fVal, fMax );
+			fVal = minval( fVal, fMax );
 		g_pFullFileSystem->FPrintf( fp, "\"%f\"\r\n", fVal );
 		break;
 	}
@@ -395,9 +395,9 @@ void CScriptObject::WriteToConfig( void )
 	case O_NUMBER:
 		fVal = fcurValue;
 		if ( fMin != -1.0 )
-			fVal = __max( fVal, fMin );
+			fVal = maxval( fVal, fMin );
 		if ( fMax != -1.0 )
-			fVal = __min( fVal, fMax );
+			fVal = minval( fVal, fMax );
 		Q_snprintf( szValue, sizeof( szValue ), "%f", fVal );
 		break;
 	case O_STRING:
@@ -427,9 +427,9 @@ void CScriptObject::WriteToConfig( void )
 	case O_SLIDER:
 		fVal = fcurValue;
 		if ( fMin != -1.0 )
-			fVal = __max( fVal, fMin );
+			fVal = maxval( fVal, fMin );
 		if ( fMax != -1.0 )
-			fVal = __min( fVal, fMax );
+			fVal = minval( fVal, fMax );
 		Q_snprintf( szValue, sizeof( szValue ), "%f", fVal );
 		break;
 	}

@@ -5,7 +5,7 @@
 //=====================================================================================//
 
 #include "cbase.h"
-#include "VCustomCampaigns.h"
+#include "vcustomcampaigns.h"
 #include "VGenericPanelList.h"
 #include "KeyValues.h"
 #include "VFooterPanel.h"

@@ -10,7 +10,7 @@
 #include <vgui/KeyCode.h>
 
 #include "CvarTextEntry.h"
-#include "TextEntryBox.h"
+#include "textentrybox.h"
 #include <vgui_controls/TextEntry.h>
 
 // memdbgon must be the last include file in a .cpp file!!!

@@ -8,6 +8,7 @@
 #if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h>
 #include <direct.h>
+#include "sys_utils.h"
 #include <io.h>
 #endif
 #include <sys/types.h>
@@ -19,7 +20,6 @@
 #undef SendMessage
 #endif
 																
-#include "sys_utils.h"
 #include "filesystem.h"
 #include "GameUI_Interface.h"
 #include "string.h"
@@ -315,6 +315,7 @@ void CGameUI::Connect( CreateInterfaceFn gameFactory )
 	m_GameFactory = gameFactory;
 }
 
+#ifdef _WIN32
 //-----------------------------------------------------------------------------
 // Purpose: Callback function; sends platform Shutdown message to specified window
 //-----------------------------------------------------------------------------
@@ -323,6 +324,7 @@ int __stdcall SendShutdownMsgFunc(WHANDLE hwnd, int lparam)
 	Sys_PostMessage(hwnd, Sys_RegisterWindowMessage("ShutdownValvePlatform"), 0, 1);
 	return 1;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Searches for GameStartup*.mp3 files in the sound/ui folder and plays one
@@ -428,49 +430,47 @@ void CGameUI::Start()
 	// localization
 	g_pVGuiLocalize->AddFile( "Resource/platform_%language%.txt");
 	g_pVGuiLocalize->AddFile( "Resource/vgui_%language%.txt");
-
+#ifdef _WIN32
 	Sys_SetLastError( SYS_NO_ERROR );
 
-	if ( IsPC() )
+	g_hMutex = Sys_CreateMutex( "ValvePlatformUIMutex" );
+	g_hWaitMutex = Sys_CreateMutex( "ValvePlatformWaitMutex" );
+	if ( g_hMutex == NULL || g_hWaitMutex == NULL || Sys_GetLastError() == SYS_ERROR_INVALID_HANDLE )
 	{
-		g_hMutex = Sys_CreateMutex( "ValvePlatformUIMutex" );
-		g_hWaitMutex = Sys_CreateMutex( "ValvePlatformWaitMutex" );
-		if ( g_hMutex == NULL || g_hWaitMutex == NULL || Sys_GetLastError() == SYS_ERROR_INVALID_HANDLE )
+		// error, can't get handle to mutex
+		if (g_hMutex)
 		{
-			// error, can't get handle to mutex
-			if (g_hMutex)
-			{
-				Sys_ReleaseMutex(g_hMutex);
-			}
-			if (g_hWaitMutex)
-			{
-				Sys_ReleaseMutex(g_hWaitMutex);
-			}
-			g_hMutex = NULL;
-			g_hWaitMutex = NULL;
-			Warning("Steam Error: Could not access Steam, bad mutex\n");
-			return;
+			Sys_ReleaseMutex(g_hMutex);
 		}
-		unsigned int waitResult = Sys_WaitForSingleObject(g_hMutex, 0);
-		if (!(waitResult == SYS_WAIT_OBJECT_0 || waitResult == SYS_WAIT_ABANDONED))
+		if (g_hWaitMutex)
 		{
-			// mutex locked, need to deactivate Steam (so we have the Friends/ServerBrowser data files)
-			// get the wait mutex, so that Steam.exe knows that we're trying to acquire ValveTrackerMutex
-			waitResult = Sys_WaitForSingleObject(g_hWaitMutex, 0);
-			if (waitResult == SYS_WAIT_OBJECT_0 || waitResult == SYS_WAIT_ABANDONED)
-			{
-				Sys_EnumWindows(SendShutdownMsgFunc, 1);
-			}
+			Sys_ReleaseMutex(g_hWaitMutex);
 		}
-
-		// Delay playing the startup music until two frames
-		// this allows cbuf commands that occur on the first frame that may start a map
-		m_iPlayGameStartupSound = 2;
-
-		// now we are set up to check every frame to see if we can friends/server browser
-		m_bTryingToLoadFriends = true;
-		m_iFriendsLoadPauseFrames = 1;
+		g_hMutex = NULL;
+		g_hWaitMutex = NULL;
+		Warning("Steam Error: Could not access Steam, bad mutex\n");
+		return;
 	}
+	unsigned int waitResult = Sys_WaitForSingleObject(g_hMutex, 0);
+	if (!(waitResult == SYS_WAIT_OBJECT_0 || waitResult == SYS_WAIT_ABANDONED))
+	{
+		// mutex locked, need to deactivate Steam (so we have the Friends/ServerBrowser data files)
+		// get the wait mutex, so that Steam.exe knows that we're trying to acquire ValveTrackerMutex
+		waitResult = Sys_WaitForSingleObject(g_hWaitMutex, 0);
+		if (waitResult == SYS_WAIT_OBJECT_0 || waitResult == SYS_WAIT_ABANDONED)
+		{
+			Sys_EnumWindows(SendShutdownMsgFunc, 1);
+		}
+	}
+
+	// Delay playing the startup music until two frames
+	// this allows cbuf commands that occur on the first frame that may start a map
+	m_iPlayGameStartupSound = 2;
+
+	// now we are set up to check every frame to see if we can friends/server browser
+	m_bTryingToLoadFriends = true;
+	m_iFriendsLoadPauseFrames = 1;
+#endif // _WIN32
 }
 
 //-----------------------------------------------------------------------------
@@ -537,6 +537,7 @@ void CGameUI::Shutdown()
 
 	ModInfo().FreeModInfo();
 	
+#ifdef _WIN32
 	// release platform mutex
 	// close the mutex
 	if (g_hMutex)
@@ -547,6 +548,7 @@ void CGameUI::Shutdown()
 	{
 		Sys_ReleaseMutex(g_hWaitMutex);
 	}
+#endif
 
 	steamapicontext->Clear();
 #ifndef _X360
@@ -674,6 +676,7 @@ void CGameUI::RunFrame()
 		}
 	}
 
+#ifdef _WIN32
 	if ( IsPC() && m_bTryingToLoadFriends && m_iFriendsLoadPauseFrames-- < 1 && g_hMutex && g_hWaitMutex )
 	{
 		// try and load Steam platform files
@@ -717,6 +720,7 @@ void CGameUI::RunFrame()
 			}
 		}
 	}
+#endif // _WIN32
 }
 
 //-----------------------------------------------------------------------------

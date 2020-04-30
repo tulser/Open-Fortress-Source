@@ -73,6 +73,10 @@
 // need this for memset
 #include <string.h>
 
+// need this for file access
+#include <cstdio>
+#include <fstream>
+
 #include "tier0/valve_minmax_on.h"	// GCC 4.2.2 headers screw up our min/max defs.
 
 #ifdef _RETAIL
@@ -189,6 +193,9 @@ typedef signed char int8;
 	// an overloaded function. Usage in function declarations is like this:
 	// int GetData() const OVERRIDE;
 	#define OVERRIDE override
+
+	#define maxval __max
+	#define minval __min
 
 #else // _WIN32
 
@@ -387,9 +394,10 @@ typedef size_t SIZE_T;
 typedef const char* LPCSTR;
 
 typedef void* HANDLE;
+typedef HANDLE WHANDLE;
+typedef HANDLE HBITMAP;
 typedef HANDLE HINSTANCE;
 typedef HINSTANCE HMODULE;
-
 typedef unsigned short WORD;
 
 #define _MAX_PATH PATH_MAX
@@ -398,6 +406,42 @@ typedef unsigned short WORD;
 #define __declspec
 #define __debugbreak
 
+#define IMAGE_BITMAP 0
+
+#define LR_CREATEDIBSECTION 0x2000
+#define LR_LOADFROMFILE 	0x0010
+#define LR_DEFAULTSIZE		0x0040
+
+#define maxval(a, b) (a < b) ? b : a
+#define minval(a, b) (a > b) ? b : a
+
+typedef struct tagRGBQUAD {
+  BYTE rgbBlue;
+  BYTE rgbGreen;
+  BYTE rgbRed;
+  BYTE rgbReserved;
+} RGBQUAD;
+
+bool CopyFile(const char* source, const char* destination, bool dontoverwrite)
+{
+	if (dontoverwrite)
+	{
+		std::ifstream existcheck(destination);
+		if (existcheck.good()) return 0;
+
+	}
+	std::ifstream from(source, std::ios::binary);
+	std::ofstream to(destination, std::ios::binary);
+
+	to << from.rdbuf();
+
+	return 1;
+}
+
+bool DeleteFile(const char* file)
+{
+	return !std::remove(file);
+}
 #endif // defined(_WIN32) && !defined(WINDED)
 
 
@@ -757,30 +801,6 @@ typedef unsigned short WORD;
 #define _mkdir(dir) mkdir( dir, S_IRWXU | S_IRWXG | S_IRWXO )
 #define _wtoi(arg) wcstol(arg, NULL, 10)
 #define _wtoi64(arg) wcstoll(arg, NULL, 10)
-
-/*
-
-typedef struct tagBITMAPINFOHEADER {
-  DWORD biSize;
-  LONG  biWidth;
-  LONG  biHeight;
-  WORD  biPlanes;
-  WORD  biBitCount;
-  DWORD biCompression;
-  DWORD biSizeImage;
-  LONG  biXPelsPerMeter;
-  LONG  biYPelsPerMeter;
-  DWORD biClrUsed;
-  DWORD biClrImportant;
-} BITMAPINFOHEADER, *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
-
-typedef struct tagRGBQUAD {
-  BYTE rgbBlue;
-  BYTE rgbGreen;
-  BYTE rgbRed;
-  BYTE rgbReserved;
-} RGBQUAD;
-*/
 
 #define RGB( r, g, b ) (r << 16) + (g << 8) + (b << 8);
 #define GetModuleFileName( a, b, c ) NULL

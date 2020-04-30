@@ -28,7 +28,7 @@
 #include <vgui_controls/ImagePanel.h>
 #include <vgui_controls/FileOpenDialog.h>
 #include <vgui_controls/MessageBox.h>
-#include <vgui/IVgui.h>
+#include <vgui/IVGui.h>
 #include <vgui/ILocalize.h>
 #include <vgui/IPanel.h>
 #include <vgui_controls/MessageBox.h>
@@ -45,8 +45,8 @@
 #include "tier1/convar.h"
 
 
-#include "materialsystem/IMaterial.h"
-#include "materialsystem/IMesh.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imesh.h"
 #include "materialsystem/imaterialvar.h"
 
 // use the JPEGLIB_USE_STDIO define so that we can read in jpeg's from outside the game directory tree.  For Spray Import.
@@ -999,9 +999,10 @@ ConversionErrorType COptionsSubMultiplayer::ConvertJPEGToTGA(const char *jpegpat
 // convert the bmp file given to a TGA file at the given destination path.
 ConversionErrorType COptionsSubMultiplayer::ConvertBMPToTGA(const char *bmpPath, const char *tgaPath)
 {
-	if ( !IsPC() )
+	if ( !IsWindows() )
 		return CE_SOURCE_FILE_FORMAT_NOT_SUPPORTED;
 
+#ifdef _WIN32
 	HBITMAP hBitmap = (HBITMAP)LoadImage(NULL, bmpPath, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE | LR_DEFAULTSIZE);
 	BITMAP bitmap;
 
@@ -1219,6 +1220,7 @@ ConversionErrorType COptionsSubMultiplayer::ConvertBMPToTGA(const char *bmpPath,
 	}
 	DeleteObject(hBitmap);
 	return retval ? CE_SUCCESS : CE_ERROR_WRITING_OUTPUT_FILE;
+#endif // _WIN32
 }
 
 // read a TGA header from the current point in the file stream.
@@ -2281,6 +2283,7 @@ static void PaletteHueReplace( RGBQUAD *palSrc, int newHue, int Start, int end )
 //-----------------------------------------------------------------------------
 void COptionsSubMultiplayer::RemapPalette( char *filename, int topcolor, int bottomcolor )
 {
+#ifdef _WIN32
 	char infile[ 256 ];
 	char outfile[ 256 ];
 
@@ -2338,6 +2341,7 @@ void COptionsSubMultiplayer::RemapPalette( char *filename, int topcolor, int bot
 		g_pFullFileSystem->Write( outbuffer.Base(), outbuffer.TellPut(), file );
 		g_pFullFileSystem->Close( file );
 	}
+#endif // _WIN32
 }
 
 //-----------------------------------------------------------------------------

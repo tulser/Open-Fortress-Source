@@ -10,7 +10,7 @@
 #include "EngineInterface.h"
 #include "inputsystem/iinputsystem.h"
 #include "vgui_controls/Label.h"
-#include "vgui_controls/imagepanel.h"
+#include "vgui_controls/ImagePanel.h"
 #include "VGenericConfirmation.h"
 #include "VFooterPanel.h"
 #include "vgui/ISurface.h"
