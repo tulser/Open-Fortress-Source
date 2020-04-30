@@ -812,7 +812,6 @@ $Project
 		$File	"particle_collision.h"
 		$File	"particle_iterators.h"
 		$File	"particle_litsmokeemitter.h"
-		$File	"particle_prototype.h"
 		$File	"particle_simple3d.h"
 		$File	"particle_util.h"
 		$File	"particledraw.h"

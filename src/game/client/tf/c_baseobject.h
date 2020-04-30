@@ -14,7 +14,6 @@
 #include "baseobject_shared.h"
 #include <vgui_controls/Panel.h>
 #include "particlemgr.h"
-#include "particle_prototype.h"
 #include "particle_util.h"
 #include "c_basecombatcharacter.h"
 #include "ihasbuildpoints.h"
