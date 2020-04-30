@@ -6,7 +6,7 @@
 //=============================================================================//
 
 #include "winlite.h"
-#include "Sys_Utils.h"
+#include "sys_utils.h"
 #include "EngineInterface.h"
 
 #if defined( _X360 )
@@ -119,4 +119,3 @@ void Sys_DestroyWindow(WHANDLE wnd)
 {
 	//::DestroyWindow((HWND)wnd);
 }
-

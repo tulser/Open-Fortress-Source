@@ -159,13 +159,13 @@ bool Sys_IsDebuggerPresent()
 	return Plat_IsInDebugSession();
 }
 
+#ifdef _WIN32
 struct ThreadedLoadLibaryContext_t
 {
 	const char *m_pLibraryName;
 	HMODULE m_hLibrary;
 };
 
-#ifdef _WIN32
 
 // wraps LoadLibraryEx() since 360 doesn't support that
 static HMODULE InternalLoadLibrary( const char *pName, Sys_Flags flags )

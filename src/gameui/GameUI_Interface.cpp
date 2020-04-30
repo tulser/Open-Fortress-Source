@@ -7,7 +7,6 @@
 
 #if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h>
-#include "Sys_Utils.h"
 #include <direct.h>
 #include <io.h>
 #endif
@@ -20,6 +19,7 @@
 #undef SendMessage
 #endif
 																
+#include "sys_utils.h"
 #include "filesystem.h"
 #include "GameUI_Interface.h"
 #include "string.h"
@@ -493,7 +493,7 @@ bool CGameUI::FindPlatformDirectory(char *platformDir, int bufferSize)
 		// we're not under steam, so setup using path relative to game
 		if ( IsPC() )
 		{
-			if ( ::GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), platformDir, bufferSize ) )
+			if ( GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), platformDir, bufferSize ) )
 			{
 				char *lastslash = strrchr(platformDir, '\\'); // this should be just before the filename
 				if ( lastslash )
@@ -1210,7 +1210,7 @@ void UTIL_StringToColor32( color32 *color, const char *pString )
 #define STUB_GAMEUI_FUNC(name, ret, val, ...) \
 	ret CGameUI::name(__VA_ARGS__) \
 	{ \
-		__debugbreak(); \
+		DebuggerBreak(); \
 		return val; \
 	}
 

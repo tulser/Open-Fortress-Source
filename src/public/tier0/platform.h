@@ -379,20 +379,24 @@ FIXME: Enable this when we no longer fear change =)
 #else
 typedef unsigned int DWORD;
 #endif
+
 typedef long LONG;
 typedef DWORD COLORREF;
 typedef unsigned int UINT;
 typedef size_t SIZE_T;
 typedef const char* LPCSTR;
+
+typedef void* HANDLE;
+typedef HANDLE HINSTANCE;
+typedef HINSTANCE HMODULE;
+
 typedef unsigned short WORD;
-typedef void * HINSTANCE;
-typedef void * HANDLE;
-typedef HANDLE WHANDLE;
-#define CAsyncCtxSaveGame void;
+
 #define _MAX_PATH PATH_MAX
 #define __cdecl
 #define __stdcall
 #define __declspec
+#define __debugbreak
 
 #endif // defined(_WIN32) && !defined(WINDED)
 
@@ -754,8 +758,7 @@ typedef HANDLE WHANDLE;
 #define _wtoi(arg) wcstol(arg, NULL, 10)
 #define _wtoi64(arg) wcstoll(arg, NULL, 10)
 
-typedef uint32 HMODULE;
-typedef void *HANDLE;
+/*
 
 typedef struct tagBITMAPINFOHEADER {
   DWORD biSize;
@@ -777,29 +780,10 @@ typedef struct tagRGBQUAD {
   BYTE rgbRed;
   BYTE rgbReserved;
 } RGBQUAD;
+*/
 
 #define RGB( r, g, b ) (r << 16) + (g << 8) + (b << 8);
-
-#define Sys_RegisterWindowMessage( x ) return NULL;
-#define Sys_PostMessage( a, b, c, d) return NULL;
-#define GetSystemTime( vtime ) vtime = time(NULL)
-
-enum {
-	SYS_NO_ERROR = 0,
-	SYS_ERROR_INVALID_HANDLE,
-};
-
-#define Sys_SetLastError( type ) return NULL;
-
-typedef struct tagBITMAPINFO {
-  BITMAPINFOHEADER bmiHeader;
-  RGBQUAD          bmiColors[1];
-} BITMAPINFO, *LPBITMAPINFO, *PBITMAPINFO;
-
-typedef struct tagHGLOBAL {
-  UINT uFlags;
-  SIZE_T dwBytes;
-} HGLOBAL;
+#define GetModuleFileName( a, b, c ) NULL
 
 #endif
 

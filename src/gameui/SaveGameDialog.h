@@ -54,7 +54,7 @@ public:
 private:
 	//friend class CAsyncCtxSaveGame;
 	void			InitiateSaving();
-	void			SaveCompleted( CAsyncCtxSaveGame *pCtx );
+	//void			SaveCompleted( CAsyncCtxSaveGame *pCtx );
 
 private:
 	bool					m_bGameSaving;
