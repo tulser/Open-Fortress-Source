@@ -159,10 +159,10 @@ LINK ?= $(CC)
 #OPEN FORTRESS G++ 4.6 DETECTION
 # If the string isn't empty,
 # we're compiling with g++ 4.6
-ifneq ($(shell $(CXX) --version | grep ") 4.6" ),)
-	$(info [OF] G++ 4.6 Detected)
+ifneq ($(shell $(CXX) --version | grep g++-4.6 ),)
+	_ := $(info [OF] G++ 4.6 Detected)
 	# 4.6 doesn't support the override keyword, so we remove it.
-	CXXFLAGS += -Doverride=""
+	CXXFLAGS += -Doverride
 endif
 
 ifeq ($(STEAM_BRANCH),1)

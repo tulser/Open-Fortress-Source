@@ -217,14 +217,18 @@ bool IGameSystem::InitAllSystems()
 		Q_snprintf( sz, sizeof( sz ), "%s->Init():Start", sys->Name() );
 		XBX_rTimeStampLog( Plat_FloatTime(), sz );
 #endif
+		Warning( "%s->Init():Start", sys->Name() );
 		bool valid = sys->Init();
 
 #if defined( _X360 )
 		Q_snprintf( sz, sizeof( sz ), "%s->Init():Finish", sys->Name() );
 		XBX_rTimeStampLog( Plat_FloatTime(), sz );
 #endif
-		if ( !valid )
+		if ( !valid ){
+			Warning( "%s->Init() Failed! ignoring.. :)", sys->Name() );
+			continue;
 			return false;
+		}
 	}
 
 	return true;
