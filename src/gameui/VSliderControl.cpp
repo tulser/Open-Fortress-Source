@@ -1,6 +1,6 @@
 #include "cbase.h"
 #include "VSliderControl.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "vgui/ISurface.h"
 #include "vgui_controls/ProgressBar.h"
 #include "tier1/KeyValues.h"

@@ -9,7 +9,7 @@
 #include "VGenericPanelList.h"
 #include "KeyValues.h"
 #include "VFooterPanel.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "EngineInterface.h"
 #include "filesystem.h"
 #include "fmtstr.h"

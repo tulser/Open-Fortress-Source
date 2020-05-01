@@ -9,7 +9,7 @@
 #include "VFooterPanel.h"
 #include "VDropDownMenu.h"
 #include "VSliderControl.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "EngineInterface.h"
 #include "gameui_util.h"
 #include "vgui/ISurface.h"

@@ -9,7 +9,7 @@
 #include "VFooterPanel.h"
 #include "VDropDownMenu.h"
 #include "VSliderControl.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "EngineInterface.h"
 #include "gameui_util.h"
 #include "vgui/ISurface.h"
@@ -17,8 +17,8 @@
 #include "materialsystem/materialsystem_config.h"
 #include "cdll_util.h"
 #include "nb_header_footer.h"
-#include "optionssubkeyboard.h"
-#include "vcontrolslistpanel.h"
+#include "OptionsSubKeyboard.h"
+#include "VControlsListPanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

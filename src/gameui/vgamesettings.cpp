@@ -12,7 +12,7 @@
 #include <vstdlib/random.h>
 
 #include "VDropDownMenu.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "VFooterPanel.h"
 #include "vgui/ISurface.h"
 #include "EngineInterface.h"

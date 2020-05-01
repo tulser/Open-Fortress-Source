@@ -10,7 +10,7 @@
 #include "VGenericConfirmation.h"
 #include "VFooterPanel.h"
 #include "VFlyoutMenu.h"
-#include "VHybridButton.h"
+#include "vhybridbutton.h"
 #include "EngineInterface.h"
 
 #include "fmtstr.h"

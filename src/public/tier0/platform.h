@@ -73,10 +73,6 @@
 // need this for memset
 #include <string.h>
 
-// need this for file access
-#include <cstdio>
-#include <fstream>
-
 #include "tier0/valve_minmax_on.h"	// GCC 4.2.2 headers screw up our min/max defs.
 
 #ifdef _RETAIL
@@ -214,6 +210,7 @@ typedef signed char int8;
 	#endif
 	typedef void *HWND;
 
+	#define _atoi64 atoll
 	// Avoid redefinition warnings if a previous header defines this.
 	#undef OVERRIDE
 	#if __cplusplus >= 201103L
@@ -422,26 +419,11 @@ typedef struct tagRGBQUAD {
   BYTE rgbReserved;
 } RGBQUAD;
 
-bool CopyFile(const char* source, const char* destination, bool dontoverwrite)
-{
-	if (dontoverwrite)
-	{
-		std::ifstream existcheck(destination);
-		if (existcheck.good()) return 0;
+// Compatibility functions for GameUI
+bool CopyFile(const char* source, const char* destination, bool dontoverwrite);
+bool DeleteFile(const char* file);
+void itoa(int val, char* buf, int base);
 
-	}
-	std::ifstream from(source, std::ios::binary);
-	std::ofstream to(destination, std::ios::binary);
-
-	to << from.rdbuf();
-
-	return 1;
-}
-
-bool DeleteFile(const char* file)
-{
-	return !std::remove(file);
-}
 #endif // defined(_WIN32) && !defined(WINDED)
 
 
