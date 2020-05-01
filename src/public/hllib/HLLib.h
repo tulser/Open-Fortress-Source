@@ -582,7 +582,15 @@ HLLIB_API hlBool hlWADFileGetImageData(const HLDirectoryItem *pFile, hlUInt *uiW
 
 #ifdef __cplusplus
 
-#	include <list>
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
+#include <list>
 
 namespace HLLib
 {

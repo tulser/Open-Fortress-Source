@@ -262,7 +262,24 @@ $Project "GameUI"
 		$File	"$SRCDIR\public\savegame_version.h"
 		$File	"$SRCDIR\common\language.h"
 	}
-	
+
+	$Folder	"Link Libraries" [$LINUX]
+	{
+		$Lib		HLLib
+		$Lib		bitmap
+		$Lib		choreoobjects
+		$Lib		dmxloader
+		$Lib		mathlib
+		$Lib		matsys_controls
+		$Lib		particles
+		$Lib		tier1
+		$Lib		tier2
+		$Lib		tier3
+		$Lib		vgui_controls
+		$Lib		vtf
+		$ImpLib		steam_api
+	}
+
 	$Folder	"Link Libraries" [$WIN32]
 	{
 		$File	"$SRCDIR\lib\public\HLLib.lib"

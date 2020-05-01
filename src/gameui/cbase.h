@@ -12,6 +12,7 @@
 #endif
 
 struct studiohdr_t;
+//#define min(a,b) nonsense
 
 #include <stdio.h>
 #include <stdlib.h>
