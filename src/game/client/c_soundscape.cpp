@@ -329,8 +329,8 @@ bool C_SoundscapeSystem::Init()
 				continue;
 			}
 
-			Warning( "C_SoundscapeSystem::Init:  Manifest '%s' with bogus file type '%s', expecting 'file'\n", 
-				SOUNDSCAPE_MANIFEST_FILE, sub->GetName() );
+			Warning( "C_SoundscapeSystem::Init:  Manifest '%s' with bogus file type '%s', expecting 'file'. Value was '%s'\n", 
+				SOUNDSCAPE_MANIFEST_FILE, sub->GetName(), sub->GetString() );
 		}
 
 		if ( mapSoundscapeFilename && filesystem->FileExists( mapSoundscapeFilename ) )
