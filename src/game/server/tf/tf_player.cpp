@@ -424,7 +424,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
-	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropInt( NULL, 0, 0 ) ),
 
 END_SEND_TABLE()
 
@@ -1332,7 +1332,7 @@ void CTFPlayer::UpdateCosmetics()
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
-			m_iCosmetics.AddToTail(pHat->GetFloat());
+			m_iCosmetics.AddToTail(pHat->GetInt());
 			NetworkStateChanged();
 		}
 
@@ -8585,6 +8585,7 @@ void CTFPlayer::Taunt( void )
 	char szResponse[AI_Response::MAX_RESPONSE_NAME];
 	if ( SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_TAUNT, NULL, szResponse, AI_Response::MAX_RESPONSE_NAME ) )
 	{
+		DevMsg("SERVER: LINE %d, WE'RE TAUNTING BOIS!!\n", __LINE__ );
 		// Get the duration of the scene.
 		float flDuration = GetSceneDuration( szResponse ) + 0.2f;
 
@@ -9050,6 +9051,7 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 		if ( iConcept != MP_CONCEPT_DIED )
 			return false;
 	}
+	DevMsg("SERVER: LINE %d, Wasn't already talking\n.", __LINE__ );
 
 	// Save the current concept.
 	m_iCurrentConcept = iConcept;
@@ -9100,6 +9102,7 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 	else
 	{
 		// play normally
+		DevMsg("Taunt concept %s\n", g_pszMPConcepts[iConcept]);
 		bReturn = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter );
 	}
 
