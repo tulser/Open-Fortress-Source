@@ -74,8 +74,6 @@ void CFMODManager::ExitFMOD(void)
 		DevMsg("FMOD system terminated successfully.\n");
 }
 
-ConVar fuck_fmod("fuck_fmod", "rb", FCVAR_ARCHIVE);
-
 // Returns the full path of a specified sound file in the /sounds folder
 void *CFMODManager::GetFullPathToSound(const char* pathToFileFromModFolder, int *pLength )
 {

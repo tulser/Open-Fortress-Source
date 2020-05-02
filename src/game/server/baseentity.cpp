@@ -6473,7 +6473,19 @@ void CBaseEntity::SetLocalAngles( const QAngle& angles )
 	if ( !IsEntityQAngleReasonable( angles ) )
 	{
 		QAngle angleNormalize(AngleNormalize(angles.x), AngleNormalize(angles.y), AngleNormalize(angles.z));
-		SetLocalAngles(angleNormalize);
+		if ( IsEntityQAngleReasonable( angleNormalize ) )
+		{
+			if ( CheckEmitReasonablePhysicsSpew() )
+			{
+				DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s, using normalized version.\n", angles.x, angles.y, angles.z, GetDebugName() );
+			}
+			SetLocalAngles(angleNormalize);
+		}
+		else
+		{
+			DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s, and failed to normalize! Ignoring..\n", angles.x, angles.y, angles.z, GetDebugName() );
+		}
+		
 		return;
 	}
 
