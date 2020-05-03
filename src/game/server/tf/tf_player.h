@@ -460,6 +460,7 @@ public:
 	CNetworkVar( bool, m_bSaveMeParity );
 	CNetworkVar( bool, m_bDied );
 	CNetworkVar( bool, m_bGotKilled );
+	CNetworkVar( bool, m_bResupplied );
 
 	// teleporter variables
 	int		no_entry_teleporter_message;
@@ -649,8 +650,6 @@ private:
 	bool				m_bAbortFreezeCam;
 	bool				m_bSeenRoundInfo;
 	bool				m_bRegenerating;
-	
-	CNetworkVar( int, m_iUpdateCosmetics );
 
 	// Items.
 	CNetworkHandle( CTFItem, m_hItem );

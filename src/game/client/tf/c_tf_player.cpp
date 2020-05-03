@@ -2356,8 +2356,9 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFNonLocalPlayerExclusive) ),
 
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
-	RecvPropInt( RECVINFO( m_iUpdateCosmetics ) ),
-	//
+	
+	RecvPropInt( RECVINFO( m_bResupplied ) ),
+
 	RecvPropInt( RECVINFO( m_iAccount ) ),
 
 	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropFloat(NULL,0,0) ),
@@ -2431,12 +2432,9 @@ C_TFPlayer::C_TFPlayer() :
 
 	m_bUpdateObjectHudState = false;
 	
-	iUpdatedCosmetics = 0;
-	
 	iCosmeticCount = 0;
 
 	ListenForGameEvent( "player_jump" );
-	ListenForGameEvent( "force_cosmetic_refresh" );
 
 	//LoadMapMusic(::filesystem);
 
@@ -2594,7 +2592,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 	// If I'm burning, stop the burning sounds
 	if ( !IsDormant() && bDormant )
 	{
-		if ( m_pBurningSound) 
+		if ( m_pBurningSound ) 
 		{
 			StopBurningSound();
 		}
@@ -2607,6 +2605,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 	if ( IsDormant() && !bDormant )
 	{
 		m_bUpdatePlayerAttachments = true;
+		m_bUpdateCosmetics = true;
 	}
 
 	// Deliberately skip base combat weapon
@@ -2624,6 +2623,8 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	m_iOldPlayerClass = m_PlayerClass.GetClassIndex();
 	m_iOldState = m_Shared.GetCond();
 	m_iOldSpawnCounter = m_iSpawnCounter;
+	m_bOldResupplied = m_bResupplied;
+	
 	m_bOldSaveMeParity = m_bSaveMeParity;
 	m_nOldWaterLevel = GetWaterLevel();
 
@@ -2650,7 +2651,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 		InitInvulnerableMaterial();
@@ -2661,6 +2661,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		{
 			InitInvulnerableMaterial();
 			m_bUpdatePlayerAttachments = true;
+			m_bUpdateCosmetics = true;
 		}
 	}
 
@@ -2687,8 +2688,21 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 		bJustSpawned = true;
 		m_bUpdatePlayerAttachments = true;
+		m_bUpdateCosmetics = true;
 	}
-
+	
+	if ( m_bOldResupplied != m_bResupplied )
+	{
+		m_bUpdateCosmetics = true;
+		m_bOldResupplied = m_bResupplied;
+	}
+	
+	if( bCosmeticsDisabled != of_disable_cosmetics.GetBool() )
+	{
+		m_bUpdateCosmetics = true;
+		bCosmeticsDisabled = of_disable_cosmetics.GetBool();
+	}
+	
 	// update the chat bubble on the player (when he is typing a chat message)
 	CreateChattingEffect();
 
@@ -3122,6 +3136,7 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 	}	
 
 	m_bUpdatePlayerAttachments = true;
+	m_bUpdateCosmetics = true;
 
 	return hdr;
 }
@@ -3204,79 +3219,6 @@ void C_TFPlayer::UpdateSpyMask( void )
 	}
 }
 
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Update the hats you're wearing
-//-----------------------------------------------------------------------------
-void C_TFPlayer::UpdateWearables( void )
-{
-	DevMsg("Triggered Update Wearables\n");
-	for( int i = 0; i < GetNumBodyGroups(); i++ )
-	{
-		SetBodygroup( i, 0 );
-	}	
-	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
-	{
-		if ( m_hCosmetic[i] )
-			m_hCosmetic[i].Get()->Release();
-	}
-	m_hCosmetic.Purge();
-	iCosmeticCount = 0;
-
-	if( of_disable_cosmetics.GetBool() )
-		return;
-
-	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
-	{
-		DevMsg("Mismatching cosmetic count\n");
-		return;
-	}
-
-	for( int i = 0; i < m_iCosmetics.Count(); i++ )
-	{
-		iCosmeticCount++;
-		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
-		if( !pCosmetic )
-		{
-			DevMsg("Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
-			continue;
-		}
-		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
-		if( pBodygroups )
-		{
-			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
-			{
-				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
-
-				if ( m_Bodygroup >= 0 )
-					SetBodygroup( m_Bodygroup, sub->GetInt() );
-			}
-		}
-
-		if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
-		{
-			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-			
-			if( handle )
-			{
-				int iVisibleTeam = GetTeamNumber();
-				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
-				{
-					iVisibleTeam = m_Shared.GetDisguiseTeam();
-				}
-				handle->m_nSkin = iVisibleTeam - 2;
-
-				m_hCosmetic.AddToTail(handle);
-			}
-		}
-		else
-		{
-			DevMsg("Blank model\n");
-		}
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: Attachments used for gameplay IE Shield powerup go here
 //-----------------------------------------------------------------------------
@@ -3298,6 +3240,73 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 				}
 				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
 			}
+		}
+	}
+}
+void C_TFPlayer::UpdateWearables( void )
+{
+	DevMsg("Triggered Update Wearables\n");
+	for( int i = 0; i < GetNumBodyGroups(); i++ )
+	{
+		SetBodygroup( i, 0 );
+	}	
+	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
+	{
+		if ( m_hCosmetic[i] )
+			m_hCosmetic[i].Get()->Release();
+	}
+	m_hCosmetic.Purge();
+
+	if( of_disable_cosmetics.GetBool() )
+		return;
+
+	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
+	{
+		DevMsg("Mismatching cosmetic count\n");
+		return;
+	}
+
+	for( int i = 0; i < m_iCosmetics.Count(); i++ )
+	{
+		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
+		if( !pCosmetic )
+		{
+			DevMsg("Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			continue;
+		}
+		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+		if( pBodygroups )
+		{
+			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+			{
+				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
+
+				if ( m_Bodygroup >= 0 )
+					SetBodygroup( m_Bodygroup, sub->GetInt() );
+			}
+		}
+
+		if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+		{
+			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+
+			if( handle )
+			{
+				int iVisibleTeam = GetTeamNumber();
+				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				
+				iVisibleTeam = iVisibleTeam - 2;
+				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+				m_hCosmetic.AddToTail(handle);
+			}
+		}
+		else
+		{
+			DevMsg("Blank model\n");
 		}
 	}
 }
@@ -3552,13 +3561,11 @@ void C_TFPlayer::ClientThink()
 		UpdatePlayerAttachedModels();
 		m_bUpdatePlayerAttachments = false;
 	}
-
-//	DevMsg("Cosmetic ents:%d, Desired cosmetics: %d\n", m_hCosmetic.Count(), m_iCosmetics.Count() );
 	
-	if( ( !of_disable_cosmetics.GetBool() && iCosmeticCount != m_iCosmetics.Count() ) || iUpdatedCosmetics != m_iUpdateCosmetics || (of_disable_cosmetics.GetBool() && m_hCosmetic.Count() > 0 ) )
+	if ( m_bUpdateCosmetics )
 	{
 		UpdateWearables();
-		iUpdatedCosmetics = m_iUpdateCosmetics;
+		m_bUpdateCosmetics = false;
 	}
 	
 	if ( m_pSaveMeEffect )
@@ -4823,11 +4830,6 @@ void C_TFPlayer::ReplayMapMusic( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::ClientPlayerRespawn( void )
 {
-	for( int i = 0; i < GetNumBodyGroups(); i++ )
-	{
-		SetBodygroup( i, 0 );
-	}
-
 	if ( IsLocalPlayer() )
 	{
 		// Dod called these, not sure why

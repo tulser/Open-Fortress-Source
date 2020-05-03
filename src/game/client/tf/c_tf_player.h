@@ -302,8 +302,8 @@ public:
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );
 	void UpdateSpyMask( void );
-	void UpdateWearables( void );
 	void UpdateGameplayAttachments( void );
+	void UpdateWearables( void );
 	
 	bool WearsPartyHat( void );
 private:
@@ -322,6 +322,11 @@ private:
 	int					bInitialSpawn;
 	int					m_iOldState;
 	int					m_iOldSpawnCounter;
+
+	int					m_bResupplied;
+	int					m_bOldResupplied;
+	
+	bool				bCosmeticsDisabled;
 
 	// Healer
 	CHandle<C_TFPlayer>	m_hHealer;
@@ -369,9 +374,7 @@ public:
 	QAngle	m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
 	
-	CNetworkVar( int, m_iUpdateCosmetics );
-	
-	int iUpdatedCosmetics;
+	bool m_bUpdateCosmetics;
 
 	CNetworkHandle( C_TFItem, m_hItem );
 

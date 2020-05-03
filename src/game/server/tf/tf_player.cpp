@@ -420,7 +420,8 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "tfnonlocaldata", 0, &REFERENCE_SEND_TABLE(DT_TFNonLocalPlayerExclusive), SendProxy_SendNonLocalDataTable ),
 
 	SendPropBool( SENDINFO( m_iSpawnCounter ) ),
-	SendPropInt( SENDINFO( m_iUpdateCosmetics ), 32, SPROP_UNSIGNED ),
+	
+	SendPropBool( SENDINFO( m_bResupplied ) ),
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
@@ -520,7 +521,7 @@ CTFPlayer::CTFPlayer()
 	
 	m_bPuppet = false;
 	
-	m_iUpdateCosmetics = 0;
+	m_bResupplied = false;
 	
 	kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	
@@ -1238,7 +1239,6 @@ void CTFPlayer::Spawn()
 	m_Shared.m_flNextLungeTime = 0.0f;
 
 	UpdatePlayerColor();
-	UpdateCosmetics();
 
 	// Gore
 	m_iGoreHead = 0;
@@ -1285,6 +1285,8 @@ void CTFPlayer::Spawn()
 			//RemoveGlowEffect();
 		}
 	}
+	
+	UpdateCosmetics();
 }
 
 void CTFPlayer::UpdateCosmetics()
@@ -1303,7 +1305,8 @@ void CTFPlayer::UpdateCosmetics()
 			Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_Mercenary_cosmetic_loadout" ), sizeof(szDesired));
 		else
 		{
-			//Q_strncpy(szDesired,"0 25 27 13 40 17 28", sizeof(szDesired));
+			// Uncomment this to test all blank loadout slots
+			// Q_strncpy(szDesired,"0 25 27 13 40 17 28", sizeof(szDesired));
 			int iCosmeticCount = random->RandomInt( 0, 5 );
 			int iMaxCosNum = GetItemsGame() ? GetItemsGame()->GetInt("cosmetic_count", 5 ) : 5;
 			for( int i = 0; i < iCosmeticCount; i++ )
@@ -1328,7 +1331,7 @@ void CTFPlayer::UpdateCosmetics()
 			if( kvDesiredCosmetics )
 				kvDesiredCosmetics->SetString( szRegion, args[i] );
 		}
-		
+
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
@@ -1340,10 +1343,7 @@ void CTFPlayer::UpdateCosmetics()
 			kvDesiredCosmetics->deleteThis();
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 	}
-	
-	m_iUpdateCosmetics++;
-	if( m_iUpdateCosmetics < 0 )
-		m_iUpdateCosmetics = 0;
+
 }
 
 void CTFPlayer::ClearSlots()
@@ -1404,6 +1404,8 @@ void CTFPlayer::Regenerate( void )
 	
 	UpdatePlayerColor();
 	UpdateCosmetics();
+	
+	m_bResupplied = !m_bResupplied;
 	
 	m_bRegenerating = false;
 	if ( iCurrentHealth > GetHealth() )
