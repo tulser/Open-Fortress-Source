@@ -28,6 +28,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+#include <replay\ienginereplay.h>
 
 ConVar cl_richpresence_printmsg( "cl_richpresence_printmsg", "0", FCVAR_ARCHIVE, "" );
 
@@ -155,10 +156,14 @@ void CTFDiscordRPC::OnJoinGame( const char *joinSecret )
 	engine->ExecuteClientCmd( szCommand );
 }
 
-void CTFDiscordRPC::OnSpectateGame( const char *spectateSecret )
+//Spectating can not work until somebody can figgure out how to return the SourceTV ip in a string
+//so you can spectate withouth taking up spots on the server
+//-Nbc66
+/*void CTFDiscordRPC::OnSpectateGame( const char *spectateSecret )
 {
 	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Spectate Game: %s\n", spectateSecret );
 }
+*/
 
 void CTFDiscordRPC::OnJoinRequest( const DiscordUser *joinRequest )
 {
@@ -401,14 +406,17 @@ void CTFDiscordRPC::UpdateRichPresence()
 void CTFDiscordRPC::UpdateNetworkInfo()
 {
 	INetChannelInfo *ni = engine->GetNetChannelInfo();
-
 	char partyId[128];
-	sprintf( partyId, "%s-party", ni->GetAddress()); // adding -party here because secrets cannot match the party id
-
+	sprintf(partyId, "%s-party", ni->GetAddress()); // adding -party here because secrets cannot match the party id
 	m_sDiscordRichPresence.partyId = partyId;
 
 	m_sDiscordRichPresence.joinSecret = ni->GetAddress();
-	m_sDiscordRichPresence.spectateSecret = "Spectate";
+
+//Spectating can not work until somebody can figgure out how to return the SourceTV ip in a string
+//so you can spectate withouth taking up spots on the server
+//-Nbc66
+
+	//m_sDiscordRichPresence.spectateSecret = "Spectate";
 }
 
 void CTFDiscordRPC::LevelInit( const char *szMapname )
