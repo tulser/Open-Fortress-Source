@@ -1211,20 +1211,20 @@ void CTFPlayerShared::UpdateCritParticle()
 
 			CNewParticleEffect *pTest = dynamic_cast<CNewParticleEffect *>(m_pCritBoostEffect);
 
-			if( !pTest )
+			if( pTest != nullptr )
 				m_pCritBoostEffect = pTarget->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW );
 			else
 				m_pCritBoostEffect->StartEmission();
 			
 			pTest = dynamic_cast<CNewParticleEffect *>(m_pCritBoostEffect);
 
-			if( pTest )
+			if( pTest != nullptr )
 				UpdateParticleColor( m_pCritBoostEffect );
 		}
 	}
 	else
 	{
-		if( dynamic_cast<CNewParticleEffect *>( m_pCritBoostEffect ) )
+		if( m_pCritBoostEffect != nullptr )
 		{
 			if( m_pCritBoostEffect->GetOwner() )
 				m_pCritBoostEffect->GetOwner()->ParticleProp()->StopEmission( m_pCritBoostEffect );

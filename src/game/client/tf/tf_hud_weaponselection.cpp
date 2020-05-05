@@ -24,6 +24,8 @@
 #include "tf_imagepanel.h"
 #include "c_tf_player.h"
 #include "c_tf_weapon_builder.h"
+#include "in_buttons.h"
+#include "iinput.h"
 
 #define SELECTION_TIMEOUT_THRESHOLD		2.5f	// Seconds
 #define SELECTION_FADEOUT_TIME			3.0f
@@ -52,6 +54,7 @@ public:
 
 	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos );
 	virtual void SelectWeaponSlot( int iSlot );
+	virtual bool AffectedByDrawHUD( void ){ return false; }
 
 	virtual C_BaseCombatWeapon	*GetSelectedWeapon( void );
 
@@ -126,6 +129,10 @@ private:
 
 	CPanelAnimationVarAliasType( float, m_flSelectionNumberXPos, "SelectionNumberXPos", "4", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flSelectionNumberYPos, "SelectionNumberYPos", "4", "proportional_float" );
+	CPanelAnimationVarAliasType( float, m_flSelectionNumberZPos, "SelectionNumberZPos", "4", "proportional_float" );
+
+	CPanelAnimationVar( int, m_iWeaponBGXPos, "WeaponBGXPos", "10" );
+	CPanelAnimationVar( int, m_iWeaponBGYPos, "WeaponBGYPos", "10" );
 
 	CPanelAnimationVarAliasType( float, m_flIconXPos, "IconXPos", "16", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flIconYPos, "IconYPos", "8", "proportional_float" );
@@ -138,7 +145,8 @@ private:
 
 	CPanelAnimationVar( Color, m_TextColor, "TextColor", "SelectionTextFg" );
 	CPanelAnimationVar( Color, m_NumberColor, "NumberColor", "SelectionNumberFg" );
-	CPanelAnimationVar( Color, m_EmptyBoxColor, "EmptyBoxColor", "SelectionEmptyBoxBg" );
+	CPanelAnimationVar( Color, m_NumberShadowColor, "NumberShadowColor", "SelectionNumberBg" );
+	CPanelAnimationVar( Color, m_EmptyBoxColor, "EmptyBoxColor", "255 255 255 255" );
 	CPanelAnimationVar( Color, m_BoxColor, "BoxColor", "SelectionBoxBg" );
 	CPanelAnimationVar( Color, m_SelectedBoxColor, "SelectedBoxClor", "SelectionSelectedBoxBg" );
 
@@ -146,7 +154,7 @@ private:
 
 	CPanelAnimationVar( float, m_flTextScan, "TextScan", "1.0" );
 
-	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "6" );
+	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "10" );
 	CPanelAnimationVar( bool, m_bPlaySelectionSounds, "PlaySelectSounds", "1" );
 
 	CTFImagePanel *m_pActiveWeaponBG;
@@ -472,7 +480,7 @@ void CHudWeaponSelection::PostChildPaint()
 							}
 							else
 							{
-								pTexture->DrawSelf( x, y, boxWide, boxTall, col  );
+								pTexture->DrawSelf( x, y, boxWide, boxTall, col );
 							}
 						}
 
@@ -521,33 +529,6 @@ void CHudWeaponSelection::PostChildPaint()
 						if ( !pWeapon->VisibleInWeaponSelection() )
 							continue;
 
-						if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
-						{
-							// draw selected weapon
-							if ( m_pActiveWeaponBG )
-							{
-								m_pActiveWeaponBG->SetPos( xpos - XRES(10), ypos - YRES(10));
-
-								int shortcut = bFirstItem ? i + 1 : -1;
-
-								if ( IsPC() && shortcut >= 0 )
-								{
-									Color numberColor = m_NumberColor;
-									numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
-									surface()->DrawSetTextColor(numberColor);
-									surface()->DrawSetTextFont(m_hNumberFont);
-									wchar_t wch = '0' + shortcut;
-									surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
-									surface()->DrawUnicodeChar(wch);
-								}
-							}
-						}
-						else
-						{
-							// draw selected weapon
-							DrawBox( xpos + XRES(5), ypos + YRES(5), m_flLargeBoxWide - XRES(10), m_flLargeBoxTall - YRES(10), col, m_flSelectionAlphaOverride, bFirstItem ? i + 1 : -1 );
-						}
-
 						// draw icon
 						const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
 						if ( pPlayer )
@@ -557,10 +538,25 @@ void CHudWeaponSelection::PostChildPaint()
 								pTexture = pWeapon->GetSpriteActive();
 							}
 						}
+						
+						if ( !(pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i )) )
+						{
+							// draw selected weapon
+							DrawBox( xpos + XRES(5), ypos + YRES(5), m_flLargeBoxWide - XRES(10), m_flLargeBoxTall - YRES(10), m_EmptyBoxColor, m_flSelectionAlphaOverride, bFirstItem ? i + 1 : -1 );
+						}						
 
 						if ( pTexture )
 						{
 							pTexture->DrawSelf( xpos, ypos, m_flLargeBoxWide, m_flLargeBoxTall, col );
+						}
+						
+						if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
+						{
+							// draw selected weapon
+							if ( m_pActiveWeaponBG )
+							{
+								m_pActiveWeaponBG->SetPos( xpos - XRES(m_iWeaponBGXPos), ypos - YRES(m_iWeaponBGYPos));
+							}
 						}
 
 						if ( !pWeapon->CanBeSelected() )
@@ -573,6 +569,26 @@ void CHudWeaponSelection::PostChildPaint()
 						}
 
 						xpos -= ( m_flLargeBoxWide + m_flBoxGap );
+						
+						int shortcut = bFirstItem ? i + 1 : -1;
+
+						if ( IsPC() && shortcut >= 0 )
+						{
+							Color numberColor = m_NumberColor;
+							Color numberShadowColor = m_NumberShadowColor;
+							numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+							surface()->DrawSetTextFont(m_hNumberFont);
+							wchar_t wch = '0' + shortcut;
+
+							surface()->DrawSetTextPos( xStartPos - XRES(4) - m_flSelectionNumberXPos, ypos + YRES(6) + m_flSelectionNumberYPos );
+							surface()->DrawSetTextColor(numberShadowColor);
+							surface()->DrawUnicodeChar(wch);
+							
+							surface()->DrawSetTextColor(numberColor);
+							surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+							surface()->DrawUnicodeChar(wch);
+						}
+						
 						bFirstItem = false;
 					}
 
@@ -606,8 +622,23 @@ void CHudWeaponSelection::PostChildPaint()
 							pTexture->DrawSelf( xpos, ypos, m_flSmallBoxWide, m_flSmallBoxTall, col  );
 						}
 
+						Color numberColor = m_NumberColor;
+						Color numberShadowColor = m_NumberShadowColor;
+						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+						surface()->DrawSetTextFont(m_hNumberFont);
+						wchar_t wch = '0' + (i+1);
+
+						surface()->DrawSetTextPos( xStartPos - XRES(4) - m_flSelectionNumberXPos, ypos + YRES(6) + m_flSelectionNumberYPos );
+						surface()->DrawSetTextColor(numberShadowColor);
+						surface()->DrawUnicodeChar(wch);
+						
+						surface()->DrawSetTextColor(numberColor);
+						surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+						surface()->DrawUnicodeChar(wch);
+
 						ypos += ( m_flSmallBoxTall + m_flBoxGap );	
 					}
+							
 				}
 			}
 		}

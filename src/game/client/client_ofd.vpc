@@ -28,7 +28,7 @@ $Project "Client (OFD)"
 	{
 		$Folder	"OPENFORTRESS DLL"
 		{
-			$File	"of\of_hud_weaponselection.cpp"
+			$File	"tf\tf_hud_weaponselection.cpp"
 			$File	"of\c_of_trigger_jump.h"
 			$File	"of\c_of_trigger_jump.cpp"
 			$File	"of\of_discordrpc.cpp"

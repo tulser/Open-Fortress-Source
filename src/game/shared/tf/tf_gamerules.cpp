@@ -2500,76 +2500,59 @@ void CTFGameRules::SetupMutator( void )
 {
 	SetMutator ( of_mutator.GetInt() );
 
-	if ( TFGameRules()->IsMutator( NO_MUTATOR ) )
+	bool bIsGunGame = false;
+	
+	switch( GetMutator() )
 	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server DISABLED mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_disabled.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( INSTAGIB ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_instagib.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib (no melee) mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_instagibnomelee.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( CLAN_ARENA ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Clan Arena mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_clanarena.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( UNHOLY_TRINITY ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Unholy Trinity mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_unholytrinity.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( ROCKET_ARENA ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( InGametype(TF_GAMETYPE_GG) )
-			RemoveGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Rocket Arena mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_rocketarena.cfg \n");
-		engine->ServerExecute();
-	}	
-	else if ( TFGameRules()->IsMutator( GUN_GAME ) )
-	{
-		// gungame shouldnt be a gametype...
-		if ( !InGametype(TF_GAMETYPE_GG) )
-			AddGametype(TF_GAMETYPE_GG );
-
-		ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Gun Game mutator config file\n");
-		engine->ServerCommand("exec config_default_mutator_gungame.cfg \n");
-		engine->ServerExecute();
+		case NO_MUTATOR:
+			ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server DISABLED mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_disabled.cfg \n");
+			engine->ServerExecute();
+			break;
+		case INSTAGIB:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_instagib.cfg \n");
+			engine->ServerExecute();
+			break;
+		case INSTAGIB_NO_MELEE:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Instagib (no melee) mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_instagibnomelee.cfg \n");
+			engine->ServerExecute();
+			break;	
+		case CLAN_ARENA:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Clan Arena mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_clanarena.cfg \n");
+			engine->ServerExecute();
+			break;
+		case UNHOLY_TRINITY:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Unholy Trinity mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_unholytrinity.cfg \n");
+			engine->ServerExecute();
+			break;
+		case ROCKET_ARENA:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Rocket Arena mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_rocketarena.cfg \n");
+			engine->ServerExecute();
+			break;
+		case GUN_GAME:
+			bIsGunGame = true;
+			// gungame shouldnt be a gametype...
+			if ( !InGametype( TF_GAMETYPE_GG ) )
+				AddGametype( TF_GAMETYPE_GG );
+	
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Gun Game mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_gungame.cfg \n");
+			engine->ServerExecute();
+			break;
+		case ARSENAL:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Arsenal mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_arsenal.cfg \n");
+			engine->ServerExecute();
+			break;
 	}
+	
+	if( !bIsGunGame && InGametype( TF_GAMETYPE_GG ) )
+		RemoveGametype( TF_GAMETYPE_GG );
 }
 
 void CTFGameRules::PassAllTracks( void )

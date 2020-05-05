@@ -1541,6 +1541,8 @@ void CTFPlayer::GiveDefaultItems()
 			ManageClanArenaWeapons( pData );
 		else if ( TFGameRules()->IsMutator( ROCKET_ARENA ) )
 			ManageRocketArenaWeapons( pData );
+//		else if ( TFGameRules()->IsMutator( ARSENAL ) )
+//			ManageArsenalWeapons( pData );
 		else if ( of_threewave.GetBool() )
 			Manage3WaveWeapons( pData );
 		else
@@ -2085,7 +2087,34 @@ void CTFPlayer::ManageRocketArenaWeapons(TFPlayerClassData_t *pData)
 		}
 	}
 }
+/*
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
+{
+	StripWeapons();
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
 
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
+
+	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	{
+		if (GetActiveWeapon() != NULL) break;
+		if (m_bRegenerating == false)
+		{
+			SetActiveWeapon(NULL);
+			Weapon_Switch(Weapon_GetSlot(iWeapon));
+			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+		}
+	}
+}
+*/
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

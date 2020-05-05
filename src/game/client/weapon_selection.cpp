@@ -172,9 +172,9 @@ void CBaseHudWeaponSelection::ProcessInput()
 		}
 		return;
 	}
-
+	
 	// Has the player selected a weapon?
-	if ( gHUD.m_iKeyBits & (IN_ATTACK | IN_ATTACK2) )
+	if ( gHUD.m_iKeyBits & (IN_ATTACK2) )
 	{
 		if ( IsWeaponSelectable() )
 		{
@@ -183,13 +183,33 @@ void CBaseHudWeaponSelection::ProcessInput()
 #endif
 			{
 				// Swallow the button
-				gHUD.m_iKeyBits &= ~(IN_ATTACK | IN_ATTACK2);
-				input->ClearInputButton( IN_ATTACK );
+				gHUD.m_iKeyBits &= ~( IN_ATTACK2 );
 				input->ClearInputButton( IN_ATTACK2 );
+			}
+
+			// Cancel select so you can easily cancel out
+			engine->ClientCmd( "cancelselect\n" );
+			return;
+		}
+	}
+
+	// Has the player selected a weapon?
+	if ( gHUD.m_iKeyBits & (IN_ATTACK) )
+	{
+		if ( IsWeaponSelectable() )
+		{
+#if !( defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) )
+			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
+#endif
+			{
+				// Swallow the button
+				gHUD.m_iKeyBits &= ~(IN_ATTACK);
+				input->ClearInputButton( IN_ATTACK );
 			}
 
 			// select weapon
 			SelectWeapon();
+			return;
 		}
 	}
 }
