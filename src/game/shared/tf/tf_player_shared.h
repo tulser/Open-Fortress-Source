@@ -346,7 +346,7 @@ private:
 
 	float m_flInvulnerableOffTime;
 #else
-	CNewParticleEffect	*m_pCritBoostEffect;
+	HPARTICLEFFECT m_pCritBoostEffect;
 #endif
 
 	// Burn handling
