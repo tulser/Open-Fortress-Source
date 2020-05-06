@@ -283,8 +283,7 @@ public:
 
 	void TeamFortress_ClientDisconnected();
 	void TeamFortress_RemoveEverythingFromWorld();
-	void TeamFortress_RemoveRockets();
-	void TeamFortress_RemovePipebombs();
+	void TeamFortress_RemoveProjectiles();
 
 	CTFTeamSpawn *GetSpawnPoint( void ){ return m_pSpawnPoint; }
 		
@@ -347,7 +346,7 @@ public:
 
 	// Dropping Ammo
 	void DropAmmoPack( void );
-	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolve = false, int Clip = -1, int Reserve = -1 );
+	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown = false, bool bDissolve = false, int Clip = -1, int Reserve = -1 );
 	
 	CTFWeaponBase *GetWeaponInSlot( int iSlot, int iSlotPos );
 	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );

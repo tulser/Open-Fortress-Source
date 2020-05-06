@@ -31,16 +31,25 @@ ActionResult<CTFBot> CTFBotDMRoam::Update( CTFBot *me, float dt )
 {
 	const float flChaseRange = 2000.0f;
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
+
 	if ( threat != nullptr )
 	{
-		if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
+		CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
+		if ( TFGameRules()->IsFreeRoam() && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_MERCENARY )
 		{
-			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Chasing down the losers" );
+			// OFBOT: in DM, we don't want to chase down people with a pistol, lets priotize picking up weapons
 		}
-
-		if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), flChaseRange ) )
+		else
 		{
-			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Going after an enemy" );
+			if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
+			{
+				return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Chasing down the losers" );
+			}
+
+			if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), flChaseRange ) )
+			{
+				return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Going after an enemy" );
+			}
 		}
 	}
 
@@ -54,7 +63,7 @@ ActionResult<CTFBot> CTFBotDMRoam::Update( CTFBot *me, float dt )
 	}
 	else if ( !m_waitDuration.HasStarted() )
 	{
-		m_waitDuration.Start( RandomFloat( 4.0f, 10.0f ) ); // OFBOT TODO:these need to be tweaked around
+		m_waitDuration.Start( RandomFloat( 3.0f, 7.0f ) ); // OFBOT TODO: these need to be tweaked around
 
 		CTFBotPathCost func( me );
 		const int maxIterations = 15;	// OFBOT TODO: same for this

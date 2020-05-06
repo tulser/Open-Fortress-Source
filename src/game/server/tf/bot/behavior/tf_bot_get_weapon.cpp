@@ -5,7 +5,7 @@
 #include "tf_bot_get_weapon.h"
 #include "entity_weapon_spawner.h"
 
-ConVar tf_bot_weapon_search_range( "tf_bot_weapon_search_range", "1400", FCVAR_CHEAT, "How far bots will search to find weapon around them" );
+ConVar tf_bot_weapon_search_range( "tf_bot_weapon_search_range", "1500", FCVAR_CHEAT, "How far bots will search to find weapon around them" );
 ConVar tf_bot_debug_weapon_scavanging( "tf_bot_debug_weapon_scavanging", "0", FCVAR_CHEAT );
 
 
@@ -145,9 +145,6 @@ bool CTFBotGetWeapon::IsPossible( CTFBot *actor )
 		if ( !weapons[i] )
 			continue;
 
-		if ( weapons[i]->GetTeamNumber() == GetEnemyTeam( actor ) )
-			continue;
-
 		pWeapon = weapons[i];
 
 		if ( tf_bot_debug_weapon_scavanging.GetBool() )
@@ -213,7 +210,7 @@ bool CWeaponFilter::IsSelected( const CBaseEntity *ent ) const
 
 			int iWeaponID = AliasToWeaponID( pSpawner->m_iszWeaponName );
 
-			if ( m_pActor && m_pActor->Weapon_OwnsThisID( iWeaponID ) ) // don't go for spawners that we already have a weapon from
+			if ( m_pActor->Weapon_OwnsThisID( iWeaponID ) ) // don't go for spawners that we already have a weapon from
 				return false;
 		}
 	}

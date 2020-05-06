@@ -407,7 +407,7 @@ void CTFBFGProjectile::CreateLightEffects(void)
 LINK_ENTITY_TO_CLASS( tf_bfg_radial, CTFBFGArea );
 
 //-----------------------------------------------------------------------------
-// Purpose: Spawns this entitye
+// Purpose: Spawns this entity
 //-----------------------------------------------------------------------------
 void CTFBFGArea::Spawn( void )
 {

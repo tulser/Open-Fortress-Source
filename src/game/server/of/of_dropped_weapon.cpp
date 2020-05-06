@@ -11,6 +11,7 @@
 #include "tf_gamerules.h"
 #include "explode.h"
 #include "in_buttons.h"
+#include "tf_bot.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -205,6 +206,17 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 				pGivenWeapon->m_iReserveAmmo = m_iReserveAmmo;
 			if ( m_iClip > -1 )
 				pGivenWeapon->m_iClip1 = m_iClip;
+
+			if ( pTFPlayer->IsFakeClient() )
+			{
+				CTFBot *actor = ToTFBot( pTFPlayer );
+				if ( actor )
+				{
+					actor->Weapon_Switch( pGivenWeapon );
+					actor->m_bPickedUpWeapon = true;
+					actor->m_bHasPickedUpOneWeapon = true;
+				}
+			}
 
 			if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
 			{

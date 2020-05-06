@@ -213,6 +213,7 @@ void CTFBot::Spawn( void )
 	m_bPickedUpPowerup = false;
 	m_bTouchedJumpPad = false;
 	m_bTouchedTeleport = false;
+	m_bHasPickedUpOneWeapon = false;
 
 	m_suspectedSpies.PurgeAndDeleteElements();
 	m_cpChangedTimer.Invalidate();
@@ -232,6 +233,8 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 {
 	OnKilled( info );
 	CTFPlayer::Event_Killed( info );
+
+	m_bHasPickedUpOneWeapon = false;
 
 	LeaveSquad();
 
@@ -1253,9 +1256,15 @@ float CTFBot::GetMaxAttackRange() const
 		return 100.0f;
 	}
 
+	// OFBot: hack so bots stop trying to act like a sniper with their pistol
+	if ( weapon->IsWeapon( TF_WEAPON_PISTOL_MERCENARY ) || weapon->IsWeapon( TF_WEAPON_PISTOL_AKIMBO ) )
+	{
+		return 700.0f;
+	}
+
 	if ( weapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || weapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) )
 	{
-		return 250.0f;
+		return 256.0f;
 	}
 
 	if ( IsExplosiveProjectileWeapon( weapon ) )
@@ -1263,7 +1272,12 @@ float CTFBot::GetMaxAttackRange() const
 		return 3000.0f;
 	}
 
-	return FLT_MAX;
+	if ( WeaponID_IsSniperRifle( weapon->GetWeaponID() ) )
+	{
+		return FLT_MAX;
+	}
+
+	return 2048.0f;
 }
 
 //-----------------------------------------------------------------------------

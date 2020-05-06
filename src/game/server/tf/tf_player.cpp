@@ -3001,6 +3001,7 @@ void CTFPlayer::ForceChangeTeam( int iTeamNum )
 	if ( iNewTeam == iOldTeam )
 		return;
 
+	TeamFortress_RemoveProjectiles();
 	RemoveAllObjects();
 
 	// don't let cheeky people remove their domination after switching to spectator in DM
@@ -3056,6 +3057,7 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bNoKill )
 	if ( iTeamNum == iOldTeam )
 		return;
 
+	TeamFortress_RemoveProjectiles();
 	RemoveAllObjects();
 
 	// don't let cheeky people remove their domination after switching to spectator in DM
@@ -6362,7 +6364,7 @@ bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *p
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool dissolve, int Clip, int Reserve )
+void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDissolve, int Clip, int Reserve )
 {
 	if( of_randomizer.GetBool() )
 		return;
@@ -6490,10 +6492,34 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 
 			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
 			AngularImpulse angImp( 200, 200, 200 );
-//			if ( thrown )
-//				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &pVecThrowDir, &angImp );
-//			else
+			
+			if ( bThrown )
+			{
+					// This makes it so it always get thrown upwards
+					Vector vecImpulse(0.0f, 0.0f, 150.0f);
+
+					Vector vecMuzzlePos = this->Weapon_ShootPosition();
+					Vector forward;
+					this->EyeVectors(&forward);
+					Vector vecEndPos = vecMuzzlePos + (forward * 256);
+
+					trace_t    trace;
+					UTIL_TraceLine(vecMuzzlePos, vecEndPos, (MASK_SHOT & ~CONTENTS_WINDOW), this, COLLISION_GROUP_NONE, &trace);
+
+					Vector vecTarget = trace.endpos;
+					Vector vecDir = vecTarget - this->GetAbsOrigin();
+					VectorNormalize(vecDir);
+					float flSpeed = 300;
+					vecDir *= flSpeed;
+
+					Vector vecThrowWeapon = vecDir += vecImpulse;
+
+					pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous(&vecThrowWeapon, &angImp);
+			}
+			else
+			{
 				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+			}
 
 		}
 
@@ -6513,7 +6539,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown, bool diss
 		pDroppedWeapon->m_iReserveAmmo = Reserve;
 		pDroppedWeapon->m_iClip = Clip;
 		pDroppedWeapon->SetBodygroup( 1, 1 );
-		if ( dissolve )
+		if ( bDissolve )
 		{
 			pDroppedWeapon->SetTouch( NULL );
 			pDroppedWeapon->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
@@ -6711,8 +6737,7 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 //=========================================================================
 void CTFPlayer::TeamFortress_RemoveEverythingFromWorld( void )
 {
-	TeamFortress_RemoveRockets();
-	TeamFortress_RemovePipebombs();
+	TeamFortress_RemoveProjectiles();
 
 	// Destroy any buildables - this should replace TeamFortress_RemoveBuildings
 	RemoveAllObjects();
@@ -6723,19 +6748,17 @@ void CTFPlayer::TeamFortress_RemoveEverythingFromWorld( void )
 // (this prevents a team kill cheat where players would fire rockets 
 // then change teams to kill their own team)
 //=========================================================================
-void CTFPlayer::TeamFortress_RemoveRockets( void )
+void CTFPlayer::TeamFortress_RemoveProjectiles( void )
 {
-	RemoveOwnedEnt( "tf_weapon_rocket" );
-	RemoveOwnedEnt( "tf_weapon_flamerocket" );
-}
-
-//=========================================================================
-// Removes all pipebombs from the world
-//=========================================================================
-void CTFPlayer::TeamFortress_RemovePipebombs( void )
-{
-	RemoveOwnedEnt( "tf_projectile_pipe", true );
-	RemoveOwnedEnt( "tf_projectile_pipe_dm", true );
+	// ficool2: there must be a better way to do this... wtf
+	RemoveOwnedEnt( "tf_projectile_syringe" );
+	RemoveOwnedEnt( "tf_projectile_nail" );
+	RemoveOwnedEnt( "tf_projectile_tranq" );
+	RemoveOwnedEnt( "tf_projectile_pipe_remote" );
+	RemoveOwnedEnt( "tf_projectile_pipe" );
+	RemoveOwnedEnt( "tf_projectile_pipe_dm" );
+	RemoveOwnedEnt( "tf_projectile_rocket" );
+	RemoveOwnedEnt( "tf_projectile_bfg" );
 }
 
 
@@ -7302,6 +7325,9 @@ void CTFPlayer::ForceRespawn()
 	m_Shared.RemoveAllCond( NULL );
 
 	RemoveAllItems( true );
+
+	// prevent a team switch exploit here
+	TeamFortress_RemoveProjectiles();
 
 	// Reset ground state for airwalk animations
 	SetGroundEntity( NULL );

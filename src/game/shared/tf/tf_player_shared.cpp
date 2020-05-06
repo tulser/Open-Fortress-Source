@@ -1169,7 +1169,7 @@ void CTFPlayerShared::UpdateCritParticle()
 		else
 			pTarget = m_pOuter->GetActiveWeapon();
 
-		if( pTarget )
+		if ( pTarget )
 		{
 			char *pEffect = NULL;
 			
@@ -1209,25 +1209,25 @@ void CTFPlayerShared::UpdateCritParticle()
 				}
 			}
 
-			CNewParticleEffect *pTest = dynamic_cast<CNewParticleEffect *>(m_pCritBoostEffect);
-
-			if( pTest != nullptr )
-				m_pCritBoostEffect = pTarget->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW );
-			else
+			if ( m_pCritBoostEffect )
+			{
 				m_pCritBoostEffect->StartEmission();
-			
-			pTest = dynamic_cast<CNewParticleEffect *>(m_pCritBoostEffect);
+			}
+			else
+			{
+				m_pCritBoostEffect = pTarget->ParticleProp()->Create( pEffect, PATTACH_ABSORIGIN_FOLLOW );
+			}
 
-			if( pTest != nullptr )
+			if ( m_pCritBoostEffect )
 				UpdateParticleColor( m_pCritBoostEffect );
-		}
+		}	
 	}
 	else
 	{
-		if( m_pCritBoostEffect != nullptr )
+		if ( m_pCritBoostEffect )
 		{
-			if( m_pCritBoostEffect->GetOwner() )
-				m_pCritBoostEffect->GetOwner()->ParticleProp()->StopEmission( m_pCritBoostEffect );
+			if ( m_pCritBoostEffect->GetOwner() )
+				m_pCritBoostEffect->GetOwner()->ParticleProp()->StopEmissionAndDestroyImmediately( m_pCritBoostEffect );
 			else
 				m_pCritBoostEffect->StopEmission();
 

@@ -290,6 +290,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 						{
 							actor->Weapon_Switch( pGivenWeapon );
 							actor->m_bPickedUpWeapon = true;
+							actor->m_bHasPickedUpOneWeapon = true;
 						}
 					}
 

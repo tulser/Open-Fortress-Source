@@ -139,6 +139,62 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 		//m_checkUseTeleportTimer.Start( RandomFloat( 0.3f, 0.5f ) );
 
 		m_checkUseTeleportTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+	
+		if ( !me->m_Shared.IsZombie() )
+		{
+			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY ) );
+			if ( !me->m_bHasPickedUpOneWeapon && ( pWeapon == nullptr || m_checkGetWeaponTimer.IsElapsed() ) && !me->m_Shared.IsZombie() )
+			{
+				if ( CTFBotGetWeapon::IsPossible( me ) )
+				{
+					m_checkGetWeaponTimer.Start( RandomFloat( 5.0f, 8.0f ) );
+					return Action<CTFBot>::SuspendFor( new CTFBotGetWeapon, "Grabbing nearby weapon" );
+				}
+
+				if ( !me->m_bHasPickedUpOneWeapon )
+					m_checkGetWeaponTimer.Start( 0.5f );
+				else
+					m_checkGetWeaponTimer.Start( RandomFloat( 3.0f, 5.0f ) );
+			}
+
+			bool bLowHealth = false;
+
+			pWeapon = me->GetActiveTFWeapon();
+
+			// OFBOT: Allclass support
+			if ( ( me->GetTimeSinceWeaponFired() < 2.0f || /*me->IsPlayerClass( TF_CLASS_SNIPER )*/ ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) ) && 
+				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat() ) )
+			{
+				bLowHealth = true;
+			}
+			else if ( me->m_Shared.InCond( TF_COND_BURNING ) ||
+				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_ok_ratio.GetFloat() )
+			{
+				bLowHealth = true;
+			}
+
+			if ( bLowHealth && CTFBotGetHealth::IsPossible( me ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotGetHealth, "Grabbing nearby health" );
+
+			if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
+
+			if ( TFGameRules()->IsFreeRoam() && me->m_bHasPickedUpOneWeapon )
+			{
+				if ( CTFBotGetPowerup::IsPossible( me ) )
+				{
+					m_checkGetPowerupTimer.Start( RandomFloat( 15.0f, 25.0f ) );
+					return Action<CTFBot>::SuspendFor( new CTFBotGetPowerup, "Grabbing nearby powerup" );
+				}
+				else
+				{
+					m_checkGetPowerupTimer.Start( RandomFloat( 5.0f, 8.0f ) );
+				}
+			}
+		}
+
+		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
+			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 
 		if ( TFGameRules()->IsFreeRoam() )
 		{
@@ -165,60 +221,6 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 				}
 			}
 		}
-	
-
-		if ( !me->m_Shared.IsZombie() )
-		{
-			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY ) );
-			if ( ( pWeapon == nullptr || m_checkGetWeaponTimer.IsElapsed() ) && !me->m_Shared.IsZombie() )
-			{
-				if ( CTFBotGetWeapon::IsPossible( me ) )
-				{
-					m_checkGetWeaponTimer.Start( RandomFloat( 5.0f, 8.0f ) );
-					return Action<CTFBot>::SuspendFor( new CTFBotGetWeapon, "Grabbing nearby weapon" );
-				}
-
-				m_checkGetWeaponTimer.Start( RandomFloat( 1.0f, 4.0f ) );
-			}
-
-			bool bLowHealth = false;
-
-			pWeapon = me->GetActiveTFWeapon();
-
-			// OFBOT: Allclass support
-			if ( ( me->GetTimeSinceWeaponFired() < 2.0f || /*me->IsPlayerClass( TF_CLASS_SNIPER )*/ ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) ) && 
-				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat() ) )
-			{
-				bLowHealth = true;
-			}
-			else if ( me->m_Shared.InCond( TF_COND_BURNING ) ||
-				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_ok_ratio.GetFloat() )
-			{
-				bLowHealth = true;
-			}
-
-			if ( bLowHealth && CTFBotGetHealth::IsPossible( me ) )
-				return Action<CTFBot>::SuspendFor( new CTFBotGetHealth, "Grabbing nearby health" );
-
-			if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
-				return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
-
-			if ( TFGameRules()->IsFreeRoam() )
-			{
-				if ( CTFBotGetPowerup::IsPossible( me ) )
-				{
-					m_checkGetPowerupTimer.Start( RandomFloat( 10.0f, 20.0f ) );
-					return Action<CTFBot>::SuspendFor( new CTFBotGetPowerup, "Grabbing nearby powerup" );
-				}
-				else
-				{
-					m_checkGetPowerupTimer.Start( RandomFloat( 3.0f, 5.0f ) );
-				}
-			}
-		}
-
-		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
-			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 	}
 
 	MonitorArmedStickybombs( me );

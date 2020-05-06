@@ -389,11 +389,9 @@ void InitPlayerClasses( void )
 
 		if( !s_aPlayerClassFiles[i] )
 		{
-			DevWarning("Failed loading Keyvalues\n");
 			continue;
 		}
 		s_aTFPlayerClassRaw[i] = pKV;
-		DevWarning("Keyvalue Loaded\n");
 	}
 }
 
