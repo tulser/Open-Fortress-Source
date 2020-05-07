@@ -1805,7 +1805,11 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 	// See if we're coming up to the server timelimit, in which case force a stalemate immediately.
 	if ( mp_timelimit.GetInt() > 0 && IsInPreMatch() == false && GetTimeLeft() <= 0 && ( TFGameRules() && !TFGameRules()->IsCoopGamemode() && !TFGameRules()->IsInfGamemode() ) )
 	{
-		if ( m_bAllowStalemateAtTimelimit || ( mp_match_end_at_timelimit.GetBool() && !IsValveMap() ) )
+		if ( TFGameRules()->IsDMGamemode() )
+		{
+			SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false );
+		}	
+		else if ( m_bAllowStalemateAtTimelimit || ( mp_match_end_at_timelimit.GetBool() && !IsValveMap() ) )
 		{
 			int iDrawScoreCheck = -1;
 			int iWinningTeam = 0;
@@ -3028,7 +3032,7 @@ void CTeamplayRoundBasedRules::CreateTimeLimitTimer( void )
 	// this is the same check we use in State_Think_RND_RUNNING()
 	// don't show the timelimit timer if we're not going to end the map when it runs out
 	bool bAllowStalemate = ( m_bAllowStalemateAtTimelimit || ( mp_match_end_at_timelimit.GetBool() && !IsValveMap() ) );
-	if ( !bAllowStalemate )
+	if ( !bAllowStalemate && !TFGameRules()->IsDMGamemode() )
 		return;
 
 #ifndef CSTRIKE_DLL
