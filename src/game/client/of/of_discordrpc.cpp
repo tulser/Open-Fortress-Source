@@ -28,7 +28,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
-#include <replay\ienginereplay.h>
+#include <replay/ienginereplay.h>
 
 ConVar cl_richpresence_printmsg( "cl_richpresence_printmsg", "0", FCVAR_ARCHIVE, "" );
 
