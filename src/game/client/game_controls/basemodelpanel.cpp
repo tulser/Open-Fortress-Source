@@ -226,6 +226,38 @@ void CModelPanel::SetDefaultAnimation( const char *pszName )
 	Assert( 0 );
 }
 
+void CModelPanel::SetBodygroup( const char* pszName, int nBody )
+{
+	CModelPanelBodygroupInfo* pBodygroupModelInfo = new CModelPanelBodygroupInfo;
+	if ( pBodygroupModelInfo )
+	{
+		size_t len = Q_strlen( pszName ) + 1;
+		char* pAlloced = new char[len];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszName, len );
+		pBodygroupModelInfo->m_pszGroup = pAlloced;
+		pBodygroupModelInfo->m_nBody = nBody;
+
+		m_pModelInfo->m_Bodygroups.AddToTail( pBodygroupModelInfo );
+	}
+}
+
+void CModelPanel::AddAttachment( const char* pszAttached )
+{
+	CModelPanelAttachedModelInfo* pAttachedModelInfo = new CModelPanelAttachedModelInfo;
+	if ( pAttachedModelInfo )
+	{
+		size_t len = Q_strlen( pszAttached ) + 1;
+		char *pAlloced = new char[len];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszAttached, len );
+		pAttachedModelInfo->m_pszModelName = pAlloced;
+		pAttachedModelInfo->m_nSkin = -1;
+
+		m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Replaces the current model with a new one, without changing the camera settings
 //-----------------------------------------------------------------------------
@@ -487,6 +519,18 @@ void CModelPanel::SetupModel( void )
 		}
 	}
 
+	// setup bodygroups
+	for ( int i = 0; i < m_pModelInfo->m_Bodygroups.Count(); i++ )
+	{
+		CModelPanelBodygroupInfo *pInfo = m_pModelInfo->m_Bodygroups[i];
+
+		int groupindex = pEnt->FindBodygroupByName( pInfo->m_pszGroup );
+		if ( groupindex > -1 )
+		{
+			pEnt->SetBodygroup( groupindex, pInfo->m_nBody );
+		}
+	}
+	
 	CalculateFrameDistance();
 }
 

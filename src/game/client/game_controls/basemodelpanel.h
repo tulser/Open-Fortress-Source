@@ -122,6 +122,32 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+class CModelPanelBodygroupInfo
+{
+public:
+	CModelPanelBodygroupInfo()
+	{
+		m_pszGroup = NULL;
+		m_nBody = -1;
+	}
+
+	~CModelPanelBodygroupInfo()
+	{
+		if ( m_pszGroup && m_pszGroup[0] )
+		{
+			delete[] m_pszGroup;
+			m_pszGroup = NULL;
+		}
+	}
+
+public:
+	const char* m_pszGroup;
+	int			m_nBody;
+};
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 class CModelPanelModelInfo
 {
 public:
@@ -151,6 +177,7 @@ public:
 
 		m_Animations.PurgeAndDeleteElements();
 		m_AttachedModelsInfo.PurgeAndDeleteElements();
+		m_Bodygroups.PurgeAndDeleteElements();
 	}
 
 public:
@@ -165,6 +192,7 @@ public:
 
 	CUtlVector<CModelPanelModelAnimation*>		m_Animations;
 	CUtlVector<CModelPanelAttachedModelInfo*>	m_AttachedModelsInfo;
+	CUtlVector<CModelPanelBodygroupInfo*>		m_Bodygroups;
 };
 
 //-----------------------------------------------------------------------------
@@ -194,6 +222,8 @@ public:
 	void	SetSkin( int nSkin );
 	void	SetAttachmentsSkin( int nSkin );
 	void	SetDefaultAnimation( const char *pszName );
+	void	SetBodygroup( const char* pszName, int nBody );
+	void	AddAttachment( const char* pszAttached );
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
 	
 	virtual void GetModelPos( float &x, float &y, float &z );
