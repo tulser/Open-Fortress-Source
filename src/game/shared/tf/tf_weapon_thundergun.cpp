@@ -32,7 +32,6 @@ BEGIN_PREDICTION_DATA( CTFThundergun )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_thundergun, CTFThundergun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_thundergun );
 
 // Server specific.
 #ifndef CLIENT_DLL

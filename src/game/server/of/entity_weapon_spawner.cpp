@@ -155,6 +155,7 @@ void CWeaponSpawner::SetWeaponModel( void )
 //-----------------------------------------------------------------------------
 void CWeaponSpawner::Precache( void )
 {
+	UTIL_PrecacheOther( m_iszWeaponName );
 	PrecacheScriptSound( m_iszPickupSound );
 	if ( m_iszWeaponModel )
 	{

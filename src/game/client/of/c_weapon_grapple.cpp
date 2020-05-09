@@ -353,8 +353,6 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_grapple, CWeaponGrapple );
  
-PRECACHE_WEAPON_REGISTER( tf_weapon_grapple );
- 
 #ifndef CLIENT_DLL
  
 /*

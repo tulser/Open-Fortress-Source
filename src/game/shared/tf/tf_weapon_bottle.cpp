@@ -34,7 +34,6 @@ BEGIN_PREDICTION_DATA( CTFBottle )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_bottle, CTFBottle );
-PRECACHE_WEAPON_REGISTER( tf_weapon_bottle );
 
 // Sword
 
@@ -47,7 +46,6 @@ BEGIN_PREDICTION_DATA( CTFSword )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_sword, CTFSword );
-PRECACHE_WEAPON_REGISTER( tf_weapon_sword );
 
 #define TF_BOTTLE_SWITCHGROUP 1
 #define TF_BOTTLE_NOTBROKEN 0

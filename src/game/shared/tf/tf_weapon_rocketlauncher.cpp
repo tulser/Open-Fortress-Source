@@ -38,7 +38,6 @@ BEGIN_PREDICTION_DATA( CTFRocketLauncher )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_rocketlauncher, CTFRocketLauncher );
-PRECACHE_WEAPON_REGISTER( tf_weapon_rocketlauncher );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -581,7 +580,6 @@ BEGIN_PREDICTION_DATA( CTFOriginal )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS(tf_weapon_rocketlauncher_dm, CTFOriginal);
-PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
 
 IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
 
@@ -603,4 +601,3 @@ BEGIN_PREDICTION_DATA( CTFSuperRocketLauncher )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS(tf_weapon_super_rocketlauncher, CTFSuperRocketLauncher);
-PRECACHE_WEAPON_REGISTER(tf_weapon_super_rocketlauncher);

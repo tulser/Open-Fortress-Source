@@ -44,7 +44,6 @@ BEGIN_PREDICTION_DATA( CTFPistol )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pistol, CTFPistol );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pistol );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -63,8 +62,6 @@ BEGIN_PREDICTION_DATA( CTFPistol_Scout )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pistol_scout, CTFPistol_Scout );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_scout );
-
 
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol_Mercenary, DT_WeaponPistol_Mercenary )
@@ -76,7 +73,6 @@ BEGIN_PREDICTION_DATA( CTFPistol_Mercenary )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pistol_mercenary, CTFPistol_Mercenary );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_mercenary );
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFPistol_Akimbo, DT_WeaponPistol_Akimbo )
 
@@ -87,7 +83,6 @@ BEGIN_PREDICTION_DATA( CTFPistol_Akimbo )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pistol_akimbo, CTFPistol_Akimbo );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pistol_akimbo );
 //
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCRailPistol, DT_TFCRailPistol )
 

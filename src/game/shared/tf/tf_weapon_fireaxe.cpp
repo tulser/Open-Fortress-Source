@@ -20,4 +20,3 @@ BEGIN_PREDICTION_DATA( CTFFireAxe )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_fireaxe, CTFFireAxe );
-PRECACHE_WEAPON_REGISTER( tf_weapon_fireaxe );

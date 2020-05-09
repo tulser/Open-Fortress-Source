@@ -325,6 +325,8 @@ public:
 
 	virtual void	Activate();
 
+	virtual void	PrecacheGameMode();
+
 	virtual void	OnNavMeshLoad( void );
 
 	virtual void	LevelShutdown( void );

@@ -44,7 +44,6 @@ BEGIN_DATADESC( CWeaponTripMine )
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_tripmine, CWeaponTripMine );
-PRECACHE_WEAPON_REGISTER( tf_weapon_tripmine );
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor

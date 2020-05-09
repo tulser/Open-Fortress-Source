@@ -78,7 +78,6 @@ END_PREDICTION_DATA()
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_flamethrower, CTFFlameThrower );
-PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
 
 BEGIN_DATADESC( CTFFlameThrower )
 END_DATADESC()

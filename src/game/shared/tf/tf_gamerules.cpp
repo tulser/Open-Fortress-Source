@@ -1819,6 +1819,53 @@ void CTFGameRules::Activate()
 	
 	CheckTDM();
 	bMultiweapons = TFGameRules()->UsesDMBuckets();
+
+	PrecacheGameMode();
+}
+
+void CTFGameRules::PrecacheGameMode()
+{
+	// To-Do: Expand this to other cases and handle more stuff aside from weapons
+	if ( !IsDMGamemode() || !of_forceclass.GetBool() )
+	{
+		// Precache all base weapons of every class
+		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+		{
+			TFPlayerClassData_t* pData = GetPlayerClassData( iClass );
+
+			for ( int iWeapon = 0; iWeapon < pData->m_iWeaponCount; iWeapon++ )
+			{
+				int iWeaponID = pData->m_aWeapons[iWeapon];
+				if ( iWeaponID != TF_WEAPON_NONE )
+				{
+					const char* pszWeaponName = WeaponIdToClassname( iWeaponID );
+					if ( !pszWeaponName )
+						continue;
+
+					UTIL_PrecacheOther( pszWeaponName );
+				}
+			}
+		}
+	}
+	else if( IsDMGamemode() )
+	{
+		// Precache all base weapons of the mercenary, all other weapons are precached by their spawners
+		TFPlayerClassData_t* pData = GetPlayerClassData( TF_CLASS_MERCENARY );
+
+		for ( int iWeapon = 0; iWeapon < pData->m_iWeaponCount; iWeapon++ )
+		{
+			int iWeaponID = pData->m_aWeapons[iWeapon];
+			if ( iWeaponID != TF_WEAPON_NONE )
+			{
+				const char* pszWeaponName = WeaponIdToClassname( iWeaponID );
+				if ( !pszWeaponName )
+					continue;
+
+				UTIL_PrecacheOther( pszWeaponName );
+
+			}
+		}
+	}
 }
 
 #endif
@@ -3203,7 +3250,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			}
 
 			// there is less than 60 seconds left of time, start voting for next map
-			if ( !IsDMGamemode() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+			if ( mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 			{
 				DevMsg( "VoteController: Timeleft is less than 60 seconds, begin nextlevel voting... \n" );
 				m_bStartedVote = true;

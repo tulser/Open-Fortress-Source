@@ -61,7 +61,6 @@ END_PREDICTION_DATA()
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pipebomblauncher, CTFPipebombLauncher );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pipebomblauncher );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -78,7 +77,6 @@ BEGIN_PREDICTION_DATA( CTFDynamite )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_dynamite_bundle, CTFDynamite );
-PRECACHE_WEAPON_REGISTER( tf_weapon_dynamite_bundle );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCPipebombLauncher, DT_TFCPipebombLauncher )
 

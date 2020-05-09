@@ -29,7 +29,6 @@ BEGIN_PREDICTION_DATA( CTFBat )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_bat, CTFBat );
-PRECACHE_WEAPON_REGISTER( tf_weapon_bat );
 
 //=============================================================================
 //

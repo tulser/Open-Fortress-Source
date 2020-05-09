@@ -778,8 +778,6 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_flaregun, CWeaponFlaregun );
 
-PRECACHE_WEAPON_REGISTER( tf_weapon_flaregun );
-
 acttable_t	CWeaponFlaregun::m_acttable[] =
 {
 	{ ACT_MP_STAND_IDLE, ACT_MP_STAND_SECONDARY2, false },
