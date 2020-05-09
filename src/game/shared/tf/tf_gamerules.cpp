@@ -3203,7 +3203,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			}
 
 			// there is less than 60 seconds left of time, start voting for next map
-			if ( !IsDMGamemode() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+			if ( mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
 			{
 				DevMsg( "VoteController: Timeleft is less than 60 seconds, begin nextlevel voting... \n" );
 				m_bStartedVote = true;
