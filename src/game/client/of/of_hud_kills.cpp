@@ -218,27 +218,6 @@ void CTFHudKills::ShowBottom( bool bShow )
 	if( bBottomVisible == bShow )
 		return;
 
-	ImagePanel *m_pBGImage = dynamic_cast<ImagePanel *>( FindChildByName("MainBG") );
-	if( m_pBGImage )
-	{
-		int w,h;
-		m_pBGImage->GetSize( w, h );
-		int iAdj = bShow ? -50 : 50;
-		m_pBGImage->SetSize( w, h - iAdj );
-	}
-	int x, y;
-	GetPos( x, y );
-	int iPosAdj = bShow ? 50 : -50;
-	SetPos( x, y - iPosAdj );
-	
-	CExLabel *m_pPlayerPlayingToLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayingToLabel" ) );
-	if( m_pPlayerPlayingToLabel )
-	{
-		int labelX, labelY;
-		m_pPlayerPlayingToLabel->GetPos( labelX, labelY );
-		int iAdj = bShow ? 50 : -50;	
-		m_pPlayerPlayingToLabel->SetPos( labelX, labelY + iAdj );
-	}
 	CExLabel *m_pPlayerNameLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayerNameLabel" ) );
 	CExLabel *m_pTmpKills = dynamic_cast<CExLabel *>( FindChildByName( "KillsLabel" ) );
 	ImagePanel *m_pShadedBox = dynamic_cast<ImagePanel *>( FindChildByName("ShadedBarP2") );	

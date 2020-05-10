@@ -484,6 +484,7 @@ public:
 	void				Manage3WaveWeapons( TFPlayerClassData_t *pData );
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
+	void				ManageArsenalWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
 	void				ManageCustomSpawnWeapons( TFPlayerClassData_t *pData );

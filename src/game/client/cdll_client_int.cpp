@@ -1152,6 +1152,7 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	
 #ifdef OPENFORTRESS_DLL
 	ParseLoadout();
+	InitItemSchema();
 	ParseItemsGame();
 	ParseSoundManifest();
 	FMODManager()->InitFMOD();

@@ -11,6 +11,13 @@
 #include "glow_outline_effect.h"
 #include "tf_gamerules.h"
 #include "tf_shareddefs.h"
+// for spy material proxy
+#include "toolframework_client.h"
+#include "functionproxy.h"
+#include "proxyentity.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imaterialvar.h"
+#include "materialsystem/imesh.h"		//for materials->FindMaterial
 
 #include "tier0/memdbgon.h"
 
@@ -431,3 +438,27 @@ const char *C_WeaponSpawner::GetSuperWeaponsIncomingLine( void )
 	}
 	return "SuperWeaponsIncoming";
 }
+
+extern ConVar of_weaponspawners;
+
+//-----------------------------------------------------------------------------
+// Purpose: Used for rage material
+//			Returns 0 if the player is in Berserk, and 1 if the player is not.
+//			I know.. Its confusing
+//-----------------------------------------------------------------------------
+class CProxyHideSpawners : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+	
+		if( !of_weaponspawners.GetBool() )
+			m_pResult->SetFloatValue( 1.0f );
+		else
+			m_pResult->SetFloatValue( 0.0f );
+		return;
+	}
+};
+
+EXPOSE_INTERFACE( CProxyHideSpawners, IMaterialProxy, "HideSpawners" IMATERIAL_PROXY_INTERFACE_VERSION );

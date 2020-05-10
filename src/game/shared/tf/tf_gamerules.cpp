@@ -145,7 +145,7 @@ ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR
 // ConVar of_ggweaponlist		( "of_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
-							true, 0, true, 6 );
+							true, 0, true, 7 );
 
 /*	List of mutators:
 	0: Disabled
@@ -167,6 +167,8 @@ ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, 
 ConVar of_multiweapons		( "of_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
 ConVar of_weaponspawners	( "of_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners." );
 ConVar of_powerups			( "of_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
+
+ConVar of_disable_drop_weapons("of_disable_drop_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable dropping weapons on death."  );
 
 #ifdef GAME_DLL
 // TF overrides the default value of the convars below.

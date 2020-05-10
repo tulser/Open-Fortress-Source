@@ -232,13 +232,32 @@ public:
 	ItemTemplate_t t_ItemTemplate;
 };
 
-class CTFHeaderImagePanel : public CTFEditableButton
+class CTFSelectionPanel;
+
+class CTFSelectionManager : public vgui::Panel
 {
 private:
-	DECLARE_CLASS_SIMPLE( CTFHeaderImagePanel, CTFEditableButton );
+	DECLARE_CLASS_SIMPLE( CTFSelectionManager, vgui::Panel );
 
 public:
-	CTFHeaderImagePanel(vgui::Panel *parent, const char *panelName);	 
+	CTFSelectionManager(vgui::Panel *parent, const char *panelName);	 
+
+	virtual void ApplySettings(KeyValues *inResourceData);
+	MESSAGE_FUNC_PTR( OnPanelSelected, "OnPanelSelected", panel );
+public:
+	vgui::Panel *pSelectedItem;
+	bool bHasSelectedItem;
+	
+	CUtlVector<CTFSelectionPanel*> m_hPanels;
+};
+
+class CTFSelectionPanel : public CTFEditableButton
+{
+private:
+	DECLARE_CLASS_SIMPLE( CTFSelectionPanel, CTFEditableButton );
+
+public:
+	CTFSelectionPanel(vgui::Panel *parent, const char *panelName);	 
 
 	virtual void ApplySettings(KeyValues *inResourceData);
 	virtual void OnReleasedSelected();
@@ -248,6 +267,7 @@ public:
 	void	SetConnectedPanel( const char *szConnectedPanel );
 public:
 	vgui::Panel		*pConnectedPanel;
+	CTFSelectionManager *pManger;
 
 	int iBaseX;
 	int iBaseY;
@@ -318,6 +338,7 @@ public:
 	
 	ItemTemplate_t t_ItemTemplate;
 };
+
 class CTFColorPanel;
 namespace vgui
 {
@@ -453,7 +474,10 @@ public:
 	virtual void PaintBackground();
 	void ShowModal();
 	void DrawClassModel();
+	void SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelection = false );
 	vgui::CTFModelPanel *GetClassModel(){ return m_pClassModel; };
+	
+	vgui::EditablePanel *GetArsenalPanel(){ return pArsenalPanel; };
 private:
 
 	vgui::Button *m_pNextTipButton;
@@ -462,9 +486,17 @@ private:
 	CUtlVector<CTFScrollableItemList*> m_pItemCategories;
 	CTFLoadoutHeader *m_pItemHeader;
 	vgui::EditablePanel *pCosmeticPanel;
+	vgui::EditablePanel *pArsenalPanel;
 	vgui::EditablePanel *pVisualPanel;
 	CTFScrollablePanelList *pParticleList;
 	CTFScrollablePanelList *pAnnouncerList;
+	
+	CTFSelectionPanel *pPrimaryToggle;
+	CTFSelectionPanel *pSecondaryToggle;
+	CTFSelectionPanel *pMeleeToggle;
+	
+	CTFScrollablePanelList *pWeaponList[3];
+	
 	vgui::CTFModelPanel *m_pClassModel;
 
 	bool m_bInteractive;							// are we in interactive mode
@@ -474,7 +506,7 @@ private:
 	bool m_bParsedParticles; // this is only used so that particles dont crash 
 							 // the memory when we reload the panel
 public:
-	CTFHeaderImagePanel *m_pSelectedOptions;
+	CTFSelectionPanel *m_pSelectedOptions;
 	CUtlVector<int> m_iCosmetics;
 	bool m_bUpdateCosmetics;
 	int m_iCurrentParticle;

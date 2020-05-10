@@ -111,6 +111,8 @@ extern ConVar	of_randomizer_setting;
 
 extern ConVar	of_headshots;
 
+extern ConVar	of_disable_drop_weapons;
+
 EHANDLE g_pLastSpawnPoints[TF_TEAM_COUNT];
 
 ConVar tf_playerstatetransitions	( "tf_playerstatetransitions", "-2", FCVAR_CHEAT, "tf_playerstatetransitions <ent index or -1 for all>. Show player state transitions." );
@@ -1395,6 +1397,12 @@ void CTFPlayer::Regenerate( void )
 
 	SetHealth( GetMaxHealth() );
 
+	if( TFGameRules()->IsMutator( ARSENAL ) )
+	{
+		TFPlayerClassData_t *pData = m_PlayerClass.GetData();
+		ManageArsenalWeapons( pData );		
+	}
+	
 	// RestockAmmo
 	RestockAmmo( 1.0f );
 	RestockClips( 1.0f );
@@ -1541,8 +1549,8 @@ void CTFPlayer::GiveDefaultItems()
 			ManageClanArenaWeapons( pData );
 		else if ( TFGameRules()->IsMutator( ROCKET_ARENA ) )
 			ManageRocketArenaWeapons( pData );
-//		else if ( TFGameRules()->IsMutator( ARSENAL ) )
-//			ManageArsenalWeapons( pData );
+		else if ( TFGameRules()->IsMutator( ARSENAL ) )
+			ManageArsenalWeapons( pData );
 		else if ( of_threewave.GetBool() )
 			Manage3WaveWeapons( pData );
 		else
@@ -1574,6 +1582,7 @@ void CTFPlayer::StripWeapons( void )
 			UTIL_Remove( pWeapon );
 		}
 	}
+	ClearSlots();
 }
 
 bool CTFPlayer::OwnsWeaponID( int ID )
@@ -2087,34 +2096,97 @@ void CTFPlayer::ManageRocketArenaWeapons(TFPlayerClassData_t *pData)
 		}
 	}
 }
-/*
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 {
 	StripWeapons();
-	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
-
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_rocketlauncher_dm");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-
-	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
+	
+	char szDesired[64] = { '\0' };
+	if( !IsFakeClient() )
+		Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_Mercenary_weapon_loadout" ), sizeof(szDesired));
+	else
 	{
-		if (GetActiveWeapon() != NULL) break;
-		if (m_bRegenerating == false)
+		/*
+		// Uncomment this to test all blank loadout slots
+		// Q_strncpy(szDesired,"0 25 27 13 40 17 28", sizeof(szDesired));
+		int iCosmeticCount = random->RandomInt( 0, 5 );
+		int iMaxCosNum = GetItemsGame() ? GetItemsGame()->GetInt("cosmetic_count", 5 ) : 5;
+		for( int i = 0; i < iCosmeticCount; i++ )
 		{
-			SetActiveWeapon(NULL);
-			Weapon_Switch(Weapon_GetSlot(iWeapon));
-			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
+			if( !i )
+				Q_snprintf( szDesired, sizeof(szDesired), "%d", random->RandomInt( 0, iMaxCosNum ));
+			else
+				Q_snprintf( szDesired, sizeof(szDesired), "%s %d", szDesired, random->RandomInt( 0, iMaxCosNum ));
+		}
+		*/
+	}
+	
+	KeyValues *kvDesiredWeapons = new KeyValues("DesiredWeapons");
+	
+	kvDesiredWeapons->SetString("1", "tf_weapon_assaultrifle");
+	kvDesiredWeapons->SetString("2", "tf_weapon_pistol_mercenary");
+	kvDesiredWeapons->SetString("3", "tf_weapon_crowbar");
+	
+	CCommand args;
+	args.Tokenize(szDesired);
+	
+	for( int i = 0; i < args.ArgC(); i += 2 )
+	{
+		if( atoi(args[i]) > 3 || atoi(args[i]) < 1 )
+			continue;
+
+		KeyValues *pWeapon = GetItemSchema()->GetWeapon(atoi(args[i + 1]));
+		
+		if( !pWeapon )
+			continue;
+		
+		int iDesiredSlot = -1;
+		KeyValues *pSlot = pWeapon->FindKey( "slot" );
+		if( pSlot )
+		{
+			iDesiredSlot = pSlot->GetInt( "mercenary", -1 );
+		}
+		
+		if( iDesiredSlot == 3 && atoi(args[i]) != iDesiredSlot )
+			continue;
+		
+		if( kvDesiredWeapons )
+			kvDesiredWeapons->SetString( args[i], args[i+1] );
+	}
+	
+	KeyValues *pWeapon = kvDesiredWeapons->GetFirstValue();
+	for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
+	{
+		CTFWeaponBase *pGivenWeapon;
+
+		pGivenWeapon = (CTFWeaponBase *)GiveNamedItem( GetItemSchema()->GetWeapon(atoi(pWeapon->GetString()))->GetName() );
+		if( pGivenWeapon )
+		{
+			pGivenWeapon->DefaultTouch(this);
+			
+			pGivenWeapon->SetSlotOverride( atoi(pWeapon->GetName()) - 1 );
+			pGivenWeapon->SetPositionOverride(0);
+
+			switch( atoi(pWeapon->GetName()) )
+			{
+				case 1:
+				SetActiveWeapon(NULL);
+				Weapon_Switch(pGivenWeapon);
+				break;
+				case 2:
+				Weapon_SetLast(pGivenWeapon);
+				break;
+			}
 		}
 	}
+
+	if( kvDesiredWeapons )
+		kvDesiredWeapons->deleteThis();
 }
-*/
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -6366,6 +6438,9 @@ bool CTFPlayer::CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *p
 //-----------------------------------------------------------------------------
 void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDissolve, int Clip, int Reserve )
 {
+	if( !bThrown && of_disable_drop_weapons.GetBool() )
+		return;
+	
 	if( of_randomizer.GetBool() )
 		return;
 	// We want the ammo packs to look like the player's weapon model they were carrying.

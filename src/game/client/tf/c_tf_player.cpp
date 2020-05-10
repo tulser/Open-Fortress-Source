@@ -59,6 +59,7 @@
 #include "tf_viewmodel.h"
 #include "cdll_int.h"
 #include "filesystem.h"
+#include "of_loadout.h"
 
 #include "dt_utlvector_recv.h"
 
@@ -124,6 +125,7 @@ extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
 
 extern const char *g_aLoadoutConvarNames[];
+extern const char *g_aArsenalConvarNames[];
 
 void RefreshDesiredCosmetics( int iClass )
 {
@@ -155,6 +157,89 @@ void RefreshDesiredCosmetics( int iClass )
 	}
 }
 
+void RefreshDesiredWeapons( int iClass )
+{
+	if( GetLoadout() )
+	{
+		KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+		if( pWeapons )
+		{
+			KeyValues *pClass = pWeapons->FindKey( g_aPlayerClassNames_NonLocalized[iClass] );
+			if( pClass )
+			{
+				KeyValues *pWeapon = pClass->GetFirstValue();
+				char szCommand[128];
+				szCommand[0] = '\0';
+				for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
+				{
+					if( szCommand[0] != '\0' )
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s %d", szCommand, pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					else
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+				}
+				ConVarRef var( g_aArsenalConvarNames[iClass] );
+				if ( var.IsValid() )
+				{
+					var.SetValue(szCommand);
+				}
+			}
+		}
+	}
+}
+
+
+void OnCosmeticEquip( const CCommand& args, KeyValues *pClass )
+{
+	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
+
+	if( !pValue )
+		return;
+
+	const char *szRegion = pValue->GetString( "region", "none" );
+	
+	pClass->SetString( szRegion, args[3] );
+
+	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
+	
+	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+}
+
+void OnWeaponEquip( const CCommand& args, KeyValues *pClass )
+{
+	KeyValues *pValue = GetWeaponFromSchema( args[3] );
+
+	if( !pValue )
+		return;
+	
+	KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		KeyValues *pLoadoutClass = pWeapons->FindKey( args[2] );
+		if( pLoadoutClass )
+		{
+			int iOtherSlot = (atoi( args[4] ) - 1) ? 1 : 2;
+			const char *szOtherWeapon = pLoadoutClass->GetString( VarArgs("%d", iOtherSlot) );
+			if( !Q_strcmp( args[3], szOtherWeapon ) )
+			{
+				pLoadoutClass->SetString( VarArgs( "%d", iOtherSlot), pLoadoutClass->GetString( args[4] ) );
+				if( GLoadoutPanel() )
+				{
+					GLoadoutPanel()->SelectWeapon( iOtherSlot, pLoadoutClass->GetString(args[4]), true );
+				}
+			}
+		}
+	}
+
+	pClass->SetString( args[4], args[3] );
+
+	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
+
+	if( GLoadoutPanel() )
+		GLoadoutPanel()->SelectWeapon( atoi(args[4]), args[3] );
+
+	RefreshDesiredWeapons( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );		
+}
+
 // --------------------------------------------------------------------
 // Purpose: Cycle through the aim & move modes.
 // --------------------------------------------------------------------
@@ -163,17 +248,32 @@ void LoadoutEquip( const CCommand& args )
 	// args[1] if ever needed, this will check the class
 	if( !GetLoadout() )
 		return;
-
+	
+	int iCategory = 0;
+	
+	char szCategory[64];
+	Q_strncpy(szCategory, args[1], sizeof(szCategory) );
+	strlwr(szCategory);	
+	
+	for( int i = 0; i < 2 ; i++ )
+	{
+		if( !Q_strcmp( szCategory, g_aLoadoutCategories[i] ) )
+		{
+			iCategory = i;
+			break;
+		}
+	}
+	
 	KeyValues *pCategory = GetLoadout()->FindKey( args[1] );
 	
 	if( !pCategory )
 	{
-		for ( int i = 0; i < 1; i++ )
+		for ( int i = 0; i < 2; i++ )
 		{
-			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+			size_t length = strlen( g_aLoadoutCategories[i] );
 
-			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], args[1], length ) )
-				ResetLoadout();
+			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], szCategory, length ) )
+				ResetLoadout( szCategory );
 		}
 		return;
 	}
@@ -185,20 +285,21 @@ void LoadoutEquip( const CCommand& args )
 			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
 
 			if ( length <= strlen( args[2] ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], args[2], length ) )
-				ResetLoadout();
+				ResetLoadout( args[1] );
 		}
 		return;
 	}
-	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
-	if( !pValue )
-		return;
 	
-	const char *szRegion = pValue->GetString( "region", "none" );
-	
-	pClass->SetString( szRegion, args[3] );
-	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
-
-	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			OnCosmeticEquip( args, pClass );
+		break;
+		case 1:
+			OnWeaponEquip( args, pClass );
+		break;
+	}
 }
 static ConCommand loadout_equip("loadout_equip", LoadoutEquip );
 
@@ -208,16 +309,31 @@ void LoadoutUnEquip( const CCommand& args )
 	if( !GetLoadout() )
 		return;
 
+	int iCategory = 0;
+	
+	char szCategory[64];
+	Q_strncpy(szCategory, args[1], sizeof(szCategory) );
+	strlwr(szCategory);	
+	
+	for( int i = 0; i < 2 ; i++ )
+	{
+		if( !Q_strcmp( szCategory, g_aLoadoutCategories[i] ) )
+		{
+			iCategory = i;
+			break;
+		}
+	}
+	
 	KeyValues *pCategory = GetLoadout()->FindKey( args[1] );
 	
 	if( !pCategory )
 	{
-		for ( int i = 0; i < 1; i++ )
+		for ( int i = 0; i < 2; i++ )
 		{
-			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+			size_t length = strlen( g_aLoadoutCategories[i] );
 
-			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], args[1], length ) )
-				ResetLoadout();
+			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], szCategory, length ) )
+				ResetLoadout( szCategory );
 		}
 		return;
 	}
@@ -229,20 +345,48 @@ void LoadoutUnEquip( const CCommand& args )
 			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
 
 			if ( length <= strlen( args[2] ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], args[2], length ) )
-				ResetLoadout();
+				ResetLoadout( args[1] );
 		}
 		return;
 	}
-	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
+	KeyValues *pValue;
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			pValue = GetCosmetic( abs( atoi(args[3]) ) );
+		break;
+		case 1:
+			pValue = GetWeaponFromSchema( args[3] );
+		break;
+	}
+	
 	if( !pValue )
 		return;
 	
-	const char *szRegion = pValue->GetString( "region", "none" );
+	if( iCategory == 1 )
+	{
+		const char *szRegion = pValue->GetString( "region", "none" );
 	
-	pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
+		pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
+	}
+	else
+	{
+		pClass->RemoveSubKey( pClass->FindKey( args[4] ) );
+	}
+
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 	
-	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+		break;
+		case 1:
+			RefreshDesiredWeapons( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+		break;
+	}
 }
 static ConCommand loadout_unequip("loadout_unequip", LoadoutUnEquip );
 
@@ -4848,6 +4992,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		KeyUp( &in_ducktoggle, NULL );
 		
 		RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
+		RefreshDesiredWeapons( GetPlayerClass()->GetClassIndex() );
 	}
 	
 	// don't draw the respawn particle in first person

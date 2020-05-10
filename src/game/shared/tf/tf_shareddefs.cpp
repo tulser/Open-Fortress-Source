@@ -174,6 +174,23 @@ const char *g_aLoadoutConvarNames[] =
 	"_Juggernaut_cosmetic_loadout",
 };
 
+const char *g_aArsenalConvarNames[] =
+{
+	"_Undefined_weapon_loadout",
+	"_Scout_weapon_loadout",
+	"_Sniper_weapon_loadout",
+	"_Soldier_weapon_loadout",
+	"_Demoman_weapon_loadout",
+	"_Medic_weapon_loadout",
+	"_Heavy_weapon_loadout",
+	"_Pyro_weapon_loadout",
+	"_Spy_weapon_loadout",
+	"_Engineer_weapon_loadout",
+	"_Mercenary_weapon_loadout",
+	"_Civilian_weapon_loadout",
+	"_Juggernaut_weapon_loadout",
+};
+
 const char *g_aPlayerMutatorNames[] =
 {
 	"None",
@@ -182,7 +199,8 @@ const char *g_aPlayerMutatorNames[] =
 
 const char *g_aLoadoutCategories[] =
 {
-	"Cosmetics",
+	"cosmetics",
+	"weapons",
 };
 
 bool IsPlayerClassName( char const *str )

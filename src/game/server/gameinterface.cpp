@@ -767,6 +767,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	ParseParticleEffects( false, false );
 	
 #ifdef OPENFORTRESS_DLL	
+	InitItemSchema();
 	ParseItemsGame();
 	ParseSoundManifest();
 #endif

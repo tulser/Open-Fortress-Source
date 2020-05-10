@@ -2528,12 +2528,16 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	if (!pentLandmark)
 	{
 		pAngles = &pentTarget->GetAbsAngles();
-
-#ifdef HL1_DLL
-		pVelocity = &vecZero;
-#else
-		pVelocity = NULL;	//BUGBUG - This does not set the player's velocity to zero!!!
-#endif
+		
+		float flSize = pOther->GetAbsVelocity().Length();
+		
+		Vector vForward; AngleVectors( *pAngles, &vForward );
+		
+		VectorNormalize(vForward);
+		
+		const Vector vNewVel( vForward.x * flSize, vForward.y * flSize, vForward.z * flSize );
+		
+		pVelocity = &vNewVel;
 	}
 
 	tmp += vecLandmarkOffset;

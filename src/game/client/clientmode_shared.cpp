@@ -1528,8 +1528,15 @@ const char* ClientModeShared::GetAnnouncer()
 			if ( pAnnouncer && TFGameRules() )
 			{
 				if ( (TFGameRules()->InGametype(TF_GAMETYPE_CTF) && pAnnouncer->GetBool( "CTF" ) )
-					|| ( ( TFGameRules()->InGametype(TF_GAMETYPE_CP) || TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) || TFGameRules()->InGametype(TF_GAMETYPE_DOM) ) && pAnnouncer->GetBool( "CP" ) )
+					
+					|| ( ( TFGameRules()->InGametype(TF_GAMETYPE_CP) 
+					|| TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) 
+					|| TFGameRules()->InGametype(TF_GAMETYPE_DOM) ) && pAnnouncer->GetBool( "CP" ) )
+					
 					|| ( TFGameRules()->InGametype(TF_GAMETYPE_ESC) && pAnnouncer->GetBool( "ESC" ) )
+					
+					|| ( TFGameRules()->InGametype(TF_GAMETYPE_INF) && pAnnouncer->GetBool( "INFECTION" ) )
+					
 					|| ( TFGameRules()->InGametype(TF_GAMETYPE_ARENA) && pAnnouncer->GetBool( "ARENA" ) )
 					|| ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() && pAnnouncer->GetBool( "DM" ) ) )
 					return of_announcer_override.GetString();
