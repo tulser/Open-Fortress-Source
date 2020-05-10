@@ -23,8 +23,6 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#include "tf_gamerules.h"
-
 #ifdef GAME_DLL
 static char team_names[MAX_TEAMS][MAX_TEAMNAME_LENGTH];
 static int team_scores[MAX_TEAMS];
@@ -359,27 +357,22 @@ bool CTeamplayRules::FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pA
 {
 	if ( pAttacker && PlayerRelationship( pPlayer, pAttacker ) == GR_TEAMMATE && !info.IsForceFriendlyFire() )
 	{
-		// no team damage in COOP (zombie survival)
-		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
-			return false;
-
-		if ( TFGameRules() && TFGameRules()->IsHL2() )
-			return false;
-
-		if (*GetTeamID(pPlayer) == 77) //82=red // merc 77
-		{
-			return true;
-		}
-
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		// my teammate hit me.
-		else if ( ( of_teamplay_knockback.GetInt() == 1 ) & (friendlyfire.GetInt() == 0 ) && pAttacker != pPlayer)
+		if ( ( of_teamplay_knockback.GetInt() == 1 ) && (friendlyfire.GetInt() == 0 ) && pAttacker != pPlayer)
 		{
 			// hack: we tell ourselves to pass the damage but then zero out this damage later
 			return true;
 		}
 
+		if ( *GetTeamID(pPlayer) == 77 ) // ASCII char: M for Mercenary
+		{
+			return true;
+		}
+#endif
+
 		// my teammate hit me.
-		else if ( (friendlyfire.GetInt() == 0) && (pAttacker != pPlayer))
+		if ( (friendlyfire.GetInt() == 0) && (pAttacker != pPlayer))
 		{
 			// friendly fire is off, and this hit came from someone other than myself,  then don't get hurt
 			return false;
@@ -396,7 +389,11 @@ int CTeamplayRules::PlayerRelationship( CBaseEntity *pPlayer, CBaseEntity *pTarg
 {
 	// half life multiplay has a simple concept of Player Relationships.
 	// you are either on another player's team, or you are not.
-	if ( !pPlayer || !pTarget || !pTarget->IsPlayer() || (*GetTeamID(pTarget) == '4') || (*GetTeamID(pPlayer) == '4') ) //actualy changes shit
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	if ( !pPlayer || !pTarget || !pTarget->IsPlayer() || (*GetTeamID(pTarget) == 77) || (*GetTeamID(pPlayer) == 77) ) // ASCII char: M for Mercenary
+#else
+	if ( !pPlayer || !pTarget || !pTarget->IsPlayer() )
+#endif
 		return GR_NOTTEAMMATE;
 
 	if ( (*GetTeamID(pPlayer) != '\0') && (*GetTeamID(pTarget) != '\0') && !stricmp( GetTeamID(pPlayer), GetTeamID(pTarget) ) )
@@ -445,8 +442,7 @@ int CTeamplayRules::IPointsForKill( CBasePlayer *pAttacker, CBasePlayer *pKilled
 
 	if ( pAttacker != pKilled && PlayerRelationship( pAttacker, pKilled ) == GR_TEAMMATE )//teamkill
 	{
-		if(*GetTeamID(pKilled) == 77) return 1;
-		else return -1;
+		return -1;
 	}
 	return 1;
 }

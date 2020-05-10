@@ -39,7 +39,7 @@ BEGIN_PREDICTION_DATA( CTFKnife )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_knife, CTFKnife );
-PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_knife );
 
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCKnife, DT_TFCWeaponKnife )
@@ -51,7 +51,7 @@ BEGIN_PREDICTION_DATA( CTFCKnife )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_knife, CTFCKnife );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_knife );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_knife );
 
 //=============================================================================
 //
@@ -112,14 +112,14 @@ void CTFKnife::PrimaryAttack( void )
 	if ( DoSwingTrace( trace ) == true )
 	{
 		// we will hit something with the attack
-		if ( trace.m_pEnt && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) ) // npcs too!
+		if ( trace.m_pEnt && trace.m_pEnt->IsPlayer() )
 		{
-			CBaseCombatCharacter *pTarget = trace.m_pEnt->MyCombatCharacterPointer();
+			CTFPlayer *pTarget = ToTFPlayer( trace.m_pEnt );
 
-			if ( pTarget && pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() )
+			if ( pTarget && ( pTarget->GetTeamNumber() != pPlayer->GetTeamNumber() || pTarget->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 			{
 				// Deal extra damage to players when stabbing them from behind
-				if ( IsBehindTarget( trace.m_pEnt ) )
+				if ( IsBehindAndFacingTarget( pTarget ) )
 				{
 					// this will be a backstab, do the strong anim
 					m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
@@ -128,18 +128,7 @@ void CTFKnife::PrimaryAttack( void )
 					m_hBackstabVictim = trace.m_pEnt;
 				}
 			}
-			else if ( pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
-			{
-				// Deal extra damage to players when stabbing them from behind
-				if ( IsBehindTarget( trace.m_pEnt ) )
-				{
-					// this will be a backstab, do the strong anim
-					m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
-					// store the victim to compare when we do the damage
-					m_hBackstabVictim = trace.m_pEnt;
-				}		
-			}
 		}
 	}
 
@@ -154,8 +143,10 @@ void CTFKnife::PrimaryAttack( void )
 	lagcompensation->FinishLagCompensation( pPlayer );
 #endif
 
-	// Swing the weapon.
+	// Swing the weapon, instantly.
 	Swing( pPlayer );
+	Smack();
+	m_flSmackTime = -1.0;
 
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
@@ -170,7 +161,7 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage( pTarget, iCustomDamage );
 
-	if ( pTarget->IsPlayer() || pTarget->IsNPC() ) // damage npcs too
+	if ( pTarget->IsPlayer() )
 	{
 		// This counts as a backstab if:
 		// a ) we are behind the target player
@@ -202,55 +193,40 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 	return flBaseDamage;
 }
 
+//
+// https://gist.github.com/sigsegv-mvm/bda5c53af428878af6889635cd787332/revisions
+// reverse engineered from TF2 ServerLinux 20151007a by sigsegv
+//
 
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFKnife::IsBehindTarget( CBaseEntity *pTarget )
+bool CTFKnife::IsBehindAndFacingTarget( CBaseEntity *pTarget )
 {
-	Assert( pTarget );
+	CTFPlayer *pTargetPlayer = ToTFPlayer(pTarget);
+	if ( !pTargetPlayer ) 
+		return false;
 
-	// Get the forward view vector of the target, ignore Z
-	Vector vecVictimForward;
+	Vector2D wsc_spy_to_victim = ( pTargetPlayer->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter() ).AsVector2D();
+	wsc_spy_to_victim.NormalizeInPlace();
 
-	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, NULL, NULL );
-	//AngleVectors( pTarget->EyeAngles(), &vecVictimForward, 0, 0 );
-	AngleVectors(pTarget->EyeAngles(), &vecVictimForward);
-	vecVictimForward.z = 0.0f;
-	vecVictimForward.NormalizeInPlace();
+	Vector temp1;
+	
+	pTargetPlayer->EyeVectors( &temp1 );
+	Vector2D eye_spy = temp1.AsVector2D();
+	eye_spy.NormalizeInPlace();
 
-	// Get a vector from my origin to my targets origin
-	Vector vecToTarget;
-	vecToTarget = pTarget->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter();
-	vecToTarget.z = 0.0f;
-	vecToTarget.NormalizeInPlace();
+	Vector temp2; 
+	
+	pTargetPlayer->EyeVectors( &temp2 );
+	Vector2D eye_victim = temp2.AsVector2D();
+	eye_victim.NormalizeInPlace();
 
-	//float flDot = DotProduct( vecVictimForward, vecToTarget );
+	if ( DotProduct2D( wsc_spy_to_victim, eye_victim ) <=  0.0f ) 
+		return false;
+	if ( DotProduct2D( wsc_spy_to_victim, eye_spy )    <=  0.5f ) 
+		return false;
+	if ( DotProduct2D( eye_spy,           eye_victim ) <= -0.3f ) 
+		return false;
 
-	// it seems that despite adding lag compensation you can still somehow facestab=
-	// checking if the attacker is facing the victim as a bandaid solution
-	Vector vecOwnerForward;
-
-	AngleVectors( GetOwner()->EyeAngles(), &vecOwnerForward );
-
-	//vecOwnerForward.z = 1.0f;
-	vecOwnerForward.z = 0.0f;
-
-	//vecOwnerForward.NormalizeInPlace()
-	vecOwnerForward.NormalizeInPlace();
-
-	float flDotVictim = DotProduct( vecVictimForward, vecToTarget );
-	float flDotOwner = DotProduct(vecOwnerForward, vecToTarget);
-
-	if (flDotOwner > 0.5)
-		// test
-		//return (flDotVictim > 0.1);
-
-		return (flDotVictim > -0.1);
-		
-	return false;
-
-	//	return ( flDot > -0.1 );
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -260,7 +236,6 @@ bool CTFKnife::SendWeaponAnim( int iActivity )
 {
 	if ( iActivity == ACT_VM_IDLE && m_bReady )
 	{
-		// sniff
 		return BaseClass::SendWeaponAnim( ACT_BACKSTAB_VM_IDLE );
 	}
 
@@ -286,9 +261,8 @@ void CTFKnife::KnifeThink( void )
 	if ( GetActivity() == ACT_VM_IDLE || GetActivity() == ACT_BACKSTAB_VM_IDLE )
 	{
 		trace_t trace;
-		if ( CanAttack() && DoSwingTrace( trace ) 
-			&& trace.m_pEnt && IsBehindTarget( trace.m_pEnt ) && ( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() ) &&
-			( trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY ) )
+		if ( CanAttack() && DoSwingTrace( trace ) && trace.m_pEnt && trace.m_pEnt->IsPlayer() &&
+			( trace.m_pEnt->GetTeamNumber() != pPlayer->GetTeamNumber() || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY ) && IsBehindAndFacingTarget( trace.m_pEnt ) )
 		{
 			// we will hit something with the attack
 			// Deal extra damage to players when stabbing them from behind

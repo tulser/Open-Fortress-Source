@@ -34,7 +34,7 @@ protected:
 	float	m_flTouchDelta;		// Amount of time that must pass before another touch function can be called
 };
 
-#if TRUE //def HL2_CLIENT_DLL
+#ifdef HL2_CLIENT_DLL
 class CAntlionGibManager : public CAutoGameSystemPerFrame
 {
 public:

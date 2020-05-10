@@ -141,7 +141,10 @@ protected:
 
 private:
 	virtual void	UpdateReplayMessages();
+	
+#ifdef OF_CLIENT_DLL
 	virtual const char* GetAnnouncer();
+#endif
 
 	void			ClearReplayMessageList();
 

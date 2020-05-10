@@ -484,9 +484,10 @@ void CSpectatorGUI::ApplySchemeSettings(IScheme *pScheme)
 	SetPaintBorderEnabled(false);
 
 	SetBorder( NULL );
-
+	
+#if defined ( CSTRIKE_DLL ) || defined ( OF_CLIENT_DLL )
 	SetZPos(80);	// guarantee it shows above the scope
-
+#endif
 }
 
 //-----------------------------------------------------------------------------

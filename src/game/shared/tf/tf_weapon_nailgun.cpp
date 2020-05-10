@@ -18,7 +18,7 @@ BEGIN_PREDICTION_DATA( CTFNailgun )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_nailgun, CTFNailgun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_nailgun);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_nailgun);
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -36,7 +36,7 @@ BEGIN_PREDICTION_DATA( CTFCNailgun )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_nailgun, CTFCNailgun );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun);
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun);
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -54,7 +54,7 @@ BEGIN_PREDICTION_DATA( CTFCNailgunSuper )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_nailgun_super, CTFCNailgunSuper );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun_super );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_nailgun_super );
 
 // Server specific.
 #ifndef CLIENT_DLL

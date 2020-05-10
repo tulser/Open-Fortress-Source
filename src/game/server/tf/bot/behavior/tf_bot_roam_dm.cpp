@@ -4,6 +4,7 @@
 #include "tf_bot_attack.h"
 #include "tf_bot_get_weapon.h"
 #include "tf_bot_taunt.h"
+#include "sniper/tf_bot_sniper_attack.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "tf_gamerules.h"
 
@@ -34,22 +35,17 @@ ActionResult<CTFBot> CTFBotDMRoam::Update( CTFBot *me, float dt )
 
 	if ( threat != nullptr )
 	{
-		CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
-		if ( TFGameRules()->IsFreeRoam() && pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_MERCENARY )
+		if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 		{
-			// OFBOT: in DM, we don't want to chase down people with a pistol, lets priotize picking up weapons
+			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Chasing down the losers" );
 		}
-		else
+		
+		if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), flChaseRange ) )
 		{
-			if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
-			{
-				return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Chasing down the losers" );
-			}
-
-			if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), flChaseRange ) )
-			{
-				return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Going after an enemy" );
-			}
+			if ( CTFBotSniperAttack::IsPossible( me ))
+				return Action<CTFBot>::SuspendFor( new CTFBotSniperAttack, "Sniping an enemy" );
+		
+			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Going after an enemy" );
 		}
 	}
 

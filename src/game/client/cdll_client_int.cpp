@@ -118,7 +118,7 @@
 #include "../engine/audio/public/sound.h"
 #include "tf_shared_content_manager.h"
 #endif
-#if defined( OPENFORTRESS_DLL )
+#if defined( OF_CLIENT_DLL )
 #include "fmod_manager.h"
 #include "c_of_music_player.h"
 #include "of_shared_schemas.h"
@@ -129,7 +129,9 @@
 #include "mouthinfo.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#ifndef OF_CLIENT_DLL
 #include "mumble.h"
+#endif
 
 // NVNT includes
 #include "hud_macros.h"
@@ -154,14 +156,19 @@
 #include "fbxsystem/fbxsystem.h"
 #endif
 
+#ifdef OF_CLIENT_DLL
 #include "of_discordrpc.h"
 #include <time.h>
 #include "gamemounter.h"
 #include "tf_player_shared.h"
 #include "c_tf_player.h"
+#endif
 
 extern vgui::IInputInternal *g_InputInternal;
+
+#ifdef OF_CLIENT_DLL
 const char *COM_GetModDirectory(); // return the mod dir (rather than the complete -game param, which can be a path)
+#endif
 
 //=============================================================================
 // HPE_BEGIN
@@ -350,8 +357,10 @@ static int64_t startTimestamp = time(0);
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
 #endif
 
+#ifdef OF_CLIENT_DLL
 ConVar of_picmip( "of_picmip", "-1", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.");
 ConVar of_prop_fading( "of_prop_fading", "1", FCVAR_ARCHIVE, "Enable or disable prop fading. Requires game restart when changed. Enabling this will disable the -makedevshots functions.");
+#endif
 
 // Physics system
 bool g_bLevelInitialized;
@@ -360,7 +369,7 @@ class IClientPurchaseInterfaceV2 *g_pClientPurchaseInterface = (class IClientPur
 
 static ConVar *g_pcv_ThreadMode = NULL;
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 //#pragma message(FILE_LINE_STRING " !!FIXME!! replace all this with Sys_LoadGameModule")
 static class DllOverride {
 	public:
@@ -522,6 +531,7 @@ public:
 };
 static CHLVoiceStatusHelper g_VoiceStatusHelper;
 
+#ifdef OF_CLIENT_DLL
 //-----------------------------------------------------------------------------
 // Copied from engine code as the .h files are not available
 //-----------------------------------------------------------------------------
@@ -567,6 +577,7 @@ struct StartSoundParams_t
 	bool			suppressrecording;
 	int				initialStreamPosition;
 };
+#endif
 
 //-----------------------------------------------------------------------------
 // Code to display which entities are having their bones setup each frame.
@@ -924,34 +935,6 @@ extern IGameSystem *ViewportClientSystem();
 //-----------------------------------------------------------------------------
 ISourceVirtualReality *g_pSourceVR = NULL;
 
-static void MountAdditionalContent()
-{
-	KeyValues *pMainFile = new KeyValues( "gameinfo.txt" );
-#ifndef _WINDOWS
-	// case sensitivity
-	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
-	if (!pMainFile)
-#endif
-	pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
-	
-	if (pMainFile)
-	{
-		KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
-		if (pFileSystemInfo)
-			for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-			{
-				if ( strcmp(pKey->GetName(),"AdditionalContentId") == 0 )
-				{
-					int appid = abs(pKey->GetInt());
-					if (appid)
-						if( filesystem->MountSteamContent(-appid) != FILESYSTEM_MOUNT_OK )
-							Warning("Unable to mount extra content with appId: %i\n", appid);
-				}
-			}
-	}	
-	pMainFile->deleteThis();
-}
-
 // Purpose: Called when the DLL is first loaded.
 // Input  : engineFactory - 
 // Output : int
@@ -1050,13 +1033,13 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	InitFbx();
 #endif
 	
-	if ((Q_stricmp(COM_GetModDirectory(), "open_fortress") != 0)
-		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress\\") != 0)
-		&& (Q_stricmp(COM_GetModDirectory(), "open_fortress/") != 0))
+#ifdef OF_CLIENT_DLL
+	if ( V_strstr( COM_GetModDirectory(), "open_fortress" ) == 0 )
 	{
 		ConColorMsg( Color( 60, 238, 60, 255 ), "%s\n", COM_GetModDirectory() );
-		Error("Error! The game's directory must have the name \"open_fortress\" in order for the mod to work correctly. Please change it.");
+		Error("Error! The game's directory must have the exact name \"open_fortress\" in order for the mod to work correctly. Please change it.");
 	}
+#endif
 
 	// it's ok if this is NULL. That just means the sourcevr.dll wasn't found
 	g_pSourceVR = (ISourceVirtualReality *)appSystemFactory(SOURCE_VIRTUAL_REALITY_INTERFACE_VERSION, NULL);
@@ -1072,9 +1055,18 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		return false;
 	}
 	
+#ifdef OF_CLIENT_DLL	
 	AddRequiredSearchPaths();
+#endif
 
-	MountAdditionalContent();
+#ifdef OF_CLIENT_DLL
+	// crude way to detect if TF2 is mounted properly
+	IMaterial *testmat = materials->FindMaterial("console/title_war", TEXTURE_GROUP_OTHER );
+	if ( testmat->IsErrorMaterial() )
+	{
+		Error("Your game is not mounting Team Fortress 2 correctly.\nMake sure you have TF2 installed.\nIf you do, make sure that Open Fortress is installed on the same drive as TF2.");
+	}
+#endif
 
 	if (CommandLine()->FindParm("-textmode"))
 		g_bTextMode = true;
@@ -1119,7 +1111,9 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	IGameSystem::Add(ClientThinkList());
 	IGameSystem::Add(ClientSoundscapeSystem());
 	IGameSystem::Add(PerfVisualBenchmark());
+#ifndef OF_CLIENT_DLL
 	IGameSystem::Add(MumbleSystem());
+#endif
 
 #if defined( TF_CLIENT_DLL )
 	IGameSystem::Add(CustomTextureToolCacheGameSystem());
@@ -1150,18 +1144,18 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 	g_pClientMode->Enable();
 	
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	ParseLoadout();
 	InitItemSchema();
 	ParseItemsGame();
 	ParseSoundManifest();
 	FMODManager()->InitFMOD();
-#endif
 
 	CTFLoadoutPanel *pLoadoutPanel = GLoadoutPanel();
 	pLoadoutPanel->InvalidateLayout( false, true );
 	pLoadoutPanel->SetVisible( false );
 	pLoadoutPanel->MakePopup( false );
+#endif
 
 	if (!view)
 	{
@@ -1212,11 +1206,12 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	HookHapticMessages(); // Always hook the messages
 #endif
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	g_discordrpc.Init();
 #endif
 
 
+#ifdef OF_CLIENT_DLL
 	// -------------------------------------------------------
 	// Hijack some engine convars and tweak them to our liking
 	// -------------------------------------------------------
@@ -1250,7 +1245,6 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		mat_showlowresimage->SetFlags( FCVAR_NONE );
 	}
 
-
 	// To disable the effects of HDR, requires cheat flag removal
 	ConVar *mat_dynamic_tonemapping = NULL;
 	mat_dynamic_tonemapping = g_pCVar->FindVar( "mat_dynamic_tonemapping" );
@@ -1267,7 +1261,40 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 		mat_disable_bloom->SetFlags( FCVAR_ARCHIVE );
 	}
 
+	// ------------------------------
+	// Force async loading to be on
+	// ------------------------------
+	ConVar *mod_forcedata = NULL;
+	mod_forcedata = g_pCVar->FindVar( "mod_forcedata" );
+	if ( mod_forcedata )
+	{
+		mod_forcedata->SetValue( 0 );
+	}
+
+	ConVar *mod_load_mesh_async = NULL;
+	mod_load_mesh_async = g_pCVar->FindVar( "mod_load_mesh_async" );
+	if ( mod_load_mesh_async )
+	{
+		mod_load_mesh_async->SetValue( 1 );
+	}
+
+	ConVar *mod_load_anims_async = NULL;
+	mod_load_anims_async = g_pCVar->FindVar( "mod_load_anims_async" );
+	if ( mod_load_anims_async )
+	{
+		mod_load_anims_async->SetValue( 1 );
+	}
+
+	ConVar *mod_load_vcollide_async = NULL;
+	mod_load_vcollide_async = g_pCVar->FindVar( "mod_load_vcollide_async" );
+	if ( mod_load_vcollide_async )
+	{
+		mod_load_vcollide_async->SetValue( 1 );
+	}
+	// ------------------------------
+
 	// mat_picmip is handled in PostInit() instead
+#endif
 
 	return true;
 }
@@ -1337,6 +1364,7 @@ void CHLClient::PostInit()
 	}
 #endif
 
+#ifdef OF_CLIENT_DLL
 	// What is the reasoning for this mess?
 	// The engine clamps mat_picmip to -1 - 2 every rendering frame and we don't have access to change this
 	// Therefore we set the desired picmip from another convar and then immediately nuke it on the same frame
@@ -1366,7 +1394,9 @@ void CHLClient::PostInit()
 			mat_picmip->Nuke();
 		}
 	}
+#endif
 
+#ifdef OF_CLIENT_DLL
 	ConVar *cl_updaterate = NULL;
 	cl_updaterate = g_pCVar->FindVar( "cl_updaterate" );
 	if( cl_updaterate )
@@ -1389,6 +1419,7 @@ void CHLClient::PostInit()
 		CommandLine()->AppendParm( "-makedevshots", NULL );
 		CommandLine()->AppendParm( "-usedevshotsfile", "nospf.txt" ); 
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1421,7 +1452,7 @@ void CHLClient::Shutdown( void )
 	g_pClientMode->Disable();
 	g_pClientMode->Shutdown();
 	
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	FMODManager()->ExitFMOD();
 #endif
 
@@ -1451,7 +1482,7 @@ void CHLClient::Shutdown( void )
 	ShutdownFbx();
 #endif
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	g_discordrpc.Shutdown();
 #endif
 	
@@ -1526,7 +1557,7 @@ void CHLClient::HudUpdate( bool bActive )
 	// I can check into this further.
 	C_BaseTempEntity::CheckDynamicTempEnts();
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	g_discordrpc.RunFrame();
 #endif
 
@@ -1745,10 +1776,12 @@ void CHLClient::View_Render( vrect_t *rect )
 
 	view->Render( rect );
 	
+#ifdef OF_CLIENT_DLL	
 	// S:O - Think about fading ambient sounds if necessary
 	FMODManager()->FadeThink();
 	FMODManager()->Think();
-	
+#endif
+
 	UpdatePerfStats();
 }
 
@@ -1881,13 +1914,12 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 
 	gHUD.LevelInit();
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	g_discordrpc.Reset();
 	
 	// S:O - Stop all FMOD sounds when exiting to the main menu
 	FMODManager()->StopAllSound();
 	InitLevelSoundManifest();
-	DevWarning("MAPNAME %s\n", pMapName);
 	ParseLevelSoundManifest();
 #endif
 
@@ -1981,11 +2013,11 @@ void CHLClient::LevelShutdown( void )
 
 	messagechars->Clear();
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	g_discordrpc.Reset();
 #endif
 
-#if !( defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT ) )
+#if !( defined( TF_CLIENT_DLL ) || defined( OF_CLIENT_DLL ) )
 	// don't want to do this for TF2 because we have particle systems in our
 	// character loadout screen that can be viewed when we're not connected to a server
 	g_pParticleSystemMgr->UncacheAllParticleSystems();
@@ -2437,12 +2469,13 @@ void OnRenderStart()
 
 	C_BaseAnimating::ThreadedBoneSetup();
 	
-	
+#ifdef OF_CLIENT_DLL
 	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
-	 //Tony; in multiplayer do some extra stuff. like re-calc the view if in a vehicle!
+	// Tony; in multiplayer do some extra stuff. like re-calc the view if in a vehicle!
     if ( engine->GetMaxClients() > 1 )
-    view->MP_PostSimulate();
-	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+		view->MP_PostSimulate();
+#endif
+
 
 	{
 		VPROF_("Client TempEnts", 0, VPROF_BUDGETGROUP_CLIENT_SIM, false, BUDGETFLAG_CLIENT);
@@ -2824,6 +2857,7 @@ void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 {
 	CBaseEntity *pEntity = ClientEntityList().GetEnt( params.soundsource );
 
+#ifdef OF_CLIENT_DLL
 	// A player speaking
 	if ( params.entchannel == CHAN_VOICE && pEntity && pEntity->IsPlayer() )
 	{
@@ -2832,9 +2866,10 @@ void CHLClient::ClientAdjustStartSoundParams( StartSoundParams_t& params )
 		// Zombies emit lower pitch voicelines
 		if ( pPlayer && pPlayer->m_Shared.IsZombie() )
 		{
-			params.pitch *= 0.8f;
+			params.pitch *= 0.7f;
 		}
 	}
+#endif
 
 #ifdef TF_CLIENT_DLL
 	// A player speaking

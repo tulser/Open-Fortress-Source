@@ -83,8 +83,10 @@ public:
 	virtual void	SharedSpawn(); // Shared between client and server.
 	virtual bool	GetSteamID( CSteamID *pID );
 
+#ifdef OF_CLIENT_DLL
 	// SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
 	virtual const Vector &GetRenderOrigin();
+#endif
 
 	// IClientEntity overrides.
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
@@ -119,7 +121,7 @@ public:
 	// Handle view smoothing when going up stairs
 	void				SmoothViewOnStairs( Vector& eyeOrigin );
 	virtual float		CalcRoll (const QAngle& angles, const Vector& velocity, float rollangle, float rollspeed);
-	virtual void        CalcViewRoll(QAngle& eyeAngles);
+	void        		CalcViewRoll(QAngle& eyeAngles);
 	void				CreateWaterEffects( void );
 
 	virtual void			SetPlayerUnderwater( bool state );
@@ -210,7 +212,11 @@ public:
 
 	virtual bool				ShouldReceiveProjectedTextures( int flags )
 	{
+#ifdef OF_CLIENT_DLL	
 		return true;
+#else
+		return false;
+#endif
 	}
 
 
@@ -448,9 +454,9 @@ public:
 
 protected:
 
-    virtual void        CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
-	virtual void        CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles,float& zNear, float& zFar, float& fov);
-	
+	void				CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
+	void				CalcVehicleView(IClientVehicle *pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov );
+
 	virtual void		CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 	virtual Vector		GetChaseCamViewOffset( CBaseEntity *target );
 	void				CalcChaseCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );

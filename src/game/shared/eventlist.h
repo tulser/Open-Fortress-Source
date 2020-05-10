@@ -90,11 +90,13 @@ typedef enum
 	AE_TAUNT_ENABLE_MOVE,
 	AE_TAUNT_DISABLE_MOVE,
 
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	//event for magazine ejection
 	AE_CL_MAG_EJECT,
 	AE_CL_MAG_EJECT2,
-	
+
 	AE_CL_STOP_PARTICLE_EFFECT,
+#endif
 
 	LAST_SHARED_ANIMEVENT
 } Animevent;

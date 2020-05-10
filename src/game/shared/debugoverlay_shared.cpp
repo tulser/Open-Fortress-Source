@@ -173,7 +173,13 @@ void NDebugOverlay::EntityText( int entityID, int text_offset, const char *text,
 {
 	if ( debugoverlay )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		debugoverlay->AddEntityTextOverlay( entityID, text_offset, duration, r, g, b, a, "%s", text );
+#else
+		debugoverlay->AddEntityTextOverlay( entityID, text_offset, duration, 
+			(int)clamp(r * 255.f,0.f,255.f), (int)clamp(g * 255.f,0.f,255.f), (int)clamp(b * 255.f,0.f,255.f), 
+			(int)clamp(a * 255.f,0.f,255.f), text );
+#endif
 	}
 }
 
@@ -637,7 +643,9 @@ void NDebugOverlay::Circle( const Vector &position, const Vector &xAxis, const V
 		// If we have an alpha value, then draw the fan
 		if ( a && i > 1 )
 		{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )			
 			if ( debugoverlay )
+#endif
 			{
 				debugoverlay->AddTriangleOverlay( vecStart, vecLastPosition, vecPosition, r, g, b, a, bNoDepthTest, flDuration );
 			}

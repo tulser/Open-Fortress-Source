@@ -535,7 +535,11 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 		return;
 
 	// HDRFIXME: Assert NULL rendertarget
+#ifdef OF_CLIENT_DLL
 	if ( mat_yuv.GetInt() )
+#else
+	if ( mat_yuv.GetInt() && (engine->GetDXSupportLevel() >= 80) )
+#endif
 	{
 		IMaterial *pMaterial;
 		pMaterial = materials->FindMaterial( "debug/yuv", TEXTURE_GROUP_OTHER, true );
@@ -547,7 +551,11 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 		}
 	}
 
+#ifdef OF_CLIENT_DLL
 	if ( mat_hsv.GetInt() )
+#else
+	if ( mat_hsv.GetInt() && (engine->GetDXSupportLevel() >= 90) )
+#endif
 	{
 		IMaterial *pMaterial;
 		pMaterial = materials->FindMaterial( "debug/hsv", TEXTURE_GROUP_OTHER, true );
@@ -627,7 +635,7 @@ void CDebugViewRender::Draw2DDebuggingInfo( const CViewSetup &view )
 //-----------------------------------------------------------------------------
 // A console command allowing you to draw a material as an overlay
 //-----------------------------------------------------------------------------
-CON_COMMAND_F( r_screenoverlay, "Draw specified material as an overlay", FCVAR_SERVER_CAN_EXECUTE )
+CON_COMMAND_F( r_screenoverlay, "Draw specified material as an overlay", FCVAR_CHEAT|FCVAR_SERVER_CAN_EXECUTE )
 {
 	if( args.ArgC() == 2 )
 	{

@@ -72,6 +72,12 @@ IterationRetval_t CRagdollEnumerator::EnumElement( IHandleEntity *pHandleEntity 
 //-----------------------------------------------------------------------------
 bool FX_AffectRagdolls( Vector vecOrigin, Vector vecStart, int iDamageType )
 {
+#ifndef OF_CLIENT_DLL
+	// don't do this when lots of ragdolls are simulating
+	if ( s_RagdollLRU.CountRagdolls(true) > 1 )
+		return false;
+#endif
+	
 	Ray_t shotRay;
 	shotRay.Init( vecStart, vecOrigin );
 
@@ -397,7 +403,11 @@ void PlayImpactSound( CBaseEntity *pEntity, trace_t &tr, Vector &vecServerOrigin
 		else
 		{
 			CLocalPlayerFilter filter;
+#ifdef OF_CLIENT_DLL			
 			C_BaseEntity::EmitSound( filter, NULL, pbulletImpactSoundName, /*pdata->soundhandles.bulletImpact,*/ &vecOrigin );
+#else
+			C_BaseEntity::EmitSound( filter, NULL, pbulletImpactSoundName, pdata->soundhandles.bulletImpact, &vecOrigin );
+#endif
 		}
 
 		return;

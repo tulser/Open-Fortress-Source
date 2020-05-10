@@ -27,7 +27,10 @@
 #include "igamesystem.h"
 #include "KeyValues.h"
 #include "filesystem.h"
+
+#ifdef OF_DLL
 #include "of_music_player.h"
+#endif
 
 #ifdef PORTAL
 #include "portal_gamerules.h"
@@ -181,7 +184,9 @@ public:
 	void InputToggleSound( inputdata_t &inputdata );
 	void InputPitch( inputdata_t &inputdata );
 	void InputVolume( inputdata_t &inputdata );
+#ifdef OF_DLL
 	void InputAddVolume( inputdata_t &inputdata );
+#endif
 	void InputFadeIn( inputdata_t &inputdata );
 	void InputFadeOut( inputdata_t &inputdata );
 
@@ -199,7 +204,9 @@ public:
 	string_t m_sSourceEntName;
 	EHANDLE m_hSoundSource;	// entity from which the sound comes
 	int		m_nSoundSourceEntIndex; // In case the entity goes away before we finish stopping the sound...
+#ifdef OF_DLL
 	CTFMusicPlayer *pMusicPlayer;
+#endif
 };
 
 LINK_ENTITY_TO_CLASS( ambient_generic, CAmbientGeneric );
@@ -234,7 +241,9 @@ BEGIN_DATADESC( CAmbientGeneric )
 	DEFINE_INPUTFUNC(FIELD_VOID, "ToggleSound", InputToggleSound ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "Pitch", InputPitch ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "Volume", InputVolume ),
+#ifdef OF_DLL	
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "AddVolume", InputAddVolume ),
+#endif
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "FadeIn", InputFadeIn ),
 	DEFINE_INPUTFUNC(FIELD_FLOAT, "FadeOut", InputFadeOut ),
 
@@ -245,6 +254,7 @@ END_DATADESC()
 #define SF_AMBIENT_SOUND_START_SILENT		16
 #define SF_AMBIENT_SOUND_NOT_LOOPING		32
 
+#ifdef OF_DLL
 const char *szMusicArray[] =
 {
 	"DeathmatchMusic.AtFortressGate",
@@ -282,6 +292,8 @@ const char *szMusicArray[] =
 	"DeathmatchMusic.Mayann",
 	"DeathmatchMusic.Watergate_Waiting"
 };
+#endif
+
 //-----------------------------------------------------------------------------
 // Spawn
 //-----------------------------------------------------------------------------
@@ -297,18 +309,26 @@ void CAmbientGeneric::Spawn( void )
 		UTIL_Remove(this);
 		return;
 	}
-	for ( int i = 0; i < ARRAYSIZE( szMusicArray ); i++ )
+
+	// HACKHACK to stop legacy maps with the old music system from breaking...
+#ifdef OF_DLL
+	if ( V_strncmp( "Death", szSoundFile, 5 ) == 0 ) 
 	{
-		if ( stricmp( szSoundFile, szMusicArray[i]) == 0 )
+		for ( int i = 0; i < ARRAYSIZE( szMusicArray ); i++ )
 		{
-			pMusicPlayer = (CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
-			pMusicPlayer->szLoopingSong = MAKE_STRING( szMusicArray[i] );
-			pMusicPlayer->Spawn();
-			pMusicPlayer->SetDisabled( true );
-			m_iszSound = MAKE_STRING( "" );
-			break;
+			if ( stricmp( szSoundFile, szMusicArray[i]) == 0 )
+			{
+				pMusicPlayer = (CTFMusicPlayer *)CBaseEntity::CreateNoSpawn( "of_music_player", GetAbsOrigin() , vec3_angle );
+				pMusicPlayer->szLoopingSong = MAKE_STRING( szMusicArray[i] );
+				pMusicPlayer->Spawn();
+				pMusicPlayer->SetDisabled( true );
+				m_iszSound = MAKE_STRING( "" );
+				break;
+			}
 		}
 	}
+#endif
+
     SetSolid( SOLID_NONE );
     SetMoveType( MOVETYPE_NONE );
 
@@ -429,6 +449,7 @@ void CAmbientGeneric::InputVolume( inputdata_t &inputdata )
 	SendSound( SND_CHANGE_VOL );
 }
 
+#ifdef OF_DLL
 void CAmbientGeneric::InputAddVolume( inputdata_t &inputdata )
 {
 	//
@@ -439,6 +460,7 @@ void CAmbientGeneric::InputAddVolume( inputdata_t &inputdata )
 
 	SendSound( SND_CHANGE_VOL );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Input handler for fading in volume over time.
@@ -498,8 +520,10 @@ void CAmbientGeneric::Precache( void )
 		if (m_fLooping)
 		{
 			m_fActive = true;
+#ifdef OF_DLL			
 			if( pMusicPlayer )
 				pMusicPlayer->SetDisabled( false );
+#endif
 		}
 	}
 }
@@ -950,9 +974,12 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 		{
 			UTIL_EmitAmbientSound(pSoundSource->GetSoundSourceIndex(), pSoundSource->GetAbsOrigin(), szSoundFile, 
 						0, SNDLVL_NONE, flags, 0);
+#ifdef OF_DLL						
 			m_fActive = false;
 			if( pMusicPlayer )
 				pMusicPlayer->SetDisabled( true );
+
+#endif		
 		}
 		else
 		{
@@ -965,9 +992,11 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 
 			if (m_fLooping)
 			{
+#ifdef OF_DLL			
 				m_fActive = true;
 				if( pMusicPlayer )
 					pMusicPlayer->SetDisabled( false );
+#endif				
 			}
 		}
 	}	
@@ -978,9 +1007,11 @@ void CAmbientGeneric::SendSound( SoundFlags_t flags)
 		{
 			UTIL_EmitAmbientSound(m_nSoundSourceEntIndex, GetAbsOrigin(), szSoundFile, 
 					0, SNDLVL_NONE, flags, 0);
+#ifdef OF_DLL					
 			m_fActive = false;
 			if( pMusicPlayer )
 				pMusicPlayer->SetDisabled( true );
+#endif
 		}
 	}
 }
@@ -1038,8 +1069,10 @@ void CAmbientGeneric::ToggleSound()
 		else
 		{
 			m_fActive = false;
+#ifdef OF_DLL			
 			if( pMusicPlayer )
 				pMusicPlayer->SetDisabled( true );
+#endif
 			
 			// HACKHACK - this makes the code in Precache() work properly after a save/restore
 			m_spawnflags |= SF_AMBIENT_SOUND_START_SILENT;
@@ -1071,8 +1104,10 @@ void CAmbientGeneric::ToggleSound()
 		if (m_fLooping)
 		{
 			m_fActive = true;
+#ifdef OF_DLL			
 			if( pMusicPlayer )
 				pMusicPlayer->SetDisabled( false );
+#endif		
 		}
 		else
 		{

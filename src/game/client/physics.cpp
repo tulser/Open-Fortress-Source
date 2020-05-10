@@ -195,7 +195,7 @@ void PhysicsReset()
 }
 
 
-ConVar cl_ragdoll_collide( "cl_ragdoll_collide", "1" );
+ConVar cl_ragdoll_collide( "cl_ragdoll_collide", "0" );
 
 int CCollisionEvent::ShouldCollide( IPhysicsObject *pObj0, IPhysicsObject *pObj1, void *pGameData0, void *pGameData1 )
 #if _DEBUG
@@ -239,9 +239,7 @@ int CCollisionEvent::ShouldCollide_2( IPhysicsObject *pObj0, IPhysicsObject *pOb
 			return 0;
 	}
 
-	//if ( (pObj0->GetGameFlags() & FVPHYSICS_PART_OF_RAGDOLL) && (pObj1->GetGameFlags() & FVPHYSICS_PART_OF_RAGDOLL) )
-	// test to see if ragdolls can be made to collide with map entities
-	if ((pObj0) && (pObj1))
+	if ( (pObj0->GetGameFlags() & FVPHYSICS_PART_OF_RAGDOLL) && (pObj1->GetGameFlags() & FVPHYSICS_PART_OF_RAGDOLL) )
 	{
 		if ( !cl_ragdoll_collide.GetBool() )
 			return 0;

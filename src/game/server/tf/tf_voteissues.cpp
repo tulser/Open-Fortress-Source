@@ -39,6 +39,8 @@ ConVar sv_vote_issue_scramble_teams_cooldown( "sv_vote_issue_scramble_teams_cool
 //ConVar sv_vote_issue_classlimits_max( "sv_vote_issue_classlimits_max", "0", FCVAR_NONE, "Maximum number of players (per-team) that can be any one class." );
 //ConVar sv_vote_issue_classlimits_cooldown( "sv_vote_issue_classlimits_cooldown", "0", FCVAR_NONE, "Minimum time before another classlimits vote can occur (in seconds)." );
 
+extern ConVar fraglimit;
+
 //-----------------------------------------------------------------------------
 // VTABLE GLOBAL: https://raw.githubusercontent.com/sigsegv-mvm/mvm-reversed/7ce8ac98fe187a07d71df87b02b4c038548837e9/Useful/symbols/ServerLinux-server_srv.txt
 // VTABLE LOCAL: https://github.com/sigsegv-mvm/mvm-reversed/blob/7ce8ac98fe187a07d71df87b02b4c038548837e9/Useful/vtable/server_srv/CBaseTFIssue.txt
@@ -289,6 +291,22 @@ bool CChangeLevelIssue::IsEnabled()
 
 bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
 {
+	// don't allow changing maps when we are halfway through fraglimit
+	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !TFGameRules()->IsInWaitingForPlayers() )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			CBasePlayer *pPlayer = ToBasePlayer( UTIL_PlayerByIndex( i ) );
+
+			if ( pPlayer && pPlayer->FragCount() >= ( (float)fraglimit.GetInt() * 0.6 ) )
+			{
+				nFailCode = VOTE_FAILED_ISSUE_DISABLED;
+				nTime = m_flNextCallTime - gpGlobals->curtime;
+				return false;
+			}
+		}
+	}
+
 	if ( pszDetails[ 0 ] == '\0' )
 	{
 		nFailCode = VOTE_FAILED_MAP_NAME_REQUIRED;
@@ -451,6 +469,9 @@ bool CNextLevelIssue::GetVoteOptions( CUtlVector <const char*> &vecNames )
 			int i;
 
 			i = RandomInt( 0, m_MapList.Count() - 1 );
+
+			if ( !m_MapList.IsValidIndex( i ) )
+				continue;
 
 			vecNames.AddToTail( m_MapList[ i ] );
 

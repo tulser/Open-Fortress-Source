@@ -1002,7 +1002,11 @@ void PhysFrictionSound( CBaseEntity *pEntity, IPhysicsObject *pObject, float ene
 
 	if ( psurf->sounds.scrapeSmooth && phit->audio.roughnessFactor < psurf->audio.roughThreshold )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 		soundName = psurf->sounds.scrapeSmooth;
+#else
+		soundHandle = &psurf->soundhandles.scrapeRough;
+#endif
 		soundHandle = &psurf->soundhandles.scrapeSmooth;
 	}
 

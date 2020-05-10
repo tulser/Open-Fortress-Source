@@ -709,7 +709,9 @@ void C_BaseExplosionEffect::CreateDynamicLight( void )
 	dl->color.r = 255;
 	dl->color.g = 220;
 	dl->color.b = 128;
+#ifdef OF_CLIENT_DLL
 	dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 	dl->die		= gpGlobals->curtime + 0.1f;
 }
 

@@ -52,14 +52,15 @@ ConVar mp_fadetoblack(
 	"mp_fadetoblack", 
 	"0", 
 	FCVAR_REPLICATED | FCVAR_NOTIFY, 
-	"fade a player's screen to black when he dies" );
+	"Fade a player's screen to black when he dies" );
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 ConVar of_teamplay_knockback(
 	"of_teamplay_knockback",
 	"0",
 	FCVAR_REPLICATED | FCVAR_NOTIFY,
 	"Allows team members to knockback other members of their team"
 	);
-
+#endif
 
 ConVar sv_hudhint_sound( "sv_hudhint_sound", "1", FCVAR_REPLICATED );

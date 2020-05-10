@@ -10,8 +10,6 @@
 
 ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
-extern ConVar of_retromode;
-
 #define TF_CLASS_UNDEFINED_FILE			""
 #define TF_CLASS_SCOUT_FILE				"scripts/playerclasses/scout"
 #define TF_CLASS_SNIPER_FILE			"scripts/playerclasses/sniper"
@@ -360,8 +358,8 @@ void InitPlayerClasses( void )
 	TFPlayerClassData_t *pClassData = &s_aTFPlayerClassData[TF_CLASS_UNDEFINED];
 	Assert( pClassData );
 	Q_strncpy( pClassData->m_szClassName, "undefined", TF_NAME_LENGTH );
-	Q_strncpy( pClassData->m_szModelName.GetForModify(), "models/player/scout.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
-	Q_strncpy( pClassData->m_szArmModelName.GetForModify(), "models/weapons/c_models/c_scout_arms.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
+	Q_strncpy( pClassData->m_szModelName.GetForModify(), "models/error.mdl", TF_NAME_LENGTH );	// Undefined players still need a model
+	Q_strncpy( pClassData->m_szArmModelName.GetForModify(), "models/error.mdl", TF_NAME_LENGTH );	// Undefined players still need a Arm model
 	Q_strncpy( pClassData->m_szLocalizableName.GetForModify(), "undefined", TF_NAME_LENGTH );
 
 	Q_strncpy( pClassData->m_szClassSelectImageRed.GetForModify(), "class_sel_sm_civilian_red", TF_NAME_LENGTH );	// Undefined players still need a class Image
@@ -534,8 +532,6 @@ bool CTFPlayerClassShared::CanBuildObject( int iObjectType )
 
 	return bFound;
 }
-
-extern ConVar of_retromode;
 
 char	*CTFPlayerClassShared::GetModelName( void )						
 { 

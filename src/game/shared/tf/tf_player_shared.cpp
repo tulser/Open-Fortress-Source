@@ -69,8 +69,6 @@ ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_
 
 ConVar tf_damage_disablespread( "tf_damage_disablespread", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
 
-ConVar of_forceclass( "of_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM." );
-ConVar of_forcezombieclass( "of_forcezombieclass", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force zombies to be Mercenaries in Infiltration." );
 ConVar of_allowteams( "of_allowteams", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow RED and BLU in DM." );
 ConVar of_berserk_speed( "of_berserk_speed", "380", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode." );
 ConVar of_berserk_speed_factor( "of_berserk_speed_factor", "1.33", FCVAR_REPLICATED | FCVAR_NOTIFY, "Running speed while in berserk mode. (factor mode)");

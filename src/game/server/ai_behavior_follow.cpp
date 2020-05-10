@@ -2130,28 +2130,14 @@ void CAI_FollowGoal::EnableGoal( CAI_BaseNPC *pAI )
 		return;
 	
 	CBaseEntity *pGoalEntity = GetGoalEntity();
-	
-	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		if ( !pGoalEntity ) 
+	if ( !pGoalEntity && AI_IsSinglePlayer() )
+	{
+		if ( pAI->IRelationType(UTIL_GetLocalPlayer()) == D_LI )
 		{
-			CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
-			
-			if ( pAI->IRelationType(pPlayer) == D_LI ) 
-			{
-				pGoalEntity = pPlayer; 
-				SetGoalEntity( pGoalEntity );
-			}
+			pGoalEntity = UTIL_GetLocalPlayer();
+			SetGoalEntity( pGoalEntity );
 		}
-	#else
-		if ( !pGoalEntity && AI_IsSinglePlayer() )
-		{
-			if ( pAI->IRelationType(UTIL_GetLocalPlayer()) == D_LI )
-			{
-				pGoalEntity = UTIL_GetLocalPlayer();
-				SetGoalEntity( pGoalEntity );
-			}	
-		}
-	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+	}
 
 	if ( pGoalEntity )
 		pBehavior->SetFollowGoal( this );

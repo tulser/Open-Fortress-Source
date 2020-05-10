@@ -34,8 +34,10 @@
 
 using namespace vgui;
 
+#ifndef OF_CLIENT_DLL
 void MP3Player_Create( vgui::VPANEL parent );
 void MP3Player_Destroy();
+#endif
 
 #include <vgui/IInputInternal.h>
 vgui::IInputInternal *g_InputInternal = NULL;
@@ -213,10 +215,13 @@ void VGui_CreateGlobalPanels( void )
 	netgraphpanel->Create( toolParent );
 	debugoverlaypanel->Create( gameToolParent );
 
+#ifndef OF_CLIENT_DLL
 #ifndef _X360
 	// Create mp3 player off of tool parent panel
 	MP3Player_Create( toolParent );
 #endif
+#endif
+
 #ifdef SIXENSE
 	g_pSixenseInput->CreateGUI( gameToolParent );
 #endif
@@ -226,8 +231,10 @@ void VGui_Shutdown()
 {
 	VGUI_DestroyClientDLLRootPanel();
 
+#ifndef OF_CLIENT_DLL
 #ifndef _X360
 	MP3Player_Destroy();
+#endif
 #endif
 
 	netgraphpanel->Destroy();

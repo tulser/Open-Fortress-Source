@@ -52,7 +52,7 @@ CON_COMMAND_F( simple_bot_add, "Add a simple bot.", FCVAR_CHEAT )
 //-----------------------------------------------------------------------------------------------------
 LINK_ENTITY_TO_CLASS( simple_bot, CSimpleBot );
 
-#ifndef TF_DLL
+#if !defined( TF_DLL ) && !defined ( OF_DLL )
 PRECACHE_REGISTER( simple_bot );
 #endif
 
@@ -80,7 +80,7 @@ void CSimpleBot::Precache()
 {
 	BaseClass::Precache();
 
-#ifndef DOTA_DLL
+#if !defined(DOTA_DLL) && !defined (OF_DLL)
 	PrecacheModel( "models/humans/group01/female_01.mdl" );
 #endif
 }
@@ -91,7 +91,7 @@ void CSimpleBot::Spawn( void )
 {
 	BaseClass::Spawn();
 
-#ifndef DOTA_DLL
+#if !defined(DOTA_DLL) && !defined (OF_DLL)
 	SetModel( "models/humans/group01/female_01.mdl" );
 #endif
 }

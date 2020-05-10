@@ -111,7 +111,7 @@ BEGIN_DATADESC( CObjectSentrygun )
 END_DATADESC()
 
 LINK_ENTITY_TO_CLASS(obj_sentrygun, CObjectSentrygun);
-PRECACHE_REGISTER(obj_sentrygun);
+//PRECACHE_REGISTER(obj_sentrygun);
 
 ConVar tf_sentrygun_damage( "tf_sentrygun_damage", "16", FCVAR_CHEAT );
 ConVar tf_sentrygun_ammocheat( "tf_sentrygun_ammocheat", "0", FCVAR_CHEAT );
@@ -749,10 +749,6 @@ bool CObjectSentrygun::FindTarget()
 
 			CTFPlayer *pTargetPlayer = static_cast<CTFPlayer*>( pTeamTest[i]->GetPlayer( iPlayer ) );
 
-			// no attacking players in coop
-			if ( TFGameRules()->IsCoopGamemode() )
-				continue;
-
 			if ( pTargetPlayer == NULL )
 				continue;
 
@@ -797,10 +793,6 @@ bool CObjectSentrygun::FindTarget()
 			{
 				CBaseObject *pTargetObject = pTeamTest[i]->GetObject( iObject );
 				if ( !pTargetObject )
-					continue;
-
-				// no attacking players in coop
-				if ( TFGameRules()->IsCoopGamemode() )
 					continue;
 
 				// don't attack ourselves

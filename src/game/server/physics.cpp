@@ -276,13 +276,7 @@ void CPhysicsHook::LevelShutdownPreEntity()
 
 void CPhysicsHook::LevelShutdownPostEntity() 
 {
-	if ( !physics )
-		return;
-
 	if ( !physenv )
-		return;
-
-	if ( !g_EntityCollisionHash )
 		return;
 
 	g_pPhysSaveRestoreManager->ForgetAllModels();
@@ -735,8 +729,7 @@ bool CCollisionEvent::ShouldFreezeContacts( IPhysicsObject **pObjectList, int ob
 #endif
 	}
 	m_lastTickFrictionError = gpGlobals->tickcount;
-	//return false;
-	return true;
+	return false;
 }
 
 // NOTE: these are fully edge triggered events 
@@ -1155,13 +1148,21 @@ void PhysSolidOverride( solid_t &solid, string_t overrideScript )
 
 		// suck out the comma delimited tokens and turn them into quoted key/values
 		char szToken[256];
+#ifdef OF_DLL		
 		const char *pStr = nexttoken(szToken, STRING(overrideScript), ',', sizeof(szToken));
+#else
+		const char *pStr = nexttoken(szToken, STRING(overrideScript), ',');
+#endif
 		while ( szToken[0] != 0 )
 		{
 			Q_strncat( pTmpString, "\"", sizeof(pTmpString), COPY_ALL_CHARACTERS );
 			Q_strncat( pTmpString, szToken, sizeof(pTmpString), COPY_ALL_CHARACTERS );
 			Q_strncat( pTmpString, "\" ", sizeof(pTmpString), COPY_ALL_CHARACTERS );
+#ifdef OF_DLL			
 			pStr = nexttoken(szToken, pStr, ',', sizeof(szToken));
+#else
+			pStr = nexttoken(szToken, pStr, ',');
+#endif
 		}
 		// terminate the script
 		Q_strncat( pTmpString, "}", sizeof(pTmpString), COPY_ALL_CHARACTERS );

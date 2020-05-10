@@ -36,8 +36,6 @@ using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CModelPanel );
 
-ConVar ColorTest ("ColorTest", "0", FCVAR_ARCHIVE );
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -226,10 +224,48 @@ void CModelPanel::SetDefaultAnimation( const char *pszName )
 	Assert( 0 );
 }
 
+#ifdef OF_CLIENT_DLL
+void CModelPanel::SetBodygroup( const char* pszName, int nBody )
+{
+	CModelPanelBodygroupInfo* pBodygroupModelInfo = new CModelPanelBodygroupInfo;
+	if ( pBodygroupModelInfo )
+	{
+		size_t len = Q_strlen( pszName ) + 1;
+		char* pAlloced = new char[len];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszName, len );
+		pBodygroupModelInfo->m_pszGroup = pAlloced;
+		pBodygroupModelInfo->m_nBody = nBody;
+
+		m_pModelInfo->m_Bodygroups.AddToTail( pBodygroupModelInfo );
+	}
+}
+
+void CModelPanel::AddAttachment( const char* pszAttached )
+{
+	CModelPanelAttachedModelInfo* pAttachedModelInfo = new CModelPanelAttachedModelInfo;
+	if ( pAttachedModelInfo )
+	{
+		size_t len = Q_strlen( pszAttached ) + 1;
+		char *pAlloced = new char[len];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszAttached, len );
+		pAttachedModelInfo->m_pszModelName = pAlloced;
+		pAttachedModelInfo->m_nSkin = -1;
+
+		m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: Replaces the current model with a new one, without changing the camera settings
 //-----------------------------------------------------------------------------
+#ifdef OF_CLIENT_DLL
 void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const char *pszVCD )
+#else
+void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
+#endif
 {
 	if ( !m_pModelInfo || !pszName || !pszName[0] )
 		return;
@@ -240,6 +276,7 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const
 	Q_strncpy( pAlloced, pszName, len );
 	m_pModelInfo->m_pszModelName = pAlloced;
 	
+#ifdef OF_CLIENT_DLL
 	if ( pszVCD )
 	{
 		len = Q_strlen( pszVCD ) + 1;
@@ -248,6 +285,8 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const
 		Q_strncpy( pAlloced, pszVCD, len );
 		m_pModelInfo->m_pszVCD = pAlloced;
 	}
+#endif
+
 	ClearAttachedModelInfos();
 
 	if ( pszAttached )
@@ -260,7 +299,11 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached, const
 			Assert( pAlloced );
 			Q_strncpy( pAlloced, pszAttached, len );
 			pAttachedModelInfo->m_pszModelName = pAlloced;
+#ifdef OF_CLIENT_DLL			
 			pAttachedModelInfo->m_nSkin = -1;
+#else
+			pAttachedModelInfo->m_nSkin = 0;
+#endif
 
 			m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
 		}
@@ -323,7 +366,9 @@ void CModelPanel::SetupVCD( void )
 	m_hScene = pEnt;
 
 	// setup the scene
+#ifdef OF_CLIENT_DLL
 	if ( m_pModelInfo->m_pszVCD )
+#endif
 		pEnt->SetupClientOnlyScene( m_pModelInfo->m_pszVCD, m_hModel, true );
 }
 
@@ -411,7 +456,9 @@ void CModelPanel::SetupModel( void )
 
 	pEnt->DontRecordInTools();
 	pEnt->AddEffects( EF_NODRAW ); // don't let the renderer draw the model normally
+#ifdef OF_CLIENT_DLL
 	pEnt->SetModelColor( ModelColor );
+#endif
 	if ( m_pModelInfo->m_nSkin >= 0 )
 	{
 		pEnt->m_nSkin = m_pModelInfo->m_nSkin;
@@ -469,11 +516,14 @@ void CModelPanel::SetupModel( void )
 			pTemp->DontRecordInTools();
 			pTemp->AddEffects( EF_NODRAW ); // don't let the renderer draw the model normally
 			pTemp->FollowEntity( m_hModel.Get() ); // attach to parent model
+#ifdef OF_CLIENT_DLL			
 			pTemp->SetOwnerEntity( m_hModel.Get() );
+#endif
 			if ( pInfo->m_nSkin >= 0 )
 			{
 				pTemp->m_nSkin = pInfo->m_nSkin;
 			}
+#ifdef OF_CLIENT_DLL			
 			else
 			{
 				if ( m_pModelInfo->m_nSkin > 2 )
@@ -481,11 +531,27 @@ void CModelPanel::SetupModel( void )
 				else
 					pTemp->m_nSkin = m_pModelInfo->m_nSkin;
 			}
+#endif
+
 			pTemp->m_flAnimTime = gpGlobals->curtime;
 				
 			m_AttachedModels.AddToTail( pTemp );
 		}
 	}
+	
+#ifdef OF_CLIENT_DLL
+	// setup bodygroups
+	for ( int i = 0; i < m_pModelInfo->m_Bodygroups.Count(); i++ )
+	{
+		CModelPanelBodygroupInfo *pInfo = m_pModelInfo->m_Bodygroups[i];
+
+		int groupindex = pEnt->FindBodygroupByName( pInfo->m_pszGroup );
+		if ( groupindex > -1 )
+		{
+			pEnt->SetBodygroup( groupindex, pInfo->m_nBody );
+		}
+	}
+#endif
 
 	CalculateFrameDistance();
 }
@@ -531,12 +597,14 @@ void CModelPanel::UpdateModel()
 	}
 }
 
+#ifdef OF_CLIENT_DLL
 void CModelPanel::SetModelColor( Vector vecColor )
 {
 	ModelColor = vecColor;
 	if ( m_hModel )
 		m_hModel->SetModelColor( ModelColor );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -571,7 +639,7 @@ void CModelPanel::Paint()
 	}
 
 	Vector vecExtraModelOffset( 0, 0, 0 );
-#ifdef TF_MOD_CLIENT
+#ifdef OF_CLIENT_DLL
 	float flWidthRatio = engine->GetScreenAspectRatio() / ( 4.0f / 3.0f );
 #else
 	float flWidthRatio = ((float)w / (float)h ) / ( 4.0f / 3.0f );

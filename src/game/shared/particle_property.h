@@ -42,7 +42,9 @@ struct ParticleControlPoint_t
 	ParticleAttachment_t			iAttachType;
 	int								iAttachmentPoint;
 	Vector							vecOriginOffset;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	const char						*szBoneName;
+#endif
 	EHANDLE							hEntity;
 };
 

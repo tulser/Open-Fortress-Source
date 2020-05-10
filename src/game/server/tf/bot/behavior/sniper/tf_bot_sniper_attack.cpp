@@ -4,6 +4,7 @@
 #include "tf_bot_sniper_attack.h"
 #include "../tf_bot_retreat_to_cover.h"
 #include "tf_weaponbase.h"
+#include "tf_gamerules.h"
 
 ConVar tf_bot_sniper_flee_range( "tf_bot_sniper_flee_range", "400", FCVAR_CHEAT, "If threat is closer than this, retreat" );
 ConVar tf_bot_sniper_melee_range( "tf_bot_sniper_melee_range", "200", FCVAR_CHEAT, "If threat is closer than this, attack with melee weapon" );
@@ -47,19 +48,33 @@ ActionResult<CTFBot> CTFBotSniperAttack::Update( CTFBot *me, float dt )
 		return Action<CTFBot>::Continue();
 	}
 
-	me->EquipBestWeaponForThreat( threat );
-
-	if ( ( me->GetAbsOrigin() - threat->GetLastKnownPosition() ).LengthSqr() < Square( tf_bot_sniper_flee_range.GetFloat() ) )
+	if ( TFGameRules()->IsFreeRoam() )
 	{
-		return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover, "Retreating from nearby enemy" );
+		if ( !me->GetActiveWeapon() || !WeaponID_IsSniperRifle ( me->GetActiveTFWeapon()->GetWeaponID() ) )
+			return Action<CTFBot>::Done( "I'm not holding a sniper rifle anymore" );
+	}
+	else
+	{
+		me->EquipBestWeaponForThreat( threat );
 	}
 
-	if ( me->GetTimeSinceLastInjury() < 1.0f )
+	if ( !TFGameRules()->IsFreeRoam() )
 	{
-		return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover, "Retreating due to injury" );
+		if ( ( me->GetAbsOrigin() - threat->GetLastKnownPosition() ).LengthSqr() < Square( tf_bot_sniper_flee_range.GetFloat() ) )
+		{
+			return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover, "Retreating from nearby enemy" );
+		}
+
+		if ( me->GetTimeSinceLastInjury() < 1.0f )
+		{
+			return Action<CTFBot>::SuspendFor( new CTFBotRetreatToCover, "Retreating due to injury" );
+		}
 	}
 
-	m_lingerDuration.Start( RandomFloat( 0.75f, 1.25f ) * tf_bot_sniper_linger_time.GetFloat() );
+	if ( TFGameRules()->IsFreeRoam() )
+		m_lingerDuration.Start( RandomFloat( 0.75f, 1.25f ) );
+	else
+		m_lingerDuration.Start( RandomFloat( 0.75f, 1.25f ) * tf_bot_sniper_linger_time.GetFloat() );
 
 	if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) )
 	{
@@ -145,7 +160,14 @@ bool CTFBotSniperAttack::IsPossible( CTFBot *actor )
 	CTFWeaponBase *pWeapon = actor->Weapon_OwnsThisID( TF_WEAPON_SNIPERRIFLE );
 
 	if ( !pWeapon )
-		pWeapon = actor->Weapon_OwnsThisID( TFC_WEAPON_SNIPER_RIFLE );
+	{
+		pWeapon = actor->Weapon_OwnsThisID( TF_WEAPON_RAILGUN );
+		
+		if ( !pWeapon )
+		{
+			pWeapon = actor->Weapon_OwnsThisID( TFC_WEAPON_SNIPER_RIFLE );
+		}
+	}
 	
 	if ( !pWeapon )
 		return false;

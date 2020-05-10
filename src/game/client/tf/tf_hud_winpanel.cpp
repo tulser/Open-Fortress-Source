@@ -1,5 +1,4 @@
-
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+ï»¿//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -27,6 +26,7 @@
 #include "tf_classmenu.h"
 #include "KeyValues.h"
 #include "tier2/tier2.h"
+#include "of_shared_schemas.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -747,32 +747,60 @@ void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 						Q_strncpy( pAttachedModel, pObjectModelsKV->GetString( szClassModelName ), sizeof( pAttachedModel ) );
 						pObjectModelsKV->deleteThis();
 					}					
+					CModelPanel *pPlayerModel = NULL;
 					switch ( i )
 					{
 						case 1:
-							if(m_pPlayer1Model)
+							if( m_pPlayer1Model )
 							{
-							m_pPlayer1Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD1 );
-							m_pPlayer1Model->SetModelColor( tf_PR->GetPlayerColorVector(iPlayerIndex) );
-							m_pPlayer1Model->SetVisible(bShow);
+								m_pPlayer1Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD1 );
+								pPlayerModel = m_pPlayer1Model;
 							}
 							break;
 						case 2:
-							if(m_pPlayer2Model)
+							if( m_pPlayer2Model )
 							{
-							m_pPlayer2Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD2 );
-							m_pPlayer2Model->SetModelColor( tf_PR->GetPlayerColorVector(iPlayerIndex) );
-							m_pPlayer2Model->SetVisible(bShow);
+								m_pPlayer2Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD2 );
+								pPlayerModel = m_pPlayer2Model;		
 							}
 							break;
 						case 3:
-							if(m_pPlayer3Model)
+							if( m_pPlayer3Model )
 							{
-							m_pPlayer3Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), NULL, szVCD3 );
-							m_pPlayer3Model->SetModelColor( tf_PR->GetPlayerColorVector(iPlayerIndex) );
-							m_pPlayer3Model->SetVisible(bShow);
+								m_pPlayer3Model->SwapModel( pPlayer->GetPlayerClass()->GetModelName(), NULL, szVCD3 );
+								pPlayerModel = m_pPlayer3Model;
 							}
 							break;
+					}
+
+					if ( pPlayerModel )
+					{
+						pPlayerModel->SetModelColor( tf_PR->GetPlayerColorVector( iPlayerIndex ) );
+						pPlayerModel->SetVisible( bShow );
+
+						for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+						{
+							if ( pPlayer->m_iCosmetics[i] )
+							{
+								KeyValues* pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+								if ( !pCosmetic )
+									continue;
+
+								if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+								{
+									pPlayerModel->AddAttachment( pCosmetic->GetString( "Model", "models/empty.mdl" ) );
+								}
+
+								KeyValues* pBodygroups = pCosmetic->FindKey( "Bodygroups" );
+								if ( pBodygroups )
+								{
+									for ( KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+									{
+										pPlayerModel->SetBodygroup( sub->GetName(), sub->GetInt() );
+									}
+								}
+							}
+						}
 					}
 				}
 			}

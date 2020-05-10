@@ -356,6 +356,7 @@ bool CEngineSprite::IsVideo()
 	return ( m_VideoMaterial != NULL );
 }
 
+#ifdef OF_CLIENT_DLL
 bool CEngineSprite::IsBIK()
 {
 	return ( m_hBIKMaterial != BIKMATERIAL_INVALID );
@@ -364,6 +365,7 @@ bool CEngineSprite::IsAVI()
 {
 	return ( m_hAVIMaterial != AVIMATERIAL_INVALID );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Returns the texture coordinate range	used to draw the sprite
@@ -424,10 +426,13 @@ IMaterial *CEngineSprite::GetMaterial( RenderMode_t nRenderMode, int nFrame )
 	}
 	
 	IMaterial *pMaterial = m_material[nRenderMode];
-	IMaterialVar* pFrameVar = pMaterial->FindVarFast( "$frame", &frameCache );
-	if ( pFrameVar )
+	if ( pMaterial )
 	{
-		pFrameVar->SetIntValue( nFrame );
+		IMaterialVar* pFrameVar = pMaterial->FindVarFast( "$frame", &frameCache );
+		if ( pFrameVar )
+		{
+			pFrameVar->SetIntValue( nFrame );
+		}
 	}
 
 	return pMaterial;

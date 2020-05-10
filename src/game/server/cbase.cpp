@@ -84,7 +84,9 @@ OUTPUTS:
 #include "tier1/strtools.h"
 #include "datacache/imdlcache.h"
 #include "env_debughistory.h"
+#ifdef OF_DLL
 #include "game.h"
+#endif
 
 #include "tier0/vprof.h"
 
@@ -133,7 +135,11 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the target name.
 	//
+#ifdef OF_DLL
 	const char *psz = nexttoken(szToken, ActionData, ',', sizeof(szToken));
+#else
+	const char *psz = nexttoken(szToken, ActionData, ',');
+#endif
 	if (szToken[0] != '\0')
 	{
 		m_iTarget = AllocPooledString(szToken);
@@ -142,7 +148,11 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the input name.
 	//
+#ifdef OF_DLL
 	psz = nexttoken(szToken, psz, ',', sizeof(szToken));
+#else
+	psz = nexttoken(szToken, psz, ',' );
+#endif
 	if (szToken[0] != '\0')
 	{
 		m_iTargetInput = AllocPooledString(szToken);
@@ -155,7 +165,11 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the parameter override.
 	//
+#ifdef OF_DLL
 	psz = nexttoken(szToken, psz, ',', sizeof(szToken));
+#else
+	psz = nexttoken(szToken, psz, ',' );
+#endif
 	if (szToken[0] != '\0')
 	{
 		m_iParameter = AllocPooledString(szToken);
@@ -164,7 +178,11 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the delay.
 	//
+#ifdef OF_DLL
 	psz = nexttoken(szToken, psz, ',', sizeof(szToken));
+#else
+	psz = nexttoken(szToken, psz, ',');
+#endif
 	if (szToken[0] != '\0')
 	{
 		m_flDelay = atof(szToken);
@@ -173,7 +191,11 @@ CEventAction::CEventAction( const char *ActionData )
 	//
 	// Parse the number of times to fire.
 	//
+#ifdef OF_DLL
 	nexttoken(szToken, psz, ',', sizeof(szToken));
+#else
+	nexttoken(szToken, psz, ',');
+#endif
 	if (szToken[0] != '\0')
 	{
 		m_nTimesToFire = atoi(szToken);
@@ -264,12 +286,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			//
 			// Post the event with the default parameter.
 			//
-			g_EventQueue.AddEvent( STRING(ev->m_iTarget),
-				STRING(ev->m_iTargetInput), 
-				Value, ev->m_flDelay + fDelay, 
-				pActivator, 
-				pCaller, 
-				ev->m_iIDStamp );
+			g_EventQueue.AddEvent( STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), Value, ev->m_flDelay + fDelay, pActivator, pCaller, ev->m_iIDStamp );
 		}
 		else
 		{
@@ -287,7 +304,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s,%.1f)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -299,8 +316,13 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						ev->m_flDelay,
 						STRING(ev->m_iParameter) );
 
+#ifdef OF_DLL
 			if ( g_pDeveloper->GetInt() > 1 )
 				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
+#else
+			DevMsg( 2, "%s", szBuffer );
+#endif
+
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 		else
@@ -309,7 +331,7 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			Q_snprintf( szBuffer,
 						sizeof(szBuffer),
 						"(%0.2f) output: (%s,%s) -> (%s,%s)(%s)\n",
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 						engine->GetServerTime(),
 #else
 						gpGlobals->curtime,
@@ -319,8 +341,13 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 						STRING(ev->m_iTargetInput),
 						STRING(ev->m_iParameter) );
 
+#ifdef OF_DLL
 			if ( g_pDeveloper->GetInt() > 1 )
 				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
+#else
+			DevMsg( 2, "%s", szBuffer );
+#endif
+
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 
@@ -341,8 +368,14 @@ void CBaseEntityOutput::FireOutput(variant_t Value, CBaseEntity *pActivator, CBa
 			{
 				char szBuffer[256];
 				Q_snprintf( szBuffer, sizeof(szBuffer), "Removing from action list: (%s,%s) -> (%s,%s)\n", pCaller ? STRING(pCaller->m_iClassname) : "NULL", pCaller ? STRING(pCaller->GetEntityName()) : "NULL", STRING(ev->m_iTarget), STRING(ev->m_iTargetInput));
-				if ( g_pDeveloper->GetInt() > 1 )
-					ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
+
+#ifdef OF_DLL
+			if ( g_pDeveloper->GetInt() > 1 )
+					ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );			
+#else
+			DevMsg( 2, "%s", szBuffer );
+#endif
+
 				ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 				bRemove = true;
 			}
@@ -785,7 +818,7 @@ void CEventQueue::Dump( void )
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
 	Msg("Dumping event queue. Current time is: %.2f\n",
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 		engine->GetServerTime()
 #else
 		gpGlobals->curtime
@@ -818,7 +851,7 @@ void CEventQueue::AddEvent( const char *target, const char *targetInput, variant
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// priority key in the priority queue
@@ -841,7 +874,7 @@ void CEventQueue::AddEvent( CBaseEntity *target, const char *targetInput, varian
 {
 	// build the new event
 	EventQueuePrioritizedEvent_t *newEvent = new EventQueuePrioritizedEvent_t;
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 	newEvent->m_flFireTime = engine->GetServerTime() + fireDelay;	// primary priority key in the priority queue
 #else
 	newEvent->m_flFireTime = gpGlobals->curtime + fireDelay;	// primary priority key in the priority queue
@@ -916,7 +949,7 @@ void CEventQueue::ServiceEvents( void )
 
 	EventQueuePrioritizedEvent_t *pe = m_Events.m_pNext;
 
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 	while ( pe != NULL && pe->m_flFireTime <= engine->GetServerTime() )
 #else
 	while ( pe != NULL && pe->m_flFireTime <= gpGlobals->curtime )
@@ -983,8 +1016,12 @@ void CEventQueue::ServiceEvents( void )
 			
 			char szBuffer[256];
 			Q_snprintf( szBuffer, sizeof(szBuffer), "unhandled input: (%s) -> (%s), from (%s,%s); target entity not found\n", STRING(pe->m_iTargetInput), STRING(pe->m_iTarget), pClass, pName );
+#ifdef OF_DLL
 			if ( g_pDeveloper->GetInt() > 1 )
 				ConDColorMsg( Color( 140, 146, 210, 255 ), "%s", szBuffer );
+#else
+			DevMsg( 2, "%s", szBuffer );
+#endif
 			ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 		}
 
@@ -1207,7 +1244,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( tmpEvent.m_pEntTarget,
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,
@@ -1221,7 +1258,7 @@ int CEventQueue::Restore( IRestore &restore )
 			AddEvent( STRING(tmpEvent.m_iTarget),
 					  STRING(tmpEvent.m_iTargetInput),
 					  tmpEvent.m_VariantValue,
-#if defined( TF_DLL ) || defined(TF_MOD)
+#if defined( TF_DLL ) || defined(OF_DLL)
 					  tmpEvent.m_flFireTime - engine->GetServerTime(),
 #else
 					  tmpEvent.m_flFireTime - gpGlobals->curtime,

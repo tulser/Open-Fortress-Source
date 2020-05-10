@@ -32,6 +32,8 @@ public:
 	DECLARE_CLASS( C_WeaponSpawner, C_BaseAnimating );
 	DECLARE_CLIENTCLASS();
 
+	C_WeaponSpawner();
+
 	void	ClientThink( void );
 	void	Spawn( void );
 	int		DrawModel( int flags );
@@ -93,6 +95,11 @@ IMPLEMENT_CLIENTCLASS_DT( C_WeaponSpawner, DT_WeaponSpawner, CWeaponSpawner )
 	RecvPropTime( RECVINFO( fl_RespawnDelay ) ),
 	RecvPropString( RECVINFO( m_iszWeaponName ) ),
 END_RECV_TABLE()
+
+C_WeaponSpawner::C_WeaponSpawner()
+{
+	bParsed = false;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Set initial angles 
@@ -410,15 +417,18 @@ int C_WeaponSpawner::DrawModel( int flags )
 
 bool C_WeaponSpawner::IsSuperWeapon( void )
 { 	
-	if( bParsed )
+	if ( bParsed )
 		return bSuperWeapon;
+	
 	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
 	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	
 	if (!pWeaponInfo)
 		return false;
+
 	
 	bSuperWeapon = pWeaponInfo->m_bAlwaysDrop;
+	bParsed = true;
 	
 	return bSuperWeapon;
 }

@@ -358,21 +358,6 @@ void		UTIL_StringToIntArray( int *pVector, int count, const char *pString );
 void		UTIL_StringToFloatArray( float *pVector, int count, const char *pString );
 void		UTIL_StringToColor32( color32 *color, const char *pString );
 
-#ifdef MAPBASE
-// Version of UTIL_StringToIntArray that doesn't set all untouched array elements to 0.
-void		UTIL_StringToIntArray_PreserveArray( int *pVector, int count, const char *pString );
-
-// Version of UTIL_StringToFloatArray that doesn't set all untouched array elements to 0.
-void		UTIL_StringToFloatArray_PreserveArray( float *pVector, int count, const char *pString );
-#endif
-#ifdef MAPBASE
-// Version of UTIL_StringToIntArray that doesn't set all untouched array elements to 0.
-void		UTIL_StringToIntArray_PreserveArray(int *pVector, int count, const char *pString);
-
-// Version of UTIL_StringToFloatArray that doesn't set all untouched array elements to 0.
-void		UTIL_StringToFloatArray_PreserveArray(float *pVector, int count, const char *pString);
-#endif
-
 
 CBasePlayer *UTIL_PlayerByIndex( int entindex );
 
@@ -606,6 +591,7 @@ public:
 		return (m_timestamp > 0.0f) ? m_duration : 0.0f;
 	}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	/// 1.0 for newly started, 0.0 for elapsed
 	float GetRemainingRatio(void) const
 	{
@@ -621,6 +607,7 @@ public:
 
 		return 0.0f;
 	}
+#endif
 
 private:
 	float m_duration;

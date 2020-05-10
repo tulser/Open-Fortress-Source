@@ -77,7 +77,7 @@ public:
 	void ResetAchievement( int iAchievementID );
 	void PrintAchievementStatus();
 	float GetLastClassChangeTime() { return m_flLastClassChangeTime; }
-	float GetTeamplayStartTime() { return 1; }
+	float GetTeamplayStartTime() { return m_flTeamplayStartTime; }
 	int	  GetMiniroundsCompleted() { return m_iMiniroundsCompleted; }
 	const char *GetMapName() { return m_szMap; }
 	void OnAchievementEvent( int iAchievementID, int iCount = 1 );

@@ -41,8 +41,10 @@ public:
 
 	bool IsTimerPaused( void ) { return m_bTimerPaused; }
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	bool		 IsInfectionBeginning( void ) { return m_bInfectionBeginning; }
-	
+#endif
+
 #ifdef CLIENT_DLL
 
 	void InternalSetPaused( bool bPaused ) { m_bTimerPaused = bPaused; }
@@ -57,7 +59,10 @@ public:
 	virtual void SetAutoCountdown( bool bAuto ){ m_bAutoCountdown = bAuto; }
 
 	void		 SetShowInHud( bool bShowInHUD ) { m_bShowInHUD = bShowInHUD; }
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	void		 SetInfectionBeginning( bool bInfectionBeginning ) { m_bInfectionBeginning = bInfectionBeginning; }
+#endif
 
 	int UpdateTransmitState();
 
@@ -138,7 +143,10 @@ private:
 	bool			m_bFire2SecRemain;
 	bool			m_bFire1SecRemain;
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	CNetworkVar( bool, m_bInfectionBeginning );
+#endif
+
 #ifdef CLIENT_DLL 
 
 	int				m_nOldTimerLength;

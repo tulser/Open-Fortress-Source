@@ -124,6 +124,7 @@ public:
 // Global list of triggers that care about weapon fire
 extern CUtlVector< CHandle<CTriggerMultiple> >	g_hWeaponFireTriggers;
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Teleport
 //-----------------------------------------------------------------------------
@@ -134,8 +135,6 @@ public:
 
 	virtual void Spawn( void ) override;
 	virtual void Touch( CBaseEntity *pOther ) override;
-	
-	virtual bool PassesTriggerFilters(CBaseEntity *pOther);
 
 	string_t m_iLandmark;
 
@@ -144,6 +143,7 @@ public:
 
 	DECLARE_DATADESC();
 };
+#endif
 
 //------------------------------------------------------------------------------
 // Base VPhysics trigger implementation

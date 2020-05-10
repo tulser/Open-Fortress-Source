@@ -2462,7 +2462,6 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFLocalPlayerExclusive )
 		0, 
 		"player_object_array"	),
 
-	RecvPropEHandle( RECVINFO( m_hLadder ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 //	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
 
@@ -3389,7 +3388,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 }
 void C_TFPlayer::UpdateWearables( void )
 {
-	DevMsg("Triggered Update Wearables\n");
+	DevMsg("UpdateWearables: Triggered Update Wearables\n");
 	for( int i = 0; i < GetNumBodyGroups(); i++ )
 	{
 		SetBodygroup( i, 0 );
@@ -3406,7 +3405,7 @@ void C_TFPlayer::UpdateWearables( void )
 
 	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
 	{
-		DevMsg("Mismatching cosmetic count\n");
+		DevMsg("UpdateWearables: Mismatching cosmetic count\n");
 		return;
 	}
 
@@ -3415,7 +3414,7 @@ void C_TFPlayer::UpdateWearables( void )
 		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
 		if( !pCosmetic )
 		{
-			DevMsg("Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			DevMsg("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
 			continue;
 		}
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
@@ -3450,7 +3449,7 @@ void C_TFPlayer::UpdateWearables( void )
 		}
 		else
 		{
-			DevMsg("Blank model\n");
+			DevMsg("UpdateWearables: Blank model\n");
 		}
 	}
 }
@@ -4746,13 +4745,7 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 {
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
-	{
-		// coop needs to return false
-		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
-		{
-			return false;
-		}
-		
+	{	
 		switch( GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
@@ -5795,20 +5788,6 @@ void C_TFPlayer::CalcViewIdle(QAngle& eyeAngles)
 int C_TFPlayer::GetAccount() const
 {
 	return m_iAccount;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Helper to remove from ladder
-//-----------------------------------------------------------------------------
-void C_TFPlayer::ExitLadder()
-{
-	if ( MOVETYPE_LADDER != GetMoveType() )
-		return;
-	
-	SetMoveType( MOVETYPE_WALK );
-	SetMoveCollide( MOVECOLLIDE_DEFAULT );
-	// Remove from ladder
-	/*m_HL2Local.*/m_hLadder = NULL;
 }
 
 void C_TFPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )

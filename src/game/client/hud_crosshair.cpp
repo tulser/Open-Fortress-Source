@@ -18,7 +18,9 @@
 #include "client_virtualreality.h"
 #include "sourcevr/isourcevirtualreality.h"
 
+#ifdef OF_CLIENT_DLL
 #include "c_tf_player.h"
+#endif
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
@@ -34,6 +36,7 @@
 ConVar crosshair( "crosshair", "1", FCVAR_ARCHIVE );
 ConVar cl_observercrosshair( "cl_observercrosshair", "1", FCVAR_ARCHIVE );
 
+#ifdef OF_CLIENT_DLL
 ConVar cl_crosshair_file( "cl_crosshair_file", "", FCVAR_ARCHIVE );
 
 ConVar cl_crosshair_red( "cl_crosshair_red", "255", FCVAR_ARCHIVE );
@@ -41,8 +44,11 @@ ConVar cl_crosshair_green( "cl_crosshair_green", "255", FCVAR_ARCHIVE );
 ConVar cl_crosshair_blue( "cl_crosshair_blue", "255", FCVAR_ARCHIVE );
 ConVar cl_crosshair_alpha( "cl_crosshair_alpha", "255", FCVAR_ARCHIVE );
 ConVar cl_crosshair_scale( "cl_crosshair_scale", "32", FCVAR_ARCHIVE );
+#endif
 
+#ifdef OF_CLIENT_DLL
 extern ConVar tf_hud_no_crosshair_on_scope_zoom;
+#endif
 
 using namespace vgui;
 
@@ -92,6 +98,7 @@ void CHudCrosshair::ApplySchemeSettings( IScheme *scheme )
 //-----------------------------------------------------------------------------
 bool CHudCrosshair::ShouldDraw( void )
 {
+#ifdef OF_CLIENT_DLL
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	if ( !pPlayer )
@@ -111,6 +118,7 @@ bool CHudCrosshair::ShouldDraw( void )
 	// don't draw crosshair if taunting
 	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 		return false;
+#endif
 
 	bool bNeedsDraw;
 
@@ -286,9 +294,13 @@ void CHudCrosshair::Paint( void )
 
 	float flPlayerScale = 1.0f;
 
+#if defined ( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
 	Color clr( cl_crosshair_red.GetInt(), cl_crosshair_green.GetInt(), cl_crosshair_blue.GetInt(), 255 );
-
 	flPlayerScale = cl_crosshair_scale.GetFloat() / 32.0f;  // the player can change the scale in the options/multiplayer tab
+#else
+	Color clr = m_clrCrosshair;
+#endif
+
 	float flWidth = flWeaponScale * flPlayerScale * (float)iTextureW;
 	float flHeight = flWeaponScale * flPlayerScale * (float)iTextureH;
 	int iWidth = (int)( flWidth + 0.5f );
@@ -312,6 +324,7 @@ void CHudCrosshair::SetCrosshairAngle( const QAngle& angle )
 	VectorCopy( angle, m_vecCrossHairOffsetAngle );
 }
 
+#ifdef OF_CLIENT_DLL
 static CHudTexture *FindHudTextureInDict( CUtlDict< CHudTexture *, int >& list, const char *psz )
 {
 	int idx = list.Find( psz );
@@ -320,16 +333,21 @@ static CHudTexture *FindHudTextureInDict( CUtlDict< CHudTexture *, int >& list, 
 
 	return list[ idx ];
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CHudCrosshair::SetCrosshair( CHudTexture *texture, const Color& clr )
 {
+#ifdef OF_CLIENT_DLL
 	const char *crosshairfile = cl_crosshair_file.GetString();
-	
+#endif
+
 	m_pCrosshair = texture;
 	m_clrCrosshair = clr;
+	
+#ifdef OF_CLIENT_DLL
 	if ( crosshairfile[0] != '\0' )
 	{
 		char buf[256];
@@ -351,6 +369,7 @@ void CHudCrosshair::SetCrosshair( CHudTexture *texture, const Color& clr )
 		m_pCrosshair = gHUD.AddUnsearchableHudIconToList( *p );
 		m_clrCrosshair = Color(cl_crosshair_red.GetFloat(), cl_crosshair_green.GetFloat(), cl_crosshair_blue.GetFloat(), cl_crosshair_alpha.GetFloat() );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

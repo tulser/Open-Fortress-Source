@@ -310,9 +310,10 @@ bool CAI_Expresser::SpeakFindResponse( AI_Response &outResponse, AIConcept_t con
 	// Let our outer fill in most match criteria
 	GetOuter()->ModifyOrAppendCriteria( set );
 
-	if (!GetOuter() && !GetOuter()->IsPlayer())
+	// Append local player criteria to set, but not if this is a player doing the talking
+	if ( !GetOuter()->IsPlayer() )
 	{
-		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetOuter()->GetAbsOrigin());
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
 		if( pPlayer )
 			pPlayer->ModifyOrAppendPlayerCriteria( set );
 	}
@@ -525,7 +526,7 @@ bool CAI_Expresser::SpeakRawScene( const char *pszScene, float delay, AI_Respons
 	{
 		SpeechMsg( GetOuter(), "SpeakRawScene( %s, %f) %f\n", pszScene, delay, sceneLength );
 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined( TF_MOD )
+#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined( OF_DLL )
 		char szInstanceFilename[256];
 		GetOuter()->GenderExpandString( pszScene, szInstanceFilename, sizeof( szInstanceFilename ) );
 		// Only mark ourselves as speaking if the scene has speech
@@ -878,7 +879,7 @@ void CAI_ExpresserHost_NPC_DoModifyOrAppendCriteria( CAI_BaseNPC *pSpeaker, AI_C
 		set.AppendCriteria( "weapon", "none" );
 	}
 
-	CBasePlayer *pPlayer = UTIL_GetNearestPlayer(pSpeaker->GetAbsOrigin());
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
 	if ( pPlayer )
 	{
 		Vector distance = pPlayer->GetAbsOrigin() - pSpeaker->GetAbsOrigin();
@@ -916,14 +917,11 @@ void CAI_ExpresserHost_NPC_DoModifyOrAppendCriteria( CAI_BaseNPC *pSpeaker, AI_C
 // HPE_BEGIN:
 // [Forrest] Remove npc_speakall from Counter-Strike.
 //=============================================================================
-#ifndef CSTRIKE_DLL
+#if !defined( CSTRIKE_DLL ) && !defined( OF_DLL )
 extern CBaseEntity *FindPickerEntity( CBasePlayer *pPlayer );
 CON_COMMAND( npc_speakall, "Force the npc to try and speak all their responses" )
 {
 	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-	
-	if ( !sv_cheats->GetBool() )
 		return;
 	
 	CBaseEntity *pEntity;

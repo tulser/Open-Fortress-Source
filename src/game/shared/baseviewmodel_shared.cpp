@@ -91,7 +91,7 @@ void CBaseViewModel::Spawn( void )
 #define VGUI_CONTROL_PANELS
 #endif
 
-#if defined (TF_DLL) || defined (TF_MOD)
+#if defined (TF_DLL) || defined (OF_DLL)
 #define VGUI_CONTROL_PANELS
 #endif
 
@@ -408,19 +408,21 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 	// Add model-specific bob even if no weapon associated (for head bob for off hand models)
 	AddViewModelBob( owner, vmorigin, vmangles );
 	
-/*
-#if !defined ( CSTRIKE_DLL )
+
+#if !defined ( CSTRIKE_DLL ) && !defined ( OF_DLL ) && !defined ( OF_CLIENT_DLL )
 	// This was causing weapon jitter when rotating in updated CS:S; original Source had this in above InPrediction block  07/14/10
 	// Add lag
 	CalcViewModelLag( vmorigin, vmangles, vmangoriginal );
 #endif
-*/
+
 
 #if defined( CLIENT_DLL )
 	if ( !prediction->InPrediction() )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		//https://developer.valvesoftware.com/wiki/Viewmodel_Prediction_Fix
 		CalcViewModelLag(vmorigin, vmangles, vmangoriginal);
+#endif
 
 		// Let the viewmodel shake at about 10% of the amplitude of the player's view
 		vieweffects->ApplyShake( vmorigin, vmangles, 0.1 );	
@@ -434,6 +436,33 @@ void CBaseViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePos
 
 	SetLocalOrigin( vmorigin );
 	SetLocalAngles( vmangles );
+	
+#ifdef SIXENSE
+	if( g_pSixenseInput->IsEnabled() && (owner->GetObserverMode()==OBS_MODE_NONE) && !UseVR() )
+	{
+		const float max_gun_pitch = 20.0f;
+
+		float viewmodel_fov_ratio = g_pClientMode->GetViewModelFOV()/owner->GetFOV();
+		QAngle gun_angles = g_pSixenseInput->GetViewAngleOffset() * -viewmodel_fov_ratio;
+
+		// Clamp pitch a bit to minimize seeing back of viewmodel
+		if( gun_angles[PITCH] < -max_gun_pitch )
+		{ 
+			gun_angles[PITCH] = -max_gun_pitch; 
+		}
+
+#ifdef WIN32 // ShouldFlipViewModel comes up unresolved on osx? Mabye because it's defined inline? fixme
+		if( ShouldFlipViewModel() ) 
+		{
+			gun_angles[YAW] *= -1.0f;
+		}
+#endif
+
+		vmangles = EyeAngles() +  gun_angles;
+
+		SetLocalAngles( vmangles );
+	}
+#endif
 #endif
 
 }

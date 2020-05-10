@@ -15,7 +15,7 @@
 #include "tier0/memdbgon.h"
 
 
-//#ifdef HL2_EPISODIC
+#if defined ( HL2_EPISODIC ) || defined ( OF_CLIENT_DLL )
 // In Episodic we unify the NO_WORLD_ILLUMINATION lights to use 
 // the more efficient elight structure instead. This should theoretically
 // be extended to other projects but may have unintended consequences
@@ -24,7 +24,7 @@
 // For an earlier iteration on this technique see changelist 214433,
 // which had a specific flag for use of elights.
 #define DLIGHT_NO_WORLD_USES_ELIGHT 1
-//#endif
+#endif
 
 
 //-----------------------------------------------------------------------------

@@ -35,7 +35,7 @@ IMPLEMENT_SERVERCLASS_ST(CTFWeaponBuilder, DT_TFWeaponBuilder)
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_builder, CTFWeaponBuilder );
-PRECACHE_WEAPON_REGISTER( tf_weapon_builder );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_builder );
 
 extern ConVar tf_debug_bullets;
 

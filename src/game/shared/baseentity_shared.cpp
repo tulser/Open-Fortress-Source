@@ -1610,10 +1610,9 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	
 	bool bDoServerEffects = true;
 
-//SecobMod__Information: This is a fix which is meant to allow tracers from mounted guns to display once more in-game, by always making sure it returns true.
-/*#if defined( HL2MP ) && defined( GAME_DLL )
+#if defined( HL2MP ) && defined( GAME_DLL )
 	bDoServerEffects = false;
-#endif*/
+#endif
 
 #if defined( GAME_DLL )
 	if( IsPlayer() )
@@ -2170,17 +2169,19 @@ void CBaseEntity::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CBaseEntity::ComputeTracerStartPosition( const Vector &vecShotSrc, Vector *pVecTracerStart )
 {
-	/*
 #ifndef HL2MP
 	if ( g_pGameRules->IsMultiplayer() )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		// NOTE: we do this because in MakeTracer, we force it to use the attachment position
 		// in multiplayer, so the results from this function should never actually get used.
 		pVecTracerStart->Init( 999, 999, 999 );
+#else
+		pVecTracerStart->Init( 99999, 99999, 99999 );
+#endif
 		return;
 	}
 #endif
-	*/
 
 	if ( IsPlayer() )
 	{

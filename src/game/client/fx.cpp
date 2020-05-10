@@ -30,7 +30,7 @@
 #include "tier0/memdbgon.h"
 
 //Precahce the effects
-#if !(defined(TF_CLIENT_DLL) || defined(TF_MOD_CLIENT))
+#if !(defined(TF_CLIENT_DLL) || defined(OF_CLIENT_DLL))
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheMuzzleFlash )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
 CLIENTEFFECT_MATERIAL( "effects/muzzleflash2" )
@@ -1241,7 +1241,9 @@ void FX_BuildTeslaHitbox(
 		el->color.g = 235;
 		el->color.b = 255;
 		el->color.exponent = 4;
+#ifdef OF_CLIENT_DLL
 		el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 
 		el->radius	= random->RandomInt( 32, 128 );
 		el->decay	= el->radius / 0.1f;

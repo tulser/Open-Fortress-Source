@@ -62,7 +62,9 @@ void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBa
 	m_flDamageBonus = 0.f;
 	m_bForceFriendlyFire = false;
 	m_flDamageForForce = 0.0f;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	m_flDamageForceMult = 1.0f;
+#endif
 }
 
 CTakeDamageInfo::CTakeDamageInfo()
@@ -226,31 +228,6 @@ void ApplyMultiDamage( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: inflicts contents of global multi damage register on gMultiDamage.pEntity
-//-----------------------------------------------------------------------------
-void ApplyMultiSelfDamage( float flTotalDamage )
-{
-	Vector		vecSpot1;//where blood comes from
-	Vector		vecDir;//direction blood should go
-	trace_t		tr;
-
-	if ( !g_MultiDamage.GetTarget() )
-		return;
-
-#ifndef CLIENT_DLL
-	const CBaseEntity *host = te->GetSuppressHost();
-	te->SetSuppressHost( NULL );
-		
-	g_MultiDamage.GetTarget()->TakeSelfDamage( g_MultiDamage, flTotalDamage );
-
-	te->SetSuppressHost( (CBaseEntity*)host );
-#endif
-
-	// Damage is done, clear it out
-	ClearMultiDamage();
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Add damage to the existing multidamage, and apply if it won't fit
 //-----------------------------------------------------------------------------
 void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
@@ -277,6 +254,8 @@ void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
 		g_MultiDamage.SetPlayerPenetrationCount( info.GetPlayerPenetrationCount() );
 	}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
 	bool bHasPhysicsForceDamage = !g_pGameRules->Damage_NoPhysicsForce( info.GetDamageType() );
 	if ( bHasPhysicsForceDamage && g_MultiDamage.GetDamageType() != DMG_GENERIC )
 	{
@@ -293,16 +272,17 @@ void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity )
 			{
 				if ( g_MultiDamage.GetDamageForce() == vec3_origin )
 				{
-					DevMsg( "AddMultiDamage:  g_MultiDamage.GetDamageForce() == vec3_origin\n" );
+					Warning( "AddMultiDamage:  g_MultiDamage.GetDamageForce() == vec3_origin\n" );
 				}
 
 				if ( g_MultiDamage.GetDamagePosition() == vec3_origin)
 				{
-					DevMsg( "AddMultiDamage:  g_MultiDamage.GetDamagePosition() == vec3_origin\n" );
+					Warning( "AddMultiDamage:  g_MultiDamage.GetDamagePosition() == vec3_origin\n" );
 				}
 			}
 		}
 	}
+#endif
 }
 
 

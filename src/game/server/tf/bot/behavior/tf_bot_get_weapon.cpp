@@ -134,7 +134,7 @@ bool CTFBotGetWeapon::IsPossible( CTFBot *actor )
 	if ( weapons.IsEmpty() )
 	{
 		if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-			DevMsg( "%3.2f: No weapon nearby.\n", gpGlobals->curtime );
+			Warning( "%3.2f: No weapon nearby.\n", gpGlobals->curtime );
 
 		return false;
 	}
@@ -208,7 +208,10 @@ bool CWeaponFilter::IsSelected( const CBaseEntity *ent ) const
 			if ( pSpawner->m_bRespawning ) // don't go for spawners that are respawning
 				return false;
 
-			int iWeaponID = AliasToWeaponID( pSpawner->m_iszWeaponName );
+			if ( pSpawner->m_bDisabled ) // don't go for spawners that are disabled
+				return false;
+
+			int iWeaponID = AliasToWeaponID( pSpawner->m_iszWeaponName.Get() );
 
 			if ( m_pActor->Weapon_OwnsThisID( iWeaponID ) ) // don't go for spawners that we already have a weapon from
 				return false;

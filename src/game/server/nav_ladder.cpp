@@ -23,6 +23,7 @@
 
 extern ConVar nav_area_bgcolor;
 
+#ifdef OF_DLL
 LINK_ENTITY_TO_CLASS( info_ladder, CInfoLadder );
 
 BEGIN_DATADESC( CInfoLadder )
@@ -31,9 +32,11 @@ BEGIN_DATADESC( CInfoLadder )
 	DEFINE_FIELD( maxs, FIELD_VECTOR ),
 
 END_DATADESC()
+#endif
 
 unsigned int CNavLadder::m_nextID = 1;
 
+#ifdef OF_DLL
 //--------------------------------------------------------------------------------------------------------------
 bool CInfoLadder::KeyValue( const char *szKeyName, const char *szValue )
 {
@@ -70,7 +73,7 @@ bool CInfoLadder::KeyValue( const char *szKeyName, const char *szValue )
 
 	return BaseClass::KeyValue( szKeyName, szValue );
 }
-
+#endif
 
 //--------------------------------------------------------------------------------------------------------------
 /**
@@ -506,7 +509,7 @@ void CNavLadder::FindLadderEntity( void )
 {
 #ifdef TERROR
 	m_ladderEntity = gEntList.FindEntityByClassnameNearest( "func_simpleladder", (m_top + m_bottom) * 0.5f, HalfHumanWidth );
-#else
+#elif defined ( OF_DLL )
 	m_ladderEntity = gEntList.FindEntityByClassnameNearest( "func_ladder", (m_top + m_bottom) * 0.5f, HalfHumanWidth );
 #endif
 }
