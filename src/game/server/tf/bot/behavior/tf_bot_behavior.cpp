@@ -595,7 +595,6 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 	// this is so bots don't charge their stickybomb launchers constantly
 	if ( pWeapon->IsWeapon( TF_WEAPON_PIPEBOMBLAUNCHER ) )
 	{
-		Warning("TF_WEAPON_PIPEBOMBLAUNCHER is this actually being reached\n");
 		actor->PressFireButton( 0.1f );
 		return;
 	}
