@@ -46,7 +46,7 @@ public:
 	char m_iszWeaponModelOLD[128];
 	char m_iszPickupSound[128];
 	
-	void	InputSetModel( inputdata_t &inputdata );
+	void	InputSetWeaponModel( inputdata_t &inputdata );
 	void	InputSetWeaponName( inputdata_t &inputdata );
 
 	CNetworkVar( bool, m_bDisableSpin );
