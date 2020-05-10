@@ -9,8 +9,10 @@
 #include "igameevents.h"
 #include "c_team_objectiveresource.h"
 
+#if defined ( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
 #include "tf_shareddefs.h"
 #include "teamplayroundbased_gamerules.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -21,7 +23,9 @@ IMPLEMENT_CLIENTCLASS_DT(C_TeamTrainWatcher, DT_TeamTrainWatcher, CTeamTrainWatc
 	RecvPropInt( RECVINFO( m_iTrainSpeedLevel ) ),
 	RecvPropFloat( RECVINFO( m_flRecedeTime ) ),
 	RecvPropInt( RECVINFO( m_nNumCappers ) ),
+#ifdef OF_CLIENT_DLL
 	RecvPropInt( RECVINFO( m_nTeam ) ),
+#endif
 #ifdef GLOWS_ENABLE
 	RecvPropEHandle( RECVINFO( m_hGlowEnt ) ),
 #endif // GLOWS_ENABLE
@@ -86,7 +90,11 @@ void C_TeamTrainWatcher::UpdateGlowEffect( void )
 	{
 		float r, g, b;
 		TeamplayRoundBasedRules()->GetTeamGlowColor( GetTeamNumber(), r, g, b );
+#ifdef OF_CLIENT_DLL
 		m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true, true );
+#else
+		m_pGlowEffect = new CGlowObject( m_hGlowEnt, Vector( r, g, b ), 1.0, true );
+#endif
 	}
 }
 

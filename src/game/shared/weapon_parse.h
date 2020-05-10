@@ -84,22 +84,28 @@ public:
 
 	char					szViewModel[MAX_WEAPON_STRING];			// View model of this weapon
 	char					szWorldModel[MAX_WEAPON_STRING];		// Model of this weapon seen carried by the player
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	char					szCenteredViewModel[MAX_WEAPON_STRING];			// View model of this weapon
 	char					szCenteredWorldModel[MAX_WEAPON_STRING];		// Model of this weapon seen carried by the player	
-	
+#endif
+
 	char					szAnimationPrefix[MAX_WEAPON_PREFIX];	// Prefix of the animations that should be used by the player carrying this weapon
 	int						iSlot;									// inventory slot.
 	int						iPosition;								// position in the inventory slot.
 	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	int						iSlotDM;									// inventory slot.
 	int						iPositionDM;								// position in the inventory slot.	
-	
+#endif
+
 	int						iMaxClip1;								// max primary clip size (-1 if no clip)
 	int						iMaxClip2;								// max secondary clip size (-1 if no clip)
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	int						iMaxReserveAmmo;
+	int						iDefaultReserveAmmo;
+#endif
 	int						iDefaultClip1;							// amount of primary ammo in the gun when it's created
 	int						iDefaultClip2;							// amount of secondary ammo in the gun when it's created
-	int						iDefaultReserveAmmo;
 	int						iWeight;								// this value used to determine this weapon's importance in autoselection.
 	int						iRumbleEffect;							// Which rumble effect to use when fired? (xbox)
 	bool					bAutoSwitchTo;							// whether this weapon should be considered for autoswitching to
@@ -141,9 +147,14 @@ public:
 
 };
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 // The weapon parse function
 bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, 
 	WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL, bool bReParse = false );
+#else
+bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, 
+	WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey = NULL );
+#endif
 
 // If weapon info has been loaded for the specified class name, this returns it.
 WEAPON_FILE_INFO_HANDLE LookupWeaponInfoSlot( const char *name );

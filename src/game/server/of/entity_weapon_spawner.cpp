@@ -37,7 +37,6 @@ extern ConVar of_randomizer;
 
 
 BEGIN_DATADESC(CWeaponSpawner)
-
 // Inputs.
 DEFINE_KEYFIELD(szWeaponName, FIELD_STRING, "weaponname"),
 DEFINE_KEYFIELD(szWeaponModel, FIELD_STRING, "model"),
@@ -46,6 +45,8 @@ DEFINE_KEYFIELD(szPickupSound, FIELD_STRING, "pickup_sound"),
 DEFINE_KEYFIELD(m_bDisableSpin, FIELD_BOOLEAN, "disable_spin"),
 DEFINE_KEYFIELD(m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow"),
 DEFINE_KEYFIELD(m_iIndex, FIELD_INTEGER, "Index"),
+DEFINE_INPUTFUNC( FIELD_STRING, "SetModel", InputSetModel ),
+DEFINE_INPUTFUNC( FIELD_STRING, "SetWeaponName", InputSetWeaponName ),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
@@ -76,18 +77,22 @@ CWeaponSpawner::CWeaponSpawner()
 
 void CWeaponSpawner::Spawn( void )
 {
+	if ( !of_weaponspawners.GetBool() )
+	{
+		m_bDisabled = true;
+		return;
+	}
+
 	m_nRenderFX = kRenderFxNone;
-	if (of_weaponspawners.GetInt() >= 1 &&
-		TFGameRules()->IsMutator( NO_MUTATOR ) && 
-		TFGameRules() && 
-		!TFGameRules()->IsGGGamemode())
+	if ( TFGameRules()->IsMutator( NO_MUTATOR ) && 
+		 !TFGameRules()->IsGGGamemode() )
 	{
 		Q_strncpy( m_iszWeaponName.GetForModify(), STRING(szWeaponName), 128 );
-		if( !strcmp(m_iszWeaponName,"tf_weapon_shotgun_mercenary")
-			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_primary")
-			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_soldier")
-			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_pyro")
-			|| !strcmp(m_iszWeaponName,"tf_weapon_shotgun_hwg") )
+		if( !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_mercenary")
+			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_primary")
+			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_soldier")
+			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_pyro")
+			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_hwg") )
 			Q_strncpy( m_iszWeaponName.GetForModify(), "tf_weapon_shotgun", 128 );
 		if ( szWeaponModel != MAKE_STRING("") )
 		Q_strncpy( m_iszWeaponModel, STRING(szWeaponModel) , sizeof( m_iszWeaponModel ) );
@@ -136,7 +141,7 @@ void CWeaponSpawner::SetWeaponModel( void )
 	{
 		if ( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
 		{
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );			  //Get the weapon info
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );			  //Get the weapon info
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
 			if ( pWeaponInfo )                //If both the weapon and weapon info exist
@@ -155,12 +160,13 @@ void CWeaponSpawner::SetWeaponModel( void )
 //-----------------------------------------------------------------------------
 void CWeaponSpawner::Precache( void )
 {
+	UTIL_PrecacheOther( m_iszWeaponName );
 	PrecacheScriptSound( m_iszPickupSound );
 	if ( m_iszWeaponModel )
 	{
 		if( m_iszWeaponModelOLD )
 		{
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
 			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 			if ( pWeaponInfo )
@@ -188,20 +194,20 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 
 		if ( pTFPlayer->m_Shared.IsZombie() )
 			return false;
-		
+
 		if ( !of_allow_allclass_spawners.GetBool() && !pTFPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) )
 			return false;		
 	
 		bSuccess = true;
 		bool bTakeWeapon = true;
 		
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 		
 		if (!pWeaponInfo)
 			return false;
 		
-		int iWeaponID = AliasToWeaponID( m_iszWeaponName );
+		int iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
 		int iSlot;
 
 		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
@@ -214,12 +220,12 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		int iPos = pWeaponInfo->iPosition;
 		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 			iPos = pWeaponInfo->iPositionDM;
-	
+
 		if( !pTFPlayer->m_hWeaponInSlot )
 		{	
 			return false;
 		}
-		
+
 		// We have it already, dont take it Freeman, but get ammo
 		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )
 		{
@@ -256,7 +262,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			EmitSound( filter, entindex(), m_iszPickupSound );		// Play the sound
 			if( bTakeWeapon )
 			{
-				CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName );  // Create the specified weapon
+				CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pTFPlayer->GiveNamedItem( m_iszWeaponName.Get() );  // Create the specified weapon
 				if ( pGivenWeapon )
 				{
 					pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
@@ -290,7 +296,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 						{
 							actor->Weapon_Switch( pGivenWeapon );
 							actor->m_bPickedUpWeapon = true;
-							actor->m_bHasPickedUpOneWeapon = true;
 						}
 					}
 
@@ -331,7 +336,7 @@ void CWeaponSpawner::Materialize( void )
 {
 	BaseClass::Materialize();
 	
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
 	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	
 	if (!pWeaponInfo)
@@ -346,7 +351,7 @@ void CWeaponSpawner::Materialize( void )
 
 const char* CWeaponSpawner::GetSuperWeaponPickupLineSelf( void )
 {
-	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
 	
 	switch ( m_iWeaponID )
 	{
@@ -362,7 +367,7 @@ const char* CWeaponSpawner::GetSuperWeaponPickupLineSelf( void )
 
 const char* CWeaponSpawner::GetSuperWeaponPickupLine( void )
 {
-	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
 	
 	switch ( m_iWeaponID )
 	{
@@ -378,7 +383,7 @@ const char* CWeaponSpawner::GetSuperWeaponPickupLine( void )
 
 const char* CWeaponSpawner::GetSuperWeaponRespawnLine( void )
 {
-	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
 	
 	switch ( m_iWeaponID )
 	{
@@ -390,4 +395,20 @@ const char* CWeaponSpawner::GetSuperWeaponRespawnLine( void )
 		break;
 	}
 	return "None";
+}
+
+void CWeaponSpawner::InputSetModel( inputdata_t &inputdata )
+{
+	const char *name = inputdata.value.String();
+
+	if ( name ) 
+		SetModel( name );
+}
+
+void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
+{
+	const char *name = inputdata.value.String();
+
+	if ( name ) 
+		Q_strncpy( m_iszWeaponName.GetForModify(), name, 128 );
 }

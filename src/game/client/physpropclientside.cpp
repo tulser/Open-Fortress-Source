@@ -609,7 +609,7 @@ const char *C_PhysPropClientside::ParseEntity( const char *pEntData )
 
 	if (!entData.ExtractValue("classname", className))
 	{
-		Error( "C_PhysPropClientside::ParseEntity: classname missing from entity!\n" );
+		Error( "classname missing from entity!\n" );
 	}
 
 	if ( !Q_strcmp( className, "prop_physics_multiplayer" ) )
@@ -749,7 +749,7 @@ CBaseEntity *BreakModelCreateSingle( CBaseEntity *pOwner, breakmodel_t *pModel, 
 	pEntity->m_nSkin = nSkin;
 	pEntity->m_iHealth = pModel->health;
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT ) || defined( DOD_DLL )
+#if defined( TF_CLIENT_DLL ) || defined( OF_CLIENT_DLL ) || defined( DOD_DLL )
 	pEntity->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 #endif
 

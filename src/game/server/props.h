@@ -195,7 +195,7 @@ public:
 	virtual AngularImpulse	PhysGunLaunchAngularImpulse();
 	virtual	CBasePlayer *HasPhysicsAttacker( float dt );
 
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	void CreateFlare( float flLifetime );
 #endif //HL2_EPISODIC
 
@@ -368,9 +368,7 @@ public:
 	float GetMass() const;
 
 	void ClearFlagsThink( void );
-
-	virtual bool	IsDeflectable( void ) { return true; }
-
+	
 	virtual int OnTakeDamage( const CTakeDamageInfo &info );
 	int DrawDebugTextOverlays(void);
 	bool IsGib();

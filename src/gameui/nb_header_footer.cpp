@@ -8,8 +8,6 @@
 #include "engineinterface.h"
 #include "BaseModPanel.h"
 
-#include "../game/shared/hl2ce/steamworks_stuff.h"
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 

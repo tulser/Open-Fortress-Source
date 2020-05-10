@@ -2358,11 +2358,19 @@ bool CHudCloseCaption::AddAsyncWork( const char *tokenstream, bool bIsStream, fl
 		tokenname[ 0 ] = 0;
 		const char *p = tokenstream;
 
+#ifdef OF_CLIENT_DLL	
 		p = nexttoken( tokenname, p, ' ', sizeof( tokenname ) );
+#else
+		p = nexttoken( tokenname, p, ' ' );
+#endif
 		// p points to reset of sentence tokens, build up a unicode string from them...
 		while ( p && Q_strlen( tokenname ) > 0 )
 		{
+#ifdef OF_CLIENT_DLL			
 			p = nexttoken( tokenname, p, ' ', sizeof( tokenname ) );
+#else
+			p = nexttoken( tokenname, p, ' ' );
+#endif
 
 			if ( Q_strlen( tokenname ) == 0 )
 				break;
@@ -2397,7 +2405,11 @@ void CHudCloseCaption::ProcessSentenceCaptionStream( const char *tokenstream )
 
 	const char *p = tokenstream;
 
+#ifdef OF_CLIENT_DLL	
 	p = nexttoken( tokenname, p, ' ', sizeof( tokenname ) );
+#else
+	p = nexttoken( tokenname, p, ' ');
+#endif
 
 	if ( Q_strlen( tokenname ) > 0 )
 	{

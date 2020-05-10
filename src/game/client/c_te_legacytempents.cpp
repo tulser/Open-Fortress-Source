@@ -39,12 +39,16 @@
 // NOTE: Always include this last!
 #include "tier0/memdbgon.h"
 
+#ifdef OF_CLIENT_DLL
 extern ConVar of_muzzlelight;
+#else
+extern ConVar muzzleflash_light
+#endif
 
 #define TENT_WIND_ACCEL 50
 
 //Precache the effects
-#if !(defined(TF_CLIENT_DLL) || defined(TF_MOD_CLIENT))
+#if !(defined(TF_CLIENT_DLL) || defined(OF_CLIENT_DLL))
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectMuzzleFlash )
 
 	CLIENTEFFECT_MATERIAL( "effects/muzzleflash1" )
@@ -95,10 +99,13 @@ C_LocalTempEntity::C_LocalTempEntity()
 	m_pszImpactEffect = NULL;
 }
 
+#if defined( CSTRIKE_DLL ) || defined (SDK_DLL )
 
+#define TE_RIFLE_SHELL 1024
+#define TE_PISTOL_SHELL 2048
+#define TE_SHOTGUN_SHELL 4096
 
-
-
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Prepare a temp entity for creation
@@ -575,7 +582,9 @@ bool C_LocalTempEntity::Frame( float frametime, int framenumber )
 		dl->color.g = 120;
 		dl->color.b = 0;
 		dl->die = gpGlobals->curtime + 0.01;
+#ifdef OF_CLIENT_DLL	
 		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 	}
 
 	if ( flags & FTENT_SMOKETRAIL )
@@ -2187,7 +2196,8 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 			soundname = "Bounce.Concrete";
 		}
 		break;
-
+		
+#if defined( CSTRIKE_DLL ) || defined ( OF_CLIENT_DLL )	
 	case TE_PISTOL_SHELL:
 		{
 			soundname = "Bounce.PistolShell";
@@ -2205,6 +2215,7 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 			soundname = "Bounce.ShotgunShell";
 		}
 		break;
+#endif
 	}
 
 	zvel = abs( pTemp->GetVelocity()[2] );
@@ -2383,7 +2394,7 @@ void CTempEnts::Update(void)
 // Recache tempents which might have been flushed
 void CTempEnts::LevelInit()
 {
-#if !(defined(TF_CLIENT_DLL) || defined(TF_MOD_CLIENT))
+#if !(defined(TF_CLIENT_DLL) || defined(OF_CLIENT_DLL))
 	m_pSpriteMuzzleFlash[0] = (model_t *)engine->LoadModel("sprites/ar2_muzzle1.vmt");
 	m_pSpriteMuzzleFlash[1] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );
 	m_pSpriteMuzzleFlash[2] = (model_t *)engine->LoadModel( "sprites/muzzleflash4.vmt" );
@@ -2769,8 +2780,12 @@ void CTempEnts::MuzzleFlash_Combine_NPC( ClientEntityHandle_t hEntity, int attac
 		Assert(0);
 		return;
 	}
-
+	
+#ifdef OF_CLIENT_DLL
 	if ( of_muzzlelight.GetBool() )
+#else
+	if ( muzzleflash_light.GetBool() )
+#endif
 	{
 		C_BaseEntity *pEnt = ClientEntityList().GetBaseEntityFromHandle( hEntity );
 		if ( pEnt )
@@ -2783,7 +2798,9 @@ void CTempEnts::MuzzleFlash_Combine_NPC( ClientEntityHandle_t hEntity, int attac
 			el->color.g = 128;
 			el->color.b = 255;
 			el->color.exponent = 5;
+#ifdef OF_CLIENT_DLL		
 			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif		
 			el->radius	= random->RandomInt( 32, 128 );
 			el->decay	= el->radius / 0.05f;
 			el->die		= gpGlobals->curtime + 0.05f;

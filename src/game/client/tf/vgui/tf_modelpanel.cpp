@@ -29,7 +29,7 @@
 #include "iefx.h"
 #include "dlight.h"
 
-#include "tf_modelpanel.h"
+#include "OF_DLLelpanel.h"
 
 bool UseHWMorphModels();
 

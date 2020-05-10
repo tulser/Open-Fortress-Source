@@ -13,7 +13,9 @@
 #include "team_spawnpoint.h"
 #include "team.h"
 
+#ifdef OF_DLL
 #include "tf_gamerules.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -42,6 +44,7 @@ void CTeamSpawnPoint::Activate( void )
 {
 	BaseClass::Activate();
 
+#ifdef OF_DLL
 	if ( TFGameRules()->IsDMGamemode() )
 	{
 		// some fools assigned teampoints to spectator team so i have to check this too
@@ -52,6 +55,9 @@ void CTeamSpawnPoint::Activate( void )
 		GetGlobalTeam( 4 )->AddSpawnpoint( this );
 	}
 	else if ( GetTeamNumber() > 0 && GetTeamNumber() <= MAX_TEAMS )
+#else
+	if ( GetTeamNumber() > 0 && GetTeamNumber() <= MAX_TEAMS )
+#endif
 	{
 		GetGlobalTeam( GetTeamNumber() )->AddSpawnpoint( this );
 	}

@@ -51,7 +51,9 @@ public:
 
 	// Return true if this hud element should be visible in the current hud state
 	virtual bool				ShouldDraw( void );
+#ifdef OF_CLIENT_DLL	
 	virtual bool 				AffectedByDrawHUD( void ){ return true; }
+#endif
 
 	virtual bool				IsActive( void ) { return m_bActive; };
 	virtual void				SetActive( bool bActive );

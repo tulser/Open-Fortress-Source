@@ -74,8 +74,7 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Domination",
 	"Gun Game",
 	"3 Wave",
-	"Zombie Survival",
-	"Coop",
+	"Infection",
 };
 
 CTFDiscordRPC g_discordrpc;
@@ -364,6 +363,9 @@ void CTFDiscordRPC::FireGameEvent( IGameEvent *event )
 
 void CTFDiscordRPC::UpdateRichPresence()
 {
+	if ( !of_enable_rpc.GetBool() )
+		return;
+	
 	//The elapsed timer function using <ctime>
 	//this is for setting up the time when the player joins a server
 	//-Nbc66

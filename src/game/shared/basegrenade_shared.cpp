@@ -24,7 +24,11 @@
 extern short	g_sModelIndexFireball;		// (in combatweapon.cpp) holds the index for the fireball 
 extern short	g_sModelIndexWExplosion;	// (in combatweapon.cpp) holds the index for the underwater explosion
 extern short	g_sModelIndexSmoke;			// (in combatweapon.cpp) holds the index for the smoke cloud
+
+#if defined(OF_DLL) || defined(OF_CLIENT_DLL)
+#else
 extern ConVar    sk_plr_dmg_grenade;
+#endif
 
 #if !defined( CLIENT_DLL )
 
@@ -111,7 +115,11 @@ END_PREDICTION_DATA()
 #define SF_DETONATE		0x0001
 
 // UNDONE: temporary scorching for PreAlpha - find a less sleazy permenant solution.
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType )
+#else
+void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType )
+#endif
 {
 #if !defined( CLIENT_DLL )
 	
@@ -129,7 +137,7 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomD
 	Vector vecAbsOrigin = GetAbsOrigin();
 	int contents = UTIL_PointContents ( vecAbsOrigin );
 
-#if defined (TF_DLL) || defined (TF_MOD)
+#if defined (TF_DLL) || defined (OF_DLL)
 	// Since this code only runs on the server, make sure it shows the tempents it creates.
 	// This solves a problem with remote detonating the pipebombs (client wasn't seeing the explosion effect)
 	CDisablePredictionFiltering disabler;
@@ -173,7 +181,11 @@ void CBaseGrenade::Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomD
 	Vector vecReported = m_hThrower ? m_hThrower->GetAbsOrigin() : vec3_origin;
 	
 	CTakeDamageInfo info( this, m_hThrower, GetBlastForce(), GetAbsOrigin(), m_flDamage, bitsDamageType, 0, &vecReported );
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	info.SetDamageCustom( bitsCustomDamageType );
+#endif
+
 	RadiusDamage( info, GetAbsOrigin(), m_DmgRadius, CLASS_NONE, NULL );
 
 	UTIL_DecalTrace( pTrace, "Scorch" );

@@ -98,10 +98,6 @@ struct sky3dparams_t
 	// 3d skybox camera data
 	CNetworkVar( int, scale );
 	CNetworkVector( origin );
-#ifdef MAPBASE
-	// Skybox angle support
-	CNetworkQAngle( angles );
-#endif
 	CNetworkVar( int, area );
 
 	// 3d skybox fog data

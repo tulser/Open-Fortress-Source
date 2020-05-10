@@ -29,7 +29,9 @@ extern ConVar	footsteps;
 extern ConVar	flashlight;
 extern ConVar	aimcrosshair;
 extern ConVar	decalfrequency;
+#ifdef OF_DLL
 extern ConVar	jinglefrequency;
+#endif
 extern ConVar	teamlist;
 extern ConVar	teamoverride;
 extern ConVar	defaultteam;

@@ -19,7 +19,9 @@
 #include "c_baseanimating.h"
 #endif
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #include "tf_weaponbase.h"
+#endif
 
 #ifdef CLIENT_DLL
 #define CBaseProjectile C_BaseProjectile

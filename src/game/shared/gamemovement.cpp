@@ -1321,9 +1321,14 @@ void CGameMovement::CheckWaterJump( void )
 			if ( pPhysObj->GetGameFlags() & FVPHYSICS_PLAYER_HELD )
 				return;
 		}
-		float ViewOffset = (player->GetViewOffset().z < 68.0f) ? 68.0f : player->GetViewOffset().z;
-		
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )		
+		float ViewOffset = (player->GetViewOffset().z < 68.0f) ? 68.0f : player->GetViewOffset().z;		
 		vecStart.z = mv->GetAbsOrigin().z + ViewOffset + WATERJUMP_HEIGHT; 
+#else
+		vecStart.z = mv->GetAbsOrigin().z + player->GetViewOffset().z + WATERJUMP_HEIGHT; 
+#endif
+	
 		VectorMA( vecStart, 24.0f, flatforward, vecEnd );
 		VectorMA( vec3_origin, -50.0f, tr.plane.normal, player->m_vecWaterJumpVel );
 
@@ -1647,7 +1652,7 @@ void CGameMovement::Friction( void )
 			}
 			else
 			{
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 				control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 #else
 				control = (speed < sv_stopspeed.GetFloat()) ? (sv_stopspeed.GetFloat() * 2.0f) : speed;
@@ -2842,9 +2847,10 @@ inline bool CGameMovement::OnLadder( trace_t &trace )
 // [sbodenbender] make ladders easier to climb in cstrike
 //=============================================================================
 
+#if defined (CSTRIKE_DLL) || defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 ConVar sv_ladder_dampen ( "sv_ladder_dampen", "0.2", FCVAR_REPLICATED, "Amount to dampen perpendicular movement on a ladder", true, 0.0f, true, 1.0f );
 ConVar sv_ladder_angle( "sv_ladder_angle", "-0.707", FCVAR_REPLICATED, "Cos of angle of incidence to ladder perpendicular for applying ladder_dampen", true, -1.0f, true, 1.0f );
-
+#endif
 //=============================================================================
 // HPE_END
 //=============================================================================
@@ -4193,9 +4199,11 @@ void CGameMovement::FinishUnDuckJump( trace_t &trace )
 void CGameMovement::FinishDuck( void )
 {
 	// ficool2 - Quantum crouch fix
-
-	//if ( player->GetFlags() & FL_DUCKING )
-	//	return;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	if ( player->GetFlags() & FL_DUCKING )
+		return;
+#endif
 
 	player->AddFlag( FL_DUCKING );
 	player->m_Local.m_bDucked = true;
@@ -4368,6 +4376,18 @@ void CGameMovement::Duck( void )
 		// DUCK
 		if ( ( mv->m_nButtons & IN_DUCK ) || bDuckJump )
 		{
+// XBOX SERVER ONLY
+#if !defined(CLIENT_DLL)
+			if ( IsX360() && buttonsPressed & IN_DUCK )
+			{
+				// Hinting logic
+				if ( player->GetToggledDuckState() && player->m_nNumCrouches < NUM_CROUCH_HINTS )
+				{
+					UTIL_HudHintText( player, "#Valve_Hint_Crouch" );
+					player->m_nNumCrouches++;
+				}
+			}
+#endif			
 			// Have the duck button pressed, but the player currently isn't in the duck position.
 			if ( ( buttonsPressed & IN_DUCK ) && !bInDuck && !bDuckJump && !bDuckJumpTime )
 			{

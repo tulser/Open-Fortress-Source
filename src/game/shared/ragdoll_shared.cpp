@@ -90,9 +90,17 @@ public:
 			if ( m_bSelfCollisions )
 			{
 				char szToken[256];
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )				
 				const char *pStr = nexttoken(szToken, pValue, ',', sizeof(szToken));
+#else
+				const char *pStr = nexttoken(szToken, pValue, ',';
+#endif
 				int index0 = atoi(szToken);
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )			
 				nexttoken( szToken, pStr, ',', sizeof(szToken) );
+#else
+				nexttoken( szToken, pStr, ',' )
+#endif
 				int index1 = atoi(szToken);
 
 				m_pSet->EnableCollisions( index0, index1 );
@@ -646,7 +654,7 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 			if ( dir.LengthSqr() > 1.0f )
 			{
 				// this fixes a bug in ep2 with antlion grubs, but causes problems in TF2 - revisit, but disable for TF now
-#if !defined(TF_CLIENT_DLL) && !defined(TF_MOD_CLIENT)
+#if !defined(TF_CLIENT_DLL) && !defined(OF_CLIENT_DLL)
 				// heuristic: guess that anything separated and small mass ratio is in some state that's 
 				// keeping the solver from fixing it
 				float mass = element.pObject->GetMass();
@@ -710,7 +718,7 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 // xbox defaults to 4 ragdolls max
 ConVar g_ragdoll_maxcount("g_ragdoll_maxcount", "4", FCVAR_REPLICATED );
 #else
-ConVar g_ragdoll_maxcount("g_ragdoll_maxcount", "16", FCVAR_REPLICATED );
+ConVar g_ragdoll_maxcount("g_ragdoll_maxcount", "8", FCVAR_REPLICATED );
 #endif
 ConVar g_debug_ragdoll_removal("g_debug_ragdoll_removal", "0", FCVAR_REPLICATED |FCVAR_CHEAT );
 

@@ -108,7 +108,9 @@ public:
 
 	bool IsDisabled( void ){ return FBitSet( m_spawnflags, SF_PATH_DISABLED ); }
 
+#ifdef OF_DLL
 	void Pass( CBaseEntity *pActivator );
+#endif
 	void InputPass( inputdata_t &inputdata );
 	void InputTeleport( inputdata_t &inputdata );
 

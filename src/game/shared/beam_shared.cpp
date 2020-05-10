@@ -181,6 +181,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBeam, DT_Beam )
 	SendPropModelIndex(SENDINFO(m_nModelIndex) ),
 	SendPropVector (SENDINFO(m_vecOrigin), 19, SPROP_CHANGES_OFTEN,	MIN_COORD_INTEGER, MAX_COORD_INTEGER),
 	SendPropEHandle(SENDINFO_NAME(m_hMoveParent, moveparent) ),
+	SendPropInt		(SENDINFO(m_nMinDXLevel),	8,	SPROP_UNSIGNED ),
 #if !defined( NO_ENTITY_PREDICTION )
 	SendPropDataTable( "beampredictable_id", 0, &REFERENCE_SEND_TABLE( DT_BeamPredictableId ), SendProxy_SendPredictableId ),
 #endif
@@ -219,6 +220,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CBeam, DT_Beam )
 	RecvPropBool(RECVINFO(m_bDrawInPortalRender) ),
 #endif
 	RecvPropInt(RECVINFO(m_nModelIndex)),
+	RecvPropInt(RECVINFO(m_nMinDXLevel)),
 
 	RecvPropVector(RECVINFO_NAME(m_vecNetworkOrigin, m_vecOrigin)),
 	RecvPropInt( RECVINFO_NAME(m_hNetworkMoveParent, moveparent), 0, RecvProxy_IntToMoveParent ),
@@ -237,6 +239,7 @@ BEGIN_DATADESC( CBeam )
 	DEFINE_FIELD( m_nNumBeamEnts, FIELD_INTEGER ),
 	DEFINE_ARRAY( m_hAttachEntity, FIELD_EHANDLE, MAX_BEAM_ENTS ),
 	DEFINE_ARRAY( m_nAttachIndex, FIELD_INTEGER, MAX_BEAM_ENTS ),
+	DEFINE_FIELD( m_nMinDXLevel, FIELD_INTEGER ),
 
 	DEFINE_FIELD( m_fWidth, FIELD_FLOAT ),
 	DEFINE_FIELD( m_fEndWidth, FIELD_FLOAT ),
@@ -299,6 +302,7 @@ BEGIN_PREDICTION_DATA( CBeam )
 	DEFINE_PRED_FIELD( m_flFrameRate, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flFrame, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_clrRender, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_nMinDXLevel, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD_TOL( m_vecEndPos, FIELD_VECTOR, FTYPEDESC_INSENDTABLE, 0.125f ),
 #ifdef PORTAL
 	DEFINE_PRED_FIELD( m_bDrawInMainRender, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -324,6 +328,7 @@ CBeam::CBeam( void )
 	m_vecEndPos.Init();
 #endif
 
+	m_nMinDXLevel = 0;
 	m_flHDRColorScale = 1.0f; // default value.
 
 #if !defined( CLIENT_DLL )
@@ -768,10 +773,7 @@ void CBeam::BeamDamage( trace_t *ptr )
 	if ( ptr->fraction != 1.0 && ptr->m_pEnt != NULL )
 	{
 		CBaseEntity *pHit = ptr->m_pEnt;
-
-#ifndef MAPBASE
 		if ( pHit )
-#endif
 		{
 			ClearMultiDamage();
 			Vector dir = ptr->endpos - GetAbsOrigin();
@@ -791,14 +793,11 @@ void CBeam::BeamDamage( trace_t *ptr )
 
 			CTakeDamageInfo info( this, this, m_flDamage * (gpGlobals->curtime - m_flFireTime), nDamageType );
 			CalculateMeleeDamageForce( &info, dir, ptr->endpos );
-
-			if ( pHit )
-				pHit->DispatchTraceAttack( info, dir, ptr );
-
+			pHit->DispatchTraceAttack( info, dir, ptr );
 			ApplyMultiDamage();
 			if ( HasSpawnFlags( SF_BEAM_DECALS ) )
 			{
-				if ( pHit && pHit->IsBSPModel() )
+				if ( pHit->IsBSPModel() )
 				{
 					UTIL_DecalTrace( ptr, GetDecalName() );
 				}
@@ -1044,6 +1043,11 @@ bool CBeam::IsTransparent( void )
 
 bool CBeam::ShouldDraw()
 {
+	if ( m_nMinDXLevel != 0 )
+	{
+		if ( m_nMinDXLevel > g_pMaterialSystemHardwareConfig->GetDXSupportLevel() )
+			return false;
+	}
 	return BaseClass::ShouldDraw();
 }
 

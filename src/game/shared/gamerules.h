@@ -41,7 +41,6 @@ class CAmmoDef;
 class CTacticalMissionManager;
 
 extern ConVar sk_autoaim_mode;
-extern ConVar tf_particles_disable_weather;
 
 // Autoaiming modes
 enum
@@ -193,7 +192,7 @@ public:
 
 	virtual bool AllowMapParticleEffect( const char *pszParticleEffect ) { return true; }
 
-	virtual bool AllowWeatherParticles( void ) { return !tf_particles_disable_weather.GetBool(); }
+	virtual bool AllowWeatherParticles( void ) { return true; }
 
 	virtual bool AllowMapVisionFilterShaders( void ) { return false; }
 	virtual const char* TranslateEffectForVisionFilter( const char *pchEffectType, const char *pchEffectName ) { return pchEffectName; }

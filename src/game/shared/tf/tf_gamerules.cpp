@@ -62,7 +62,6 @@
 	#include "pathtrack.h"
 	#include "entitylist.h"
 	#include "trigger_area_capture.h"
-	
 	#include "ai_basenpc.h"
 	#include "ai_dynamiclink.h"
 	#include "vote_controller.h"
@@ -70,6 +69,7 @@
 	#include "tf_voteissues.h"
 	#include "nav_mesh.h"
 	#include "bot/tf_bot_manager.h"
+
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -110,7 +110,6 @@ extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
 extern ConVar of_crouchjump;
-extern ConVar of_forceclass;
 extern ConVar of_resistance;
 extern ConVar mp_disable_respawn_times;
 extern ConVar fraglimit;
@@ -131,7 +130,6 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 // Open Fortress Convars
 ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
-ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode." );
 ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
@@ -141,11 +139,10 @@ ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_
 
 ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Healthkits." );
 ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
-// Not implemented.
-// ConVar of_ggweaponlist		( "of_ggweaponlist", "cfg/gg_weaponlist_default.txt" );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
 							true, 0, true, 6 );
+													
 
 /*	List of mutators:
 	0: Disabled
@@ -157,16 +154,12 @@ ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	6: Gun Game
 */
 
-/*	Individual gamemode mutators, deprecated by the convar above.
-	ConVar of_instagib			( "of_instagib", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Toggles Instagib.", true, 0, true, 2 );
-	ConVar of_clanarena		( "of_clanarena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Clan Arena mutators.", true, 0, true, 2 );
-	ConVar of_gungame			( "of_gungame", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Gun Game mode." );
-*/
-
 ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
 ConVar of_multiweapons		( "of_multiweapons", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the Quake-like multi weapon system." );
 ConVar of_weaponspawners	( "of_weaponspawners", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles weapon spawners." );
 ConVar of_powerups			( "of_powerups", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles powerups." );
+ConVar of_forceclass		( "of_forceclass", "1", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force players to be Mercenary in DM. Requires a map change to take effect." );
+ConVar of_forcezombieclass	( "of_forcezombieclass", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Force zombies to be Mercenaries in Infection. Requires a map change to take effect." );
 
 #ifdef GAME_DLL
 // TF overrides the default value of the convars below.
@@ -209,7 +202,7 @@ CON_COMMAND_F( tf_halloween_force_mob_spawn, "For testing.", FCVAR_CHEAT )
 #endif
 
 ConVar of_retromode ( "of_retromode", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
-					"Sets the Retro mode type, which turns on TFC classes and mechanics such as armor.\n-1 = Default to map settings\n 0 = Force off\n 1 = Force on\n 2 = Force on for Blu only\n 3 = Force on for Red only" );
+					"Sets the Retro mode type, which turns on TFC classes and mechanics such as armor. Requires a map change to take effect. \n-1 = Default to map settings\n 0 = Force off\n 1 = Force on\n 2 = Force on for Blu only\n 3 = Force on for Red only" );
 
 ConVar of_grenades	( "of_grenades", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Enables grenades.\n-1 = Depends on Retro mode\n 0 = Forced off\n 1 = Forced on (frags only)\n 2 = Forced on (class-based grenades)" );
@@ -248,6 +241,13 @@ ConVar tf_flag_caps_per_round( "tf_flag_caps_per_round", "3", FCVAR_REPLICATED, 
 							  , ValidateCapturesPerRound
 #endif
 							  );	
+
+ConVar of_mctf_flag_caps_per_round( "of_mctf_flag_caps_per_round", "7", FCVAR_REPLICATED, "Number of flag captures per round on MCTF (not CTF!) maps. Set to 0 to disable.", true, 0, true, 9
+#ifdef GAME_DLL
+							  , ValidateCapturesPerRound
+#endif
+							  );	
+
 		
 /**
  * Player hull & eye position for standing, ducking, etc.  This version has a taller
@@ -300,6 +300,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 #ifdef CLIENT_DLL
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropInt( RECVINFO( m_nMutator ) ),
+	RecvPropInt( RECVINFO( m_nRetroMode ) ),
 	RecvPropInt( RECVINFO( m_iCosmeticCount ) ),
 	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
 	RecvPropInt( RECVINFO( m_nHuntedCount_red ) ),
@@ -316,12 +317,13 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropBool( RECVINFO( m_bCapsInitialized ) ),
 	RecvPropBool( RECVINFO( m_bIsTeamplay ) ),
 	RecvPropBool( RECVINFO( m_bIsTDM ) ),
-	RecvPropBool( RECVINFO( m_bIsHL2 ) ),
 	RecvPropBool( RECVINFO( m_nbDontCountKills ) ),
 	RecvPropBool( RECVINFO( m_bUsesHL2Hull ) ),
 	RecvPropBool( RECVINFO( m_bForce3DSkybox ) ),
 	RecvPropBool( RECVINFO( m_bUsesMoney ) ),
 	RecvPropBool( RECVINFO( m_bKOTH ) ),
+	RecvPropBool( RECVINFO( m_bAllClass ) ),
+	RecvPropBool( RECVINFO( m_bAllClassZombie ) ),
 	RecvPropEHandle( RECVINFO( m_hRedKothTimer ) ), 
 	RecvPropEHandle( RECVINFO( m_hBlueKothTimer ) ),
 	RecvPropEHandle( RECVINFO( m_itHandle ) ),
@@ -332,6 +334,7 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nMutator ), 3, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nRetroMode ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iCosmeticCount ) ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nHuntedCount_red ), 7, SPROP_UNSIGNED ),
@@ -348,12 +351,13 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropBool( SENDINFO( m_bEscortOverride ) ),
 	SendPropBool( SENDINFO( m_bIsTeamplay ) ),
 	SendPropBool( SENDINFO( m_bIsTDM ) ),
-	SendPropBool( SENDINFO( m_bIsHL2 ) ),
 	SendPropBool( SENDINFO( m_nbDontCountKills ) ),
 	SendPropBool( SENDINFO( m_bUsesHL2Hull ) ),
 	SendPropBool( SENDINFO( m_bForce3DSkybox ) ),
 	SendPropBool( SENDINFO( m_bUsesMoney ) ),
 	SendPropBool( SENDINFO( m_bKOTH ) ),
+	SendPropBool( SENDINFO( m_bAllClass ) ),
+	SendPropBool( SENDINFO( m_bAllClassZombie ) ),
 	SendPropEHandle( SENDINFO( m_hRedKothTimer ) ), 
 	SendPropEHandle( SENDINFO( m_hBlueKothTimer ) ),
 	SendPropEHandle( SENDINFO( m_hInfectionTimer ) ),
@@ -916,25 +920,6 @@ void CTFLogicDOM::InputSetDomScoreLimit( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Coop Logic 
-//-----------------------------------------------------------------------------
-
-class CTFLogicCoop : public CBaseEntity
-{
-public:
-	DECLARE_CLASS(CTFLogicCoop, CBaseEntity);
-	void	Spawn(void);
-};
-
-LINK_ENTITY_TO_CLASS(of_logic_coop, CTFLogicCoop);
-
-void CTFLogicCoop::Spawn(void)
-{
-	BaseClass::Spawn();
-}
-
-
-//-----------------------------------------------------------------------------
 // Infection Logic 
 //-----------------------------------------------------------------------------
 
@@ -1231,119 +1216,6 @@ void CTFLogicKOTH::InputSetRedTimer( inputdata_t &inputdata )
 // (We clamp ammo ourselves elsewhere).
 ConVar ammo_max( "ammo_max", "5000", FCVAR_REPLICATED );
 
-ConVar  physcannon_mega_enabled( "physcannon_mega_enabled", "0", FCVAR_CHEAT | FCVAR_REPLICATED );
-
-// Controls the application of the robus radius damage model.
-ConVar	sv_robust_explosions( "sv_robust_explosions","1", FCVAR_REPLICATED );
-
-// Damage scale for damage inflicted by the player on each skill level.
-ConVar	sk_dmg_inflict_scale1( "sk_dmg_inflict_scale1", "1.50", FCVAR_REPLICATED );
-ConVar	sk_dmg_inflict_scale2( "sk_dmg_inflict_scale2", "1.00", FCVAR_REPLICATED );
-ConVar	sk_dmg_inflict_scale3( "sk_dmg_inflict_scale3", "0.75", FCVAR_REPLICATED );
-
-// Damage scale for damage taken by the player on each skill level.
-ConVar	sk_dmg_take_scale1( "sk_dmg_take_scale1", "0.50", FCVAR_REPLICATED );
-ConVar	sk_dmg_take_scale2( "sk_dmg_take_scale2", "1.00", FCVAR_REPLICATED );
-#ifdef HL2_EPISODIC
-	ConVar	sk_dmg_take_scale3( "sk_dmg_take_scale3", "2.0", FCVAR_REPLICATED );
-#else
-	ConVar	sk_dmg_take_scale3( "sk_dmg_take_scale3", "1.50", FCVAR_REPLICATED );
-#endif//HL2_EPISODIC
-
-ConVar	sk_allow_autoaim( "sk_allow_autoaim", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE_XBOX );
-
-// Autoaim scale
-ConVar	sk_autoaim_scale1( "sk_autoaim_scale1", "1.0", FCVAR_REPLICATED );
-ConVar	sk_autoaim_scale2( "sk_autoaim_scale2", "1.0", FCVAR_REPLICATED );
-//ConVar	sk_autoaim_scale3( "sk_autoaim_scale3", "0.0", FCVAR_REPLICATED ); NOT CURRENTLY OFFERED ON SKILL 3
-
-// Quantity scale for ammo received by the player.
-ConVar	sk_ammo_qty_scale1 ( "sk_ammo_qty_scale1", "1.20", FCVAR_REPLICATED );
-ConVar	sk_ammo_qty_scale2 ( "sk_ammo_qty_scale2", "1.00", FCVAR_REPLICATED );
-ConVar	sk_ammo_qty_scale3 ( "sk_ammo_qty_scale3", "0.60", FCVAR_REPLICATED );
-
-ConVar	sk_plr_health_drop_time		( "sk_plr_health_drop_time", "30", FCVAR_REPLICATED );
-ConVar	sk_plr_grenade_drop_time	( "sk_plr_grenade_drop_time", "30", FCVAR_REPLICATED );
-
-ConVar	sk_plr_dmg_ar2			( "sk_plr_dmg_ar2","0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_ar2			( "sk_npc_dmg_ar2","0", FCVAR_REPLICATED);
-ConVar	sk_max_ar2				( "sk_max_ar2","0", FCVAR_REPLICATED);
-ConVar	sk_max_ar2_altfire		( "sk_max_ar2_altfire","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_alyxgun		( "sk_plr_dmg_alyxgun","0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_alyxgun		( "sk_npc_dmg_alyxgun","0", FCVAR_REPLICATED);
-ConVar	sk_max_alyxgun			( "sk_max_alyxgun","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_pistol		( "sk_plr_dmg_pistol","0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_pistol		( "sk_npc_dmg_pistol","0", FCVAR_REPLICATED);
-ConVar	sk_max_pistol			( "sk_max_pistol","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_smg1			( "sk_plr_dmg_smg1","0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_smg1			( "sk_npc_dmg_smg1","0", FCVAR_REPLICATED);
-ConVar	sk_max_smg1				( "sk_max_smg1","0", FCVAR_REPLICATED);
-
-// FIXME: remove these
-//ConVar	sk_plr_dmg_flare_round	( "sk_plr_dmg_flare_round","0", FCVAR_REPLICATED);
-//ConVar	sk_npc_dmg_flare_round	( "sk_npc_dmg_flare_round","0", FCVAR_REPLICATED);
-//ConVar	sk_max_flare_round		( "sk_max_flare_round","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_buckshot		( "sk_plr_dmg_buckshot","0", FCVAR_REPLICATED);	
-ConVar	sk_npc_dmg_buckshot		( "sk_npc_dmg_buckshot","0", FCVAR_REPLICATED);
-ConVar	sk_max_buckshot			( "sk_max_buckshot","0", FCVAR_REPLICATED);
-ConVar	sk_plr_num_shotgun_pellets( "sk_plr_num_shotgun_pellets","7", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_rpg_round	( "sk_plr_dmg_rpg_round","0", FCVAR_REPLICATED);
-ConVar	sk_npc_dmg_rpg_round	( "sk_npc_dmg_rpg_round","0", FCVAR_REPLICATED);
-ConVar	sk_max_rpg_round		( "sk_max_rpg_round","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_sniper_round	( "sk_plr_dmg_sniper_round","0", FCVAR_REPLICATED);	
-ConVar	sk_npc_dmg_sniper_round	( "sk_npc_dmg_sniper_round","0", FCVAR_REPLICATED);
-ConVar	sk_max_sniper_round		( "sk_max_sniper_round","0", FCVAR_REPLICATED);
-
-//ConVar	sk_max_slam				( "sk_max_slam","0", FCVAR_REPLICATED);
-//ConVar	sk_max_tripwire			( "sk_max_tripwire","0", FCVAR_REPLICATED);
-
-//ConVar	sk_plr_dmg_molotov		( "sk_plr_dmg_molotov","0", FCVAR_REPLICATED);
-//ConVar	sk_npc_dmg_molotov		( "sk_npc_dmg_molotov","0", FCVAR_REPLICATED);
-//ConVar	sk_max_molotov			( "sk_max_molotov","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_grenade		( "sk_plr_dmg_grenade","0", FCVAR_REPLICATED);
-ConVar	sk_npc_dmg_grenade		( "sk_npc_dmg_grenade","0", FCVAR_REPLICATED);
-ConVar	sk_max_grenade			( "sk_max_grenade","0", FCVAR_REPLICATED);
-
-#ifdef HL2_EPISODIC
-ConVar	sk_max_hopwire			( "sk_max_hopwire", "3", FCVAR_REPLICATED);
-ConVar	sk_max_striderbuster	( "sk_max_striderbuster", "3", FCVAR_REPLICATED);
-#endif
-
-//ConVar sk_plr_dmg_brickbat	( "sk_plr_dmg_brickbat","0", FCVAR_REPLICATED);
-//ConVar sk_npc_dmg_brickbat	( "sk_npc_dmg_brickbat","0", FCVAR_REPLICATED);
-//ConVar sk_max_brickbat		( "sk_max_brickbat","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_smg1_grenade	( "sk_plr_dmg_smg1_grenade","0", FCVAR_REPLICATED);
-ConVar	sk_npc_dmg_smg1_grenade	( "sk_npc_dmg_smg1_grenade","0", FCVAR_REPLICATED);
-ConVar	sk_max_smg1_grenade		( "sk_max_smg1_grenade","0", FCVAR_REPLICATED );
-
-ConVar	sk_plr_dmg_357			( "sk_plr_dmg_357", "0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_357			( "sk_npc_dmg_357", "0", FCVAR_REPLICATED );
-ConVar	sk_max_357				( "sk_max_357", "0", FCVAR_REPLICATED );
-
-ConVar	sk_plr_dmg_crossbow		( "sk_plr_dmg_crossbow", "0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_crossbow		( "sk_npc_dmg_crossbow", "0", FCVAR_REPLICATED );
-ConVar	sk_max_crossbow			( "sk_max_crossbow", "0", FCVAR_REPLICATED );
-
-ConVar	sk_dmg_sniper_penetrate_plr( "sk_dmg_sniper_penetrate_plr","0", FCVAR_REPLICATED);
-ConVar	sk_dmg_sniper_penetrate_npc( "sk_dmg_sniper_penetrate_npc","0", FCVAR_REPLICATED);
-
-ConVar	sk_plr_dmg_airboat		( "sk_plr_dmg_airboat", "0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_airboat		( "sk_npc_dmg_airboat", "0", FCVAR_REPLICATED );
-
-ConVar	sk_max_gauss_round		( "sk_max_gauss_round", "0", FCVAR_REPLICATED );
-
-// Gunship & Dropship cannons
-ConVar	sk_npc_dmg_gunship			( "sk_npc_dmg_gunship", "0", FCVAR_REPLICATED );
-ConVar	sk_npc_dmg_gunship_to_plr	( "sk_npc_dmg_gunship_to_plr", "0", FCVAR_REPLICATED );
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : iDmgType - 
@@ -1430,16 +1302,12 @@ CTFGameRules::CTFGameRules()
 	m_bDomRedLeadThreshold = false;
 	m_bDomBlueLeadThreshold = false;
 	m_bStartedVote = false;
-	m_bHasTeamSpawns = false;
 	m_bHasCivilianSpawns = false;
 	m_bHasJuggernautSpawns = false;
 	m_bEntityLimitPrevented = false;
 
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
-
-	if ( !Q_strncmp(STRING(gpGlobals->mapname), "d1_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d2_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "d3_", 3) )
-		m_bIsHL2 = true;
 
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_capture_blocked" );	
@@ -1502,14 +1370,13 @@ CTFGameRules::CTFGameRules()
 	m_iPreviousRoundWinners = TEAM_UNASSIGNED;
 	m_iBirthdayMode = BIRTHDAY_RECALCULATE;
 
+	// tells bots whether they should just move randomly around on the map, like if its free for all
+	m_bIsFreeRoamMap = false;
+
 	m_pszTeamGoalStringRed.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringBlue.GetForModify()[0] = '\0';
 	m_pszTeamGoalStringMercenary.GetForModify()[0] = '\0';
 
-	m_flLastHealthDropTime = 0.0f;
-	m_flLastGrenadeDropTime = 0.0f;	
-
-	
 #ifdef GAME_DLL
 	const char *szMapname = STRING( gpGlobals->mapname );
 	if ( !Q_strncmp( szMapname, "cp_manor_event", MAX_MAP_NAME ) )
@@ -1557,6 +1424,23 @@ int CTFGameRules::GetMutator( void )
 void CTFGameRules::SetMutator( int nMutator )
 {
 	m_nMutator = nMutator;
+}
+#endif
+
+bool CTFGameRules::IsRetroMode( int nRetroMode )
+{
+	return ( m_nRetroMode == nRetroMode );
+}
+
+int CTFGameRules::GetRetroMode( void )
+{
+	return m_nRetroMode;
+}
+
+#ifdef GAME_DLL
+void CTFGameRules::SetRetroMode( int nRetroMode)
+{
+	m_nRetroMode = nRetroMode;
 }
 #endif
 
@@ -1671,6 +1555,8 @@ void CTFGameRules::Activate()
 {
 	SetupMutator();
 
+	SetRetroMode( of_retromode.GetInt() );
+
 	ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server global gamemode config file\n");
 	engine->ServerCommand("exec config_default_global.cfg\n");
 	engine->ServerExecute();
@@ -1780,26 +1666,6 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 
-	// this is for a future zombie survival gamemode
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_coop") || !Q_strncmp(STRING(gpGlobals->mapname), "zm_", 3) || of_coop.GetBool() )
-	{
-		AddGametype(TF_GAMETYPE_COOP);
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Coop gamemode config file\n");
-		engine->ServerCommand("exec config_default_coop.cfg \n");
-		engine->ServerExecute();
-	}
-	
-	// HL2 Deathmatch
-	if ( IsHL2() )
-	{
-		AddGametype(TF_GAMETYPE_COOP);
-		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server HL2 gamemode config file\n");
-		engine->ServerCommand("exec config_default_hl2.cfg \n");
-		engine->ServerExecute();
-
-		AddGametype(TF_GAMETYPE_DM);
-	}
-
 	// Infection
 	if ( gEntList.FindEntityByClassname(NULL, "of_logic_inf") || !Q_strncmp(STRING(gpGlobals->mapname), "inf_", 4) || of_infection.GetBool() )
 	{
@@ -1816,9 +1682,276 @@ void CTFGameRules::Activate()
 		engine->ServerCommand("exec config_default_inf.cfg \n");
 		engine->ServerExecute();
 	}
-	
+
+	m_bAllClass = false;
+	m_bAllClassZombie = false;
+
+	if ( !of_forceclass.GetBool() )
+		m_bAllClass = true;
+
+	if ( !of_forcezombieclass.GetBool() )
+		m_bAllClassZombie = true;
+
 	CheckTDM();
 	bMultiweapons = TFGameRules()->UsesDMBuckets();
+
+	PrecacheGameMode();	
+}
+
+extern const char *s_aPlayerClassFiles[];
+
+void CTFGameRules::PrecacheGameMode()
+{
+	// To-Do: Expand this to other cases and handle more stuff aside from weapons
+	if ( !TFGameRules()->IsDMGamemode() || TFGameRules()->IsAllClassEnabled() || ( TFGameRules()->IsInfGamemode() && TFGameRules()->IsAllClassZombieEnabled() ) )
+	{
+		// Precache our base classes
+		for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+		{
+			const unsigned char *pKey = NULL;
+
+			if ( g_pGameRules )
+			{
+				pKey = g_pGameRules->GetEncryptionKey();
+			}
+
+			KeyValues *kvFinal = ReadEncryptedKVFile( filesystem, s_aPlayerClassFiles[i], pKey );
+			if( !kvFinal )
+				continue;
+		
+			const char *pszModel = kvFinal->GetString("model");
+			if ( pszModel && pszModel[0] )
+			{
+				int iModel = CBaseEntity::PrecacheModel( pszModel );
+				PrecacheGibsForModel( iModel );
+			}
+
+			const char *pszModelArm = kvFinal->GetString("arm_model");
+			if ( pszModelArm && pszModelArm[0] )
+			{
+				CBaseEntity::PrecacheModel( pszModelArm );
+			}
+
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_crit_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_melee_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_explosion_death") );
+			
+			// Precache TFC classes if necessary
+			if ( IsRetroModeEnabled() )
+			{
+				// TFC
+				KeyValues* kvModifier = kvFinal->FindKey("TFC");
+				if( kvModifier )
+				{
+					pszModel = kvModifier->GetString("model");
+					if ( pszModel && pszModel[0] )
+					{
+						int iModel = CBaseEntity::PrecacheModel( pszModel );
+						PrecacheGibsForModel( iModel );
+					}
+
+					pszModelArm = kvModifier->GetString("arm_model");
+					if ( pszModelArm && pszModelArm[0] )
+					{
+						CBaseEntity::PrecacheModel( pszModelArm );
+					}
+			
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_crit_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_melee_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_explosion_death") );
+				}
+			}
+			// Precache the zombie classes if necessary
+			if ( TFGameRules()->IsInfGamemode() )
+			{
+				KeyValues* kvModifier = kvFinal->FindKey("Zombie");
+				if( kvModifier )
+				{
+					pszModel = kvModifier->GetString("model");
+					if ( pszModel && pszModel[0] )
+					{
+						int iModel = CBaseEntity::PrecacheModel( pszModel );
+						PrecacheGibsForModel( iModel );
+					}
+
+					pszModelArm = kvModifier->GetString("arm_model");
+					if ( pszModelArm && pszModelArm[0] )
+					{
+						CBaseEntity::PrecacheModel( pszModelArm );
+					}	
+			
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_crit_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_melee_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_explosion_death") );
+				}
+			}
+		}
+		// Precache all base weapons of every class
+		for ( int iClass = TF_FIRST_NORMAL_CLASS; iClass <= TF_LAST_NORMAL_CLASS; iClass++ )
+		{
+			TFPlayerClassData_t* pData = GetPlayerClassData( iClass );
+
+			for ( int iWeapon = 0; iWeapon < pData->m_iWeaponCount; iWeapon++ )
+			{
+				int iWeaponID = pData->m_aWeapons[iWeapon];
+				if ( iWeaponID != TF_WEAPON_NONE )
+				{
+					const char* pszWeaponName = WeaponIdToClassname( iWeaponID );
+					if ( !pszWeaponName )
+						continue;
+
+					UTIL_PrecacheOther( pszWeaponName );
+				}
+			}
+		}
+
+		// HACK: also precache the akimbos for mercenary
+		UTIL_PrecacheOther( "tf_weapon_pistol_akimbo" );
+
+		// For spy's disguises
+		CBaseEntity::PrecacheModel( "models/player/spy_mask.mdl" );
+	}
+	else // never add conditionals here, we gotta atleast precache something
+	{
+		// Precache only the mercenary
+		const unsigned char *pKey = NULL;
+
+		if ( g_pGameRules )
+		{
+			pKey = g_pGameRules->GetEncryptionKey();
+		}
+
+		KeyValues *kvFinal = ReadEncryptedKVFile( filesystem, s_aPlayerClassFiles[TF_CLASS_MERCENARY], pKey );
+		if ( kvFinal )
+		{
+			const char *pszModel = kvFinal->GetString("model");
+			if ( pszModel && pszModel[0] )
+			{
+				int iModel = CBaseEntity::PrecacheModel( pszModel );
+				PrecacheGibsForModel( iModel );
+			}
+
+			const char *pszModelArm = kvFinal->GetString("arm_model");
+			if ( pszModelArm && pszModelArm[0] )
+			{
+				CBaseEntity::PrecacheModel( pszModelArm );
+			}
+
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_crit_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_melee_death") );
+			CBaseEntity::PrecacheScriptSound( kvFinal->GetString("sound_explosion_death") );
+		
+			// Precache TFC mercenary if necessary
+			if ( IsRetroModeEnabled() )
+			{
+				// TFC
+				KeyValues* kvModifier = kvFinal->FindKey("TFC");
+				if( kvModifier )
+				{
+					pszModel = kvModifier->GetString("model");
+					if ( pszModel && pszModel[0] )
+					{
+						int iModel = CBaseEntity::PrecacheModel( pszModel );
+						PrecacheGibsForModel( iModel );
+					}
+
+					pszModelArm = kvModifier->GetString("arm_model");
+					if ( pszModelArm && pszModelArm[0] )
+					{
+						CBaseEntity::PrecacheModel( pszModelArm );
+					}
+		
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_crit_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_melee_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_explosion_death") );
+				}
+			}
+			// Precache the zombie mercenary if necessary
+			if ( TFGameRules()->IsInfGamemode() )
+			{
+				KeyValues* kvModifier = kvFinal->FindKey("Zombie");
+				if( kvModifier )
+				{
+					pszModel = kvModifier->GetString("model");
+					if ( pszModel && pszModel[0] )
+					{
+						int iModel = CBaseEntity::PrecacheModel( pszModel );
+						PrecacheGibsForModel( iModel );
+					}
+
+					pszModelArm = kvModifier->GetString("arm_model");
+					if ( pszModelArm && pszModelArm[0] )
+					{
+						CBaseEntity::PrecacheModel( pszModelArm );
+					}	
+		
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_crit_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_melee_death") );
+					CBaseEntity::PrecacheScriptSound( kvModifier->GetString("sound_explosion_death") );
+				}
+			}
+		}
+
+		// Precache all base weapons of the mercenary, all other weapons are precached by their spawners
+		TFPlayerClassData_t* pData = GetPlayerClassData( TF_CLASS_MERCENARY );
+
+		for ( int iWeapon = 0; iWeapon < pData->m_iWeaponCount; iWeapon++ )
+		{
+			int iWeaponID = pData->m_aWeapons[iWeapon];
+			if ( iWeaponID != TF_WEAPON_NONE )
+			{
+				const char* pszWeaponName = WeaponIdToClassname( iWeaponID );
+				if ( !pszWeaponName )
+					continue;
+
+				UTIL_PrecacheOther( pszWeaponName );
+
+			}
+		}
+
+		// HACK: also precache the akimbos for mercenary
+		UTIL_PrecacheOther( "tf_weapon_pistol_akimbo" );
+	}
+
+	// Precache cosmetics for mercenary
+	// undone: this precaching is now done when loadouts are updated at UpdateCosmetics in tf_player.cpp
+	// undone: that causes so much stuttering, so this has to be done
+	KeyValues* pItemsGame = new KeyValues( "items_game" );
+	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
+	if ( pItemsGame )
+	{
+		KeyValues* pCosmetics = pItemsGame->FindKey( "Cosmetics" );
+		if ( pCosmetics )
+		{
+			for ( KeyValues *pCosmetic = pCosmetics->GetFirstSubKey(); pCosmetic; pCosmetic = pCosmetic->GetNextKey() )
+			{
+				if ( pCosmetic )
+				{
+					if( Q_stricmp(pCosmetic->GetString( "Model" ), "BLANK") )
+						CBaseEntity::PrecacheModel( pCosmetic->GetString( "Model" ) );
+				}
+			}
+		}
+	}
+
+	// Precache this for DM
+	CBaseEntity::PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
+
+	// birthday hat
+	if ( TFGameRules() && TFGameRules()->IsBirthday() )
+	{
+		for ( int i = 1; i < ARRAYSIZE(g_pszBDayGibs); i++ )
+		{
+			CBaseEntity::PrecacheModel( g_pszBDayGibs[i] );
+		}
+		CBaseEntity::PrecacheModel( "models/effects/bday_hat.mdl" );
+	}
 }
 
 #endif
@@ -1895,11 +2028,6 @@ bool CTFGameRules::IsESCGamemode( void )
 	return InGametype( TF_GAMETYPE_ESC );
 }
 
-bool CTFGameRules::IsCoopGamemode( void )
-{ 
-	return InGametype( TF_GAMETYPE_COOP );
-}
-
 bool CTFGameRules::IsZSGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_ZS );
@@ -1915,32 +2043,9 @@ bool CTFGameRules::IsPayloadOverride( void )
 	return m_bEscortOverride;
 }
 
-bool CTFGameRules::IsHL2( void )
-{ 
-	return m_bIsHL2;
-}
-
 bool CTFGameRules::IsFreeRoam( void )
 { 
-	// tells bots whether they should just move randomly around on the map, like if its free for all
-	bool bFreeRoam = false;
-
-#ifdef GAME_DLL
-	if ( ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) 
-		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
-		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
-		bFreeRoam = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopGamemode() )
-		bFreeRoam = true;	// also account for enabling DM or infection on maps such as ctf_2fort
-#else
-	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
-		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
-		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
-		bFreeRoam = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopGamemode() )
-		bFreeRoam = true;	// also account for enabling DM or infection on maps such as ctf_2fort
-#endif
-	return bFreeRoam;
+	return m_bIsFreeRoamMap;
 }
 
 bool CTFGameRules::UsesMoney( void )
@@ -1985,7 +2090,7 @@ bool CTFGameRules::CanBotChooseClass( CBasePlayer *pBot, int iDesiredClassIndex 
 //-----------------------------------------------------------------------------
 bool CTFGameRules::CanBotChangeClass( CBasePlayer *pBot )
 {
-	if ( ( TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() ) )
+	if ( ( TFGameRules()->IsDMGamemode() && IsAllClassEnabled() ) )
 		return false;
 
 	if ( !pBot || !pBot->IsPlayer()/* || !DWORD(a2 + 2309) */ )
@@ -2154,11 +2259,26 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
-	SetupMutator();
+	// this is required immediately so bots know what to do
+	m_bIsFreeRoamMap = false;
 
-	// fixes a dumb crash, see ai_pathfinder.cpp line 607
-	CAI_DynamicLink::gm_bInitialized = false;
-	CAI_DynamicLink::InitDynamicLinks();
+#ifdef GAME_DLL
+	if ( ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
+		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#else
+	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
+		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#endif
+
+	SetupMutator();
 
 	FireGamemodeOutputs();
 
@@ -2172,7 +2292,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_iNumCaps[i] = 0;
 	}
 
-	m_bHasTeamSpawns = false;
 	m_bHasCivilianSpawns = false;
 	m_bHasJuggernautSpawns = false;
 
@@ -2192,8 +2311,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 	}
 
 	// verify if info_player_teamspawns exist on this map
-	// if none exist, then this will tell the spawning system to utilise info_player_deathmatch / info_player_start spawnpoints
-	// this also checks whether spawnpoints exist with the Civilian or Juggernaut spawnflag
+	// this also whether spawnpoints exist with the Civilian or Juggernaut spawnflag
 	// see IsSpawnPointValid to see why this is necessary
 	CBaseEntity *pSpot = gEntList.FindEntityByClassname( NULL, "info_player_teamspawn" );
 	while ( pSpot )
@@ -2201,8 +2319,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		CTFTeamSpawn *pTFSpawn = dynamic_cast< CTFTeamSpawn* >( pSpot );
 		if ( pTFSpawn )
 		{
-			m_bHasTeamSpawns = true;
-
 			if ( pTFSpawn->AllowCivilian() )
 				m_bHasCivilianSpawns = true;
 
@@ -2240,10 +2356,16 @@ void CTFGameRules::SetupOnRoundStart( void )
 			m_hAmmoEntities.AddToTail( hndl );
 		}
 
-		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_healthkit*" ) )
+		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_healthkit*" ) && !pEnt->ClassMatches( "item_healthkit_tiny" ) ) // don't want bots to go after these...
 		{
 			EHANDLE hndl( pEnt );
 			m_hHealthEntities.AddToTail( hndl );
+		}
+
+		if ( pEnt->ClassMatches( "dm_weapon_spawner" ) )
+		{
+			EHANDLE hndl( pEnt );
+			m_hWeaponEntities.AddToTail( hndl );
 		}
 
 		if ( pEnt->ClassMatches( "ofd_trigger_jump" ) )
@@ -2427,7 +2549,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 			{
 				pPlayer->m_Shared.SetZombie( false );
 				pPlayer->ChangeTeam( TF_TEAM_RED, true );
-				if ( of_forceclass.GetBool() ) 
+				if ( TFGameRules()->IsAllClassEnabled() ) 
 					pPlayer->SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 			}
 		}
@@ -2445,15 +2567,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 				UTIL_Remove( pEntity );
 			}
 		}
-		// HORRIBLE HORRIBLE HACK AGAIN, THIS TIME FOR HUNTED MAP
-		if ( !Q_strncmp( STRING( gpGlobals->mapname), "esc_", 4 ) )
-		{
-			CBaseEntity *pEntity = NULL;
-			while ( ( pEntity = gEntList.FindEntityByName( pEntity, "winzone" ) ) != NULL )
-			{
-				UTIL_Remove( pEntity );
-			}
-		}
+
 
 		// no more visualizers, or respawn rooms, or regenerate lockers
 		CBaseEntity *pEntity = NULL;
@@ -2609,42 +2723,39 @@ void CTFGameRules::DisableSpawns( int iTeamNumber )
 		{
 			CTFTeamSpawn *pCTFSpawn = dynamic_cast<CTFTeamSpawn*>( pSpot );
 			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
-			if ( !TFGameRules()->HasTeamSpawns() && !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+			bool bSpotCreated = false;
+			// Check to see if this is a valid team spawn (player is on this team, etc.).
+			if( pSpot->GetTeamNumber() == iTeamNumber )
 			{
-				bool bSpotCreated = false;
-				// Check to see if this is a valid team spawn (player is on this team, etc.).
-				if( pSpot->GetTeamNumber() == iTeamNumber )
+				// Check for a bad spawn entity.
+				if ( pSpot->GetAbsOrigin() != Vector( 0, 0, 0 ) )
 				{
-					// Check for a bad spawn entity.
-					if ( pSpot->GetAbsOrigin() != Vector( 0, 0, 0 ) )
+					bool bKill = true;
+					for ( int i = 0; i < m_hReEnableSpawns.Count(); i++ )
 					{
-						bool bKill = true;
-						for ( int i = 0; i < m_hReEnableSpawns.Count(); i++ )
+						if ( m_hReEnableSpawns[i] == pCTFSpawn )
 						{
-							if ( m_hReEnableSpawns[i] == pCTFSpawn )
-							{
-								bKill = false;
-							}
-						}
-						if ( bKill )
-						{
-							// Found a valid spawn point.
-							pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-							bSpotCreated = true;
-							inputdata_t Temp;
-							UTIL_Remove( pCTFSpawn );//->InputDisable( Temp );
+							bKill = false;
 						}
 					}
+					if ( bKill )
+					{
+						// Found a valid spawn point.
+						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+						bSpotCreated = true;
+						inputdata_t Temp;
+						UTIL_Remove( pCTFSpawn );//->InputDisable( Temp );
+					}
 				}
-				if ( !bSpotCreated )
-					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-				if ( pSpot != pFirstSpot )
-				{
-					continue;
-				}
-				else
-					break;
 			}
+			if ( !bSpotCreated )
+				pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+			if ( pSpot != pFirstSpot )
+			{
+				continue;
+			}
+			else
+				break;
 		}
 		else
 			break;
@@ -3671,7 +3782,13 @@ void CTFGameRules::SpawnZombieMob( void )
 
 	bool CTFGameRules::CheckCapsPerRound()
 	{
-		if ( tf_flag_caps_per_round.GetInt() > 0 )
+		bool bCaps = false;
+		if ( TFGameRules()->IsDMGamemode() && of_mctf_flag_caps_per_round.GetInt() > 0 )
+			bCaps = true;
+		else if ( !TFGameRules()->IsDMGamemode() && tf_flag_caps_per_round.GetInt() > 0 )
+			bCaps = true;
+
+		if ( bCaps )
 		{
 			int iMaxCaps = -1;
 			CTFTeam *pMaxTeam = NULL;
@@ -3686,7 +3803,13 @@ void CTFGameRules::SpawnZombieMob( void )
 
 				// we might have more than one team over the caps limit (if the server op lowered the limit)
 				// so loop through to see who has the most among teams over the limit
-				if ( pTeam->GetFlagCaptures() >= tf_flag_caps_per_round.GetInt() )
+				bool bOver = false;
+				if ( TFGameRules()->IsDMGamemode() && pTeam->GetFlagCaptures() >= of_mctf_flag_caps_per_round.GetInt() )
+					bOver = true;
+				else if ( !TFGameRules()->IsDMGamemode() && pTeam->GetFlagCaptures() >= tf_flag_caps_per_round.GetInt() )
+					bOver = true;
+
+				if ( bOver )
 				{
 					if ( pTeam->GetFlagCaptures() > iMaxCaps )
 					{
@@ -4075,14 +4198,11 @@ void TestSpawnPointType( const char *pEntClassName )
 			// the successful spawn point's location
 			NDebugOverlay::Box( pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX, 0, 255, 0, 100, 60 );
 
-			if ( !TFGameRules()->IsHL2() )
-			{
-				// drop down to ground
-				Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+			// drop down to ground
+			Vector GroundPos = DropToGround( NULL, pSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
-				// the location the player will spawn at
-				NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
-			}
+			// the location the player will spawn at
+			NDebugOverlay::Box( GroundPos, VEC_HULL_MIN, VEC_HULL_MAX, 0, 0, 255, 100, 60 );
 
 			// draw the spawn angles
 			QAngle spotAngles = pSpot->GetLocalAngles();
@@ -4221,10 +4341,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 		Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
 
 		// Move the player to the place it said.
-		if ( TFGameRules()->IsHL2() )
-			pPlayer->SetLocalOrigin( pSpawnSpot->GetAbsOrigin() + Vector(0,0,1) );
-		else
-			pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
+		pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
 
 		pPlayer->SetAbsVelocity( vec3_origin );
 		pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
@@ -4242,13 +4359,14 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 //-----------------------------------------------------------------------------
 bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
 {
-    // Check the team if not in deathmatch
-	if ( IsHL2() || ( TFGameRules()->IsInfGamemode() && pPlayer->GetTeamNumber() == TF_TEAM_BLUE ) )
+	// WTFWTF 
+
+    // zombies can spawn everywhere
+	if ( TFGameRules()->IsInfGamemode() && pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 	{
 	}
 	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
 	{
-		// wow...
 		// some fools assigned teampoints to spectator team so i have to check this too
 		if ( pSpot->GetTeamNumber() == TEAM_UNASSIGNED || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
 		{
@@ -4257,11 +4375,13 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		{
 			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
 			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
-			if ( ( TFGameRules()->IsInfGamemode() && ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) || !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) ) ) )
+			if ( ( TFGameRules()->IsInfGamemode() && TFGameRules()->IsFreeRoam() ) )
 			{
 			}
 			else
+			{
 				return false;
+			}
 		}
 	}
 
@@ -5287,7 +5407,10 @@ void CTFGameRules::SendWinPanelInfo( void )
 		winEvent->SetInt( "winreason", m_iWinReason );
 		winEvent->SetString( "cappers",  ( m_iWinReason == WINREASON_ALL_POINTS_CAPTURED || m_iWinReason == WINREASON_FLAG_CAPTURE_LIMIT ) ?
 			m_szMostRecentCappers : "" );
-		winEvent->SetInt( "flagcaplimit", tf_flag_caps_per_round.GetInt() );
+		if ( TFGameRules()->IsDMGamemode() )
+			winEvent->SetInt( "flagcaplimit", of_mctf_flag_caps_per_round.GetInt() );
+		else
+			winEvent->SetInt( "flagcaplimit", tf_flag_caps_per_round.GetInt() );
 		winEvent->SetInt( "blue_score", iBlueScore );
 		winEvent->SetInt( "red_score", iRedScore );
 		winEvent->SetInt( "blue_score_prev", iBlueScorePrev );
@@ -6536,98 +6659,17 @@ CAmmoDef* GetAmmoDef()
 	static CAmmoDef def;
 	static bool bInitted = false;
 
-	if ( !bInitted )
+	if (!bInitted)
 	{
 		bInitted = true;
-		
+
 		// Start at 1 here and skip the dummy ammo type to make CAmmoDef use the same indices
 		// as our #defines.
-		for ( int i=1; i < TF_AMMO_COUNT; i++ )
+		for (int i = 1; i < TF_AMMO_COUNT; i++)
 		{
-			def.AddAmmoType( g_aAmmoNames[i], DMG_BULLET, TRACER_LINE, 0, 0, "ammo_max", 2400, 10, 14 );
-			Assert( def.Index( g_aAmmoNames[i] ) == i );
+			def.AddAmmoType(g_aAmmoNames[i], DMG_BULLET, TRACER_LINE, 0, 0, "ammo_max", 2400, 10, 14);
+			Assert(def.Index(g_aAmmoNames[i]) == i);
 		}
-
-		//HACKHACKHACKHACK AAAAAAAAAA
-#define DMG_SNIPER DMG_CRITICAL
-
-		
-
-		//HL2 AMMO TYPES FOR BACKWARDS COMPAT
-		def.AddAmmoType("AR2",				DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_plr_dmg_ar2",			"sk_npc_dmg_ar2",			"sk_max_ar2",			BULLET_IMPULSE(200, 1225), 0 );
-		def.AddAmmoType("AlyxGun",			DMG_BULLET,					TRACER_LINE,			"sk_plr_dmg_alyxgun",		"sk_npc_dmg_alyxgun",		"sk_max_alyxgun",		BULLET_IMPULSE(200, 1225), 0 );
-		def.AddAmmoType("Pistol",			DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_plr_dmg_pistol",		"sk_npc_dmg_pistol",		"sk_max_pistol",		BULLET_IMPULSE(200, 1225), 0 );
-		def.AddAmmoType("SMG1",				DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_plr_dmg_smg1",			"sk_npc_dmg_smg1",			"sk_max_smg1",			BULLET_IMPULSE(200, 1225), 0 );
-		def.AddAmmoType("357",				DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_plr_dmg_357",			"sk_npc_dmg_357",			"sk_max_357",			BULLET_IMPULSE(800, 5000), 0 );
-		def.AddAmmoType("XBowBolt",			DMG_BULLET,					TRACER_LINE,			"sk_plr_dmg_crossbow",		"sk_npc_dmg_crossbow",		"sk_max_crossbow",		BULLET_IMPULSE(800, 8000), 0 );
-
-		def.AddAmmoType("Buckshot",			DMG_BULLET | DMG_BUCKSHOT,	TRACER_LINE,			"sk_plr_dmg_buckshot",		"sk_npc_dmg_buckshot",		"sk_max_buckshot",		BULLET_IMPULSE(400, 1200), 0 );
-		def.AddAmmoType("RPG_Round",		DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_rpg_round",		"sk_npc_dmg_rpg_round",		"sk_max_rpg_round",		0, 0 );
-		def.AddAmmoType("SMG1_Grenade",		DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_smg1_grenade",	"sk_npc_dmg_smg1_grenade",	"sk_max_smg1_grenade",	0, 0 );
-		def.AddAmmoType("SniperRound",		DMG_BULLET | DMG_SNIPER,	TRACER_NONE,			"sk_plr_dmg_sniper_round",	"sk_npc_dmg_sniper_round",	"sk_max_sniper_round",	BULLET_IMPULSE(650, 6000), 0 );
-		def.AddAmmoType("SniperPenetratedRound", DMG_BULLET | DMG_SNIPER, TRACER_NONE,			"sk_dmg_sniper_penetrate_plr", "sk_dmg_sniper_penetrate_npc", "sk_max_sniper_round", BULLET_IMPULSE(150, 6000), 0 );
-		def.AddAmmoType("Grenade",			DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_grenade",		"sk_npc_dmg_grenade",		"sk_max_grenade",		0, 0);
-		def.AddAmmoType("Thumper",			DMG_SONIC,					TRACER_NONE,			10, 10, 2, 0, 0 );
-		def.AddAmmoType("Gravity",			DMG_CLUB,					TRACER_NONE,			0,	0, 8, 0, 0 );
-//		def.AddAmmoType("Extinguisher",		DMG_BURN,					TRACER_NONE,			0,	0, 100, 0, 0 );
-		def.AddAmmoType("Battery",			DMG_CLUB,					TRACER_NONE,			NULL, NULL, NULL, 0, 0 );
-		def.AddAmmoType("GaussEnergy",		DMG_SHOCK,					TRACER_NONE,			"sk_jeep_gauss_damage",		"sk_jeep_gauss_damage", "sk_max_gauss_round", BULLET_IMPULSE(650, 8000), 0 ); // hit like a 10kg weight at 400 in/s
-		def.AddAmmoType("CombineCannon",	DMG_BULLET,					TRACER_LINE,			"sk_npc_dmg_gunship_to_plr", "sk_npc_dmg_gunship", NULL, 1.5 * 750 * 12, 0 ); // hit like a 1.5kg weight at 750 ft/s
-		def.AddAmmoType("AirboatGun",		DMG_AIRBOAT,				TRACER_LINE,			"sk_plr_dmg_airboat",		"sk_npc_dmg_airboat",		NULL,					BULLET_IMPULSE(10, 600), 0 );
-
-		//=====================================================================
-		// STRIDER MINIGUN DAMAGE - Pull up a chair and I'll tell you a tale.
-		//
-		// When we shipped Half-Life 2 in 2004, we were unaware of a bug in
-		// CAmmoDef::NPCDamage() which was returning the MaxCarry field of
-		// an ammotype as the amount of damage that should be done to a NPC
-		// by that type of ammo. Thankfully, the bug only affected Ammo Types 
-		// that DO NOT use ConVars to specify their parameters. As you can see,
-		// all of the important ammotypes use ConVars, so the effect of the bug
-		// was limited. The Strider Minigun was affected, though.
-		//
-		// According to my perforce Archeology, we intended to ship the Strider
-		// Minigun ammo type to do 15 points of damage per shot, and we did. 
-		// To achieve this we, unaware of the bug, set the Strider Minigun ammo 
-		// type to have a maxcarry of 15, since our observation was that the 
-		// number that was there before (8) was indeed the amount of damage being
-		// done to NPC's at the time. So we changed the field that was incorrectly
-		// being used as the NPC Damage field.
-		//
-		// The bug was fixed during Episode 1's development. The result of the 
-		// bug fix was that the Strider was reduced to doing 5 points of damage
-		// to NPC's, since 5 is the value that was being assigned as NPC damage
-		// even though the code was returning 15 up to that point.
-		//
-		// Now as we go to ship Orange Box, we discover that the Striders in 
-		// Half-Life 2 are hugely ineffective against citizens, causing big
-		// problems in maps 12 and 13. 
-		//
-		// In order to restore balance to HL2 without upsetting the delicate 
-		// balance of ep2_outland_12, I have chosen to build Episodic binaries
-		// with 5 as the Strider->NPC damage, since that's the value that has
-		// been in place for all of Episode 2's development. Half-Life 2 will
-		// build with 15 as the Strider->NPC damage, which is how HL2 shipped
-		// originally, only this time the 15 is located in the correct field
-		// now that the AmmoDef code is behaving correctly.
-		//
-		//=====================================================================
-#ifdef HL2_EPISODIC
-		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 5, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
-#else
-		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 15,15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
-#endif//HL2_EPISODIC
-
-		def.AddAmmoType("StriderMinigunDirect",	DMG_BULLET,				TRACER_LINE,			2, 2, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
-		def.AddAmmoType("HelicopterGun",	DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_npc_dmg_helicopter_to_plr", "sk_npc_dmg_helicopter",	"sk_max_smg1",	BULLET_IMPULSE(400, 1225), AMMO_FORCE_DROP_IF_CARRIED | AMMO_INTERPRET_PLRDAMAGE_AS_DAMAGE_TO_PLAYER );
-		def.AddAmmoType("AR2AltFire",		DMG_DISSOLVE,				TRACER_NONE,			0, 0, "sk_max_ar2_altfire", 0, 0 );
-		def.AddAmmoType("Grenade",			DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_grenade",		"sk_npc_dmg_grenade",		"sk_max_grenade",		0, 0);
-#ifdef HL2_EPISODIC
-		def.AddAmmoType("Hopwire",			DMG_BLAST,					TRACER_NONE,			"sk_plr_dmg_grenade",		"sk_npc_dmg_grenade",		"sk_max_hopwire",		0, 0);
-		def.AddAmmoType("CombineHeavyCannon",	DMG_BULLET,				TRACER_LINE,			40,	40, NULL, 10 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 10 kg weight at 750 ft/s
-		def.AddAmmoType("ammo_proto1",			DMG_BULLET,				TRACER_LINE,			0, 0, 10, 0, 0 );
-#endif // HL2_EPISODIC
-
 	}
 
 	return &def;
@@ -6682,8 +6724,6 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_ESC]);
 	if ( TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) && !TFGameRules()->m_bEscortOverride )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_PAYLOAD]);
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP) )
-		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_COOP]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_DOM) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DOM]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
@@ -7173,1068 +7213,7 @@ void CTFGameRules::SelectInfector( void )
 
 void CTFGameRules::FinishInfection( void )
 {
-	SetWinningTeam( TF_TEAM_RED, WINREASON_COOP_FAIL, false );
+	SetWinningTeam( TF_TEAM_RED, WINREASON_DEFEND_UNTIL_TIME_LIMIT, false );
 }
-
-	//-----------------------------------------------------------------------------
-	// Purpose: Whether or not the NPC should drop a health vial
-	// Output : Returns true on success, false on failure.
-	//-----------------------------------------------------------------------------
-	bool CTFGameRules::NPC_ShouldDropHealth( CBasePlayer *pRecipient )
-	{
-		// Can only do this every so often
-		if ( m_flLastHealthDropTime > gpGlobals->curtime )
-			return false;
-
-		//Try to throw dynamic health
-		float healthPerc = ( (float) pRecipient->m_iHealth / (float) pRecipient->m_iMaxHealth );
-
-		if ( random->RandomFloat( 0.0f, 1.0f ) > healthPerc*1.5f )
-			return true;
-
-		return false;
-	}
-
-	//-----------------------------------------------------------------------------
-	// Purpose: Whether or not the NPC should drop a health vial
-	// Output : Returns true on success, false on failure.
-	//-----------------------------------------------------------------------------
-	bool CTFGameRules::NPC_ShouldDropGrenade( CBasePlayer *pRecipient )
-	{
-		// Can only do this every so often
-		if ( m_flLastGrenadeDropTime > gpGlobals->curtime )
-			return false;
-		
-		int grenadeIndex = GetAmmoDef()->Index( "grenade" );
-		int numGrenades = pRecipient->GetAmmoCount( grenadeIndex );
-
-		// If we're not maxed out on grenades and we've randomly okay'd it
-		if ( ( numGrenades < GetAmmoDef()->MaxCarry( grenadeIndex ) ) && ( random->RandomInt( 0, 2 ) == 0 ) )
-			return true;
-
-		return false;
-	}
-
-	//-----------------------------------------------------------------------------
-	// Purpose: Update the drop counter for health
-	//-----------------------------------------------------------------------------
-	void CTFGameRules::NPC_DroppedHealth( void )
-	{
-		m_flLastHealthDropTime = gpGlobals->curtime + sk_plr_health_drop_time.GetFloat();
-	}
-
-	//-----------------------------------------------------------------------------
-	// Purpose: Update the drop counter for grenades
-	//-----------------------------------------------------------------------------
-	void CTFGameRules::NPC_DroppedGrenade( void )
-	{
-		m_flLastGrenadeDropTime = gpGlobals->curtime + sk_plr_grenade_drop_time.GetFloat();
-	}
-
-
-#ifdef HL2_EPISODIC
-	ConVar  alyx_darkness_force("alyx_darkness_force", "0", FCVAR_CHEAT | FCVAR_REPLICATED);
-#endif // HL2_EPISODIC
-
-//-----------------------------------------------------------------------------
-// Returns whether or not Alyx cares about light levels in order to see.
-//-----------------------------------------------------------------------------
-bool CTFGameRules::IsAlyxInDarknessMode()
-{
-#ifdef HL2_EPISODIC
-	if ( alyx_darkness_force.GetBool() )
-		return true;
-
-	return ( GlobalEntity_GetState( "ep_alyx_darknessmode" ) == GLOBAL_ON );
-#else
-	return false;
-#endif // HL2_EPISODIC
-}
-
-
-//-----------------------------------------------------------------------------
-// This takes the long way around to see if a prop should emit a DLIGHT when it
-// ignites, to avoid having Alyx-related code in props.cpp.
-//-----------------------------------------------------------------------------
-bool CTFGameRules::ShouldBurningPropsEmitLight()
-{
-#ifdef HL2_EPISODIC
-	return IsAlyxInDarknessMode();
-#else
-	return false;
-#endif // HL2_EPISODIC
-}
-
-
-
-	//------------------------------------------------------------------------------
-	// Purpose : Initialize all default class relationships
-	// Input   :
-	// Output  :
-	//------------------------------------------------------------------------------
-	void CTFGameRules::InitDefaultAIRelationships( void )
-	{
-		int i, j;
-
-		//  Allocate memory for default relationships
-		CBaseCombatCharacter::AllocateDefaultRelationships();
-
-		// --------------------------------------------------------------
-		// First initialize table so we can report missing relationships
-		// --------------------------------------------------------------
-		for (i=0;i<NUM_AI_CLASSES;i++)
-		{
-			for (j=0;j<NUM_AI_CLASSES;j++)
-			{
-				// By default all relationships are neutral of priority zero
-				CBaseCombatCharacter::SetDefaultRelationship( (Class_T)i, (Class_T)j, D_NU, 0 );
-			}
-		}
-
-		// ------------------------------------------------------------
-		//	> CLASS_ANTLION
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_PROTOSNIPER,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_ANTLION,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ANTLION,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_BARNACLE
-		//
-		//  In this case, the relationship D_HT indicates which characters
-		//  the barnacle will try to eat.
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_BARNACLE,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_MANHACK,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_EARTH_FAUNA,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BARNACLE,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_BULLSEYE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_ANTLION,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_VORTIGAUNT,		D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSEYE,			CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_BULLSQUID
-		// ------------------------------------------------------------
-		/*
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_BULLSEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_HEADCRAB,			D_HT, 1);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_HOUNDEYE,			D_HT, 1);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_MANHACK,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_BULLSQUID,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-		*/
-		// ------------------------------------------------------------
-		//	> CLASS_CITIZEN_PASSIVE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_BULLSQUID,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_COMBINE_HUNTER,	D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_HEADCRAB,			D_FR, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_HOUNDEYE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_MANHACK,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_MISSILE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_VORTIGAUNT,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_ZOMBIE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_PASSIVE,	CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_CITIZEN_REBEL
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_BULLSQUID,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_MISSILE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_VORTIGAUNT,		D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CITIZEN_REBEL,		CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_COMBINE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_COMBINE,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_COMBINE_GUNSHIP,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_COMBINE_HUNTER,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_COMBINE_GUNSHIP
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_COMBINE,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_COMBINE_GUNSHIP,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_COMBINE_HUNTER,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_MISSILE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_GUNSHIP,		CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_COMBINE_HUNTER
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,	CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_COMBINE,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_COMBINE_GUNSHIP,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_COMBINE_HUNTER,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,	CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_COMBINE_HUNTER,		CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_CONSCRIPT
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_VORTIGAUNT,		D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_CONSCRIPT,			CLASS_HACKED_ROLLERMINE,D_NU, 0);
-		
-		// ------------------------------------------------------------
-		//	> CLASS_FLARE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_ANTLION,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_VORTIGAUNT,		D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_FLARE,			CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_HEADCRAB
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_BULLSQUID,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HEADCRAB,			CLASS_HACKED_ROLLERMINE,D_FR, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_HOUNDEYE
-		// ------------------------------------------------------------
-		/*
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_BULLSQUID,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_HEADCRAB,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HOUNDEYE,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-		*/
-
-		// ------------------------------------------------------------
-		//	> CLASS_MANHACK
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_HEADCRAB,			D_HT,-1);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_HOUNDEYE,			D_HT,-1);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MANHACK,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_METROPOLICE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_METROPOLICE,		CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_MILITARY
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MILITARY,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_MISSILE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_MISSILE,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_NONE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_ANTLION,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_BULLSEYE,			D_NU, 0);	
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_VORTIGAUNT,		D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_PLAYER_ALLY,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_PLAYER_ALLY_VITAL,D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_NONE,				CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_PLAYER
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_PLAYER,			D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_BARNACLE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_BULLSEYE,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_CITIZEN_PASSIVE,	D_LI, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_CITIZEN_REBEL,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_COMBINE_GUNSHIP,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_VORTIGAUNT,		D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_PROTOSNIPER,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_PLAYER_ALLY,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_PLAYER_ALLY_VITAL,D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER,			CLASS_HACKED_ROLLERMINE,D_LI, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_PLAYER_ALLY
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_PLAYER,			D_LI, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_BARNACLE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_HEADCRAB,			D_FR, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_VORTIGAUNT,		D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_ZOMBIE,			D_FR, 1);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_PROTOSNIPER,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_PLAYER_ALLY,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_PLAYER_ALLY_VITAL,D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY,			CLASS_HACKED_ROLLERMINE,D_LI, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_PLAYER_ALLY_VITAL
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_PLAYER,			D_LI, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_BARNACLE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_COMBINE_HUNTER,	D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_VORTIGAUNT,		D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_PROTOSNIPER,		D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_PLAYER_ALLY,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_PLAYER_ALLY_VITAL,D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PLAYER_ALLY_VITAL,	CLASS_HACKED_ROLLERMINE,D_LI, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_SCANNER
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_COMBINE,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_COMBINE_GUNSHIP,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_COMBINE_HUNTER,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_MANHACK,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_METROPOLICE,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_MILITARY,			D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_SCANNER,			D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_STALKER,			D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_PROTOSNIPER,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_SCANNER,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_STALKER
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_STALKER,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_VORTIGAUNT
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_PLAYER,			D_LI, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_BARNACLE,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_CITIZEN_PASSIVE,	D_LI, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_CITIZEN_REBEL,	D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_SCANNER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_VORTIGAUNT,		D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_PLAYER_ALLY,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_PLAYER_ALLY_VITAL,D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_VORTIGAUNT,		CLASS_HACKED_ROLLERMINE,D_LI, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_ZOMBIE
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_HEADCRAB,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_MANHACK,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_MILITARY,			D_FR, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_ZOMBIE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_ZOMBIE,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_PROTOSNIPER
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_PLAYER,			D_HT, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_BULLSQUID,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_COMBINE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_HOUNDEYE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_METROPOLICE,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_MILITARY,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_MISSILE,			D_NU, 5);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_STALKER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_VORTIGAUNT,		D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_PROTOSNIPER,			CLASS_HACKED_ROLLERMINE,D_HT, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_EARTH_FAUNA
-		//
-		// Hates pretty much everything equally except other earth fauna.
-		// This will make the critter choose the nearest thing as its enemy.
-		// ------------------------------------------------------------	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_NONE,				D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_PLAYER,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_CITIZEN_PASSIVE,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_CITIZEN_REBEL,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_COMBINE_GUNSHIP,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_COMBINE_HUNTER,	D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_CONSCRIPT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_FLARE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_MANHACK,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_MISSILE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_SCANNER,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_STALKER,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_VORTIGAUNT,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_ZOMBIE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_PROTOSNIPER,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_EARTH_FAUNA,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_PLAYER_ALLY,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_PLAYER_ALLY_VITAL,D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_EARTH_FAUNA,			CLASS_HACKED_ROLLERMINE,D_NU, 0);
-
-		// ------------------------------------------------------------
-		//	> CLASS_HACKED_ROLLERMINE
-		// ------------------------------------------------------------
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_NONE,				D_NU, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_PLAYER,			D_LI, 0);			
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_ANTLION,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_BARNACLE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_BULLSEYE,			D_NU, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_BULLSQUID,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_CITIZEN_PASSIVE,	D_NU, 0);	
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_CITIZEN_REBEL,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_COMBINE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_COMBINE_GUNSHIP,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_COMBINE_HUNTER,	D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_CONSCRIPT,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_FLARE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_HEADCRAB,			D_HT, 0);
-		//CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_HOUNDEYE,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_MANHACK,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_METROPOLICE,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_MILITARY,			D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_MISSILE,			D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_SCANNER,			D_NU, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_STALKER,			D_HT, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_VORTIGAUNT,		D_LI, 0);		
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_ZOMBIE,			D_HT, 1);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_PROTOSNIPER,		D_NU, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_EARTH_FAUNA,		D_HT, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_PLAYER_ALLY,		D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_PLAYER_ALLY_VITAL,D_LI, 0);
-		CBaseCombatCharacter::SetDefaultRelationship(CLASS_HACKED_ROLLERMINE,			CLASS_HACKED_ROLLERMINE,D_LI, 0);
-	}
-
-
-	//------------------------------------------------------------------------------
-	// Purpose : Return classify text for classify type
-	// Input   :
-	// Output  :
-	//------------------------------------------------------------------------------
-	const char* CTFGameRules::AIClassText(int classType)
-	{
-		switch (classType)
-		{
-			case CLASS_NONE:			return "CLASS_NONE";
-			case CLASS_PLAYER:			return "CLASS_PLAYER";
-			case CLASS_ANTLION:			return "CLASS_ANTLION";
-			case CLASS_BARNACLE:		return "CLASS_BARNACLE";
-			case CLASS_BULLSEYE:		return "CLASS_BULLSEYE";
-			//case CLASS_BULLSQUID:		return "CLASS_BULLSQUID";	
-			case CLASS_CITIZEN_PASSIVE: return "CLASS_CITIZEN_PASSIVE";		
-			case CLASS_CITIZEN_REBEL:	return "CLASS_CITIZEN_REBEL";
-			case CLASS_COMBINE:			return "CLASS_COMBINE";
-			case CLASS_COMBINE_GUNSHIP:	return "CLASS_COMBINE_GUNSHIP";
-			case CLASS_COMBINE_HUNTER:	return "CLASS_COMBINE_HUNTER";
-			case CLASS_CONSCRIPT:		return "CLASS_CONSCRIPT";
-			case CLASS_HEADCRAB:		return "CLASS_HEADCRAB";
-			//case CLASS_HOUNDEYE:		return "CLASS_HOUNDEYE";
-			case CLASS_MANHACK:			return "CLASS_MANHACK";
-			case CLASS_METROPOLICE:		return "CLASS_METROPOLICE";
-			case CLASS_MILITARY:		return "CLASS_MILITARY";	
-			case CLASS_SCANNER:			return "CLASS_SCANNER";		
-			case CLASS_STALKER:			return "CLASS_STALKER";		
-			case CLASS_VORTIGAUNT:		return "CLASS_VORTIGAUNT";
-			case CLASS_ZOMBIE:			return "CLASS_ZOMBIE";
-			case CLASS_PROTOSNIPER:		return "CLASS_PROTOSNIPER";
-			case CLASS_MISSILE:			return "CLASS_MISSILE";
-			case CLASS_FLARE:			return "CLASS_FLARE";
-			case CLASS_EARTH_FAUNA:		return "CLASS_EARTH_FAUNA";
-
-			default:					return "MISSING CLASS in ClassifyText()";
-		}
-	}
 
 #endif

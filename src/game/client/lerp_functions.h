@@ -56,6 +56,7 @@ inline T Lerp_Hermite( float t, const T& p0, const T& p1, const T& p2 )
 	return output;
 }
 
+#ifdef OF_CLIENT_DLL
 // Fix for wack pose parameters: https://github.com/ValveSoftware/source-sdk-2013/issues/404
 template <>
 inline float Lerp_Hermite( float t, const float& p0, const float& p1, const float& p2 )
@@ -77,6 +78,7 @@ inline float Lerp_Hermite( float t, const float& p0, const float& p1, const floa
 
 	return output;
 }
+#endif
 
 template <class T>
 inline T Derivative_Hermite( float t, const T& p0, const T& p1, const T& p2 )

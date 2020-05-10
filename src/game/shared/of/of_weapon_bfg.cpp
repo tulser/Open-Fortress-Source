@@ -37,7 +37,7 @@ BEGIN_PREDICTION_DATA( CTFBFG )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_gib, CTFBFG );
-PRECACHE_WEAPON_REGISTER( tf_weapon_gib );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_gib );
 
 // Server specific.
 #ifndef CLIENT_DLL

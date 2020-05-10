@@ -54,15 +54,6 @@
 
 REGISTER_GAMERULES_CLASS( CMultiplayRules );
 
-// This sets what percentage of players are required in the changelevel trigger before map change takes effect. Currently it's set to 100% (all players required).
-	ConVar	mp_transition_players_percent( "mp_transition_players_percent",
-						  "60",
-						  FCVAR_NOTIFY|FCVAR_REPLICATED,
-						  "How many players in percent are needed for a level transition?" );
-		#ifndef CLIENT_DLL
-		ConVar sv_transitions( "sv_transitions", "1", FCVAR_NOTIFY|FCVAR_GAMEDLL, "Enable transitions" );
-		#endif
-
 ConVar mp_chattime(
 		"mp_chattime", 
 		"10", 
@@ -131,7 +122,7 @@ void cc_GotoNextMapInCycle()
 ConCommand skip_next_map( "skip_next_map", cc_SkipNextMapInCycle, "Skips the next map in the map rotation for the server." );
 ConCommand changelevel_next( "changelevel_next", cc_GotoNextMapInCycle, "Immediately changes to the next map in the map rotation for the server." );
 
-#if !defined( TF_DLL ) && !defined( TF_MOD )		// TF overrides the default value of this convar
+#if !defined( TF_DLL ) && !defined( OF_DLL )		// TF overrides the default value of this convar
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "0", FCVAR_GAMEDLL, "WaitingForPlayers time length in seconds" );
 #endif
 
@@ -143,7 +134,7 @@ ConVar mp_clan_ready_signal( "mp_clan_ready_signal", "ready", FCVAR_GAMEDLL, "Te
 ConVar nextlevel( "nextlevel", 
 				  "", 
 				  FCVAR_GAMEDLL | FCVAR_NOTIFY,
-#if defined( CSTRIKE_DLL ) || defined( TF_DLL ) || defined( TF_MOD )
+#if defined( CSTRIKE_DLL ) || defined( TF_DLL ) || defined( OF_DLL )
 				  "If set to a valid map name, will trigger a changelevel to the specified map at the end of the round" );
 #else
 				  "If set to a valid map name, will change to this map during the next changelevel" );
@@ -356,7 +347,7 @@ bool CMultiplayRules::Init()
 	// override some values for multiplay.
 
 		// suitcharger
-#if !defined( TF_DLL ) && !defined( TF_MOD )
+#if !defined( TF_DLL ) && !defined( OF_DLL )
 //=============================================================================
 // HPE_BEGIN:
 // [menglish] CS doesn't have the suitcharger either
@@ -598,8 +589,10 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	bool CMultiplayRules::ClientConnected( edict_t *pEntity, const char *pszName, const char *pszAddress, char *reject, int maxrejectlen )
 	{
 		CBasePlayer *pPlayer = (CBasePlayer *)CBaseEntity::Instance( pEntity );
-		if( pPlayer )
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )		
+		if ( pPlayer )
 			FireTargets( "game_playerjoin", pPlayer, pPlayer, USE_TOGGLE, 0 );
+#endif
 		GetVoiceGameMgr()->ClientConnected( pEntity );
 		return true;
 	}
@@ -790,6 +783,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		// g_EventQueue.AddEvent( "game_playerdie", "Use", value, 0, pVictim, pVictim );
 		FireTargets( "game_playerdie", pVictim, pVictim, USE_TOGGLE, 0 );
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		CTFPlayer *pPlayer = ToTFPlayer( pVictim );
 
 		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && pPlayer && pPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
@@ -798,6 +792,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			if ( pEsc )
 				pEsc->m_OnHuntedDeath.FireOutput( pVictim, pEsc );
 		}
+#endif
 
 		// Did the player kill himself?
 		if ( pVictim == pScorer )  
@@ -1263,7 +1258,11 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		{
 			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 			{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )				
 				ConColorMsg( Color( 255, 239, 213, 255 ), "Using map cycle file '%s'.\n", pszResult );
+#else
+				Msg( "Using map cycle file '%s'.\n", pszResult );
+#endif
 				V_strcpy_safe( szLastResult, pszResult );
 			}
 			return;
@@ -1275,7 +1274,11 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		{
 			if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 			{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )					
 				ConColorMsg( Color( 255, 228, 181, 255 ), "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+#else
+				Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+#endif
 				V_strcpy_safe( szLastResult, pszResult );
 			}
 			return;
@@ -1289,7 +1292,11 @@ ConVarRef suitcharger( "sk_suitcharger" );
 			{
 				if ( bForceSpew || V_stricmp( szLastResult, pszResult) )
 				{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )					
 					ConColorMsg( Color( 255, 218, 185, 255 ), "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+#else
+					Msg( "Using map cycle file '%s'.  ('%s' was not found.)\n", pszResult, szRecommendedName );
+#endif
 					V_strcpy_safe( szLastResult, pszResult );
 				}
 				return;

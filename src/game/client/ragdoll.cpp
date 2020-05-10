@@ -19,6 +19,10 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#if defined ( _DEBUG ) && !defined ( OF_CLIENT_DLL )
+extern ConVar r_FadeProps;
+#endif
+
 CRagdoll::CRagdoll()
 {
 	m_ragdoll.listCount = 0;

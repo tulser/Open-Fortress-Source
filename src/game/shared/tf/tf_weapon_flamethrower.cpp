@@ -78,7 +78,7 @@ END_PREDICTION_DATA()
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_flamethrower, CTFFlameThrower );
-PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
 
 BEGIN_DATADESC( CTFFlameThrower )
 END_DATADESC()
@@ -89,7 +89,7 @@ BEGIN_NETWORK_TABLE( CTFCFlameThrower, DT_TFCFlameThrower )
 END_NETWORK_TABLE()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_flamethrower, CTFCFlameThrower );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_flamethrower );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_flamethrower );
 
 BEGIN_DATADESC( CTFCFlameThrower )
 END_DATADESC()
@@ -1104,8 +1104,6 @@ CTFFlameEntity *CTFFlameEntity::Create( const Vector &vecOrigin, const QAngle &v
 	}
 
 	// Set team.
-	/* if ( pOwner->GetTeamNumber() == 4) pFlame->ChangeTeam(77);
-	else */ 
 	pFlame->ChangeTeam( pOwner->GetTeamNumber()  );
 	pFlame->m_iDmgType = iDmgType;
 	pFlame->m_iCustomDmgType = iCustomDmgType;

@@ -20,7 +20,7 @@
 #endif
 // NVNT end extra includes
 
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
 #endif
@@ -53,9 +53,12 @@
 #define HIDEWEAPON_THINK_CONTEXT			"BaseCombatWeapon_HideThink"
 
 extern bool UTIL_ItemCanBeTouchedByPlayer( CBaseEntity *pItem, CBasePlayer *pPlayer );
-extern ConVar of_infiniteammo;
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
+extern ConVar of_infiniteammo;
+#endif
+
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 #ifdef _DEBUG
 ConVar tf_weapon_criticals_force_random( "tf_weapon_criticals_force_random", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // _DEBUG
@@ -87,7 +90,9 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_iState = m_iOldState = WEAPON_NOT_CARRIED;
 	m_iClip1 = -1;
 	m_iClip2 = -1;
+#if defined ( OF_CLIENT_DLL )
 	m_iReserveAmmo = -1;
+#endif
 	m_iPrimaryAmmoType = -1;
 	m_iSecondaryAmmoType = -1;
 #endif
@@ -99,11 +104,11 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 
 	m_hWeaponFileInfo = GetInvalidWeaponInfoHandle();
 
-#if defined( TF_DLL ) || defined ( TF_MOD )
+#if defined( TF_DLL ) || defined ( OF_DLL )
 	UseClientSideAnimation();
 #endif
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 	m_flCritTokenBucket = tf_weapon_criticals_bucket_default.GetFloat();
 	m_nCritChecks = 1;
 	m_nCritSeedRequests = 0;
@@ -147,7 +152,11 @@ void CBaseCombatWeapon::GiveDefaultAmmo( void )
 	// If I use clips, set my clips to the default
 	if ( UsesClipsForAmmo1() )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		m_iClip1 = GetDefaultClip1();
+#else
+		m_iClip1 = AutoFiresFullClip() ? 0 : GetDefaultClip1();
+#endif
 	}
 	else
 	{
@@ -163,7 +172,9 @@ void CBaseCombatWeapon::GiveDefaultAmmo( void )
 		SetSecondaryAmmoCount( GetDefaultClip2() );
 		m_iClip2 = WEAPON_NOCLIP;
 	}
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	m_iReserveAmmo = GetDefaultReserveAmmo();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -255,9 +266,75 @@ void CBaseCombatWeapon::Precache( void )
 #endif
 	m_iPrimaryAmmoType = m_iSecondaryAmmoType = -1;
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	ParseWeaponScript( false );
+#else
+	// Add this weapon to the weapon registry, and get our index into it
+	// Get weapon data from script file
+	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
+	{
+		// Get the ammo indexes for the ammo's specified in the data file
+		if ( GetWpnData().szAmmo1[0] )
+		{
+			m_iPrimaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo1 );
+			if (m_iPrimaryAmmoType == -1)
+			{
+				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
+			}
+ #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
+			// Ammo override
+			int iModUseMetalOverride = 0;
+			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
+			if ( iModUseMetalOverride )
+			{
+				m_iPrimaryAmmoType = (int)TF_AMMO_METAL;
+			}
+#endif
+ 		}
+		if ( GetWpnData().szAmmo2[0] )
+		{
+			m_iSecondaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo2 );
+			if (m_iSecondaryAmmoType == -1)
+			{
+				Msg("ERROR: Weapon (%s) using undefined secondary ammo type (%s)\n",GetClassname(),GetWpnData().szAmmo2);
+			}
+
+		}
+#if defined( CLIENT_DLL )
+		gWR.LoadWeaponSprites( GetWeaponFileInfoHandle() );
+#endif
+		// Precache models (preload to avoid hitch)
+		m_iViewModelIndex = 0;
+		m_iWorldModelIndex = 0;
+		if ( GetViewModel() && GetViewModel()[0] )
+		{
+			m_iViewModelIndex = CBaseEntity::PrecacheModel( GetViewModel() );
+		}
+		if ( GetWorldModel() && GetWorldModel()[0] )
+		{
+			m_iWorldModelIndex = CBaseEntity::PrecacheModel( GetWorldModel() );
+		}
+
+		// Precache sounds, too
+		for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; ++i )
+		{
+			const char *shootsound = GetShootSound( i );
+			if ( shootsound && shootsound[0] )
+			{
+				CBaseEntity::PrecacheScriptSound( shootsound );
+			}
+		}
+	}
+	else
+	{
+		// Couldn't read data file, remove myself
+		Warning( "Error reading weapon data file for: %s\n", GetClassname() );
+	//	Remove( );	//don't remove, this gets released soon!
+	}
+#endif
 }
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
 {
 	// Add this weapon to the weapon registry, and get our index into it
@@ -323,6 +400,7 @@ void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
 	//	Remove( );	//don't remove, this gets released soon!
 	}	
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Get my data in the file weapon info array
@@ -365,6 +443,7 @@ const char *CBaseCombatWeapon::GetPrintName( void ) const
 	return GetWpnData().szPrintName;
 }
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -379,6 +458,7 @@ int CBaseCombatWeapon::GetDefaultReserveAmmo( void ) const
 {
 	return GetWpnData().iDefaultReserveAmmo;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -644,13 +724,21 @@ bool CBaseCombatWeapon::HasAmmo( void )
 		return true;
 	if ( GetWeaponFlags() & ITEM_FLAG_SELECTONEMPTY )
 		return true;
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	if ( m_iReserveAmmo <= 0 )
 		return false;
-	
+#endif
+
 	CBasePlayer *player = ToBasePlayer( GetOwner() );
 	if ( !player )
 		return false;
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	return ( m_iClip1 > 0 || m_iReserveAmmo || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
+#else
+	return ( m_iClip1 > 0 || player->GetAmmoCount( m_iPrimaryAmmoType ) || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -949,7 +1037,11 @@ bool CBaseCombatWeapon::ShouldDisplayReloadHUDHint()
 		// I'm owned by a player, I use clips, I have less then half a clip loaded. Now, does the player have more ammo?
 		if ( pOwner )
 		{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )			
 			if ( m_iReserveAmmo > 0 ) 
+#else
+			if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) > 0 ) 
+#endif
 				return true;
 		}
 	}
@@ -1272,13 +1364,21 @@ bool CBaseCombatWeapon::HasPrimaryAmmo( void )
 	CBaseCombatCharacter		*pOwner = GetOwner();
 	if ( pOwner )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		if ( m_iReserveAmmo > 0 ) 
+#else
+		if ( pOwner->GetAmmoCount( m_iPrimaryAmmoType ) > 0 ) 
+#endif
 			return true;
 	}
 	else
 	{
 		// No owner, so return how much primary ammo I have along with me.
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		if( m_iReserveAmmo > 0 )
+#else
+		if( GetPrimaryAmmoCount() > 0 )
+#endif
 			return true;
 	}
 
@@ -1401,12 +1501,21 @@ bool CBaseCombatWeapon::ReloadOrSwitchWeapons( void )
 	}
 	else
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
 		if ( UsesClipsForAmmo1() && 
 			 ( m_iClip1 == 0 ) && 
 			 (GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
 			 m_flNextPrimaryAttack < gpGlobals->curtime && 
 			 m_flNextSecondaryAttack < gpGlobals->curtime )
+#else
+		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
+		if ( UsesClipsForAmmo1() && !AutoFiresFullClip() && 
+			 (m_iClip1 == 0) && 
+			 (GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
+			 m_flNextPrimaryAttack < gpGlobals->curtime && 
+			 m_flNextSecondaryAttack < gpGlobals->curtime )	
+#endif
 		{
 			// if we're successfully reloading, we're done
 			if ( Reload() )
@@ -1501,6 +1610,11 @@ bool CBaseCombatWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 	// cancel any reload in progress.
 	m_bInReload = false; 
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	m_bFiringWholeClip = false;
+#endif
 
 	// kill any think functions
 	SetThink(NULL);
@@ -1591,10 +1705,18 @@ void CBaseCombatWeapon::HideThink( void )
 
 bool CBaseCombatWeapon::CanReload( void )
 {
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	if ( AutoFiresFullClip() && m_bFiringWholeClip )
+	{
+		return false;
+	}
+#endif
+
 	return true;
 }
 
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 //-----------------------------------------------------------------------------
 // Purpose: Anti-hack
 //-----------------------------------------------------------------------------
@@ -1699,6 +1821,11 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 	if (!pOwner)
 		return;
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	UpdateAutoFire();
+#endif
 
 	//Track the duration of the fire
 	//FIXME: Check for IN_ATTACK2 as well?
@@ -1751,7 +1878,9 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 				// reload clip2 if empty
 				if (m_iClip2 < 1)
 				{
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 					if ( of_infiniteammo.GetBool() != 1 ) 
+#endif
 						pOwner->RemoveAmmo( 1, m_iSecondaryAmmoType );
 					
 					
@@ -1763,9 +1892,14 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	
 	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
 			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && m_iReserveAmmo<=0 )) )
+#else
+		if ( !IsMeleeWeapon() &&  
+			(( UsesClipsForAmmo1() && m_iClip1 <= 0) || ( !UsesClipsForAmmo1() && pOwner->GetAmmoCount(m_iPrimaryAmmoType)<=0 )) )
+#endif
 		{
 			HandleFireOnEmpty();
 		}
@@ -1790,6 +1924,14 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 				 m_flNextPrimaryAttack = gpGlobals->curtime;
 			}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else			
+			if ( AutoFiresFullClip() )
+			{
+				m_bFiringWholeClip = true;
+			}			
+#endif
+
 			PrimaryAttack();
 
 #ifdef CLIENT_DLL
@@ -1807,6 +1949,23 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 		Reload();
 		m_fFireDuration = 0.0f;
 	}
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	// -----------------------
+	//  No buttons down
+	// -----------------------
+	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD)))
+	{
+		// no fire buttons down or reloading
+		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
+		{
+			if ( GetActivity() != ACT_VM_RELOAD )
+//			SetNextThink ( GetActivity()->GetLength() ) stickynote
+				WeaponIdle();
+		}
+	}
+#endif
 }
 
 void CBaseCombatWeapon::HandleFireOnEmpty()
@@ -1833,6 +1992,10 @@ void CBaseCombatWeapon::HandleFireOnEmpty()
 //-----------------------------------------------------------------------------
 void CBaseCombatWeapon::ItemBusyFrame( void )
 {
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	UpdateAutoFire();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -2003,7 +2166,11 @@ bool CBaseCombatWeapon::DefaultReload( int iClipSize1, int iClipSize2, int iActi
 	if ( UsesClipsForAmmo1() )
 	{
 		// need to reload primary clip?
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 		int primary	= MIN(iClipSize1 - m_iClip1, m_iReserveAmmo );
+#else
+		int primary	= MIN(iClipSize1 - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));
+#endif
 		if ( primary != 0 )
 		{
 			bReload = true;
@@ -2136,7 +2303,11 @@ void CBaseCombatWeapon::CheckReload( void )
 			}
 
 			// If out of ammo end reload
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )					
 			if ( m_iReserveAmmo <=0 )
+#else
+			if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) <=0)
+#endif
 			{
 				FinishReload();
 				return;
@@ -2146,8 +2317,12 @@ void CBaseCombatWeapon::CheckReload( void )
 			{
 				// Add them to the clip
 				m_iClip1 += 1;
-				if ( of_infiniteammo.GetBool() != 1 ) 
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )			
+				if ( of_infiniteammo.GetBool() != 1 ) 					
 					m_iReserveAmmo -= 1;
+#else
+				pOwner->RemoveAmmo( 1, m_iPrimaryAmmoType );
+#endif
 
 				Reload();
 				return;
@@ -2186,10 +2361,18 @@ void CBaseCombatWeapon::FinishReload( void )
 		// If I use primary clips, reload primary
 		if ( UsesClipsForAmmo1() )
 		{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 			int primary	= MIN( GetMaxClip1() - m_iClip1, m_iReserveAmmo );	
+#else
+			int primary	= MIN( GetMaxClip1() - m_iClip1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));	
+#endif
 			m_iClip1 += primary;
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 			if ( of_infiniteammo.GetBool() != 1 ) 
 				m_iReserveAmmo -= primary;
+#else
+			pOwner->RemoveAmmo( primary, m_iPrimaryAmmoType);
+#endif
 		}
 
 		// If I use secondary clips, reload secondary
@@ -2197,7 +2380,9 @@ void CBaseCombatWeapon::FinishReload( void )
 		{
 			int secondary = MIN( GetMaxClip2() - m_iClip2, pOwner->GetAmmoCount(m_iSecondaryAmmoType));
 			m_iClip2 += secondary;
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 			if ( of_infiniteammo.GetBool() != 1 ) 
+#endif				
 				pOwner->RemoveAmmo( secondary, m_iSecondaryAmmoType );
 		}
 
@@ -2222,6 +2407,57 @@ void CBaseCombatWeapon::AbortReload( void )
 #endif
 	m_bInReload = false;
 }
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+void CBaseCombatWeapon::UpdateAutoFire( void )
+{
+	if ( !AutoFiresFullClip() )
+		return;
+
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+	if ( !pOwner )
+		return;
+
+	if ( m_iClip1 == 0 )
+	{
+		// Ready to reload again
+		m_bFiringWholeClip = false;
+	}
+
+	if ( m_bFiringWholeClip )
+	{
+		// If it's firing the clip don't let them repress attack to reload
+		pOwner->m_nButtons &= ~IN_ATTACK;
+	}
+
+	// Don't use the regular reload key
+	if ( pOwner->m_nButtons & IN_RELOAD )
+	{
+		pOwner->m_nButtons &= ~IN_RELOAD;
+	}
+
+	// Try to fire if there's ammo in the clip and we're not holding the button
+	bool bReleaseClip = m_iClip1 > 0 && !( pOwner->m_nButtons & IN_ATTACK );
+
+	if ( !bReleaseClip )
+	{
+		if ( CanReload() && ( pOwner->m_nButtons & IN_ATTACK ) )
+		{
+			// Convert the attack key into the reload key
+			pOwner->m_nButtons |= IN_RELOAD;
+		}
+
+		// Don't allow attack button if we're not attacking
+		pOwner->m_nButtons &= ~IN_ATTACK;
+	}
+	else
+	{
+		// Fake the attack key
+		pOwner->m_nButtons |= IN_ATTACK;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Primary fire button attack
@@ -2279,9 +2515,13 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 	}
 	else
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 		info.m_iShots = MIN( info.m_iShots, m_iReserveAmmo );
 		if ( of_infiniteammo.GetBool() != 1 ) 
 			m_iReserveAmmo -= info.m_iShots;
+#else
+		pPlayer->RemoveAmmo( info.m_iShots, m_iPrimaryAmmoType );
+#endif
 	}
 
 	info.m_flDistance = MAX_TRACE_LENGTH;
@@ -2298,7 +2538,11 @@ void CBaseCombatWeapon::PrimaryAttack( void )
 
 	pPlayer->FireBullets( info );
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	if (!m_iClip1 && m_iReserveAmmo <= 0)
+#else
+	if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+#endif
 	{
 		// HEV suit - indicate out of ammo condition
 		pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0); 
@@ -2554,7 +2798,9 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_PRED_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iClip1, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),			
 	DEFINE_PRED_FIELD( m_iClip2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	DEFINE_PRED_FIELD( m_iReserveAmmo, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),		
+#endif
 
 	DEFINE_PRED_FIELD( m_nViewModelIndex, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 
@@ -2563,6 +2809,10 @@ BEGIN_PREDICTION_DATA( CBaseCombatWeapon )
 	DEFINE_PRED_FIELD( m_flTimeWeaponIdle, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_FIELD( m_bInReload, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bFireOnEmpty, FIELD_BOOLEAN ),
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	DEFINE_FIELD( m_bFiringWholeClip, FIELD_BOOLEAN ),
+#endif
 	DEFINE_FIELD( m_flNextEmptySoundTime, FIELD_FLOAT ),
 	DEFINE_FIELD( m_Activity, FIELD_INTEGER ),
 	DEFINE_FIELD( m_fFireDuration, FIELD_FLOAT ),
@@ -2613,7 +2863,9 @@ BEGIN_DATADESC( CBaseCombatWeapon )
 	DEFINE_FIELD( m_iSecondaryAmmoType, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip1, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iClip2, FIELD_INTEGER ),
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	DEFINE_FIELD( m_iReserveAmmo, FIELD_INTEGER ),
+#endif
 	DEFINE_FIELD( m_bFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bAltFiresUnderwater, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_fMinRange1, FIELD_FLOAT ),
@@ -2771,9 +3023,11 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	SendPropTime( SENDINFO( m_flNextSecondaryAttack ) ),
 	SendPropInt( SENDINFO( m_nNextThinkTick ) ),
 	SendPropTime( SENDINFO( m_flTimeWeaponIdle ) ),
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
+#endif
 
-#if defined( TF_DLL ) || defined ( TF_MOD )
+#if defined( TF_DLL ) || defined ( OF_DLL )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
@@ -2782,7 +3036,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalActiveWeaponData )
 	RecvPropTime( RECVINFO( m_flNextSecondaryAttack ) ),
 	RecvPropInt( RECVINFO( m_nNextThinkTick ) ),
 	RecvPropTime( RECVINFO( m_flTimeWeaponIdle ) ),
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	RecvPropInt( RECVINFO( m_iReserveAmmo )),
+#endif
 #endif
 END_NETWORK_TABLE()
 
@@ -2793,7 +3049,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 #if !defined( CLIENT_DLL )
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip1 ), 8 ),
 	SendPropIntWithMinusOneFlag( SENDINFO( m_iClip2 ), 8 ),
+#if defined( OF_DLL )
 	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
+#endif
 	SendPropInt( SENDINFO(m_iPrimaryAmmoType ), 8 ),
 	SendPropInt( SENDINFO(m_iSecondaryAmmoType ), 8 ),
 
@@ -2801,14 +3059,16 @@ BEGIN_NETWORK_TABLE_NOBASE( CBaseCombatWeapon, DT_LocalWeaponData )
 
 	SendPropInt( SENDINFO( m_bFlipViewModel ) ),
 
-#if defined( TF_DLL ) || defined ( TF_MOD )
+#if defined( TF_DLL ) || defined ( OF_DLL )
 	SendPropExclude( "DT_AnimTimeMustBeFirst" , "m_flAnimTime" ),
 #endif
 
 #else
 	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip1 )),
 	RecvPropIntWithMinusOneFlag( RECVINFO( m_iClip2 )),
+#if defined ( OF_CLIENT_DLL )	
 	RecvPropInt( RECVINFO( m_iReserveAmmo )),
+#endif
 	RecvPropInt( RECVINFO(m_iPrimaryAmmoType )),
 	RecvPropInt( RECVINFO(m_iSecondaryAmmoType )),
 
@@ -2826,14 +3086,18 @@ BEGIN_NETWORK_TABLE(CBaseCombatWeapon, DT_BaseCombatWeapon)
 	SendPropModelIndex( SENDINFO(m_iViewModelIndex) ),
 	SendPropModelIndex( SENDINFO(m_iWorldModelIndex) ),
 	SendPropInt( SENDINFO(m_iState ), 8, SPROP_UNSIGNED ),
+#if defined( OF_DLL )
 	SendPropInt( SENDINFO( m_iReserveAmmo ), 18 ),
+#endif
 	SendPropEHandle( SENDINFO(m_hOwner) ),
 #else
 	RecvPropDataTable("LocalWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalWeaponData)),
 	RecvPropDataTable("LocalActiveWeaponData", 0, 0, &REFERENCE_RECV_TABLE(DT_LocalActiveWeaponData)),
 	RecvPropInt( RECVINFO(m_iViewModelIndex)),
 	RecvPropInt( RECVINFO(m_iWorldModelIndex)),
+#if defined ( OF_CLIENT_DLL )
 	RecvPropInt( RECVINFO( m_iReserveAmmo )),
+#endif
 	RecvPropInt( RECVINFO(m_iState), 0, &CBaseCombatWeapon::RecvProxy_WeaponState ),
 	RecvPropEHandle( RECVINFO(m_hOwner ) ),
 #endif

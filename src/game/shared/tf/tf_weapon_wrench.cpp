@@ -33,7 +33,7 @@ BEGIN_PREDICTION_DATA( CTFWrench )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_wrench, CTFWrench );
-PRECACHE_WEAPON_REGISTER( tf_weapon_wrench );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_wrench );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCWrench, DT_TFCWeaponWrench )
 
@@ -44,7 +44,7 @@ BEGIN_PREDICTION_DATA( CTFCWrench )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_wrench, CTFCWrench );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_wrench );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_wrench );
 
 //=============================================================================
 //
@@ -121,7 +121,7 @@ void CTFWrench::Smack( void )
 		trace.m_pEnt &&
 		trace.m_pEnt->IsBaseObject() &&
 		( 
-			( ( TFGameRules()->IsCoopGamemode() || iPlayerTeam != TF_TEAM_MERCENARY ) &&
+			( ( iPlayerTeam != TF_TEAM_MERCENARY ) &&
 					trace.m_pEnt->GetTeamNumber() == iPlayerTeam ) ||
 				pPlayer == ((CBaseObject *) trace.m_pEnt)->GetOwner()
 			)

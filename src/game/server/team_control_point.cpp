@@ -35,8 +35,9 @@ BEGIN_DATADESC(CTeamControlPoint)
 	DEFINE_KEYFIELD( m_bRandomOwnerOnRestart,	FIELD_BOOLEAN,	"random_owner_on_restart" ),
 	DEFINE_KEYFIELD( m_bLocked,					FIELD_BOOLEAN,	"point_start_locked" ),
 
+#ifdef OF_DLL
 	DEFINE_KEYFIELD( m_iDomScoreAmount,			FIELD_INTEGER,	"point_dom_score_amount" ),
-
+#endif
 	DEFINE_FUNCTION( UnlockThink ),
 
 //	DEFINE_FIELD( m_iTeam, FIELD_INTEGER ),
@@ -84,7 +85,9 @@ CTeamControlPoint::CTeamControlPoint()
 	m_bLocked = false;
 	m_flUnlockTime = -1;
 
+#ifdef OF_DLL
 	m_iDomScoreAmount = 1;
+#endif
 
 	UseClientSideAnimation();
 }
@@ -218,7 +221,11 @@ void CTeamControlPoint::Precache( void )
 	for ( int i = 0; i < m_TeamData.Count(); i++ )
 	{
 		// Skip over spectator
+#ifdef OF_DLL
+		if ( i == TEAM_SPECTATOR || i == TF_TEAM_MERCENARY )
+#else
 		if ( i == TEAM_SPECTATOR )
+#endif
 			continue;
 
 		if ( m_TeamData[i].iszCapSound != NULL_STRING )
@@ -240,7 +247,7 @@ void CTeamControlPoint::Precache( void )
 
 		if ( !m_TeamData[i].iIcon )
 		{
-			DevMsg( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
+			Warning( "Invalid hud icon material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
 		}
 
 		if ( m_TeamData[i].iszOverlay != NULL_STRING )
@@ -251,7 +258,7 @@ void CTeamControlPoint::Precache( void )
 
 			if ( !m_TeamData[i].iOverlay )
 			{
-				DevMsg( "Invalid hud overlay material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
+				Warning( "Invalid hud overlay material for team %d in control point '%s' ( point index %d )\n", i, GetDebugName(), GetPointIndex() );
 			}
 		}
 	}
@@ -265,7 +272,11 @@ void CTeamControlPoint::Precache( void )
 	{
 		PrecacheScriptSound( STRING( m_iszWarnSound ) );
 	}
-
+	
+#ifndef OF_DLL	
+	PrecacheScriptSound( "Announcer.ControlPointContested" );
+	PrecacheScriptSound( "Announcer.ControlPointContested_Neutral" );	
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -302,12 +313,18 @@ void CTeamControlPoint::HandleScoring( int iTeam )
 		CTeamControlPointMaster *pMaster = g_hControlPointMasters.Count() ? g_hControlPointMasters[0] : NULL;
 		if ( pMaster && !pMaster->WouldNewCPOwnerWinGame( this, iTeam ) )
 		{
+#if defined ( TF_DLL ) || defined ( OF_DLL )		 	
+#ifdef OF_DLL			
 			if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD ) )
+#else
+			if ( TeamplayRoundBasedRules()->GetGameType() == TF_GAMETYPE_ESCORT )
+#endif
 			{
 				CBroadcastRecipientFilter filter;
 				EmitSound( filter, entindex(), "Hud.EndRoundScored" );
 			}
 			else
+#endif
 			{
 				CTeamRecipientFilter filter( iTeam );
 				EmitSound( filter, entindex(), "Hud.EndRoundScored" );
@@ -333,7 +350,7 @@ void CTeamControlPoint::InputSetOwner( inputdata_t &input )
 	if ( GetOwner() == iCapTeam )
 		return;
 
-	if ( TFGameRules()->PointsMayBeCaptured() )
+	if ( TeamplayGameRules()->PointsMayBeCaptured() )
 	{
 		// must be done before setting the owner
 		HandleScoring( iCapTeam );
@@ -431,7 +448,7 @@ void CTeamControlPoint::ForceOwner( int iTeam )
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::SetOwner( int iCapTeam, bool bMakeSound, int iNumCappers, int *pCappingPlayers )
 {
-	if ( TFGameRules()->PointsMayBeCaptured() )
+	if ( TeamplayGameRules()->PointsMayBeCaptured() )
 	{
 		// must be done before setting the owner
 		HandleScoring( iCapTeam );
@@ -588,7 +605,11 @@ void CTeamControlPoint::InternalSetOwner( int iCapTeam, bool bMakeSound, int iNu
 	for ( int i = 0; i < m_TeamData.Count(); i++ )
 	{
 		// Skip spectator
-		if ( i == TEAM_SPECTATOR )
+#ifdef OF_DLL
+			if ( i == TEAM_SPECTATOR || i == TF_TEAM_MERCENARY )
+#else
+			if ( i == TEAM_SPECTATOR )
+#endif
 			continue;
 
 		if ( GetModelPtr() && GetModelPtr()->SequencesAvailable() )
@@ -852,7 +873,11 @@ void CTeamControlPoint::UpdateCapPercentage( void )
 	for ( int i = LAST_SHARED_TEAM+1; i < m_TeamData.Count(); i++ )
 	{
 		// Skip spectator
-		if ( i == TEAM_SPECTATOR )
+#ifdef OF_DLL
+			if ( i == TEAM_SPECTATOR || i == TF_TEAM_MERCENARY )
+#else
+			if ( i == TEAM_SPECTATOR )
+#endif
 			continue;
 
 		float flPerc = GetTeamCapPercentage(i);
@@ -980,6 +1005,7 @@ void CTeamControlPoint::InputRoundActivate( inputdata_t &inputdata )
 	InternalSetLocked( m_bLocked );
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -987,12 +1013,17 @@ void CTeamControlPoint::SetLocked( bool bLock )
 {
 	InternalSetLocked( bLock );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::InputSetLocked( inputdata_t &inputdata )
 {
+	// never lock/unlock the point if we're in waiting for players
+	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
+		return;
+
 	bool bLocked = inputdata.value.Int() > 0;
 	InternalSetLocked( bLocked );
 }
@@ -1043,6 +1074,7 @@ void CTeamControlPoint::InternalSetLocked( bool bLocked )
 	}
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1063,12 +1095,17 @@ void CTeamControlPoint::SetUnlockTime( float fTime )
 
 	SetContextThink( &CTeamControlPoint::UnlockThink, gpGlobals->curtime + 0.1f, CONTROL_POINT_UNLOCK_THINK );
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTeamControlPoint::InputSetUnlockTime( inputdata_t &inputdata )
 {
+	// never lock/unlock the point if we're in waiting for players
+	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
+		return;
+	
 	int nTime = inputdata.value.Int();
 
 	if ( nTime <= 0 )

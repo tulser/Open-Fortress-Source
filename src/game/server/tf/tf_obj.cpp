@@ -1635,10 +1635,6 @@ int CBaseObject::OnTakeDamage( const CTakeDamageInfo &info )
 			return 0;
 	}
 
-	// No damaging our buildings in coop
-    if ( info.GetAttacker()->IsPlayer() && TFGameRules()->IsCoopGamemode() )
-		return 0;
-
 	IHasBuildPoints *pBPInterface = dynamic_cast<IHasBuildPoints*>(this);
 
 	float flDamage = info.GetDamage();
@@ -1993,16 +1989,6 @@ void CBaseObject::Killed( const CTakeDamageInfo &info )
 	Explode();
 
 	UTIL_Remove( this );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Indicates this NPC's place in the relationship table.
-//-----------------------------------------------------------------------------
-Class_T	CBaseObject::Classify( void )
-{
-	// fixme: horrible horrible horrible method of making npcs shoot buildings
-	//return CLASS_NONE;
-	return CLASS_HEADCRAB;
 }
 
 //-----------------------------------------------------------------------------

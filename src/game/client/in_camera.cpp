@@ -16,32 +16,41 @@
 #include "tier0/vprof.h"
 #include "debugoverlay_shared.h"
 #include "cam_thirdperson.h"
+
+#ifdef OF_CLIENT_DLL
 #include "c_tf_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //-------------------------------------------------- Global Variables
 
-static ConVar cam_command( "cam_command", "0", FCVAR_CHEAT );	 // tells camera to go to thirdperson
-static ConVar cam_snapto( "cam_snapto", "0", FCVAR_CHEAT );	 // snap to thirdperson view
-static ConVar cam_ideallag( "cam_ideallag", "4.0", FCVAR_CHEAT, "Amount of lag used when matching offset to ideal angles in thirdperson view" );
-static ConVar cam_idealdelta( "cam_idealdelta", "4.0", FCVAR_CHEAT, "Controls the speed when matching offset to ideal angles in thirdperson view" );
-ConVar cam_idealyaw( "cam_idealyaw", "0", FCVAR_CHEAT );	 // thirdperson yaw
-ConVar cam_idealpitch( "cam_idealpitch", "0", FCVAR_CHEAT );	 // thirperson pitch
-ConVar cam_idealdist( "cam_idealdist", "150", FCVAR_CHEAT );	 // thirdperson distance
-ConVar cam_idealdistright( "cam_idealdistright", "0", FCVAR_CHEAT );	 // thirdperson distance
-ConVar cam_idealdistup( "cam_idealdistup", "0", FCVAR_CHEAT );	 // thirdperson distance
-static ConVar cam_collision( "cam_collision", "1", FCVAR_CHEAT, "When in thirdperson and cam_collision is set to 1, an attempt is made to keep the camera from passing though walls." );
+#ifdef OF_CLIENT_DLL
+#define CAM_CONVAR (FCVAR_CHEAT)
+#else
+#define CAM_CONVAR (FCVAR_CHEAT | FCVAR_ARCHIVE)
+#endif
+
+static ConVar cam_command( "cam_command", "0", CAM_CONVAR );	 // tells camera to go to thirdperson
+static ConVar cam_snapto( "cam_snapto", "0", CAM_CONVAR );	 // snap to thirdperson view
+static ConVar cam_ideallag( "cam_ideallag", "4.0", CAM_CONVAR, "Amount of lag used when matching offset to ideal angles in thirdperson view" );
+static ConVar cam_idealdelta( "cam_idealdelta", "4.0", CAM_CONVAR, "Controls the speed when matching offset to ideal angles in thirdperson view" );
+ConVar cam_idealyaw( "cam_idealyaw", "0", CAM_CONVAR );	 // thirdperson yaw
+ConVar cam_idealpitch( "cam_idealpitch", "0", CAM_CONVAR );	 // thirperson pitch
+ConVar cam_idealdist( "cam_idealdist", "150", CAM_CONVAR );	 // thirdperson distance
+ConVar cam_idealdistright( "cam_idealdistright", "0", CAM_CONVAR );	 // thirdperson distance
+ConVar cam_idealdistup( "cam_idealdistup", "0", CAM_CONVAR );	 // thirdperson distance
+static ConVar cam_collision( "cam_collision", "1", CAM_CONVAR, "When in thirdperson and cam_collision is set to 1, an attempt is made to keep the camera from passing though walls." );
 static ConVar cam_showangles( "cam_showangles", "0", FCVAR_CHEAT, "When in thirdperson, print viewangles/idealangles/cameraoffsets to the console." );
-static ConVar c_maxpitch( "c_maxpitch", "90", FCVAR_CHEAT );
-static ConVar c_minpitch( "c_minpitch", "0", FCVAR_CHEAT );
-static ConVar c_maxyaw( "c_maxyaw", "135", FCVAR_CHEAT );
-static ConVar c_minyaw( "c_minyaw", "-135", FCVAR_CHEAT );
-static ConVar c_maxdistance( "c_maxdistance", "200", FCVAR_CHEAT );
-static ConVar c_mindistance( "c_mindistance", "30", FCVAR_CHEAT );
-static ConVar c_orthowidth( "c_orthowidth", "100", FCVAR_CHEAT );
-static ConVar c_orthoheight( "c_orthoheight", "100", FCVAR_CHEAT );
+static ConVar c_maxpitch( "c_maxpitch", "90", CAM_CONVAR );
+static ConVar c_minpitch( "c_minpitch", "0", CAM_CONVAR );
+static ConVar c_maxyaw( "c_maxyaw", "135", CAM_CONVAR );
+static ConVar c_minyaw( "c_minyaw", "-135", CAM_CONVAR );
+static ConVar c_maxdistance( "c_maxdistance", "200", CAM_CONVAR );
+static ConVar c_mindistance( "c_mindistance", "30", CAM_CONVAR );
+static ConVar c_orthowidth( "c_orthowidth", "100", CAM_CONVAR );
+static ConVar c_orthoheight( "c_orthoheight", "100", CAM_CONVAR );
 
 static kbutton_t cam_pitchup, cam_pitchdown, cam_yawleft, cam_yawright;
 static kbutton_t cam_in, cam_out; // -- "cam_move" is unused
@@ -688,11 +697,13 @@ void CInput::CAM_ToThirdPerson(void)
 	}
 
 	cam_command.SetValue( 0 );
+#ifdef OF_CLIENT_DLL
 	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pLocalTFPlayer )
 	{
 		pLocalTFPlayer->UpdatePlayerAttachedModels();
 	}
+#endif
 }
 
 /*
@@ -709,12 +720,20 @@ void CInput::CAM_ToFirstPerson(void)
 	cam_command.SetValue( 0 );
 
 	// Let the local player know
+#ifdef OF_CLIENT_DLL
 	C_TFPlayer *pLocalTFPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pLocalTFPlayer )
 	{
 		pLocalTFPlayer->ThirdPersonSwitch( false );
 		pLocalTFPlayer->UpdatePlayerAttachedModels();
 	}
+#else
+	C_BasePlayer *localPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( localPlayer )
+	{
+		localPlayer->ThirdPersonSwitch( false );
+	}
+#endif
 }
 
 /*
@@ -915,11 +934,15 @@ static ConCommand camout( "-camout", CAM_OutUp );
 static ConCommand thirdperson_mayamode( "thirdperson_mayamode", ::CAM_ToThirdPerson_MayaMode, "Switch to thirdperson Maya-like camera controls.", FCVAR_CHEAT );
 
 // TF allows servers to push people into first/thirdperson, for mods
-#if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
+#ifdef OF_CLIENT_DLL
 static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_SERVER_CAN_EXECUTE );
+#else
+static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_CHEAT | FCVAR_SERVER_CAN_EXECUTE );
+#endif
 static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera.", FCVAR_SERVER_CAN_EXECUTE );
 #else
-static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera." );
+static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_CHEAT );
 static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera." );
 #endif
 static ConCommand camortho( "camortho", ::CAM_ToOrthographic, "Switch to orthographic camera.", FCVAR_CHEAT );

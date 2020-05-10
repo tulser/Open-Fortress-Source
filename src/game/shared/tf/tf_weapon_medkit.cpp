@@ -31,7 +31,7 @@ BEGIN_PREDICTION_DATA( CTFMedkit )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_medkit, CTFMedkit );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_medkit );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_medkit );
 
 //=============================================================================
 //

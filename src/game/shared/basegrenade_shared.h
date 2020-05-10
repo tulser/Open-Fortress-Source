@@ -52,7 +52,11 @@ public:
 
 	virtual void		Precache( void );
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual void		Explode( trace_t *pTrace, int bitsDamageType, int bitsCustomDamageType = 0 );
+#else
+	virtual void		Explode( trace_t *pTrace, int bitsDamageType );
+#endif
 	void				Smoke( void );
 
 	void				BounceTouch( CBaseEntity *pOther );

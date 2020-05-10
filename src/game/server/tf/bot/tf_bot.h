@@ -341,7 +341,6 @@ public:
 	bool m_bPickedUpPowerup;
 	bool m_bTouchedJumpPad;
 	bool m_bTouchedTeleport;
-	bool m_bHasPickedUpOneWeapon; // has the bot picked up atleast one weapon? (if so, start going for powerups etc)
 
 private:
 	CountdownTimer m_lookForEnemiesTimer;

@@ -77,10 +77,13 @@ ConVar func_breakdmg_bullet( "func_breakdmg_bullet", "0.5" );
 ConVar func_breakdmg_club( "func_breakdmg_club", "1.5" );
 ConVar func_breakdmg_explosive( "func_breakdmg_explosive", "1.25" );
 
-// changed to 1 as its better
+#ifdef OF_DLL
 ConVar sv_turbophysics( "sv_turbophysics", "1", FCVAR_REPLICATED, "Turns on turbo physics" );
+#else
+ConVar sv_turbophysics( "sv_turbophysics", "0", FCVAR_REPLICATED, "Turns on turbo physics" );
+#endif
 
-#if TRUE // TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	#define PROP_FLARE_LIFETIME 30.0f
 	#define PROP_FLARE_IGNITE_SUBSTRACT 5.0f
 	CBaseEntity *CreateFlare( Vector vOrigin, QAngle Angles, CBaseEntity *pOwner, float flDuration );
@@ -238,7 +241,7 @@ void CBaseProp::Precache( void )
 {
 	if ( GetModelName() == NULL_STRING )
 	{
-		DevMsg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		Msg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 		SetModelName( AllocPooledString( "models/error.mdl" ) );
 	}
 
@@ -247,7 +250,7 @@ void CBaseProp::Precache( void )
 	PrecacheScriptSound( "Metal.SawbladeStick" );
 	PrecacheScriptSound( "PropaneTank.Burst" );
 
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	UTIL_PrecacheOther( "env_flare" );
 #endif
 
@@ -275,8 +278,12 @@ bool CBaseProp::KeyValue( const char *szKeyName, const char *szValue )
 {
 	if ( FStrEq(szKeyName, "health") )
 	{
-		// Only override props and tf bombs are allowed to override health.
+		// Only override props and tf bombs are allowed to override health
+#ifdef OF_DLL	
 		if ( FClassnameIs( this, "prop_physics_override" ) || FClassnameIs( this, "prop_dynamic_override" ) || FClassnameIs( this, "tf_generic_bomb" ) || FClassnameIs( this, "tf_pumpkin_bomb" ) )
+#else
+		if ( FClassnameIs( this, "prop_physics_override" ) || FClassnameIs( this, "prop_dynamic_override" ) )
+#endif
 			return BaseClass::KeyValue( szKeyName, szValue );
 
 		return true;
@@ -500,7 +507,7 @@ void CBreakableProp::HandleFirstCollisionInteractions( int index, gamevcollision
 
 		if ( tr.m_pEnt )
 		{
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 			// Don't paintsplat friendlies
 			int iClassify = tr.m_pEnt->Classify();
 			if ( iClassify != CLASS_PLAYER_ALLY_VITAL && iClassify != CLASS_PLAYER_ALLY && 
@@ -836,7 +843,7 @@ void CBreakableProp::Spawn()
 	
 	//jmd: I am guessing that the call to Spawn will set any flags that should be set anyway; this
 	//clears flags we don't want (specifically the FL_ONFIRE for explosive barrels in HL2MP)]
-#if TRUE //def HL2MP
+#ifdef HL2MP
 	ClearFlags();
 #endif 
 
@@ -1009,7 +1016,7 @@ void CBreakableProp::BreakablePropTouch( CBaseEntity *pOther )
 		}
 	}
 
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	if ( m_hFlareEnt )
 	{
 		CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
@@ -1464,7 +1471,7 @@ void CBreakableProp::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t
 	m_bOriginalBlockLOS = BlocksLOS();
 	SetBlocksLOS( false );
 
-#if TRUE // TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	if ( HasInteraction( PROPINTER_PHYSGUN_CREATE_FLARE ) )
 	{
 		CreateFlare( PROP_FLARE_LIFETIME );
@@ -1473,7 +1480,7 @@ void CBreakableProp::OnPhysGunPickup( CBasePlayer *pPhysGunUser, PhysGunPickup_t
 }
 
 
-#if TRUE // TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 //-----------------------------------------------------------------------------
 // Purpose: Create a flare at the attachment point
 //-----------------------------------------------------------------------------
@@ -1732,11 +1739,13 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		WRITE_VEC3COORD( GetAbsOrigin() );
 		WRITE_ANGLES( GetAbsAngles() );
 		MessageEnd();
+		
+#ifdef HL2MP
+		UTIL_Remove( this );
+#endif		
 
 		return;
 	}
-
-	UTIL_Remove( this );
 
 	// in multiplayer spawn break models as clientside temp ents
 	if ( gpGlobals->maxClients > 1 && breakable_multiplayer.GetBool() )
@@ -1798,7 +1807,9 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 		}
 	}
 
+#ifndef HL2MP
 	UTIL_Remove( this );
+#endif
 }
 
 
@@ -1857,8 +1868,6 @@ END_SEND_TABLE()
 //-----------------------------------------------------------------------------
 CDynamicProp::CDynamicProp()
 {
-	m_bDisableBoneFollowers = true;
-
 	m_nPendingSequence = -1;
 	if ( g_pGameRules->IsMultiplayer() )
 	{
@@ -1984,7 +1993,11 @@ void CDynamicProp::BoneFollowerHierarchyChanged()
 //-----------------------------------------------------------------------------
 bool CDynamicProp::OverridePropdata( void )
 {
+#ifdef OF_DLL
 	return ( FClassnameIs(this, "prop_dynamic_override" ) || FClassnameIs(this, "tf_generic_bomb" ) || FClassnameIs(this, "tf_pumpkin_bomb" ) );
+#else
+	return ( FClassnameIs(this, "prop_dynamic_override" ) );
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -2533,7 +2546,7 @@ void CPhysicsProp::Precache( void )
 {
 	if ( GetModelName() == NULL_STRING )
 	{
-		DevMsg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
+		Msg( "%s at (%.3f, %.3f, %.3f) has no model name!\n", GetClassname(), GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
 	}
 	else
 	{
@@ -3430,7 +3443,7 @@ int PropBreakablePrecacheAll( string_t modelName )
 
 	if ( modelName == NULL_STRING )
 	{
-		DevMsg("Trying to precache breakable prop, but has no model name\n");
+		Msg("Trying to precache breakable prop, but has no model name\n");
 		return iBreakables;
 	}
 

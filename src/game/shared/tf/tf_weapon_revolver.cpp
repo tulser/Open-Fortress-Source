@@ -29,7 +29,7 @@ BEGIN_PREDICTION_DATA( CTFRevolver )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_revolver, CTFRevolver );
-PRECACHE_WEAPON_REGISTER( tf_weapon_revolver );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_revolver );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFRevolver_Mercenary, DT_WeaponRevolver_Mercenary )
 
@@ -40,7 +40,7 @@ BEGIN_PREDICTION_DATA( CTFRevolver_Mercenary )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_revolver_mercenary, CTFRevolver_Mercenary );
-PRECACHE_WEAPON_REGISTER( tf_weapon_revolver_mercenary );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_revolver_mercenary );
 
 // Server specific.
 #ifndef CLIENT_DLL

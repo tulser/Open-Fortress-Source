@@ -29,7 +29,7 @@ BEGIN_PREDICTION_DATA( CTFClub )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_club, CTFClub );
-PRECACHE_WEAPON_REGISTER( tf_weapon_club );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_club );
 
 //=============================================================================
 //

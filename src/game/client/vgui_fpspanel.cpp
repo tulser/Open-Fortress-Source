@@ -25,7 +25,9 @@
 
 static ConVar cl_showfps( "cl_showfps", "0", 0, "Draw fps meter at top of screen (1 = fps, 2 = smooth fps)" );
 static ConVar cl_showpos( "cl_showpos", "0", 0, "Draw current position at top of screen" );
+#ifdef OF_CLIENT_DLL
 static ConVar cl_showpos_xy("cl_showpos_xy", "0", 0, "Draw horizontal player velocity only");
+#endif
 static ConVar cl_showbattery( "cl_showbattery", "0", 0, "Draw current battery level at top of screen when on battery power" );
 
 extern bool g_bDisplayParticlePerformance;
@@ -343,6 +345,7 @@ void CFPSPanel::Paint()
 		if ( player )
 		{
 			//added command cl_showpos_xy to allow players to see their horizontal velocity seperated from their vertical velocity
+#ifdef OF_CLIENT_DLL			
 			if (cl_showpos_xy.GetInt() <= 0)
 				vel = player->GetLocalVelocity();
 			else if (cl_showpos_xy.GetInt() == 1)
@@ -351,6 +354,7 @@ void CFPSPanel::Paint()
 			else if (cl_showpos_xy.GetInt() == 2)
 				vel = player->GetLocalVelocity() * Vector(0, 0, 1);
 			else
+#endif
 				vel = player->GetLocalVelocity();
 		}
 

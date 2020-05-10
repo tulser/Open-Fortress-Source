@@ -59,15 +59,7 @@
 #include "tf_playerclass_shared.h"
 #include "of_weapon_physcannon.h"
 #include "tf_powerup.h"
-#include "ai_basenpc.h"
-#include "AI_Criteria.h"
-#include "npc_barnacle.h"
 #include "IVehicle.h"
-#include "prop_combine_ball.h"
-#include "datacache/imdlcache.h"
-#include "ai_interactions.h"
-#include "ai_squad.h"
-#include "npc_alyx_episodic.h"
 #include "player_pickup.h"
 #include "eventqueue.h"
 #include "ammodef.h"
@@ -152,9 +144,6 @@ ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NO
 ConVar of_spawn_with_weapon( "of_spawn_with_weapon", "", FCVAR_ARCHIVE | FCVAR_NOTIFY, "For bot behaviour debugging: players will only spawn with the specified weapon classname." );
 
 extern ConVar of_grenades;
-extern ConVar of_retromode;
-extern ConVar of_forceclass;
-extern ConVar of_forcezombieclass;
 extern ConVar of_allowteams;
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
@@ -356,7 +345,6 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayer, DT_TFLocalPlayerExclusive )
 		"player_object_array"
 		),
 
-	SendPropEHandle( SENDINFO( m_hLadder ) ),
 	SendPropFloat( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
 //	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 10, SPROP_CHANGES_OFTEN ),
 
@@ -504,10 +492,6 @@ CTFPlayer::CTFPlayer()
 	m_bSpeakingConceptAsDisguisedSpy = false;
 	
 	m_iAccount = 0;
-
-	m_pPlayerAISquad = 0;
-	
-  	m_bTransition = false;
 	
     ConVarRef scissor( "r_flashlightscissor" );
     scissor.SetValue( "0" );
@@ -794,7 +778,8 @@ void CTFPlayer::PostThink()
 void CTFPlayer::Precache()
 {
 	// Precache the player models and gibs.
-	PrecachePlayerModels();
+	// this is handled in CTFGameRules instead now
+	//PrecachePlayerModels();
 
 	// Precache the player sounds.
 	PrecacheScriptSound( "Player.Spawn" );
@@ -853,6 +838,12 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "electrocuted_gibbed_blue" );
 	PrecacheParticleSystem( "electrocuted_gibbed_dm" );
 
+	// should hopefully stop stuttering
+	PrecacheParticleSystem( "ExplosionCore_wall" );
+	PrecacheParticleSystem( "ExplosionCore_MidAir" );
+	PrecacheParticleSystem( "ExplosionCore_MidAir_underwater" );
+	PrecacheParticleSystem( "mlg_explosion_primary" );
+
 	PrecacheScriptSound( "HL2Player.FlashLightOn" );
 	PrecacheScriptSound( "HL2Player.FlashLightOff" );
 
@@ -878,6 +869,8 @@ extern const char *s_aPlayerClassFiles[];
 //-----------------------------------------------------------------------------
 void CTFPlayer::PrecachePlayerModels( void )
 {
+	// DEPRECATED, this is now done in TFGameRules instead
+#if 0
 	int i;
 	for ( i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 	{
@@ -990,6 +983,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 		}
 		PrecacheModel( "models/effects/bday_hat.mdl" );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1264,7 +1258,7 @@ void CTFPlayer::Spawn()
 		else
 			SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_RESPAWN );
 	}
-	m_pPlayerAISquad = g_AI_SquadManager.FindCreateSquad(AllocPooledString(PLAYER_SQUADNAME));
+
 	m_bGotKilled = false;
 	m_bDied = false;
 
@@ -1328,8 +1322,11 @@ void CTFPlayer::UpdateCosmetics()
 				continue;
 			
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
-			if( kvDesiredCosmetics )
-				kvDesiredCosmetics->SetString( szRegion, args[i] );
+			kvDesiredCosmetics->SetString( szRegion, args[i] );
+
+			// undone: causes too much stuttering, its now done in tf_gamerules precache instead
+			//const char *pModel = pCosmetic->GetString( "Model" , "models/error.mdl" );
+			//PrecacheModel( pModel );
 		}
 
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
@@ -2326,51 +2323,6 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 			// need to save this for later so we can apply and modifiers to the armor and grenades...after the call to InitClass() //by tf2team
 			m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
 
-			if ( !pSpot && !TFGameRules()->HasTeamSpawns() )
-			{
-				DevMsg( "Player Spawn: no valid info_player_teamspawn found, fallbacking to info_player_deathmatch\n" );
-
-				pSpawnPointName = "info_player_deathmatch";
-
-				// this is likely to be a deathmatch map if it has info_player_deathmatch spawnpoints, therefore we use dm spawn logic
-				bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
-
-				if ( bFind )
-				{
-					g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
-				}
-
-				m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
-
-				if ( !pSpot )
-				{
-					DevMsg("Player Spawn: no valid info_player_deathmatch found, fallbacking to info_player_start\n");
-
-					if ( TFGameRules() && TFGameRules()->IsHL2() )
-					{
-						pSpot = FindPlayerStart( "info_player_start" );
-						if ( pSpot )
-							return pSpot;
-
-						return CBaseEntity::Instance( INDEXENT(0) );
-					}
-					else
-					{
-						pSpawnPointName = "info_player_start";
-
-						// this is likely to be a singleplayer HL2 map and it may have randomized info_player_starts, therefore we use dm spawn logic again
-						bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
-
-						if ( bFind )
-						{
-							g_pLastSpawnPoints[ GetTeamNumber() ] = pSpot;
-						}
-
-						m_pSpawnPoint = dynamic_cast<CTFTeamSpawn*>( pSpot );
-					}
-				}
-			}
-
 			break;
 		}
 	case TEAM_SPECTATOR:
@@ -2431,49 +2383,40 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 	{
 		if ( pSpot )
 		{
-			// don't run validity checks on a info_player_start, as spawns in singleplayer maps should always be valid
-			if ( !TFGameRules()->HasTeamSpawns() && FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
+			// Check to see if this is a valid team spawn (player is on this team, etc.).
+			if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
 			{
-				// Found a valid spawn point.
-				return true;
-			}
-			else
-			{
-				// Check to see if this is a valid team spawn (player is on this team, etc.).
-				if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+				// Check for a bad spawn entity.
+				if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
 				{
-					// Check for a bad spawn entity.
-					if ( pSpot->GetAbsOrigin() == Vector( 0, 0, 0 ) )
-					{
-						pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-						continue;
-					}
+					pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+					continue;
+				}
 
-					// this is here because the DM spawning system may fall back to the normal spawning system if the player count overflows the spawnpoints
-					if ( !TFGameRules()->HasTeamSpawns() && !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) )
-					{
-						// telefragging
-						CBaseEntity *pList[ 32 ];
-						Vector mins = pSpot->GetAbsOrigin() + VEC_HULL_MIN;
-						Vector maxs = pSpot->GetAbsOrigin() + VEC_HULL_MAX;
-						int targets = UTIL_EntitiesInBox( pList, 32, mins, maxs, FL_CLIENT );
+				// this is here because the DM spawning system may fall back to the normal spawning system if the player count overflows the spawnpoints
+				// telefragging
+				if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) && !m_Shared.IsZombie() )
+				{
+					CBaseEntity *pList[ 32 ];
+					Vector mins = pSpot->GetAbsOrigin() + VEC_HULL_MIN;
+					Vector maxs = pSpot->GetAbsOrigin() + VEC_HULL_MAX;
+					int targets = UTIL_EntitiesInBox( pList, 32, mins, maxs, FL_CLIENT );
 
-						for ( int i = 0; i < targets; i++ )
+					for ( int i = 0; i < targets; i++ )
+					{
+						// don't telefrag ourselves
+						CBaseEntity *ent = pList[ i ];
+						if ( ent != this && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 						{
-							// don't telefrag ourselves
-							CBaseEntity *ent = pList[ i ];
-							if ( ent != this && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
-							{
-								// special damage type to bypass uber or spawn protection in DM
-								CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
-								ent->TakeDamage( info );
-							}
+							// special damage type to bypass uber or spawn protection in DM
+							CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
+							ent->TakeDamage( info );
 						}
 					}
-
-					// Found a valid spawn point.
-					return true;
 				}
+
+				// Found a valid spawn point.
+				return true;
 			}
 		}
 
@@ -2493,6 +2436,8 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 	return false;
 }
 
+#define SPAWNPOINT_ITERATIONS 5
+
 //-----------------------------------------------------------------------------
 // Purpose: Spawning for deathmatch
 //-----------------------------------------------------------------------------
@@ -2506,15 +2451,15 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 	}
 
-	// Randomize the spawnpoint a bit (not sure if 6 is a good value here)
-	for ( int i = random->RandomInt( 0, 6 ); i > 0; i-- )
+	// Randomize the spawnpoint a bit (not sure if 5 is a good value here)
+	for ( int i = random->RandomInt( 0, SPAWNPOINT_ITERATIONS ); i < ( SPAWNPOINT_ITERATIONS + 1 ); i++ )
+	{
 		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+	}
 
 	// First we try to find a spawn point that is fully clear. If that fails,
 	// we look for a spawnpoint that's clear except for another players. We
 	// don't collide with our team members, so we should be fine.
-
-	bool bIgnorePlayers = true;
 
 	// Find furthest spawn point
 	CBaseEntity *pFirstSpot = pSpot;
@@ -2532,7 +2477,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 		}
 
 		// Check to see if this is a valid team spawn (player is on this team, etc.).
-		if ( TFGameRules()->IsSpawnPointValid( pSpot, this, bIgnorePlayers ) )
+		if ( TFGameRules()->IsSpawnPointValid( pSpot, this, true ) )
 		{
 			// Check for a bad spawn entity.
 			if ( pSpot->GetAbsOrigin() == vec3_origin )
@@ -2546,9 +2491,9 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 			// Are players in the map?
 			bool bPlayers = false;
 
-			float flClosestPlayerDist = FLT_MAX;
+			float flClosestPlayerDistance = FLT_MAX;
 
-			// This is a mismash of code from npc_strider and hltvdirector and observe targets... its messy
+			
 			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 			{
 				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
@@ -2559,11 +2504,11 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 
 				bPlayers = true;
 
-				float flDistSqr = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).LengthSqr();
+				float flDistanceSqr = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).LengthSqr();
 
-				if ( flDistSqr < flClosestPlayerDist )
+				if ( flDistanceSqr < flClosestPlayerDistance )
 				{
-					flClosestPlayerDist = flDistSqr;
+					flClosestPlayerDistance = flDistanceSqr;
 				}
 			}
 
@@ -2574,9 +2519,9 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 				break;
 			}
 
-			if ( flClosestPlayerDist > flFurthest )
+			if ( flClosestPlayerDistance > flFurthest )
 			{
-				flFurthest = flClosestPlayerDist;
+				flFurthest = flClosestPlayerDistance;
 				pFurthest = pSpot;
 			}
 		}
@@ -2594,7 +2539,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 		if ( pSpot )
 		{
 			// zombies don't telefrag
-			if ( !TFGameRules()->HasTeamSpawns() && ( !FStrEq( STRING( pSpot->m_iClassname ), "info_player_start" ) ) && !m_Shared.IsZombie() )
+			if ( !m_Shared.IsZombie() )
 			{
 				// telefragging
 				CBaseEntity *pList[ 32 ];
@@ -2612,7 +2557,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
 						ent->TakeDamage( info );
 					}
-			}	
+				}	
 			}
 		}
 
@@ -2786,14 +2731,14 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 	{
 		if ( TFGameRules()->IsTeamplay() ) 
 		{
-			if ( of_forceclass.GetBool() ) 
+			if ( !TFGameRules()->IsAllClassEnabled() ) 
 				SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 		}
 		else 
 		{
 			if ( !of_allowteams.GetBool() )			
 				ChangeTeam( TF_TEAM_MERCENARY, false );
-			if ( of_forceclass.GetBool() ) 
+			if ( !TFGameRules()->IsAllClassEnabled() ) 
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 			else
 				ShowViewPortPanel( PANEL_CLASS );
@@ -2877,7 +2822,6 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		// Bots MUST join a team
 		if ( TFGameRules()->WouldChangeUnbalanceTeams( iTeam, GetTeamNumber() ) && !IsFakeClient() )
 		{
-			DevMsg("Unbalanced\n");
 			ShowViewPortPanel( PANEL_TEAM );
 			return;
 		}
@@ -2893,25 +2837,25 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 				TFGameRules()->GetInfectionRoundTimer() && TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 			{
 				ChangeTeam( TF_TEAM_RED, false );
-				if( !of_forceclass.GetBool() )
+				if(  TFGameRules()->IsAllClassEnabled() )
 					ShowViewPortPanel( PANEL_CLASS );
 			}
 			else if ( GetTeamNumber() != TF_TEAM_BLUE &&
 				TFGameRules()->GetInfectionRoundTimer() && !TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 			{
 				ChangeTeam( TF_TEAM_BLUE, false );
-				if( !of_forcezombieclass.GetBool() )
+				if ( TFGameRules()->IsAllClassZombieEnabled() )
 					ShowViewPortPanel( PANEL_CLASS );
 			}
 			else
 			{
 				ChangeTeam( TF_TEAM_RED, false );
-				if( !of_forceclass.GetBool() )
+				if ( TFGameRules()->IsAllClassEnabled() )
 					ShowViewPortPanel( PANEL_CLASS );
 			}
 
-			if ( ( GetTeamNumber() == TF_TEAM_RED && of_forceclass.GetBool() ) 
-				|| ( GetTeamNumber() != TF_TEAM_RED && of_forcezombieclass.GetBool() ) ) 
+			if ( ( GetTeamNumber() == TF_TEAM_RED && !TFGameRules()->IsAllClassEnabled() ) 
+				|| ( GetTeamNumber() != TF_TEAM_RED && !TFGameRules()->IsAllClassZombieEnabled() ) ) 
 				SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 
 			return;
@@ -2935,9 +2879,9 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 
 		if ( TFGameRules()->IsDMGamemode() )
 		{
-			if ( of_forceclass.GetBool() == 0 )
+			if ( TFGameRules()->IsAllClassEnabled() )
 				ShowViewPortPanel( PANEL_CLASS );
-		}
+		}	
 		else
 		{
 			ShowViewPortPanel( PANEL_CLASS );
@@ -3183,10 +3127,10 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 	if ( GetTeamNumber() <= LAST_SHARED_TEAM )
 		return;
 
-	if ( TFGameRules()->IsDMGamemode() && of_forceclass.GetBool() )
+	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsAllClassEnabled() )
 		return;
 
-	if ( TFGameRules()->IsInfGamemode() && ( (of_forceclass.GetBool() && GetTeamNumber() == TF_TEAM_RED) || (of_forcezombieclass.GetBool() && GetTeamNumber() == TF_TEAM_BLUE) ) )
+	if ( TFGameRules()->IsInfGamemode() && ( ( !TFGameRules()->IsAllClassEnabled() && GetTeamNumber() == TF_TEAM_RED) || ( !TFGameRules()->IsAllClassZombieEnabled() && GetTeamNumber() == TF_TEAM_BLUE) ) )
 		return;
 	
 	// In case we don't get the class menu message before the spawn timer
@@ -3951,8 +3895,8 @@ bool CTFPlayer::CanDisguise( void )
 		return false;
 	}
 
-	// no disguising in zombie survival, coop, or DM
-	if ( TFGameRules() && ( ( TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopGamemode() ) || ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) ) )
+	// no disguising in infection or DM
+	if ( TFGameRules() && ( TFGameRules()->IsInfGamemode() || ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) ) )
 		return false;
 
 	return true;
@@ -5063,12 +5007,6 @@ bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{
-		// coop needs to return false
-		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
-		{
-			return false;
-		}
-
 		if (TFGameRules() && TFGameRules()->IsDMGamemode() && !of_allowteams.GetBool() && !TFGameRules()->IsTeamplay())
 		{
 			return BaseClass::ShouldCollide(collisionGroup, contentsMask);
@@ -5909,7 +5847,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		if ( TFGameRules()->GetInfectionRoundTimer() && !TFGameRules()->GetInfectionRoundTimer()->IsInfectionBeginning() )
 		{
 			ChangeTeam( TF_TEAM_BLUE, false );
-			if ( of_forcezombieclass.GetBool() ) 
+			if ( !TFGameRules()->IsAllClassZombieEnabled() ) 
 					SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );
 			// PLACEHOLDER
 			CBroadcastRecipientFilter filter;
@@ -6605,9 +6543,11 @@ void CTFPlayer::ClientHearVox( const char *pSentence )
 
 bool CTFPlayer::IsRetroModeOn( void )
 {
-	if ((of_retromode.GetInt() == RETROMODE_BLUE_ONLY && GetTeamNumber() == TF_TEAM_BLUE) ||
-		(of_retromode.GetInt() == RETROMODE_RED_ONLY && GetTeamNumber() == TF_TEAM_RED) ||
-		(of_retromode.GetInt() == RETROMODE_ON))
+	if  ( 
+		( TFGameRules()->IsRetroMode( RETROMODE_BLUE_ONLY ) && GetTeamNumber() == TF_TEAM_BLUE) ||
+		( TFGameRules()->IsRetroMode( RETROMODE_RED_ONLY ) && GetTeamNumber() == TF_TEAM_RED) ||
+		( TFGameRules()->IsRetroMode( RETROMODE_ON ) ) 
+		)
 	{
 		m_bRetroMode = true;
 		return true;
@@ -8221,22 +8161,6 @@ int CTFPlayer::BuildObservableEntityList( void )
 			}
 		}
 	}
-
-	// Add all my npcs
-	CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
-	for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
-	{
-		CAI_BaseNPC *pNPC = ppAIs[i];
-		if (pNPC)
-		{
-			m_hObservableEntities.AddToTail(pNPC);
-
-			if (m_hObserverTarget.Get() == pNPC)
-			{
-				iCurrentIndex = (m_hObservableEntities.Count() - 1);
-			}
-		}
-	}	
 	
 	return iCurrentIndex;
 }
@@ -9807,481 +9731,6 @@ void CTFPlayer::AddAccount( int amount, bool bTrackChange )
 		m_iAccount = 0;
 	else if ( m_iAccount > 16000 )
 		m_iAccount = 16000;
-}
-
-ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
-ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-bool CTFPlayer::CommanderFindGoal( commandgoal_t *pGoal )
-{
-	CAI_BaseNPC *pAllyNpc;
-	trace_t	tr;
-	Vector	vecTarget;
-	Vector	forward;
-
-	EyeVectors( &forward );
-	
-	//---------------------------------
-	// MASK_SHOT on purpose! So that you don't hit the invisible hulls of the NPCs.
-	CTraceFilterSkipTwoEntities filter( this, PhysCannonGetHeldEntity( GetActiveWeapon() ), COLLISION_GROUP_INTERACTIVE_DEBRIS );
-
-	UTIL_TraceLine( EyePosition(), EyePosition() + forward * MAX_COORD_RANGE, MASK_SHOT, &filter, &tr );
-
-	if( !tr.DidHitWorld() )
-	{
-		CUtlVector<CAI_BaseNPC *> Allies;
-		AISquadIter_t iter;
-		for ( pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-		{
-			if ( pAllyNpc->IsCommandable() )
-				Allies.AddToTail( pAllyNpc );
-		}
-
-		for( int i = 0 ; i < Allies.Count() ; i++ )
-		{
-			if( Allies[ i ]->IsValidCommandTarget( tr.m_pEnt ) )
-			{
-				pGoal->m_pGoalEntity = tr.m_pEnt;
-				return true;
-			}
-		}
-	}
-
-	if( tr.fraction == 1.0 || (tr.surface.flags & SURF_SKY) )
-	{
-		// Move commands invalid against skybox.
-		pGoal->m_vecGoalLocation = tr.endpos;
-		return false;
-	}
-
-	if ( tr.m_pEnt->IsNPC() && ((CAI_BaseNPC *)(tr.m_pEnt))->IsCommandable() )
-	{
-		pGoal->m_vecGoalLocation = tr.m_pEnt->GetAbsOrigin();
-	}
-	else
-	{
-		vecTarget = tr.endpos;
-
-		Vector mins( -16, -16, 0 );
-		Vector maxs( 16, 16, 0 );
-
-		// Back up from whatever we hit so that there's enough space at the 
-		// target location for a bounding box.
-		// Now trace down. 
-		//UTIL_TraceLine( vecTarget, vecTarget - Vector( 0, 0, 8192 ), MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
-		UTIL_TraceHull( vecTarget + tr.plane.normal * 24,
-						vecTarget - Vector( 0, 0, 8192 ),
-						mins,
-						maxs,
-						MASK_SOLID_BRUSHONLY,
-						this,
-						COLLISION_GROUP_NONE,
-						&tr );
-
-
-		if ( !tr.startsolid )
-			pGoal->m_vecGoalLocation = tr.endpos;
-		else
-			pGoal->m_vecGoalLocation = vecTarget;
-	}
-
-	pAllyNpc = GetSquadCommandRepresentative();
-	if ( !pAllyNpc )
-		return false;
-
-	vecTarget = pGoal->m_vecGoalLocation;
-	if ( !pAllyNpc->FindNearestValidGoalPos( vecTarget, &pGoal->m_vecGoalLocation ) )
-		return false;
-
-	return ( ( vecTarget - pGoal->m_vecGoalLocation ).LengthSqr() < Square( 15*12 ) );
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-CAI_BaseNPC *CTFPlayer::GetSquadCommandRepresentative()
-{
-	if ( m_pPlayerAISquad != NULL )
-	{
-		CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember();
-		
-		if ( pAllyNpc )
-		{
-			return pAllyNpc->GetSquadCommandRepresentative();
-		}
-	}
-
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetNumSquadCommandables()
-{
-	AISquadIter_t iter;
-	int c = 0;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() )
-			c++;
-	}
-	return c;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-int CTFPlayer::GetNumSquadCommandableMedics()
-{
-	AISquadIter_t iter;
-	int c = 0;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() && pAllyNpc->IsMedic() )
-			c++;
-	}
-	return c;
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void CTFPlayer::CommanderUpdate()
-{
-	CAI_BaseNPC *pCommandRepresentative = GetSquadCommandRepresentative();
-	bool bFollowMode = false;
-	if ( pCommandRepresentative )
-	{
-		bFollowMode = ( pCommandRepresentative->GetCommandGoal() == vec3_invalid );
-
-		// set the variables for network transmission (to show on the hud)
-		m_HL2Local.m_iSquadMemberCount = GetNumSquadCommandables();
-		m_HL2Local.m_iSquadMedicCount = GetNumSquadCommandableMedics();
-		m_HL2Local.m_fSquadInFollowMode = bFollowMode;
-
-		// debugging code for displaying extra squad indicators
-		/*
-		char *pszMoving = "";
-		AISquadIter_t iter;
-		for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-		{
-			if ( pAllyNpc->IsCommandMoving() )
-			{
-				pszMoving = "<-";
-				break;
-			}
-		}
-
-		NDebugOverlay::ScreenText(
-			0.932, 0.919, 
-			CFmtStr( "%d|%c%s", GetNumSquadCommandables(), ( bFollowMode ) ? 'F' : 'S', pszMoving ),
-			255, 128, 0, 128,
-			0 );
-		*/
-
-	}
-	else
-	{
-		m_HL2Local.m_iSquadMemberCount = 0;
-		m_HL2Local.m_iSquadMedicCount = 0;
-		m_HL2Local.m_fSquadInFollowMode = true;
-	}
-
-	if ( m_QueuedCommand != CC_NONE && ( m_QueuedCommand == CC_FOLLOW || gpGlobals->realtime - m_RealTimeLastSquadCommand >= player_squad_double_tap_time.GetFloat() ) )
-	{
-		CommanderExecute( m_QueuedCommand );
-		m_QueuedCommand = CC_NONE;
-	}
-	else if ( !bFollowMode && pCommandRepresentative && m_CommanderUpdateTimer.Expired() && player_squad_transient_commands.GetBool() )
-	{
-		m_CommanderUpdateTimer.Set(2.5);
-
-		if ( pCommandRepresentative->ShouldAutoSummon() )
-			CommanderExecute( CC_FOLLOW );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//
-// bHandled - indicates whether to continue delivering this order to
-// all allies. Allows us to stop delivering certain types of orders once we find
-// a suitable candidate. (like picking up a single weapon. We don't wish for
-// all allies to respond and try to pick up one weapon).
-//----------------------------------------------------------------------------- 
-bool CTFPlayer::CommanderExecuteOne( CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies )
-{
-	if ( goal.m_pGoalEntity )
-	{
-		return pNpc->TargetOrder( goal.m_pGoalEntity, Allies, numAllies );
-	}
-	else if ( pNpc->IsInPlayerSquad() )
-	{
-		pNpc->MoveOrder( goal.m_vecGoalLocation, Allies, numAllies );
-	}
-	
-	return true;
-}
-
-//---------------------------------------------------------
-//---------------------------------------------------------
-void CTFPlayer::CommanderExecute( CommanderCommand_t command )
-{
-	CAI_BaseNPC *pPlayerSquadLeader = GetSquadCommandRepresentative();
-
-	if ( !pPlayerSquadLeader )
-	{
-		EmitSound( "HL2Player.UseDeny" );
-		return;
-	}
-
-	int i;
-	CUtlVector<CAI_BaseNPC *> Allies;
-	commandgoal_t goal;
-
-	if ( command == CC_TOGGLE )
-	{
-		if ( pPlayerSquadLeader->GetCommandGoal() != vec3_invalid )
-			command = CC_FOLLOW;
-		else
-			command = CC_SEND;
-	}
-	else
-	{
-		if ( command == CC_FOLLOW && pPlayerSquadLeader->GetCommandGoal() == vec3_invalid )
-			return;
-	}
-
-	if ( command == CC_FOLLOW )
-	{
-		goal.m_pGoalEntity = this;
-		goal.m_vecGoalLocation = vec3_invalid;
-	}
-	else
-	{
-		goal.m_pGoalEntity = NULL;
-		goal.m_vecGoalLocation = vec3_invalid;
-
-		// Find a goal for ourselves.
-		if( !CommanderFindGoal( &goal ) )
-		{
-			EmitSound( "HL2Player.UseDeny" );
-			return; // just keep following
-		}
-	}
-
-#ifdef _DEBUG
-	if( goal.m_pGoalEntity == NULL && goal.m_vecGoalLocation == vec3_invalid )
-	{
-		DevMsg( 1, "**ERROR: Someone sent an invalid goal to CommanderExecute!\n" );
-	}
-#endif // _DEBUG
-
-	AISquadIter_t iter;
-	for ( CAI_BaseNPC *pAllyNpc = m_pPlayerAISquad->GetFirstMember(&iter); pAllyNpc; pAllyNpc = m_pPlayerAISquad->GetNextMember(&iter) )
-	{
-		if ( pAllyNpc->IsCommandable() )
-			Allies.AddToTail( pAllyNpc );
-	}
-
-	//---------------------------------
-	// If the trace hits an NPC, send all ally NPCs a "target" order. Always
-	// goes to targeted one first
-#ifdef DBGFLAG_ASSERT
-	int nAIs = g_AI_Manager.NumAIs();
-#endif
-	CAI_BaseNPC * pTargetNpc = (goal.m_pGoalEntity) ? goal.m_pGoalEntity->MyNPCPointer() : NULL;
-	
-	bool bHandled = false;
-	if( pTargetNpc )
-	{
-		bHandled = !CommanderExecuteOne( pTargetNpc, goal, Allies.Base(), Allies.Count() );
-	}
-	
-	for ( i = 0; !bHandled && i < Allies.Count(); i++ )
-	{
-		if ( Allies[i] != pTargetNpc && Allies[i]->IsPlayerAlly() )
-		{
-			bHandled = !CommanderExecuteOne( Allies[i], goal, Allies.Base(), Allies.Count() );
-		}
-		Assert( nAIs == g_AI_Manager.NumAIs() ); // not coded to support mutating set of NPCs
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Enter/exit commander mode, manage ally selection.
-//-----------------------------------------------------------------------------
-void CTFPlayer::CommanderMode()
-{
-	float commandInterval = gpGlobals->realtime - m_RealTimeLastSquadCommand;
-	m_RealTimeLastSquadCommand = gpGlobals->realtime;
-	if ( commandInterval < player_squad_double_tap_time.GetFloat() )
-	{
-		m_QueuedCommand = CC_FOLLOW;
-	}
-	else
-	{
-		m_QueuedCommand = (player_squad_transient_commands.GetBool()) ? CC_SEND : CC_TOGGLE;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPlayer::NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity )
-{
-	CAI_BaseNPC *pAttacker = pAttackerEntity->MyNPCPointer();
-	if ( pAttacker )
-	{
-		const Vector &origin = GetAbsOrigin();
-		for ( int i = 0; i < g_AI_Manager.NumAIs(); i++ )
-		{
-			const float NEAR_Z = 12*12;
-			const float NEAR_XY_SQ = Square( 50*12 );
-			CAI_BaseNPC *pNpc = g_AI_Manager.AccessAIs()[i];
-			if ( pNpc->IsPlayerAlly() )
-			{
-				const Vector &originNpc = pNpc->GetAbsOrigin();
-				if ( fabsf( originNpc.z - origin.z ) < NEAR_Z )
-				{
-					if ( (originNpc.AsVector2D() - origin.AsVector2D()).LengthSqr() < NEAR_XY_SQ )
-					{
-						pNpc->OnFriendDamaged( this, pAttacker );
-					}
-				}
-			}
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Notification of a player's npc ally in the players squad being killed
-//-----------------------------------------------------------------------------
-void CTFPlayer::OnSquadMemberKilled( inputdata_t &data )
-{
-	// send a message to the client, to notify the hud of the loss
-	CSingleUserRecipientFilter user( this );
-	user.MakeReliable();
-	UserMessageBegin( user, "SquadMemberDied" );
-	MessageEnd();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : CBaseEntity
-//-----------------------------------------------------------------------------
-bool CTFPlayer::IsHoldingEntity( CBaseEntity *pEnt )
-{
-	return PlayerPickupControllerIsHoldingEntity( m_hUseEntity, pEnt );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Notifies Alyx that player has put a combine ball into a socket so she can comment on it.
-// Input  : pCombineBall - ball the was socketed
-//-----------------------------------------------------------------------------
-void CTFPlayer::CombineBallSocketed( CPropCombineBall *pCombineBall )
-{
-#ifdef HL2_EPISODIC
-	CNPC_Alyx *pAlyx = CNPC_Alyx::GetAlyx();
-	if ( pAlyx )
-	{
-		pAlyx->CombineBallSocketed( pCombineBall->NumBounces() );
-	}
-#endif
-}
-
-void CTFPlayer::StartWaterDeathSounds( void )
-{
-	CPASAttenuationFilter filter( this );
-
-	if ( m_sndLeeches == NULL )
-	{
-		m_sndLeeches = (CSoundEnvelopeController::GetController()).SoundCreate( filter, entindex(), CHAN_STATIC, "coast.leech_bites_loop" , ATTN_NORM );
-	}
-
-	if ( m_sndLeeches )
-	{
-		(CSoundEnvelopeController::GetController()).Play( m_sndLeeches, 1.0f, 100 );
-	}
-
-	if ( m_sndWaterSplashes == NULL )
-	{
-		m_sndWaterSplashes = (CSoundEnvelopeController::GetController()).SoundCreate( filter, entindex(), CHAN_STATIC, "coast.leech_water_churn_loop" , ATTN_NORM );
-	}
-
-	if ( m_sndWaterSplashes )
-	{
-		(CSoundEnvelopeController::GetController()).Play( m_sndWaterSplashes, 1.0f, 100 );
-	}
-}
-
-void CTFPlayer::StopWaterDeathSounds( void )
-{
-	if ( m_sndLeeches )
-	{
-		(CSoundEnvelopeController::GetController()).SoundFadeOut( m_sndLeeches, 0.5f, true );
-		m_sndLeeches = NULL;
-	}
-
-	if ( m_sndWaterSplashes )
-	{
-		(CSoundEnvelopeController::GetController()).SoundFadeOut( m_sndWaterSplashes, 0.5f, true );
-		m_sndWaterSplashes = NULL;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Shuts down sounds
-//-----------------------------------------------------------------------------
-void CTFPlayer::StopLoopingSounds( void )
-{
-	if ( m_sndLeeches != NULL )
-	{
-		 (CSoundEnvelopeController::GetController()).SoundDestroy( m_sndLeeches );
-		 m_sndLeeches = NULL;
-	}
-
-	if ( m_sndWaterSplashes != NULL )
-	{
-		 (CSoundEnvelopeController::GetController()).SoundDestroy( m_sndWaterSplashes );
-		 m_sndWaterSplashes = NULL;
-	}
-
-	BaseClass::StopLoopingSounds();
-}
-
-ConVar	sk_battery("sk_battery", "0");
-
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Helper to remove from ladder
-//-----------------------------------------------------------------------------
-void CTFPlayer::ExitLadder()
-{
-	if ( MOVETYPE_LADDER != GetMoveType() )
-		return;
-
-	SetMoveType( MOVETYPE_WALK );
-	SetMoveCollide( MOVECOLLIDE_DEFAULT );
-	// Remove from ladder
-	/*m_HL2Local.*/m_hLadder.Set( NULL );
-}
-
-
-surfacedata_t *CTFPlayer::GetLadderSurface( const Vector &origin )
-{
-	extern const char *FuncLadder_GetSurfaceprops(CBaseEntity *pLadderEntity);
-
-	CBaseEntity *pLadder = /*m_HL2Local.*/m_hLadder.Get();
-	if ( pLadder )
-	{
-		const char *pSurfaceprops = FuncLadder_GetSurfaceprops(pLadder);
-		// get ladder material from func_ladder
-		return physprops->GetSurfaceData( physprops->GetSurfaceIndex( pSurfaceprops ) );
-
-	}
-	return BaseClass::GetLadderSurface(origin);
 }
 
 // Required for HL2 ents!

@@ -251,11 +251,13 @@ void CBaseGameStats::Event_Init( void )
 		SetDXLevelStatistic( pDXLevel.GetInt() );
 	}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	// Exit if the user is running on DirectX 6, 7 or 8 as these are completely unsupported.
 	if ( pDXLevel.GetInt() > 50 && pDXLevel.GetInt() < 90 )
 	{
 		Error("Open Fortress cannot be ran in DirectX 8 or lower.\nPut -dxlevel 95 into the launch parameters of your game, start the game once and then remove this launch parameter afterwards, so it's permanently saved.");
 	}
+#endif
 
 	++m_BasicStats.m_Summary.m_nCount;
 
@@ -1468,7 +1470,11 @@ void CBaseGameStats::SetHL2UnlockedChapterStatistic( void )
 					++search;
 
 				// read the value
-				int iChapter =99;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+				int iChapter = 99;
+#else
+				int iChapter = Q_atoi( search );
+#endif
 				m_BasicStats.m_nHL2ChaptureUnlocked = iChapter;
 			}
 

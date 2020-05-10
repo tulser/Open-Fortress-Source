@@ -28,9 +28,11 @@ enum ParticleAttachment_t
 	PATTACH_WORLDORIGIN,			// Used for control points that don't attach to an entity
 
 	PATTACH_ROOTBONE_FOLLOW,		// Create at the root bone of the entity, and update to follow
-
-	PATTACH_BONE_FOLLOW,			// Create at a bone, then follow it
 	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	PATTACH_BONE_FOLLOW,			// Create at a bone, then follow it
+#endif
+
 	MAX_PATTACH_TYPES,
 };
 

@@ -1691,10 +1691,12 @@ protected:
 	CThreadFastMutex m_CalcAbsolutePositionMutex;
 	CThreadFastMutex m_CalcAbsoluteVelocityMutex;
 	
+#ifdef OF_CLIENT_DLL
 public:
 	virtual Vector GetItemTintColor( void ) { return vec3_origin; }
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwnerEntity(); }
-	
+#endif
+
 #ifdef TF_CLIENT_DLL
 	// TF prevents drawing of any entity attached to players that aren't items in the inventory of the player.
 	// This is to prevent servers creating fake cosmetic items and attaching them to players.

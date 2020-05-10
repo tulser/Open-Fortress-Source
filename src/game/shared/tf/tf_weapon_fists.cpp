@@ -30,7 +30,7 @@ BEGIN_PREDICTION_DATA( CTFFists )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_fists, CTFFists );
-PRECACHE_WEAPON_REGISTER( tf_weapon_fists );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_fists );
 
 
 
@@ -43,7 +43,7 @@ BEGIN_PREDICTION_DATA( CTFBerserk )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_berserk, CTFBerserk );
-PRECACHE_WEAPON_REGISTER( tf_weapon_berserk );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_berserk );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFClaws, DT_TFWeaponClaws )
 
@@ -54,7 +54,7 @@ BEGIN_PREDICTION_DATA( CTFClaws )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_claws, CTFClaws );
-PRECACHE_WEAPON_REGISTER( tf_weapon_claws );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_claws );
 
 //=============================================================================
 //

@@ -120,7 +120,7 @@ void CPathTrack::Link( void  )
 		}
 		else
 		{
-			DevMsg("Dead end link: %s\n", STRING( m_target ) );
+			Warning("Dead end link: %s\n", STRING( m_target ) );
 		}
 	}
 
@@ -559,6 +559,7 @@ CPathTrack *CPathTrack::Instance( edict_t *pent )
 	return NULL;
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -573,6 +574,7 @@ void CPathTrack::Pass( CBaseEntity *pActivator )
 		gameeventmanager->FireEvent( event, true );
 	}
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -581,12 +583,14 @@ void CPathTrack::InputPass( inputdata_t &inputdata )
 {
 	m_OnPass.FireOutput( inputdata.pActivator, this );
 
+#if defined ( TF_DLL ) || defined ( OF_DLL )
 	IGameEvent * event = gameeventmanager->CreateEvent( "path_track_passed" );
 	if ( event )
 	{
 		event->SetInt( "index", entindex() );
 		gameeventmanager->FireEvent( event, true );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

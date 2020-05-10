@@ -129,7 +129,11 @@ void CDebugOverlay::Paint()
 				{
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
+#ifdef OF_CLIENT_DLL
 					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
+#else
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
+#endif
 				}
 			}
 			else
@@ -138,7 +142,11 @@ void CDebugOverlay::Paint()
 				{	
 					float xPos		= screenPos[0];
 					float yPos		= screenPos[1]+ (pCurrText->lineOffset*13); // Line spacing;
+#ifdef OF_CLIENT_DLL					
 					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, "%s", pCurrText->text );
+#else
+					g_pMatSystemSurface->DrawColoredText( m_hFont, xPos, yPos, r, g, b, a, pCurrText->text );
+#endif					
 				}
 			}
 		}

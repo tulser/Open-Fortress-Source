@@ -23,8 +23,13 @@ class CTeamControlPoint;
 #define TEAM_TRAIN_ALERT_DISTANCE	750   // alert is the VO warning
 #define TEAM_TRAIN_ALARM_DISTANCE	200   // alarm is the looping sound played at the control point
 
+#ifdef OF_DLL
 #define TEAM_TRAIN_ALERT			"Cart.Warning"
 #define TEAM_TRAIN_FINAL_ALERT		"Cart.FinalWarning"
+#else
+#define TEAM_TRAIN_ALERT			"Announcer.Cart.Warning"
+#define TEAM_TRAIN_FINAL_ALERT		"Announcer.Cart.FinalWarning"
+#endif
 #define TEAM_TRAIN_ALARM			"Cart.Warning"
 #define TEAM_TRAIN_ALARM_SINGLE		"Cart.WarningSingle"
 
@@ -66,19 +71,23 @@ public:
 	// ==========================================================
 	void WatcherActivate( void );
 	
+#ifdef OF_DLL
 	void CheckPayloadOverride( void );
 	void SetupTracksToPass( void );
 	void SaveTeamSpawnPoints( void );
 	typedef CHandle<CPathTrack>	TrackHandle;
 	typedef CHandle<CBaseEntity>	SpawnHandle;
+#endif
 
 	void WatcherThink( void );
 	void WatcherAlarmThink( void );
 
 	CBaseEntity *GetTrainEntity( void );
+#ifdef OF_DLL
 	CPathTrack 	*GetSecondToLastNode( void );
 	CPathTrack	*GetStartNode  ( void ) { return m_hStartNode; }
 	CPathTrack	*GetGoalNode   ( void ) { return m_hGoalNode;  }
+#endif
 	bool IsDisabled( void ) { return m_bDisabled; }
 
 	bool TimerMayExpire( void );
@@ -100,7 +109,9 @@ public:
 	float GetTrainDistanceAlongTrack( void ) const;
 	Vector GetNextCheckpointPosition( void ) const;	// return world space location of next checkpoint along the path
 	
+#ifdef OF_DLL
 	virtual void Shutdown( void );
+#endif
 
 #if defined( STAGING_ONLY ) && defined( TF_DLL )
 	void DumpStats( void );
@@ -120,8 +131,11 @@ private:
 	void HandleTrainMovement( bool bStartReceding = false );
 	void HandleSparks( bool bSparks );
 
+#ifdef OF_DLL
 public:
 	CNetworkVar( int, m_nTeam );
+#endif
+
 private:
 
 	bool m_bDisabled;

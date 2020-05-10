@@ -110,6 +110,7 @@ int CParticleProperty::GetParticleAttachment( C_BaseEntity *pEntity, const char 
 //-----------------------------------------------------------------------------
 CNewParticleEffect *CParticleProperty::Create( const char *pszParticleName, ParticleAttachment_t iAttachType, const char *pszAttachmentName )
 {
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	switch( iAttachType )
 	{
 		case PATTACH_BONE_FOLLOW:
@@ -129,6 +130,14 @@ CNewParticleEffect *CParticleProperty::Create( const char *pszParticleName, Part
 				return NULL;
 			return Create( pszParticleName, iAttachType, iAttachment );
 	}
+#else
+	int iAttachment = GetParticleAttachment( GetOuter(), pszAttachmentName, pszParticleName );
+	if ( iAttachment == INVALID_PARTICLE_ATTACHMENT )
+		return NULL;
+
+	// Create the system
+	return Create( pszParticleName, iAttachType, iAttachment );
+#endif
 }
 	  
 //-----------------------------------------------------------------------------
@@ -544,7 +553,7 @@ extern void FormatViewModelAttachment( Vector &vOrigin, bool bInverse );
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int iPoint, bool bInitializing )
-{;
+{
 	ParticleControlPoint_t *pPoint = &pEffect->pControlPoints[iPoint];
 
 	if ( !pPoint->hEntity.Get() )
@@ -629,7 +638,10 @@ void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int i
 						// try C_BaseAnimating if attach point is not on the weapon
 						if ( !pAnimating->C_BaseAnimating::GetAttachment( pPoint->iAttachmentPoint, attachmentToWorld ) )
 						{
-							//Warning( "Cannot update control point %d for effect '%s'.\n", pPoint->iAttachmentPoint, pEffect->pParticleEffect->GetEffectName() );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
+#else						
+							Warning( "Cannot update control point %d for effect '%s'.\n", pPoint->iAttachmentPoint, pEffect->pParticleEffect->GetEffectName() );
+#endif
 							// Remove the effect cause this warning means something is orphaned
 							StopParticlesNamed( pEffect->pParticleEffect->GetEffectName() );
 							return;
@@ -674,6 +686,7 @@ void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int i
 				}
 			}
 			break;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		case PATTACH_BONE_FOLLOW:
 			{
 				C_BaseAnimating *pAnimating = pPoint->hEntity->GetBaseAnimating();
@@ -697,6 +710,7 @@ void CParticleProperty::UpdateControlPoint( ParticleEffectList_t *pEffect, int i
 			}
 			break;
 		}
+#endif
 	}
 
 	Vector vecForcedOriginOffset( 0, 0, flOffset );

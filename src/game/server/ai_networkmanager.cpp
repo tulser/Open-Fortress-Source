@@ -595,9 +595,10 @@ void CAI_NetworkManager::LoadNetworkGraph( void )
 
 	if ( numNodes > MAX_NODES || numNodes < 0 )
 	{
-		Warning( "AI node graph %s is corrupt\n", szNrpFilename );
+		Error( "AI node graph %s is corrupt\n", szNrpFilename );
 		DevMsg( "%s", (const char *)buf.Base() );
 		DevMsg( "\n" );
+		Assert( 0 );
 		return;
 	}
 	

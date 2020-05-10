@@ -46,7 +46,7 @@ public:
 
 	virtual void		SendPlayerAnimEvent( CTFPlayer *pPlayer );
 
-	bool				IsBehindTarget( CBaseEntity *pTarget );
+	bool				IsBehindAndFacingTarget( CBaseEntity *pTarget );
 
 	virtual bool		CalcIsAttackCriticalHelper( void );
 

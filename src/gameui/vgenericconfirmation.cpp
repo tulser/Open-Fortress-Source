@@ -11,7 +11,6 @@
 #include "vgui/ISurface.h"
 #include "nb_button.h"
 #include "cdll_util.h"
-#include "../game/shared/hl2ce/steamworks_stuff.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -48,10 +47,7 @@ GenericConfirmation::GenericConfirmation( Panel *parent, const char *panelName )
 
 	char* szOk;
 
-	if (g_bSteamworksError)
-		szOk = "#GameUI_QuitConfirmationTitle";
-	else
-		szOk = "#L4D360UI_Ok";
+	szOk = "#L4D360UI_Ok";
 
 	m_pLblOkButton = new vgui::Label( this, "LblOkButton", "#GameUI_Icons_A_3DBUTTON" );
 	m_pLblOkText = new vgui::Label(this, "LblOkText", szOk);

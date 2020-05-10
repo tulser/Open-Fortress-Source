@@ -67,9 +67,10 @@ public:
 	// Initialize view renderer
 	virtual void		Init( void ) = 0;
 	
-// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+#ifdef OF_CLIENT_DLL
 	virtual void        MP_PostSimulate() = 0;
-// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+#endif
 
 	// Clear any systems between levels
 	virtual void		LevelInit( void ) = 0;

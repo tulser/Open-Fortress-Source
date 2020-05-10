@@ -1024,11 +1024,6 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 	if ( !CanFireCriticalShot() )
 		return false;
 
-	if ( !IsAllowedToWithdrawFromCritBucket( GetDamage() ) )
-		return false;
-
-	AddToCritBucket( GetDamage() );
-
 	float flPlayerCritMult = pPlayer->GetCritMult();
 
 	if ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bUseRapidFireCrits )

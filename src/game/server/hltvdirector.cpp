@@ -70,7 +70,7 @@ static float WeightedAngle( Vector vec1, Vector vec2)
 	return a*a;	// vectors are facing opposite direction
 }
 
-#if !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_DLL ) && !defined( TF_MOD )// add your mod here if you use your own director
+#if !defined( CSTRIKE_DLL ) && !defined( DOD_DLL ) && !defined( TF_DLL ) && !defined( OF_DLL )// add your mod here if you use your own director
 
 static CHLTVDirector s_HLTVDirector;	// singleton
 
@@ -611,7 +611,9 @@ void CHLTVDirector::RemoveEventsFromHistory(int tick)
 
 		if ( (dc.m_Tick < tick) || (tick == -1) )
 		{
+#ifdef OF_DLL			
 			if ( gameeventmanager )
+#endif				
 				gameeventmanager->FreeEvent( dc.m_Event );
 			dc.m_Event = NULL;
 			m_EventHistory.RemoveAt( index );

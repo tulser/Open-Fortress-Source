@@ -93,8 +93,9 @@ enum {
 	WINREASON_RD_CORES_COLLECTED,
 	WINREASON_RD_REACTOR_RETURNED,
 	// open fortress
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	WINREASON_POINTLIMIT,
-	WINREASON_COOP_FAIL,
+#endif
 };
 
 enum stalemate_reasons_t
@@ -203,9 +204,13 @@ public:
 
 	virtual int GetWinningTeam( void ){ return m_iWinningTeam; }
 	int GetWinReason() { return m_iWinReason; }
+	
+#ifdef OF_DLL
 #ifdef GAME_DLL
 	virtual float GetStateTransitionTime( void ){ return m_flStateTransitionTime; }
 #endif
+#endif
+
 	bool InOvertime( void ){ return m_bInOvertime; }
 	void SetOvertime( bool bOvertime );
 
@@ -271,8 +276,10 @@ public:
 public: // IGameEventListener Interface
 	virtual void FireGameEvent( IGameEvent * event );
 	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	void BroadcastSound( int iTeam, const char *sound, bool bAnnouncer = true, int iExcludePlayers = -1 );
 	void BroadcastSoundFFA( int iPlayer, const char *sound, const char *sound_rest = NULL, bool bAnnouncer = true );
+#endif
 
 	//----------------------------------------------------------------------------------
 	// Server specific
@@ -384,7 +391,12 @@ public:
 	virtual void PlaySpecialCapSounds( int iCappingTeam, CTeamControlPoint *pPoint ){ return; }
 
 	bool PlayThrottledAlert( int iTeam, const char *sound, float fDelayBeforeNext );
-	
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else	
+	void BroadcastSound( int iTeam, const char *sound, int iAdditionalSoundFlags = 0 );
+#endif
+
 	int GetRoundsPlayed( void ) { return m_nRoundsPlayed; }
 
 	virtual void RecalculateControlPointState( void ){ return; }
@@ -393,6 +405,9 @@ public:
 
 	virtual bool ShouldWaitToStartRecording( void ){ return IsInWaitingForPlayers(); }
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+public:
+#endif
 	virtual int	 CountActivePlayers( void );
 protected:
 	virtual void Think( void );
@@ -409,7 +424,11 @@ protected:
 	bool		 CheckTimeLimit( bool bAllowEnd = true );
 	int			 GetTimeLeft( void );
 	virtual	bool CheckWinLimit( bool bAllowEnd = true );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual bool CheckMaxRounds( bool bAllowEnd = true );
+#else
+	bool CheckMaxRounds( bool bAllowEnd = true );
+#endif
 
 	void		 CheckReadyRestart( void );
 #if defined(TF_CLIENT_DLL) || defined(TF_DLL)
@@ -479,11 +498,15 @@ protected:
 	void PlaySuddenDeathSong( void );
 
 	virtual const char* GetStalemateSong( int nTeam ) { return "Game.Stalemate"; }
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual const char* WinSongName( int nTeam );
 	virtual const char* LoseSongName( int nTeam );
-	
-	virtual void RespawnTeam( int iTeam ) { RespawnPlayers( false, true, iTeam ); }
+#else
+	virtual const char* WinSongName( int nTeam ) { return "Game.YourTeamWon"; }
+	virtual const char* LoseSongName( int nTeam ) { return "Game.YourTeamLost"; }
+#endif
 
+	virtual void RespawnTeam( int iTeam ) { RespawnPlayers(false, true, iTeam); }
 	void HideActiveTimer( void );
 	virtual void RestoreActiveTimer( void );
 
@@ -504,7 +527,9 @@ protected:
 	float						m_flNextPeriodicThink;
 	bool						m_bChangeLevelOnRoundEnd;
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	bool						m_bInfectionLastManAlive;
+#endif
 
 	bool						m_bResetTeamScores;
 	bool						m_bResetPlayerScores;
@@ -556,7 +581,12 @@ public:
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual void	HandleOvertimeBegin(){}
+	
+#if defined ( OF_CLIENT_DLL )
 	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b );
+#else
+	virtual void	GetTeamGlowColor( int nTeam, float &r, float &g, float &b ){ r = 0.76f; g = 0.76f; b = 0.76f; }
+#endif
 
 private:
 	bool			m_bOldInWaitingForPlayers;
@@ -591,7 +621,9 @@ protected:
 
 public:
 	CNetworkArray( float,		m_TeamRespawnWaveTimes, MAX_TEAMS );	// Time between each team's respawn wave
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	CNetworkVar( float, m_flStartedWinState );
+#endif
 private:
 	float m_flStartBalancingTeamsAt;
 	float m_flNextBalanceTeamsTime;

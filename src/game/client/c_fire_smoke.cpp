@@ -296,9 +296,10 @@ void C_EntityFlame::StopEffect( void )
 
 	if ( m_hEffect )
 	{
+#ifdef OF_CLIENT_DLL		
 		if ( m_hEntAttached )
 			m_hEntAttached->ParticleProp()->StopEmission( m_hEffect, true );
-
+#endif
 
 		ParticleProp()->StopEmission( m_hEffect, true );
 		m_hEffect->SetControlPointEntity( 0, NULL );
@@ -331,9 +332,10 @@ void C_EntityFlame::CreateEffect( void )
 {
 	if ( m_hEffect )
 	{
+#ifdef OF_CLIENT_DLL		
 		if ( m_hOldAttached )
 			m_hOldAttached->ParticleProp()->StopEmission( m_hEffect, true );
-
+#endif
 
 		ParticleProp()->StopEmission( m_hEffect, true );
 		m_hEffect->SetControlPointEntity( 0, NULL );
@@ -341,26 +343,34 @@ void C_EntityFlame::CreateEffect( void )
 		m_hEffect = NULL;
 	}
  
-	// m_hEffect = ParticleProp()->Create( "burningplayer_red", PATTACH_ABSORIGIN_FOLLOW );
-	// m_hEntAttached = ParticleProp()->Create( "burningplayer_red", PATTACH_ABSORIGIN_FOLLOW );
-
+#ifdef OF_CLIENT_DLL
 	// adds proper burning on npcs
 	if ( m_hEntAttached )
 	{
 		m_hEffect = m_hEntAttached->ParticleProp()->Create("burningplayer_red", PATTACH_ABSORIGIN_FOLLOW);
 	}
+#else
+#if defined( TF_CLIENT_DLL )
+	m_hEffect = ParticleProp()->Create( "burningplayer_red", PATTACH_ABSORIGIN_FOLLOW );
+#else
+	m_hEffect = ParticleProp()->Create( "burning_character", PATTACH_ABSORIGIN_FOLLOW );
+#endif	
+#endif
 
 	if ( m_hEffect )
 	{
+#ifdef OF_CLIENT_DLL
 		// fixed for proper burning on npcs
-		//C_BaseEntity *pEntity = m_hEntAttached;
 		m_hOldAttached = m_hEntAttached;
-		//C_BaseEntity *pEntity = m_hEntAttached;
-		//ParticleProp()->AddControlPoint( m_hEffect, 1, pEntity, PATTACH_ABSORIGIN_FOLLOW );
-		//m_hEffect->SetControlPoint( 0, GetAbsOrigin() );
-		//m_hEffect->SetControlPoint( 1, GetAbsOrigin() );
-		//m_hEffect->SetControlPointEntity( 0, pEntity );
-		//m_hEffect->SetControlPointEntity( 1, pEntity );
+#else
+		C_BaseEntity *pEntity = m_hEntAttached;
+		m_hOldAttached = m_hEntAttached;
+		ParticleProp()->AddControlPoint( m_hEffect, 1, pEntity, PATTACH_ABSORIGIN_FOLLOW );
+		m_hEffect->SetControlPoint( 0, GetAbsOrigin() );
+		m_hEffect->SetControlPoint( 1, GetAbsOrigin() );
+		m_hEffect->SetControlPointEntity( 0, pEntity );
+		m_hEffect->SetControlPointEntity( 1, pEntity );
+#endif
 	}
 }
 

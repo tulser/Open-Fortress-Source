@@ -213,7 +213,6 @@ void CTFBot::Spawn( void )
 	m_bPickedUpPowerup = false;
 	m_bTouchedJumpPad = false;
 	m_bTouchedTeleport = false;
-	m_bHasPickedUpOneWeapon = false;
 
 	m_suspectedSpies.PurgeAndDeleteElements();
 	m_cpChangedTimer.Invalidate();
@@ -233,8 +232,6 @@ void CTFBot::Event_Killed( const CTakeDamageInfo &info )
 {
 	OnKilled( info );
 	CTFPlayer::Event_Killed( info );
-
-	m_bHasPickedUpOneWeapon = false;
 
 	LeaveSquad();
 
@@ -458,7 +455,6 @@ bool CTFBot::IsQuietWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_MEDIGUN:
 		case TF_WEAPON_DISPENSER:
 		case TF_WEAPON_INVIS:
-		case TF_WEAPON_FLAREGUN:
 		//case TF_WEAPON_LUNCHBOX:
 		//case TF_WEAPON_JAR:
 		//case TF_WEAPON_COMPOUND_BOW:
@@ -518,7 +514,6 @@ bool CTFBot::IsHitScanWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_ASSAULTRIFLE:
 		case TF_WEAPON_PHYSCANNON:
 		case TF_WEAPON_LIGHTNING_GUN:
-		case TF_WEAPON_THUNDERGUN:
 		case TFC_WEAPON_SHOTGUN_SB:
 		case TFC_WEAPON_SHOTGUN_DB:
 		case TFC_WEAPON_RAILPISTOL:

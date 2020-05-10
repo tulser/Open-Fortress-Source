@@ -214,7 +214,6 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 				{
 					actor->Weapon_Switch( pGivenWeapon );
 					actor->m_bPickedUpWeapon = true;
-					actor->m_bHasPickedUpOneWeapon = true;
 				}
 			}
 

@@ -965,6 +965,7 @@ void CKeepUpright::Activate()
 		// force it to have perfect damping to compensate.
 		// detect it using the hack of angular limit == 150, attached to a vehicle
 		// Fixing it in the code is the simplest course of action presently
+#ifdef HL2_DLL
 		if ( m_angularLimit == 150.0f )
 		{
 			CBaseEntity *pEntity = static_cast<CBaseEntity *>(pPhys->GetGameData());
@@ -973,6 +974,7 @@ void CKeepUpright::Activate()
 				m_bDampAllRotation = true;
 			}
 		}
+#endif
 
 		m_pController = physenv->CreateMotionController( (IMotionEvent *)this );
 		m_pController->AttachObject( pPhys, false );
