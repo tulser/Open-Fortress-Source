@@ -131,6 +131,7 @@ extern ConVar tf_mm_servermode;
 #ifdef OF_DLL
 #include "gamemounter.h"
 #include "of_shared_schemas.h"
+#include "of_modelloader.h"
 #endif
 
 extern IToolFrameworkServer *g_pToolFrameworkServer;
@@ -745,6 +746,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	InitItemSchema();
 	ParseItemsGame();
 	ParseSoundManifest();
+	SetupModelLoader();
 #endif
 
 	// try to get debug overlay, may be NULL if on HLDS

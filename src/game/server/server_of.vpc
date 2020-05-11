@@ -49,7 +49,20 @@ $Project "Server (Open Fortress)"
 			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.cpp"
 			$File	"$SRCDIR\game\shared\of\of_projectile_bfg.h"
 			$File	"$SRCDIR\game\shared\of\of_shared_schemas.cpp"
-			$File	"$SRCDIR\game\shared\of\of_shared_schemas.h"
+			$File	"$SRCDIR\game\shared\of\of_shared_schemas.h"		
+
+			$File	"$SRCDIR\game\shared\of\of_modelloader.h"
+			$File	"$SRCDIR\game\shared\of\of_modelloader.cpp"
+			{
+                $Configuration
+                {
+                    $Compiler
+                    {
+                        $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                    }
+                }
+            }
+			
 			$File	"of\of_dropped_weapon.cpp"
 			$File	"of\of_dropped_weapon.h"
 			$File	"of\of_dropped_powerup.cpp"
