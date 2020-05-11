@@ -2029,11 +2029,6 @@ bool CTFGameRules::IsESCGamemode( void )
 	return InGametype( TF_GAMETYPE_ESC );
 }
 
-bool CTFGameRules::IsZSGamemode( void )
-{ 
-	return InGametype( TF_GAMETYPE_ZS );
-}
-
 bool CTFGameRules::IsInfGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_INF );

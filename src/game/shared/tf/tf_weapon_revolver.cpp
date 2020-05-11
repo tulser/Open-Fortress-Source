@@ -123,6 +123,9 @@ acttable_t *CTFRevolver::ActivityList(int &iActivityCount)
 //Act table remapping for Merc
 acttable_t *CTFRevolver_Mercenary::ActivityList(int &iActivityCount)
 {
+	if ( !GetTFPlayerOwner() )
+		return BaseClass::ActivityList(iActivityCount);
+
 	if ( GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY )
 	{
 		iActivityCount = ARRAYSIZE( m_acttableRevolver );

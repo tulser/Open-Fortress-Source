@@ -58,27 +58,27 @@ const char *g_aClassImage[] =
 };
 
 const char *g_aGameTypeNames_NonLocalized[] = // Move me?
-{
-	"Undefined",
-	"Capture the Flag",
-	"Control Point",
-	"Payload",
-	"Arena",
-	"Mann vs Machine",
-	"Robot Destruction",
-	"Passtime",
-	"Player Destruction",
-	"Escort",
-	"Deathmatch",
-	"Team Deathmatch",
-	"Domination",
-	"Gun Game",
-	"3 Wave",
-	"Infection",
-};
-
-CTFDiscordRPC g_discordrpc;
-
+{                                 
+	"Undefined",                  
+	"Capture the Flag",           
+	"Control Point",              
+	"Payload",                    
+	"Arena",                      
+	"Mann vs Machine",            
+	"Robot Destruction",          
+	"Passtime",                   
+	"Player Destruction",         
+	"Escort",                     
+	"Deathmatch",                 
+	"Team Deathmatch",            
+	"Domination",                 
+	"Gun Game",                   
+	"3 Wave",                     
+	"Infection",                  
+};                                
+                                  
+CTFDiscordRPC g_discordrpc;      
+                                  
 CTFDiscordRPC::CTFDiscordRPC()
 {
 	Q_memset(m_szLatchedMapname, 0, MAX_MAP_NAME);

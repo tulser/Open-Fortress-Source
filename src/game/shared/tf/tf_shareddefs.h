@@ -241,8 +241,6 @@ enum
 	TF_GAMETYPE_DOM, // Domination, also used with Escort
 	TF_GAMETYPE_GG, // Gun Game
 	TF_GAMETYPE_3WAVE, // 3 Wave
-	TF_GAMETYPE_ZS, // Zombie Survival (not implemented yet)
-	TF_GAMETYPE_COOP, // Co-op (ZS inherits from this, and any other future gamemodes)
 	TF_GAMETYPE_INF, // Infection
 	TF_GAMETYPE_LAST
 };

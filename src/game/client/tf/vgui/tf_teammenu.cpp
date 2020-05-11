@@ -753,8 +753,6 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "Escort";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD ) && !TFGameRules()->m_bEscortOverride )
 		GameType = "Payload";
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP ) )
-		GameType = "Coop";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
 		GameType = "Infection";
 	return GameType;
