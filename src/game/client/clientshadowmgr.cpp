@@ -3305,6 +3305,11 @@ bool CClientShadowMgr::ComputeSeparatingPlane( IClientRenderable* pRend1, IClien
 bool CClientShadowMgr::CullReceiver( ClientShadowHandle_t handle, IClientRenderable* pRenderable,
 									IClientRenderable* pSourceRenderable )
 {
+#ifdef OF_CLIENT_DLL
+	if ( !pRenderable )
+		return true;
+#endif
+
 	// check flags here instead and assert !pSourceRenderable
 	if( m_Shadows[handle].m_Flags & SHADOW_FLAGS_FLASHLIGHT )
 	{
@@ -3320,6 +3325,7 @@ bool CClientShadowMgr::CullReceiver( ClientShadowHandle_t handle, IClientRendera
 	}
 
 	Assert( pSourceRenderable );	
+
 	// Compute a bounding sphere for the renderable
 	Vector origin;
 	float radius;

@@ -45,7 +45,7 @@ DEFINE_KEYFIELD(szPickupSound, FIELD_STRING, "pickup_sound"),
 DEFINE_KEYFIELD(m_bDisableSpin, FIELD_BOOLEAN, "disable_spin"),
 DEFINE_KEYFIELD(m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow"),
 DEFINE_KEYFIELD(m_iIndex, FIELD_INTEGER, "Index"),
-DEFINE_INPUTFUNC( FIELD_STRING, "SetModel", InputSetModel ),
+DEFINE_INPUTFUNC( FIELD_STRING, "SetWeaponModel", InputSetWeaponModel ),
 DEFINE_INPUTFUNC( FIELD_STRING, "SetWeaponName", InputSetWeaponName ),
 END_DATADESC()
 
@@ -397,12 +397,15 @@ const char* CWeaponSpawner::GetSuperWeaponRespawnLine( void )
 	return "None";
 }
 
-void CWeaponSpawner::InputSetModel( inputdata_t &inputdata )
+void CWeaponSpawner::InputSetWeaponModel( inputdata_t &inputdata )
 {
 	const char *name = inputdata.value.String();
 
 	if ( name ) 
+	{
+		CBaseEntity::PrecacheModel( name );
 		SetModel( name );
+	}
 }
 
 void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
@@ -410,5 +413,16 @@ void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
 	const char *name = inputdata.value.String();
 
 	if ( name ) 
+	{
+		// precache the weapon...
+		string_t iszItem = AllocPooledString( name );	// Make a copy of the classname	
+		CBaseEntity *pent;
+		pent = CreateEntityByName( STRING( iszItem ) );
+		if ( !pent )
+			return;
+		pent->Precache();
+		UTIL_Remove( pent );
+
 		Q_strncpy( m_iszWeaponName.GetForModify(), name, 128 );
+	}
 }
