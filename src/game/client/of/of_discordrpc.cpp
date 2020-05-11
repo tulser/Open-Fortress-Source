@@ -123,7 +123,7 @@ void CTFDiscordRPC::RunFrame()
 
 void CTFDiscordRPC::OnReady( const DiscordUser* user )
 {
-	if (!of_enable_rpc.GetBool())
+	if ( !of_enable_rpc.GetBool() || CommandLine()->FindParm("-no_discord") )
 	{
 		Discord_Shutdown();
 
@@ -254,6 +254,16 @@ void CTFDiscordRPC::SetLogo( void )
 
 void CTFDiscordRPC::InitializeDiscord()
 {
+	if ( !of_enable_rpc.GetBool() || CommandLine()->FindParm("-no_discord") )
+	{
+		Discord_Shutdown();
+
+		if ( steamapicontext->SteamFriends() )
+			steamapicontext->SteamFriends()->ClearRichPresence();
+
+		return;
+	}
+
 	DiscordEventHandlers handlers;
 	Q_memset(&handlers, 0, sizeof(handlers));
 	handlers.ready			= &CTFDiscordRPC::OnReady;
