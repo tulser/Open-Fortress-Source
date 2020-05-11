@@ -778,25 +778,28 @@ void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 						pPlayerModel->SetModelColor( tf_PR->GetPlayerColorVector( iPlayerIndex ) );
 						pPlayerModel->SetVisible( bShow );
 
-						for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+						if ( !of_disable_cosmetics.GetBool() )
 						{
-							if ( pPlayer->m_iCosmetics[i] )
+							for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
 							{
-								KeyValues* pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
-								if ( !pCosmetic )
-									continue;
-
-								if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+								if ( pPlayer->m_iCosmetics[i] )
 								{
-									pPlayerModel->AddAttachment( pCosmetic->GetString( "Model", "models/empty.mdl" ) );
-								}
+									KeyValues* pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+									if ( !pCosmetic )
+										continue;
 
-								KeyValues* pBodygroups = pCosmetic->FindKey( "Bodygroups" );
-								if ( pBodygroups )
-								{
-									for ( KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+									if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
 									{
-										pPlayerModel->SetBodygroup( sub->GetName(), sub->GetInt() );
+										pPlayerModel->AddAttachment( pCosmetic->GetString( "Model", "models/empty.mdl" ) );
+									}
+
+									KeyValues* pBodygroups = pCosmetic->FindKey( "Bodygroups" );
+									if ( pBodygroups )
+									{
+										for ( KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+										{
+											pPlayerModel->SetBodygroup( sub->GetName(), sub->GetInt() );
+										}
 									}
 								}
 							}

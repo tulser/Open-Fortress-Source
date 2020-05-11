@@ -33,6 +33,7 @@ extern ConVar cl_autorezoom;
 extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
+extern ConVar of_disable_cosmetics;
 
 typedef CHandle<C_PlayerAttachedModel>	CosmeticHandle;
 
