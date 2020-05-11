@@ -832,6 +832,8 @@ int CTFDMTeamMenu::GetGamemodeSkin( void )
 	{
 		if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 			GameType = 2;
+		else if( TFGameRules()->IsMutator( ARSENAL ) )
+			GameType = 4;
 	}
 //	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 //		GameType = "ControlPoint";

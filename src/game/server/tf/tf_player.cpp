@@ -2106,19 +2106,24 @@ void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 		Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), "_Mercenary_weapon_loadout" ), sizeof(szDesired));
 	else
 	{
-		/*
-		// Uncomment this to test all blank loadout slots
-		// Q_strncpy(szDesired,"0 25 27 13 40 17 28", sizeof(szDesired));
-		int iCosmeticCount = random->RandomInt( 0, 5 );
-		int iMaxCosNum = GetItemsGame() ? GetItemsGame()->GetInt("cosmetic_count", 5 ) : 5;
-		for( int i = 0; i < iCosmeticCount; i++ )
+		int iMaxCosNum = GetItemSchema()->GetWeaponCount() - 1;
+		int iLastWep = -1;
+		for( int i = 0; i < 2; i++ )
 		{
 			if( !i )
-				Q_snprintf( szDesired, sizeof(szDesired), "%d", random->RandomInt( 0, iMaxCosNum ));
+			{
+				iLastWep = random->RandomInt( 0, iMaxCosNum );
+				Q_snprintf( szDesired, sizeof(szDesired), "%d %d", i + 1, iLastWep);
+			}
 			else
-				Q_snprintf( szDesired, sizeof(szDesired), "%s %d", szDesired, random->RandomInt( 0, iMaxCosNum ));
+			{
+				int iNewWep = -1;
+				do{
+				iNewWep = random->RandomInt( 0, iMaxCosNum );}
+				while( iNewWep == iLastWep );
+				Q_snprintf( szDesired, sizeof(szDesired), "%s %d %d", szDesired, i + 1, iNewWep);
+			}
 		}
-		*/
 	}
 	
 	KeyValues *kvDesiredWeapons = new KeyValues("DesiredWeapons");
