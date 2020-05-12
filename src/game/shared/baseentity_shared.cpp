@@ -2040,20 +2040,17 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 #endif
 }
 
-
+// NOTE: HL2_DLL implies GAME_DLL
+#if defined( HL2_DLL )
 //-----------------------------------------------------------------------------
 // Should we draw bubbles underwater?
 //-----------------------------------------------------------------------------
 bool CBaseEntity::ShouldDrawUnderwaterBulletBubbles()
 {
-#if defined( HL2_DLL ) && defined( GAME_DLL )
 	CBaseEntity *pPlayer = ( gpGlobals->maxClients == 1 ) ? UTIL_GetLocalPlayer() : NULL;
 	return pPlayer && (pPlayer->GetWaterLevel() == 3);
-#else
-	return false;
-#endif
 }
-
+#endif // hl2
 
 //-----------------------------------------------------------------------------
 // Handle shot entering water
@@ -2086,7 +2083,7 @@ bool CBaseEntity::HandleShotImpactingWater( const FireBulletsInfo_t &info,
 		DispatchEffect( "gunshotsplash", data );
 	}
 
-#ifdef GAME_DLL
+#if defined( HL2_DLL )
 	if ( ShouldDrawUnderwaterBulletBubbles() )
 	{
 		CWaterBullet *pWaterBullet = ( CWaterBullet * )CreateEntityByName( "waterbullet" );

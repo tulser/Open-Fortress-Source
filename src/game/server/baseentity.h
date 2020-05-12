@@ -1571,8 +1571,10 @@ private:
 	// Handle shot entering water
 	void HandleShotImpactingGlass( const FireBulletsInfo_t &info, const trace_t &tr, const Vector &vecDir, ITraceFilter *pTraceFilter );
 
+#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 	// Should we draw bubbles underwater?
 	bool ShouldDrawUnderwaterBulletBubbles();
+#endif
 
 	// Computes the tracer start position
 	void ComputeTracerStartPosition( const Vector &vecShotSrc, Vector *pVecTracerStart );
