@@ -893,7 +893,7 @@ void CGameUI::StopProgressBar(bool bError, const char *failureReason, const char
 		bool bDatatable = false;
 		if ( failureReason )
 		{
-			if ( Q_strncmp( failureReason, "Server uses different", 21 ) == 0 )
+			if ( Q_strstr( failureReason, "class tables" ) )
 			{
 				bDatatable = true;
 			}
