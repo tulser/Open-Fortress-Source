@@ -1430,9 +1430,8 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 			// wow...
 			char szClassname[48];		
 			Q_strncpy( szClassname, pEnt->GetClassname(), sizeof( szClassname ) );
-			Q_strlower( szClassname );
 			
-			if ( !Q_strncmp( szClassname, "tf_projectile", 14 ) /*FClassnameIs( pEnt, "tf_projectile_rocket" ) || FClassnameIs( pEnt, "tf_projectile_energy_ball" )*/ )
+			if ( !Q_strncmp( szClassname, "tf_p", 4 ) /*FClassnameIs( pEnt, "tf_projectile_rocket" ) || FClassnameIs( pEnt, "tf_projectile_energy_ball" )*/ )
 			{
 				if ( GetVisionInterface()->IsLineOfSightClear( pEnt->WorldSpaceCenter() ) )
 					return true;

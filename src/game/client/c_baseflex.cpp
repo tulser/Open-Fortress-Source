@@ -1010,7 +1010,7 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 	ProcessSceneEvents( false );
 
 #ifdef OF_CLIENT_DLL
-	if ( !IsRagdoll() )
+	if ( m_nRenderFX != kRenderFxRagdoll )
 #endif
 	{
 		// check for blinking
@@ -1245,7 +1245,7 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 	ProcessSceneEvents( false );
 		
 #ifdef OF_CLIENT_DLL
-	if ( !IsRagdoll() )
+	if ( m_nRenderFX != kRenderFxRagdoll )
 #endif
 	{
 		// check for blinking

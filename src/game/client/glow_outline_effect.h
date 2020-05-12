@@ -130,11 +130,20 @@ private:
 	{
 		bool ShouldDraw( int nSlot ) const
 		{
+#ifdef OF_CLIENT_DLL
+			return m_hEntity.Get() && 
+				   ( m_nSplitScreenSlot == GLOW_FOR_ALL_SPLIT_SCREEN_SLOTS || m_nSplitScreenSlot == nSlot ) && 
+				   ( m_bRenderWhenOccluded || m_bRenderWhenUnoccluded ) && 
+				   m_hEntity->ShouldDraw() && 
+				   !m_hEntity->IsDormant() &&
+					m_flGlowAlpha > 0.0f;
+#else
 			return m_hEntity.Get() && 
 				   ( m_nSplitScreenSlot == GLOW_FOR_ALL_SPLIT_SCREEN_SLOTS || m_nSplitScreenSlot == nSlot ) && 
 				   ( m_bRenderWhenOccluded || m_bRenderWhenUnoccluded ) && 
 				   m_hEntity->ShouldDraw() && 
 				   !m_hEntity->IsDormant();
+#endif
 		}
 
 		bool IsUnused() const { return m_nNextFreeSlot != GlowObjectDefinition_t::ENTRY_IN_USE; }

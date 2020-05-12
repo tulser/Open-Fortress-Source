@@ -2469,13 +2469,20 @@ int CTFPlayerShared::GetDesiredPlayerClassIndex( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFPlayerShared::PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom )
+int CTFPlayerShared::PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom, bool bDissolve )
 {
 	//const char *pszSequence = -1;
 	const char *pszSequence = NULL;
 
-	// play a custom death animation depending on the type of damage it was
-	switch( iDamageCustom )
+	if ( bDissolve )
+	{
+		// fizzly wizzly
+		pszSequence = "dieviolent";
+	}
+	else
+	{
+		// play a custom death animation depending on the type of damage it was
+		switch ( iDamageCustom )
 		{
 		case TF_DMG_CUSTOM_HEADSHOT:
 		case TF_DMG_CUSTOM_DECAPITATION_BOSS:
@@ -2485,6 +2492,7 @@ int CTFPlayerShared::PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCusto
 			pszSequence = "primary_death_backstab";
 			break;
 		}
+	}
 
 //	if ( pszSequence != -1 )
 	if ( pszSequence != NULL )

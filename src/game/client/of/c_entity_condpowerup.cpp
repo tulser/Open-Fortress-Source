@@ -29,7 +29,6 @@ public:
 	void	ClientThink( void );
 	void	Spawn( void );
 	int		DrawModel( int flags );
-	const char *GetPowerupIncomingLine( void );
 
 private:
 
@@ -45,7 +44,6 @@ private:
 		bool	m_bDisableShowOutline;
 		bool	m_bRespawning;
 		bool	bInitialDelay;
-		bool	bWarningTriggered;
 		bool	m_bShouldGlow;
 		float	fl_RespawnTime;
 		float	m_flRespawnTick;
@@ -85,6 +83,8 @@ void C_CondPowerup::Spawn( void )
 	iTeamNum = TEAM_INVALID;
 	m_bShouldGlow = false;
 
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
+
 	UpdateGlowEffect();
 	
 	ClientThink();
@@ -95,22 +95,10 @@ void C_CondPowerup::Spawn( void )
 //-----------------------------------------------------------------------------
 void C_CondPowerup::ClientThink( void )
 {
-	if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
-	{
-		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupIncomingLine() );
-		bWarningTriggered = true;
-	}
-	else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
-	{
-		bWarningTriggered = false;
-	}
-	if ( bWarningTriggered && !m_bRespawning )
-		bWarningTriggered = false;
-	
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
 	// If old team does not equal new team then update glow with new glow color
-	if (pPlayer &&  pPlayer->GetTeamNumber() != iTeamNum)
+	if ( pPlayer && pPlayer->GetTeamNumber() != iTeamNum )
 	{
 		iTeamNum = pPlayer->GetTeamNumber();
 		UpdateGlowEffect();
@@ -130,7 +118,7 @@ void C_CondPowerup::ClientThink( void )
 		UpdateGlowEffect();
 	}	
 
-	SetNextClientThink(CLIENT_THINK_ALWAYS);
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
 }
 
 
@@ -139,14 +127,18 @@ void C_CondPowerup::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_CondPowerup::UpdateGlowEffect( void )
 {
-	DestroyGlowEffect();
-	
-	if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
-		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
-/*
-	if ( !m_bShouldGlow && m_pGlowEffect )
-		m_pGlowEffect->SetAlpha( 0.0f );
-*/
+	if ( m_pGlowEffect )
+	{
+		if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
+		{
+			m_pGlowEffect->SetColor( TFGameRules()->GetTeamGlowColor( GetLocalPlayerTeam() ) );
+			m_pGlowEffect->SetAlpha( of_glow_alpha.GetFloat() );
+		}
+		else
+		{
+			m_pGlowEffect->SetAlpha( 0.0f );
+		}
+	}
 }
 
 void C_CondPowerup::DestroyGlowEffect( void )
@@ -355,32 +347,4 @@ int C_CondPowerup::DrawModel( int flags )
 	}
 
 	return nRetVal;
-}
-
-const char *C_CondPowerup::GetPowerupIncomingLine( void )
-{
-	switch ( m_iCondition )
-	{
-		case TF_COND_CRITBOOSTED:
-		case TF_COND_CRIT_POWERUP:
-		return "CritsIncoming";
-		break;
-		case TF_COND_STEALTHED:
-		case TF_COND_INVIS_POWERUP:
-		return "InvisibilityIncoming";
-		break;
-		case TF_COND_SHIELD:
-		return "ShieldIncoming";
-		break;
-		case TF_COND_INVULNERABLE:
-		return "UberIncoming";
-		break;
-		case TF_COND_HASTE:
-		return "HasteIncoming";
-		break;
-		case TF_COND_BERSERK:
-		return "BerserkIncoming";
-		break;
-	}
-	return "PowerupsIncoming";
 }

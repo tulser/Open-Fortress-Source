@@ -11,6 +11,7 @@
 #include "ModInfo.h"
 #include "vgui_controls/ComboBox.h"
 #include "vgui_controls/QueryBox.h"
+#include "CvarToggleCheckButton.h"
 #include "tier1/KeyValues.h"
 #include "tier1/convar.h"
 #include <vgui/IInput.h>
@@ -53,7 +54,9 @@ COptionsSubAudio::COptionsSubAudio(vgui::Panel *parent) : PropertyPage(parent, N
 	m_pSpeakerSetupCombo->AddItem( "#GameUI_5Speakers", new KeyValues("SpeakerSetup", "speakers", 5) );
 	m_pSpeakerSetupCombo->AddItem( "#GameUI_7Speakers", new KeyValues("SpeakerSetup", "speakers", 7) );
 
-   m_pSpokenLanguageCombo = new ComboBox (this, "AudioSpokenLanguage", 6, false );
+    m_pSpokenLanguageCombo = new ComboBox ( this, "AudioSpokenLanguage", 6, false );
+
+	m_pMuteFocusCheck = new CCvarToggleCheckButton( this, "snd_mute_losefocus", "#GameUI_SndMuteLoseFocus", "snd_mute_losefocus" );
 
 	LoadControlSettings("Resource\\OptionsSubAudio.res");
 }
@@ -153,7 +156,7 @@ void COptionsSubAudio::OnResetData()
    }
 
    // Activate the current language in the combo
-   {for (int itemID = 0; itemID < m_pSpokenLanguageCombo->GetItemCount(); itemID++)
+   for (int itemID = 0; itemID < m_pSpokenLanguageCombo->GetItemCount(); itemID++)
    {
       KeyValues *kv = m_pSpokenLanguageCombo->GetItemUserData( itemID );
       if ( kv && kv->GetInt( "language" ) == m_nCurrentAudioLanguage )
@@ -161,7 +164,9 @@ void COptionsSubAudio::OnResetData()
          m_pSpokenLanguageCombo->ActivateItem( itemID );
          break;
       }
-   }}
+   }
+
+   m_pMuteFocusCheck->Reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -229,6 +234,8 @@ void COptionsSubAudio::OnApplyChanges()
          qb->DoModal();
       }
    }
+
+   m_pMuteFocusCheck->ApplyChanges();
 }
 
 //-----------------------------------------------------------------------------

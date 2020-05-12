@@ -81,6 +81,8 @@ void C_TFDroppedPowerup::Spawn( void )
 	iTeamNum = TEAM_INVALID;
 	m_bShouldGlow = false;
 
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
+
 	UpdateGlowEffect();
 	
 	ClientThink();
@@ -118,14 +120,18 @@ void C_TFDroppedPowerup::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_TFDroppedPowerup::UpdateGlowEffect( void )
 {
-	DestroyGlowEffect();
-	
-	if ( !m_bDisableShowOutline && m_bShouldGlow )
-		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
-/*
-	if ( !m_bShouldGlow && m_pGlowEffect )
-		m_pGlowEffect->SetAlpha( 0.0f );
-*/
+	if ( m_pGlowEffect )
+	{
+		if ( !m_bDisableShowOutline && m_bShouldGlow )
+		{
+			m_pGlowEffect->SetColor( TFGameRules()->GetTeamGlowColor( GetLocalPlayerTeam() ) );
+			m_pGlowEffect->SetAlpha( of_glow_alpha.GetFloat() );
+		}
+		else
+		{
+			m_pGlowEffect->SetAlpha( 0.0f );
+		}
+	}
 }
 
 void C_TFDroppedPowerup::DestroyGlowEffect( void )

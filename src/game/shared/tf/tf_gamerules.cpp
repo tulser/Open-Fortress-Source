@@ -1558,6 +1558,25 @@ void CTFGameRules::Activate()
 
 	SetRetroMode( of_retromode.GetInt() );
 
+	// this is required immediately so bots know what to do
+	m_bIsFreeRoamMap = false;
+
+#ifdef GAME_DLL
+	if ( ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
+		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#else
+	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
+		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
+		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
+#endif
+
 	ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server global gamemode config file\n");
 	engine->ServerCommand("exec config_default_global.cfg\n");
 	engine->ServerExecute();
@@ -1808,10 +1827,7 @@ void CTFGameRules::PrecacheGameMode()
 				}
 			}
 		}
-
-		// HACK: also precache the akimbos for mercenary
-		UTIL_PrecacheOther( "tf_weapon_pistol_akimbo" );
-
+		
 		// For spy's disguises
 		CBaseEntity::PrecacheModel( "models/player/spy_mask.mdl" );
 	}
@@ -1915,14 +1931,11 @@ void CTFGameRules::PrecacheGameMode()
 
 			}
 		}
-
-		// HACK: also precache the akimbos for mercenary
-		UTIL_PrecacheOther( "tf_weapon_pistol_akimbo" );
 	}
 
 	// Precache cosmetics for mercenary
 	// undone: this precaching is now done when loadouts are updated at UpdateCosmetics in tf_player.cpp
-	// undone: that causes so much stuttering, so this has to be done
+	// undone the undone: that causes so much stuttering, so this has to be done
 	KeyValues* pItemsGame = new KeyValues( "items_game" );
 	pItemsGame->LoadFromFile( filesystem, "scripts/items/items_game.txt" );
 	if ( pItemsGame )
@@ -1939,7 +1952,7 @@ void CTFGameRules::PrecacheGameMode()
 					
 					if ( !Q_stricmp(pCosmetic->GetString("region"), "gloves") || !Q_stricmp(pCosmetic->GetString("region"), "suit") )
 						if( Q_stricmp(pCosmetic->GetString( "viewmodel" ), "BLANK") )
-							CBaseEntity::PrecacheModel( pCosmetic->GetString( "viewmodel" ) );
+							CBaseEntity::PrecacheModel( pCosmetic->GetString( "viewmodel" ) );					
 				}
 			}
 		}
@@ -2259,25 +2272,6 @@ void CTFGameRules::RecalculateControlPointState( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnRoundStart( void )
 {
-	// this is required immediately so bots know what to do
-	m_bIsFreeRoamMap = false;
-
-#ifdef GAME_DLL
-	if ( ( !Q_strncmp( STRING( gpGlobals->mapname), "dm_", 3 ) 
-		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
-		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
-		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
-		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
-#else
-	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
-		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
-		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
-		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
-		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
-#endif
-
 	SetupMutator();
 
 	FireGamemodeOutputs();
@@ -4342,7 +4336,6 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 
 		// Move the player to the place it said.
 		pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
-
 		pPlayer->SetAbsVelocity( vec3_origin );
 		pPlayer->SetLocalAngles( pSpawnSpot->GetLocalAngles() );
 		pPlayer->m_Local.m_vecPunchAngle = vec3_angle;
@@ -4368,7 +4361,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
 	{
 		// some fools assigned teampoints to spectator team so i have to check this too
-		if ( pSpot->GetTeamNumber() == TEAM_UNASSIGNED || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY && TFGameRules()->IsTeamplay() )
+		if ( ( pSpot->GetTeamNumber() < FIRST_GAME_TEAM || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY ) && ( TFGameRules()->IsFreeRoam() && TFGameRules()->IsDMGamemode() ) )
 		{
 		}
 		else

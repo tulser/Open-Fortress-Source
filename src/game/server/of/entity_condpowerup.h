@@ -31,10 +31,13 @@ public:
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
 	virtual void Materialize(void);
+	void    AnnouncerThink( void );
+
 	const char* GetPowerupRespawnLine(void);
 	const char* GetPowerupPickupLine(void);
 	const char* GetPowerupPickupLineSelf(void);
 	const char* GetPowerupPickupSound(void);
+	const char* GetPowerupPickupIncomingLine(void);
 
 	int UpdateTransmitState()	// always send to all clients
 	{
@@ -48,6 +51,7 @@ public:
 	string_t m_iszPowerupModelOLD;
 	string_t m_iszPickupSound;
 	string_t m_iszTimerIcon;
+	bool bWarningTriggered;
 
 	CNetworkVar(bool, m_bDisableShowOutline);
 

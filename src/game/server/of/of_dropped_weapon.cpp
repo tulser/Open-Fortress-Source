@@ -5,13 +5,13 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "of_dropped_weapon.h"
 #include "tf_shareddefs.h"
 #include "ammodef.h"
 #include "tf_gamerules.h"
 #include "explode.h"
 #include "in_buttons.h"
 #include "tf_bot.h"
+#include "of_dropped_weapon.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -25,6 +25,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
 	SendPropVector( SENDINFO( m_vecInitialVelocity ), -1, SPROP_NOSCALE ),
 	SendPropInt( SENDINFO( m_iReserveAmmo ) ),
 	SendPropInt( SENDINFO( m_iClip ) ),
+	SendPropBool( SENDINFO( m_bFlamethrower ) ),
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CTFDroppedWeapon )
@@ -65,12 +66,23 @@ void CTFDroppedWeapon::Precache( void )
 {
 }
 
-CTFDroppedWeapon *CTFDroppedWeapon::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName )
+CTFDroppedWeapon *CTFDroppedWeapon::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname )
 {
 	CTFDroppedWeapon *pDroppedWeapon = static_cast<CTFDroppedWeapon*>( CBaseAnimating::CreateNoSpawn( "tf_dropped_weapon", vecOrigin, vecAngles, pOwner ) );
 	if ( pDroppedWeapon )
 	{
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszClassname );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+
 		pDroppedWeapon->SetModelName( AllocPooledString( pszModelName ) );
+		pDroppedWeapon->WeaponID = iWeaponID;
+		pDroppedWeapon->pszWeaponName = pszClassname;
+		pDroppedWeapon->pWeaponInfo = pWeaponInfo;
+		if ( iWeaponID == TF_WEAPON_FLAMETHROWER || iWeaponID == TFC_WEAPON_FLAMETHROWER )
+			pDroppedWeapon->m_bFlamethrower = true;
+		else
+			pDroppedWeapon->m_bFlamethrower = false;
+
 		DispatchSpawn( pDroppedWeapon );
 	}
 
@@ -89,6 +101,10 @@ void CTFDroppedWeapon::FlyThink( void )
 
 void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 {
+	// bail out early if the weaponid somehow doesn't exist
+	if ( WeaponID == TF_WEAPON_NONE )
+		return;
+
 	Assert( pOther );
 
 	if ( !pOther->IsPlayer() )
@@ -123,14 +139,13 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	Assert( pPlayer );
 
-	// bail out early if the weaponid somehow doesn't exist
-	if ( !WeaponID )
-		return;
-
 	bool bSuccess = true;
 
+	// akimbo pickups have pewished
+#if 0
 	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_MERCENARY ) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
+#endif
 
 	// don't allow multiple pistols to be picked up at the same time
 	if ( WeaponID == TF_WEAPON_PISTOL || WeaponID == TF_WEAPON_PISTOL_SCOUT )
@@ -138,12 +153,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		if ( pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_SCOUT ) )
 			return;
 	}
-
-	const char *pszWeaponName = WeaponIdToClassname( WeaponID );
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszWeaponName );
-	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 		
-	if (!pWeaponInfo)
+	if ( !pWeaponInfo )
 		return;
 
 	int iSlot;
