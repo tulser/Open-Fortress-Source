@@ -1936,6 +1936,10 @@ void CTFGameRules::PrecacheGameMode()
 				{
 					if( Q_stricmp(pCosmetic->GetString( "Model" ), "BLANK") )
 						CBaseEntity::PrecacheModel( pCosmetic->GetString( "Model" ) );
+					
+					if ( !Q_stricmp(pCosmetic->GetString("region"), "gloves") || !Q_stricmp(pCosmetic->GetString("region"), "suit") )
+						if( Q_stricmp(pCosmetic->GetString( "viewmodel" ), "BLANK") )
+							CBaseEntity::PrecacheModel( pCosmetic->GetString( "viewmodel" ) );
 				}
 			}
 		}

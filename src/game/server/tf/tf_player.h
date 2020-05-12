@@ -718,6 +718,9 @@ public:
 	// for chat particle bubble
 	CNetworkVar( bool, m_bChatting );
 
+	const char			*m_chzVMCosmeticGloves;
+	const char			*m_chzVMCosmeticSleeves;
+
 	// this is true if the player who died results in a victory (payload override gamemode)
 	bool	m_bWinDeath;
 };

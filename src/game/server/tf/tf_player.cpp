@@ -513,6 +513,9 @@ CTFPlayer::CTFPlayer()
 	
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
+
+	m_chzVMCosmeticGloves = NULL;
+	m_chzVMCosmeticSleeves = NULL;
 }
 
 
@@ -1094,6 +1097,7 @@ void CTFPlayer::Spawn()
 	CreateViewModel( TF_VIEWMODEL_WEAPON );
 	CreateViewModel( TF_VIEWMODEL_SPYWATCH );
 	CreateViewModel( TF_VIEWMODEL_ARMS );
+	CreateViewModel( TF_VIEWMODEL_COSMETICS );
 
 	// Make sure it has no model set, in case it had one before
 
@@ -1103,6 +1107,9 @@ void CTFPlayer::Spawn()
 	GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 
 	GetViewModel(TF_VIEWMODEL_ARMS)->m_nSkin = GetTeamNumber() - 2;
+	
+	if ( GetViewModel( TF_VIEWMODEL_COSMETICS ) )
+		GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( "" );
 
 	m_Shared.bWatchReady = false; // Ok so fuck the watch, because for some reason it deploys on equip, this is later used for shit in tf_weapon_invis
 	
@@ -1326,6 +1333,11 @@ void CTFPlayer::UpdateCosmetics()
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
 			kvDesiredCosmetics->SetString( szRegion, args[i] );
 
+			if ( !Q_stricmp( szRegion, "gloves" ) )
+				m_chzVMCosmeticGloves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
+			else if ( !Q_stricmp(szRegion, "suit") )
+				m_chzVMCosmeticSleeves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
+
 			// undone: causes too much stuttering, its now done in tf_gamerules precache instead
 			//const char *pModel = pCosmetic->GetString( "Model" , "models/error.mdl" );
 			//PrecacheModel( pModel );
@@ -1341,6 +1353,29 @@ void CTFPlayer::UpdateCosmetics()
 		if( kvDesiredCosmetics )
 			kvDesiredCosmetics->deleteThis();
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
+	}
+
+	if ( !GetPlayerClass()->GetModifiers() && GetPlayerClass()->GetClass() == TF_CLASS_MERCENARY )
+	{	
+		if ( GetViewModel( TF_VIEWMODEL_ARMS ) )
+		{
+			if ( m_chzVMCosmeticGloves )
+				GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( m_chzVMCosmeticGloves );
+			else
+				GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
+
+			GetViewModel( TF_VIEWMODEL_ARMS )->m_nSkin = GetTeamNumber() - 2;
+		}
+
+		if ( GetViewModel( TF_VIEWMODEL_COSMETICS ) )
+		{
+			if ( m_chzVMCosmeticSleeves )
+				GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( m_chzVMCosmeticSleeves );
+			else
+				GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
+			
+			GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin = GetTeamNumber() - 2;
+		}
 	}
 
 }
@@ -1483,6 +1518,23 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 		vmhands->SetModel( GetPlayerClass()->GetArmModelName() );
 		vmhands->SetLightingOrigin( pViewModel->GetLightingOrigin() );
 		m_hViewModel.Set( iViewModel+2, vmhands );
+
+		CTFViewModel *vmsleeves = (CTFViewModel *)CreateEntityByName("tf_viewmodel");
+		if (vmsleeves && iViewModel + 3 != 4)
+		{
+			vmsleeves->SetAbsOrigin(GetAbsOrigin());
+			vmsleeves->SetOwner(this);
+			vmsleeves->SetParent(this);
+			vmsleeves->SetIndex(iViewModel + 3);
+			DispatchSpawn(vmsleeves);
+			vmsleeves->m_nSkin = m_nSkin;
+			vmsleeves->SetLocalOrigin(vec3_origin);
+			vmsleeves->FollowEntity(pViewModel, true);
+			vmsleeves->SetModel(GetPlayerClass()->GetArmModelName());
+			vmsleeves->SetLightingOrigin(pViewModel->GetLightingOrigin());
+			m_hViewModel.Set(iViewModel + 3, vmsleeves);
+		}
+
 	}
 }
 
