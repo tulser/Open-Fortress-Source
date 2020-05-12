@@ -53,8 +53,8 @@ static ConVar mat_show_ab_hdr( "mat_show_ab_hdr", "0" );
 static ConVar mat_tonemapping_occlusion_use_stencil( "mat_tonemapping_occlusion_use_stencil", "0" );
 ConVar mat_debug_autoexposure("mat_debug_autoexposure","0", FCVAR_CHEAT);
 #ifdef OF_CLIENT_DLL
-static ConVar mat_autoexposure_max( "mat_autoexposure_max", "1.1" );
-static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.9" );
+static ConVar mat_autoexposure_max( "mat_autoexposure_max", "1.2" );
+static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.8" );
 #else
 static ConVar mat_autoexposure_max( "mat_autoexposure_max", "2" );
 static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.5" );	
@@ -436,19 +436,11 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 	float flTestRangeMax = ( m_max_lum == 1.0f ) ? 10000.0f : m_max_lum; // Count all pixels >1.0 as 1.0
 
 	// First, set stencil bits where the colors match
-#ifdef OF_CLIENT_DLL
-	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, false );
-	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", false );
-	pMinVar->SetFloatValue( flTestRangeMin );
-	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", false );
-	pMaxVar->SetFloatValue( flTestRangeMax );
-#else
 	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, true );
-	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", true );
+	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", NULL );
 	pMinVar->SetFloatValue( flTestRangeMin );
-	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", true );
+	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", NULL );
 	pMaxVar->SetFloatValue( flTestRangeMax );
-#endif
 
 	int scrx_min = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_minx );
 	int scrx_max = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_maxx );
@@ -478,11 +470,8 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 		tscale = pRenderContext->GetToneMappingScaleLinear().x;
 	}
 	
-#ifdef OF_CLIENT_DLL	
-	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", false );
-#else
-	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", true );
-#endif
+	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", NULL );
+
 	use_t_scale->SetFloatValue( tscale );
 
 	m_npixels = ( 1 + scrx_max - scrx_min ) * ( 1 + scry_max - scry_min );
@@ -1563,13 +1552,9 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 		IMaterial *downsample_mat = materials->FindMaterial( "dev/downsample_non_hdr", TEXTURE_GROUP_OTHER, true);
 	#endif
 
-#ifdef OF_CLIENT_DLL
-	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, false );
-	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, false );
-#else
 	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, true );
 	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, true );
-#endif
+
 	ITexture *dest_rt0 = materials->FindTexture( "_rt_SmallFB0", TEXTURE_GROUP_RENDER_TARGET );
 	ITexture *dest_rt1 = materials->FindTexture( "_rt_SmallFB1", TEXTURE_GROUP_RENDER_TARGET );
 
@@ -1612,11 +1597,8 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 
 	// Gaussian blur y rt1 to rt0
 	SetRenderTargetAndViewPort( dest_rt0 );
-#ifdef OF_CLIENT_DLL
-	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", false );
-#else
 	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", NULL );
-#endif
+
 	pBloomAmountVar->SetFloatValue( flBloomScale );
 	pRenderContext->DrawScreenSpaceRectangle(	yblur_mat, 0, 0, nSrcWidth / 4, nSrcHeight / 4,
 												0, 0, nSrcWidth / 4 - 1, nSrcHeight / 4 - 1,
@@ -2624,11 +2606,7 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			
 			IMaterial *pBloomMaterial;
 			pBloomMaterial = materials->FindMaterial( "dev/floattoscreen_combine", "" );
-#ifdef OF_CLIENT_DLL			
-			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", false );
-#else
 			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", NULL );
-#endif
 			pBloomAmountVar->SetFloatValue( flBloomScale );
 			
 			PostProcessingPass* selectedHDR;
