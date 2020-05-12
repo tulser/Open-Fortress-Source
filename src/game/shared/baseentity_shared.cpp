@@ -1675,12 +1675,14 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	}
 #endif // SERVER_DLL
 
-	bool bUnderwaterBullets = ShouldDrawUnderwaterBulletBubbles();
 	bool bStartedInWater = false;
+#if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
+	bool bUnderwaterBullets = ShouldDrawUnderwaterBulletBubbles();
 	if ( bUnderwaterBullets )
 	{
 		bStartedInWater = ( enginetrace->GetPointContents( info.m_vecSrc ) & (CONTENTS_WATER|CONTENTS_SLIME) ) != 0;
 	}
+#endif
 
 	// Prediction is only usable on players
 	int iSeed = 0;
