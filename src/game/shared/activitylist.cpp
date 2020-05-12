@@ -113,7 +113,8 @@ bool ActivityList_RegisterSharedActivity( const char *pszActivityName, int iActi
 
 	// technically order isn't dependent, but it's too damn easy to forget to add new ACT_'s to all three lists.
 	static int lastActivityIndex = -1;
-	Assert( iActivityIndex < LAST_SHARED_ACTIVITY && (iActivityIndex == lastActivityIndex + 1 || iActivityIndex == 0) );
+	AssertMsg( iActivityIndex < LAST_SHARED_ACTIVITY, "Activity %d registered, >= LAST_SHARED_ACTIVITY (%d)", iActivityIndex, LAST_SHARED_ACTIVITY );
+	AssertMsg( iActivityIndex == lastActivityIndex + 1 || iActivityIndex == 0, "Activity %d registered out of order, last activity was %d", iActivityIndex, lastActivityIndex );
 	lastActivityIndex = iActivityIndex;
 
 	// first, check to make sure the slot we're asking for is free. It must be for 

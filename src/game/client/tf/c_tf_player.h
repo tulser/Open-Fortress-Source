@@ -297,7 +297,7 @@ private:
 public:
 
 	Vector				m_vecPlayerColor;	
-	CUtlVector<float> 	m_iCosmetics;
+	CUtlVector<int> 	m_iCosmetics;
 	
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );

@@ -248,7 +248,7 @@ static ConCommand mp_switchteams( "mp_switchteams", cc_SwitchTeams, "Switch team
 //-----------------------------------------------------------------------------	
 void cc_ScrambleTeams( const CCommand& args )
 {
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsCoopGamemode() || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsCoopGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return;
 	
 	if ( UTIL_IsCommandIssuedByServerAdmin() )
@@ -3308,7 +3308,7 @@ void CTeamplayRoundBasedRules::CheckRespawnWaves( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 {
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsCoopGamemode() || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsCoopGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return;
 
 	if ( mp_autoteambalance.GetBool() == false || ( IsInArenaMode() == true && tf_arena_use_queue.GetBool() == true ) )
