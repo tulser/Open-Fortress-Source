@@ -238,7 +238,7 @@ public:
 
 	void	DebugPrintConditions( void );
 
-	int		PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom );
+	int		PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom, bool bDissolve );
 
 	float	GetStealthNoAttackExpireTime( void );
 
@@ -346,7 +346,7 @@ private:
 
 	float m_flInvulnerableOffTime;
 #else
-	CNewParticleEffect	*m_pCritBoostEffect;
+	HPARTICLEFFECT m_pCritBoostEffect;
 #endif
 
 	// Burn handling

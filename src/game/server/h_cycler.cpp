@@ -105,6 +105,15 @@ void CCycler::Spawn( )
 
 	if (GetSequence() != 0 || m_flCycle != 0)
 	{
+#if defined ( TF2_DLL ) || defined ( OF_DLL )
+		m_animate = 1;
+#else
+		m_animate = 0;
+		m_flPlaybackRate = 0;
+#endif
+	}
+	else
+	{
 		m_animate = 1;
 	}
 }

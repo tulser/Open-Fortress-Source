@@ -172,20 +172,51 @@ void CBaseHudWeaponSelection::ProcessInput()
 		}
 		return;
 	}
-
+	
+#ifdef OF_CLIENT_DLL
 	// Has the player selected a weapon?
-	if ( gHUD.m_iKeyBits & (IN_ATTACK | IN_ATTACK2) )
+	if ( gHUD.m_iKeyBits & (IN_ATTACK2) )
 	{
 		if ( IsWeaponSelectable() )
 		{
-#if !( defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) )
+#if !( defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL ) )
 			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
 #endif
 			{
 				// Swallow the button
+				gHUD.m_iKeyBits &= ~( IN_ATTACK2 );
+				input->ClearInputButton( IN_ATTACK2 );
+			}
+
+			// Cancel select so you can easily cancel out
+			engine->ClientCmd( "cancelselect\n" );
+			return;
+		}
+	}
+#endif
+
+	// Has the player selected a weapon?
+#ifdef OF_CLIENT_DLL
+	if ( gHUD.m_iKeyBits & (IN_ATTACK) )
+#else
+	if ( gHUD.m_iKeyBits & (IN_ATTACK | IN_ATTACK2) )
+#endif
+	{
+		if ( IsWeaponSelectable() )
+		{
+#if !( defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL ) )
+			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
+#endif
+			{
+				// Swallow the button
+#ifdef OF_CLIENT_DLL				
+				gHUD.m_iKeyBits &= ~(IN_ATTACK);
+				input->ClearInputButton( IN_ATTACK );
+#else
 				gHUD.m_iKeyBits &= ~(IN_ATTACK | IN_ATTACK2);
 				input->ClearInputButton( IN_ATTACK );
 				input->ClearInputButton( IN_ATTACK2 );
+#endif
 			}
 
 			// select weapon

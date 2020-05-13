@@ -29,7 +29,7 @@ BEGIN_PREDICTION_DATA( CTFRevolver )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_revolver, CTFRevolver );
-PRECACHE_WEAPON_REGISTER( tf_weapon_revolver );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_revolver );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFRevolver_Mercenary, DT_WeaponRevolver_Mercenary )
 
@@ -40,7 +40,7 @@ BEGIN_PREDICTION_DATA( CTFRevolver_Mercenary )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_revolver_mercenary, CTFRevolver_Mercenary );
-PRECACHE_WEAPON_REGISTER( tf_weapon_revolver_mercenary );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_revolver_mercenary );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -123,6 +123,9 @@ acttable_t *CTFRevolver::ActivityList(int &iActivityCount)
 //Act table remapping for Merc
 acttable_t *CTFRevolver_Mercenary::ActivityList(int &iActivityCount)
 {
+	if ( !GetTFPlayerOwner() )
+		return BaseClass::ActivityList(iActivityCount);
+
 	if ( GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY )
 	{
 		iActivityCount = ARRAYSIZE( m_acttableRevolver );

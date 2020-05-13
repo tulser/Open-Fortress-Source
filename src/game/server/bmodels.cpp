@@ -274,6 +274,7 @@ public:
 
 	// Input handlers.
 	void	InputToggleDirection( inputdata_t &inputdata );
+	
 	void	InputSetSpeed( inputdata_t &inputdata );
 
 private:
@@ -287,8 +288,11 @@ LINK_ENTITY_TO_CLASS( func_conveyor, CFuncConveyor );
 BEGIN_DATADESC( CFuncConveyor )
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "ToggleDirection", InputToggleDirection ),
+#ifdef OF_DLL
 	DEFINE_INPUTFUNC( FIELD_FLOAT, "SetSpeed", InputSetSpeed ),
-
+#else
+	DEFINE_INPUTFUNC( FIELD_VOID, "SetSpeed", InputSetSpeed ),
+#endif
 	DEFINE_KEYFIELD( m_vecMoveDir, FIELD_VECTOR, "movedir" ),
 	DEFINE_FIELD( m_flConveyorSpeed, FIELD_FLOAT ),
 
@@ -811,7 +815,9 @@ void CFuncRotating::HurtTouch ( CBaseEntity *pOther )
 	// calculate damage based on rotation speed
 	m_flBlockDamage = GetLocalAngularVelocity().Length() / 10;
 
+#ifdef HL1_DLL
 	if( m_flBlockDamage > 0 )
+#endif
 	{
 		pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 	
@@ -959,18 +965,6 @@ void CFuncRotating::UpdateSpeed( float flNewSpeed )
 		// Changing speed - adjust the pitch and volume.
 		RampPitchVol();
 	}
-
-#ifdef MAPBASE
-	QAngle angNormalizedAngles = GetLocalAngles();
-	if (m_vecMoveAng.x)
-		angNormalizedAngles.x = AngleNormalize( angNormalizedAngles.x );
-	if (m_vecMoveAng.y)
-		angNormalizedAngles.y = AngleNormalize( angNormalizedAngles.y );
-	if (m_vecMoveAng.z)
-		angNormalizedAngles.z = AngleNormalize( angNormalizedAngles.z );
-
-	SetLocalAngles(angNormalizedAngles);
-#endif
 
 	SetLocalAngularVelocity( m_vecMoveAng * m_flSpeed );
 }
@@ -1347,7 +1341,9 @@ void CFuncRotating::InputToggle( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CFuncRotating::Blocked( CBaseEntity *pOther )
 {
+#ifdef HL1_DLL
 	if( m_flBlockDamage > 0 )
+#endif
 		pOther->TakeDamage( CTakeDamageInfo( this, this, m_flBlockDamage, DMG_CRUSH ) );
 }
 
@@ -1402,7 +1398,11 @@ BEGIN_DATADESC( CFuncVPhysicsClip )
 	// Keyfields
 	DEFINE_KEYFIELD( m_iFilterName,	FIELD_STRING,	"filtername" ),
 	DEFINE_FIELD( m_hFilter,	FIELD_EHANDLE ),
+#ifdef OF_DLL
 	DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),
+#else
+	DEFINE_FIELD( m_bDisabled,	FIELD_BOOLEAN ),
+#endif
 
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Disable", InputDisable ),
@@ -1447,12 +1447,6 @@ bool CFuncVPhysicsClip::EntityPassesFilter( CBaseEntity *pOther )
 
 	if ( pFilter )
 		return pFilter->PassesFilter( this, pOther );
-
-#ifdef MAPBASE
-	// I couldn't figure out what else made this crash. The entity shouldn't be NULL.
-	if ( !pOther->VPhysicsGetObject() )
-		return false;
-#endif
 
 	if ( pOther->GetMoveType() == MOVETYPE_VPHYSICS && pOther->VPhysicsGetObject()->IsMoveable() )
 		return true;

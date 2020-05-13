@@ -289,10 +289,21 @@ void ParseItemsGame( void )
 		}
 		GetItemsGame()->SetInt("cosmetic_count", i);
 	}
+
+	KeyValues *pWeapons = GetItemsGame()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		FOR_EACH_SUBKEY( pWeapons, kvSubKey )
+		{
+			GetItemSchema()->AddWeapon( kvSubKey->GetName() );
+		}
+	}	
+	
 }
 
 void ReloadItemsSchema()
 {
+	GetItemSchema()->PurgeSchema();
 	InitItemsGame();
 	ParseItemsGame();
 #ifdef CLIENT_DLL
@@ -325,6 +336,22 @@ KeyValues* GetCosmetic( int iID )
 	return pCosmetic;
 }
 
+KeyValues* GetWeaponFromSchema( const char *szName )
+{
+	if( !GetItemsGame() )
+		return NULL;
+	
+	KeyValues *pWeapons = GetItemsGame()->FindKey("Weapons");
+	if( !pWeapons )
+		return NULL;
+	
+	KeyValues *pWeapon = pWeapons->FindKey( szName );
+	if( !pWeapon )
+		return NULL;
+	
+	return pWeapon;
+}
+
 KeyValues* GetRespawnParticle( int iID )
 {
 	if( !GetItemsGame() )
@@ -339,6 +366,56 @@ KeyValues* GetRespawnParticle( int iID )
 		return NULL;
 	
 	return pParticle;
+}
+
+CTFItemSchema *gItemSchema;
+CTFItemSchema *GetItemSchema()
+{
+	return gItemSchema;
+}
+
+void InitItemSchema()
+{
+	gItemSchema = new CTFItemSchema();
+}
+
+CTFItemSchema::CTFItemSchema()
+{
+}
+
+void CTFItemSchema::PurgeSchema()
+{
+	m_hWeaponNames.Purge();
+}
+
+void CTFItemSchema::AddWeapon( const char *szWeaponName )
+{
+	m_hWeaponNames.AddToTail( szWeaponName );
+}
+
+KeyValues *CTFItemSchema::GetWeapon( int iID )
+{
+	if( iID > m_hWeaponNames.Count() || iID < 0 )
+		return NULL;
+	
+	return GetWeaponFromSchema( m_hWeaponNames[iID] );
+}
+
+KeyValues *CTFItemSchema::GetWeapon( const char *szWeaponName )
+{
+	return GetWeaponFromSchema( szWeaponName );
+}
+
+int CTFItemSchema::GetWeaponID( const char *szWeaponName )
+{
+	int iMax = m_hWeaponNames.Count();
+	for( int i = 0; i < iMax; i++ )
+	{
+		if( FStrEq(m_hWeaponNames[i], szWeaponName) )
+			return i;
+	}
+
+	return 0;
 }
 
 #ifdef CLIENT_DLL
@@ -367,25 +444,71 @@ KeyValues* GetCosmeticLoadoutForClass( int iClass )
 	
 }
 
-void ResetLoadout( void )
+KeyValues* GetWeaponLoadoutForClass( int iClass )
 {
-	if( gLoadout )
-		gLoadout->deleteThis();
+	if( iClass > TF_CLASS_JUGGERNAUT )
+		return NULL;
+
+	if( !GetLoadout() )
+		return NULL;
 	
-	gLoadout = new KeyValues( "Loadout" );
+	KeyValues *kvWeapons = GetLoadout()->FindKey("Weapons");
+	if( !kvWeapons )
+		return NULL;
 	
-	KeyValues *pCosmetics = new KeyValues( "Cosmetics" );
-	gLoadout->AddSubKey( pCosmetics );
+	KeyValues *kvClass = kvWeapons->FindKey(g_aPlayerClassNames_NonLocalized[iClass]);
+	
+	return kvClass;
+	
+}
+
+void ResetLoadout( const char *szCatName )
+{
+	if( !gLoadout )
+		gLoadout = new KeyValues( "Loadout" );
+	
+	char szCatNameFull[64];
+	Q_strncpy(szCatNameFull, szCatName, sizeof(szCatNameFull) );
+	strlwr(szCatNameFull);
+	
+	int iCategory = 0;
+	
+	for( int i = 0; i < 2 ; i++ )
+	{
+		if( !Q_strcmp( szCatNameFull, g_aLoadoutCategories[i] ) )
+		{
+			iCategory = i;
+			break;
+		}
+	}
+	
+	KeyValues *pCategory = new KeyValues( szCatNameFull );
+	gLoadout->AddSubKey( pCategory );
+
 	for ( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
 	{
 		KeyValues *pClass = new KeyValues( g_aPlayerClassNames_NonLocalized[i] );
-		pClass->SetString( "hat", "0" );
-		if( i == TF_CLASS_MERCENARY )
+		
+		switch( iCategory )
 		{
-			pClass->SetString( "chest", "11" );
-			pClass->SetString( "gloves", "15" );
+			case 0:
+			pClass->SetString( "hat", "0" );
+			if( i == TF_CLASS_MERCENARY )
+			{
+				pClass->SetString( "chest", "11" );
+				pClass->SetString( "gloves", "15" );
+			}
+			break;
+			case 1:
+			if( i == TF_CLASS_MERCENARY )
+			{
+				pClass->SetString( "1", "tf_weapon_assaultrifle" );
+				pClass->SetString( "2", "tf_weapon_pistol_mercenary" );
+				pClass->SetString( "3", "tf_weapon_crowbar" );
+			}
+			break;
 		}
-		pCosmetics->AddSubKey( pClass );
+		pCategory->AddSubKey( pClass );
 	}
 	gLoadout->SaveToFile( filesystem, "cfg/loadout.cfg" );
 }
@@ -394,7 +517,8 @@ void ParseLoadout( void )
 {	
 	if ( !filesystem->FileExists( "cfg/loadout.cfg" , "MOD" ) )
 	{
-		ResetLoadout();
+		ResetLoadout( "Cosmetics" );
+		ResetLoadout( "Weapons" );
 	}
 	else
 	{
@@ -415,6 +539,7 @@ void InitLoadoutHandle()
 }
 
 extern const char *g_aLoadoutConvarNames[];
+extern const char *g_aArsenalConvarNames[];
 
 CTFLoadoutHandler::CTFLoadoutHandler()
 {
@@ -424,6 +549,7 @@ CTFLoadoutHandler::CTFLoadoutHandler()
 		char szCommand[128];
 		szCommand[0] = '\0';
 
+		// Cosmetics here
 		KeyValues *kvClass = GetCosmeticLoadoutForClass( i );
 		if( kvClass )
 		{
@@ -439,6 +565,24 @@ CTFLoadoutHandler::CTFLoadoutHandler()
 		pLol->SetValue(szCommand);
 		
 		m_hClassLoadouts.AddToTail( pLol );
+		
+		
+		// Weapons here
+		kvClass = GetWeaponLoadoutForClass( i );
+		if( kvClass )
+		{
+			for( KeyValues *sub = kvClass->GetFirstValue(); sub != NULL; sub = sub->GetNextValue() )
+			{
+				if( szCommand[0] == '\0' )
+					Q_snprintf( szCommand, sizeof(szCommand), "%s", sub->GetString() );
+				else
+					Q_snprintf( szCommand, sizeof(szCommand), "%s %s", szCommand, sub->GetString() );
+			}
+		}
+		ConVar *pNewLol = new ConVar( g_aArsenalConvarNames[i], "", FCVAR_USERINFO );
+		pNewLol->SetValue(szCommand);
+		
+		m_hClassArsenal.AddToTail( pNewLol );
 	}
 }
 #endif

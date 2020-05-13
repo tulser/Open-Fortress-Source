@@ -389,9 +389,20 @@ CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout",
 {
 	m_pCloseButton = new Button( this, "CloseButton", "" );	
 	pCosmeticPanel = new EditablePanel( this, "CosmeticPanel" );
+	pArsenalPanel = new EditablePanel( this, "ArsenalPanel" );
 	pVisualPanel = new EditablePanel( this, "VisualPanel" );
 	pParticleList = new CTFScrollablePanelList( pVisualPanel, "ParticleList" );
 	pAnnouncerList = new CTFScrollablePanelList( pVisualPanel, "AnnouncerList" );
+	
+	pPrimaryToggle = new CTFSelectionPanel( pArsenalPanel, "PrimaryToggle" );
+	pSecondaryToggle = new CTFSelectionPanel( pArsenalPanel, "SecondaryToggle" );
+	pMeleeToggle = new CTFSelectionPanel( pArsenalPanel, "MeleeToggle" );
+	
+	for( int i = 0; i < 3; i++ )
+	{
+		pWeaponList[i] = new CTFScrollablePanelList( pArsenalPanel, VarArgs("WeaponList%d", i) );
+	}
+
 	m_pItemHeader = new CTFLoadoutHeader( pCosmeticPanel, "ItemHeader" );
 	m_pClassModel = new CTFModelPanel( this, "classmodelpanel" );
 	
@@ -696,6 +707,112 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 			}
 		}
 	}
+	
+	KeyValues *inArsenalPanel = inNewResourceData->FindKey("ArsenalPanel");
+	if( !inArsenalPanel )
+		return;	
+	
+	KeyValues *inWeaponList = inArsenalPanel->FindKey("WeaponList");
+	if( !inWeaponList )
+		return;	
+
+	for( int i = 0; i < 3; i++ )
+	{
+		if( pWeaponList[i] )
+		{
+			pWeaponList[i]->ClearItemList();
+			
+			inWeaponList->SetString("fieldName",VarArgs("WeaponList%d", i));
+			
+			inWeaponList->SetInt( "visible", !i );
+			
+			pWeaponList[i]->ApplySettings( inWeaponList );
+			
+			KeyValues *kvTemp = new KeyValues("Resource");
+			
+			kvTemp->SetString( "fieldName", "ItemTemplate" );
+			kvTemp->SetString( "wide", "82" );
+			kvTemp->SetString( "tall", "60" );
+			kvTemp->SetString( "autoResize", "0" );
+			kvTemp->SetString( "pinCorner", "2" );
+			kvTemp->SetString( "visible", "1" );
+			kvTemp->SetString( "enabled", "1" );
+			kvTemp->SetString( "tabPosition", "0" );
+			kvTemp->SetString( "proportionalToParent", "1" );
+			kvTemp->SetString( "border_idle", "ItemOutlineIdle" );
+			kvTemp->SetString( "border_hover", "ItemOutlineHoverover" );
+			kvTemp->SetString( "border_pressed", "ItemOutlineIdle" );
+			kvTemp->SetString( "border_selected", "ItemOutlineSelected"	);
+			kvTemp->SetString( "command", "loadout_equip weapons mercenary \"\"" );
+
+			KeyValues *kvButtTemp = new KeyValues("Button");
+			kvButtTemp->SetString( "wide", "50" );
+			kvButtTemp->SetString( "tall", "50" );
+			kvButtTemp->SetString( "xpos", "c-25" );
+			kvButtTemp->SetString( "ypos", "c-25" );
+			kvButtTemp->SetString( "zpos", "10" );
+			kvButtTemp->SetString( "proportionalToParent", "1" );
+			
+			KeyValues *kvImageTemp = new KeyValues("WeaponImage");
+			kvImageTemp->SetString( "wide", "100" );
+			kvImageTemp->SetString( "tall", "50" );
+			kvImageTemp->SetString( "xpos", "c-41" );
+			kvImageTemp->SetString( "ypos", "c-25" );
+			kvImageTemp->SetString( "zpos", "6" );
+			kvImageTemp->SetString( "scaleImage", "1" );
+			kvImageTemp->SetString( "proportionalToParent", "1" );
+			
+			kvTemp->AddSubKey( kvButtTemp );
+			
+			for( int y = 0; y < GetItemSchema()->GetWeaponCount(); y++ )
+			{
+				KeyValues *pSlot = GetItemSchema()->GetWeapon(y)->FindKey("slot");
+				if( pSlot )
+				{
+					if( pSlot->GetInt( "mercenary", 0 ) != i + 1 )
+						continue;
+				}
+				else if( i == 2 )
+					continue;
+				CTFCommandButton *pTemp = new CTFCommandButton( pWeaponList[i], "Temp" );
+				kvTemp->SetString( "fieldName", GetItemSchema()->GetWeapon(y)->GetName() );
+
+				kvTemp->SetString( "command", VarArgs( "loadout_equip weapons mercenary %s %d", GetItemSchema()->GetWeapon(y)->GetName(), i + 1 ) );
+				pTemp->ApplySettings( kvTemp );
+				
+				KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+				if( pWeapons )
+				{
+					KeyValues *pMercenary = pWeapons->FindKey("mercenary");
+					if( pMercenary )
+					{
+						if( !Q_stricmp(pMercenary->GetString(VarArgs("%d", i+1 ) ), GetItemSchema()->GetWeapon(y)->GetName()) )
+						{
+							pTemp->SetSelected(true);
+							
+							switch( i )
+							{
+								case 0:
+								pPrimaryToggle->pImage->SetImage( GetItemSchema()->GetWeapon(y)->GetString("backpack_icon", "..\backpack\blocked") );
+								break;
+								case 1:
+								pSecondaryToggle->pImage->SetImage( GetItemSchema()->GetWeapon(y)->GetString("backpack_icon", "..\backpack\blocked") );
+								break;
+								case 2:
+								pMeleeToggle->pImage->SetImage( GetItemSchema()->GetWeapon(y)->GetString("backpack_icon", "..\backpack\blocked") );
+								break;								
+							}
+						}
+					}
+				}
+				kvImageTemp->SetString( "image", GetItemSchema()->GetWeapon(y)->GetString( "backpack_icon", "..\backpack\blocked" ) );
+				CTFImagePanel *pTempImage = new CTFImagePanel( pTemp, "WeaponImage" );
+				pTempImage->ApplySettings( kvImageTemp );
+				
+				pWeaponList[i]->AddItem( pTemp );
+			}
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -748,9 +865,12 @@ void CTFLoadoutPanel::PerformLayout()
 	BaseClass::PerformLayout();
 
 	// Set the animation.
-	m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
-	m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
-	m_pClassModel->Update();
+	if ( m_pClassModel )
+	{
+		m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
+		m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
+		m_pClassModel->Update();
+	}
 	
 	m_iCurrentParticle = of_respawn_particle.GetInt();
 }
@@ -762,6 +882,9 @@ QUICK_CVAR(of_bodygroup_value)
 void CTFLoadoutPanel::PaintBackground()
 {
 	BaseClass::PaintBackground();
+
+	if ( !m_pClassModel )
+		return;
 
 	if( m_iCurrentParticle != of_respawn_particle.GetInt() )
 	{
@@ -827,6 +950,42 @@ void CTFLoadoutPanel::PaintBackground()
 		m_pClassModel->Update();
 		
 		m_bUpdateCosmetics = false;
+	}
+}
+void CTFLoadoutPanel::SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelection )
+{
+	vgui::Panel *pPanel = NULL;
+	switch( iSlot )
+	{
+		case 1:
+		pPanel = GLoadoutPanel()->GetArsenalPanel()->FindChildByName("PrimaryToggle");
+		break;
+		case 2:
+		pPanel = GLoadoutPanel()->GetArsenalPanel()->FindChildByName("SecondaryToggle");
+		break;
+		case 3:
+		pPanel = GLoadoutPanel()->GetArsenalPanel()->FindChildByName("MeleeToggle");
+		break;
+	}
+	
+	if( pPanel )
+	{
+		CTFImagePanel *pImage = dynamic_cast<CTFImagePanel*>( pPanel->FindChildByName("Image"));
+		if( pImage )
+		{
+			KeyValues *pWeapon = GetWeaponFromSchema(szWeapon);
+			if( pWeapon )
+				pImage->SetImage( pWeapon->GetString("backpack_icon", "..\backpack\blocked") );
+		}
+	}
+	
+	if( bChangeSelection )
+	{
+		CTFCommandButton *pWeapon = dynamic_cast<CTFCommandButton*>(pWeaponList[iSlot-1]->FindChildByName(szWeapon));
+		if( pWeapon )
+		{
+			pWeapon->SetSelected(true);
+		}
 	}
 }
 
@@ -1056,7 +1215,8 @@ void CTFEditableButtonFunc::OnMouseReleased(MouseCode code)
 
 DECLARE_BUILD_FACTORY( CTFCommandButton );
 DECLARE_BUILD_FACTORY( CTFHeaderItem );
-DECLARE_BUILD_FACTORY( CTFHeaderImagePanel );
+DECLARE_BUILD_FACTORY( CTFSelectionPanel );
+DECLARE_BUILD_FACTORY( CTFSelectionManager );
 DECLARE_BUILD_FACTORY_CUSTOM( CTFItemSelection, CTFItemSelection_Factory );
 
 //-----------------------------------------------------------------------------
@@ -1879,18 +2039,69 @@ void CTFLoadoutHeader::ClearCategoryList()
 	m_hCategories.Purge();
 }
 
+CTFSelectionManager::CTFSelectionManager(Panel *parent, const char *panelName) : Panel(parent, panelName)
+{
+	pSelectedItem = NULL;
+	bHasSelectedItem = false;
+}
+
+void CTFSelectionManager::OnPanelSelected( Panel *panel )
+{
+	if( bHasSelectedItem )
+	{
+		CTFSelectionPanel *pTarget = (CTFSelectionPanel*)pSelectedItem;
+		if(pTarget)
+		{
+			pTarget->SetSelected(false);
+			pTarget->OnReleasedSelected();
+		}
+	}
+	
+	pSelectedItem = panel;
+	bHasSelectedItem = true;
+}
+
+void CTFSelectionManager::ApplySettings(KeyValues *inResourceData)
+{
+	KeyValues *pPanels = inResourceData->FindKey("Panels");
+	
+	bool bFirst = true;
+	
+	if( pPanels )
+	{
+		FOR_EACH_VALUE(pPanels, kvValue)
+		{
+			CTFSelectionPanel *pPanel = (CTFSelectionPanel*) GetParent()->FindChildByName( kvValue->GetName() );
+			if( pPanel )
+			{
+				m_hPanels.AddToTail(pPanel);
+				pPanel->AddActionSignalTarget(this);
+				if( bFirst )
+				{
+					pPanel->SetSelected(true);
+					pPanel->OnReleasedUnselected();
+					bFirst = false;
+				}
+			}
+		}
+	}
+	
+	BaseClass::ApplySettings(inResourceData);
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 
-CTFHeaderImagePanel::CTFHeaderImagePanel(Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
+CTFSelectionPanel::CTFSelectionPanel(Panel *parent, const char *panelName) : CTFEditableButton(parent, panelName)
 {
 	pImage = new CTFImagePanel(this, "Image");
 	iBaseX = -999;
 	iBaseY = -999;
+	
+	pManger = NULL;
 }
 
-void CTFHeaderImagePanel::ApplySettings(KeyValues *inResourceData)
+void CTFSelectionPanel::ApplySettings(KeyValues *inResourceData)
 {
 	BaseClass::ApplySettings( inResourceData );
 	
@@ -1903,15 +2114,13 @@ void CTFHeaderImagePanel::ApplySettings(KeyValues *inResourceData)
 		pImage->ApplySettings(inImage);
 	}
 
-	SetConnectedPanel( inResourceData->GetString("panel") );
+	iBaseX = -999;
+    iBaseY = -999;
 
-	if( GLoadoutPanel() && !GLoadoutPanel()->m_pSelectedOptions )
-	{
-		SetSelected( true );
-	}
+	SetConnectedPanel( inResourceData->GetString("panel") );
 }
 
-void CTFHeaderImagePanel::SetConnectedPanel( const char *szConnectedPanel )
+void CTFSelectionPanel::SetConnectedPanel( const char *szConnectedPanel )
 {
 	Panel *pParent = GetParent();
 	if( !pParent )
@@ -1923,7 +2132,7 @@ void CTFHeaderImagePanel::SetConnectedPanel( const char *szConnectedPanel )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFHeaderImagePanel::OnMouseReleased(MouseCode code)
+void CTFSelectionPanel::OnMouseReleased(MouseCode code)
 {
 	if( m_bSelected )
 		return;
@@ -1931,16 +2140,15 @@ void CTFHeaderImagePanel::OnMouseReleased(MouseCode code)
 	BaseClass::OnMouseReleased(code);
 }
 
-void CTFHeaderImagePanel::OnReleasedSelected()
+void CTFSelectionPanel::OnReleasedSelected()
 {
 	BaseClass::OnReleasedSelected();
 
 	if( pConnectedPanel )
 		pConnectedPanel->SetVisible( false );
-	
 }
 
-void CTFHeaderImagePanel::OnReleasedUnselected()
+void CTFSelectionPanel::OnReleasedUnselected()
 {
 	BaseClass::OnReleasedUnselected();
 
@@ -1948,7 +2156,7 @@ void CTFHeaderImagePanel::OnReleasedUnselected()
 		pConnectedPanel->SetVisible( true );
 }
 
-void CTFHeaderImagePanel::SetSelected( bool bSelected )
+void CTFSelectionPanel::SetSelected( bool bSelected )
 {
 	BaseClass::SetSelected( bSelected );
 	
@@ -1973,23 +2181,8 @@ void CTFHeaderImagePanel::SetSelected( bool bSelected )
 			iBaseY = y;	
 
 		SetPos( iBaseX - iXAdj , iBaseY - iYAdj );
-	}
-	
-	if( GLoadoutPanel() )
-	{
-		if( bSelected )
-		{
-			if( GLoadoutPanel()->m_pSelectedOptions )
-			{
-				GLoadoutPanel()->m_pSelectedOptions->OnReleasedSelected();
-				GLoadoutPanel()->m_pSelectedOptions->SetSelected( false );
-			}
-			GLoadoutPanel()->m_pSelectedOptions = this;
-		}
-		else if( GLoadoutPanel()->m_pSelectedOptions == this )
-		{
-			GLoadoutPanel()->m_pSelectedOptions = NULL;
-		}
+		
+		PostActionSignal(new KeyValues("OnPanelSelected"));
 	}
 }
 DECLARE_BUILD_FACTORY( CTFColorPanel );

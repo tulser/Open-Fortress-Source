@@ -44,7 +44,14 @@ CBaseProjectile::CBaseProjectile()
 //-----------------------------------------------------------------------------
 void CBaseProjectile::SetLauncher( CBaseEntity *pLauncher )
 {
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	if ( m_hOriginalLauncher == NULL )
+	{
+		m_hOriginalLauncher = pLauncher;
+	}
+#else
 	m_hOriginalLauncher = pLauncher;
+#endif
 
 #ifdef GAME_DLL
 	ResetCollideWithTeammates();

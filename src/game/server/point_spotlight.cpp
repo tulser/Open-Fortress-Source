@@ -26,9 +26,6 @@ public:
 	DECLARE_DATADESC();
 
 	CPointSpotlight();
-#ifdef MAPBASE
-	~CPointSpotlight();
-#endif
 
 	void	Precache(void);
 	void	Spawn(void);
@@ -71,7 +68,8 @@ private:
 	float	m_flSpotlightCurLength;
 	float	m_flSpotlightGoalWidth;
 	float	m_flHDRColorScale;
-
+	int		m_nMinDXLevel;
+	
 public:
 	COutputEvent m_OnOn, m_OnOff;     ///< output fires when turned on, off
 };
@@ -95,7 +93,8 @@ BEGIN_DATADESC( CPointSpotlight )
 	DEFINE_KEYFIELD( m_flSpotlightMaxLength,FIELD_FLOAT, "SpotlightLength"),
 	DEFINE_KEYFIELD( m_flSpotlightGoalWidth,FIELD_FLOAT, "SpotlightWidth"),
 	DEFINE_KEYFIELD( m_flHDRColorScale, FIELD_FLOAT, "HDRColorScale" ),
-
+	DEFINE_KEYFIELD( m_nMinDXLevel, FIELD_INTEGER, "mindxlevel" ),
+	
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID,		"LightOn",		InputLightOn ),
 	DEFINE_INPUTFUNC( FIELD_VOID,		"LightOff",		InputLightOff ),
@@ -120,15 +119,9 @@ CPointSpotlight::CPointSpotlight()
 	m_vSpotlightDir.Init();
 #endif
 	m_flHDRColorScale = 1.0f;
+	m_nMinDXLevel = 0;
 	m_bIgnoreSolid = false;
 }
-
-#ifdef MAPBASE
-CPointSpotlight::~CPointSpotlight()
-{
-	SpotlightDestroy();
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -148,14 +141,6 @@ void CPointSpotlight::Precache(void)
 //-----------------------------------------------------------------------------
 void CPointSpotlight::Spawn(void)
 {
-	// entity limit measures, if we are above 1900 then don't spawn ourselves
-	if ( engine->GetEntityCount() > 1950 )
-	{
-		Warning("point_spotlight removed itself due to entity count exceeding 1950");
-		UTIL_Remove(this);
-		return;
-	}
-
 	Precache();
 
 	UTIL_SetSize( this,vec3_origin,vec3_origin );
@@ -385,7 +370,8 @@ void CPointSpotlight::SpotlightCreate(void)
 	m_hSpotlight->SetBeamFlags( (FBEAM_SHADEOUT|FBEAM_NOTILE) );
 	m_hSpotlight->SetBrightness( 64 );
 	m_hSpotlight->SetNoise( 0 );
-
+	m_hSpotlight->SetMinDXLevel( m_nMinDXLevel );
+	
 	if ( m_bEfficientSpotlight )
 	{
 		m_hSpotlight->PointsInit( GetAbsOrigin(), m_hSpotlightTarget->GetAbsOrigin() );

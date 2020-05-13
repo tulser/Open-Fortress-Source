@@ -207,7 +207,11 @@ void CBaseGameStats::Event_Init( void )
 	SetHL2UnlockedChapterStatistic();
 	SetSteamStatistic( filesystem->IsSteam() );
 	SetCyberCafeStatistic( gamestatsuploader->IsCyberCafeUser() );
+#ifdef OF_DLL
 	ConVarRef pDXLevel( "mat_dxlevel", /* bIgnoreMissing */ true );
+#else
+	ConVarRef pDXLevel( "mat_dxlevel" );
+#endif
 	if( pDXLevel.IsValid() )
 	{
 		SetDXLevelStatistic( pDXLevel.GetInt() );
@@ -239,7 +243,11 @@ void CBaseGameStats::Event_LevelInit( void )
 	// HACK HACK:  Punching this hole through only works in single player!!!
 	if ( gpGlobals->maxClients == 1 )
 	{
+#ifdef OF_DLL
 		ConVarRef closecaption( "closecaption", /* bIgnoreMissing */ true );
+#else
+		ConVarRef closecaption( "closecaption" );
+#endif
 		if( closecaption.IsValid() )
 			SetCaptionsStatistic( closecaption.GetBool() );
 
@@ -997,7 +1005,11 @@ void CBaseGameStats::SetHL2UnlockedChapterStatistic( void )
 					++search;
 
 				// read the value
+#ifdef OF_DLL				
 				int iChapter = 99;
+#else
+				int iChapter = Q_atoi( search );
+#endif
 				m_BasicStats.m_nHL2ChaptureUnlocked = iChapter;
 			}
 

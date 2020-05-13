@@ -54,6 +54,7 @@ ipch
 *.bak
 
 # Ignore tier1 since its compiled in VPC projs
+
 /src/lib/public/tier1.lib
 /src/lib/public/raytrace.lib
 /src/lib/public/mathlib.lib
@@ -85,8 +86,9 @@ ipch
 /src/materialsystem/procshader/Release_procshader_2013/*
 /src/shadereditor/Debug_shader_editor_2013/*
 /src/shadereditor/Release_shader_editor_2013/*
+# Linux and macosx build dirs
 obj_*_linux32/
-obj_*_osx32/
+obj_*_macosx/
 
 # Lua
 /src/thirdparty/lua-5.2.3/Debug
@@ -102,3 +104,7 @@ obj_*_osx32/
 
 # These makefiles are hand-made, and required for linux builds.
 !/src/devtools/*.mak
+/src/lib/public/mathlib.lib
+/src/lib/public/raytrace.lib
+/src/lib/public/tier1.lib
+/src/lib/public/vgui_controls.lib

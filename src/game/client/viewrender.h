@@ -302,8 +302,10 @@ public:
 	virtual void	Init( void );
 	virtual void	Shutdown( void );
 	
+#ifdef OF_CLIENT_DLL
 	// Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
 	virtual void    MP_PostSimulate();
+#endif
 
 	const CViewSetup *GetPlayerViewSetup( ) const;
 

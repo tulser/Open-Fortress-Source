@@ -153,14 +153,13 @@ void CPhysicsPushedEntities::ComputeRotationalPushDirection( CBaseEntity *pBlock
 		// that corner remains in the same local position.
 		// BUGBUG: This will break, but not as badly as the previous solution!!!
 		
-		/*
+#ifndef OF_DLL
 		Vector vecAbsMins, vecAbsMaxs;
 		pBlocker->CollisionProp()->WorldSpaceAABB( &vecAbsMins, &vecAbsMaxs );
 		start.x = (pMove->x < 0) ? vecAbsMaxs.x : vecAbsMins.x;
 		start.y = (pMove->y < 0) ? vecAbsMaxs.y : vecAbsMins.y;
 		start.z = (pMove->z < 0) ? vecAbsMaxs.z : vecAbsMins.z;
-		
-	*/
+#endif
 	
 		CBasePlayer *pPlayer = ToBasePlayer(pBlocker);
 		if ( pPlayer )

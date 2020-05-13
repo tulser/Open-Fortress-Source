@@ -9,9 +9,12 @@
 #include "basegrenade_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
+#include "tier0/memdbgon.h
 
+#if defined(OF_DLL) || defined(OF_CLIENT_DLL)
+#else
 extern ConVar    sk_plr_dmg_grenade;
+#endif
 
 // ==========================================================================================
 
@@ -54,7 +57,11 @@ void CBaseGrenadeContact::Spawn( void )
 	// Explode on contact
 	SetTouch( &CBaseGrenadeContact::ExplodeTouch );
 
+#if defined(OF_DLL) || defined(OF_CLIENT_DLL)
+	m_flDamage = 0.0f;
+#else
 	m_flDamage = sk_plr_dmg_grenade.GetFloat();
+#endif
 
 	// Allow player to blow this puppy up in the air
 	m_takedamage	= DAMAGE_YES;

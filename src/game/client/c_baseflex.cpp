@@ -195,8 +195,10 @@ CStudioHdr *C_BaseFlex::OnNewModel()
 	
 	// init to invalid setting
 	m_iBlink = -1;
+#ifdef OF_CLIENT_DLL
 	m_iBlinkL = -1;
 	m_iBlinkR = -1;
+#endif
 	m_iEyeUpdown = LocalFlexController_t(-1);
 	m_iEyeRightleft = LocalFlexController_t(-1);
 	m_bSearchedForEyeFlexes = false;
@@ -306,31 +308,6 @@ bool C_BaseFlex::GetSoundSpatialization( SpatializationInfo_t& info )
 				}
 			}
 		}
-		else
-		{
-			m_iMouthAttachment = LookupAttachment( "eyes" );
-			
-			if ((info.info.nChannel == CHAN_VOICE || info.info.nChannel == CHAN_VOICE2) && m_iMouthAttachment > 0)
-			{
-				Vector origin;
-				QAngle angles;
-				
-				C_BaseAnimating::AutoAllowBoneAccess boneaccess( true, false );
-
-				if (GetAttachment( m_iMouthAttachment, origin, angles ))
-				{
-					if (info.pOrigin)
-					{
-						*info.pOrigin = origin;
-					}
-
-					if (info.pAngles)
-					{
-						*info.pAngles = angles;
-					}
-				}
-			}	
-		}
 	}
 
 	return bret;
@@ -378,7 +355,7 @@ bool CFlexSceneFileManager::Init()
 	FindSceneFile( NULL, "randomAlert", true );
 #endif
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( OF_CLIENT_DLL )
 	// HACK TO ALL TF TO HAVE PER CLASS OVERRIDES
 	char const *pTFClasses[] = 
 	{
@@ -391,9 +368,11 @@ bool CFlexSceneFileManager::Init()
 		"pyro",
 		"spy",
 		"engineer",
+#ifdef OF_CLIENT_DLL
 		"mercenary",
 		"civilian",
 		"juggernaut"
+#endif
 	};
 
 	char fn[ MAX_PATH ];
@@ -1030,46 +1009,57 @@ void C_BaseFlex::GetToolRecordingState( KeyValues *msg )
 
 	ProcessSceneEvents( false );
 
-	// check for blinking
-	if (m_blinktoggle != m_prevblinktoggle)
+#ifdef OF_CLIENT_DLL
+	if ( m_nRenderFX != kRenderFxRagdoll )
+#endif
 	{
-		m_prevblinktoggle = m_blinktoggle;
-		m_blinktime = gpGlobals->curtime + g_CV_BlinkDuration.GetFloat();
-	}
+		// check for blinking
+		if (m_blinktoggle != m_prevblinktoggle)
+		{
+			m_prevblinktoggle = m_blinktoggle;
+			m_blinktime = gpGlobals->curtime + g_CV_BlinkDuration.GetFloat();
+		}
 
-	if (m_iBlink == -1)
-		m_iBlink = AddGlobalFlexController( "blink" );
+		if (m_iBlink == -1)
+			m_iBlink = AddGlobalFlexController( "blink" );
 
-	if (m_iBlinkL == -1)
-		m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
+#ifdef OF_CLIENT_DLL
+		if (m_iBlinkL == -1)
+			m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
 
-	if (m_iBlinkR == -1)
-		m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
+		if (m_iBlinkR == -1)
+			m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
+#endif
 
-	g_flexweight[m_iBlink] = 0;
-	g_flexweight[m_iBlinkL] = 0;
-	g_flexweight[m_iBlinkR] = 0;
+		g_flexweight[m_iBlink] = 0;
+#ifdef OF_CLIENT_DLL		
+		g_flexweight[m_iBlinkL] = 0;
+		g_flexweight[m_iBlinkR] = 0;
+#endif
 
-	// FIXME: this needs a better algorithm
-	// blink the eyes
-	float t = (m_blinktime - gpGlobals->curtime) * M_PI * 0.5 * (1.0/g_CV_BlinkDuration.GetFloat());
-	if (t > 0)
-	{
-		// do eyeblink falloff curve
-		t = cos(t);
+		// FIXME: this needs a better algorithm
+		// blink the eyes
+		float t = (m_blinktime - gpGlobals->curtime) * M_PI * 0.5 * (1.0/g_CV_BlinkDuration.GetFloat());
 		if (t > 0)
 		{
-			g_flexweight[m_iBlink] = sqrtf( t ) * 2;
-			if (g_flexweight[m_iBlink] > 1)
-				g_flexweight[m_iBlink] = 2.0 - g_flexweight[m_iBlink];
+			// do eyeblink falloff curve
+			t = cos(t);
+			if (t > 0)
+			{
+				g_flexweight[m_iBlink] = sqrtf( t ) * 2;
+				if (g_flexweight[m_iBlink] > 1)
+					g_flexweight[m_iBlink] = 2.0 - g_flexweight[m_iBlink];
 
-			g_flexweight[m_iBlinkL] = sqrtf( t ) * 2;
-			if (g_flexweight[m_iBlinkL] > 1)
-				g_flexweight[m_iBlinkL] = 2.0 - g_flexweight[m_iBlinkL];
+#ifdef OF_CLIENT_DLL
+				g_flexweight[m_iBlinkL] = sqrtf( t ) * 2;
+				if (g_flexweight[m_iBlinkL] > 1)
+					g_flexweight[m_iBlinkL] = 2.0 - g_flexweight[m_iBlinkL];
 
-			g_flexweight[m_iBlinkR] = sqrtf( t ) * 2;
-			if (g_flexweight[m_iBlinkR] > 1)
-				g_flexweight[m_iBlinkR] = 2.0 - g_flexweight[m_iBlinkR];
+				g_flexweight[m_iBlinkR] = sqrtf( t ) * 2;
+				if (g_flexweight[m_iBlinkR] > 1)
+					g_flexweight[m_iBlinkR] = 2.0 - g_flexweight[m_iBlinkR];
+#endif
+			}
 		}
 	}
 
@@ -1175,6 +1165,10 @@ void C_BaseFlex::SetupWeights( const matrix3x4_t *pBoneToWorld, int nFlexWeightC
 	// hack in an initialization
 	LinkToGlobalFlexControllers( GetModelPtr() );
 
+#ifndef OF_CLIENT_DLL	
+	m_iBlink = AddGlobalFlexController( "UH" );
+#endif
+
 	if ( SetupGlobalWeights( pBoneToWorld, nFlexWeightCount, pFlexWeights, pFlexDelayedWeights ) )
 	{
 		SetupLocalWeights( pBoneToWorld, nFlexWeightCount, pFlexWeights, pFlexDelayedWeights );
@@ -1249,42 +1243,51 @@ bool C_BaseFlex::SetupGlobalWeights( const matrix3x4_t *pBoneToWorld, int nFlexW
 	}
 
 	ProcessSceneEvents( false );
-
-	// check for blinking
-	if (m_blinktoggle != m_prevblinktoggle)
+		
+#ifdef OF_CLIENT_DLL
+	if ( m_nRenderFX != kRenderFxRagdoll )
+#endif
 	{
-		m_prevblinktoggle = m_blinktoggle;
-		m_blinktime = gpGlobals->curtime + g_CV_BlinkDuration.GetFloat();
-	}
-
-	if (m_iBlink == -1)
-		m_iBlink = AddGlobalFlexController( "blink" );
-
-	if (m_iBlinkL == -1)
-		m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
-
-	if (m_iBlinkR == -1)
-		m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
-
-	// FIXME: this needs a better algorithm
-	// blink the eyes
-	float flBlinkDuration = g_CV_BlinkDuration.GetFloat();
-	float flOOBlinkDuration = ( flBlinkDuration > 0 ) ? 1.0f / flBlinkDuration : 0.0f;
-	float t = ( m_blinktime - gpGlobals->curtime ) * M_PI * 0.5 * flOOBlinkDuration;
-	if (t > 0)
-	{
-		// do eyeblink falloff curve
-		t = cos(t);
-		if (t > 0.0f && t < 1.0f)
+		// check for blinking
+		if (m_blinktoggle != m_prevblinktoggle)
 		{
-			t = sqrtf( t ) * 2.0f;
-			if (t > 1.0f)
-				t = 2.0f - t;
-			t = clamp( t, 0.0f, 1.0f );
-			// add it to whatever the blink track is doing
-			g_flexweight[m_iBlink] = clamp( g_flexweight[m_iBlink] + t, 0.0f, 2.0f );
-			g_flexweight[m_iBlinkL] = clamp( g_flexweight[m_iBlinkL] + t, 0.0f, 2.0f );
-			g_flexweight[m_iBlinkR] = clamp( g_flexweight[m_iBlinkR] + t, 0.0f, 2.0f );
+			m_prevblinktoggle = m_blinktoggle;
+			m_blinktime = gpGlobals->curtime + g_CV_BlinkDuration.GetFloat();
+		}
+
+		if (m_iBlink == -1)
+			m_iBlink = AddGlobalFlexController( "blink" );
+
+#ifdef OF_CLIENT_DLL
+		if (m_iBlinkL == -1)
+			m_iBlinkL = AddGlobalFlexController( "left_CloseLid" );
+
+		if (m_iBlinkR == -1)
+			m_iBlinkR = AddGlobalFlexController( "right_CloseLid" );
+#endif
+
+		// FIXME: this needs a better algorithm
+		// blink the eyes
+		float flBlinkDuration = g_CV_BlinkDuration.GetFloat();
+		float flOOBlinkDuration = ( flBlinkDuration > 0 ) ? 1.0f / flBlinkDuration : 0.0f;
+		float t = ( m_blinktime - gpGlobals->curtime ) * M_PI * 0.5 * flOOBlinkDuration;
+		if (t > 0)
+		{
+			// do eyeblink falloff curve
+			t = cos(t);
+			if (t > 0.0f && t < 1.0f)
+			{
+				t = sqrtf( t ) * 2.0f;
+				if (t > 1.0f)
+					t = 2.0f - t;
+				t = clamp( t, 0.0f, 1.0f );
+				// add it to whatever the blink track is doing
+				g_flexweight[m_iBlink] = clamp( g_flexweight[m_iBlink] + t, 0.0f, 2.0f );
+#ifdef OF_CLIENT_DLL				
+				g_flexweight[m_iBlinkL] = clamp( g_flexweight[m_iBlinkL] + t, 0.0f, 2.0f );
+				g_flexweight[m_iBlinkR] = clamp( g_flexweight[m_iBlinkR] + t, 0.0f, 2.0f );
+#endif
+			}
 		}
 	}
 

@@ -30,7 +30,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponInvis )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_invis, CTFWeaponInvis );
-PRECACHE_WEAPON_REGISTER( tf_weapon_invis );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_invis );
 
 // Server specific.
 #if !defined( CLIENT_DLL ) 

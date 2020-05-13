@@ -8,7 +8,18 @@
 #include "cbase.h"
 #include "teamplay_round_timer.h"
 #include "teamplayroundbased_gamerules.h"
+
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+
 #include "tf_gamerules.h"
+
+#ifdef CLIENT_DLL
+#include "c_tf_player.h"
+#else
+#include "tf_player.h"
+#endif
+
+#endif
 
 #ifdef CLIENT_DLL
 #include "iclientmode.h"
@@ -16,16 +27,12 @@
 #include "c_playerresource.h"
 #include "c_team_objectiveresource.h"
 
-#include "tf_gamerules.h"
-#include "c_tf_player.h"
-
 #else
 #include "team.h"
 #include "team_objectiveresource.h"
-
-#include "tf_player.h"
 #endif
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define ROUND_TIMER_60SECS	"RoundEnds60seconds"
 #define ROUND_TIMER_30SECS	"RoundEnds30seconds"
 #define ROUND_TIMER_10SECS	"RoundEnds10seconds"
@@ -43,8 +50,27 @@
 #define ROUND_SETUP_3SECS	"RoundBegins3Seconds"
 #define ROUND_SETUP_2SECS	"RoundBegins2Seconds"
 #define ROUND_SETUP_1SECS	"RoundBegins1Seconds"
+#else
+#define ROUND_TIMER_60SECS	"Announcer.RoundEnds60seconds"
+#define ROUND_TIMER_30SECS	"Announcer.RoundEnds30seconds"
+#define ROUND_TIMER_10SECS	"Announcer.RoundEnds10seconds"
+#define ROUND_TIMER_5SECS	"Announcer.RoundEnds5seconds"
+#define ROUND_TIMER_4SECS	"Announcer.RoundEnds4seconds"
+#define ROUND_TIMER_3SECS	"Announcer.RoundEnds3seconds"
+#define ROUND_TIMER_2SECS	"Announcer.RoundEnds2seconds"
+#define ROUND_TIMER_1SECS	"Announcer.RoundEnds1seconds"
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
+#define ROUND_SETUP_60SECS	"Announcer.RoundBegins60Seconds"
+#define ROUND_SETUP_30SECS	"Announcer.RoundBegins30Seconds"
+#define ROUND_SETUP_10SECS	"Announcer.RoundBegins10Seconds"
+#define ROUND_SETUP_5SECS	"Announcer.RoundBegins5Seconds"
+#define ROUND_SETUP_4SECS	"Announcer.RoundBegins4Seconds"
+#define ROUND_SETUP_3SECS	"Announcer.RoundBegins3Seconds"
+#define ROUND_SETUP_2SECS	"Announcer.RoundBegins2Seconds"
+#define ROUND_SETUP_1SECS	"Announcer.RoundBegins1Seconds"
+#endif
+
+#if defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
 #define MERASMUS_SETUP_5SECS	"Merasmus.RoundBegins5Seconds"
 #define MERASMUS_SETUP_4SECS	"Merasmus.RoundBegins4Seconds"
 #define MERASMUS_SETUP_3SECS	"Merasmus.RoundBegins3Seconds"
@@ -54,9 +80,15 @@
 
 #define ROUND_START_BELL	"Ambient.Siren"
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define ROUND_TIMER_TIME_ADDED			"TimeAdded"
 #define ROUND_TIMER_TIME_ADDED_LOSER	"TimeAddedForEnemy"
 #define ROUND_TIMER_TIME_ADDED_WINNER	"TimeAwardedForTeam"
+#else
+#define ROUND_TIMER_TIME_ADDED			"Announcer.TimeAdded"
+#define ROUND_TIMER_TIME_ADDED_LOSER	"Announcer.TimeAddedForEnemy"
+#define ROUND_TIMER_TIME_ADDED_WINNER	"Announcer.TimeAwardedForTeam"
+#endif
 
 enum
 {
@@ -82,7 +114,7 @@ enum
 
 extern bool IsInCommentaryMode();
 
-#if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( TF_MOD ) )
+#if defined( GAME_DLL ) && ( defined( TF_DLL ) || defined( OF_DLL ) )
 ConVar tf_overtime_nag( "tf_overtime_nag", "0", FCVAR_NOTIFY, "Announcer overtime nag." );
 #endif
 
@@ -134,7 +166,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamRoundTimer, DT_TeamRoundTimer )
 	RecvPropBool( RECVINFO( m_bInCaptureWatchState ) ),
 	RecvPropBool( RECVINFO( m_bStopWatchTimer ) ),
 	RecvPropTime( RECVINFO( m_flTotalTime ) ),
+#ifdef OF_CLIENT_DLL
 	RecvPropBool( RECVINFO( m_bInfectionBeginning ) ),
+#endif
 
 #else
 
@@ -154,7 +188,9 @@ BEGIN_NETWORK_TABLE_NOBASE( CTeamRoundTimer, DT_TeamRoundTimer )
 	SendPropBool( SENDINFO( m_bStopWatchTimer ) ),
 	SendPropBool( SENDINFO( m_bInCaptureWatchState ) ),
 	SendPropTime( SENDINFO( m_flTotalTime ) ),
+#ifdef OF_DLL
 	SendPropBool( SENDINFO( m_bInfectionBeginning ) ),
+#endif
 
 #endif
 END_NETWORK_TABLE()
@@ -258,7 +294,9 @@ CTeamRoundTimer::CTeamRoundTimer( void )
 	m_flLastTime = 0.f;
 #endif
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	m_bInfectionBeginning = false;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -274,6 +312,36 @@ CTeamRoundTimer::~CTeamRoundTimer( void )
 //-----------------------------------------------------------------------------
 void CTeamRoundTimer::Precache( void )
 {
+#if defined( TF_DLL ) || defined( TF_CLIENT_DLL ) 
+	PrecacheScriptSound( ROUND_TIMER_60SECS );
+	PrecacheScriptSound( ROUND_TIMER_30SECS );
+	PrecacheScriptSound( ROUND_TIMER_10SECS );
+	PrecacheScriptSound( ROUND_TIMER_5SECS );
+	PrecacheScriptSound( ROUND_TIMER_4SECS );
+	PrecacheScriptSound( ROUND_TIMER_3SECS );
+	PrecacheScriptSound( ROUND_TIMER_2SECS );
+	PrecacheScriptSound( ROUND_TIMER_1SECS );
+	PrecacheScriptSound( ROUND_SETUP_60SECS );
+	PrecacheScriptSound( ROUND_SETUP_30SECS );
+	PrecacheScriptSound( ROUND_SETUP_10SECS );
+	PrecacheScriptSound( ROUND_SETUP_5SECS );
+	PrecacheScriptSound( ROUND_SETUP_4SECS );
+	PrecacheScriptSound( ROUND_SETUP_3SECS );
+	PrecacheScriptSound( ROUND_SETUP_2SECS );
+	PrecacheScriptSound( ROUND_SETUP_1SECS );
+	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED );
+	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_LOSER );
+	PrecacheScriptSound( ROUND_TIMER_TIME_ADDED_WINNER );
+	PrecacheScriptSound( ROUND_START_BELL );
+
+#ifdef TF_CLIENT_DLL
+	PrecacheScriptSound( MERASMUS_SETUP_5SECS );
+	PrecacheScriptSound( MERASMUS_SETUP_4SECS );
+	PrecacheScriptSound( MERASMUS_SETUP_3SECS );
+	PrecacheScriptSound( MERASMUS_SETUP_2SECS );
+	PrecacheScriptSound( MERASMUS_SETUP_1SECS );
+#endif // TF_CLIENT_DLL
+#endif // TF_DLL || TF_CLIENT_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -678,8 +746,10 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 		return;
 #endif
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	if ( m_bInfectionBeginning )
 		return;
+#endif
 
 	// don't play sounds if the level designer has turned them off or if it's during the WaitingForPlayers time
 	if ( !m_bTimerPaused && m_bAutoCountdown && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
@@ -748,13 +818,17 @@ void CTeamRoundTimer::SendTimeWarning( int nWarning )
 					}
 				}
 
-#if defined( TF_CLIENT_DLL ) || defined( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( OF_CLIENT_DLL )
 				if ( bShouldPlaySound == true )
 				{
+#ifdef OF_CLIENT_DLL					
 					bool announcer = true;
 					if ( !strcmp(GetTimeWarningSound( nWarning ), ROUND_START_BELL ) )
 						announcer = false;
 					TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetTimeWarningSound( nWarning ), announcer );
+#else
+					pPlayer->EmitSound( GetTimeWarningSound( nWarning ) );
+#endif
 				}
 #endif // TF_CLIENT_DLL
 			}
@@ -831,10 +905,12 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		inputdata_t data;
 		InputDisable( data );
 		m_OnSetupFinished.FireOutput( this, this );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() )
 		{
 			TFGameRules()->PassAllTracks();
 		}
+#endif
 	}
 
 	if ( IsDisabled() || m_bTimerPaused )
@@ -880,10 +956,12 @@ void CTeamRoundTimer::RoundTimerSetupThink( void )
 		{
 			UTIL_LogPrintf( "World triggered \"Round_Setup_End\"\n" );
 		}
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() )
 		{
 			TFGameRules()->PassAllTracks();
 		}
+#endif
 		return;
 	}
 	else if ( flTime <= 60.0 && m_bFire1MinRemain )
@@ -990,7 +1068,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				{
 					TeamplayRoundBasedRules()->SetOvertime( true );
 				}
-#if defined( TF_DLL ) || defined( TF_MOD )
+#if defined( TF_DLL ) || defined( OF_DLL )
 				else
 				{
 					if ( tf_overtime_nag.GetBool() && ( gpGlobals->curtime > m_flNextOvertimeNag ) )
@@ -1014,6 +1092,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 			return;
 		}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		if ( TFGameRules() && TFGameRules()->IsInfGamemode() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
 		{ 
 			// this is the 10 sec setup during Infection gamemode
@@ -1027,6 +1106,7 @@ void CTeamRoundTimer::RoundTimerThink( void )
 				TFGameRules()->FinishInfection();
 			}
 		}
+#endif
 
 		// HACK: in payload override we want to put the timer into overtime if the Civilian is still alive and end the round if he dies during overtime 
 		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers() )
@@ -1290,17 +1370,32 @@ void CTeamRoundTimer::AddTimerSeconds( int iSecondsToAdd, int iTeamResponsible /
 				{
 					if ( iTeam == iTeamResponsible )
 					{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )						
 						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_WINNER );	
+#else
+						CTeamRecipientFilter filter( iTeam, true );
+						EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED_WINNER );	
+#endif
 					}
 					else
 					{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )					
 						TeamplayRoundBasedRules()->BroadcastSound( iTeam, ROUND_TIMER_TIME_ADDED_LOSER );
+#else
+						CTeamRecipientFilter filter( iTeam, true );
+						EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED_LOSER );	
+#endif
 					}
 				}
 			}
 			else
 			{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )			
 				TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, ROUND_TIMER_TIME_ADDED );
+#else
+				CReliableBroadcastRecipientFilter filter;
+				EmitSound( filter, entindex(), ROUND_TIMER_TIME_ADDED );	
+#endif
 			}
 		}
 
@@ -1397,14 +1492,22 @@ void CTeamRoundTimer::InputAddTeamTime( inputdata_t &input )
 	int			nSeconds = 0;
 
 	// get the team
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+	p = nexttoken( token, p, ' ' );
+#endif
 	if ( token[0] )
 	{
 		nTeam = Q_atoi( token );
 	}
 
 	// get the time
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+	p = nexttoken( token, p, ' ' );
+#endif
 	if ( token[0] )
 	{
 		nSeconds = Q_atoi( token );

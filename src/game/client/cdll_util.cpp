@@ -36,7 +36,9 @@ ConVar localplayer_visionflags( "localplayer_visionflags", "0", FCVAR_CHEAT );
 //-----------------------------------------------------------------------------
 // ConVars
 //-----------------------------------------------------------------------------
-ConVar r_FadeProps( "r_FadeProps", "1", FCVAR_ARCHIVE, "Enable prop fading. Disabling improves prop visuals but slightly degrades performance" );
+#ifdef _DEBUG
+ConVar r_FadeProps( "r_FadeProps", "1" );
+#endif
 
 bool g_MakingDevShots = false;
 extern ConVar cl_leveloverview;
@@ -732,10 +734,12 @@ const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
 	if ((str == NULL) || (*str == '\0'))
 	{
 		*token = '\0';
+#ifdef OF_CLIENT_DLL		
         if (tokenLen)
         {
             *token = '\0';
         }
+#endif
 		return(NULL);
 	}
 
@@ -743,12 +747,21 @@ const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
 	// Copy everything up to the first separator into the return buffer.
 	// Do not include separators in the return buffer.
 	//
+#ifdef OF_CLIENT_DLL
 	while ((*str != sep) && (*str != '\0') && (tokenLen > 1))
 	{
 		*token++ = *str++;
 	    tokenLen--;
 	}
+#else
+	while ((*str != sep) && (*str != '\0'))
+	{
+		*token++ = *str++;
+	}
+	*token = '\0';
+#endif
 
+#ifdef OF_CLIENT_DLL
     //
     // If the token is too big for the return buffer, skip the rest of the token
     //
@@ -762,6 +775,7 @@ const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
         *token = '\0';
         tokenLen--;
     }
+#endif
 
 	//
 	// Advance the pointer unless we hit the end of the input string.
@@ -1125,7 +1139,9 @@ unsigned char UTIL_ComputeEntityFade( C_BaseEntity *pEntity, float flMinDist, fl
 	if ( g_MakingDevShots || cl_leveloverview.GetFloat() > 0 )
 		return 255;
 
+#ifdef _DEBUG
 	if ( r_FadeProps.GetBool() )
+#endif
 	{
 		nAlpha = ComputeDistanceFade( pEntity, flMinDist, flMaxDist );
 
@@ -1220,7 +1236,7 @@ bool UTIL_GetMapLoadCountFileName( const char *pszFilePrependName, char *pszBuff
 	return true;
 }
 
-#if defined(TF_CLIENT_DLL) || defined(TF_MOD_CLIENT)
+#if defined(TF_CLIENT_DLL) || defined(OF_CLIENT_DLL)
 #define MAP_KEY_FILE "viewed.res"
 #else
 #define MAP_KEY_FILE "mapkeys.res"

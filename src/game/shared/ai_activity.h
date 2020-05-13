@@ -226,11 +226,17 @@ typedef enum
 	ACT_VM_THROW,
 	ACT_VM_PULLPIN,
 	ACT_VM_PRIMARYATTACK,		// fire
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	ACT_VM_LAST_PRIMARYATTACK,	// last fire
+#endif
 	ACT_VM_SECONDARYATTACK,		// alt. fire
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	ACT_VM_LAST_PRIMARYATTACK_CRIT,
+#endif
 	ACT_VM_PRIMARYATTACK_CRIT,
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	ACT_VM_CHARGEUP,
+#endif
 	ACT_VM_RELOAD,			
 	ACT_VM_RELOAD_START,			
 	ACT_VM_RELOAD_FINISH,			
@@ -2193,7 +2199,7 @@ typedef enum
 	ACT_MELEE_VM_INSPECT_IDLE,
 	ACT_MELEE_VM_INSPECT_END,
 
-	////OPENFORTRESS ACTIVITES FOR DM MERC MODEL
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	ACT_MERC_STAND_SMG,
 	ACT_MERC_CROUCH_SMG,
 	ACT_MERC_RUN_SMG,
@@ -2404,7 +2410,8 @@ typedef enum
 	ACT_MERC_JUMP_FLOAT_DYNAMITE,
 	ACT_MERC_JUMP_LAND_DYNAMITE,	
 	ACT_MERC_LOADOUT,
-	
+#endif
+
 	// this is the end of the global activities, private per-monster activities start here.
 	LAST_SHARED_ACTIVITY,
 } Activity;

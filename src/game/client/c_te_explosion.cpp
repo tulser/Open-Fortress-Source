@@ -14,7 +14,10 @@
 #include "engine/ivdebugoverlay.h"
 #include "tier1/KeyValues.h"
 #include "toolframework_client.h"
+
+#ifdef OF_CLIENT_DLL
 #include "c_tf_player.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -45,6 +48,7 @@ IterationRetval_t CRagdollExplosionEnumerator::EnumElement( IHandleEntity *pHand
 		return ITERATION_CONTINUE;
 
 	// don't affect gibs
+#ifdef OF_CLIENT_DLL
 	if ( pModel->m_pRagdoll )
 	{
 		// inverting the if statement doesn't work, so I have to do it like this!
@@ -53,6 +57,7 @@ IterationRetval_t CRagdollExplosionEnumerator::EnumElement( IHandleEntity *pHand
 	{
 		return ITERATION_CONTINUE;
 	}
+#endif
 
 	m_Entities.AddToTail( pEnt );
 
@@ -83,6 +88,7 @@ CRagdollExplosionEnumerator::~CRagdollExplosionEnumerator()
 		if ( tr.fraction < 1.0f && tr.m_pEnt != pModel )
 			continue;	
 
+#ifdef OF_CLIENT_DLL
 		// don't affect gibs
 		if ( pModel->m_pRagdoll )
 		{
@@ -92,13 +98,18 @@ CRagdollExplosionEnumerator::~CRagdollExplosionEnumerator()
 		{
 			continue;
 		}
+#endif
 
 		dir *= force; // scale force
 
 		// tricky, adjust tr.start so end-start->= force
-		tr.startpos = tr.endpos - dir;
+		tr.startpos = tr.endpos - dir;	
 		// move explosion center a bit down, so things fly higher 
+#ifdef OF_CLIENT_DLL	
 		tr.startpos.z -= 64.0f;
+#else
+		tr.startpos.z -= 32.0f;
+#endif
 
 		pModel->ImpactTrace( &tr, DMG_BLAST, NULL );
 	}

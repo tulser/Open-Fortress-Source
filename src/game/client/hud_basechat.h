@@ -40,11 +40,13 @@ namespace vgui
 
 extern Color g_ColorBlue;
 extern Color g_ColorRed;
-extern Color g_ColorMercenary;
 extern Color g_ColorGreen;
 extern Color g_ColorDarkGreen;
 extern Color g_ColorYellow;
 extern Color g_ColorGrey;
+#ifdef OF_CLIENT_DLL
+extern Color g_ColorMercenary;
+#endif
 
 extern ConVar cl_showtextmsg;
 
@@ -258,7 +260,9 @@ public:
 #ifdef _XBOX
 	virtual bool	ShouldDraw();
 #endif
-	virtual bool 	AffectedByDrawHUD( void ){ return false; }
+#ifdef OF_CLIENT_DLL
+	virtual bool 	AffectedByDrawHUD( void ) { return false; }
+#endif
 	vgui::Panel		*GetInputPanel( void );
 
 	static int		m_nLineCounter;

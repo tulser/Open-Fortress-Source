@@ -32,7 +32,6 @@
 #include <igameresources.h>
 
 #include "vgui_avatarimage.h"
-#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

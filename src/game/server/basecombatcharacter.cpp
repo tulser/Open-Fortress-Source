@@ -190,6 +190,11 @@ END_SEND_TABLE();
 // This table encodes the CBaseCombatCharacter
 //-----------------------------------------------------------------------------
 IMPLEMENT_SERVERCLASS_ST(CBaseCombatCharacter, DT_BaseCombatCharacter)
+#ifndef OF_DLL
+#ifdef GLOWS_ENABLE
+	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
+#endif // GLOWS_ENABLE
+#endif
 	// Data that only gets sent to the local player.
 	SendPropDataTable( "bcc_localdata", 0, &REFERENCE_SEND_TABLE(DT_BCCLocalPlayerExclusive), SendProxy_SendBaseCombatCharacterLocalDataTable ),
 
@@ -740,6 +745,12 @@ CBaseCombatCharacter::CBaseCombatCharacter( void )
 	m_impactEnergyScale = 1.0f;
 
 	m_bForceServerRagdoll = ai_force_serverside_ragdoll.GetBool();
+	
+#ifndef OF_DLL	
+#ifdef GLOWS_ENABLE
+	m_bGlowEnabled.Set( false );
+#endif // GLOWS_ENABLE
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -843,6 +854,12 @@ void CBaseCombatCharacter::UpdateOnRemove( void )
 		pOwner->DeathNotice( this );
 		SetOwnerEntity( NULL );
 	}
+	
+#ifndef OF_DLL
+#ifdef GLOWS_ENABLE
+	RemoveGlowEffect();
+#endif // GLOWS_ENABLE
+#endif
 
 	// Chain at end to mimic destructor unwind order
 	BaseClass::UpdateOnRemove();
@@ -1150,12 +1167,7 @@ bool CTraceFilterMelee::ShouldHitEntity( IHandleEntity *pHandleEntity, int conte
 		// Only do these comparisons between NPCs
 		if ( pBCC && pVictimBCC )
 		{
-			// make players scream when death from npc
-			if (pBCC->IsNPC() && pVictimBCC->IsPlayer())
-			{
-				info.AddDamageType(DMG_CLUB);
-			}
-
+			// Can only damage other NPCs that we hate
 			if ( m_bDamageAnyNPC || pBCC->IRelationType( pEntity ) == D_HT )
 			{
 				if ( info.GetDamage() )
@@ -1910,7 +1922,6 @@ void CBaseCombatCharacter::Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector
 			{
 				// Drop enough ammo to kill 2 of me.
 				// Figure out how much damage one piece of this type of ammo does to this type of enemy.
-				// SecobMod__Enable_Fixed_Multiplayer_AI 
 				float flAmmoDamage = g_pGameRules->GetAmmoDamage(UTIL_GetNearestPlayer(GetAbsOrigin()), this, pWeapon->GetPrimaryAmmoType());
 				pWeapon->m_iClip1 = (GetMaxHealth() / flAmmoDamage) * 2;
 			}
@@ -2101,7 +2112,9 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	else if (pWeapon->GetDefaultClip1() >  pWeapon->GetMaxClip1() )
 	{
 		pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
+#ifdef OF_DLL
 		pWeapon->m_iReserveAmmo = pWeapon->GetMaxReserveAmmo();
+#endif
 		GiveAmmo( (pWeapon->GetDefaultClip1() - pWeapon->GetMaxClip1()), pWeapon->m_iPrimaryAmmoType); 
 	}
 
@@ -2742,13 +2755,7 @@ Relationship_t *CBaseCombatCharacter::FindEntityRelationship( CBaseEntity *pTarg
 Disposition_t CBaseCombatCharacter::IRelationType ( CBaseEntity *pTarget )
 {
 	if ( pTarget )
-		// if its a building, ANNIHALTE THEM
-		if  (pTarget->IsBaseObject() )
-		{
-			return D_HT;
-		}
 		return FindEntityRelationship( pTarget )->disposition;
-	// assume neutral otherwise
 	return D_NU;
 }
 
@@ -3233,6 +3240,35 @@ float CBaseCombatCharacter::GetSpreadBias( CBaseCombatWeapon *pWeapon, CBaseEnti
 	return 1.0;
 }
 
+#ifndef OF_DLL
+#ifdef GLOWS_ENABLE
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::AddGlowEffect( void )
+{
+	SetTransmitState( FL_EDICT_ALWAYS );
+	m_bGlowEnabled.Set( true );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseCombatCharacter::RemoveGlowEffect( void )
+{
+	m_bGlowEnabled.Set( false );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CBaseCombatCharacter::IsGlowEffectActive( void )
+{
+	return m_bGlowEnabled;
+}
+#endif // GLOWS_ENABLE
+#endif
+
 //-----------------------------------------------------------------------------
 // Assume everyone is average with every weapon. Override this to make exceptions.
 //-----------------------------------------------------------------------------
@@ -3251,7 +3287,7 @@ CBaseEntity *CBaseCombatCharacter::FindMissTarget( void )
 	int numMissCandidates = 0;
 
 	// SecobMod__Enable_Fixed_Multiplayer_AI
-	CBasePlayer *pPlayer = UTIL_GetNearestVisiblePlayer(this);
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
 	CBaseEntity *pEnts[256];
 	Vector		radius( 100, 100, 100);
 	Vector		vecSource = GetAbsOrigin();
@@ -3499,6 +3535,12 @@ void CBaseCombatCharacter::ChangeTeam( int iTeamNum )
 	// old team member no longer in the nav mesh
 	ClearLastKnownArea();
 
+#ifndef OF_DLL
+#ifdef GLOWS_ENABLE
+	RemoveGlowEffect();
+#endif // GLOWS_ENABLE
+#endif
+
 	BaseClass::ChangeTeam( iTeamNum );
 }
 
@@ -3563,6 +3605,7 @@ float CBaseCombatCharacter::GetTimeSinceLastInjury( int team /*= TEAM_ANY */ ) c
 	return never;
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: add additional upwards velocity
 //
@@ -3587,3 +3630,4 @@ void CBaseCombatCharacter::ApplyAirBlastImpulse( const Vector &vec )
 	
 	ApplyAbsVelocityImpulse( Vector );
 }
+#endif

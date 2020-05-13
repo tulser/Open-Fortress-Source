@@ -174,9 +174,9 @@ int C_PlayerAttachedModel::DrawOverriddenViewmodel( int flags )
 
 bool C_PlayerAttachedModel::ShouldDraw( void )
 {
+	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( m_bSpyMask )
 	{
-		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 		if ( !pOwner )
 			return false;
 
@@ -190,6 +190,15 @@ bool C_PlayerAttachedModel::ShouldDraw( void )
 	}
 	else
 	{
+		if ( !pOwner )
+			return false;
+		
+		if ( !pOwner->ShouldDrawThisPlayer() )
+			return false;
+		
+		if ( pOwner->IsEffectActive(EF_NODRAW) )
+			return false;
+		
 		return BaseClass::ShouldDraw();
 	}
 }

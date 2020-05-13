@@ -660,9 +660,6 @@ CNPCSpawnDestination *CTemplateNPCMaker::FindSpawnDestination()
 			bool fValid = true;
 			Vector vecTest = pDestination->GetAbsOrigin();
 
-			// SecobMod__Enable_Fixed_Multiplayer_AI
-			pPlayer = UTIL_GetNearestPlayer(vecTest);
-
 			if( m_CriterionVisibility != TS_YN_DONT_CARE )
 			{
 				// Right now View Cone check is omitted intentionally.
@@ -729,9 +726,6 @@ CNPCSpawnDestination *CTemplateNPCMaker::FindSpawnDestination()
 			for( int i = 0 ; i < count ; i++ )
 			{
 				Vector vecTest = pDestinations[ i ]->GetAbsOrigin();
-
-				// SecobMod__Enable_Fixed_Multiplayer_AI
-				pPlayer = UTIL_GetNearestPlayer(vecTest);
 
 				float flDist = ( vecTest - pPlayer->GetAbsOrigin() ).Length();
 

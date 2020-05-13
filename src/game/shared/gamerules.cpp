@@ -262,19 +262,31 @@ void CGameRules::RefreshSkillData ( bool forceUpdate )
 	}
 	GlobalEntity_Add( "skill.cfg", STRING(gpGlobals->mapname), GLOBAL_ON );
 
+#if !(defined( TF_DLL ) || defined( OF_DLL ) )&& !defined( DOD_DLL )
 	char	szExec[256];
+#endif
 
 	ConVarRef skill( "skill" );
 
 	SetSkillLevel( skill.IsValid() ? skill.GetInt() : 1 );
-
+	
+#ifdef HL2_DLL
 	// HL2 current only uses one skill config file that represents MEDIUM skill level and
 	// synthesizes EASY and HARD. (sjb)
 	Q_snprintf( szExec,sizeof(szExec), "exec skill_manifest.cfg\n" );
 
 	engine->ServerCommand( szExec );
 	engine->ServerExecute();
+#else
+#if !(defined( TF_DLL ) || defined( OF_DLL ) ) && !defined( DOD_DLL )
+	Q_snprintf( szExec,sizeof(szExec), "exec skill%d.cfg\n", GetSkillLevel() );
 
+	engine->ServerCommand( szExec );
+	engine->ServerExecute();
+#endif // TF_DLL && DOD_DLL
+
+#endif // HL2_DLL
+		
 #endif // CLIENT_DLL
 }
 
@@ -559,7 +571,7 @@ void CGameRules::FrameUpdatePostEntityThink()
 }
 
 // Hook into the convar from the engine
-ConVar skill( "skill", "3" );
+ConVar skill( "skill", "1" );
 
 void CGameRules::Think()
 {
@@ -658,7 +670,8 @@ bool CGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		::V_swap(collisionGroup0,collisionGroup1);
 	}
 
-	/*
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
 #ifndef HL2MP
 	if ( (collisionGroup0 == COLLISION_GROUP_PLAYER || collisionGroup0 == COLLISION_GROUP_PLAYER_MOVEMENT) &&
 		collisionGroup1 == COLLISION_GROUP_PUSHAWAY )
@@ -666,7 +679,7 @@ bool CGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 		return false;
 	}
 #endif
-	*/
+#endif
 
 	if ( collisionGroup0 == COLLISION_GROUP_DEBRIS && collisionGroup1 == COLLISION_GROUP_PUSHAWAY )
 	{
@@ -707,14 +720,15 @@ bool CGameRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 	if ( collisionGroup0 == COLLISION_GROUP_INTERACTIVE_DEBRIS && collisionGroup1 == COLLISION_GROUP_INTERACTIVE_DEBRIS )
 		return false;
 
-	/*
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
 #ifndef HL2MP
 	// This change was breaking HL2DM
 	// Adrian: TEST! Interactive Debris doesn't collide with the player.
 	if ( collisionGroup0 == COLLISION_GROUP_INTERACTIVE_DEBRIS && ( collisionGroup1 == COLLISION_GROUP_PLAYER_MOVEMENT || collisionGroup1 == COLLISION_GROUP_PLAYER ) )
 		 return false;
 #endif
-	*/
+#endif
 
 	if ( collisionGroup0 == COLLISION_GROUP_BREAKABLE_GLASS && collisionGroup1 == COLLISION_GROUP_BREAKABLE_GLASS )
 		return false;
@@ -782,8 +796,11 @@ float CGameRules::GetAmmoDamage( CBaseEntity *pAttacker, CBaseEntity *pVictim, i
 	float flDamage = 0;
 	CAmmoDef *pAmmoDef = GetAmmoDef();
 
-	// fixed a damn null point here
-	if (pAttacker && pAttacker->IsPlayer())
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	if ( pAttacker && pAttacker->IsPlayer() )
+#else
+	if ( pAttacker->IsPlayer() )
+#endif
 	{
 		flDamage = pAmmoDef->PlrDamage( nAmmoType );
 	}
@@ -852,7 +869,11 @@ void CGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	if ( pszFov )
 	{
 		int iFov = atoi(pszFov);
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 		iFov = clamp( iFov, 50, 130 );
+#else
+		iFov = clamp( iFov, 75, 90 );
+#endif
 		pPlayer->SetDefaultFOV( iFov );
 	}
 

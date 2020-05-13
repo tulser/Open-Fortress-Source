@@ -4,6 +4,7 @@
 #include "tf_bot_attack.h"
 #include "tf_bot_get_weapon.h"
 #include "tf_bot_taunt.h"
+#include "sniper/tf_bot_sniper_attack.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "tf_gamerules.h"
 
@@ -31,15 +32,19 @@ ActionResult<CTFBot> CTFBotDMRoam::Update( CTFBot *me, float dt )
 {
 	const float flChaseRange = 2000.0f;
 	const CKnownEntity *threat = me->GetVisionInterface()->GetPrimaryKnownThreat();
+
 	if ( threat != nullptr )
 	{
 		if ( TFGameRules()->State_Get() == GR_STATE_TEAM_WIN )
 		{
 			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Chasing down the losers" );
 		}
-
+		
 		if ( me->IsRangeLessThan( threat->GetLastKnownPosition(), flChaseRange ) )
 		{
+			if ( CTFBotSniperAttack::IsPossible( me ))
+				return Action<CTFBot>::SuspendFor( new CTFBotSniperAttack, "Sniping an enemy" );
+		
 			return Action<CTFBot>::SuspendFor( new CTFBotAttack, "Going after an enemy" );
 		}
 	}
@@ -54,7 +59,7 @@ ActionResult<CTFBot> CTFBotDMRoam::Update( CTFBot *me, float dt )
 	}
 	else if ( !m_waitDuration.HasStarted() )
 	{
-		m_waitDuration.Start( RandomFloat( 4.0f, 10.0f ) ); // OFBOT TODO:these need to be tweaked around
+		m_waitDuration.Start( RandomFloat( 3.0f, 7.0f ) ); // OFBOT TODO: these need to be tweaked around
 
 		CTFBotPathCost func( me );
 		const int maxIterations = 15;	// OFBOT TODO: same for this

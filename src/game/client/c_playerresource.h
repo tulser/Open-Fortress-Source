@@ -48,9 +48,11 @@ public : // IGameResources intreface
 	virtual int		GetPing( int index );
 //	virtual int		GetPacketloss( int index );
 	virtual int		GetPlayerScore( int index );
+#ifdef OF_CLIENT_DLL
 	virtual int		GetGGLevel( int index );
-	virtual int		GetDeaths( int index );
 	virtual int		GetLives( int index );
+#endif
+	virtual int		GetDeaths( int index );
 	virtual int		GetTeam( int index );
 	virtual int		GetFrags( int index );
 	virtual int		GetHealth( int index );
@@ -66,8 +68,10 @@ protected:
 	string_t	m_szName[MAX_PLAYERS+1];
 	int		m_iPing[MAX_PLAYERS+1];
 	int		m_iScore[MAX_PLAYERS+1];
+#ifdef OF_CLIENT_DLL
 	int		m_iGGLevel[MAX_PLAYERS+1];
 	int		m_iLives[MAX_PLAYERS+1];
+#endif
 	int		m_iDeaths[MAX_PLAYERS+1];
 	bool	m_bConnected[MAX_PLAYERS+1];
 	int		m_iTeam[MAX_PLAYERS+1];

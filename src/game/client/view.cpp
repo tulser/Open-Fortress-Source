@@ -51,7 +51,9 @@
 #include "replay/ienginereplay.h"
 #endif
 
+#if defined( HL2_CLIENT_DLL ) || defined( CSTRIKE_DLL ) || defined ( OF_CLIENT_DLL )
 #define USE_MONITORS
+#endif
 
 #ifdef PORTAL
 #include "c_prop_portal.h" //portal surface rendering functions
@@ -105,12 +107,12 @@ extern ConVar cl_forwardspeed;
 static ConVar v_centermove( "v_centermove", "0.15");
 static ConVar v_centerspeed( "v_centerspeed","500" );
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
-// 7 degrees approximates a 35mm camera - we determined that this makes the viewmodels
+#if defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
+// 54 degrees approximates a 35mm camera - we determined that this makes the viewmodels
 // and motions look the most natural.
 ConVar v_viewmodel_fov( "viewmodel_fov", "70", FCVAR_ARCHIVE, "Sets the field-of-view for the viewmodel.", true, 0.1, true, 179.9 );
 #else
-ConVar v_viewmodel_fov( "viewmodel_fov", "70", FCVAR_CHEAT, "Sets the field-of-view for the viewmodel.", true, 0.1, true, 179.9 );
+ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_CHEAT, "Sets the field-of-view for the viewmodel.", true, 0.1, true, 179.9 );
 #endif
 ConVar mat_viewportscale( "mat_viewportscale", "1.0", FCVAR_ARCHIVE, "Scale down the main viewport (to reduce GPU impact on CPU profiling)", true, (1.0f / 640.0f), true, 1.0f );
 ConVar mat_viewportupscale( "mat_viewportupscale", "1", FCVAR_ARCHIVE, "Scale the viewport back up" );
@@ -123,7 +125,7 @@ static ConVar r_mapextents( "r_mapextents", "16384", FCVAR_CHEAT,
 ConVar	gl_clear( "gl_clear", "0");
 ConVar	gl_clear_randomcolor( "gl_clear_randomcolor", "0", FCVAR_CHEAT, "Clear the back buffer to random colors every frame. Helps spot open seams in geometry." );
 
-static ConVar r_farz( "r_farz", "0", FCVAR_CHEAT, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
+static ConVar r_farz( "r_farz", "-1", FCVAR_CHEAT, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
 static ConVar cl_demoviewoverride( "cl_demoviewoverride", "0", 0, "Override view during demo playback" );
 
 
@@ -132,7 +134,7 @@ void SoftwareCursorChangedCB( IConVar *pVar, const char *pOldValue, float fOldVa
 	ConVar *pConVar = (ConVar *)pVar;
 	vgui::surface()->SetSoftwareCursor( pConVar->GetBool() || UseVR() );
 }
-static ConVar cl_software_cursor ( "cl_software_cursor", "1", FCVAR_ARCHIVE, "Switches the game to use a larger software cursor instead of the normal OS cursor", SoftwareCursorChangedCB );
+static ConVar cl_software_cursor ( "cl_software_cursor", "0", FCVAR_ARCHIVE, "Switches the game to use a larger software cursor instead of the normal OS cursor", SoftwareCursorChangedCB );
 
 
 static Vector s_DemoView;
@@ -734,7 +736,11 @@ void CViewRender::SetUpViews()
 	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-	m_View.fovViewmodel = abs( g_pClientMode->GetViewModelFOV() - flFOVOffset );
+#ifdef OF_CLIENT_DLL 
+	m_View.fovViewmodel = abs( g_pClientMode->GetViewModelFOV() - flFOVOffset ); // fix viewmodel going upsidedown at low fov
+#else
+	view.fovViewmodel = g_pClientMode->GetViewModelFOV() - flFOVOffset;
+#endif
 
 	if ( UseVR() )
 	{
@@ -1251,6 +1257,9 @@ void CViewRender::Render( vrect_t *rect )
 			flags |= RENDERVIEW_SUPPRESSMONITORRENDERING;
 		}
 
+#ifdef OF_CLIENT_DLL
+		// this is expensive... and not used anyway
+#if 0
 		// allow a viewmodel to drive the camera movement from a bone
 		if ( pPlayer && pPlayer->InFirstPersonView() && pPlayer->GetViewModel( 0 ) )
 		{
@@ -1266,6 +1275,8 @@ void CViewRender::Render( vrect_t *rect )
 				view.angles += camangles;
 			}
 		}
+#endif
+#endif
 
 	    RenderView( view, nClearFlags, flags );
 
@@ -1368,6 +1379,7 @@ CON_COMMAND( getpos, "dump position and angles to the console" )
 	Warning( "%s %f %f %f\n", pCommand2, angles.x, angles.y, angles.z );
 }
 
+#ifdef OF_CLIENT_DLL
 // Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
 void CViewRender::MP_PostSimulate()
 {
@@ -1423,4 +1435,4 @@ void CViewRender::MP_PostSimulate()
 #endif
 
 }
-// end Secobmod_FIX_VEHICLE_PLAYER_CAMERA_JUDDER
+#endif

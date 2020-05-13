@@ -141,8 +141,15 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual bool CanHolster( void ) const;
 	virtual bool Deploy( void );
 	virtual bool ReloadOrSwitchWeapons( void );
-	virtual int	 GetSlot( void ) const;
-	virtual int	 GetPosition( void ) const;
+	virtual int	 GetSlot( void );
+	virtual int	 GetPosition( void );
+	
+	virtual int  GetSlotOverride( void ) { return m_iSlotOverride; };
+	virtual int  GetPositionOverride( void ){ return m_iPositionOverride; };
+	
+	virtual void  SetSlotOverride( int iSlot ) { m_iSlotOverride = iSlot; };
+	virtual void  SetPositionOverride( int iPos ){ m_iPositionOverride = iPos; };
+	
 	virtual int	 GetDamage( void ) const;
 	virtual bool CanSecondaryAttack( void ) const;
 	virtual bool CanDropManualy( void ) const;
@@ -289,6 +296,9 @@ public:
 	CNetworkVar( bool,  m_bWindingUp );
 	CNetworkVar( float, m_flWindTick );
 	CNetworkVar( bool,	m_bSwapFire );
+	
+	CNetworkVar( int,	m_iSlotOverride );
+	CNetworkVar( int,	m_iPositionOverride );
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );

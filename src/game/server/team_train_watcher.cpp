@@ -17,9 +17,12 @@
 #include "mp_shareddefs.h"
 #include "props.h"
 #include "physconstraint.h"
+
+#ifdef OF_DLL
 #include "tf_gamerules.h"
 #include "pathtrack.h"
 #include "triggers.h"
+#endif
 
 #ifdef TF_DLL
 #include "tf_shareddefs.h"
@@ -66,7 +69,7 @@ EHANDLE g_hTeamTrainWatcherMaster = NULL;
 */
 #define MAX_ALARM_TIME_NO_RECEDE 18 // max amount of time to play the alarm if the train isn't going to recede
 
-
+#ifdef OF_DLL
 class CEscortTouchTrigger : public CBaseTrigger
 {
 	DECLARE_CLASS( CEscortTouchTrigger, CBaseTrigger );
@@ -126,6 +129,7 @@ public:
 };
 
 LINK_ENTITY_TO_CLASS( escort_touch_trigger, CEscortTouchTrigger );
+#endif
 
 BEGIN_DATADESC( CTeamTrainWatcher )
 
@@ -200,7 +204,9 @@ IMPLEMENT_SERVERCLASS_ST(CTeamTrainWatcher, DT_TeamTrainWatcher)
 	SendPropInt( SENDINFO( m_iTrainSpeedLevel ), 4 ),
 	SendPropTime( SENDINFO( m_flRecedeTime ) ),
 	SendPropInt( SENDINFO( m_nNumCappers ) ),
+#ifdef OF_DLL
 	SendPropInt( SENDINFO( m_nTeam ) ),
+#endif
 #ifdef GLOWS_ENABLE
 	SendPropEHandle( SENDINFO( m_hGlowEnt ) ),
 #endif // GLOWS_ENABLE
@@ -385,7 +391,11 @@ CTeamTrainWatcher::CTeamTrainWatcher()
 	m_hGlowEnt.Set( NULL );
 #endif // GLOWS_ENABLE
 
+#if defined ( TF_DLL ) || defined ( OF_DLL )
 	ChangeTeam( TF_TEAM_BLUE );
+#else
+	ChangeTeam( TEAM_UNASSIGNED );
+#endif
 
 /*
 	// create a CTeamTrainWatcherMaster entity
@@ -1097,11 +1107,14 @@ void CTeamTrainWatcher::WatcherActivate( void )
 
 	InternalSetSpeedForwardModifier( m_flSpeedForwardModifier );
 	
+#ifdef OF_DLL
 	CheckPayloadOverride();
+#endif
 
 	SetContextThink( &CTeamTrainWatcher::WatcherThink, gpGlobals->curtime + 0.1, TW_THINK );
 }
 
+#ifdef OF_DLL
 void CTeamTrainWatcher::CheckPayloadOverride( void )
 {
 	if ( TFGameRules() && TFGameRules()->IsESCGamemode() && TFGameRules()->IsPayloadOverride() ) // This is the juicy bit, we Spawn our winning trigger and disable all the payload logic
@@ -1211,6 +1224,7 @@ void CTeamTrainWatcher::SaveTeamSpawnPoints()
 		// Continue until a valid spawn point is found or we hit the start.
 	while ( pSpot != pFirstSpot );
 } 
+#endif
 
 void CTeamTrainWatcher::StopCaptureAlarm( void )
 {
@@ -1571,6 +1585,7 @@ CBaseEntity *CTeamTrainWatcher::GetTrainEntity( void )
 	return m_hTrain.Get();
 }
 
+#ifdef OF_DLL
 CPathTrack *CTeamTrainWatcher::GetSecondToLastNode( void )
 {
 /*	int i, lastnode = 0;
@@ -1590,6 +1605,7 @@ CPathTrack *CTeamTrainWatcher::GetSecondToLastNode( void )
 	else
 		return NULL;
 }
+#endif
 
 bool CTeamTrainWatcher::TimerMayExpire( void )
 {
@@ -1719,6 +1735,7 @@ Vector CTeamTrainWatcher::GetNextCheckpointPosition( void ) const
 	Assert( !"No checkpoint found in team train watcher\n" );
 	return vec3_origin;
 }
+#ifdef OF_DLL
 
 void CTeamTrainWatcher::Shutdown( void )
 {
@@ -1763,6 +1780,7 @@ void CTeamTrainWatcher::Shutdown( void )
 
 	UTIL_Remove ( this );
 }
+#endif
 
 #if defined( STAGING_ONLY ) && defined( TF_DLL )
 CON_COMMAND_F( tf_dumptrainstats, "Dump the stats for the current train watcher to the console", FCVAR_GAMEDLL )

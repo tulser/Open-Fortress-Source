@@ -199,7 +199,9 @@ public:
 			// only copy out entities that will simulate or think this frame
 			if ( m_simThinkList[i].nextThinkTick <= gpGlobals->tickcount )
 			{
-				//Assert(m_simThinkList[i].nextThinkTick>=0);
+#ifndef OF_DLL				
+				Assert(m_simThinkList[i].nextThinkTick>=0);
+#endif
 				int entinfoIndex = m_simThinkList[i].entEntry;
 				const CEntInfo *pInfo = gEntList.GetEntInfoPtrByIndex( entinfoIndex );
 				pList[out] = (CBaseEntity *)pInfo->m_pEntity;
@@ -521,8 +523,7 @@ CBaseEntity *CGlobalEntityList::FindEntityProcedural( const char *szName, CBaseE
 		//
 		if ( FStrEq( pName, "player" ) )
 		{
-			// SecobMod__Enable_Fixed_Multiplayer_AI
-			return (CBaseEntity *)UTIL_GetLocalPlayer();
+			return (CBaseEntity *)UTIL_PlayerByIndex( 1 );
 		}
 		else if ( FStrEq( pName, "pvsplayer" ) )
 		{
@@ -533,13 +534,12 @@ CBaseEntity *CGlobalEntityList::FindEntityProcedural( const char *szName, CBaseE
 			else if ( pActivator )
 			{
 				// FIXME: error condition?
-				return CBaseEntity::Instance( UTIL_FindClientInPVS( pActivator->edict() ) );
+				return (CBaseEntity *)UTIL_PlayerByIndex( 1 );
 			}
 			else
 			{
 				// FIXME: error condition?
-				// SecobMod__Enable_Fixed_Multiplayer_AI
-				return (CBaseEntity *)UTIL_GetLocalPlayer();
+				return FindPickerEntity(UTIL_GetLocalPlayer());;
 			}
 
 		}

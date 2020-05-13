@@ -19,11 +19,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar sv_vote_issue_restart_game_allowed( "sv_vote_issue_restart_game_allowed", "1", FCVAR_NONE, "Can players call votes to restart the game?" );
+// default is 0 as people can't behave themselves
+ConVar sv_vote_issue_restart_game_allowed( "sv_vote_issue_restart_game_allowed", "0", FCVAR_NONE, "Can players call votes to restart the game?" );
 ConVar sv_vote_issue_restart_game_cooldown( "sv_vote_issue_restart_game_cooldown", "300", FCVAR_NONE, "Minimum time before another restart vote can occur (in seconds)." );
 ConVar sv_vote_kick_ban_duration( "sv_vote_kick_ban_duration", "20", FCVAR_NONE, "The number of minutes a vote ban should last. (0 = Disabled)" );
 ConVar sv_vote_kick_maxplayers_required( "sv_vote_kick_maxplayers_required", "6", FCVAR_NONE, "Amount of players that must be present in a server before the kick vote can be called." );
-ConVar sv_vote_issue_changelevel_allowed( "sv_vote_issue_changelevel_allowed", "1", FCVAR_NONE, "Can players call votes to change levels?" );
+// default is 0 as people can't behave themselves
+ConVar sv_vote_issue_changelevel_allowed( "sv_vote_issue_changelevel_allowed", "0", FCVAR_NONE, "Can players call votes to change levels?" );
 ConVar sv_vote_issue_changemutator_allowed( "sv_vote_issue_changemutator_allowed", "1", FCVAR_NONE, "Can players call votes to change the mutators?" );
 ConVar sv_vote_issue_nextlevel_allowed( "sv_vote_issue_nextlevel_allowed", "1", FCVAR_NONE, "Can players call votes to set the next level?" );
 // TODO:
@@ -38,6 +40,8 @@ ConVar sv_vote_issue_scramble_teams_cooldown( "sv_vote_issue_scramble_teams_cool
 // this convar is clamped to min 1
 //ConVar sv_vote_issue_classlimits_max( "sv_vote_issue_classlimits_max", "0", FCVAR_NONE, "Maximum number of players (per-team) that can be any one class." );
 //ConVar sv_vote_issue_classlimits_cooldown( "sv_vote_issue_classlimits_cooldown", "0", FCVAR_NONE, "Minimum time before another classlimits vote can occur (in seconds)." );
+
+extern ConVar fraglimit;
 
 //-----------------------------------------------------------------------------
 // VTABLE GLOBAL: https://raw.githubusercontent.com/sigsegv-mvm/mvm-reversed/7ce8ac98fe187a07d71df87b02b4c038548837e9/Useful/symbols/ServerLinux-server_srv.txt
@@ -289,6 +293,22 @@ bool CChangeLevelIssue::IsEnabled()
 
 bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create_failed_t &nFailCode, int &nTime )
 {
+	// don't allow changing maps when we are halfway through fraglimit
+	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !TFGameRules()->IsInWaitingForPlayers() )
+	{
+		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			CBasePlayer *pPlayer = ToBasePlayer( UTIL_PlayerByIndex( i ) );
+
+			if ( pPlayer && pPlayer->FragCount() >= ( (float)fraglimit.GetInt() * 0.5 ) )
+			{
+				nFailCode = VOTE_FAILED_ISSUE_DISABLED;
+				nTime = m_flNextCallTime - gpGlobals->curtime;
+				return false;
+			}
+		}
+	}
+
 	if ( pszDetails[ 0 ] == '\0' )
 	{
 		nFailCode = VOTE_FAILED_MAP_NAME_REQUIRED;
@@ -451,6 +471,9 @@ bool CNextLevelIssue::GetVoteOptions( CUtlVector <const char*> &vecNames )
 			int i;
 
 			i = RandomInt( 0, m_MapList.Count() - 1 );
+
+			if ( !m_MapList.IsValidIndex( i ) )
+				continue;
 
 			vecNames.AddToTail( m_MapList[ i ] );
 

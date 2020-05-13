@@ -67,8 +67,10 @@ public:
 	float			GetDamageForForceCalc() const;
 	void			SetDamageForForceCalc( const float flScaleAmount );
 	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 	float			GetDamageForceMult() const;
 	void			SetDamageForceMult( const float flMultAmount );
+#endif
 
 	Vector			GetDamagePosition() const;
 	void			SetDamagePosition( const Vector &damagePosition );
@@ -135,7 +137,9 @@ protected:
 	bool			m_bForceFriendlyFire;	// Ideally this would be a dmg type, but we can't add more
 
 	float			m_flDamageForForce;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	float			m_flDamageForceMult;
+#endif
 
 	DECLARE_SIMPLE_DATADESC();
 };
@@ -166,7 +170,6 @@ extern CMultiDamage g_MultiDamage;
 // Multidamage accessors
 void ClearMultiDamage( void );
 void ApplyMultiDamage( void );
-void ApplyMultiSelfDamage( float flTotalDamage );
 void AddMultiDamage( const CTakeDamageInfo &info, CBaseEntity *pEntity );
 
 //-----------------------------------------------------------------------------
@@ -308,6 +311,7 @@ inline void CTakeDamageInfo::SetDamageForForceCalc( float flDamage )
 	m_flDamageForForce = flDamage;
 }
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 inline float CTakeDamageInfo::GetDamageForceMult() const
 {
 	return m_flDamageForceMult;
@@ -317,6 +321,7 @@ inline void CTakeDamageInfo::SetDamageForceMult( float flMultAmount )
 {
 	m_flDamageForceMult = flMultAmount;
 }
+#endif
 
 inline Vector CTakeDamageInfo::GetDamagePosition() const
 {

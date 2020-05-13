@@ -80,7 +80,7 @@ void CBaseFilter::InputTestActivator( inputdata_t &inputdata )
 //
 //   Allows one to filter through mutiple filters
 // ###################################################################
-#define MAX_FILTERS 16
+#define MAX_FILTERS 5
 enum filter_t
 {
 	FILTER_AND,
@@ -117,17 +117,6 @@ BEGIN_DATADESC( CFilterMultiple )
 	DEFINE_KEYFIELD(m_iFilterName[2], FIELD_STRING, "Filter03"),
 	DEFINE_KEYFIELD(m_iFilterName[3], FIELD_STRING, "Filter04"),
 	DEFINE_KEYFIELD(m_iFilterName[4], FIELD_STRING, "Filter05"),
-	DEFINE_KEYFIELD(m_iFilterName[5], FIELD_STRING, "Filter06"),
-	DEFINE_KEYFIELD(m_iFilterName[6], FIELD_STRING, "Filter07"),
-	DEFINE_KEYFIELD(m_iFilterName[7], FIELD_STRING, "Filter08"),
-	DEFINE_KEYFIELD(m_iFilterName[8], FIELD_STRING, "Filter09"),
-	DEFINE_KEYFIELD(m_iFilterName[9], FIELD_STRING, "Filter10"),
-	DEFINE_KEYFIELD(m_iFilterName[10], FIELD_STRING, "Filter11"),
-	DEFINE_KEYFIELD(m_iFilterName[11], FIELD_STRING, "Filter12"),
-	DEFINE_KEYFIELD(m_iFilterName[12], FIELD_STRING, "Filter13"),
-	DEFINE_KEYFIELD(m_iFilterName[13], FIELD_STRING, "Filter14"),
-	DEFINE_KEYFIELD(m_iFilterName[14], FIELD_STRING, "Filter15"),
-	DEFINE_KEYFIELD(m_iFilterName[15], FIELD_STRING, "Filter16"),
 	DEFINE_ARRAY( m_hFilter, FIELD_EHANDLE, MAX_FILTERS ),
 
 END_DATADESC()
@@ -383,8 +372,12 @@ protected:
 
 	bool PassesDamageFilterImpl(const CTakeDamageInfo &info)
 	{
+#ifdef OF_DLL
 		//Tony; these are bitflags. check them as so.
 		return ((info.GetDamageType() & m_iDamageType) == m_iDamageType);
+#else
+		return info.GetDamageType() == m_iDamageType;
+#endif
 	}
 
 	int m_iDamageType;
@@ -642,6 +635,7 @@ BEGIN_DATADESC( CFilterEnemy )
 
 END_DATADESC()
 
+#ifdef OF_DLL
 // ###################################################################
 //    > FilterContext
 // ###################################################################
@@ -668,6 +662,7 @@ BEGIN_DATADESC( CFilterContext )
     DEFINE_KEYFIELD( m_iFilterContext,    FIELD_STRING,    "ResponseContext" ),
 
 END_DATADESC()
+#endif
 
 // ###################################################################
 //	> FilterModel

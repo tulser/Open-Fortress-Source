@@ -105,7 +105,7 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 
 	char sz[128];
 	
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 	Q_snprintf(sz, sizeof( sz ), "scripts/weapons/%s", pWeaponInfo->szClassName);
 #else
 	Q_snprintf(sz, sizeof( sz ), "scripts/%s", pWeaponInfo->szClassName);
@@ -171,16 +171,6 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 			}
 		}
 
-		p = FindHudTextureInDict( tempList, "weapon_s" );
-		if ( p )
-		{
-			pWeaponInfo->iconActive = gHUD.AddUnsearchableHudIconToList( *p );
-			if ( pWeaponInfo->iconActive )
-			{
-				pWeaponInfo->iconActive->Precache();
-			}
-		}
-		
 		p = FindHudTextureInDict( tempList, "weapon_s" );
 		if ( p )
 		{

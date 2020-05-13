@@ -32,6 +32,7 @@
 #include "achievementmgr.h"
 #include "tf_hud_freezepanel.h"
 #include "tf_gamestats_shared.h"
+#include "tf_gamerules.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -243,16 +244,19 @@ void CTFStatPanel::UpdateStats( int iMsgType )
 	
 	m_bStatsChanged = true;
 
-	if ( m_statRecord > TFSTAT_UNDEFINED )
+	if ( TFGameRules() && !TFGameRules()->IsDMGamemode() )
 	{
-		bool bAlive = ( iMsgType != STATMSG_PLAYERDEATH );
-		if ( !bAlive || ( gpGlobals->curtime - m_flTimeLastSpawn < 3.0 ) )
+		if ( m_statRecord > TFSTAT_UNDEFINED )
 		{
-			// show the panel now if dead or very recently spawned
-			vgui::ivgui()->AddTickSignal( GetVPanel(), 1000 );
-			ShowStatPanel( m_iCurStatClass, m_iCurStatTeam, m_iCurStatValue, m_statRecord, m_recordBreakType, bAlive );
-			m_flTimeHide = gpGlobals->curtime + ( bAlive ? 12.0f : 20.0f );
-			m_statRecord = TFSTAT_UNDEFINED;
+			bool bAlive = ( iMsgType != STATMSG_PLAYERDEATH );
+			if ( !bAlive || ( gpGlobals->curtime - m_flTimeLastSpawn < 3.0 ) )
+			{
+				// show the panel now if dead or very recently spawned
+				vgui::ivgui()->AddTickSignal( GetVPanel(), 1000 );
+				ShowStatPanel( m_iCurStatClass, m_iCurStatTeam, m_iCurStatValue, m_statRecord, m_recordBreakType, bAlive );
+				m_flTimeHide = gpGlobals->curtime + ( bAlive ? 12.0f : 20.0f );
+				m_statRecord = TFSTAT_UNDEFINED;
+			}
 		}
 	}
 

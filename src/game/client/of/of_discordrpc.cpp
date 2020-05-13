@@ -28,6 +28,7 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+#include <replay/ienginereplay.h>
 
 ConVar cl_richpresence_printmsg( "cl_richpresence_printmsg", "0", FCVAR_ARCHIVE, "" );
 
@@ -57,28 +58,27 @@ const char *g_aClassImage[] =
 };
 
 const char *g_aGameTypeNames_NonLocalized[] = // Move me?
-{
-	"Undefined",
-	"Capture the Flag",
-	"Control Point",
-	"Payload",
-	"Arena",
-	"Mann vs Machine",
-	"Robot Destruction",
-	"Passtime",
-	"Player Destruction",
-	"Escort",
-	"Deathmatch",
-	"Team Deathmatch",
-	"Domination",
-	"Gun Game",
-	"3 Wave",
-	"Zombie Survival",
-	"Coop",
-};
-
-CTFDiscordRPC g_discordrpc;
-
+{                                 
+	"Undefined",                  
+	"Capture the Flag",           
+	"Control Point",              
+	"Payload",                    
+	"Arena",                      
+	"Mann vs Machine",            
+	"Robot Destruction",          
+	"Passtime",                   
+	"Player Destruction",         
+	"Escort",                     
+	"Deathmatch",                 
+	"Team Deathmatch",            
+	"Domination",                 
+	"Gun Game",                   
+	"3 Wave",                     
+	"Infection",                  
+};                                
+                                  
+CTFDiscordRPC g_discordrpc;      
+                                  
 CTFDiscordRPC::CTFDiscordRPC()
 {
 	Q_memset(m_szLatchedMapname, 0, MAX_MAP_NAME);
@@ -123,7 +123,7 @@ void CTFDiscordRPC::RunFrame()
 
 void CTFDiscordRPC::OnReady( const DiscordUser* user )
 {
-	if (!of_enable_rpc.GetBool())
+	if ( !of_enable_rpc.GetBool() || CommandLine()->FindParm("-no_discord") )
 	{
 		Discord_Shutdown();
 
@@ -155,10 +155,14 @@ void CTFDiscordRPC::OnJoinGame( const char *joinSecret )
 	engine->ExecuteClientCmd( szCommand );
 }
 
-void CTFDiscordRPC::OnSpectateGame( const char *spectateSecret )
+//Spectating can not work until somebody can figgure out how to return the SourceTV ip in a string
+//so you can spectate withouth taking up spots on the server
+//-Nbc66
+/*void CTFDiscordRPC::OnSpectateGame( const char *spectateSecret )
 {
 	ConColorMsg( Color( 114, 137, 218, 255 ), "[Rich Presence] Spectate Game: %s\n", spectateSecret );
 }
+*/
 
 void CTFDiscordRPC::OnJoinRequest( const DiscordUser *joinRequest )
 {
@@ -250,6 +254,16 @@ void CTFDiscordRPC::SetLogo( void )
 
 void CTFDiscordRPC::InitializeDiscord()
 {
+	if ( !of_enable_rpc.GetBool() || CommandLine()->FindParm("-no_discord") )
+	{
+		Discord_Shutdown();
+
+		if ( steamapicontext->SteamFriends() )
+			steamapicontext->SteamFriends()->ClearRichPresence();
+
+		return;
+	}
+
 	DiscordEventHandlers handlers;
 	Q_memset(&handlers, 0, sizeof(handlers));
 	handlers.ready			= &CTFDiscordRPC::OnReady;
@@ -359,6 +373,9 @@ void CTFDiscordRPC::FireGameEvent( IGameEvent *event )
 
 void CTFDiscordRPC::UpdateRichPresence()
 {
+	if ( !of_enable_rpc.GetBool() )
+		return;
+	
 	//The elapsed timer function using <ctime>
 	//this is for setting up the time when the player joins a server
 	//-Nbc66
@@ -401,14 +418,17 @@ void CTFDiscordRPC::UpdateRichPresence()
 void CTFDiscordRPC::UpdateNetworkInfo()
 {
 	INetChannelInfo *ni = engine->GetNetChannelInfo();
-
 	char partyId[128];
-	sprintf( partyId, "%s-party", ni->GetAddress()); // adding -party here because secrets cannot match the party id
-
+	sprintf(partyId, "%s-party", ni->GetAddress()); // adding -party here because secrets cannot match the party id
 	m_sDiscordRichPresence.partyId = partyId;
 
 	m_sDiscordRichPresence.joinSecret = ni->GetAddress();
-	m_sDiscordRichPresence.spectateSecret = "Spectate";
+
+//Spectating can not work until somebody can figgure out how to return the SourceTV ip in a string
+//so you can spectate withouth taking up spots on the server
+//-Nbc66
+
+	//m_sDiscordRichPresence.spectateSecret = "Spectate";
 }
 
 void CTFDiscordRPC::LevelInit( const char *szMapname )

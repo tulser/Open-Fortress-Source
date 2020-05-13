@@ -243,6 +243,12 @@ void C_EnvScreenEffect::ReceiveMessage( int classID, bf_read &msg )
 
 				if ( m_nType == SCREENEFFECT_EP1_INTRO )
 				{
+#ifndef OF_CLIENT_DLL					
+					if( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+					{
+						return;
+					}
+#endif				
 					// Set our keys
 					pKeys->SetFloat( "duration", m_flDuration );
 					pKeys->SetInt( "fadeout", 0 );
@@ -260,6 +266,11 @@ void C_EnvScreenEffect::ReceiveMessage( int classID, bf_read &msg )
 				}
 				else if ( m_nType == SCREENEFFECT_EP2_GROGGY )
 				{
+#ifndef OF_CLIENT_DLL						
+					if( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+						return;
+#endif
+					
 					// Set our keys
 					pKeys->SetFloat( "duration", m_flDuration );
 					pKeys->SetInt( "fadeout", 0 );
@@ -277,6 +288,13 @@ void C_EnvScreenEffect::ReceiveMessage( int classID, bf_read &msg )
 			
 			if ( m_nType == SCREENEFFECT_EP1_INTRO )
 			{
+#ifndef OF_CLIENT_DLL					
+				if( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+				{
+					return;
+				}
+#endif
+				
 				// Create a keyvalue block to set these params
 				KeyValues *pKeys = new KeyValues( "keys" );
 				if ( pKeys == NULL )
@@ -294,6 +312,13 @@ void C_EnvScreenEffect::ReceiveMessage( int classID, bf_read &msg )
 			}
 			else if ( m_nType == SCREENEFFECT_EP2_GROGGY )
 			{
+#ifndef OF_CLIENT_DLL				
+				if( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+				{
+					return;
+				}	
+#endif
+				
 				// Create a keyvalue block to set these params
 				KeyValues *pKeys = new KeyValues( "keys" );
 				if ( pKeys == NULL )

@@ -180,7 +180,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponPDA_Engineer_Build )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pda_engineer_build, CTFWeaponPDA_Engineer_Build );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pda_engineer_build );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_pda_engineer_build );
 
 //==============================
 
@@ -193,7 +193,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponPDA_Engineer_Destroy )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pda_engineer_destroy, CTFWeaponPDA_Engineer_Destroy );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pda_engineer_destroy );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_pda_engineer_destroy );
 
 //==============================
 
@@ -206,7 +206,7 @@ BEGIN_PREDICTION_DATA( CTFWeaponPDA_Spy )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_pda_spy, CTFWeaponPDA_Spy );
-PRECACHE_WEAPON_REGISTER( tf_weapon_pda_spy );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_pda_spy );
 
 #ifdef CLIENT_DLL
 

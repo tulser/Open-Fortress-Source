@@ -29,7 +29,7 @@ BEGIN_PREDICTION_DATA( CTFShovel )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_shovel, CTFShovel );
-PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_shovel );
 
 //=============================================================================
 //

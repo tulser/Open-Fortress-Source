@@ -193,8 +193,10 @@ public:
 	virtual int			GetTeamIndex();
 	virtual void		ChangeTeam( int iTeamNum );
 	virtual int			GetFragCount();
+#ifdef OF_DLL
 	virtual int			GetGGLevel();
 	virtual int			GetLives();
+#endif
 	virtual int			GetDeathCount();
 	virtual bool		IsConnected();
 	virtual int			GetArmorValue();
@@ -254,9 +256,6 @@ public:
 	// IPlayerInfo passthrough (because we can't do multiple inheritance)
 	IPlayerInfo *GetPlayerInfo() { return &m_PlayerInfo; }
 	IBotController *GetBotController() { return &m_PlayerInfo; }
-	
-	bool m_bTransition;			
-	bool m_bTransitionTeleported;	// This is important as it allows the game to save each players progress over a map change. Create the booleans required for transitions to work.
 
 	virtual void			SetModel( const char *szModelName );
 	void					SetBodyPitch( float flPitch );
@@ -287,7 +286,7 @@ public:
 	// Returns true if this player wants pPlayer to be moved back in time when this player runs usercmds.
 	// Saves a lot of overhead on the server if we can cull out entities that don't need to lag compensate
 	// (like team members, entities out of our PVS, etc).
-	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
+	virtual bool			WantsLagCompensationOnEntity( const CBaseEntity	*pPlayer, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const;
 
 	virtual void			Spawn( void );
 	virtual void			Activate( void );
@@ -555,7 +554,9 @@ public:
 	virtual void			PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize = true ) {}
 	virtual void			ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis = NULL ) {}
 	virtual float			GetHeldObjectMass( IPhysicsObject *pHeldObject );
+#ifdef OF_DLL
 	virtual CBaseEntity		*GetHeldObject(void);
+#endif
 
 	void					CheckSuitUpdate();
 	void					SetSuitUpdate(const char *name, int fgroup, int iNoRepeat);
@@ -664,8 +665,10 @@ public:
 
 	// Accessor methods
 	int		FragCount() const		{ return m_iFrags; }
+#ifdef OF_DLL
 	int		GGLevel() const			{ return m_iGGLevel; }
 	int		Lives() const			{ return m_iLives; }
+#endif
 	int		DeathCount() const		{ return m_iDeaths;}
 	bool	IsConnected() const		{ return m_iConnected != PlayerDisconnected; }
 	bool	IsDisconnecting() const	{ return m_iConnected == PlayerDisconnecting; }
@@ -688,22 +691,32 @@ public:
 	virtual bool	IsReadyToPlay( void ) { return true; }
 	virtual bool	IsReadyToSpawn( void ) { return true; }
 	virtual bool	ShouldGainInstantSpawn( void ) { return false; }
+#ifdef OF_DLL
 	virtual void	ResetPerRoundStats( void ) { ResetGGLevel(); ResetLives(); }
+#else
+	virtual void	ResetPerRoundStats( void ) { return; }
+#endif
 	void			AllowInstantSpawn( void ) { m_bAllowInstantSpawn = true; }
 
+#ifdef OF_DLL
 	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount();ResetGGLevel();ResetLives(); }
+#else
+	virtual void	ResetScores( void ) { ResetFragCount(); ResetDeathCount(); }
+#endif
 	void	ResetFragCount();
 	void	IncrementFragCount( int nCount );
 	
+#ifdef OF_DLL
 	void	ResetGGLevel();
-	void	IncrementGGLevel( int nCount );	
+	void	IncrementGGLevel( int nCount );
+
+	void	ResetLives();
+	void	SetLives( int nCount );
+	void	IncrementLives( int nCount );	
+#endif
 
 	void	ResetDeathCount();
 	void	IncrementDeathCount( int nCount );
-	
-	void	ResetLives();
-	void	SetLives( int nCount );
-	void	IncrementLives( int nCount );
 	
 	void	SetArmorValue( int value );
 	void	IncrementArmorValue( int nCount, int nMaxValue = -1 );
@@ -1050,11 +1063,15 @@ private:
 
 	int						m_iFrags;
 	int						m_iDeaths;
+#ifdef OF_DLL
 	int 					m_iGGLevel;
 	int 					m_iLives;
+#endif
 
 	float					m_flNextDecalTime;	// Next time this player can spray a decal.
+#ifdef OF_DLL
 	float					m_flNextJingleTime;	// Ditto, but for jingles.
+#endif
 
 	// Team Handling
 	// char					m_szTeamName[TEAM_NAME_LENGTH];
@@ -1118,8 +1135,10 @@ public:
 	float					m_flSideMove;
 	int						m_nNumCrateHudHints;
 
+#ifdef OF_DLL
 	int						m_iStringcmds; // how many stringcmds we have sent
 	float					m_fStringcmdsResetTime;
+#endif
 
 private:
 

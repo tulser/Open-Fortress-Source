@@ -31,7 +31,7 @@ DEFINE_KEYFIELD( m_iszPowerupModelOLD, FIELD_STRING, "powerup_model" ),
 DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
 DEFINE_KEYFIELD( m_iszTimerIcon, FIELD_STRING, "timericon" ),
 DEFINE_KEYFIELD( m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow" ),
-
+DEFINE_THINKFUNC( AnnouncerThink ),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CCondPowerup, DT_CondPowerup )
@@ -55,6 +55,7 @@ CCondPowerup::CCondPowerup()
 	m_iszPowerupModelOLD = MAKE_STRING( "" );
 	m_iszPowerupModel = MAKE_STRING( "" );
 	m_iszTimerIcon = MAKE_STRING( "" );
+	bWarningTriggered = false;
 }
 
 void CCondPowerup::Spawn( void )
@@ -62,11 +63,18 @@ void CCondPowerup::Spawn( void )
 	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) ||
 		 !of_powerups.GetBool() )
 		return;
+
 	Precache();
-	if (m_iszPowerupModel==MAKE_STRING( "" )) SetModel( STRING(m_iszPowerupModelOLD)  );
-	else SetModel( STRING(m_iszPowerupModel) );
+
+	if ( m_iszPowerupModel == MAKE_STRING( "" ) ) 
+		SetModel( STRING (m_iszPowerupModelOLD )  );
+	else 
+		SetModel( STRING( m_iszPowerupModel ) );
 	
 	SetTransmitState( FL_EDICT_ALWAYS );	// Used for the glow effect to always show up
+
+	RegisterThinkContext( "AnnounceThink" );
+	SetContextThink( &CCondPowerup::AnnouncerThink, gpGlobals->curtime, "AnnounceThink" );
 
 	BaseClass::Spawn();
 }
@@ -76,8 +84,11 @@ void CCondPowerup::Spawn( void )
 //-----------------------------------------------------------------------------
 void CCondPowerup::Precache( void )
 {
-	if (m_iszPowerupModel==MAKE_STRING( "" )) PrecacheModel( STRING(m_iszPowerupModelOLD)  );
-	else PrecacheModel( STRING(m_iszPowerupModel) );
+	if ( m_iszPowerupModel == MAKE_STRING( "" ) ) 
+		PrecacheModel( STRING( m_iszPowerupModelOLD )  );
+	else 
+		PrecacheModel( STRING( m_iszPowerupModel ) );
+
 	PrecacheScriptSound( STRING( m_iszPickupSound ) );
 }
 
@@ -166,6 +177,50 @@ bool CCondPowerup::MyTouch( CBasePlayer *pPlayer )
 	return bSuccess;
 }
 
+CBaseEntity* CCondPowerup::Respawn( void )
+{
+	CBaseEntity *ret = BaseClass::Respawn();
+	m_nRenderFX = kRenderFxDistort;
+	m_flRespawnTick = GetNextThink();
+	return ret;
+}
+
+void CCondPowerup::Materialize( void )
+{
+	if ( !IsDisabled() )
+	{
+		// changing from invisible state to visible.
+		m_nRenderFX = kRenderFxNone;
+		RemoveEffects( EF_NODRAW );
+	}
+	m_OnRespawn.FireOutput( this, this );
+	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && strcmp(GetPowerupRespawnLine(), "None" ) )
+		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, GetPowerupRespawnLine() );
+	else if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND )
+		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, STRING ( m_iszSpawnSound ), false );
+	m_bRespawning = false;
+	bInitialDelay = false;
+	SetTouch( &CItem::ItemTouch );
+}
+
+void CCondPowerup::AnnouncerThink()
+{
+	if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
+	{
+		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupPickupIncomingLine() );
+		bWarningTriggered = true;
+	}
+	else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
+	{
+		bWarningTriggered = false;
+	}
+
+	if ( bWarningTriggered && !m_bRespawning )
+		bWarningTriggered = false;
+
+	SetNextThink( gpGlobals->curtime + 0.5f, "AnnounceThink" );
+}
+
 const char* CCondPowerup::GetPowerupPickupLineSelf( void )
 {
 	switch ( m_iCondition )
@@ -250,14 +305,6 @@ const char* CCondPowerup::GetPowerupPickupSound( void )
 	return "None";
 }
 
-CBaseEntity* CCondPowerup::Respawn( void )
-{
-	CBaseEntity *ret = BaseClass::Respawn();
-	m_nRenderFX = kRenderFxDistort;
-	m_flRespawnTick = GetNextThink();
-	return ret;
-}
-
 const char* CCondPowerup::GetPowerupRespawnLine( void )
 {
 	switch ( m_iCondition )
@@ -286,23 +333,30 @@ const char* CCondPowerup::GetPowerupRespawnLine( void )
 	return "None";
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CCondPowerup::Materialize( void )
+const char *CCondPowerup::GetPowerupPickupIncomingLine( void )
 {
-	if ( !IsDisabled() )
+	switch ( m_iCondition )
 	{
-		// changing from invisible state to visible.
-		m_nRenderFX = kRenderFxNone;
-		RemoveEffects( EF_NODRAW );
+		case TF_COND_CRITBOOSTED:
+		case TF_COND_CRIT_POWERUP:
+		return "CritsIncoming";
+		break;
+		case TF_COND_STEALTHED:
+		case TF_COND_INVIS_POWERUP:
+		return "InvisibilityIncoming";
+		break;
+		case TF_COND_SHIELD:
+		return "ShieldIncoming";
+		break;
+		case TF_COND_INVULNERABLE:
+		return "UberIncoming";
+		break;
+		case TF_COND_HASTE:
+		return "HasteIncoming";
+		break;
+		case TF_COND_BERSERK:
+		return "BerserkIncoming";
+		break;
 	}
-	m_OnRespawn.FireOutput( this, this );
-	if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND && strcmp(GetPowerupRespawnLine(), "None" ) )
-		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, GetPowerupRespawnLine() );
-	else if ( TeamplayRoundBasedRules() && TeamplayRoundBasedRules()->State_Get() != GR_STATE_PREROUND )
-		TeamplayRoundBasedRules()->BroadcastSound(TEAM_UNASSIGNED, STRING ( m_iszSpawnSound ), false );
-	m_bRespawning = false;
-	bInitialDelay = false;
-	SetTouch( &CItem::ItemTouch );
+	return "PowerupsIncoming";
 }

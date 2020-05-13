@@ -35,9 +35,12 @@
 #include "datacache/imdlcache.h"
 #include "basemultiplayerplayer.h"
 #include "voice_gamemgr.h"
+
+#if defined( TF_DLL ) || defined ( OF_DLL )
 #include "tf_player.h"
-#include "tf_weaponbase.h"
 #include "tf_gamerules.h"
+#include "tf_weaponbase.h"
+#endif
 
 #ifdef HL2_DLL
 #include "weapon_physcannon.h"
@@ -101,7 +104,7 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
                                       // Other games may use this in their official maps, and only TF exposes IsValveMap() currently
                                       "always",
 #endif // TF_DLL
-                                      FCVAR_CHEAT,
+                                      FCVAR_NONE,
                                       "Allow use of point_servercommand entities in map. Potentially dangerous for untrusted maps.\n"
                                       "  disallow : Always disallow\n"
 #ifdef TF_DLL
@@ -109,9 +112,13 @@ ConVar sv_allow_point_servercommand ( "sv_allow_point_servercommand",
 #endif // TF_DLL
                                       "  always   : Allow for all maps", sv_allow_point_servercommand_changed );
 
+#ifdef OF_DLL
 ConVar	sv_allow_all_servercommands( "sv_allow_all_servercommands", "0", FCVAR_NONE, "Allow usage of all commands by a point_servercommand (no blacklist). Can be maliciously abused!" );
+#endif
 
-ConVar sv_quota_stringcmdspersecond( "sv_quota_stringcmdspersecond", "16", FCVAR_NONE, "How many string commands per second clients are allowed to submit, 0 to disallow all string commands." );
+#ifdef OF_DLL
+ConVar sv_quota_stringcmdspersecond( "sv_quota_stringcmdspersecond", "25", FCVAR_NONE, "How many string commands per second clients are allowed to submit, 0 to disallow all string commands." );
+#endif
 
 void ClientKill( edict_t *pEdict, const Vector &vecForce, bool bExplode = false )
 {
@@ -635,6 +642,7 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 
 	char const *comparename = inputdata.value.String();
 
+#ifdef OF_DLL
 	if ( !sv_allow_all_servercommands.GetBool() )
 	{
 		if ( V_strstr( comparename, "rcon" ) || V_strstr( comparename, "admin" ) || V_strstr( comparename, "sm" ) || V_strstr( comparename, "ent_" ) || V_strstr( comparename, "test_" ) || V_strstr( comparename, "alias" ) || V_strstr( comparename, "command" ) || V_strstr( comparename, "ban" ) || V_strstr( comparename, "kick" ) || V_strstr( comparename, "ip" ) || V_strstr( comparename, "exec" ) || V_strstr( comparename, "cmd" ) )
@@ -642,10 +650,15 @@ void CPointServerCommand::InputCommand( inputdata_t& inputdata )
 			return;
 		}
 	}
+#endif
 
 	if ( bAllowed )
 	{
 		engine->ServerCommand( UTIL_VarArgs( "%s\n", inputdata.value.String() ) );
+	}
+	else
+	{
+		Warning( "point_servercommand usage blocked by sv_allow_point_servercommand setting\n" );
 	}
 }
 
@@ -717,7 +730,7 @@ static ConCommand drawcross("drawcross", CC_DrawCross, "Draws a cross at the giv
 //------------------------------------------------------------------------------
 void kill_helper( const CCommand &args, bool bExplode )
 {
-	/*
+#ifndef OF_DLL
 	if ( args.ArgC() > 1 && sv_cheats->GetBool() )
 	{
 		// Find the matching netname
@@ -734,14 +747,14 @@ void kill_helper( const CCommand &args, bool bExplode )
 		}
 	}
 	else
+#endif
 	{
-	*/
 		CBasePlayer *pPlayer = UTIL_GetCommandClient();
 		if ( pPlayer )
 		{
 			pPlayer->CommitSuicide( bExplode );
 		}
-	//}
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -864,6 +877,7 @@ CON_COMMAND( say_team, "Display player message to team" )
 }
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
+#ifdef OF_DLL
 CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 {
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() ); 
@@ -876,7 +890,7 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		Q_strlower( item_to_give );
 
 		// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-		if ( !Q_stricmp( item_to_give, "point_servercommand" ) || !Q_stricmp( item_to_give, "point_clientcommand" ) )
+		if ( !Q_stricmp( item_to_give, "point_servercommand" ) )
 		{
 			if ( engine->IsDedicatedServer() )
 			{
@@ -892,23 +906,30 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 					return;
 			}
 		}
-		
-		if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
-			return;
 
-		// Dirty hack to avoid suit playing it's pickup sound
-		if ( !Q_stricmp( item_to_give, "item_suit" ) )
+		// required precache
+		UTIL_PrecacheOther( item_to_give );
+
+		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname	
+		EHANDLE pent;
+		pent = CreateEntityByName(STRING(iszItem));
+		if ( pent == NULL )
 		{
-			pPlayer->EquipSuit( false );
+			Msg( "NULL Ent in Give Weapon!\n" );
 			return;
 		}
 
-		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
-		
+		pent->SetLocalOrigin( pPlayer->GetLocalOrigin() );
+		pent->AddSpawnFlags( SF_NORESPAWN );
+
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( STRING(iszItem) );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );		
 		if( !pWeaponInfo )
+		{
+			UTIL_Remove( pent );
+			Warning( "NULL WeaponInfo in Give Weapon!\n" );
 			return;
+		}
 		
 		int iSlot;
 
@@ -925,18 +946,6 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		
 		if( pPlayer->m_hWeaponInSlot[iSlot][iPos] )
 			UTIL_Remove(pPlayer->m_hWeaponInSlot[iSlot][iPos]);
-			
-		EHANDLE pent;
-
-		pent = CreateEntityByName(STRING(iszItem));
-		if ( pent == NULL )
-		{
-			Msg( "NULL Ent in Give Weapon!\n" );
-			return;
-		}
-
-		pent->SetLocalOrigin( pPlayer->GetLocalOrigin() );
-		pent->AddSpawnFlags( SF_NORESPAWN );
 
 		CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( (CBaseEntity*)pent );
 
@@ -949,6 +958,7 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		pPlayer->Weapon_Switch( pWeapon );
 	}
 }
+#endif
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -964,7 +974,7 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 		Q_strlower( item_to_give );
 
 		// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-		if ( !Q_stricmp( item_to_give, "point_servercommand" ) || !Q_stricmp( item_to_give, "point_clientcommand" ))
+		if ( !Q_stricmp( item_to_give, "point_servercommand" ) )
 		{
 			if ( engine->IsDedicatedServer() )
 			{
@@ -980,9 +990,6 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 					return;
 			}
 		}
-		
-		if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
-			return;
 
 		// Dirty hack to avoid suit playing it's pickup sound
 		if ( !Q_stricmp( item_to_give, "item_suit" ) )	
@@ -1021,13 +1028,14 @@ CON_COMMAND( fov, "Change players FOV" )
 //------------------------------------------------------------------------------
 void CC_Player_SetModel( const CCommand &args )
 {
-
+	if ( gpGlobals->deathmatch )
+		return;
+	
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
 	if ( pPlayer && args.ArgC() == 2)
 	{
 		static char szName[256];
 		Q_snprintf( szName, sizeof( szName ), "models/%s.mdl", args[1] );
-		CBaseEntity::PrecacheModel( szName );	
 		pPlayer->SetModel( szName );
 		UTIL_SetSize(pPlayer, VEC_HULL_MIN, VEC_HULL_MAX);
 	}
@@ -1232,8 +1240,11 @@ void EnableNoClip( CBasePlayer *pPlayer )
 	// Disengage from hierarchy
 	pPlayer->SetParent( NULL );
 	pPlayer->SetMoveType( MOVETYPE_NOCLIP );
-	//ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip ON\n");
+#ifdef OF_DLL
 	ConColorMsg( Color( 238, 103, 256, 255 ), "noclip ON\n" );
+#else
+	ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip ON\n");
+#endif
 	pPlayer->AddEFlags( EFL_NOCLIP_ACTIVE );
 }
 
@@ -1259,8 +1270,12 @@ void CC_Player_NoClip( void )
 	pPlayer->SetMoveType( MOVETYPE_WALK );
 
 	Vector oldorigin = pPlayer->GetAbsOrigin();
-	//ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip OFF\n");
+#ifdef OF_DLL
 	ConColorMsg( Color( 238, 103, 256, 255 ), "noclip OFF\n" );
+#else
+	ClientPrint( pPlayer, HUD_PRINTCONSOLE, "noclip OFF\n");
+#endif
+
 	if ( !TestEntityPosition( pPlayer ) )
 	{
 		Vector forward, right, up;
@@ -1280,7 +1295,11 @@ void CC_Player_NoClip( void )
 						{
 							if ( !FindPassableSpace( pPlayer, forward, -1, oldorigin ) )	// back
 							{
+#ifdef OF_DLL								
 								ConColorMsg( Color( 238, 163, 230, 255 ), "Can't find the world\n" );
+#else
+								Msg( "Can't find the world\n" );
+#endif
 							}
 						}
 					}
@@ -1465,7 +1484,9 @@ CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitc
 	pPlayer->Teleport( NULL, &newang, NULL );
 	pPlayer->SnapEyeAngles( newang );
 
+#if defined ( TF_DLL ) || defined ( OF_DLL )
 	static_cast<CTFPlayer*>( pPlayer )->DoAnimationEvent( PLAYERANIMEVENT_SNAP_YAW );
+#endif
 }
 
 
@@ -1625,9 +1646,10 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 	const char *pCmd = args[0];
 
 	// Is the client spawned yet?
-	if ( !pPlayer || !pCmd )
+	if ( !pPlayer )
 		return;
 
+#ifdef OF_DLL
 	if ( pPlayer->IsConnected() )
 	{
 		if ( pPlayer->m_fStringcmdsResetTime < gpGlobals->curtime )
@@ -1644,6 +1666,7 @@ void ClientCommand( CBasePlayer *pPlayer, const CCommand &args )
 			}
 		}
 	}
+#endif
 
 	MDLCACHE_CRITICAL_SECTION();
 

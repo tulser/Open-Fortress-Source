@@ -61,7 +61,9 @@
 #include "PortalRender.h"
 #endif
 
+#if defined( HL2_CLIENT_DLL ) || defined( CSTRIKE_DLL ) || defined ( OF_CLIENT_DLL )
 #define USE_MONITORS
+#endif
 
 #include "rendertexture.h"
 #include "viewpostprocess.h"
@@ -74,9 +76,6 @@
 #ifdef USE_MONITORS
 #include "c_point_camera.h"
 #endif // USE_MONITORS
-
-// Projective textures
-#include "C_Env_Projected_Texture.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -111,7 +110,11 @@ static ConVar r_drawopaqueworld( "r_drawopaqueworld", "1", FCVAR_CHEAT );
 static ConVar r_drawtranslucentworld( "r_drawtranslucentworld", "1", FCVAR_CHEAT );
 static ConVar r_3dsky( "r_3dsky","1", 0, "Enable the rendering of 3d sky boxes" );
 static ConVar r_skybox( "r_skybox","1", FCVAR_CHEAT, "Enable the rendering of sky boxes" );
+#if defined( TF_CLIENT_DLL ) || defined( OF_CLIENT_DLL )
 ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_ARCHIVE );
+#else
+ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_CHEAT );
+#endif
 static ConVar r_drawtranslucentrenderables( "r_drawtranslucentrenderables", "1", FCVAR_CHEAT );
 static ConVar r_drawopaquerenderables( "r_drawopaquerenderables", "1", FCVAR_CHEAT );
 static ConVar r_threaded_renderables( "r_threaded_renderables", "0" );
@@ -158,12 +161,16 @@ static ConVar mat_clipz( "mat_clipz", "1" );
 //-----------------------------------------------------------------------------
 static ConVar r_screenfademinsize( "r_screenfademinsize", "0" );
 static ConVar r_screenfademaxsize( "r_screenfademaxsize", "0" );
-static ConVar cl_drawmonitors( "cl_drawmonitors", "1", FCVAR_CHEAT );
+static ConVar cl_drawmonitors( "cl_drawmonitors", "1" );
 static ConVar r_eyewaterepsilon( "r_eyewaterepsilon", "10.0f", FCVAR_CHEAT );
 
-static ConVar of_dof( "of_dof", "0", FCVAR_ARCHIVE, "Enables depth of field effect." );
+#ifdef TF_CLIENT_DLL
+static ConVar pyro_dof( "pyro_dof", "1", FCVAR_ARCHIVE );
+#endif
 
 extern ConVar cl_leveloverview;
+
+extern ConVar localplayer_visionflags;
 
 //-----------------------------------------------------------------------------
 // Globals
@@ -760,9 +767,11 @@ static void SetClearColorToFogColor()
 // Precache of necessary materials
 //-----------------------------------------------------------------------------
 
+#ifdef HL2_CLIENT_DLL
 CLIENTEFFECT_REGISTER_BEGIN( PrecacheViewRender )
 	CLIENTEFFECT_MATERIAL( "scripted/intro_screenspaceeffect" )
 CLIENTEFFECT_REGISTER_END()
+#endif
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffects )
 	CLIENTEFFECT_MATERIAL( "dev/blurfiltery_and_add_nohdr" )
@@ -786,12 +795,14 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffects )
 	CLIENTEFFECT_MATERIAL( "dev/motion_blur" )
 	CLIENTEFFECT_MATERIAL( "dev/upscale" )
 
+#ifdef TF_CLIENT_DLL
 	CLIENTEFFECT_MATERIAL( "dev/pyro_blur_filter_y" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_blur_filter_x" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_dof" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_vignette_border" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_vignette" )
 	CLIENTEFFECT_MATERIAL( "dev/pyro_post" )
+#endif
 
 CLIENTEFFECT_REGISTER_END_CONDITIONAL( engine->GetDXSupportLevel() >= 90 )
 
@@ -851,6 +862,25 @@ bool IsCurrentViewAccessAllowed()
 void SetupCurrentView( const Vector &vecOrigin, const QAngle &angles, view_id_t viewID )
 {
 	tmZone( TELEMETRY_LEVEL0, TMZF_NONE, "%s", __FUNCTION__ );
+	
+#ifndef OF_CLIENT_DLL
+	// Don't want TF2 running less than DX 8
+	if ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 )
+	{
+		// We know they were running at least 8.0 when the game started...we check the 
+		// value in ClientDLL_Init()...so they must be messing with their DirectX settings.
+		if ( ( Q_stricmp( COM_GetModDirectory(), "tf" ) == 0 ) || ( Q_stricmp( COM_GetModDirectory(), "tf_beta" ) == 0 ) )
+		{
+			static bool bFirstTime = true;
+			if ( bFirstTime )
+			{
+				bFirstTime = false;
+				Msg( "This game has a minimum requirement of DirectX 8.0 to run properly.\n" );
+			}
+			return;
+		}
+	}
+#endif
 
 	// Store off view origin and angles
 	g_vecCurrentRenderOrigin = vecOrigin;
@@ -1316,9 +1346,6 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	if ( r_flashlightdepthtexture.GetBool() && (viewID == VIEW_MAIN) )
 	{
 		g_pClientShadowMgr->ComputeShadowDepthTextures( view );
-#ifdef ASW_PROJECTED_TEXTURES
-		CMatRenderContextPtr pRenderContext( materials );
-#endif
 	}
 
 	m_BaseDrawFlags = baseDrawFlags;
@@ -1392,9 +1419,6 @@ void CViewRender::ViewDrawScene( bool bDrew3dSkybox, SkyboxVisibility_t nSkyboxV
 	if ( r_flashlightdepthtexture.GetBool() )
 	{
 		g_pClientShadowMgr->UnlockAllShadowDepthTextures();
-#ifdef ASW_PROJECTED_TEXTURES
-		CMatRenderContextPtr pRenderContext( materials );
-#endif
 	}
 }
 
@@ -1934,8 +1958,14 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 		g_pClientShadowMgr->AdvanceFrame();
 
 	#ifdef USE_MONITORS
+#ifdef OF_CLIENT_DLL	
 		if ( cl_drawmonitors.GetBool() && 
 			( ( whatToDraw & RENDERVIEW_SUPPRESSMONITORRENDERING ) == 0 ) )
+#else
+		if ( cl_drawmonitors.GetBool() && 
+			( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 70 ) &&
+			( ( whatToDraw & RENDERVIEW_SUPPRESSMONITORRENDERING ) == 0 ) )	
+#endif
 		{
 			CViewSetup viewMiddle = GetView( STEREO_EYE_MONO );
 			DrawMonitors( viewMiddle );	
@@ -2000,10 +2030,14 @@ void CViewRender::RenderView( const CViewSetup &view, int nClearFlags, int whatT
 
 		RenderPlayerSprites();
 
-		// Image-space motion blur
+		// Image-space motion blur		
 		if ( !building_cubemaps.GetBool() && view.m_bDoBloomAndToneMapping ) // We probably should use a different view. variable here
 		{
+#ifdef OF_CLIENT_DLL
 			if ( ( mat_motion_blur_enabled.GetInt() ) )
+#else
+			if ( ( mat_motion_blur_enabled.GetInt() ) && ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90 ) )
+#endif
 			{
 				pRenderContext.GetFrom( materials );
 				{
@@ -2401,6 +2435,12 @@ void CViewRender::DetermineWaterRenderInfo( const VisibleFogVolumeInfo_t &fogVol
 	info.m_bOpaqueWater = !pWaterMaterial->IsTranslucent();
 
 	bool bForceCheap = false;
+	
+#ifndef OF_CLIENT_DLL
+	// DX level 70 can't handle anything but cheap water
+	if (engine->GetDXSupportLevel() < 80)
+		return;
+#endif
 
 	// The material can override the default settings though
 	IMaterialVar *pForceCheapVar = pWaterMaterial->FindVar( "$forcecheap", NULL, false );
@@ -3996,13 +4036,7 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 					C_BaseAnimating *pba = assert_cast<C_BaseAnimating *>( pEntity );
 					arrRenderEntsNpcsFirst[ numNpcs ++ ] = *itEntity;
 					arrBoneSetupNpcsLast[ numOpaqueEnts - numNpcs ] = pba;
-
-					if ( DepthMode != DEPTH_MODE_SSA0 )
-					{
-						itEntity->m_pRenderable = NULL;		// We will render NPCs separately
-						itEntity->m_RenderHandle = NULL;
-					}
-					
+		
 					continue;
 				}
 				else if ( pEntity->GetBaseAnimating() )
@@ -4015,7 +4049,11 @@ void CRendering3dView::DrawOpaqueRenderables( ERenderDepthMode DepthMode )
 		}
 	}
 
+#ifdef OF_CLIENT_DLL
 	if ( r_threaded_renderables.GetBool() )
+#else
+	if ( 0 && r_threaded_renderables.GetBool() )
+#endif
 	{
 		ParallelProcess( "BoneSetupNpcsLast", arrBoneSetupNpcsLast.Base() + numOpaqueEnts - numNpcs, numNpcs, &SetupBonesOnBaseAnimating );
 		ParallelProcess( "BoneSetupNpcsLast NonNPCs", arrBoneSetupNpcsLast.Base(), numNonNpcsAnimating, &SetupBonesOnBaseAnimating );
@@ -4688,15 +4726,8 @@ sky3dparams_t *CSkyboxView::PreRender3dSkyboxWorld( SkyboxVisibility_t nSkyboxVi
 
 	// render the 3D skybox
 	if ( !r_3dsky.GetInt() )
-	{	
-		if ( TFGameRules() )
-		{
-			if ( !TFGameRules()->Force3DSkybox())
-				return NULL;
-		}
-		else
-			return NULL;
-	}
+		return NULL;
+	
 	C_BasePlayer *pbp = C_BasePlayer::GetLocalPlayer();
 
 	// No local player object yet...
@@ -4731,16 +4762,6 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 	// with this near plane.  If so, move it in a bit.  It's at 2.0 to give us more precision.  That means you 
 	// need to keep the eye position at least 2 * scale away from the geometry in the skybox
 	zNear = 2.0;
-#ifdef MAPBASE
-	// Use the fog's farz if specified
-	if (m_pSky3dParams->fog.farz > 0)
-	{
-		zFar = ( m_pSky3dParams->scale > 0.0f ?
-			m_pSky3dParams->fog.farz / m_pSky3dParams->scale :
-			m_pSky3dParams->fog.farz );
-	}
-	else
-#endif
 	zFar = MAX_TRACE_LENGTH;
 
 	// scale origin by sky scale
@@ -4750,56 +4771,7 @@ void CSkyboxView::DrawInternal( view_id_t iSkyBoxViewID, bool bInvokePreAndPostR
 		VectorScale( origin, scale, origin );
 	}
 	Enable3dSkyboxFog();
-#ifdef MAPBASE
-	// Skybox angle support.
-	// 
-	// If any of the angles aren't 0, do the rotation code.
-	if (m_pSky3dParams->angles.GetX() != 0 ||
-		m_pSky3dParams->angles.GetY() != 0 ||
-		m_pSky3dParams->angles.GetZ() != 0)
-	{
-		// Unfortunately, it's not as simple as "angles += m_pSky3dParams->angles".
-		// This stuff took a long time to figure out. I'm glad I got it working.
 
-		// First, create a matrix for the sky's angles.
-		matrix3x4_t matSkyAngles;
-		AngleMatrix( m_pSky3dParams->angles, matSkyAngles );
-
-		// The code in between the lines below was mostly lifted from projected texture screenspace code and was a huge lifesaver.
-		// The comments are my attempt at explaining the little I understand of what's going on here.
-		// ----------------------------------------------------------------------
-
-		// These are the vectors that would eventually become our final angle directions.
-		Vector vecSkyForward, vecSkyRight, vecSkyUp;
-
-		// Get vectors from our original angles.
-		Vector vPlayerForward, vPlayerRight, vPlayerUp;
-		AngleVectors( angles, &vPlayerForward, &vPlayerRight, &vPlayerUp );
-
-		// Transform them from our sky angles matrix and put the results in those vectors we declared earlier.
-		VectorTransform( vPlayerForward, matSkyAngles, vecSkyForward );
-		VectorTransform( vPlayerRight, matSkyAngles, vecSkyRight );
-		VectorTransform( vPlayerUp, matSkyAngles, vecSkyUp );
-
-		// Normalize them.
-		VectorNormalize( vecSkyForward );
-		VectorNormalize( vecSkyRight );
-		VectorNormalize( vecSkyUp );
-
-		// Now do a bit of quaternion magic and apply that to our original angles.
-		// This works perfectly, so I'm not gonna touch it.
-		Quaternion quat;
-		BasisToQuaternion( vecSkyForward, vecSkyRight, vecSkyUp, quat );
-		QuaternionAngles( quat, angles );
-
-		// End of code mostly lifted from projected texture screenspace stuff
-		// ----------------------------------------------------------------------
-
-		// Now just rotate our origin with that matrix.
-		// We create a copy of the origin since VectorRotate doesn't want in1 to be the same variable as the destination.
-		VectorRotate(Vector(origin), matSkyAngles, origin);
-	}
-#endif
 	VectorAdd( origin, m_pSky3dParams->origin, origin );
 
 	// BUGBUG: Fix this!!!  We shouldn't need to call setup vis for the sky if we're connecting
@@ -5348,10 +5320,14 @@ void CBaseWorldView::DrawSetup( float waterHeight, int nSetupFlags, float waterZ
 		render->PopView( GetFrustum() );
 	}
 
-	if ( savedViewID == VIEW_MAIN && of_dof.GetBool() )
+#ifdef TF_CLIENT_DLL
+	bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
+
+	if ( savedViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() )
 	{
 		SSAO_DepthPass();
 	}
+#endif
 
 	g_CurrentViewID = savedViewID;
 }
@@ -5417,6 +5393,13 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 
 	ITexture *pSaveFrameBufferCopyTexture = pRenderContext->GetFrameBufferCopyTexture( 0 );
 
+#ifndef OF_CLIENT_DLL
+	if ( engine->GetDXSupportLevel() >= 80 )
+	{
+		pRenderContext->SetFrameBufferCopyTexture( GetPowerOfTwoFrameBufferTexture() );
+	}
+#endif
+
 	pRenderContext->SetFrameBufferCopyTexture( GetPowerOfTwoFrameBufferTexture() );
 
 	pRenderContext.SafeRelease();
@@ -5428,11 +5411,14 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 		DrawWorld( waterZAdjust );
 		DrawOpaqueRenderables( DepthMode );
 
+#ifdef TF_CLIENT_DLL
+		bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
 
-		if ( g_CurrentViewID == VIEW_MAIN && of_dof.GetBool() )
+		if ( g_CurrentViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() ) // Pyro-vision Goggles
 		{
 			DrawDepthOfField();
 		}
+#endif
 
 		DrawTranslucentRenderables( false, false );
 		DrawNoZBufferTranslucentRenderables();
@@ -5441,10 +5427,14 @@ void CBaseWorldView::DrawExecute( float waterHeight, view_id_t viewID, float wat
 	{
 		DrawWorld( waterZAdjust );
 
-		if ( g_CurrentViewID == VIEW_MAIN && of_dof.GetBool() )
+#ifdef TF_CLIENT_DLL
+		bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
+
+		if ( g_CurrentViewID == VIEW_MAIN && bVisionOverride && pyro_dof.GetBool() ) // Pyro-vision Goggles
 		{
 			DrawDepthOfField();
 		}
+#endif
 
 		// Draw translucent world brushes only, no entities
 		DrawTranslucentWorldInLeaves( false );
@@ -5525,10 +5515,13 @@ void CBaseWorldView::SSAO_DepthPass()
 		DrawOpaqueRenderables( DEPTH_MODE_SSA0 );
 	}
 
+#if 0
+	if ( m_bRenderFlashlightDepthTranslucents || r_flashlightdepth_drawtranslucents.GetBool() )
 	{
 		VPROF_BUDGET( "DrawTranslucentRenderables", VPROF_BUDGETGROUP_SHADOW_DEPTH_TEXTURING );
 		DrawTranslucentRenderables( false, true );
 	}
+#endif
 
 	modelrender->ForcedMaterialOverride( 0 );
 
@@ -6008,14 +6001,19 @@ void CUnderWaterView::Setup( const CViewSetup &view, bool bDrawSkybox, const Vis
 
 	IMaterial *pWaterMaterial = fogInfo.m_pFogVolumeMaterial;
 
-	IMaterialVar *pScreenOverlayVar = pWaterMaterial->FindVar( "$underwateroverlay", NULL, false );
-	if ( pScreenOverlayVar && ( pScreenOverlayVar->IsDefined() ) )
+#ifndef OF_CLIENT_DLL
+	if ( engine->GetDXSupportLevel() >= 90 )					// screen overlays underwater are a dx9 feature
+#endif
 	{
-		char const *pOverlayName = pScreenOverlayVar->GetStringValue();
-		if ( pOverlayName[0] != '0' )						// fixme!!!
+		IMaterialVar *pScreenOverlayVar = pWaterMaterial->FindVar( "$underwateroverlay", NULL, false );
+		if ( pScreenOverlayVar && ( pScreenOverlayVar->IsDefined() ) )
 		{
-			IMaterial *pOverlayMaterial = materials->FindMaterial( pOverlayName,  TEXTURE_GROUP_OTHER );
-			m_pMainView->SetWaterOverlayMaterial( pOverlayMaterial );
+			char const *pOverlayName = pScreenOverlayVar->GetStringValue();
+			if ( pOverlayName[0] != '0' )						// fixme!!!
+			{
+				IMaterial *pOverlayMaterial = materials->FindMaterial( pOverlayName,  TEXTURE_GROUP_OTHER );
+				m_pMainView->SetWaterOverlayMaterial( pOverlayMaterial );
+			}
 		}
 	}
 

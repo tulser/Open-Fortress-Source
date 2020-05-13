@@ -135,6 +135,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	RecvPropBool( RECVINFO( m_bSwapFire ) ),
 	RecvPropTime( RECVINFO( m_flWindTick ) ),
 	RecvPropInt( RECVINFO( m_iDamageIncrease ) ),
+	RecvPropInt( RECVINFO( m_iSlotOverride ) ),
+	RecvPropInt( RECVINFO( m_iPositionOverride ) ),
 	RecvPropFloat( RECVINFO( m_flBlastRadiusIncrease ) ),
 // Server specific.
 #else
@@ -147,6 +149,8 @@ BEGIN_NETWORK_TABLE( CTFWeaponBase, DT_TFWeaponBase )
 	SendPropBool( SENDINFO( m_bSwapFire ) ),
 	SendPropTime( SENDINFO( m_flWindTick ) ),
 	SendPropInt( SENDINFO( m_iDamageIncrease ) ),
+	SendPropInt( SENDINFO( m_iSlotOverride ) ),
+	SendPropInt( SENDINFO( m_iPositionOverride ) ),
 	SendPropFloat( SENDINFO( m_flBlastRadiusIncrease ) ),
 	// World models have no animations so don't send these.
 	SendPropExclude( "DT_BaseAnimating", "m_nSequence" ),
@@ -244,6 +248,9 @@ CTFWeaponBase::CTFWeaponBase()
 	m_bQuakeRLHack = false;
 	
 	m_bWindingUp = false;
+	
+	m_iSlotOverride = -1;
+	m_iPositionOverride = -1;
 }
 
 CTFWeaponBase::~CTFWeaponBase()
@@ -314,7 +321,7 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 		!= hHandle )
 	{
 		pTFOwner->DropWeapon( pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()].Get(),
-		false, false, 
+		true, false, 
 		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()]->m_iClip1,
 		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()]->m_iReserveAmmo );
 		UTIL_Remove( pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] );
@@ -356,8 +363,11 @@ bool CTFWeaponBase::LoadsManualy( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFWeaponBase::GetSlot( void ) const
+int CTFWeaponBase::GetSlot( void )
 {
+	if( GetSlotOverride() > -1 )
+		return GetSlotOverride();
+	
 	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
 		return GetWpnData().iSlotDM;
 	
@@ -376,8 +386,11 @@ int CTFWeaponBase::GetSlot( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-int CTFWeaponBase::GetPosition( void ) const
+int CTFWeaponBase::GetPosition( void )
 {
+	if( GetPositionOverride() > -1 )
+		return GetPositionOverride();
+	
 	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		return GetWpnData().iPositionDM;	
 	return GetWpnData().iPosition;
@@ -825,7 +838,7 @@ bool CTFWeaponBase::Holster( CBaseCombatWeapon *pSwitchingTo )
 	if ( pOwner && GetTFWpnData().m_bDropOnNoAmmo && m_iClip1 <= 0 && m_iReserveAmmo<= 0 )
 	{
 #ifdef GAME_DLL 
-		pOwner->DropWeapon( this, false, true, 0, 0 );
+		pOwner->DropWeapon( this, true, true, 0, 0 );
 		UTIL_Remove ( this );
 #endif
 	}	
@@ -1023,11 +1036,6 @@ bool CTFWeaponBase::CalcIsAttackCriticalHelper()
 
 	if ( !CanFireCriticalShot() )
 		return false;
-
-	if ( !IsAllowedToWithdrawFromCritBucket( GetDamage() ) )
-		return false;
-
-	AddToCritBucket( GetDamage() );
 
 	float flPlayerCritMult = pPlayer->GetCritMult();
 

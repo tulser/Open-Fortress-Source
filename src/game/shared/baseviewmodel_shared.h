@@ -16,7 +16,10 @@
 #include "baseplayer_shared.h"
 #include "shared_classnames.h"
 #include "econ/ihasowner.h"
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #include "baseparticleentity.h"
+#endif
 
 class CBaseCombatWeapon;
 class CBaseCombatCharacter;
@@ -146,7 +149,11 @@ public:
 	// Should this object receive shadows?
 	virtual bool			ShouldReceiveProjectedTextures( int flags )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		return true;
+#else
+		return false;
+#endif
 	}
 
 	// Add entity to visible view models list?

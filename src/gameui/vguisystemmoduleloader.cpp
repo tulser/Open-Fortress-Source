@@ -334,6 +334,36 @@ bool CVGuiSystemModuleLoader::ActivateModule(const char *moduleName)
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: brings the specified module to the background
+//-----------------------------------------------------------------------------
+bool CVGuiSystemModuleLoader::DeactivateModule(int moduleIndex)
+{
+	if (!m_Modules.IsValidIndex(moduleIndex))
+		return false;
+
+	vgui::ipanel()->SetVisible( m_Modules[moduleIndex].moduleInterface->GetPanel(), false );
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: deactivates a module by name
+//-----------------------------------------------------------------------------
+bool CVGuiSystemModuleLoader::DeactivateModule(const char *moduleName)
+{
+	for (int i = 0; i < GetModuleCount(); i++)
+	{
+		if (!stricmp(GetModuleLabel(i), moduleName) || !stricmp(m_Modules[i].data->GetName(), moduleName))
+		{
+			DeactivateModule(i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+//-----------------------------------------------------------------------------
 // Purpose: returns a modules interface factory
 //-----------------------------------------------------------------------------
 CreateInterfaceFn CVGuiSystemModuleLoader::GetModuleFactory(int moduleIndex)

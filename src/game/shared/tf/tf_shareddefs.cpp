@@ -174,6 +174,23 @@ const char *g_aLoadoutConvarNames[] =
 	"_Juggernaut_cosmetic_loadout",
 };
 
+const char *g_aArsenalConvarNames[] =
+{
+	"_Undefined_weapon_loadout",
+	"_Scout_weapon_loadout",
+	"_Sniper_weapon_loadout",
+	"_Soldier_weapon_loadout",
+	"_Demoman_weapon_loadout",
+	"_Medic_weapon_loadout",
+	"_Heavy_weapon_loadout",
+	"_Pyro_weapon_loadout",
+	"_Spy_weapon_loadout",
+	"_Engineer_weapon_loadout",
+	"_Mercenary_weapon_loadout",
+	"_Civilian_weapon_loadout",
+	"_Juggernaut_weapon_loadout",
+};
+
 const char *g_aPlayerMutatorNames[] =
 {
 	"None",
@@ -182,7 +199,8 @@ const char *g_aPlayerMutatorNames[] =
 
 const char *g_aLoadoutCategories[] =
 {
-	"Cosmetics",
+	"cosmetics",
+	"weapons",
 };
 
 bool IsPlayerClassName( char const *str )
@@ -341,19 +359,15 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_GRENADELAUNCHER_MERCENARY",
 	"TF_WEAPON_ROCKETLAUNCHER_DM",
 	"TF_WEAPON_ASSAULTRIFLE",
-	"TF_WEAPON_SWORD",
 	"TF_WEAPON_C4",
 	"TF_WEAPON_BERSERK",
 	"TF_WEAPON_PHYSCANNON",
 	"TF_WEAPON_SUPER_ROCKETLAUNCHER",
 	"TF_WEAPON_CHAINSAW",
 	"TF_WEAPON_DYNAMITE_BUNDLE",
-	"TF_WEAPON_TRIPMINE",
 	"TF_WEAPON_LIGHTNING_GUN",
 	"TF_WEAPON_GRAPPLE",
-	"TF_WEAPON_FLAREGUN",
 	"TF_WEAPON_GIB",
-	"TF_WEAPON_THUNDERGUN",
 	"TF_WEAPON_CLAWS",
 
 	"TFC_WEAPON_SHOTGUN_SB",
@@ -388,7 +402,7 @@ const char *g_aWeaponNames[] =
 bool WeaponID_IsSniperRifle( int iWeaponID )
 {
 	return iWeaponID == TF_WEAPON_SNIPERRIFLE || 
-		/*iWeaponID == TF_WEAPON_RAILGUN ||*/
+		iWeaponID == TF_WEAPON_RAILGUN ||
 		iWeaponID == TFC_WEAPON_SNIPER_RIFLE;
 }
 
@@ -497,19 +511,15 @@ uint g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_ROCKETLAUNCHER_DM,
 	DMG_BULLET | DMG_USEDISTANCEMOD ,	// TF_WEAPON_ASSAULTRIFLE,
-	DMG_SLASH, //TF_WEAPON_SWORD
 	DMG_CLUB, //TF_WEAPON_C4
 	DMG_ALWAYSGIB, //TF_WEAPON_BERSERK
 	DMG_DISSOLVE, //TF_WEAPON_PHYSCANNON
 	DMG_BLAST,		// TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE,		// TF_WEAPON_CHAINSAW,
 	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_DYNAMITE_BUNDLE,
-	DMG_BLAST | DMG_HALF_FALLOFF,		// TF_WEAPON_TRIPMINE,
-	DMG_BLAST,		// TF_WEAPON_LIGHTNING_GUN,
+	DMG_DISSOLVE,		// TF_WEAPON_LIGHTNING_GUN,
 	DMG_GENERIC,		// TF_WEAPON_GRAPPLE,
-	DMG_IGNITE,			// TF_WEAPON_FLAREGUN
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GIB,
-	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_THUNDERGUN,
 	DMG_SLASH, // TF_WEAPON_CLAWS
 	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
@@ -596,7 +606,6 @@ int g_iProjectileWeapons[] =
 	TF_WEAPON_ROCKETLAUNCHER_DM,
 	TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	TF_WEAPON_DYNAMITE_BUNDLE,
-	TF_WEAPON_TRIPMINE,
 	TFC_WEAPON_INCENDIARYCANNON,
 };
 

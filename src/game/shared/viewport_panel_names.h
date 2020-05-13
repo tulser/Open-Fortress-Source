@@ -16,7 +16,9 @@
 #define PANEL_ACTIVE		"active"	// current active panel			
 
 #define PANEL_SCOREBOARD	"scores"
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define PANEL_SCOREBOARD_DM	"scoresDM"
+#endif
 #define PANEL_OVERVIEW		"overview"
 #define PANEL_CLASS			"class"
 #define PANEL_TEAM			"team"

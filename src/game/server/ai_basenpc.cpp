@@ -23,7 +23,7 @@
 #include "game.h"
 #include "shot_manipulator.h"
 
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 #include "ai_interactions.h"
 #include "hl2_gamerules.h"
 #endif // HL2_DLL
@@ -70,7 +70,7 @@
 #include "checksum_crc.h"
 #include "iservervehicle.h"
 #include "filters.h"
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 #include "npc_bullseye.h"
 #include "hl2_player.h"
 #include "weapon_physcannon.h"
@@ -87,11 +87,7 @@
 #include "datacache/imdlcache.h"
 #include "vstdlib/jobthread.h"
 
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-#include "ilagcompensationmanager.h" 
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 #include "npc_alyx_episodic.h"
 #endif
 
@@ -103,8 +99,6 @@
 #include "collisionutils.h"
 
 extern ConVar sk_healthkit;
-extern ConVar of_headshots;
-extern ConVar of_crit_multiplier;
 
 // dvs: for opening doors -- these should probably not be here
 #include "ai_route.h"
@@ -112,13 +106,6 @@ extern ConVar of_crit_multiplier;
 
 #include "utlbuffer.h"
 #include "gamestats.h"
-
-#include "tf_player.h"
-#include "tf_shareddefs.h"
-#include "tf_weaponbase.h"
-#include "tf_obj.h"
-
-#include "base_boss.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -165,7 +152,7 @@ ConVar	ai_use_think_optimizations( "ai_use_think_optimizations", "1" );
 
 ConVar	ai_test_moveprobe_ignoresmall( "ai_test_moveprobe_ignoresmall", "0" );
 
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 extern ConVar ai_vehicle_avoidance;
 #endif // HL2_EPISODIC
 
@@ -267,18 +254,10 @@ int CAI_Manager::NumAIs()
 
 //-------------------------------------
 
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-int CAI_Manager::AddAI( CAI_BaseNPC *pAI ) 
- {
- 	m_AIs.AddToTail( pAI );
-	return NumAIs()-1; // return the index it was added to 
- }
-#else
 void CAI_Manager::AddAI( CAI_BaseNPC *pAI )
 {
 	m_AIs.AddToTail( pAI );
 }
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 
 //-------------------------------------
 
@@ -663,36 +642,18 @@ void CAI_BaseNPC::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize, bo
 {
 	BaseClass::Ignite( flFlameLifetime, bNPCOnly, flSize, bCalledByLevelDesigner );
 
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		#if TRUE //def HL2_EPISODIC 
-		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
-		if ( pPlayer && pPlayer->IRelationType( this ) != D_LI ) 
-		{ 
-			CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx(); 
-
-			if ( alyx ) 
-			{ 
-				alyx->EnemyIgnited( this ); 
-			} 
-		} 
-		#endif //HL2_EPISODIC
-#else
-	#if TRUE //def HL2_EPISODIC
-	if ( AI_IsSinglePlayer() )
+#ifdef HL2_EPISODIC
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
+	if ( pPlayer->IRelationType( this ) != D_LI )
 	{
-		CBasePlayer *pPlayer = AI_GetSinglePlayer();
-		if ( pPlayer->IRelationType( this ) != D_LI )
-		{
-			CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx();
+		CNPC_Alyx *alyx = CNPC_Alyx::GetAlyx();
 
-			if ( alyx )
-			{
-				alyx->EnemyIgnited( this );
-			}
+		if ( alyx )
+		{
+			alyx->EnemyIgnited( this );
 		}
 	}
-	#endif //HL2_EPISODIC
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -749,49 +710,7 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	Forget( bits_MEMORY_INCOVER );
 
-	CTakeDamageInfo newInfo = info;
-
-	int bitsDamage = info.GetDamageType();
-
-	// crit damage, copied from tf_player.cpp
-	if (info.GetAttacker() != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)))
-	{
-		float flDamage = info.GetDamage();
-
-		if (bitsDamage & DMG_CRITICAL)
-		{
-			/*
-			if ( bDebug )
-			{
-				Warning("    CRITICAL!\n");
-			}
-			*/
-
-			flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
-
-			// Show the attacker, unless the target is a disguised spy
-			//if (info.GetAttacker() && info.GetAttacker()->IsPlayer() && !m_Shared.InCond(TF_COND_DISGUISED))
-			if (info.GetAttacker() && info.GetAttacker()->IsPlayer())
-			{
-				CEffectData	data;
-				data.m_nHitBox = GetParticleSystemIndex("crit_text");
-				data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
-				data.m_vAngles = vec3_angle;
-				data.m_nEntIndex = 0;
-
-				CSingleUserRecipientFilter filter( ( CBasePlayer*)info.GetAttacker() );
-				te->DispatchEffect( filter, 0.0, data.m_vOrigin, "ParticleEffect", data );
-
-				EmitSound_t params;
-				params.m_flSoundTime = 0;
-				params.m_pSoundName = "TFPlayer.CritHit";
-				EmitSound( filter, info.GetAttacker()->entindex(), params );
-			}
-		}
-		newInfo.SetDamage(flDamage);
-	}
-	
-	if (!BaseClass::OnTakeDamage_Alive(newInfo))
+	if ( !BaseClass::OnTakeDamage_Alive( info ) )
 		return 0;
 
 	if ( GetSleepState() == AISS_WAITING_FOR_THREAT )
@@ -858,15 +777,9 @@ int CAI_BaseNPC::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		{
 			// See if the person that injured me is an NPC.
 			CAI_BaseNPC *pAttacker = dynamic_cast<CAI_BaseNPC *>( info.GetAttacker() );
-#ifndef SecobMod__Enable_Fixed_Multiplayer_AI
-	CBasePlayer *pPlayer = AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+			CBasePlayer *pPlayer = AI_GetSinglePlayer();
 
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			if( pAttacker && pAttacker->IsAlive() && UTIL_GetNearestPlayer(GetAbsOrigin()) ) 
-#else
-if( pAttacker && pAttacker->IsAlive() && pPlayer )
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+			if( pAttacker && pAttacker->IsAlive() && pPlayer )
 			{
 				if( pAttacker->GetSquad() != NULL && pAttacker->IsInPlayerSquad() )
 				{
@@ -880,46 +793,6 @@ if( pAttacker && pAttacker->IsAlive() && pPlayer )
 	{
 		SetCondition( COND_PHYSICS_DAMAGE );
 	}
-	
-
-	 float m_iCurrentHealth = m_iHealth;
-
-		if ( ( m_iMaxHealth * 0.1 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow10Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.2 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow20Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.3 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow30Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.4 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow40Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.5 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow50Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.6 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow60Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.7 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow70Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.8 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow80Percent.FireOutput( info.GetAttacker(), this );
-		}
-		else if ( ( m_iMaxHealth * 0.9 ) > m_iCurrentHealth )
-		{
-			m_outputOnHealthBelow90Percent.FireOutput( info.GetAttacker(), this );
-		}
 
 	if ( m_iHealth <= ( m_iMaxHealth / 2 ) )
 	{
@@ -1020,13 +893,6 @@ if( pAttacker && pAttacker->IsAlive() && pPlayer )
 	//  Insert a combat sound so that nearby NPCs know I've been hit
 	// ---------------------------------------------------------------
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), 1024, 0.5, this, SOUNDENT_CHANNEL_INJURY );
-	
-	// copied from tf2player code
-	CBaseEntity *pAttacker = info.GetAttacker();
-	if ( pAttacker && pAttacker->IsPlayer() )
-	{
-		ToTFPlayer( pAttacker )->RecordDamageEvent( info, ( m_iHealth <= 0 ) );
-	}
 
 	return 1;
 }
@@ -1271,10 +1137,6 @@ void CAI_BaseNPC::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 
 	bool bDebug = showhitlocation.GetBool();
 
-	// headshots only!
-	if ( ptr->hitgroup != HITGROUP_HEAD && of_headshots.GetInt() >= 2 )
-		return;
-
 	switch ( ptr->hitgroup )
 	{
 	case HITGROUP_GENERIC:
@@ -1289,42 +1151,8 @@ void CAI_BaseNPC::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir
 		break;
 
 	case HITGROUP_HEAD:
-        // moved this line furhter down
-		//	subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
-		if ( info.GetAttacker()->IsPlayer() )
-		{
-			CTFPlayer *pAttacker = ToTFPlayer( info.GetAttacker() );
-
-			if ( ( ( subInfo.GetDamageType() & DMG_USE_HITLOCATIONS ) || of_headshots.GetBool() ) )
-			{
-				// copied from tf_player.cpp
-				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
-				bool bCritical = true;
-
-				if (pWpn && !pWpn->CanFireCriticalShot( true ) )
-				{
-					bCritical = false;
-				}
-
-				if (bCritical)
-				{
-					subInfo.AddDamageType( DMG_CRITICAL );
-					if( subInfo.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat() )
-						subInfo.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
-
-					// play the critical shot sound to the shooter	
-					if ( pWpn )
-					{
-							pWpn->WeaponSound ( BURST );
-					}
-				}
-			}
-		}
-		else
-		{
-			subInfo.ScaleDamage( GetHitgroupDamageMultiplier( ptr->hitgroup, info ) );
-		}
-		if ( bDebug ) DevMsg("Hit Location: Head\n");
+		subInfo.ScaleDamage( GetHitgroupDamageMultiplier(ptr->hitgroup, info) );
+		if( bDebug ) DevMsg("Hit Location: Head\n");
 		break;
 
 	case HITGROUP_CHEST:
@@ -1610,7 +1438,7 @@ void CAI_BaseNPC::MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::FireBullets( const FireBulletsInfo_t &info )
 {
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 	// If we're shooting at a bullseye, become perfectly accurate if the bullseye demands it
 	if ( GetEnemy() && GetEnemy()->Classify() == CLASS_BULLSEYE )
 	{
@@ -1738,6 +1566,20 @@ void CAI_BaseNPC::MakeDamageBloodDecal ( int cCount, float flNoise, trace_t *ptr
 	trace_t Bloodtr;
 	Vector vecTraceDir;
 	int i;
+
+	if ( !IsAlive() )
+	{
+		// dealing with a dead npc.
+		if ( m_iMaxHealth <= 0 )
+		{
+			// no blood decal for a npc that has already decalled its limit.
+			return;
+		}
+		else
+		{
+			m_iMaxHealth -= 1;
+		}
+	}
 
 	for ( i = 0 ; i < cCount ; i++ )
 	{
@@ -3267,12 +3109,8 @@ void CAI_BaseNPC::UpdateEfficiency( bool bInPVS )
 	}
 
 	//---------------------------------
-	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());  
-	#else
-		CBasePlayer *pPlayer = AI_GetSinglePlayer(); 
-	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
 
+	CBasePlayer *pPlayer = AI_GetSinglePlayer(); 
 	static Vector vPlayerEyePosition;
 	static Vector vPlayerForward;
 	static int iPrevFrame = -1;
@@ -3384,10 +3222,7 @@ void CAI_BaseNPC::UpdateEfficiency( bool bInPVS )
 				}
 			}
 			
-			if ( pCurrentSound )
-				iSound = pCurrentSound->NextSound();
-			else
-				break;
+			iSound = pCurrentSound->NextSound();
 		}
 	}
 
@@ -3519,11 +3354,7 @@ void CAI_BaseNPC::UpdateSleepState( bool bInPVS )
 {
 	if ( GetSleepState() > AISS_AWAKE )
 	{
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		CBasePlayer *pLocalPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
-#else
-CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
 		if ( !pLocalPlayer )
 		{
 			if ( gpGlobals->maxClients > 1 )
@@ -3578,10 +3409,7 @@ CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
 							break;
 						}
 
-						if ( pCurrentSound )
-							iSound = pCurrentSound->NextSound();
-						else
-							break;
+						iSound = pCurrentSound->NextSound();
 					}
 				}
 			}
@@ -3726,13 +3554,7 @@ void CAI_BaseNPC::RebalanceThinks()
 
 		int i;
 
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
-		#else
-			CBasePlayer *pPlayer = AI_GetSinglePlayer();
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
-
+		CBasePlayer *pPlayer = AI_GetSinglePlayer();
 		Vector vPlayerForward;
 		Vector vPlayerEyePosition;
 
@@ -4013,11 +3835,7 @@ void CAI_BaseNPC::SetPlayerAvoidState( void )
 
 		GetPlayerAvoidBounds( &vMins, &vMaxs );
 
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			CBasePlayer *pLocalPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
-		#else
-			CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		CBasePlayer *pLocalPlayer = AI_GetSinglePlayer();
 
 		if ( pLocalPlayer )
 		{
@@ -4928,7 +4746,7 @@ void CAI_BaseNPC::GatherConditions( void )
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::PrescheduleThink( void )
 {
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	CheckForScriptedNPCInteractions();
 #endif
 
@@ -4992,44 +4810,19 @@ void CAI_BaseNPC::RunAI( void )
 		}
 	}
 
-	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		if( ai_debug_loners.GetBool() && !IsInSquad() ) 
-		{
+	if( ai_debug_loners.GetBool() && !IsInSquad() && AI_IsSinglePlayer() )
+	{
 		Vector right;
 		Vector vecPoint;
 
 		vecPoint = EyePosition() + Vector( 0, 0, 12 );
 
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			UTIL_GetNearestPlayer(GetAbsOrigin())->GetVectors( NULL, &right, NULL ); 
-		#else
-			UTIL_GetLocalPlayer()->GetVectors( NULL, &right, NULL );
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		UTIL_GetLocalPlayer()->GetVectors( NULL, &right, NULL );
 
 		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 64 ), 255, 0, 0, false , 0.1 );
 		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 32 ) + right * 32, 255, 0, 0, false , 0.1 );
 		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 32 ) - right * 32, 255, 0, 0, false , 0.1 );
-		}
-	#else
-		if( ai_debug_loners.GetBool() && !IsInSquad() && AI_IsSinglePlayer() )
-		{
-		Vector right;
-		Vector vecPoint;
-
-		vecPoint = EyePosition() + Vector( 0, 0, 12 );
-
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			UTIL_GetNearestPlayer(GetAbsOrigin())->GetVectors( NULL, &right, NULL ); 
-		#else
-			UTIL_GetLocalPlayer()->GetVectors( NULL, &right, NULL );
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
-		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 64 ), 255, 0, 0, false , 0.1 );
-		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 32 ) + right * 32, 255, 0, 0, false , 0.1 );
-		NDebugOverlay::Line( vecPoint, vecPoint + Vector( 0, 0, 32 ) - right * 32, 255, 0, 0, false , 0.1 );
-		}
-	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
+	}
 	
 #ifdef _DEBUG
 	m_bSelected = ( (m_debugOverlays & OVERLAY_NPC_SELECTED_BIT) != 0 );
@@ -6086,7 +5879,7 @@ void CAI_BaseNPC::CheckTarget( CBaseEntity *pTarget )
 //-----------------------------------------------------------------------------
 CAI_BaseNPC *CAI_BaseNPC::CreateCustomTarget( const Vector &vecOrigin, float duration )
 {
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 	CNPC_Bullseye *pTarget = (CNPC_Bullseye*)CreateEntityByName( "npc_bullseye" );
 
 	ASSERT( pTarget != NULL );
@@ -7917,7 +7710,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		if (!pEnemy || !pEnemy->IsAlive())
 		{
 			if ( pEnemy )
+			{
 				DbgEnemyMsg( this, "    %s rejected: dead\n", pEnemy->GetDebugName() );
+			}
 			continue;
 		}
 		
@@ -7992,7 +7787,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		{
 			DbgEnemyMsg( this, "    %s accepted (1)\n", pEnemy->GetDebugName() );
 			if ( pBestEnemy )
+			{
 				DbgEnemyMsg( this, "    (%s displaced)\n", pBestEnemy->GetDebugName() );
+			}
 
 			iBestPriority	 = IRelationPriority ( pEnemy );
 			iBestDistSq		 = (pEnemy->GetAbsOrigin() - GetAbsOrigin() ).LengthSqr();
@@ -8006,7 +7803,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 		{
 			DbgEnemyMsg( this, "    %s accepted\n", pEnemy->GetDebugName() );
 			if ( pBestEnemy )
+			{
 				DbgEnemyMsg( this, "    (%s displaced due to priority, %d > %d )\n", pBestEnemy->GetDebugName(), IRelationPriority( pEnemy ), iBestPriority );
+			}
 			// this entity is disliked MORE than the entity that we
 			// currently think is the best visible enemy. No need to do
 			// a distance check, just get mad at this one for now.
@@ -8140,7 +7939,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 
 			DbgEnemyMsg( this, "    %s accepted\n", pEnemy->GetDebugName() );
 			if ( pBestEnemy )
+			{
 				DbgEnemyMsg( this, "    (%s displaced due to distance/visibility)\n", pBestEnemy->GetDebugName() );
+			}
 			fBestSeen		 = fCurSeen;
 			fBestVisible	 = fCurVisible;
 			iBestDistSq		 = iDistSq;
@@ -8149,7 +7950,9 @@ CBaseEntity *CAI_BaseNPC::BestEnemy( void )
 			bBestUnreachable = bUnreachable;
 		}
 		else
+		{
 			DbgEnemyMsg( this, "    %s rejected: lower priority\n", pEnemy->GetDebugName() );
+		}
 	}
 
 	DbgEnemyMsg( this, "} == %s\n", pBestEnemy->GetDebugName() );
@@ -8240,6 +8043,7 @@ float CAI_BaseNPC::CalcIdealYaw( const Vector &vecTarget )
 	{
 		vecProjection.x = -vecTarget.y;
 		vecProjection.y = vecTarget.x;
+		vecProjection.z = 0;
 
 		return UTIL_VecToYaw( vecProjection - GetLocalOrigin() );
 	}
@@ -8247,6 +8051,7 @@ float CAI_BaseNPC::CalcIdealYaw( const Vector &vecTarget )
 	{
 		vecProjection.x = vecTarget.y;
 		vecProjection.y = vecTarget.x;
+		vecProjection.z = 0;
 
 		return UTIL_VecToYaw( vecProjection - GetLocalOrigin() );
 	}
@@ -8872,13 +8677,8 @@ void CAI_BaseNPC::DrawDebugGeometryOverlays(void)
 
 		info.SetDamage( m_iHealth );
 		info.SetAttacker( this );
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		info.SetInflictor( (CBaseEntity *)this ); 
-#else
-info.SetInflictor( ( AI_IsSinglePlayer() ) ? (CBaseEntity *)AI_GetSinglePlayer() : (CBaseEntity *)this );
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
-info.SetDamageType( DMG_GENERIC );
+		info.SetInflictor( ( AI_IsSinglePlayer() ) ? (CBaseEntity *)AI_GetSinglePlayer() : (CBaseEntity *)this );
+		info.SetDamageType( DMG_GENERIC );
 
 		m_debugOverlays &= ~OVERLAY_NPC_KILL_BIT;
 		TakeDamage( info );
@@ -9717,7 +9517,7 @@ Vector CAI_BaseNPC::GetShootEnemyDir( const Vector &shootOrigin, bool bNoisy )
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::CollectShotStats( const Vector &vecShootOrigin, const Vector &vecShootDir )
 {
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 	if( ai_shot_stats.GetBool() != 0 && GetEnemy()->IsPlayer() )
 	{
 		int iterations = ai_shot_stats_term.GetInt();
@@ -9758,7 +9558,7 @@ void CAI_BaseNPC::CollectShotStats( const Vector &vecShootOrigin, const Vector &
 #endif
 }
 
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Return the actual position the NPC wants to fire at when it's trying
 //			to hit it's current enemy.
@@ -10108,11 +9908,7 @@ CBaseEntity *CAI_BaseNPC::FindNamedEntity( const char *name, IEntityFindFilter *
 {
 	if ( !stricmp( name, "!player" ))
 	{
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		return UTIL_GetNearestPlayer(GetAbsOrigin()); 
-#else
-return ( CBaseEntity * )AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		return ( CBaseEntity * )AI_GetSinglePlayer();
 	}
 	else if ( !stricmp( name, "!enemy" ) )
 	{
@@ -10127,11 +9923,7 @@ return ( CBaseEntity * )AI_GetSinglePlayer();
 	{
 		// FIXME: look at CBaseEntity *CNPCSimpleTalker::FindNearestFriend(bool fPlayer)
 		// punt for now
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		return UTIL_GetNearestPlayer(GetAbsOrigin()); 
-#else
-return ( CBaseEntity * )AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		return ( CBaseEntity * )AI_GetSinglePlayer();
 	}
 	else if (!stricmp( name, "self" ))
 	{
@@ -10151,11 +9943,7 @@ return ( CBaseEntity * )AI_GetSinglePlayer();
 		{
 			DevMsg( "ERROR: \"player\" is no longer used, use \"!player\" in vcd instead!\n" );
 		}
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		return UTIL_GetNearestPlayer(GetAbsOrigin()); 
-#else
-return ( CBaseEntity * )AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		return ( CBaseEntity * )AI_GetSinglePlayer();
 	}
 	else
 	{
@@ -10620,10 +10408,6 @@ CBaseEntity *CAI_BaseNPC::DropItem ( const char *pszItemName, Vector vecPos, QAn
 
 bool CAI_BaseNPC::ShouldFadeOnDeath( void )
 {
-	// always return true as otherwise ragdolls remain forever
-	return true;
-	
-	/*
 	if ( g_RagdollLVManager.IsLowViolence() )
 	{
 		return true;
@@ -10633,7 +10417,6 @@ bool CAI_BaseNPC::ShouldFadeOnDeath( void )
 		// if flagged to fade out
 		return HasSpawnFlags(SF_NPC_FADE_CORPSE);
 	}
-	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -10962,23 +10745,11 @@ BEGIN_DATADESC( CAI_BaseNPC )
 	DEFINE_OUTPUT( m_OnForcedInteractionStarted,	"OnForcedInteractionStarted" ),
 	DEFINE_OUTPUT( m_OnForcedInteractionAborted,	"OnForcedInteractionAborted" ),
 	DEFINE_OUTPUT( m_OnForcedInteractionFinished,	"OnForcedInteractionFinished" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow90Percent , "OnHealthBelow90Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow80Percent , "OnHealthBelow80Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow70Percent , "OnHealthBelow70Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow60Percent , "OnHealthBelow60Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow50Percent , "OnHealthBelow50Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow40Percent , "OnHealthBelow40Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow30Percent , "OnHealthBelow30Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow20Percent , "OnHealthBelow20Percent" ),
-	DEFINE_OUTPUT( m_outputOnHealthBelow10Percent , "OnHealthBelow10Percent" ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetRelationship", InputSetRelationship ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetEnemyFilter", InputSetEnemyFilter ),
 	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetHealth", InputSetHealth ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMaxHealth", InputSetMaxHealth ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddHealth", InputAddHealth ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveHealth", InputRemoveHealth ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "BeginRappel", InputBeginRappel ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "SetSquad", InputSetSquad ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Wake", InputWake ),
@@ -11600,6 +11371,8 @@ CAI_BaseNPC::CAI_BaseNPC(void)
 	m_failedSchedule			= NULL;
 	m_interuptSchedule			= NULL;
 	m_nDebugPauseIndex			= 0;
+
+	g_AI_Manager.AddAI( this );
 	
 	if ( g_AI_Manager.NumAIs() == 1 )
 	{
@@ -11613,8 +11386,6 @@ CAI_BaseNPC::CAI_BaseNPC(void)
 	m_bInChoreo = true; // assume so until call to UpdateEfficiency()
 	
 	SetCollisionGroup( COLLISION_GROUP_NPC );
-
-	m_LagTrack = new CUtlFixedLinkedList< LagRecordNPC >();
 }
 
 //-----------------------------------------------------------------------------
@@ -11624,9 +11395,6 @@ CAI_BaseNPC::CAI_BaseNPC(void)
 //-----------------------------------------------------------------------------
 CAI_BaseNPC::~CAI_BaseNPC(void)
 {
-	m_LagTrack->Purge();
-	delete m_LagTrack;
-
 	g_AI_Manager.RemoveAI( this );
 
 	delete m_pLockedBestSound;
@@ -11802,40 +11570,6 @@ void CAI_BaseNPC::InputSetHealth( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CAI_BaseNPC::InputSetMaxHealth( inputdata_t &inputdata )
-{
-	m_iMaxHealth = inputdata.value.Int();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Add health to the NPC
-//-----------------------------------------------------------------------------
-void CAI_BaseNPC::InputAddHealth( inputdata_t &inputdata )
-{
-	int iHealth = inputdata.value.Int();
-	SetHealth( min( GetMaxHealth(), GetHealth() + iHealth ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Remove health from the NPC
-//-----------------------------------------------------------------------------
-void CAI_BaseNPC::InputRemoveHealth( inputdata_t &inputdata )
-{
-	int iDamage = inputdata.value.Int();
-
-	SetHealth( GetHealth() - iDamage );
-	if ( GetHealth() <= 0 )
-	{
-		m_lifeState = LIFE_DEAD;
-
-		CTakeDamageInfo info( inputdata.pCaller, inputdata.pActivator, vec3_origin, GetAbsOrigin(), iDamage, DMG_GENERIC );
-		Event_Killed( info );
-	}
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::InputBeginRappel( inputdata_t &inputdata )
@@ -12000,7 +11734,7 @@ void CAI_BaseNPC::CleanupScriptsOnTeleport( bool bEnrouteAsWell )
 //-----------------------------------------------------------------------------
 bool CAI_BaseNPC::HandleInteraction(int interactionType, void *data, CBaseCombatCharacter* sourceEnt)
 {
-#if TRUE //def HL2_DLL
+#ifdef HL2_DLL
 	if ( interactionType == g_interactionBarnacleVictimGrab )
 	{
 		// Make the victim stop thinking so they're as good as dead without 
@@ -12182,11 +11916,7 @@ bool CAI_BaseNPC::CineCleanup()
 			{
 				SetLocalOrigin( origin );
 
-				#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-				int drop = UTIL_DropToFloor( this, MASK_NPCSOLID, UTIL_GetNearestVisiblePlayer(this) ); 
-#else
-int drop = UTIL_DropToFloor( this, MASK_NPCSOLID, UTIL_GetLocalPlayer() );
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+				int drop = UTIL_DropToFloor( this, MASK_NPCSOLID, UTIL_GetLocalPlayer() );
 
 				// Origin in solid?  Set to org at the end of the sequence
 				if ( ( drop < 0 ) || sv_test_scripted_sequences.GetBool() )
@@ -12263,12 +11993,7 @@ void CAI_BaseNPC::Teleport( const Vector *newPosition, const QAngle *newAngles, 
 
 bool CAI_BaseNPC::FindSpotForNPCInRadius( Vector *pResult, const Vector &vStartPos, CAI_BaseNPC *pNPC, float radius, bool bOutOfPlayerViewcone )
 {
-	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-	CBasePlayer *pPlayer = UTIL_GetNearestPlayer(pNPC->GetAbsOrigin()); 
-#else
-CBasePlayer *pPlayer = AI_GetSinglePlayer();
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
+	CBasePlayer *pPlayer = AI_GetSinglePlayer();
 	QAngle fan;
 
 	fan.x = 0;
@@ -12331,7 +12056,7 @@ bool CAI_BaseNPC::IsNavigationUrgent()
 
 bool CAI_BaseNPC::ShouldFailNav( bool bMovementFailed )
 {
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 
 	if ( ai_vehicle_avoidance.GetBool() )
 	{
@@ -12804,17 +12529,11 @@ bool CAI_BaseNPC::IsPlayerAlly( CBasePlayer *pPlayer )
 	{
 		// in multiplayer mode we need a valid pPlayer 
 		// or override this virtual function
-		#ifndef SecobMod__Enable_Fixed_Multiplayer_AI
-			if ( !AI_IsSinglePlayer() ) 
-			return false; 
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		if ( !AI_IsSinglePlayer() )
+			return false;
 
 		// NULL means single player mode
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-			pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin()); 
-		#else
-			pPlayer = UTIL_GetLocalPlayer();
-		#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+		pPlayer = UTIL_GetLocalPlayer();
 	}
 
 	return ( !pPlayer || IRelationType( pPlayer ) == D_LI ); 
@@ -13108,12 +12827,7 @@ bool CAI_BaseNPC::FindNearestValidGoalPos( const Vector &vTestPoint, Vector *pRe
 
 	if ( vCandidate != vec3_invalid )
 	{
-		#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		AI_Waypoint_t *pPathToPoint = GetPathfinder()->BuildRoute( GetAbsOrigin(), vCandidate, UTIL_GetNearestPlayer(GetAbsOrigin()), 5*12, NAV_NONE, true ); 
-#else
-AI_Waypoint_t *pPathToPoint = GetPathfinder()->BuildRoute( GetAbsOrigin(), vCandidate, AI_GetSinglePlayer(), 5*12, NAV_NONE, true );
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI
-
+		AI_Waypoint_t *pPathToPoint = GetPathfinder()->BuildRoute( GetAbsOrigin(), vCandidate, AI_GetSinglePlayer(), 5*12, NAV_NONE, true );
 		if ( pPathToPoint )
 		{
 			GetPathfinder()->UnlockRouteNodes( pPathToPoint );
@@ -14246,32 +13960,21 @@ void CAI_BaseNPC::CalculateForcedInteractionPosition( void )
 //-----------------------------------------------------------------------------
 void CAI_BaseNPC::PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot )
 {
-#if TRUE //def HL2_EPISODIC
+#ifdef HL2_EPISODIC
 	if ( IsActiveDynamicInteraction() )
 	{
 		ScriptedNPCInteraction_t *pInteraction = GetRunningDynamicInteraction();
 		if ( pInteraction->iLoopBreakTriggerMethod & SNPCINT_LOOPBREAK_ON_FLASHLIGHT_ILLUM )
 		{
 			// Only do this in alyx darkness mode
-			#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-				if ( HL2GameRules()->IsAlyxInDarknessMode() )
+			if ( HL2GameRules()->IsAlyxInDarknessMode() )
+			{
+				// Can only break when we're in the action anim
+				if ( m_hCine->IsPlayingAction() )
 				{
-					// Can only break when we're in the action anim
-					if ( m_hCine->IsPlayingAction() )
-					{
-						m_hCine->StopActionLoop( true );
-					}
+					m_hCine->StopActionLoop( true );
 				}
-			#else
-				if ( HL2GameRules()->IsAlyxInDarknessMode() )
-				{
-					// Can only break when we're in the action anim
-					if ( m_hCine->IsPlayingAction() )
-					{
-						m_hCine->StopActionLoop( true );
-					}
-				}
-			#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+			}
 		}
 	}
 #endif

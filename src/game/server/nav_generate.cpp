@@ -155,7 +155,7 @@ void CNavMesh::BuildLadders( void )
 		ladder->CollisionProp()->WorldSpaceSurroundingBounds( &mins, &maxs );
 		CreateLadder( mins, maxs, 0.0f );
 	}
-#else
+#elif defined ( OF_DLL )
 	CInfoLadder *entity = NULL;
 	while( (entity = dynamic_cast< CInfoLadder * >(gEntList.FindEntityByClassname( entity, "info_ladder" ))) != NULL )
 	{
@@ -3496,12 +3496,24 @@ void CNavMesh::BeginAnalysis( bool quitWhenFinished )
 			engine->ServerCommand( "director_no_death_check 1\ndirector_stop\nnb_delete_all\n" );
 
 			ConVarRef mat_fullbright( "mat_fullbright" );
-
+#ifndef OF_DLL			
+			ConVarRef mat_hdr_level( "mat_hdr_level" );
+#endif
+		
 			if( mat_fullbright.GetBool() )
 			{
 				Warning( "Setting mat_fullbright 0\n" );
 				mat_fullbright.SetValue( 0 );
 			}
+	
+#ifndef OF_DLL		
+			if ( mat_hdr_level.GetInt() < 2 )
+			{
+				Warning( "Enabling HDR and reloading materials\n" );
+				mat_hdr_level.SetValue( 2 );
+				engine->ClientCommand( host->edict(), "mat_reloadallmaterials\n" );
+			}			
+#endif
 
 			// Running a threaded server breaks our lighting calculations
 			ConVarRef host_thread_mode( "host_thread_mode" );

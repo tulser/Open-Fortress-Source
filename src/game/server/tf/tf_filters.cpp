@@ -87,7 +87,7 @@ bool CFilterTFTeam::PassesFilterImpl( CBaseEntity *pCaller, CBaseEntity *pEntity
 		}
 
 		// in free roam, we can enter any spawn we want
-		if  ( TFGameRules()->IsFreeRoam() )
+		if  ( TFGameRules()->IsInfGamemode() )
 		{
 			if ( m_bNegated )
 			{

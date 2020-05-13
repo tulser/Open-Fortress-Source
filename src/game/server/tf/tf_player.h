@@ -14,15 +14,11 @@
 #include "tf_weaponbase_gun.h"
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
-#include "hl2_playerlocaldata.h"
-#include "hl2_player.h"
 #include "trigger_area_capture.h"
 #include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
 #include "NextBotUtil.h"
 #include "tf_powerup.h"
-
-#include "hl_movedata.h"
 
 class CTFPlayer;
 class CTFTeam;
@@ -33,8 +29,6 @@ class CTFWeaponBuilder;
 class CBaseObject;
 class CTFWeaponBase;
 class CIntroViewpoint;
-class CAI_Squad;
-class CPropCombineBall;
 
 //=============================================================================
 //
@@ -92,27 +86,6 @@ private:
 };
 
 
-
-#define ARMOR_DECAY_TIME 3.5f
-
-enum HL2PlayerPhysFlag_e
-{
-	// 1 -- 5 are used by enum PlayerPhysFlag_e in player.h
-
-	PFLAG_ONBARNACLE	= ( 1<<6 )		// player is hangning from the barnalce
-};
-
-class IPhysicsPlayerController;
-class CLogicPlayerProxy;
-
-struct commandgoal_t
-{
-	Vector		m_vecGoalLocation;
-	CBaseEntity	*m_pGoalEntity;
-};
-
-// Time between checks to determine whether NPCs are illuminated by the flashlight
-#define FLASHLIGHT_NPC_CHECK_INTERVAL	0.4
 //=============================================================================
 //
 // TF Player
@@ -260,7 +233,7 @@ public:
 	virtual void		ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis );
 	virtual float		GetHeldObjectMass( IPhysicsObject *pHeldObject );
 	
-	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }
+	virtual bool		IsFollowingPhysics( void ) { return 0; }
 	void				InputForceDropPhysObjects( inputdata_t &data );
 
 	void				DropZombieAmmoHealth( void );
@@ -283,8 +256,7 @@ public:
 
 	void TeamFortress_ClientDisconnected();
 	void TeamFortress_RemoveEverythingFromWorld();
-	void TeamFortress_RemoveRockets();
-	void TeamFortress_RemovePipebombs();
+	void TeamFortress_RemoveProjectiles();
 
 	CTFTeamSpawn *GetSpawnPoint( void ){ return m_pSpawnPoint; }
 		
@@ -347,7 +319,7 @@ public:
 
 	// Dropping Ammo
 	void DropAmmoPack( void );
-	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool thrown = false, bool dissolve = false, int Clip = -1, int Reserve = -1 );
+	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown = false, bool bDissolve = false, int Clip = -1, int Reserve = -1 );
 	
 	CTFWeaponBase *GetWeaponInSlot( int iSlot, int iSlotPos );
 	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );
@@ -398,11 +370,6 @@ public:
 	virtual bool	IsDeflectable( void ) { return true; }
 
 	Vector 	GetClassEyeHeight( void );
-
-	// HL2 ladder related methods
-	LadderMove_t		*GetLadderMove() { return &/*m_HL2Local.*/m_LadderMove; }
-	virtual void		ExitLadder();
-	virtual surfacedata_t *GetLadderSurface( const Vector &origin );	
 
 	// HL2 uses these for NPC checks
 	virtual Vector		EyeDirection2D( void );
@@ -460,6 +427,7 @@ public:
 	CNetworkVar( bool, m_bSaveMeParity );
 	CNetworkVar( bool, m_bDied );
 	CNetworkVar( bool, m_bGotKilled );
+	CNetworkVar( bool, m_bResupplied );
 
 	// teleporter variables
 	int		no_entry_teleporter_message;
@@ -484,6 +452,7 @@ public:
 	void				Manage3WaveWeapons( TFPlayerClassData_t *pData );
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
+	void				ManageArsenalWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
 	void				ManageCustomSpawnWeapons( TFPlayerClassData_t *pData );
@@ -575,6 +544,7 @@ private:
 	bool				SelectDMSpawnSpots(const char *pEntClassName, CBaseEntity* &pSpot);
 
 	void				PrecachePlayerModels( void );
+	void				PrecacheMyself( void );
 	void				RemoveNemesisRelationships();
 
 	// Think.
@@ -649,8 +619,6 @@ private:
 	bool				m_bAbortFreezeCam;
 	bool				m_bSeenRoundInfo;
 	bool				m_bRegenerating;
-	
-	CNetworkVar( int, m_iUpdateCosmetics );
 
 	// Items.
 	CNetworkHandle( CTFItem, m_hItem );
@@ -750,60 +718,11 @@ public:
 	// for chat particle bubble
 	CNetworkVar( bool, m_bChatting );
 
-	///==HL2 PORT START==///
+	const char			*m_chzVMCosmeticGloves;
+	const char			*m_chzVMCosmeticSleeves;
 
-	// HL2 Ladder related data
-	CNetworkVar( EHANDLE, m_hLadder );
-	LadderMove_t				m_LadderMove;
-
-	bool				IsSprinting( void ) { return false; }
-	bool				IsWeaponLowered( void ) { return false; }
-	void				StartWaterDeathSounds(void);
-	void				StopWaterDeathSounds(void);
-	virtual bool		Weapon_Lower(void) { return false; }
-	void				StopSprinting( void ) { return; }
-	bool				ApplyBattery(float powerMultiplier = 1.0) { return false; }
-	float				SuitPower_GetCurrentPercentage( void ) { return 100; } //act as if we always have max suit power when talking about AI stuff, since it's all flashlight related
-	virtual	bool		IsHoldingEntity( CBaseEntity *pEnt );
-	void				MissedAR2AltFire() {;}
-	void				CombineBallSocketed( CPropCombineBall *pCombineBall );
-	virtual void		StopLoopingSounds(void);
-	
 	// this is true if the player who died results in a victory (payload override gamemode)
 	bool	m_bWinDeath;
-
-	// Commander Mode for controller NPCs
-	enum CommanderCommand_t
-	{
-		CC_NONE,
-		CC_TOGGLE,
-		CC_FOLLOW,
-		CC_SEND,
-	};
-
-	virtual void CommanderMode();
-	void CommanderUpdate();
-	void CommanderExecute( CommanderCommand_t command = CC_TOGGLE );
-	bool CommanderFindGoal( commandgoal_t *pGoal );
-	void NotifyFriendsOfDamage( CBaseEntity *pAttackerEntity );
-	CAI_BaseNPC *GetSquadCommandRepresentative();
-	int GetNumSquadCommandables();
-	int GetNumSquadCommandableMedics();
-	bool CommanderExecuteOne(CAI_BaseNPC *pNpc, const commandgoal_t &goal, CAI_BaseNPC **Allies, int numAllies);
-	void OnSquadMemberKilled(inputdata_t &data);
-
-	CAI_Squad *			m_pPlayerAISquad;
-	CSimpleSimTimer		m_CommanderUpdateTimer;
-	float				m_RealTimeLastSquadCommand;
-	CommanderCommand_t	m_QueuedCommand;
-
-	CSoundPatch *m_sndLeeches;
-	CSoundPatch *m_sndWaterSplashes;
-
-	// This player's HL2 specific data that should only be replicated to 
-	//  the player and not to other players.
-	CNetworkVarEmbedded( CHL2PlayerLocalData, m_HL2Local );
-	///==HL2 PORT END==///
 };
 
 //-----------------------------------------------------------------------------

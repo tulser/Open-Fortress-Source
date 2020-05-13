@@ -89,8 +89,6 @@
 #include "tier3/tier3.h"
 #include "serverbenchmark_base.h"
 #include "querycache.h"
-#include "of_shared_schemas.h"
-
 
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
@@ -130,7 +128,11 @@ extern ConVar tf_mm_servermode;
 #include "replay/ireplaysystem.h"
 #endif
 
+#ifdef OF_DLL
 #include "gamemounter.h"
+#include "of_shared_schemas.h"
+#include "of_modelloader.h"
+#endif
 
 extern IToolFrameworkServer *g_pToolFrameworkServer;
 extern IParticleSystemQuery *g_pParticleSystemQuery;
@@ -200,7 +202,7 @@ void SceneManager_ClientActive( CBasePlayer *player );
 class IMaterialSystem;
 class IStudioRender;
 
-#ifdef _DEBUG
+#if defined ( _DEBUG ) || defined ( OF_DLL )
 static ConVar s_UseNetworkVars( "UseNetworkVars", "1", FCVAR_CHEAT, "For profiling, toggle network vars." );
 #endif
 
@@ -209,9 +211,11 @@ ConVar sv_massreport( "sv_massreport", "0" );
 ConVar sv_force_transmit_ents( "sv_force_transmit_ents", "0", FCVAR_CHEAT, "Will transmit all entities to client, regardless of PVS conditions (will still skip based on transmit flags, however)." );
 
 ConVar sv_autosave( "sv_autosave", "1", 0, "Set to 1 to autosave game on level transition. Does not affect autosave triggers." );
+#ifdef OF_DLL
 // HACKHACK: This might be implemented in the main engine DLLS but it's hidden/missing in the Source SDK 2013??
 // Will not function 1-to-1 like other offical Source Engine titles. (Cannot connect etc.)
 ConVar hide_server("hide_server", "0", 0, "Whether the server should be hidden from the master server");
+#endif
 ConVar *sv_maxreplay = NULL;
 static ConVar  *g_pcv_commentary = NULL;
 static ConVar *g_pcv_ThreadMode = NULL;
@@ -569,34 +573,6 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSI
 // When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
 COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 10 );
 
-static void MountAdditionalContent()
-{
-	KeyValues *pMainFile = new KeyValues( "gameinfo.txt" );
-#ifndef _WINDOWS
-	// case sensitivity
-	pMainFile->LoadFromFile( filesystem, "GameInfo.txt", "MOD" );
-	if (!pMainFile)
-#endif
-	pMainFile->LoadFromFile( filesystem, "gameinfo.txt", "MOD" );
-	
-	if (pMainFile)
-	{
-		KeyValues* pFileSystemInfo = pMainFile->FindKey( "FileSystem" );
-		if (pFileSystemInfo)
-			for ( KeyValues *pKey = pFileSystemInfo->GetFirstSubKey(); pKey; pKey = pKey->GetNextKey() )
-			{
-				if ( strcmp(pKey->GetName(),"AdditionalContentId") == 0 )
-				{
-					int appid = abs(pKey->GetInt());
-					if (appid)
-						if( filesystem->MountSteamContent(-appid) != FILESYSTEM_MOUNT_OK )
-							Warning("Unable to mount extra content with appId: %i\n", appid);
-				}
-			}
-	}	
-	pMainFile->deleteThis();
-}
-
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
@@ -671,10 +647,10 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// cache the globals
 	
+#ifdef OF_DLL
 	AddRequiredSearchPaths();
+#endif
 
-	MountAdditionalContent();
-	
 	gpGlobals = pGlobals;
 
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
@@ -765,10 +741,12 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// Parse the particle manifest file & register the effects within it
 	ParseParticleEffects( false, false );
-	
-#ifdef OPENFORTRESS_DLL	
+
+#ifdef OF_DLL	
+	InitItemSchema();
 	ParseItemsGame();
 	ParseSoundManifest();
+	SetupModelLoader();
 #endif
 
 	// try to get debug overlay, may be NULL if on HLDS
@@ -822,7 +800,9 @@ void CServerGameDLL::DLLShutdown( void )
 #ifndef _XBOX
 #ifdef USE_NAV_MESH
 	// destroy the Navigation Mesh interface
+#ifdef OF_DLL
 	if ( TheNavMesh )
+#endif
 	{
 		delete TheNavMesh;
 		TheNavMesh = NULL;
@@ -1346,6 +1326,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 	
 	IGameSystem::PreClientUpdateAllSystems();
 
+#if defined ( _DEBUG ) || defined ( OF_DLL )
 	if ( sv_showhitboxes.GetInt() == -1 )
 		return;
 
@@ -1375,6 +1356,7 @@ void CServerGameDLL::PreClientUpdate( bool simulating )
 		return;
 
 	anim->DrawServerHitboxes();
+#endif
 }
 
 void CServerGameDLL::Think( bool finalTick )
@@ -1862,6 +1844,7 @@ void CServerGameDLL::PreSaveGameLoaded( char const *pSaveName, bool bInGame )
 	gamestats->Event_PreSaveGameLoaded( pSaveName, bInGame );
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------
@@ -1884,6 +1867,7 @@ public:
 };
 
 COFCGCLobby g_OFCGCLobby;
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Returns true if the game DLL wants the server not to be made public.
@@ -1929,17 +1913,17 @@ IServerGCLobby *CServerGameDLL::GetServerGCLobby()
 {
 #ifdef TF_DLL
 	return GTFGCClientSystem();
-#else	
+#elif defined (OF_DLL)
 	// ficool2 - only exists so server hibernation can be switched
 	return &g_OFCGCLobby;
+#else
+	return NULL;
 #endif
 }
 
 
 void CServerGameDLL::SetServerHibernation( bool bHibernating )
 {
-	// ficool2 - this function is total garbage! its called in the engine, not here
-
 	m_bIsHibernating = bHibernating;
 
 #ifdef INFESTED_DLL
@@ -2160,7 +2144,11 @@ void CServerGameDLL::LoadSpecificMOTDMsg( const ConVar &convar, const char *pszS
 }
 
 // keeps track of which chapters the user has unlocked
+#ifdef OF_DLL
 extern ConVar sv_unlockedchapters;
+#else
+ConVar sv_unlockedchapters( "sv_unlockedchapters", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Updates which chapters are unlocked
@@ -2235,14 +2223,21 @@ void UpdateChapterRestrictions( const char *mapname )
 		}
 
 		// ok we have the string, see if it's newer
+#ifdef OF_DLL		
 		const char *unlockedChapter = "99";
+#else
+		const char *unlockedChapter = sv_unlockedchapters.GetString();
+#endif
 		int nUnlockedChapter = atoi( unlockedChapter );
 
 		if ( nUnlockedChapter < nNewChapter )
 		{
+#ifdef OF_DLL				
 			// ok we're at a higher chapter, unlock
 			sv_unlockedchapters.SetValue( 99 );
-
+#else
+			sv_unlockedchapters.SetValue( nNewChapter );
+#endif
 			// HACK: Call up through a better function than this? 7/23/07 - jdw
 			if ( IsX360() )
 			{
@@ -2913,12 +2908,18 @@ void CServerGameClients::ClientSettingsChanged( edict_t *pEdict )
 	if ( useInterpolation )
 	{
 		float flLerpRatio = Q_atof( QUICKGETCVARVALUE("cl_interp_ratio") );
+#ifdef OF_DLL
 		if ( ( flLerpRatio == 0 || flLerpRatio > 2 ) )
+#else
+		if ( ( flLerpRatio == 0 )
+#endif
 			flLerpRatio = 1.0f;
 		float flLerpAmount = Q_atof( QUICKGETCVARVALUE("cl_interp") );
-		
+	
+#ifdef OF_DLL
 		if ( flLerpAmount > 0.5 )
 			flLerpAmount = 0.1f;
+#endif
 
 		static const ConVar *pMin = g_pCVar->FindVar( "sv_client_min_interp_ratio" );
 		static const ConVar *pMax = g_pCVar->FindVar( "sv_client_max_interp_ratio" );

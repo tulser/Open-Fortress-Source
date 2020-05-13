@@ -90,7 +90,6 @@ bool CTFHudKills::ShouldDraw( void )
 	if (TFGameRules() &&
 		!TFGameRules()->IsTeamplay() &&
 		!TFGameRules()->IsArenaGamemode() &&
-		!TFGameRules()->IsCoopGamemode() &&
 		( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() ) 
 		|| TFGameRules()->IsGGGamemode()) )
 		return CHudElement::ShouldDraw();
@@ -239,6 +238,7 @@ void CTFHudKills::ShowBottom( bool bShow )
 		int iAdj = bShow ? 50 : -50;	
 		m_pPlayerPlayingToLabel->SetPos( labelX, labelY + iAdj );
 	}
+	
 	CExLabel *m_pPlayerNameLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayerNameLabel" ) );
 	CExLabel *m_pTmpKills = dynamic_cast<CExLabel *>( FindChildByName( "KillsLabel" ) );
 	ImagePanel *m_pShadedBox = dynamic_cast<ImagePanel *>( FindChildByName("ShadedBarP2") );	

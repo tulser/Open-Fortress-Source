@@ -640,7 +640,7 @@ CBasePlayer* UTIL_PlayerByUserId( int userID )
 // Return the local player.
 // If this is a multiplayer game, return NULL.
 // 
-#ifdef OPENFORTRESS_DLL //SecobMod__Enable_Fixed_Multiplayer_AI
+#ifdef OF_DLL //SecobMod__Enable_Fixed_Multiplayer_AI
 CBasePlayer *UTIL_GetLocalPlayer( void )
 {
 
@@ -762,7 +762,7 @@ CBasePlayer *UTIL_GetListenServerHost( void )
 	// no "local player" if this is a dedicated server or a single player game
 	if (engine->IsDedicatedServer())
 	{
-#ifndef OPENFORTRESS_DLL //SecobMod__Enable_Fixed_Multiplayer_AI
+#ifndef OF_DLL //SecobMod__Enable_Fixed_Multiplayer_AI
 		Assert( !"UTIL_GetListenServerHost" );
 		Warning( "UTIL_GetListenServerHost() called from a dedicated server or single-player game.\n" );
 		return NULL;
@@ -857,7 +857,11 @@ void UTIL_GetPlayerConnectionInfo( int playerIndex, int& ping, int &packetloss )
 		// then updaterate, what is the case for default settings
 		const char * szCmdRate = engine->GetClientConVarValue( playerIndex, "cl_cmdrate" );
 		
-		int nCmdRate = MAX( 1, (int)(float)atof( szCmdRate ) );
+#ifdef OF_DLL
+		int nCmdRate = MAX( 1, (int)(float)atof( szCmdRate ) ); // fix ping masking exploit with negative cmdrate values
+#else
+		int nCmdRate = MAX( 1, Q_atoi( szCmdRate ) );
+#endif
 		latency -= (0.5f/nCmdRate) + TICKS_TO_TIME( 1.0f ); // correct latency
 
 		// in GoldSrc we had a different, not fixed tickrate. so we have to adjust
@@ -1382,11 +1386,19 @@ static void SetMinMaxSize (CBaseEntity *pEnt, const Vector& mins, const Vector& 
 	{
 		if ( mins[i] > maxs[i] )
 		{
-			Error("%i/%s - %s:  backwards mins/maxs: %s\n\nIf you are getting this error on a dedicated server, your server is likely not mounting Team Fortress 2 correctly.\nMake sure to specify full paths to TF2 in the gameinfo.txt.", pEnt->entindex(),
+#ifdef OF_DLL
+			Error("%i/%s - %s:  backwards mins/maxs: %s\n\nIf you are getting this error, your game is not mounting Team Fortress 2 correctly.\nInstall TF2 if you haven't already, or try specifying full drive paths to TF2 in the gameinfo.txt.", pEnt->entindex(),
 				STRING( pEnt->GetEntityName() ),
 				pEnt->GetClassname(), STRING ( pEnt->GetModelName() ) );
+#else
+			Error( "%s: backwards mins/maxs", ( pEnt ) ? pEnt->GetDebugName() : "<NULL>" );
+#endif
 		}
 	}
+	
+#ifndef OF_DLL
+	Assert( pEnt );
+#endif
 
 	pEnt->SetCollisionBounds( mins, maxs );
 }
@@ -1412,11 +1424,16 @@ void UTIL_SetModel( CBaseEntity *pEntity, const char *pModelName )
 	{
 		// Throwing a program-terminating error might be a little too much since we could just precache it here.
 		// If we're not in debug mode, just let it off with a nice warning.
+#ifdef OF_DLL		
 		if ( int newi = CBaseEntity::PrecacheModel( pModelName ) )
 		{
 			i = newi;
 			Warning( "%s was not precached\n", pModelName );
 		}
+#else
+		Error("%i/%s - %s:  UTIL_SetModel:  not precached: %s\n", pEntity->entindex(),
+		return;	
+#endif
 	}
 
 	CBaseAnimating *pAnimating = pEntity->GetBaseAnimating();
@@ -2168,15 +2185,21 @@ void UTIL_ValidateSoundName( string_t &name, const char *defaultStr )
 //          tokenLen - Length of token buffer
 // Output : Returns a pointer to the next token to be parsed.
 //-----------------------------------------------------------------------------
+#ifdef OF_DLL
 const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
+#else
+const char *nexttoken(char *token, const char *str, char sep)
+#endif
 {
 	if ((str == NULL) || (*str == '\0'))
 	{
 		*token = '\0';
+#ifdef OF_DLL		
         if (tokenLen)
         {
             *token = '\0';
         }
+#endif
 		return(NULL);
 	}
 
@@ -2184,12 +2207,20 @@ const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
 	// Copy everything up to the first separator into the return buffer.
 	// Do not include separators in the return buffer.
 	//
+#ifdef OF_DLL
 	while ((*str != sep) && (*str != '\0') && (tokenLen > 1))
 	{
 		*token++ = *str++;
 	}
-	
+#else
+	while ((*str != sep) && (*str != '\0'))
+	{
+		*token++ = *str++;
+	}
+	*token = '\0';
+#endif
 
+#ifdef OF_DLL 
     //
     // If the token is too big for the return buffer, skip the rest of the token
     //
@@ -2203,6 +2234,7 @@ const char *nexttoken(char *token, const char *str, char sep, size_t tokenLen)
         *token = '\0';
         tokenLen--;
     }
+#endif
 
 	//
 	// Advance the pointer unless we hit the end of the input string.

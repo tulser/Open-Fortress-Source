@@ -44,7 +44,7 @@ BEGIN_DATADESC( CTFGenericBomb )
 	DEFINE_INPUTFUNC( FIELD_VOID, "Detonate", InputDetonate ),
 END_DATADESC()
 
-PRECACHE_REGISTER( tf_generic_bomb );
+//PRECACHE_REGISTER( tf_generic_bomb );
 
 // CTFGenericBomb - tf_generic_bomb
 LINK_ENTITY_TO_CLASS( tf_generic_bomb, CTFGenericBomb );
@@ -84,11 +84,12 @@ void CTFGenericBomb::Spawn()
 	if (!szModel || !*szModel )
 	{
 		Warning( "tf_generic_bomb at %.0f %.0f %0.f missing modelname\n", GetAbsOrigin().x, GetAbsOrigin().y, GetAbsOrigin().z );
-		szModel = "models/props_halloween/pumpkin_explode.mdl";
-		SetModelName( AllocPooledString( szModel ) );
+		UTIL_Remove( this );
+		return;
 	}
 
 	Precache();
+
 	int iModelIndex = PrecacheModel( szModel );
 	PrecacheGibsForModel( iModelIndex );
 	SetModel( szModel );
@@ -209,7 +210,7 @@ BEGIN_DATADESC( CTFPumpkinBomb )
 	DEFINE_KEYFIELD( m_iHealth, FIELD_INTEGER, "health" ),
 END_DATADESC()
 
-PRECACHE_REGISTER( tf_pumpkin_bomb );
+//PRECACHE_REGISTER( tf_pumpkin_bomb );
 
 // CTFPumpkinBomb - tf_generic_bomb
 LINK_ENTITY_TO_CLASS( tf_pumpkin_bomb, CTFPumpkinBomb );

@@ -70,10 +70,10 @@ public:
 	void			DropSingleInstance( const Vector &Velocity, CBaseCombatCharacter *pBCC, float flLifetime, float flTime );
 
 	COutputEvent m_OnRespawn;
-private:
 	bool			m_bDisabled;
 	bool			m_bHide = 1;
 
+private:
 	DECLARE_DATADESC();
 };
 

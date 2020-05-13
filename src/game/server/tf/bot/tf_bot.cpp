@@ -455,7 +455,6 @@ bool CTFBot::IsQuietWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_MEDIGUN:
 		case TF_WEAPON_DISPENSER:
 		case TF_WEAPON_INVIS:
-		case TF_WEAPON_FLAREGUN:
 		//case TF_WEAPON_LUNCHBOX:
 		//case TF_WEAPON_JAR:
 		//case TF_WEAPON_COMPOUND_BOW:
@@ -515,7 +514,6 @@ bool CTFBot::IsHitScanWeapon( CTFWeaponBase *weapon ) const
 		case TF_WEAPON_ASSAULTRIFLE:
 		case TF_WEAPON_PHYSCANNON:
 		case TF_WEAPON_LIGHTNING_GUN:
-		case TF_WEAPON_THUNDERGUN:
 		case TFC_WEAPON_SHOTGUN_SB:
 		case TFC_WEAPON_SHOTGUN_DB:
 		case TFC_WEAPON_RAILPISTOL:
@@ -1253,9 +1251,15 @@ float CTFBot::GetMaxAttackRange() const
 		return 100.0f;
 	}
 
+	// OFBot: hack so bots stop trying to act like a sniper with their pistol
+	if ( weapon->IsWeapon( TF_WEAPON_PISTOL_MERCENARY ) || weapon->IsWeapon( TF_WEAPON_PISTOL_AKIMBO ) )
+	{
+		return 700.0f;
+	}
+
 	if ( weapon->IsWeapon( TF_WEAPON_FLAMETHROWER ) || weapon->IsWeapon( TF_WEAPON_LIGHTNING_GUN ) )
 	{
-		return 250.0f;
+		return 256.0f;
 	}
 
 	if ( IsExplosiveProjectileWeapon( weapon ) )
@@ -1263,7 +1267,12 @@ float CTFBot::GetMaxAttackRange() const
 		return 3000.0f;
 	}
 
-	return FLT_MAX;
+	if ( WeaponID_IsSniperRifle( weapon->GetWeaponID() ) )
+	{
+		return FLT_MAX;
+	}
+
+	return 2048.0f;
 }
 
 //-----------------------------------------------------------------------------
@@ -1421,9 +1430,8 @@ bool CTFBot::ShouldFireCompressionBlast( void )
 			// wow...
 			char szClassname[48];		
 			Q_strncpy( szClassname, pEnt->GetClassname(), sizeof( szClassname ) );
-			Q_strlower( szClassname );
 			
-			if ( !Q_strncmp( szClassname, "tf_projectile", 14 ) /*FClassnameIs( pEnt, "tf_projectile_rocket" ) || FClassnameIs( pEnt, "tf_projectile_energy_ball" )*/ )
+			if ( !Q_strncmp( szClassname, "tf_p", 4 ) /*FClassnameIs( pEnt, "tf_projectile_rocket" ) || FClassnameIs( pEnt, "tf_projectile_energy_ball" )*/ )
 			{
 				if ( GetVisionInterface()->IsLineOfSightClear( pEnt->WorldSpaceCenter() ) )
 					return true;

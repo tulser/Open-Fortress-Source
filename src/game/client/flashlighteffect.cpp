@@ -48,20 +48,16 @@ static ConVar r_flashlightvisualizetrace( "r_flashlightvisualizetrace", "0", FCV
 static ConVar r_flashlightambient( "r_flashlightambient", "0.0", FCVAR_CHEAT );
 static ConVar r_flashlightshadowatten( "r_flashlightshadowatten", "0.35", FCVAR_CHEAT );
 static ConVar r_flashlightladderdist( "r_flashlightladderdist", "40.0", FCVAR_CHEAT );
-#ifndef MAPBASE
 static ConVar mat_slopescaledepthbias_shadowmap( "mat_slopescaledepthbias_shadowmap", "16", FCVAR_CHEAT );
 static ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "0.0005", FCVAR_CHEAT  );
-#else
-static ConVar mat_slopescaledepthbias_shadowmap( "mat_slopescaledepthbias_shadowmap", "4", FCVAR_CHEAT );
-static ConVar mat_depthbias_shadowmap(	"mat_depthbias_shadowmap", "0.00001", FCVAR_CHEAT  );
-#endif
-#ifdef MAPBASE
-static ConVar r_flashlighttextureoverride( "r_flashlighttextureoverride", "", FCVAR_CHEAT );
-#endif
 
 
 void r_newflashlightCallback_f( IConVar *pConVar, const char *pOldString, float flOldValue )
 {
+	if( engine->GetDXSupportLevel() < 70 )
+	{
+		r_newflashlight.SetValue( 0 );
+	}	
 }
 
 //-----------------------------------------------------------------------------
@@ -77,14 +73,11 @@ CFlashlightEffect::CFlashlightEffect(int nEntIndex)
 
 	m_bIsOn = false;
 	m_pPointLight = NULL;
-
-#ifdef MAPBASE
-	if ( r_flashlighttextureoverride.GetString()[0] != '\0' )
+	if( engine->GetDXSupportLevel() < 70 )
 	{
-		m_FlashlightTexture.Init( r_flashlighttextureoverride.GetString(), TEXTURE_GROUP_OTHER, true );
-	}
-	else
-#endif
+		r_newflashlight.SetValue( 0 );
+	}	
+
 	if ( g_pMaterialSystemHardwareConfig->SupportsBorderColor() )
 	{
 		m_FlashlightTexture.Init( "effects/flashlight_border", TEXTURE_GROUP_OTHER, true );

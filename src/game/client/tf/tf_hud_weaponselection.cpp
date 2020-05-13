@@ -24,6 +24,8 @@
 #include "tf_imagepanel.h"
 #include "c_tf_player.h"
 #include "c_tf_weapon_builder.h"
+#include "in_buttons.h"
+#include "iinput.h"
 
 #define SELECTION_TIMEOUT_THRESHOLD		2.5f	// Seconds
 #define SELECTION_FADEOUT_TIME			3.0f
@@ -45,15 +47,16 @@ public:
 	CHudWeaponSelection(const char *pElementName );
 
 	virtual bool ShouldDraw();
-	virtual void OnWeaponPickup( C_BaseCombatWeapon *pWeapon );
+	virtual void OnWeaponPickup( CTFWeaponBase *pWeapon );
 
 	virtual void CycleToNextWeapon( void );
 	virtual void CycleToPrevWeapon( void );
 
-	virtual C_BaseCombatWeapon *GetWeaponInSlot( int iSlot, int iSlotPos );
+	virtual CTFWeaponBase *GetWeaponInSlot( int iSlot, int iSlotPos );
 	virtual void SelectWeaponSlot( int iSlot );
+	virtual bool AffectedByDrawHUD( void ){ return false; }
 
-	virtual C_BaseCombatWeapon	*GetSelectedWeapon( void );
+	virtual CTFWeaponBase	*GetSelectedWeapon( void );
 
 	virtual void OpenSelection( void );
 	virtual void HideSelection( void );
@@ -85,15 +88,15 @@ protected:
 	}
 
 private:
-	C_BaseCombatWeapon *FindNextWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition);
-	C_BaseCombatWeapon *FindPrevWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition);
+	CTFWeaponBase *FindNextWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition);
+	CTFWeaponBase *FindPrevWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition);
 
 	void FastWeaponSwitch( int iWeaponSlot );
 	void PlusTypeFastWeaponSwitch( int iWeaponSlot );
 	int GetNumVisibleSlots();
 	bool ShouldDrawInternal();
 
-	virtual	void SetSelectedWeapon( C_BaseCombatWeapon *pWeapon ) 
+	virtual	void SetSelectedWeapon( CTFWeaponBase *pWeapon ) 
 	{ 
 		m_hSelectedWeapon = pWeapon;
 	}
@@ -126,6 +129,10 @@ private:
 
 	CPanelAnimationVarAliasType( float, m_flSelectionNumberXPos, "SelectionNumberXPos", "4", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flSelectionNumberYPos, "SelectionNumberYPos", "4", "proportional_float" );
+	CPanelAnimationVarAliasType( float, m_flSelectionNumberZPos, "SelectionNumberZPos", "4", "proportional_float" );
+
+	CPanelAnimationVar( int, m_iWeaponBGXPos, "WeaponBGXPos", "10" );
+	CPanelAnimationVar( int, m_iWeaponBGYPos, "WeaponBGYPos", "10" );
 
 	CPanelAnimationVarAliasType( float, m_flIconXPos, "IconXPos", "16", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flIconYPos, "IconYPos", "8", "proportional_float" );
@@ -138,7 +145,8 @@ private:
 
 	CPanelAnimationVar( Color, m_TextColor, "TextColor", "SelectionTextFg" );
 	CPanelAnimationVar( Color, m_NumberColor, "NumberColor", "SelectionNumberFg" );
-	CPanelAnimationVar( Color, m_EmptyBoxColor, "EmptyBoxColor", "SelectionEmptyBoxBg" );
+	CPanelAnimationVar( Color, m_NumberShadowColor, "NumberShadowColor", "SelectionNumberBg" );
+	CPanelAnimationVar( Color, m_EmptyBoxColor, "EmptyBoxColor", "255 255 255 255" );
 	CPanelAnimationVar( Color, m_BoxColor, "BoxColor", "SelectionBoxBg" );
 	CPanelAnimationVar( Color, m_SelectedBoxColor, "SelectedBoxClor", "SelectionSelectedBoxBg" );
 
@@ -146,7 +154,7 @@ private:
 
 	CPanelAnimationVar( float, m_flTextScan, "TextScan", "1.0" );
 
-	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "6" );
+	CPanelAnimationVar( int, m_iMaxSlots, "MaxSlots", "10" );
 	CPanelAnimationVar( bool, m_bPlaySelectionSounds, "PlaySelectSounds", "1" );
 
 	CTFImagePanel *m_pActiveWeaponBG;
@@ -192,7 +200,7 @@ CHudWeaponSelection::CHudWeaponSelection( const char *pElementName ) : CBaseHudW
 //-----------------------------------------------------------------------------
 // Purpose: sets up display for showing weapon pickup
 //-----------------------------------------------------------------------------
-void CHudWeaponSelection::OnWeaponPickup( C_BaseCombatWeapon *pWeapon )
+void CHudWeaponSelection::OnWeaponPickup( CTFWeaponBase *pWeapon )
 {
 	// add to pickup history
 	CHudHistoryResource *pHudHR = GET_HUDELEMENT( CHudHistoryResource );
@@ -243,7 +251,7 @@ bool CHudWeaponSelection::ShouldDraw()
 
 bool CHudWeaponSelection::ShouldDrawInternal()
 {
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 	{
 		if ( IsInSelectionMode() )
@@ -367,11 +375,11 @@ void CHudWeaponSelection::PostChildPaint()
 	}	
 
 	// find and display our current selection
-	C_BaseCombatWeapon *pSelectedWeapon = NULL;
+	CTFWeaponBase *pSelectedWeapon = NULL;
 	switch ( hud_fastswitch.GetInt() )
 	{
 	case HUDTYPE_FASTSWITCH:
-		pSelectedWeapon = pPlayer->GetActiveWeapon();
+		pSelectedWeapon = pPlayer->GetActiveTFWeapon();
 		break;
 	default:
 		pSelectedWeapon = GetSelectedWeapon();
@@ -426,7 +434,7 @@ void CHudWeaponSelection::PostChildPaint()
 				int iMaxSlotPositions = 3;	//MAX_WEAPON_POSITIONS	- no need to do this 20 times, we only have 1 weapon usually
 				for ( int slotPos = 0; slotPos < iMaxSlotPositions; ++slotPos )
 				{
-					C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotPos );
+					CTFWeaponBase *pWeapon = GetWeaponInSlot( i, slotPos );
 					if ( pWeapon )
 					{
 						lastSlotPos = slotPos;
@@ -443,7 +451,7 @@ void CHudWeaponSelection::PostChildPaint()
 					int x = xPos;
 					int y = yPos;
 
-					C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( i, slotPos );
+					CTFWeaponBase *pWeapon = GetWeaponInSlot( i, slotPos );
 
 					bool bSelectedWeapon = ( i == m_iSelectedSlot && slotPos == m_iSelectedBoxPosition );
 
@@ -472,7 +480,7 @@ void CHudWeaponSelection::PostChildPaint()
 							}
 							else
 							{
-								pTexture->DrawSelf( x, y, boxWide, boxTall, col  );
+								pTexture->DrawSelf( x, y, boxWide, boxTall, col );
 							}
 						}
 
@@ -514,39 +522,12 @@ void CHudWeaponSelection::PostChildPaint()
 					bool bFirstItem = true;
 					for ( int slotpos = 0; slotpos < MAX_WEAPON_POSITIONS; slotpos++ )
 					{
-						C_BaseCombatWeapon *pWeapon = GetWeaponInSlot(i, slotpos);
+						CTFWeaponBase *pWeapon = GetWeaponInSlot(i, slotpos);
 						if ( !pWeapon )
 							continue;
 
 						if ( !pWeapon->VisibleInWeaponSelection() )
 							continue;
-
-						if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
-						{
-							// draw selected weapon
-							if ( m_pActiveWeaponBG )
-							{
-								m_pActiveWeaponBG->SetPos( xpos - XRES(10), ypos - YRES(10));
-
-								int shortcut = bFirstItem ? i + 1 : -1;
-
-								if ( IsPC() && shortcut >= 0 )
-								{
-									Color numberColor = m_NumberColor;
-									numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
-									surface()->DrawSetTextColor(numberColor);
-									surface()->DrawSetTextFont(m_hNumberFont);
-									wchar_t wch = '0' + shortcut;
-									surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
-									surface()->DrawUnicodeChar(wch);
-								}
-							}
-						}
-						else
-						{
-							// draw selected weapon
-							DrawBox( xpos + XRES(5), ypos + YRES(5), m_flLargeBoxWide - XRES(10), m_flLargeBoxTall - YRES(10), col, m_flSelectionAlphaOverride, bFirstItem ? i + 1 : -1 );
-						}
 
 						// draw icon
 						const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
@@ -557,10 +538,25 @@ void CHudWeaponSelection::PostChildPaint()
 								pTexture = pWeapon->GetSpriteActive();
 							}
 						}
+						
+						if ( !(pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i )) )
+						{
+							// draw selected weapon
+							DrawBox( xpos + XRES(5), ypos + YRES(5), m_flLargeBoxWide - XRES(10), m_flLargeBoxTall - YRES(10), m_EmptyBoxColor, m_flSelectionAlphaOverride, bFirstItem ? i + 1 : -1 );
+						}						
 
 						if ( pTexture )
 						{
 							pTexture->DrawSelf( xpos, ypos, m_flLargeBoxWide, m_flLargeBoxTall, col );
+						}
+						
+						if ( pWeapon == pSelectedWeapon || ( m_iDemoModeSlot == i ) )
+						{
+							// draw selected weapon
+							if ( m_pActiveWeaponBG )
+							{
+								m_pActiveWeaponBG->SetPos( xpos - XRES(m_iWeaponBGXPos), ypos - YRES(m_iWeaponBGYPos));
+							}
 						}
 
 						if ( !pWeapon->CanBeSelected() )
@@ -573,6 +569,26 @@ void CHudWeaponSelection::PostChildPaint()
 						}
 
 						xpos -= ( m_flLargeBoxWide + m_flBoxGap );
+						
+						int shortcut = bFirstItem ? i + 1 : -1;
+
+						if ( IsPC() && shortcut >= 0 )
+						{
+							Color numberColor = m_NumberColor;
+							Color numberShadowColor = m_NumberShadowColor;
+							numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+							surface()->DrawSetTextFont(m_hNumberFont);
+							wchar_t wch = '0' + shortcut;
+
+							surface()->DrawSetTextPos( xStartPos - XRES(4) - m_flSelectionNumberXPos, ypos + YRES(6) + m_flSelectionNumberYPos );
+							surface()->DrawSetTextColor(numberShadowColor);
+							surface()->DrawUnicodeChar(wch);
+							
+							surface()->DrawSetTextColor(numberColor);
+							surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+							surface()->DrawUnicodeChar(wch);
+						}
+						
 						bFirstItem = false;
 					}
 
@@ -588,7 +604,7 @@ void CHudWeaponSelection::PostChildPaint()
 						// draw has weapon in slot
 						DrawBox( xpos + XRES(5), ypos + YRES(5), m_flSmallBoxWide - XRES(10), m_flSmallBoxTall - YRES(10), m_BoxColor, m_flAlphaOverride, i + 1 );
 
-						C_BaseCombatWeapon *pWeapon = GetFirstPos( i );
+						CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetFirstPos(i);
 						if ( !pWeapon )
 							continue;
 
@@ -606,8 +622,23 @@ void CHudWeaponSelection::PostChildPaint()
 							pTexture->DrawSelf( xpos, ypos, m_flSmallBoxWide, m_flSmallBoxTall, col  );
 						}
 
+						Color numberColor = m_NumberColor;
+						Color numberShadowColor = m_NumberShadowColor;
+						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+						surface()->DrawSetTextFont(m_hNumberFont);
+						wchar_t wch = '0' + (i+1);
+
+						surface()->DrawSetTextPos( xStartPos - XRES(4) - m_flSelectionNumberXPos, ypos + YRES(6) + m_flSelectionNumberYPos );
+						surface()->DrawSetTextColor(numberShadowColor);
+						surface()->DrawUnicodeChar(wch);
+						
+						surface()->DrawSetTextColor(numberColor);
+						surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
+						surface()->DrawUnicodeChar(wch);
+
 						ypos += ( m_flSmallBoxTall + m_flBoxGap );	
 					}
+							
 				}
 			}
 		}
@@ -781,20 +812,20 @@ void CHudWeaponSelection::HideSelection( void )
 //-----------------------------------------------------------------------------
 // Purpose: Returns the next available weapon item in the weapon selection
 //-----------------------------------------------------------------------------
-C_BaseCombatWeapon *CHudWeaponSelection::FindNextWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition)
+CTFWeaponBase *CHudWeaponSelection::FindNextWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition)
 {
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return NULL;
 
-	C_BaseCombatWeapon *pNextWeapon = NULL;
+	CTFWeaponBase *pNextWeapon = NULL;
 
 	// search all the weapons looking for the closest next
 	int iLowestNextSlot = MAX_WEAPON_SLOTS;
 	int iLowestNextPosition = MAX_WEAPON_POSITIONS;
 	for ( int i = 0; i < MAX_WEAPONS; i++ )
 	{
-		C_BaseCombatWeapon *pWeapon = pPlayer->GetWeapon(i);
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(i);
 		if ( !pWeapon )
 			continue;
 
@@ -822,20 +853,20 @@ C_BaseCombatWeapon *CHudWeaponSelection::FindNextWeaponInWeaponSelection(int iCu
 //-----------------------------------------------------------------------------
 // Purpose: Returns the prior available weapon item in the weapon selection
 //-----------------------------------------------------------------------------
-C_BaseCombatWeapon *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition)
+CTFWeaponBase *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCurrentSlot, int iCurrentPosition)
 {
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return NULL;
 
-	C_BaseCombatWeapon *pPrevWeapon = NULL;
+	CTFWeaponBase *pPrevWeapon = NULL;
 
 	// search all the weapons looking for the closest next
 	int iLowestPrevSlot = -1;
 	int iLowestPrevPosition = -1;
 	for ( int i = 0; i < MAX_WEAPONS; i++ )
 	{
-		C_BaseCombatWeapon *pWeapon = pPlayer->GetWeapon(i);
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(i);
 		if ( !pWeapon )
 			continue;
 
@@ -866,18 +897,18 @@ C_BaseCombatWeapon *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCu
 void CHudWeaponSelection::CycleToNextWeapon( void )
 {
 	// Get the local player.
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
 	if ( pPlayer->IsAlive() == false )
 		return;
 
-	C_BaseCombatWeapon *pNextWeapon = NULL;
+	CTFWeaponBase *pNextWeapon = NULL;
 	if ( IsInSelectionMode() )
 	{
 		// find the next selection spot
-		C_BaseCombatWeapon *pWeapon = GetSelectedWeapon();
+		CTFWeaponBase *pWeapon = GetSelectedWeapon();
 		if ( !pWeapon )
 			return;
 
@@ -886,7 +917,7 @@ void CHudWeaponSelection::CycleToNextWeapon( void )
 	else
 	{
 		// open selection at the current place
-		pNextWeapon = pPlayer->GetActiveWeapon();
+		pNextWeapon = pPlayer->GetActiveTFWeapon();
 		if ( pNextWeapon )
 		{
 			pNextWeapon = FindNextWeaponInWeaponSelection( pNextWeapon->GetSlot(), pNextWeapon->GetPosition() );
@@ -924,18 +955,18 @@ void CHudWeaponSelection::CycleToNextWeapon( void )
 void CHudWeaponSelection::CycleToPrevWeapon( void )
 {
 	// Get the local player.
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
 	if ( pPlayer->IsAlive() == false )
 		return;
 
-	C_BaseCombatWeapon *pNextWeapon = NULL;
+	CTFWeaponBase *pNextWeapon = NULL;
 	if ( IsInSelectionMode() )
 	{
 		// find the next selection spot
-		C_BaseCombatWeapon *pWeapon = GetSelectedWeapon();
+		CTFWeaponBase *pWeapon = GetSelectedWeapon();
 		if ( !pWeapon )
 			return;
 
@@ -944,7 +975,7 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 	else
 	{
 		// open selection at the current place
-		pNextWeapon = pPlayer->GetActiveWeapon();
+		pNextWeapon = pPlayer->GetActiveTFWeapon();
 		if ( pNextWeapon )
 		{
 			pNextWeapon = FindPrevWeaponInWeaponSelection( pNextWeapon->GetSlot(), pNextWeapon->GetPosition() );
@@ -979,15 +1010,15 @@ void CHudWeaponSelection::CycleToPrevWeapon( void )
 //-----------------------------------------------------------------------------
 // Purpose: returns the weapon in the specified slot
 //-----------------------------------------------------------------------------
-C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPos )
+CTFWeaponBase *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPos )
 {
-	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *player = C_TFPlayer::GetLocalTFPlayer();
 	if ( !player )
 		return NULL;
 
 	for ( int i = 0; i < MAX_WEAPONS; i++ )
 	{
-		C_BaseCombatWeapon *pWeapon = player->GetWeapon(i);
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)player->GetWeapon(i);
 		
 		if ( pWeapon == NULL )
 			continue;
@@ -999,16 +1030,17 @@ C_BaseCombatWeapon *CHudWeaponSelection::GetWeaponInSlot( int iSlot, int iSlotPo
 	return NULL;
 }
 
-C_BaseCombatWeapon *CHudWeaponSelection::GetSelectedWeapon( void )
+CTFWeaponBase *CHudWeaponSelection::GetSelectedWeapon( void )
 { 
 	if ( hud_fastswitch.GetInt() == 0 && m_iDemoModeSlot >= 0 )
 	{
-		C_BaseCombatWeapon *pWeapon = GetFirstPos( m_iDemoModeSlot );
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetFirstPos( m_iDemoModeSlot );
 		return pWeapon;
 	}
 	else
 	{
-		return m_hSelectedWeapon;
+		C_BaseCombatWeapon *pWeapon = m_hSelectedWeapon.Get();
+		return (CTFWeaponBase *)pWeapon;
 	}
 }
 
@@ -1042,20 +1074,20 @@ void CHudWeaponSelection::FireGameEvent( IGameEvent *event )
 void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 {
 	// get the slot the player's weapon is in
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
 	// see where we should start selection
 	int iPosition = -1;
-	C_BaseCombatWeapon *pActiveWeapon = pPlayer->GetActiveWeapon();
+	CTFWeaponBase *pActiveWeapon = pPlayer->GetActiveTFWeapon();
 	if ( pActiveWeapon && pActiveWeapon->GetSlot() == iWeaponSlot )
 	{
 		// start after this weapon
 		iPosition = pActiveWeapon->GetPosition();
 	}
 
-	C_BaseCombatWeapon *pNextWeapon = NULL;
+	CTFWeaponBase *pNextWeapon = NULL;
 
 	// search for the weapon after the current one
 	pNextWeapon = FindNextWeaponInWeaponSelection(iWeaponSlot, iPosition);
@@ -1088,7 +1120,7 @@ void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 {
 	// get the slot the player's weapon is in
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
@@ -1123,7 +1155,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 		int lastSlotPos = -1;
 		for ( int slotPos = 0; slotPos < MAX_WEAPON_POSITIONS; ++slotPos )
 		{
-			C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( newSlot, slotPos );
+			CTFWeaponBase *pWeapon = GetWeaponInSlot( newSlot, slotPos );
 			if ( pWeapon )
 			{
 				lastSlotPos = slotPos;
@@ -1146,8 +1178,8 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 
 	// Select the weapon in this position
 	bool bWeaponSelected = false;
-	C_BaseCombatWeapon *pActiveWeapon = pPlayer->GetActiveWeapon();
-	C_BaseCombatWeapon *pWeapon = GetWeaponInSlot( m_iSelectedSlot, m_iSelectedBoxPosition );
+	CTFWeaponBase *pActiveWeapon = pPlayer->GetActiveTFWeapon();
+	CTFWeaponBase *pWeapon = GetWeaponInSlot( m_iSelectedSlot, m_iSelectedBoxPosition );
 	if ( pWeapon && CanBeSelectedInHUD( pWeapon ) )
 	{
 		if ( pWeapon != pActiveWeapon )
@@ -1162,7 +1194,7 @@ void CHudWeaponSelection::PlusTypeFastWeaponSwitch( int iWeaponSlot )
 	if ( !bWeaponSelected )
 	{
 		// Still need to set this to make hud display appear
-		SetSelectedWeapon( pPlayer->GetActiveWeapon() );
+		SetSelectedWeapon( pPlayer->GetActiveTFWeapon() );
 	}
 }
 
@@ -1175,7 +1207,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 	--iSlot;
 
 	// Get the local player.
-	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
 
@@ -1210,7 +1242,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 	case HUDTYPE_BUCKETS:
 		{
 			int slotPos = 0;
-			C_BaseCombatWeapon *pActiveWeapon = GetSelectedWeapon();
+			CTFWeaponBase *pActiveWeapon = GetSelectedWeapon();
 
 			// start later in the list
 			if ( IsInSelectionMode() && pActiveWeapon && pActiveWeapon->GetSlot() == iSlot )
@@ -1219,10 +1251,10 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 			}
 
 			// find the weapon in this slot
-			pActiveWeapon = GetNextActivePos( iSlot, slotPos );
+			pActiveWeapon = (CTFWeaponBase *)GetNextActivePos(iSlot, slotPos);
 			if ( !pActiveWeapon )
 			{
-				pActiveWeapon = GetNextActivePos( iSlot, 0 );
+				pActiveWeapon = (CTFWeaponBase *)GetNextActivePos(iSlot, 0);
 			}
 			
 			if ( pActiveWeapon != NULL )

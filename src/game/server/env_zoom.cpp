@@ -74,18 +74,12 @@ float GetZoomOwnerDesiredFOV( CBaseEntity *pZoomOwner )
 //-----------------------------------------------------------------------------
 void CEnvZoom::InputZoom( inputdata_t &inputdata )
 {
-	// SecobMod__Enable_Fixed_Multiplayer_AI
-	CBasePlayer *pPlayer;
-
-	if (inputdata.pActivator && inputdata.pActivator->IsPlayer())
-		pPlayer = ToBasePlayer(inputdata.pActivator);
-	else
-		pPlayer= UTIL_GetNearestPlayer(GetAbsOrigin()); 
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
 
 	if ( pPlayer )
 	{
 
-#ifndef OPENFORTRESS_DLL //#ifdef HL2_DLL
+#ifdef HL2_DLL
 		if ( pPlayer == pPlayer->GetFOVOwner() )
 		{
 			CHL2_Player *pHLPlayer = static_cast<CHL2_Player*>( pPlayer );
@@ -111,12 +105,7 @@ void CEnvZoom::InputZoom( inputdata_t &inputdata )
 //-----------------------------------------------------------------------------
 void CEnvZoom::InputUnZoom( inputdata_t &inputdata )
 {
-	// SecobMod__Enable_Fixed_Multiplayer_AI
-	CBasePlayer *pPlayer;
-	if (inputdata.pActivator && inputdata.pActivator->IsPlayer())
-		pPlayer = ToBasePlayer(inputdata.pActivator);
-	else
-		pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
+	CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
 
 	if ( pPlayer )
 	{
