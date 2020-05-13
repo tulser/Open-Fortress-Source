@@ -38,8 +38,6 @@ public:
 	void	Spawn( void );
 	int		DrawModel( int flags );
 	int		GetWeaponID(){ return AliasToWeaponID( m_iszWeaponName ); };
-	bool	IsSuperWeapon();
-	const char *GetSuperWeaponsIncomingLine( void );
 	virtual C_BaseEntity *GetItemTintColorOwner( void )
 	{
 		return (C_BaseEntity *) C_BasePlayer::GetLocalPlayer();
@@ -59,11 +57,9 @@ private:
 		bool	m_bDisableShowOutline;
 		bool	m_bShouldGlow;
 		bool	m_bRespawning;
+		bool    m_bSuperWeapon;
 		bool	bInitialDelay;
 		int		iTeamNum;
-		bool	bSuperWeapon;
-		bool	bParsed;
-		bool	bWarningTriggered;
 		
 		float				fl_RespawnTime;
 		float				m_flRespawnTick;
@@ -90,6 +86,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_WeaponSpawner, DT_WeaponSpawner, CWeaponSpawner )
 	RecvPropBool( RECVINFO( m_bDisableShowOutline ) ),
 	RecvPropBool( RECVINFO( m_bRespawning ) ),
 	RecvPropBool( RECVINFO( bInitialDelay ) ),
+	RecvPropBool( RECVINFO( m_bSuperWeapon ) ),
 	RecvPropTime( RECVINFO( fl_RespawnTime ) ),
 	RecvPropTime( RECVINFO( m_flRespawnTick ) ),
 	RecvPropTime( RECVINFO( fl_RespawnDelay ) ),
@@ -98,7 +95,6 @@ END_RECV_TABLE()
 
 C_WeaponSpawner::C_WeaponSpawner()
 {
-	bParsed = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -110,6 +106,8 @@ void C_WeaponSpawner::Spawn( void )
 	absAngle = GetAbsAngles();
 	iTeamNum = TEAM_INVALID;
 
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
+
 	UpdateGlowEffect();
 
 	ClientThink();
@@ -120,20 +118,6 @@ void C_WeaponSpawner::Spawn( void )
 //-----------------------------------------------------------------------------
 void C_WeaponSpawner::ClientThink( void )
 {
-	if( IsSuperWeapon() )
-	{
-		if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
-		{
-			TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetSuperWeaponsIncomingLine() );
-			bWarningTriggered = true;
-		}
-		else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
-		{
-			bWarningTriggered = false;
-		}
-		if ( bWarningTriggered && !m_bRespawning )
-			bWarningTriggered = false;	
-	}
 	if ( !m_bDisableSpin )
 	{
 		absAngle.y += 90 * gpGlobals->frametime;
@@ -152,12 +136,13 @@ void C_WeaponSpawner::ClientThink( void )
 		return;
 	}
 	
-	if( 										// Don't glow if
+	if  ( 										// Don't glow if
 		( !of_allow_allclass_spawners.GetBool() && !pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) ||  // Or we're not merc
-		( building_cubemaps.GetBool() ) // or we're building cubemaps
-	)
+		( building_cubemaps.GetBool() 
+		) // or we're building cubemaps
+		)
 	{
-		if( m_bShouldGlow )
+		if ( m_bShouldGlow )
 		{
 			m_bShouldGlow = false;
 			UpdateGlowEffect();
@@ -168,7 +153,7 @@ void C_WeaponSpawner::ClientThink( void )
 	
 	if ( !m_bRespawning ) 
 	{
-		if ( IsSuperWeapon() )
+		if ( m_bSuperWeapon )
 			bShouldGlow = true;
 		else
 		{
@@ -197,14 +182,18 @@ void C_WeaponSpawner::ClientThink( void )
 //-----------------------------------------------------------------------------
 void C_WeaponSpawner::UpdateGlowEffect( void )
 {
-	DestroyGlowEffect();
-	
-	if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
-		m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
-/*
-	if ( !m_bShouldGlow && m_pGlowEffect )
-		m_pGlowEffect->SetAlpha( 0.0f );
-*/
+	if ( m_pGlowEffect )
+	{
+		if ( !m_bDisableShowOutline && m_bShouldGlow && !building_cubemaps.GetBool() )
+		{
+			m_pGlowEffect->SetColor( TFGameRules()->GetTeamGlowColor( GetLocalPlayerTeam() ) );
+			m_pGlowEffect->SetAlpha( of_glow_alpha.GetFloat() );
+		}
+		else
+		{
+			m_pGlowEffect->SetAlpha( 0.0f );
+		}
+	}
 }
 
 void C_WeaponSpawner::DestroyGlowEffect(void)
@@ -413,40 +402,6 @@ int C_WeaponSpawner::DrawModel( int flags )
 	}
 
 	return nRetVal;
-}
-
-bool C_WeaponSpawner::IsSuperWeapon( void )
-{ 	
-	if ( bParsed )
-		return bSuperWeapon;
-	
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName );
-	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-	
-	if (!pWeaponInfo)
-		return false;
-
-	
-	bSuperWeapon = pWeaponInfo->m_bAlwaysDrop;
-	bParsed = true;
-	
-	return bSuperWeapon;
-}
-
-const char *C_WeaponSpawner::GetSuperWeaponsIncomingLine( void )
-{ 	
-	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName );
-	
-	switch ( m_iWeaponID )
-	{
-		case TF_WEAPON_GIB:
-		return "GIBIncoming";
-		break;
-		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
-		return "QuadIncoming";
-		break;		
-	}
-	return "SuperWeaponsIncoming";
 }
 
 extern ConVar of_weaponspawners;

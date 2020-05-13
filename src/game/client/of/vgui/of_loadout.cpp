@@ -865,9 +865,12 @@ void CTFLoadoutPanel::PerformLayout()
 	BaseClass::PerformLayout();
 
 	// Set the animation.
-	m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
-	m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
-	m_pClassModel->Update();
+	if ( m_pClassModel )
+	{
+		m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
+		m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
+		m_pClassModel->Update();
+	}
 	
 	m_iCurrentParticle = of_respawn_particle.GetInt();
 }
@@ -879,6 +882,9 @@ QUICK_CVAR(of_bodygroup_value)
 void CTFLoadoutPanel::PaintBackground()
 {
 	BaseClass::PaintBackground();
+
+	if ( !m_pClassModel )
+		return;
 
 	if( m_iCurrentParticle != of_respawn_particle.GetInt() )
 	{

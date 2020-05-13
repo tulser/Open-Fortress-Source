@@ -132,7 +132,7 @@ ConVar of_resistance		( "of_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY
 
 ConVar of_fullammo			("of_fullammo", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Weapons have full ammo when dropped.");
 
-ConVar of_selfdamage		( "of_selfdamage", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Weather or not you should deal self damage with explosives.",true, -1, true, 1  );
+ConVar of_selfdamage		( "of_selfdamage", "-1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Whether or not you should deal self damage with explosives.",true, -1, true, 1  );
 
 ConVar of_knockback_all("of_knockback_all", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for all damage types.");
 ConVar of_knockback_bullets("of_knockback_bullets", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY, "Multiplies damage impulse for bullets.");
@@ -251,6 +251,7 @@ public:
 	CNetworkVar( unsigned short, m_iGoreRightLeg );
 	
 	CNetworkVar( bool, m_bFlagOnGround );
+	CNetworkVar( bool, m_bDissolve );
 };
 
 LINK_ENTITY_TO_CLASS( tf_ragdoll, CTFRagdoll );
@@ -272,6 +273,7 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CTFRagdoll, DT_TFRagdoll )
 	SendPropInt( SENDINFO( m_iGoreLeftLeg ), 2, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iGoreRightLeg ), 2, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bFlagOnGround ) ),
+	SendPropBool( SENDINFO( m_bDissolve ) ),
 END_SEND_TABLE()
 
 // -------------------------------------------------------------------------------- //
@@ -519,7 +521,7 @@ CTFPlayer::CTFPlayer()
 	
 	m_purgatoryDuration.Invalidate();
 	m_lastCalledMedic.Invalidate();
-
+	
 	m_chzVMCosmeticGloves = NULL;
 	m_chzVMCosmeticSleeves = NULL;
 }
@@ -1101,15 +1103,18 @@ void CTFPlayer::Spawn()
 //	DestroyViewModels();
 	
 	CreateViewModel( TF_VIEWMODEL_WEAPON );
-	CreateViewModel( TF_VIEWMODEL_SPYWATCH );
 	CreateViewModel( TF_VIEWMODEL_ARMS );
 	CreateViewModel( TF_VIEWMODEL_COSMETICS );
-
+	
 	// Make sure it has no model set, in case it had one before
-
-	if ( GetViewModel( TF_VIEWMODEL_SPYWATCH ) )
-		GetViewModel( TF_VIEWMODEL_SPYWATCH )->SetModel( "" );
-
+	if ( IsPlayerClass ( TF_CLASS_SPY ) )
+	{
+		CreateViewModel( TF_VIEWMODEL_SPYWATCH );
+		
+		if ( GetViewModel( TF_VIEWMODEL_SPYWATCH ) )
+			GetViewModel( TF_VIEWMODEL_SPYWATCH )->SetModel( "" );
+	}
+	
 	GetViewModel(TF_VIEWMODEL_ARMS)->SetModel( GetPlayerClass()->GetArmModelName() );
 
 	GetViewModel(TF_VIEWMODEL_ARMS)->m_nSkin = GetTeamNumber() - 2;
@@ -1338,11 +1343,11 @@ void CTFPlayer::UpdateCosmetics()
 			
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
 			kvDesiredCosmetics->SetString( szRegion, args[i] );
-
+			
 			if ( !Q_stricmp( szRegion, "gloves" ) )
 				m_chzVMCosmeticGloves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
 			else if ( !Q_stricmp(szRegion, "suit") )
-				m_chzVMCosmeticSleeves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
+				m_chzVMCosmeticSleeves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );			
 
 			// undone: causes too much stuttering, its now done in tf_gamerules precache instead
 			//const char *pModel = pCosmetic->GetString( "Model" , "models/error.mdl" );
@@ -1383,7 +1388,6 @@ void CTFPlayer::UpdateCosmetics()
 			GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin = GetTeamNumber() - 2;
 		}
 	}
-
 }
 
 void CTFPlayer::ClearSlots()
@@ -1507,6 +1511,7 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 		DispatchSpawn( pViewModel );
 		pViewModel->FollowEntity( this, false );
 		pViewModel->SetParent( NULL );
+		pViewModel->SetLightingOrigin( GetLightingOrigin() );
 		m_hViewModel.Set( iViewModel, pViewModel );
 	}
 	
@@ -1540,7 +1545,6 @@ void CTFPlayer::CreateViewModel( int iViewModel )
 			vmsleeves->SetLightingOrigin(pViewModel->GetLightingOrigin());
 			m_hViewModel.Set(iViewModel + 3, vmsleeves);
 		}
-
 	}
 }
 
@@ -2694,10 +2698,10 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 					}
 				}	
 			}
-		}
 
-		// Found a valid spawn point.
-		return true;
+			// Found a valid spawn point.
+			return true;
+		}
 	}
 
 	return false;
@@ -4417,6 +4421,8 @@ bool CTFPlayer::DropCurrentWeapon( void )
 	int Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
+// akimbo pickups have pewished
+#if 0
 	if ( m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -4425,6 +4431,7 @@ bool CTFPlayer::DropCurrentWeapon( void )
 		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
 	}
 	else
+#endif
 	{
 		DropWeapon( m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
@@ -5685,6 +5692,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	}
+	// akimbo pickups have pewished	
+#if 0
 	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -5693,6 +5702,9 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		pTFPistol = NULL;
 	}
 	else if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
+		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );	
+#endif
+	if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
 		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );
 	
 	Clip = -1;
@@ -6327,6 +6339,8 @@ void CC_DropWeapon( void )
 	int Clip = pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
+	// akimbo pickups have pewished
+#if 0
 	if ( pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -6335,6 +6349,7 @@ void CC_DropWeapon( void )
 		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 	}
 	else
+#endif
 	{
 		pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
@@ -6421,7 +6436,7 @@ CTFWeaponBase *CTFPlayer::GetWeaponInSlot( int iSlot, int iSlotPos )
 {
 	if( m_hWeaponInSlot[iSlot][iSlotPos] )
 		return m_hWeaponInSlot[iSlot][iSlotPos];
-	DevMsg("Failed to find a weapon\n");
+
 	return NULL;
 }
 
@@ -6485,7 +6500,6 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	// We need to find bones on the world model, so switch the weapon to it.
 	const char *pszWorldModel = pWeapon->GetWorldModel();
 	pWeapon->SetModel( pszWorldModel );
-
 	
 	// Find the position and angle of the weapons so the "ammo box" matches.
 	Vector vecPackOrigin;
@@ -6496,51 +6510,10 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	int m_iWeaponID = pWeapon->GetWeaponID();
 
 	// Create the ammo pack.
-	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel );
+	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel, m_iWeaponID, pWeapon->GetClassname() );
 	Assert( pDroppedWeapon );
 	if ( pDroppedWeapon )
 	{
-		// Remove all of the players ammo.
-
-		// Fill up the ammo pack.
-		pDroppedWeapon->WeaponID = m_iWeaponID;
-		
-///////
-/*	
-			// It has been discovered that it's possible to throw the physcannon out of the world this way.
-			// So try to find a direction to throw the physcannon that's legal.
-			QAngle gunAngles;
-			VectorAngles( BodyDirection2D(), gunAngles );
-
-			Vector vecForward;
-			AngleVectors( gunAngles, &vecForward, NULL, NULL );
-			Vector pVecThrowDir;
-			Vector vecForward;
-			Vector vecOrigin = EyePosition();
-			Vector vecRightThrow;
-
-			CrossProduct( vecForward, Vector( 0, 0, 1), vecRightThrow );
-
-			Vector vecTest[ 4 ];
-			vecTest[0] = vecForward;
-			vecTest[1] = -vecForward;
-			vecTest[2] = vecRightThrow;
-			vecTest[3] = -vecRightThrow;
-
-			trace_t tr;
-			int i;
-			for( i = 0 ; i < 4 ; i++ )
-			{
-				UTIL_TraceLine( vecOrigin, vecOrigin + vecTest[ i ] * 48.0f, MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
-
-				if ( !tr.startsolid && tr.fraction == 1.0f )
-				{
-					pVecThrowDir = vecTest[ i ];
-				}
-			}
-
-*/
-///////		
 		Vector vecRight, vecUp;
 		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
 
@@ -6701,6 +6674,7 @@ bool CTFPlayer::IsRetroModeOn( void )
 void CTFPlayer::UpdateModel( void )
 {
 	SetModel( GetPlayerClass()->GetModelName() );
+	m_PlayerAnimState->OnNewModel();
 }
 
 
@@ -6795,6 +6769,8 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	}
+	// akimbo pickups have pewished
+#if 0
 	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -6803,6 +6779,7 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 		pTFPistol = NULL;
 	}
 	else
+#endif
 		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 
 	TeamFortress_RemoveEverythingFromWorld();
@@ -8004,6 +7981,7 @@ void CTFPlayer::CreateRagdollEntity( bool bGib, bool bBurning, bool bDissolve, b
 		pRagdoll->m_iGoreLeftLeg = m_iGoreLeftLeg;
 		pRagdoll->m_iGoreRightLeg = m_iGoreRightLeg;
 		pRagdoll->m_bFlagOnGround = bFlagOnGround;
+		pRagdoll->m_bDissolve = bDissolve;
 
 		if ( bDissolve )
 			pRagdoll->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );

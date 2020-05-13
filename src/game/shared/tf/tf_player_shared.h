@@ -238,7 +238,7 @@ public:
 
 	void	DebugPrintConditions( void );
 
-	int		PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom );
+	int		PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCustom, bool bDissolve );
 
 	float	GetStealthNoAttackExpireTime( void );
 

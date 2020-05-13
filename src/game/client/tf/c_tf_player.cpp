@@ -91,7 +91,9 @@ ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT, "Max 
 
 ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, sniper rifle will re-zoom after firing a zoomed shot." );
 
-ConVar of_muzzlelight("of_muzzlelight", "1", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
+// ficool2: disabled this by default as it causes framerate issues
+ConVar of_muzzlelight("of_muzzlelight", "0", FCVAR_CHEAT, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
+
 ConVar of_beta_muzzleflash("of_beta_muzzleflash", "0", FCVAR_ARCHIVE, "Enable the TF2 beta muzzleflash model when firing.");
 
 ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake." );
@@ -120,6 +122,8 @@ ConVar cl_quickzoom( "cl_quickzoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Softz
 ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces death animation." );
 
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
+
+ConVar of_respawn_particles( "of_respawn_particles", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Draw respawn particles of players?" );
 
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
@@ -677,6 +681,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_iGoreLeftLeg ) ),
 	RecvPropInt( RECVINFO( m_iGoreRightLeg ) ),
 	RecvPropBool( RECVINFO( m_bFlagOnGround ) ),
+	RecvPropBool( RECVINFO( m_bDissolve ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -713,6 +718,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iGoreRightLeg = 0;
 
 	m_bFlagOnGround = false;
+	m_bDissolve = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1350,8 +1356,21 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 					if( !pCosmetic )
 						continue;
 
-					if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+					// can't draw headwear regions in firstperson ragdolls
+					if ( cl_fp_ragdoll.GetBool() && pPlayer == C_TFPlayer::GetLocalTFPlayer() )
 					{
+						const char *pRegion = pCosmetic->GetString( "region" );
+						if ( pRegion && ( !Q_strcmp( pRegion, "hat" ) || 
+							 !Q_strcmp( pRegion, "face" ) || 
+							 !Q_strcmp( pRegion, "glasses" ) ) )
+						{
+							continue;
+						}
+					}
+
+					if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+					{
+
 						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
 						
 						if( handle )
@@ -1381,7 +1400,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 	if ( pPlayer && m_bFlagOnGround && ( iRandom == 1 || tf_always_deathanim.GetBool() ) )
 	{
-		int iSeq = pPlayer->m_Shared.PlayDeathAnimation( this, m_iDamageCustom );
+		int iSeq = pPlayer->m_Shared.PlayDeathAnimation( this, m_iDamageCustom, m_bDissolve );
 
 		if ( iSeq != -1 )
 		{
@@ -4994,17 +5013,20 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		RefreshDesiredWeapons( GetPlayerClass()->GetClassIndex() );
 	}
 	
-	// don't draw the respawn particle in first person
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
+	// don't draw the respawn particle in first person or if the client has them disabled
+	if ( of_respawn_particles.GetBool() )
 	{
-		char pEffectName[32];
-		pEffectName[0] = '\0';
-		if ( m_Shared.GetSpawnEffects() < 10 )
-			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
-		else
-			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
-		if ( pEffectName[0] != '\0' )
-			m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
+		{
+			char pEffectName[32];
+			pEffectName[0] = '\0';
+			if ( m_Shared.GetSpawnEffects() < 10 )
+				Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
+			else
+				Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
+			if ( pEffectName[0] != '\0' )
+				m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );
+		}
 	}
 	
 	UpdateVisibility();

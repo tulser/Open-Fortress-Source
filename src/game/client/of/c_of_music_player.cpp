@@ -67,19 +67,19 @@ void C_TFMusicPlayer::ClientThink( void )
 
 	if ( !bParsed )
 	{
-		SetNextClientThink( CLIENT_THINK_ALWAYS );
+		SetNextClientThink( gpGlobals->curtime + 0.1f );
 		return;
 	}
 	
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pLocalPlayer )
 	{
-		SetNextClientThink( CLIENT_THINK_ALWAYS );
+		SetNextClientThink( gpGlobals->curtime + 0.1f );
 		return;
 	}
 	if ( pLocalPlayer->m_Shared.InState( TF_STATE_WELCOME ) )
 	{
-		SetNextClientThink( CLIENT_THINK_ALWAYS );
+		SetNextClientThink( gpGlobals->curtime + 0.1f );
 		return;
 	}
 
@@ -113,7 +113,7 @@ void C_TFMusicPlayer::ClientThink( void )
 
 	HandleVolume();
 	
-	SetNextClientThink( CLIENT_THINK_ALWAYS );
+	SetNextClientThink( gpGlobals->curtime + 0.1f );
 }
 
 static const ConVar *snd_musicvolume = NULL;

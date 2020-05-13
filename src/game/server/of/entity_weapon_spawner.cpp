@@ -47,6 +47,7 @@ DEFINE_KEYFIELD(m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow"),
 DEFINE_KEYFIELD(m_iIndex, FIELD_INTEGER, "Index"),
 DEFINE_INPUTFUNC( FIELD_STRING, "SetWeaponModel", InputSetWeaponModel ),
 DEFINE_INPUTFUNC( FIELD_STRING, "SetWeaponName", InputSetWeaponName ),
+DEFINE_THINKFUNC( AnnouncerThink ),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
@@ -54,6 +55,7 @@ IMPLEMENT_SERVERCLASS_ST( CWeaponSpawner, DT_WeaponSpawner )
 	SendPropBool( SENDINFO( m_bDisableShowOutline ) ),
 	SendPropBool( SENDINFO( m_bRespawning ) ),
 	SendPropBool( SENDINFO( bInitialDelay ) ),
+	SendPropBool( SENDINFO( m_bSuperWeapon ) ),
 	SendPropTime( SENDINFO( m_flRespawnTick ) ),
 	SendPropTime( SENDINFO( fl_RespawnTime ) ),
 	SendPropTime( SENDINFO( fl_RespawnDelay ) ),
@@ -73,6 +75,8 @@ CWeaponSpawner::CWeaponSpawner()
 	szPickupSound = MAKE_STRING( "Player.PickupWeapon" );
 	ResetSequence( LookupSequence("spin") );
 	UTIL_SetSize( this, -Vector(8,8,8), Vector(8,8,8) );
+	pWeaponInfo = NULL;
+	bWarningTriggered = false;
 }
 
 void CWeaponSpawner::Spawn( void )
@@ -88,20 +92,20 @@ void CWeaponSpawner::Spawn( void )
 		 !TFGameRules()->IsGGGamemode() )
 	{
 		Q_strncpy( m_iszWeaponName.GetForModify(), STRING(szWeaponName), 128 );
-		if( !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_mercenary")
-			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_primary")
-			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_soldier")
-			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_pyro")
-			|| !strcmp(m_iszWeaponName.Get(),"tf_weapon_shotgun_hwg") )
+
+		// fixup tf_weapon_shotgun_<class> strings to tf_weapon_shotgun
+		if ( !Q_strncmp( "tf_weapon_shot", m_iszWeaponName.Get(), 14 ) )
 			Q_strncpy( m_iszWeaponName.GetForModify(), "tf_weapon_shotgun", 128 );
+
 		if ( szWeaponModel != MAKE_STRING("") )
-		Q_strncpy( m_iszWeaponModel, STRING(szWeaponModel) , sizeof( m_iszWeaponModel ) );
+			Q_strncpy( m_iszWeaponModel, STRING( szWeaponModel ) , sizeof( m_iszWeaponModel ) );
+
 		if ( szWeaponModelOLD != MAKE_STRING("") )
-		Q_strncpy( m_iszWeaponModelOLD, STRING(szWeaponModelOLD) , sizeof( m_iszWeaponModelOLD ) );
-		Q_strncpy( m_iszPickupSound, STRING(szPickupSound), sizeof( m_iszPickupSound ) );
+			Q_strncpy( m_iszWeaponModelOLD, STRING( szWeaponModelOLD ) , sizeof( m_iszWeaponModelOLD ) );
+			Q_strncpy( m_iszPickupSound, STRING( szPickupSound ), sizeof( m_iszPickupSound ) );
+
 		if ( filesystem )
 		{
-		
 			char szMapName[128];
 			Q_snprintf( szMapName, sizeof(szMapName), "maps/%s_mapdata.txt" , STRING(gpGlobals->mapname) );
 			if ( filesystem->FileExists( szMapName, "GAME" ) )
@@ -128,10 +132,14 @@ void CWeaponSpawner::Spawn( void )
 		}
 
 		Precache();
+		// Update(); called in Precache instead
 		SetWeaponModel();
 		BaseClass::Spawn();
 		ResetSequence( LookupSequence("spin") );
 		UTIL_SetSize( this, -Vector(25,25,12), Vector(25,25,12) );
+
+		RegisterThinkContext( "AnnounceThink" );
+		SetContextThink( &CWeaponSpawner::AnnouncerThink, gpGlobals->curtime, "AnnounceThink" );
 	}
 }
 
@@ -141,9 +149,6 @@ void CWeaponSpawner::SetWeaponModel( void )
 	{
 		if ( m_iszWeaponModelOLD[0] == 0 ) // If the backwards compatible model isnt set either
 		{
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );			  //Get the weapon info
-			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );											  //Is it valid?
-			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) ); // Cast to TF Weapon info
 			if ( pWeaponInfo )                //If both the weapon and weapon info exist
 				SetModel( pWeaponInfo->szWorldModel );	 //Get its model
 			return;
@@ -162,13 +167,12 @@ void CWeaponSpawner::Precache( void )
 {
 	UTIL_PrecacheOther( m_iszWeaponName );
 	PrecacheScriptSound( m_iszPickupSound );
+	Update();
+
 	if ( m_iszWeaponModel )
 	{
 		if( m_iszWeaponModelOLD )
 		{
-			WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
-			Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
-			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 			if ( pWeaponInfo )
 				PrecacheModel( pWeaponInfo->szWorldModel );
 			return;
@@ -200,9 +204,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 	
 		bSuccess = true;
 		bool bTakeWeapon = true;
-		
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
-		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 		
 		if (!pWeaponInfo)
 			return false;
@@ -267,6 +268,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				{
 					pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
 
+					
 					if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
 					{
 						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_ULTRARARE );
@@ -329,15 +331,9 @@ CBaseEntity* CWeaponSpawner::Respawn( void )
 	return ret;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CWeaponSpawner::Materialize( void )
 {
 	BaseClass::Materialize();
-	
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
-	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	
 	if (!pWeaponInfo)
 		return;
@@ -348,6 +344,47 @@ void CWeaponSpawner::Materialize( void )
 	if( pWeaponInfo->m_bAlwaysDrop )
 		SetTransmitState( FL_EDICT_ALWAYS );
 }
+
+void CWeaponSpawner::Update( void )
+{
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
+	pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	if ( pWeaponInfo )
+	{
+		m_bSuperWeapon = pWeaponInfo->m_bAlwaysDrop;
+		SetNextThink( gpGlobals->curtime, "AnnounceThink" );
+	}
+	else
+	{
+		m_bSuperWeapon = false;
+	}
+}
+
+void CWeaponSpawner::AnnouncerThink()
+{
+	// don't bother thinking if we aren't a superweapon
+	if ( m_bSuperWeapon )
+	{
+		if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
+		{
+			TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetSuperWeaponPickupLineIncoming() );
+			bWarningTriggered = true;
+		}
+		else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
+		{
+			bWarningTriggered = false;
+		}
+		if ( bWarningTriggered && !m_bRespawning )
+			bWarningTriggered = false;	
+
+		SetNextThink( gpGlobals->curtime + 0.5f, "AnnounceThink" );
+	}
+	else
+	{
+		SetNextThink( -1, "AnnounceThink" );
+	}
+}
+
 
 const char* CWeaponSpawner::GetSuperWeaponPickupLineSelf( void )
 {
@@ -397,6 +434,23 @@ const char* CWeaponSpawner::GetSuperWeaponRespawnLine( void )
 	return "None";
 }
 
+const char *CWeaponSpawner::GetSuperWeaponPickupLineIncoming( void )
+{ 	
+	int m_iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
+	
+	switch ( m_iWeaponID )
+	{
+		case TF_WEAPON_GIB:
+		return "GIBIncoming";
+		break;
+		case TF_WEAPON_SUPER_ROCKETLAUNCHER:
+		return "QuadIncoming";
+		break;		
+	}
+	return "SuperWeaponsIncoming";
+}
+
+
 void CWeaponSpawner::InputSetWeaponModel( inputdata_t &inputdata )
 {
 	const char *name = inputdata.value.String();
@@ -415,14 +469,10 @@ void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
 	if ( name ) 
 	{
 		// precache the weapon...
-		string_t iszItem = AllocPooledString( name );	// Make a copy of the classname	
-		CBaseEntity *pent;
-		pent = CreateEntityByName( STRING( iszItem ) );
-		if ( !pent )
-			return;
-		pent->Precache();
-		UTIL_Remove( pent );
+		UTIL_PrecacheOther( name );
 
 		Q_strncpy( m_iszWeaponName.GetForModify(), name, 128 );
+
+		Update();
 	}
 }

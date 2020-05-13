@@ -24,8 +24,11 @@
 
 ConVar DrawBattleLines( "ai_drawbattlelines", "0", FCVAR_CHEAT );
 
-
+#ifdef OF_DLL // missing parameters for constructor
+static AI_StandoffParams_t AI_DEFAULT_STANDOFF_PARAMS = { AIHCR_MOVE_ON_COVER, true, false, 1.5, 2.5, 1, 3, 25, false, 1.0f };
+#else
 static AI_StandoffParams_t AI_DEFAULT_STANDOFF_PARAMS = { AIHCR_MOVE_ON_COVER, true, 1.5, 2.5, 1, 3, 25, 0 };
+#endif
 
 #define MAKE_ACTMAP_KEY( posture, activity ) ( (((unsigned)(posture)) << 16) | ((unsigned)(activity)) )
 

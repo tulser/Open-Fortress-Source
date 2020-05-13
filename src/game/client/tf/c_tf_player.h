@@ -558,6 +558,8 @@ private:
 	// takedamageinfo.h
 	//int				m_bitsDamageType;
 	int				m_iDamageCustom;
+	// for cool dissolves
+	bool			m_bDissolve;
 	
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
 };

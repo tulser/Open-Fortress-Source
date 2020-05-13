@@ -19,11 +19,13 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar sv_vote_issue_restart_game_allowed( "sv_vote_issue_restart_game_allowed", "1", FCVAR_NONE, "Can players call votes to restart the game?" );
+// default is 0 as people can't behave themselves
+ConVar sv_vote_issue_restart_game_allowed( "sv_vote_issue_restart_game_allowed", "0", FCVAR_NONE, "Can players call votes to restart the game?" );
 ConVar sv_vote_issue_restart_game_cooldown( "sv_vote_issue_restart_game_cooldown", "300", FCVAR_NONE, "Minimum time before another restart vote can occur (in seconds)." );
 ConVar sv_vote_kick_ban_duration( "sv_vote_kick_ban_duration", "20", FCVAR_NONE, "The number of minutes a vote ban should last. (0 = Disabled)" );
 ConVar sv_vote_kick_maxplayers_required( "sv_vote_kick_maxplayers_required", "6", FCVAR_NONE, "Amount of players that must be present in a server before the kick vote can be called." );
-ConVar sv_vote_issue_changelevel_allowed( "sv_vote_issue_changelevel_allowed", "1", FCVAR_NONE, "Can players call votes to change levels?" );
+// default is 0 as people can't behave themselves
+ConVar sv_vote_issue_changelevel_allowed( "sv_vote_issue_changelevel_allowed", "0", FCVAR_NONE, "Can players call votes to change levels?" );
 ConVar sv_vote_issue_changemutator_allowed( "sv_vote_issue_changemutator_allowed", "1", FCVAR_NONE, "Can players call votes to change the mutators?" );
 ConVar sv_vote_issue_nextlevel_allowed( "sv_vote_issue_nextlevel_allowed", "1", FCVAR_NONE, "Can players call votes to set the next level?" );
 // TODO:
@@ -298,7 +300,7 @@ bool CChangeLevelIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote
 		{
 			CBasePlayer *pPlayer = ToBasePlayer( UTIL_PlayerByIndex( i ) );
 
-			if ( pPlayer && pPlayer->FragCount() >= ( (float)fraglimit.GetInt() * 0.6 ) )
+			if ( pPlayer && pPlayer->FragCount() >= ( (float)fraglimit.GetInt() * 0.5 ) )
 			{
 				nFailCode = VOTE_FAILED_ISSUE_DISABLED;
 				nTime = m_flNextCallTime - gpGlobals->curtime;

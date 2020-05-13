@@ -16,6 +16,7 @@
 
 class CLabeledCommandComboBox;
 class CCvarSlider;
+class CCvarToggleCheckButton;
 
 //-----------------------------------------------------------------------------
 // Purpose: Audio Details, Part of OptionsDialog
@@ -47,6 +48,7 @@ private:
 	vgui::ComboBox				*m_pSoundQualityCombo;
 	CCvarSlider					*m_pSFXSlider;
 	CCvarSlider					*m_pMusicSlider;
+	CCvarToggleCheckButton	    *m_pMuteFocusCheck;
 	bool						   m_bRequireRestart;
    
    vgui::ComboBox				*m_pSpokenLanguageCombo;

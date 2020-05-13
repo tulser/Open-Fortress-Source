@@ -906,18 +906,12 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 					return;
 			}
 		}
-		
-		// Dirty hack to avoid suit playing it's pickup sound
-		if ( !Q_stricmp( item_to_give, "item_suit" ) )
-		{
-			pPlayer->EquipSuit( false );
-			return;
-		}
 
-		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
-		
+		// required precache
+		UTIL_PrecacheOther( item_to_give );
+
+		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname	
 		EHANDLE pent;
-
 		pent = CreateEntityByName(STRING(iszItem));
 		if ( pent == NULL )
 		{
@@ -931,7 +925,11 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( STRING(iszItem) );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );		
 		if( !pWeaponInfo )
+		{
+			UTIL_Remove( pent );
+			Warning( "NULL WeaponInfo in Give Weapon!\n" );
 			return;
+		}
 		
 		int iSlot;
 

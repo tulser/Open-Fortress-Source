@@ -1213,7 +1213,7 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 
 #ifdef OF_CLIENT_DLL
 	// -------------------------------------------------------
-	// Hijack some engine convars and tweak them to our liking
+	// Hijack some convars and tweak them to our liking
 	// -------------------------------------------------------
 
 	// Don't allow DXLevel to be changed in game, only from -dxlevel launch parameter
@@ -1259,6 +1259,29 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	if ( mat_disable_bloom )
 	{
 		mat_disable_bloom->SetFlags( FCVAR_ARCHIVE );
+	}
+
+	// People with FPS configs are getting black screens due to forced HDR, so force these convars
+	ConVar *mat_autoexposure_min = NULL;
+	mat_autoexposure_min = g_pCVar->FindVar( "mat_autoexposure_min" );
+	if ( mat_autoexposure_min )
+	{
+		mat_autoexposure_min->SetValue( 0.8f );
+		mat_autoexposure_min->SetFlags( FCVAR_CHEAT );
+	}
+	ConVar *mat_autoexposure_max = NULL;
+	mat_autoexposure_max = g_pCVar->FindVar( "mat_autoexposure_max" );
+	if ( mat_autoexposure_max )
+	{
+		mat_autoexposure_max->SetValue( 1.2f );
+		mat_autoexposure_max->SetFlags( FCVAR_CHEAT );
+	}
+	ConVar *mat_bloom_scalefactor_scalar = NULL;
+	mat_bloom_scalefactor_scalar = g_pCVar->FindVar( "mat_bloom_scalefactor_scalar" );
+	if ( mat_bloom_scalefactor_scalar )
+	{
+		mat_bloom_scalefactor_scalar->SetValue(1);
+		mat_bloom_scalefactor_scalar->SetFlags( FCVAR_CHEAT );
 	}
 
 	// ------------------------------
