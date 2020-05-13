@@ -397,6 +397,12 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 
 	SendPropVector( SENDINFO( m_vecPlayerColor ) ),
 	
+	SendPropVector( SENDINFO( m_vecViewmodelOffset ) ),
+	SendPropVector( SENDINFO( m_vecViewmodelAngle ) ),
+	
+	SendPropBool( SENDINFO( m_bCentered ) ),
+	SendPropBool( SENDINFO( m_bMinimized ) ),
+	
 	// Ragdoll.
 	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 

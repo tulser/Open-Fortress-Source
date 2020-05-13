@@ -400,6 +400,12 @@ public:
 	
 public:
 	CNetworkVector( m_vecPlayerColor );
+	CNetworkVector( m_vecViewmodelOffset );
+	CNetworkVector( m_vecViewmodelAngle );
+
+	CNetworkVar( bool, m_bCentered );
+	CNetworkVar( bool, m_bMinimized );
+	
 	CUtlVector<float> m_iCosmetics;
 	KeyValues *kvDesiredCosmetics;
 	CTFPlayerShared m_Shared;

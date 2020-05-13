@@ -84,6 +84,7 @@ ConVar viewmodel_angle_z( "viewmodel_angle_z", "0", FCVAR_ARCHIVE | FCVAR_USERIN
 ConVar viewmodel_centered("viewmodel_centered", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Center every viewmodel." );
 ConVar viewmodel_hide_arms("viewmodel_hide_arms", "0", FCVAR_ARCHIVE| FCVAR_USERINFO, "Hide the arms on all viewmodels." );
 ConVar tf_use_min_viewmodels("tf_use_min_viewmodels", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Use minimized viewmodels.");
+ConVar of_spec_viewmodel_settings("of_spec_viewmodel_settings", "1" ,FCVAR_ARCHIVE, "Show the viewmodel settings of the person you're spectating." );
 #endif
 
 //-----------------------------------------------------------------------------
@@ -152,7 +153,19 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 
 	// Check for lowering the weapon
 	C_TFPlayer *pPlayer = ToTFPlayer( owner );
-
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	bool bSpec = false;
+	
+	if ( pLocalPlayer && pLocalPlayer->GetObserverMode() == OBS_MODE_IN_EYE && 
+		 pLocalPlayer->GetObserverTarget() && pLocalPlayer->GetObserverTarget()->IsPlayer() )
+	{
+		pPlayer = assert_cast<C_TFPlayer*>(pLocalPlayer->GetObserverTarget());
+		if( pPlayer )
+			bSpec = true;
+		else
+			pPlayer = ToTFPlayer( owner );
+	}
+	
 	Assert( pPlayer );
 
 	bool bLowered = pPlayer->IsWeaponLowered();
@@ -165,64 +178,56 @@ void CTFViewModel::CalcViewModelView( CBasePlayer *owner, const Vector& eyePosit
 	vecLoweredAngles.x += m_vLoweredWeaponOffset.x;
 	Vector	forward, right, up;
 
-	// for some reason the viewmodel_angle must be seperated from the offset as otherwise it freaks out
-	if ( pWeapon )
+	float x = 0,y = 0,z = 0,pitch = 0,yaw = 0,roll = 0;
+	
+	if( !of_spec_viewmodel_settings.GetBool() || !bSpec )//|| pPlayer->IsLocalPlayer() )
 	{
-		if ( viewmodel_centered.GetBool() && !tf_use_min_viewmodels.GetBool() )
+		x = viewmodel_offset_x.GetFloat();
+		y = viewmodel_offset_y.GetFloat();
+		z = viewmodel_offset_z.GetFloat();
+		pitch = viewmodel_angle_x.GetFloat();
+		yaw   = viewmodel_angle_y.GetFloat();
+		roll  = viewmodel_angle_z.GetFloat();
+	}
+	else if( pPlayer )
+	{
+		x = pPlayer->m_vecViewmodelOffset.GetX();
+		y = pPlayer->m_vecViewmodelOffset.GetY();
+		z = pPlayer->m_vecViewmodelOffset.GetZ();
+		pitch = pPlayer->m_vecViewmodelAngle.GetX();
+		yaw   = pPlayer->m_vecViewmodelAngle.GetY();
+		roll  = pPlayer->m_vecViewmodelAngle.GetZ();
+	}
+	
+	if( pWeapon )
+	{
+		bool bCentered = (!of_spec_viewmodel_settings.GetBool() || bSpec) ? viewmodel_centered.GetBool() : pPlayer->m_bCentered; 
+		bool bMinimized = (!of_spec_viewmodel_settings.GetBool() || bSpec) ? tf_use_min_viewmodels.GetBool() : pPlayer->m_bMinimized;
+		
+		if( bCentered )
 		{
-			const CTFWeaponInfo *pTFInfo = NULL;
-
-			pTFInfo = &pWeapon->GetTFWpnData();
-
-			float angle_x = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleX;
-			float angle_y = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleY;
-			float angle_z = pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleZ;
-
-			QAngle 	con( angle_x, angle_y, angle_z );
-			AngleVectors( eyeAngles, &forward, &right, &up );
-
-			vecNewAngles += con;
+			x += pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetX;
+			y += pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetY;
+			z += pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetZ;
+			
+			pitch += pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleX;
+			yaw   += pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleY;
+			roll  += pWeapon->GetTFWpnData().m_flCenteredViewmodelAngleZ;
 		}
-		else
-		{
-			QAngle 	con( viewmodel_angle_x.GetFloat(), viewmodel_angle_y.GetFloat(), viewmodel_angle_z.GetFloat() );
-			AngleVectors( eyeAngles, &forward, &right, &up );
 
-			vecNewAngles += con;
+		if( bMinimized )
+		{
+			x += pWeapon->GetTFWpnData().m_flMinViewmodelOffsetX;
+			y += pWeapon->GetTFWpnData().m_flMinViewmodelOffsetY;
+			z += pWeapon->GetTFWpnData().m_flMinViewmodelOffsetZ;
 		}
 	}
+	
+	QAngle 	con( pitch, yaw, roll );
+	AngleVectors( eyeAngles, &forward, &right, &up );
 
-	if ( pWeapon )
-	{
-		if ( viewmodel_centered.GetBool() && !tf_use_min_viewmodels.GetBool() )
-		{
-			const CTFWeaponInfo *pTFInfo = NULL;
-
-			pTFInfo = &pWeapon->GetTFWpnData();
-
-			float offset_x = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetX;
-			float offset_y = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetY;
-			float offset_z = pWeapon->GetTFWpnData().m_flCenteredViewmodelOffsetZ;
-
-			vecNewOrigin += forward*offset_x + right*offset_y + up*offset_z;
-		}
-		else if ( !viewmodel_centered.GetBool() && tf_use_min_viewmodels.GetBool() )
-		{
-			const CTFWeaponInfo *pTFInfo = NULL;
-
-			pTFInfo = &pWeapon->GetTFWpnData();
-
-			float offset_x = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetX;
-			float offset_y = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetY;
-			float offset_z = pWeapon->GetTFWpnData().m_flMinViewmodelOffsetZ;
-
-			vecNewOrigin += forward*offset_x + right*offset_y + up*offset_z;
-		}
-		else
-		{
-			vecNewOrigin += forward*viewmodel_offset_x.GetFloat() + right*viewmodel_offset_y.GetFloat() + up*viewmodel_offset_z.GetFloat();
-		}
-	}
+	vecNewAngles += con;
+	vecNewOrigin += forward*x + right*y + up*z;
 
 	BaseClass::CalcViewModelView( owner, vecNewOrigin, vecNewAngles );
 

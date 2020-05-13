@@ -4651,6 +4651,17 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	int iFov = atoi(pszFov);
 	iFov = clamp( iFov, 50, 130 );
 	pTFPlayer->SetDefaultFOV( iFov );
+
+	pTFPlayer->m_vecViewmodelOffset.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_x" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_y" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_z" ) ) );
+	
+	pTFPlayer->m_vecViewmodelAngle.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_x" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_y" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_z" ) ) );
+
+	pTFPlayer->m_bCentered  = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_centered" ) ) == 1;
+	pTFPlayer->m_bMinimized = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf_use_min_viewmodels" ) ) == 1;
 }
 
 //-----------------------------------------------------------------------------

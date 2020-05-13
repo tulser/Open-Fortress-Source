@@ -2494,6 +2494,12 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropEHandle( RECVINFO(m_hItem ) ),
 	
 	RecvPropVector( RECVINFO( m_vecPlayerColor ) ),
+	
+	RecvPropVector( RECVINFO( m_vecViewmodelOffset ) ),
+	RecvPropVector( RECVINFO( m_vecViewmodelAngle ) ),
+	
+	RecvPropBool( RECVINFO( m_bCentered ) ),
+	RecvPropBool( RECVINFO( m_bMinimized ) ),
 
 	RecvPropDataTable( "tflocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFLocalPlayerExclusive) ),
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFNonLocalPlayerExclusive) ),

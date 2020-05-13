@@ -86,6 +86,9 @@ CTFLightningGun::CTFLightningGun()
 CTFLightningGun::~CTFLightningGun()
 {
 	DestroySounds();
+#if defined ( CLIENT_DLL )
+	StopLightning();
+#endif	
 }
 
 void CTFLightningGun::DestroySounds( void )
