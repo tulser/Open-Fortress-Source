@@ -621,7 +621,7 @@ SendProp SendPropInt(
 #endif
 		else
 		{
-			Assert(!"SendPropInt var has invalid size");
+			AssertMsg(false, "SendPropInt %s has invalid size %d", pVarName, sizeofVar);
 			varProxy = SendProxy_Int8ToInt32;	// safest one...
 		}
 	}
@@ -629,7 +629,7 @@ SendProp SendPropInt(
 	// Figure out # of bits if the want us to.
 	if ( nBits <= 0 )
 	{
-		Assert( sizeofVar == 1 || sizeofVar == 2 || sizeofVar == 4 );
+		AssertMsg( sizeofVar == 1 || sizeofVar == 2 || sizeofVar == 4, "Couldn't figure out nBits, SendPropInt %s has invalid size %d", pVarName, sizeofVar);
 		nBits = sizeofVar * 8;
 	}
 
