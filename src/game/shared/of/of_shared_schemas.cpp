@@ -493,11 +493,6 @@ void ResetLoadout( const char *szCatName )
 		{
 			case 0:
 			pClass->SetString( "hat", "0" );
-			if( i == TF_CLASS_MERCENARY )
-			{
-				pClass->SetString( "chest", "11" );
-				pClass->SetString( "gloves", "15" );
-			}
 			break;
 			case 1:
 			if( i == TF_CLASS_MERCENARY )
