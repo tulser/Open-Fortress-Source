@@ -46,7 +46,7 @@ extern ConVar fov_desired;
 #endif
 
 #if defined (CLIENT_DLL)
-ConVar of_autoreload( "of_autoreload", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automatically reload when not firing." );
+ConVar of_autoreload( "of_autoreload", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Automatically reload when not firing." );
 ConVar of_autoswitchweapons("of_autoswitchweapons", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO , "Toggles autoswitching when picking up new weapons.");
 #endif
 
