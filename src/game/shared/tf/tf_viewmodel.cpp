@@ -246,17 +246,32 @@ int CTFViewModel::DrawModel( int flags )
 
 	Assert( pPlayer );
 
-	CBaseViewModel *pViewModel = pPlayer->GetViewModel( 2 );
-
-	if ( pViewModel && viewmodel_hide_arms.GetBool() )
+	// arms + sleeves
+	CBaseViewModel *pViewModelArms = pPlayer->GetViewModel( 2 );
+	CBaseViewModel *pViewModelSleeves = pPlayer->GetViewModel( 3 );
+	if ( pViewModelArms )
 	{
-		pViewModel->AddEffects( EF_NODRAW );
+		if ( viewmodel_hide_arms.GetBool() )
+		{
+			pViewModelArms->AddEffects( EF_NODRAW );
+		}
+		else
+		{
+			pViewModelArms->RemoveEffects( EF_NODRAW );
+		}
 	}
-	else if ( pViewModel )
+	if ( pViewModelSleeves )
 	{
-		pViewModel->RemoveEffects( EF_NODRAW );
+		if ( viewmodel_hide_arms.GetBool() )
+		{
+			pViewModelSleeves->AddEffects( EF_NODRAW );
+		}
+		else
+		{
+			pViewModelSleeves->RemoveEffects( EF_NODRAW );
+		}
 	}
-
+	
 	bool bLowered = pPlayer->IsWeaponLowered();
 
 	if ( bLowered && fabs( m_vLoweredWeaponOffset.x - cl_gunlowerangle.GetFloat() ) < 0.1 )
