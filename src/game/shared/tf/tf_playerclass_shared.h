@@ -156,6 +156,7 @@ public:
 	const int GetModifiers ( void ) const { return m_iModifiers; }
 	const int GetOldModifiers ( void ) const { return m_iOldModifiers; }
 	const int GetOldClass ( void ) const { return m_iOldClass; }
+	void SetClass ( int iClass ) { m_iClass = iClass; }
 	void SetOldModifiers ( int iOldModifiers ) { m_iOldModifiers = iOldModifiers; }
 	void SetOldClass ( int iOldClass ) { m_iOldClass = iOldClass; }
 	

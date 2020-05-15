@@ -262,6 +262,7 @@ private:
 	void OnAddShield( void );
 	void OnAddShieldCharge( void );
 	void OnAddHaste( void );
+	void OnAddJauggernaught( void );
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -276,6 +277,7 @@ private:
 	void OnRemoveShield( void );
 	void OnRemoveShieldCharge( void );
 	void OnRemoveHaste( void );
+	void OnRemoveJauggernaught( void );
 
 	float GetCritMult( void );
 
@@ -399,6 +401,8 @@ private:
 
 	WEAPON_FILE_INFO_HANDLE	m_hDisguiseWeaponInfo;
 #endif
+
+	int m_iJauggernaughtOldClass;
 };			   
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim

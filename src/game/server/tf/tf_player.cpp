@@ -6697,6 +6697,38 @@ void CTFPlayer::UpdateSkin( int iTeam )
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Utility function for live-changing classes (without respawning player)
+//-----------------------------------------------------------------------------
+void CTFPlayer::UpdatePlayerClass( int iPlayerClass )
+{
+	//If we call without defining a class to change to just refresh class visuals
+	if ( !iPlayerClass == TF_CLASS_UNDEFINED )
+	{
+		TeamFortress_RemoveEverythingFromWorld();
+
+		GetPlayerClass()->SetClass( iPlayerClass );
+
+		int iModifiers = 0;
+
+		if (m_Shared.IsZombie())
+			iModifiers |= (1 << TF_CLASSMOD_ZOMBIE);
+
+		if (IsRetroModeOn())
+			iModifiers |= (1 << TF_CLASSMOD_TFC);
+
+		GetPlayerClass()->Init( iPlayerClass, iModifiers );
+		
+		m_Shared.FadeInvis( 0.1 );
+
+		RemoveTeleportEffect();
+	}
+
+	UpdateModel();
+	UpdateArmModel();
+	UpdateSkin( GetTeamNumber() );
+}
+
 //=========================================================================
 // Displays the state of the items specified by the Goal passed in
 void CTFPlayer::DisplayLocalItemStatus( CTFGoal *pGoal )

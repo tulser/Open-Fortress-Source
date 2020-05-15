@@ -213,6 +213,7 @@ public:
 	void				UpdateModel( void );
 	void				UpdateArmModel( void );
 	void				UpdateSkin( int iTeam );
+	void				UpdatePlayerClass( int iPlayerClass = TF_CLASS_UNDEFINED );
 
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
 	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
