@@ -536,7 +536,10 @@ private:
 	float m_flTimerMayExpireAt;
 	bool m_bStartedVote;
 	bool m_bEntityLimitPrevented;
-	
+public:
+	float m_flMapStartTime;	// used for voting to see how long map lasted
+private:
+
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;

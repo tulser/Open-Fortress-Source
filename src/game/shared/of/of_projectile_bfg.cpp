@@ -134,8 +134,7 @@ void CTFBFGProjectile::Spawn()
 	SetSolid( SOLID_BBOX );	
 	SetCollisionGroup( TF_COLLISIONGROUP_GRENADES );
 #ifdef GAME_DLL
-	float iBoxSize = 10;
-	UTIL_SetSize( this, -Vector( iBoxSize, iBoxSize, iBoxSize ), Vector( iBoxSize, iBoxSize, iBoxSize ) );
+	UTIL_SetSize( this, -Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );
 	CTFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( pOwner )
 	{
@@ -185,8 +184,7 @@ CTFBFGProjectile *CTFBFGProjectile::Create ( CTFWeaponBase *pWeapon, const Vecto
 	if ( pRocket )
 	{
 		pRocket->SetScorer( pScorer );
-		float iBoxSize = 10;
-		UTIL_SetSize( pRocket, -Vector( iBoxSize, iBoxSize, iBoxSize ), Vector( iBoxSize, iBoxSize, iBoxSize ) );
+		UTIL_SetSize( pRocket, -Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );
 	}
 
 	return pRocket;

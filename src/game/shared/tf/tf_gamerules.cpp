@@ -1716,6 +1716,10 @@ void CTFGameRules::Activate()
 	bMultiweapons = TFGameRules()->UsesDMBuckets();
 
 	PrecacheGameMode();	
+
+#ifdef GAME_DLL
+	m_flMapStartTime = gpGlobals->curtime;
+#endif
 }
 
 extern const char *s_aPlayerClassFiles[];
@@ -4644,6 +4648,17 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	int iFov = atoi(pszFov);
 	iFov = clamp( iFov, 50, 130 );
 	pTFPlayer->SetDefaultFOV( iFov );
+
+	pTFPlayer->m_vecViewmodelOffset.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_x" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_y" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_z" ) ) );
+	
+	pTFPlayer->m_vecViewmodelAngle.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_x" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_y" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_z" ) ) );
+
+	pTFPlayer->m_bCentered  = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_centered" ) ) == 1;
+	pTFPlayer->m_bMinimized = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf_use_min_viewmodels" ) ) == 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -4927,8 +4942,6 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	{
 		int iFragLimit = fraglimit.GetInt();
 		
-		if ( IsGGGamemode() )
-				iFragLimit = (m_iMaxLevel * m_iRequiredKills) - m_iRequiredKills + 1;
 		if ( iFragLimit > 0 ) 
 		{
 			if ( IsTDMGamemode() )
@@ -4949,11 +4962,11 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					GoToIntermission();
 				}
 				// one of our teams is at 80% of the fragcount, start voting for next map
-				if ( ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
+				if ( !m_bStartedVote && ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
 					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
-					&& !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+					&& !TFGameRules()->IsInWaitingForPlayers() )
 				{
-					DevMsg( "VoteController: Team fraglimit is 80%%, begin nextlevel voting... \n" );
+					DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
 					m_bStartedVote = true;
 					//engine->ServerCommand( "callvote nextlevel" );
 					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -4979,9 +4992,9 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					}
 
 					// one of our players is at 80% of the fragcount, start voting for next map
-					if ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) && !m_bStartedVote && !TFGameRules()->IsInWaitingForPlayers() )
+					if ( !m_bStartedVote && ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
 					{
-						DevMsg( "VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n" );
+						DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
 						m_bStartedVote = true;
 						//engine->ServerCommand( "callvote nextlevel" );
 						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -4995,9 +5008,19 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	
 	if ( IsGGGamemode() )
 	{			
-		if (pTFPlayerScorer && pTFPlayerScorer->GGLevel() == m_iMaxLevel )
+		if ( pTFPlayerScorer && pTFPlayerScorer->GGLevel() == m_iMaxLevel )
 		{
 			SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+		}
+
+		if ( !m_bStartedVote && ( pTFPlayerScorer->GGLevel() >= ( (float)m_iMaxLevel * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
+		{
+			DevMsg( "VoteController: GGLevel is 80%, begin nextlevel voting... \n" );
+			m_bStartedVote = true;
+			//engine->ServerCommand( "callvote nextlevel" );
+			char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
+			szEmptyDetails[0] = '\0';
+			g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
 		}
 	}
 

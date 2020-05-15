@@ -1602,7 +1602,9 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 		forceVector += pMagnet->GetForceVector( this );
 	}
 
+#ifndef OF_DLL	
 	CBaseCombatWeapon *pDroppedWeapon = m_hActiveWeapon.Get();
+#endif
 
 	// Drop any weapon that I own
 	if ( VPhysicsGetObject() )
@@ -1635,8 +1637,9 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 	if ( ShouldGib( info ) == false )
 	{
 		bool bRagdollCreated = false;
+#ifndef OF_DLL		
 		if ( (info.GetDamageType() & DMG_DISSOLVE) && CanBecomeRagdoll() )
-		{
+		{			
 			int nDissolveType = ENTITY_DISSOLVE_NORMAL;
 			if ( info.GetDamageType() & DMG_SHOCK )
 			{
@@ -1659,6 +1662,7 @@ void CBaseCombatCharacter::Event_Killed( const CTakeDamageInfo &info )
 				pDroppedWeapon->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
 			}
 		}
+#endif
 #endif
 
 		if ( !bRagdollCreated && ( info.GetDamageType() & DMG_REMOVENORAGDOLL ) == 0 )

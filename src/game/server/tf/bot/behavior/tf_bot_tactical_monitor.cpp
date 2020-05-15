@@ -38,8 +38,6 @@ class DetonatePipebombsReply : public INextBotReply
 		if ( actor->GetActiveWeapon() != actor->Weapon_GetSlot( 1 ) )
 			actor->Weapon_Switch( actor->Weapon_GetSlot( 1 ) );
 
-		Warning("MonitorArmedStickybombs 6 DETONATE THE MOTHERFO \n");
-
 		actor->PressAltFireButton();
 	}
 };
@@ -430,7 +428,7 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 			if ( pKnown.IsObsolete() /* || pKnown.GetEntity()->IsBaseObject() */ )
 				continue;
 
-			if ( actor->GetTeamNumber() != TF_TEAM_MERCENARY && GetEnemyTeam( pKnown.GetEntity() ) == pGrenade->GetTeamNumber() )
+			if ( actor->GetTeamNumber() != TF_TEAM_MERCENARY && GetEnemyTeam( pKnown.GetEntity() ) != pGrenade->GetTeamNumber() )
 				continue;
 
 			if ( pGrenade->GetAbsOrigin().DistToSqr( pKnown.GetLastKnownPosition() ) >= Square( 150.0 ) )

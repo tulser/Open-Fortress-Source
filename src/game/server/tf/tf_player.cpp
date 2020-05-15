@@ -399,6 +399,12 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 
 	SendPropVector( SENDINFO( m_vecPlayerColor ) ),
 	
+	SendPropVector( SENDINFO( m_vecViewmodelOffset ) ),
+	SendPropVector( SENDINFO( m_vecViewmodelAngle ) ),
+	
+	SendPropBool( SENDINFO( m_bCentered ) ),
+	SendPropBool( SENDINFO( m_bMinimized ) ),
+	
 	// Ragdoll.
 	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 
@@ -5814,18 +5820,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_DECAPITATION_BOSS )
 		m_iGoreHead = 2;
 
-	bool bRagdollCreated = false;
-	if ( (info.GetDamageType() & DMG_DISSOLVE) )
-	{
-
-		int nDissolveType = ENTITY_DISSOLVE_NORMAL;
-		if ( info.GetDamageType() & DMG_SHOCK )
-		{
-			nDissolveType = ENTITY_DISSOLVE_ELECTRICAL;
-		}
-
-		bRagdollCreated = Dissolve( NULL, gpGlobals->curtime, false, nDissolveType );
-	}
 	// show killer in death cam mode
 	// chopped down version of SetObserverTarget without the team check
 	if( pPlayerAttacker )
@@ -7375,9 +7369,11 @@ void CTFPlayer::ForceRespawn()
 	if ( iDesiredClass == TF_CLASS_RANDOM )
 	{
 		// Don't let them be the same class twice in a row
-		do{
+		do 
+		{
 			iDesiredClass = random->RandomInt( TF_FIRST_NORMAL_CLASS, TF_CLASS_COUNT_ALL );
-		} while( iDesiredClass == GetPlayerClass()->GetClassIndex() );
+		} 
+		while ( iDesiredClass == GetPlayerClass()->GetClassIndex() );
 	}
 
 	if ( HasTheFlag() )
@@ -7392,10 +7388,10 @@ void CTFPlayer::ForceRespawn()
 
 		int iModifiers = 0;
 		
-		if( m_Shared.IsZombie() )
+		if ( m_Shared.IsZombie() )
 			iModifiers |= (1<<TF_CLASSMOD_ZOMBIE);
 		
-		if( IsRetroModeOn() )
+		if ( IsRetroModeOn() )
 			iModifiers |= (1<<TF_CLASSMOD_TFC);
 
 		GetPlayerClass()->Init( iDesiredClass, iModifiers );

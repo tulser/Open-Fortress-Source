@@ -1,8 +1,8 @@
 # Compiling for Linux
 from..
-* [Ubuntu/Debian](for-the-lucky),
-* [Some other *nix](for-the-rest-of-us),
-* or even [Microsoft Windows](for-the-foolish).
+* [Ubuntu/Debian](#for-the-lucky),
+* [Some other *nix](#for-the-rest-of-us),
+* or even [Microsoft Windows](#for-the-foolish).
 [Appendix A: Dedicated Server]
 
 ## For the lucky
@@ -80,5 +80,5 @@ Contact me! I'm `Nopey Nope#5837` on Discord, and `imjustagan@gmail.com` is my e
 
 
 [jimbly]: https://github.com/Jimbly/steam-runtime-docker
-[prebuilt]: http://repo.steamstatic.com/steamrt/steamrt-scout/snapshots/
+[prebuilt]: https://repo.steampowered.com/steamrt-images-scout/snapshots/
 [source]: https://github.com/ValveSoftware/steam-runtime

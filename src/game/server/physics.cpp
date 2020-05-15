@@ -283,13 +283,50 @@ void CPhysicsHook::LevelShutdownPostEntity()
 
 	g_Collisions.LevelShutdown();
 
-	physics->DestroyEnvironment( physenv );
-	physenv = NULL;
+#ifdef OF_DLL // attempting to solve a rare random vphysics crash here...
+	if ( physics )
+#endif
+	{
+		// strict nullptr checks
+#ifdef OF_DLL
+		if ( physenv )
+			physenv->CleanupDeleteList();
 
-	physics->DestroyObjectPairHash( g_EntityCollisionHash );
-	g_EntityCollisionHash = NULL;
+		DevMsg( 4, "VPhysics PreDestruct...\n");
 
-	physics->DestroyAllCollisionSets();
+		if ( physenv && physics )
+#endif
+			physics->DestroyEnvironment( physenv );
+
+		// a crash is happening somewhere in this block, using these devmsgs to be 100% sure I catch the correct line in the crash dump
+#ifdef OF_DLL
+		DevMsg( 4, "VPhysics Destruction...\n");
+#endif
+
+		physenv = NULL;
+
+#ifdef OF_DLL
+		if ( g_EntityCollisionHash && physics )
+#endif
+		{
+#ifdef OF_DLL
+			physics->DestroyAllCollisionSets();
+
+			DevMsg( 4, "VPhysics Destruction: Part 2\n");
+
+			if ( physics )
+#endif
+				physics->DestroyObjectPairHash( g_EntityCollisionHash );
+
+#ifdef OF_DLL
+			DevMsg( 4, "VPhysics Destruction: Part 3\n");
+#endif
+
+			g_EntityCollisionHash = NULL;
+		}
+
+		physics->DestroyAllCollisionSets();
+	}
 
 	g_PhysWorldObject = NULL;
 

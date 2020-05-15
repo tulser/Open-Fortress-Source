@@ -604,6 +604,15 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 
 	if ( pWeapon->IsMeleeWeapon() )
 	{
+		if ( pWeapon->IsWeapon ( TF_WEAPON_CHAINSAW ) )
+		{
+			// OFBot: this charging detection is horrendous...
+			if ( actor->IsRangeLessThan( threat->GetEntity(), 250.0f ) )
+				actor->PressFireButton( tf_bot_fire_weapon_min_time.GetFloat() );
+			else
+				actor->PressAltFireButton();
+		}
+
 		if ( actor->IsRangeLessThan( threat->GetEntity(), 250.0f ) )
 			actor->PressFireButton();
 
