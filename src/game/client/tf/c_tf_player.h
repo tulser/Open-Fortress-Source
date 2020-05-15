@@ -289,6 +289,11 @@ private:
 	QAngle				m_angTauntEngViewAngles;
 
 public:
+	CNetworkVector( m_vecViewmodelOffset );
+	CNetworkVector( m_vecViewmodelAngle );
+
+	CNetworkVar( bool, m_bCentered );
+	CNetworkVar( bool, m_bMinimized );
 
 	Vector				m_vecPlayerColor;	
 	CUtlVector<int> 	m_iCosmetics;

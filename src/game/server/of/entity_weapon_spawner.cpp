@@ -81,7 +81,7 @@ CWeaponSpawner::CWeaponSpawner()
 
 void CWeaponSpawner::Spawn( void )
 {
-	if ( !of_weaponspawners.GetBool() )
+	if ( !of_weaponspawners.GetBool() || !TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->IsGGGamemode() )
 	{
 		m_bDisabled = true;
 		return;

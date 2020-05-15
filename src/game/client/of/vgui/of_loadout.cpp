@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -35,6 +35,8 @@
 #include <vgui_controls/ScrollBarSlider.h>
 #include <vgui_controls/Slider.h>
 #include "fmtstr.h"
+
+#include "tier0/dbg.h"
 
 using namespace vgui;
 
@@ -206,13 +208,14 @@ void CTFModelPanel::ApplySettings( KeyValues *inResourceData )
 		
 	Color bgColor = inResourceData->GetColor( "bgcolor_override" );
 	SetBackgroundColor( bgColor );
+	
 
 	KeyValues *pModelData = inResourceData->FindKey( "model" );
 	if( pModelData )
 	{
 		m_vecDefPosition = Vector( pModelData->GetFloat( "origin_x", 0 ), pModelData->GetFloat( "origin_y", 0 ), pModelData->GetFloat( "origin_z", 0 ) );
 		m_vecDefAngles = QAngle( pModelData->GetFloat( "angles_x", 0 ), pModelData->GetFloat( "angles_y", 0 ), pModelData->GetFloat( "angles_z", 0 ) );
-		SetModelName(pModelData->GetString("modelname", "models/error.mdl"), pModelData->GetInt("skin", 0));
+		SetModelName( ReadAndAllocStringValue ( pModelData, "modelname" ), pModelData->GetInt("skin", 0) );
 	}
 }
 
@@ -228,6 +231,7 @@ void CTFModelPanel::Update()
 	MDLHandle_t hSelectedMDL = g_pMDLCache->FindMDL( m_BMPResData.m_pszModelName );
 	g_pMDLCache->PreloadModel( hSelectedMDL );
 	SetMDL( hSelectedMDL );
+
 
 	if ( m_iAnimationIndex < m_BMPResData.m_aAnimations.Size() )
 	{
@@ -385,7 +389,7 @@ void DestroyLoadoutPanel()
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CTFLoadoutPanel::CTFLoadoutPanel() : EditablePanel( NULL, "TFLoadout", 
-	scheme()->LoadSchemeFromFile( "Resource/ClientScheme.res", "ClientScheme" ) )
+	scheme()->LoadSchemeFromFile( "resource/ClientScheme.res", "ClientScheme" ) )
 {
 	m_pCloseButton = new Button( this, "CloseButton", "" );	
 	pCosmeticPanel = new EditablePanel( this, "CosmeticPanel" );
@@ -439,9 +443,8 @@ void CTFLoadoutPanel::ApplySettings( KeyValues *inResourceData )
 	BaseClass::ApplySettings( inResourceData );
 	
 	KeyValues *inNewResourceData = new KeyValues("ResourceData");
-	inNewResourceData->LoadFromFile( filesystem, "Resource/UI/Loadout.res" );
 	
-	if( !inNewResourceData )
+	if( !inNewResourceData->LoadFromFile( filesystem, "resource/ui/Loadout.res" ) )
 		return;	
 	
 	KeyValues *inCosmeticPanel = inNewResourceData->FindKey("CosmeticPanel");
@@ -837,7 +840,7 @@ void CTFLoadoutPanel::ApplySchemeSettings(IScheme *pScheme)
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	SetProportional( true );
-	LoadControlSettings( "Resource/UI/Loadout.res" );
+	LoadControlSettings( "resource/ui/Loadout.res" );
 	m_bControlsLoaded = true;
 
 	SetVisible( false );
@@ -867,8 +870,8 @@ void CTFLoadoutPanel::PerformLayout()
 	// Set the animation.
 	if ( m_pClassModel )
 	{
-		m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
-		m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
+		// m_pClassModel->SetAnimationIndex( ACT_MERC_LOADOUT );
+		// m_pClassModel->SetModelName( "models/player/mercenary.mdl", 4 );
 		m_pClassModel->Update();
 	}
 	
@@ -916,8 +919,10 @@ void CTFLoadoutPanel::PaintBackground()
 
 	if( m_bUpdateCosmetics )
 	{
+		if( !m_pClassModel->GetModelPtr()->IsValid() ) 
+			return;
+
 		m_pClassModel->ClearMergeMDLs();
-		m_pClassModel->GetRootMDL();
 		for( int i = 0; i < m_pClassModel->GetNumBodyGroups(); i++ )
 		{
 			m_pClassModel->SetBodygroup(i, 0);

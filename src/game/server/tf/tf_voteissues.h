@@ -103,6 +103,7 @@ public:
 	virtual const char *GetVotePassedString( void );				// Get the string an issue would like to display whenit passes.
 	virtual bool		IsYesNoVote( void );
 	virtual bool        GetVoteOptions( CUtlVector <const char*> &vecNames );	// We use this to generate options for votingg.
+	virtual float		GetQuorumRatio( void );
 
 	CNextLevelIssue() : CBaseTFIssue( "NextLevel" ) { }
 };

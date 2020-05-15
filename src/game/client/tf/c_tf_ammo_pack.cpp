@@ -21,13 +21,8 @@ public:
 
 	DECLARE_CLIENTCLASS();
 
-	~C_TFAmmoPack();
-
-	virtual int		DrawModel( int flags );
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual bool	Interpolate( float currentTime );
-
-	virtual CStudioHdr *OnNewModel( void );
 
 	// ITargetIDProvidesHint
 public:
@@ -37,34 +32,12 @@ private:
 
 	Vector		m_vecInitialVelocity;
 
-	// Looping sound emitted by dropped flamethrowers
-	CSoundPatch *m_pPilotLightSound;
-
 };
 
 // Network table.
 IMPLEMENT_CLIENTCLASS_DT( C_TFAmmoPack, DT_AmmoPack, CTFAmmoPack )
 	RecvPropVector( RECVINFO( m_vecInitialVelocity ) ),
 END_RECV_TABLE()
-
-C_TFAmmoPack::~C_TFAmmoPack()
-{
-	if ( m_pPilotLightSound )
-	{
-		CSoundEnvelopeController::GetController().SoundDestroy( m_pPilotLightSound );
-		m_pPilotLightSound = NULL;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : flags - 
-// Output : int
-//-----------------------------------------------------------------------------
-int C_TFAmmoPack::DrawModel( int flags )
-{
-	return BaseClass::DrawModel( flags );
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -111,28 +84,4 @@ void C_TFAmmoPack::DisplayHintTo( C_BasePlayer *pPlayer )
 	{
 		pTFPlayer->HintMessage( HINT_PICKUP_AMMO );
 	}
-}
-
-CStudioHdr * C_TFAmmoPack::OnNewModel( void )
-{
-	CStudioHdr *hdr = BaseClass::OnNewModel();
-
-	if ( !strcmp( hdr->GetRenderHdr()->name, "weapons\\w_models\\w_flamethrower.mdl" ) )
-	{
-		// Create the looping pilot light sound
-		const char *pilotlightsound = "Weapon_FlameThrower.PilotLoop";
-		CLocalPlayerFilter filter;
-
-		CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
-		m_pPilotLightSound = controller.SoundCreate( filter, entindex(), pilotlightsound );
-
-		controller.Play( m_pPilotLightSound, 1.0, 100 );
-	}
-	else
-	{
-		CSoundEnvelopeController::GetController().SoundDestroy( m_pPilotLightSound );
-		m_pPilotLightSound = NULL;
-	}
-
-	return hdr;
 }
