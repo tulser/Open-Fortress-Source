@@ -246,14 +246,15 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	// Spawn.
 	pRocket->Spawn();
 	
-	if ( pWeapon && pWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
+	if( pWeapon && pWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
 	{
 		const char *s_PipebombModel = pWeapon->GetTFWpnData().m_nProjectileModel;	
 		if ( s_PipebombModel )
 		{
 			PrecacheModel( s_PipebombModel );
 			pRocket->SetModel( s_PipebombModel );
-		}				
+		}	
+		UTIL_SetSize( pRocket, -Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );
 	}
 
 	// Setup the initial velocity.

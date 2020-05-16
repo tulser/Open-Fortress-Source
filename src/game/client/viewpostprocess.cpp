@@ -37,7 +37,11 @@ float g_flCustomBloomScaleMinimum = 0.0f;
 bool g_bFlashlightIsOn = false;
 
 // hdr parameters
+#ifdef OF_CLIENT_DLL
 ConVar mat_bloomscale( "mat_bloomscale", "0.2" );
+#else
+ConVar mat_bloomscale( "mat_bloomscale", "1.0" );
+#endif
 ConVar mat_hdr_level( "mat_hdr_level", "2", FCVAR_ARCHIVE );
 
 ConVar mat_bloomamount_rate( "mat_bloomamount_rate", "0.05f", FCVAR_CHEAT );
@@ -48,8 +52,13 @@ static ConVar mat_dynamic_tonemapping( "mat_dynamic_tonemapping", "1", FCVAR_CHE
 static ConVar mat_show_ab_hdr( "mat_show_ab_hdr", "0" );
 static ConVar mat_tonemapping_occlusion_use_stencil( "mat_tonemapping_occlusion_use_stencil", "0" );
 ConVar mat_debug_autoexposure("mat_debug_autoexposure","0", FCVAR_CHEAT);
-static ConVar mat_autoexposure_max( "mat_autoexposure_max", "1.1" );
-static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.9" );
+#ifdef OF_CLIENT_DLL
+static ConVar mat_autoexposure_max( "mat_autoexposure_max", "1.2" );
+static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.8" );
+#else
+static ConVar mat_autoexposure_max( "mat_autoexposure_max", "2" );
+static ConVar mat_autoexposure_min( "mat_autoexposure_min", "0.5" );	
+#endif
 static ConVar mat_show_histogram( "mat_show_histogram", "0" );
 ConVar mat_hdr_tonemapscale( "mat_hdr_tonemapscale", "1.0", FCVAR_CHEAT );
 ConVar mat_hdr_uncapexposure( "mat_hdr_uncapexposure", "0", FCVAR_CHEAT );
@@ -84,6 +93,8 @@ ConVar mat_tonemap_percent_target( "mat_tonemap_percent_target", "60.0", FCVAR_C
 ConVar mat_tonemap_percent_bright_pixels( "mat_tonemap_percent_bright_pixels", "2.0", FCVAR_CHEAT );
 ConVar mat_tonemap_min_avglum( "mat_tonemap_min_avglum", "3.0", FCVAR_CHEAT );
 ConVar mat_fullbright( "mat_fullbright", "0", FCVAR_CHEAT );
+
+extern ConVar localplayer_visionflags;
 
 enum PostProcessingCondition {
 	PPP_ALWAYS,
@@ -425,12 +436,11 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 	float flTestRangeMax = ( m_max_lum == 1.0f ) ? 10000.0f : m_max_lum; // Count all pixels >1.0 as 1.0
 
 	// First, set stencil bits where the colors match
-	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, false );
-	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", false );
+	IMaterial *test_mat=materials->FindMaterial( "dev/lumcompare", TEXTURE_GROUP_OTHER, true );
+	IMaterialVar *pMinVar = test_mat->FindVar( "$C0_X", NULL );
 	pMinVar->SetFloatValue( flTestRangeMin );
-	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", false );
+	IMaterialVar *pMaxVar = test_mat->FindVar( "$C0_Y", NULL );
 	pMaxVar->SetFloatValue( flTestRangeMax );
-
 
 	int scrx_min = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_minx );
 	int scrx_max = FLerp( xl, ( xl + dest_width - 1 ), 0, 1, m_maxx );
@@ -459,7 +469,9 @@ void CHistogram_entry_t::IssueQuery( int frm_num )
 	{
 		tscale = pRenderContext->GetToneMappingScaleLinear().x;
 	}
-	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", false );
+	
+	IMaterialVar *use_t_scale = test_mat->FindVar( "$C0_Z", NULL );
+
 	use_t_scale->SetFloatValue( tscale );
 
 	m_npixels = ( 1 + scrx_max - scrx_min ) * ( 1 + scry_max - scry_min );
@@ -1421,6 +1433,12 @@ static void DrawBloomDebugBoxes( IMatRenderContext *pRenderContext )
 
 static float GetBloomAmount( void )
 {
+#ifndef OF_CLIENT_DLL	
+	// return bloom amount ( 0.0 if disabled or otherwise turned off )
+	if ( engine->GetDXSupportLevel() < 80 )
+		return 0.0;
+#endif
+
 	HDRType_t hdrType = g_pMaterialSystemHardwareConfig->GetHDRType();
 
 	bool bBloomEnabled = (mat_hdr_level.GetInt() >= 1);
@@ -1534,8 +1552,9 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 		IMaterial *downsample_mat = materials->FindMaterial( "dev/downsample_non_hdr", TEXTURE_GROUP_OTHER, true);
 	#endif
 
-	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, false );
-	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, false );
+	IMaterial *xblur_mat = materials->FindMaterial( "dev/blurfilterx_nohdr", TEXTURE_GROUP_OTHER, true );
+	IMaterial *yblur_mat = materials->FindMaterial( "dev/blurfiltery_nohdr", TEXTURE_GROUP_OTHER, true );
+
 	ITexture *dest_rt0 = materials->FindTexture( "_rt_SmallFB0", TEXTURE_GROUP_RENDER_TARGET );
 	ITexture *dest_rt1 = materials->FindTexture( "_rt_SmallFB1", TEXTURE_GROUP_RENDER_TARGET );
 
@@ -1578,7 +1597,8 @@ static void Generate8BitBloomTexture( IMatRenderContext *pRenderContext, float f
 
 	// Gaussian blur y rt1 to rt0
 	SetRenderTargetAndViewPort( dest_rt0 );
-	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", false );
+	IMaterialVar *pBloomAmountVar = yblur_mat->FindVar( "$bloomamount", NULL );
+
 	pBloomAmountVar->SetFloatValue( flBloomScale );
 	pRenderContext->DrawScreenSpaceRectangle(	yblur_mat, 0, 0, nSrcWidth / 4, nSrcHeight / 4,
 												0, 0, nSrcWidth / 4 - 1, nSrcHeight / 4 - 1,
@@ -1660,7 +1680,11 @@ static void DoPreBloomTonemapping( IMatRenderContext *pRenderContext, int nX, in
 
 static void DoPostBloomTonemapping( IMatRenderContext *pRenderContext, int nX, int nY, int nWidth, int nHeight, float flAutoExposureMin, float flAutoExposureMax )
 {
+#ifdef OF_CLIENT_DLL
 	if ( mat_show_histogram.GetInt() )
+#else
+	if ( mat_show_histogram.GetInt() && ( engine->GetDXSupportLevel() >= 90 ) )
+#endif
 	{
 		g_HDR_HistogramSystem.DisplayHistogram();
 	}
@@ -1698,7 +1722,7 @@ typedef struct SPyroSide
 static TPyroSide	PyroSides[ MAX_PYRO_SIDES ];
 
 ConVar pyro_vignette( "pyro_vignette", "2", FCVAR_ARCHIVE );
-ConVar pyro_vignette_distortion( "pyro_vignette_distortion", "0", FCVAR_ARCHIVE );
+ConVar pyro_vignette_distortion( "pyro_vignette_distortion", "2", FCVAR_ARCHIVE );
 ConVar pyro_min_intensity( "pyro_min_intensity", "0.1", FCVAR_ARCHIVE );
 ConVar pyro_max_intensity( "pyro_max_intensity", "0.35", FCVAR_ARCHIVE );
 ConVar pyro_min_rate( "pyro_min_rate", "0.05", FCVAR_ARCHIVE );
@@ -1707,8 +1731,6 @@ ConVar pyro_min_side_length( "pyro_min_side_length", "0.3", FCVAR_ARCHIVE );
 ConVar pyro_max_side_length( "pyro_max_side_length", "0.55", FCVAR_ARCHIVE );
 ConVar pyro_min_side_width( "pyro_min_side_width", "0.65", FCVAR_ARCHIVE );
 ConVar pyro_max_side_width( "pyro_max_side_width", "0.95", FCVAR_ARCHIVE );
-
-ConVar of_vignette( "of_vignette", "0", FCVAR_ARCHIVE, "Enables a vignette effect" );
 
 static void CreatePyroSide( int nSide, Vector2D &vMaxSize )
 {
@@ -1882,7 +1904,7 @@ static void DrawPyroVignette( int nDestX, int nDestY, int nWidth, int nHeight,	/
 	pRenderContext->GetRenderTargetDimensions( nScreenWidth, nScreenHeight );
 	pRenderContext->DrawScreenSpaceRectangle( pVignetteBorder, 0, 0, nScreenWidth, nScreenHeight, 0, 0, nScreenWidth - 1, nScreenHeight - 1, nScreenWidth, nScreenHeight, pClientRenderable );
 
-	if ( of_vignette.GetInt() > 1 )
+    if ( pyro_vignette.GetInt() > 1 )
 	{
 		float flPyroSegments = 2.0f / NUM_PYRO_SEGMENTS;
 		Vector2D vMaxSize( flPyroSegments, flPyroSegments );
@@ -2323,12 +2345,22 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			}
 
 			// bloom, software-AA and colour-correction (applied in 1 pass, after generation of the bloom texture)
+#ifdef OF_CLIENT_DLL			
 			bool  bPerformSoftwareAA	= IsX360() && ( flAAStrength != 0.0f );
 			bool  bPerformBloom			= !bPostVGui && ( flBloomScale > 0.0f );
 			bool  bPerformColCorrect	= !bPostVGui && 
 										  ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_FLOAT ) &&
 										  g_pColorCorrectionMgr->HasNonZeroColorCorrectionWeights() &&
 										  mat_colorcorrection.GetInt();
+#else
+			bool  bPerformSoftwareAA	= IsX360() && ( engine->GetDXSupportLevel() >= 90 ) && ( flAAStrength != 0.0f );
+			bool  bPerformBloom			= !bPostVGui && ( flBloomScale > 0.0f ) && ( engine->GetDXSupportLevel() >= 90 );
+			bool  bPerformColCorrect	= !bPostVGui && 
+										  ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() >= 90) &&
+										  ( g_pMaterialSystemHardwareConfig->GetHDRType() != HDR_TYPE_FLOAT ) &&
+										  g_pColorCorrectionMgr->HasNonZeroColorCorrectionWeights() &&
+										  mat_colorcorrection.GetInt();			
+#endif	
 			bool  bSplitScreenHDR		= mat_show_ab_hdr.GetInt();
 			pRenderContext->EnableColorCorrection( bPerformColCorrect );
 			if ( bPerformBloom || bPerformSoftwareAA || bPerformColCorrect )
@@ -2510,7 +2542,9 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 					}
 
 
-					if ( g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() && of_vignette.GetInt() > 0 )
+					bool bVisionOverride = ( localplayer_visionflags.GetInt() & ( 0x01 ) ); // Pyro-vision Goggles
+
+					if ( bVisionOverride && g_pMaterialSystemHardwareConfig->SupportsPixelShaders_2_0() && pyro_vignette.GetInt() > 0 )
 					{
 						if ( bFBUpdated )
 						{
@@ -2572,7 +2606,7 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			
 			IMaterial *pBloomMaterial;
 			pBloomMaterial = materials->FindMaterial( "dev/floattoscreen_combine", "" );
-			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", false );
+			IMaterialVar *pBloomAmountVar = pBloomMaterial->FindVar( "$bloomamount", NULL );
 			pBloomAmountVar->SetFloatValue( flBloomScale );
 			
 			PostProcessingPass* selectedHDR;
@@ -2611,7 +2645,11 @@ void DoEnginePostProcessing( int x, int y, int w, int h, bool bFlashlightIsOn, b
 			}
 
 			pRenderContext->SetRenderTarget(NULL);
+#ifdef OF_CLIENT_DLL			
 			if ( mat_show_histogram.GetInt() )
+#else
+			if ( mat_show_histogram.GetInt() && (engine->GetDXSupportLevel()>=90))
+#endif
 				g_HDR_HistogramSystem.DisplayHistogram();
 			if ( mat_dynamic_tonemapping.GetInt() )
 			{
@@ -2701,7 +2739,11 @@ void DoImageSpaceMotionBlur( const CViewSetup &view, int x, int y, int w, int h 
 #ifdef CSS_PERF_TEST
 	return;
 #endif
+#ifdef OF_CLIENT_DLL
 	if ( ( !mat_motion_blur_enabled.GetInt() ) )
+#else
+	if ( ( !mat_motion_blur_enabled.GetInt() ) || ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 90 ) )
+#endif	
 	{
 		return;
 	}

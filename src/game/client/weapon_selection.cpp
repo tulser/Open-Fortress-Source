@@ -146,11 +146,82 @@ void CBaseHudWeaponSelection::OnThink( void )
 	}
 }
 
+extern ConVar of_hide_weapon_selection;
+
+#ifdef OF_CLIENT_DLL
+void CBaseHudWeaponSelection::ProcessInput()
+{	
+	if( !of_hide_weapon_selection.GetBool() && hud_fastswitch.GetInt() == HUDTYPE_FASTSWITCH )
+		return;
+
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( !pPlayer )
+		return;
+
+	// Check to see if the player is in VGUI mode...
+	if ( pPlayer->IsInVGuiInputMode() && !pPlayer->IsInViewModelVGuiInputMode() )
+	{
+		// If so, close weapon selection when they press fire
+		if ( gHUD.m_iKeyBits & IN_ATTACK )
+		{
+			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
+			{
+				// Swallow the button
+				gHUD.m_iKeyBits &= ~IN_ATTACK;
+				input->ClearInputButton( IN_ATTACK );
+			}
+
+			engine->ClientCmd( "cancelselect\n" );
+		}
+		return;
+	}
+
+	// Has the player selected a weapon?
+	if ( gHUD.m_iKeyBits & (IN_ATTACK2) )
+	{
+		if ( IsWeaponSelectable() )
+		{
+			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
+			{
+				// Swallow the button
+				gHUD.m_iKeyBits &= ~( IN_ATTACK2 );
+				input->ClearInputButton( IN_ATTACK2 );
+			}
+
+			// Cancel select so you can easily cancel out
+			engine->ClientCmd( "cancelselect\n" );
+			return;
+		}
+	}
+
+	// Has the player selected a weapon?
+	if ( gHUD.m_iKeyBits & (IN_ATTACK) )
+	{
+		if ( IsWeaponSelectable() )
+		{
+#if !( defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL ) )
+			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
+#endif
+			{
+				gHUD.m_iKeyBits &= ~(IN_ATTACK);
+				input->ClearInputButton( IN_ATTACK );
+			}
+
+			// select weapon
+			SelectWeapon();
+		}
+	}
+
+}
+
+#else
+
 //-----------------------------------------------------------------------------
 // Purpose: Think used for selection of weapon menu item.
 //-----------------------------------------------------------------------------
 void CBaseHudWeaponSelection::ProcessInput()
 {
+
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 	if ( !pPlayer )
 		return;
@@ -178,7 +249,7 @@ void CBaseHudWeaponSelection::ProcessInput()
 	{
 		if ( IsWeaponSelectable() )
 		{
-#if !( defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT ) )
+#if !( defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL ) )
 			if ( HUDTYPE_PLUS != hud_fastswitch.GetInt() )
 #endif
 			{
@@ -193,7 +264,7 @@ void CBaseHudWeaponSelection::ProcessInput()
 		}
 	}
 }
-
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -531,11 +602,14 @@ void CBaseHudWeaponSelection::SelectWeapon( void )
 	else
 	{
 		SetWeaponSelected();
+#ifdef OF_CLIENT_DLL
+		if( of_hide_weapon_selection.GetBool() || hud_fastswitch.GetInt() != HUDTYPE_FASTSWITCH )
+#endif
+		{
+			m_hSelectedWeapon = NULL;
 	
-		m_hSelectedWeapon = NULL;
-	
-		engine->ClientCmd( "cancelselect\n" );
-
+			engine->ClientCmd( "cancelselect\n" );
+		}
 		// Play the "weapon selected" sound
 		player->EmitSound( "Player.WeaponSelected" );
 	}
@@ -555,10 +629,14 @@ void CBaseHudWeaponSelection::CancelWeaponSelection( void )
 	// instead of checking it's IsActive flag.
 	if ( ShouldDraw() )
 	{
-		HideSelection();
+#ifdef OF_CLIENT_DLL
+		if( of_hide_weapon_selection.GetBool() || hud_fastswitch.GetInt() != HUDTYPE_FASTSWITCH )
+#endif
+		{
+			HideSelection();
 
-		m_hSelectedWeapon = NULL;
-
+			m_hSelectedWeapon = NULL;
+		}
 		// Play the "close weapon selection" sound
 		player->EmitSound( "Player.WeaponSelectionClose" );
 	}

@@ -53,6 +53,10 @@ public:
 	bool ActivateModule(int moduleIndex);
 	bool ActivateModule(const char *moduleName);
 
+	// deactivate the specified module
+	bool DeactivateModule(int moduleIndex);
+	bool DeactivateModule(const char *moduleName);
+
 	// Deactivates all the modules (puts them into in inactive but recoverable state)
 	void DeactivatePlatformModules();
 

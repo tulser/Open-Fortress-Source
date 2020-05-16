@@ -43,6 +43,7 @@ DECLARE_BUILD_FACTORY( CTFArrowPanel );
 DECLARE_BUILD_FACTORY( CTFFlagStatus );
 
 extern ConVar tf_flag_caps_per_round;
+extern ConVar of_mctf_flag_caps_per_round;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -495,7 +496,22 @@ void CTFHudFlagObjectives::OnTick()
 	}
 
 	// are we playing captures for rounds?
-	if ( tf_flag_caps_per_round.GetInt() > 0 )
+	bool bRounds = false;
+	bool bMCTF = false;
+	if ( TFGameRules() )
+	{
+		if ( TFGameRules()->IsDMGamemode() && of_mctf_flag_caps_per_round.GetInt() > 0 )
+		{
+			bRounds = true;
+			bMCTF = true;
+		}
+		else if ( !TFGameRules()->IsDMGamemode() && tf_flag_caps_per_round.GetInt() > 0 )
+		{
+			bRounds = true;
+		}
+	}
+	
+	if ( bRounds )
 	{
 		C_TFTeam *pTeam = GetGlobalTFTeam( TF_TEAM_BLUE );
 		if ( pTeam )
@@ -516,7 +532,10 @@ void CTFHudFlagObjectives::OnTick()
 		}
 		
 		SetPlayingToLabelVisible( true );
-		SetDialogVariable( "rounds", tf_flag_caps_per_round.GetInt() );
+		if ( bMCTF )
+			SetDialogVariable( "rounds", of_mctf_flag_caps_per_round.GetInt() );
+		else
+			SetDialogVariable( "rounds", tf_flag_caps_per_round.GetInt() );
 	}
 	else // we're just playing straight score
 	{

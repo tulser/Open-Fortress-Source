@@ -341,7 +341,6 @@ public:
 	bool m_bPickedUpPowerup;
 	bool m_bTouchedJumpPad;
 	bool m_bTouchedTeleport;
-	
 
 private:
 	CountdownTimer m_lookForEnemiesTimer;

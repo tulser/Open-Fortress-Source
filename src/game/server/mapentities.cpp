@@ -342,7 +342,7 @@ void MapEntity_ParseAllEntities(const char *pMapData, IMapEntityFilter *pFilter,
 
 		if (token[0] != '{')
 		{
-			Error( "MapEntity_ParseAllEntities: found %s when expecting {", token);
+			Error( "found %s when expecting {", token);
 			continue;
 		}
 
@@ -522,7 +522,7 @@ void MapEntity_PrecacheEntity( const char *pEntData, int &nStringSize )
 	
 	if (!entData.ExtractValue("classname", className))
 	{
-		Error( "MapEntity_PrecacheEntity: classname missing from entity!\n" );
+		Error( "classname missing from entity!\n" );
 	}
 
 	// Construct via the LINK_ENTITY_TO_CLASS factory.

@@ -145,7 +145,6 @@ public:
 	void DestroyScreens( void );
 
 	// Data
-	virtual Class_T	Classify( void );
 	virtual int		GetType( void );
 	virtual int		GetAltMode( void );
 	virtual CTFPlayer *GetBuilder( void );

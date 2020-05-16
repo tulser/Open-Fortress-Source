@@ -450,7 +450,7 @@ Vector *g_EntityPositions = NULL;
 QAngle *g_EntityOrientations = NULL;
 string_t *g_EntityClassnames = NULL;
 
-#ifdef MAPBASE // VDC Memory Leak Fixes
+#ifdef OF_DLL // VDC Memory Leak Fixes
 class GlobalCleanUp : public CAutoGameSystem
 {
 	void Shutdown()
@@ -473,7 +473,7 @@ void NWCEdit::RememberEntityPosition( CBaseEntity *pEntity )
 
 	if ( !g_EntityPositions )
 	{
-#ifdef MAPBASE // VDC Memory Leak Fixes
+#ifdef OF_DLL // VDC Memory Leak Fixes
 		new GlobalCleanUp();
 #endif
 

@@ -27,7 +27,7 @@ BEGIN_PREDICTION_DATA( CTFCTranq )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_tranq, CTFCTranq );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_tranq );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_tranq );
 
 // Server specific.
 #ifndef CLIENT_DLL

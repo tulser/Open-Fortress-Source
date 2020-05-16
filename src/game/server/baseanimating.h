@@ -75,9 +75,6 @@ public:
 	// Tells whether or not we're using client-side animation. Used for controlling
 	// the transmission of animtime.
 	bool	IsUsingClientSideAnimation()	{ return m_bClientSideAnimation; }
-
-	//SecobMod__Information: Set to match DutchMegas' Collaborate mod code.
-	void SetClientSideAnimation( bool bNewValue ) { m_bClientSideAnimation = bNewValue; };
 	
 	// Basic NPC Animation functions
 	virtual float	GetIdealSpeed( ) const;
@@ -273,8 +270,10 @@ public:
 	void				UpdateModelScale();
 	virtual	void		RefreshCollisionBounds( void );
 
+#ifdef OF_DLL
 	virtual void			UpdateOnRemove( void );
 	virtual void			ChangeTeam( int iTeamNum );
+#endif
 	
 	// also calculate IK on server? (always done on client)
 	void EnableServerIK();
@@ -337,6 +336,7 @@ public:
 
 	bool PrefetchSequence( int iSequence );
 
+#ifdef OF_DLL
 #ifdef GLOWS_ENABLE
 	// Glows
 	void				AddGlowEffect( void );
@@ -348,6 +348,7 @@ public:
 protected:
 	CNetworkVar( bool, m_bGlowEnabled );
 #endif // GLOWS_ENABLE
+#endif
 
 private:
 	void LockStudioHdr();
@@ -360,13 +361,6 @@ private:
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );
 	void InputSetLightingOrigin( inputdata_t &inputdata );
 	void InputSetModelScale( inputdata_t &inputdata );
-
-#ifdef MAPBASE
-	void InputSetModel( inputdata_t &inputdata );
-
-	void InputSetCycle( inputdata_t &inputdata );
-	void InputSetPlaybackRate( inputdata_t &inputdata );
-#endif
 
 	bool CanSkipAnimation( void );
 
@@ -404,6 +398,11 @@ public:
 	Vector	GetStepOrigin( void ) const;
 	QAngle	GetStepAngles( void ) const;
 
+#ifndef OF_DLL
+private:
+#endif
+
+	// was pev->frame	
 	CNetworkVar(float, m_flCycle);
 	CNetworkVar(int, m_nSequence);
 
@@ -414,7 +413,6 @@ public:
 
 private:
 
-	// was pev->frame	
 	CNetworkArray( float, m_flPoseParameter, NUM_POSEPAREMETERS );	// must be private so manual mode works!
 	CNetworkArray( float, m_flEncodedController, NUM_BONECTRLS );		// bone controller setting (0..1)
 
@@ -555,7 +553,7 @@ EXTERN_SEND_TABLE(DT_BaseAnimating);
 #define ANIMATION_SKIN_BITS				10	// 1024 body skin selections FIXME: this seems way high
 #define ANIMATION_BODY_BITS				32	// body combinations
 #define ANIMATION_HITBOXSET_BITS		2	// hit box sets 
-#if defined( TF_DLL ) || defined( TF_MOD )
+#if defined( TF_DLL ) || defined( OF_DLL )
 #define ANIMATION_POSEPARAMETER_BITS	8	// pose parameter resolution
 #else
 #define ANIMATION_POSEPARAMETER_BITS	11	// pose parameter resolution

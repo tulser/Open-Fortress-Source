@@ -7,7 +7,6 @@
 #include "vgui_controls/MessageDialog.h"
 #include "vgui/ILocalize.h"
 #include "vgui/ISurface.h"
-#include "../game/shared/hl2ce/steamworks_stuff.h"
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
@@ -148,10 +147,7 @@ void CMessageDialog::ApplySchemeSettings( vgui::IScheme *pScheme )
 	
 	char* szOk;
 
-	if (g_bSteamworksError)
-		szOk = "#GameUI_QuitConfirmationTitle";
-	else
-		szOk = "#L4D360UI_Ok";
+	szOk = "#L4D360UI_Ok";
 
 	LoadControlSettings( "resource/UI/MessageDialog.res", "GAME", m_pControlSettings );
 

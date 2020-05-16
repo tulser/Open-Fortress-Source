@@ -7,7 +7,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_DLL
 ConVar sk_item_healthkit_tiny( "sk_item_healthkit_tiny","8" );
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
@@ -57,9 +57,11 @@ public:
 
 	DECLARE_CLASS(CHealthKitTiny, CTFPowerup);
 
-	string_t m_iszModel=MAKE_STRING( "" );
-	string_t m_iszModelOLD=MAKE_STRING( "" );
-	string_t m_iszPickupSound=MAKE_STRING( "HealthKitTiny.Touch" );
+	CHealthKitTiny();
+	bool m_bDontHeal;
+	string_t m_iszModel;
+	string_t m_iszModelOLD;
+	string_t m_iszPickupSound;
 	DECLARE_DATADESC();
 	void Spawn(void)
 	{
@@ -89,17 +91,27 @@ public:
 
 	bool MyTouch(CBasePlayer *pPlayer)
 	{
+		if( m_bDontHeal )
+			return false;
+
 		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );  // And the tf player,       Guess we could just use the tf player, no?
 		if ( pTFPlayer && pTFPlayer->m_Shared.IsZombie() )
 			return false;
 
 		if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))
 		{
+			m_bDontHeal = true;
 			CSingleUserRecipientFilter filter(pPlayer);
 			EmitSound(filter, entindex(), STRING(m_iszPickupSound));
 			AddEffects( EF_NODRAW );
 		}
 		return true;
+	}
+	
+	void Materialize( void )
+	{
+		BaseClass::Materialize();
+		m_bDontHeal = false;
 	}
 };
 
@@ -114,3 +126,12 @@ DEFINE_KEYFIELD( m_iszModelOLD, FIELD_STRING, "powerup_model" ),
 DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
 
 END_DATADESC()
+
+CHealthKitTiny::CHealthKitTiny()
+{
+	m_iszModel = MAKE_STRING( "" );	
+	m_iszModelOLD = MAKE_STRING( "" );	
+	m_iszPickupSound = MAKE_STRING( "HealthKitTiny.Touch" );	
+	
+	m_bDontHeal = false;
+}

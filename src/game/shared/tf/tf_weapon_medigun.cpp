@@ -69,7 +69,7 @@ void RecvProxy_HealingTarget( const CRecvProxyData *pData, void *pStruct, void *
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_medigun, CWeaponMedigun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_medigun );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_medigun );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( WeaponMedigun, DT_WeaponMedigun )
 

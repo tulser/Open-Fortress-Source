@@ -80,7 +80,7 @@ extern itemFlags_t g_ItemFlags[8];
 
 static CUtlDict< FileWeaponInfo_t*, unsigned short > m_WeaponInfoDatabase;
 
-#if 1 //def _DEBUG
+#if defined ( _DEBUG ) || defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 // used to track whether or not two weapons have been mistakenly assigned the wrong slot
 bool g_bUsedWeaponSlots[MAX_WEAPON_SLOTS][MAX_WEAPON_POSITIONS] = { { false } };
 
@@ -279,7 +279,11 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameW
 //			false - if data load fails
 //-----------------------------------------------------------------------------
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey, bool bReParse )
+#else
+bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey )	
+#endif
 {
 	if ( !phandle )
 	{
@@ -291,12 +295,16 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	if ( pFileInfo->bParsedScript && !bReParse )
+#else
+	if ( pFileInfo->bParsedScript )
+#endif
 		return true;
 
 	char sz[128];
 	
-#ifdef OPENFORTRESS_DLL
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	Q_snprintf( sz, sizeof( sz ), "scripts/weapons/%s", szWeaponName );
 #else
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
@@ -328,8 +336,10 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 
 	szViewModel[0] = 0;
 	szWorldModel[0] = 0;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	szCenteredViewModel[0] = 0;
 	szCenteredWorldModel[0] = 0;
+#endif
 	szAnimationPrefix[0] = 0;
 	iSlot = 0;
 	iPosition = 0;
@@ -337,8 +347,10 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	iMaxClip2 = 0;
 	iDefaultClip1 = 0;
 	iDefaultClip2 = 0;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	iMaxReserveAmmo = 0;
 	iDefaultReserveAmmo = 0;
+#endif
 	iWeight = 0;
 	iRumbleEffect = -1;
 	bAutoSwitchTo = false;
@@ -380,16 +392,20 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	// View model & world model
 	Q_strncpy( szViewModel, pKeyValuesData->GetString( "viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szWorldModel, pKeyValuesData->GetString( "playermodel" ), MAX_WEAPON_STRING );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	// View model & world model for the Centered Option
 	Q_strncpy( szCenteredViewModel, pKeyValuesData->GetString( "centered_viewmodel" ), MAX_WEAPON_STRING );
 	Q_strncpy( szCenteredWorldModel, pKeyValuesData->GetString( "centered_playermodel" ), MAX_WEAPON_STRING );
-	
+#endif
+
 	Q_strncpy( szAnimationPrefix, pKeyValuesData->GetString( "anim_prefix" ), MAX_WEAPON_PREFIX );
 	iSlot = pKeyValuesData->GetInt( "bucket", 0 );
 	iPosition = pKeyValuesData->GetInt( "bucket_position", 0 );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	iSlotDM = pKeyValuesData->GetInt( "bucket_dm", 0 );
 	iPositionDM = pKeyValuesData->GetInt( "bucket_dm_position", 0 );
-	
+#endif
+
 	// Use the console (X360) buckets if hud_fastswitch is set to 2.
 #ifdef CLIENT_DLL
 	if ( hud_fastswitch.GetInt() == 2 )
@@ -404,8 +420,10 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	iMaxClip2 = pKeyValuesData->GetInt( "clip2_size", WEAPON_NOCLIP );					// Max secondary clips gun can hold (assume they don't use clips by default)
 	iDefaultClip1 = pKeyValuesData->GetInt( "default_clip", iMaxClip1 );		// amount of primary ammo placed in the primary clip when it's picked up
 	iDefaultClip2 = pKeyValuesData->GetInt( "default_clip2", iMaxClip2 );		// amount of secondary ammo placed in the secondary clip when it's picked up
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	iMaxReserveAmmo = pKeyValuesData->GetInt( "MaxAmmo", WEAPON_NOCLIP );	
 	iDefaultReserveAmmo = pKeyValuesData->GetInt( "DefaultAmmo", iMaxReserveAmmo );
+#endif
 	iWeight = pKeyValuesData->GetInt( "weight", 0 );
 
 	iRumbleEffect = pKeyValuesData->GetInt( "rumble", -1 );
@@ -435,8 +453,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	m_bAllowFlipping = ( pKeyValuesData->GetInt( "AllowFlipping", 1 ) != 0 ) ? true : false;
 	m_bMeleeWeapon = ( pKeyValuesData->GetInt( "MeleeWeapon", 0 ) != 0 ) ? true : false;
 
-#if 1 //defined(_DEBUG) && defined(HL2_CLIENT_DLL)
-	// make sure two weapons aren't in the same slot & position in DM
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	if ( iSlotDM >= MAX_WEAPON_SLOTS ||
 		iPosition >= MAX_WEAPON_POSITIONS )
 	{
@@ -450,6 +467,22 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 			DevMsg( "Duplicately assigned weapon slots in selection hud:  %s (%s, %d, %d)\n", szClassName, szPrintName, iSlotDM, iPosition );
 		}
 		g_bUsedWeaponSlots[iSlotDM][iPosition] = true;
+	}
+#elif defined(_DEBUG) && defined(HL2_CLIENT_DLL)
+	// make sure two weapons aren't in the same slot & position
+	if ( iSlot >= MAX_WEAPON_SLOTS ||
+		iPosition >= MAX_WEAPON_POSITIONS )
+	{
+		Warning( "Invalid weapon slot or position [slot %d/%d max], pos[%d/%d max]\n",
+			iSlot, MAX_WEAPON_SLOTS - 1, iPosition, MAX_WEAPON_POSITIONS - 1 );
+	}
+	else
+	{
+		if (g_bUsedWeaponSlots[iSlot][iPosition])
+		{
+			Warning( "Duplicately assigned weapon slots in selection hud:  %s (%d, %d)\n", szPrintName, iSlot, iPosition );
+		}
+		g_bUsedWeaponSlots[iSlot][iPosition] = true;
 	}
 #endif
 

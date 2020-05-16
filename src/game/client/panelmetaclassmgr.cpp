@@ -234,7 +234,7 @@ CPanelMetaClassMgrImp::CPanelMetaClassMgrImp() : m_PanelTypeDict( true, 0, 32 )
 
 CPanelMetaClassMgrImp::~CPanelMetaClassMgrImp()
 {
-#ifdef MAPBASE // VDC Memory Leak Fixes
+#ifdef OF_CLIENT_DLL // VDC Memory Leak Fixes
 	while ( m_MetaClassKeyValues.Count()> 0 )
 	{
 		if (m_MetaClassKeyValues[0])

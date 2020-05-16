@@ -164,6 +164,7 @@ private:
 	CUtlVector<clientsideproprespawn_t> m_PropList;
 };
 
+#ifdef OF_CLIENT_DLL
 class C_FadingPhysPropClientside : public C_PhysPropClientside
 {
 public:
@@ -184,5 +185,6 @@ public:
 		}
 	}
 };
+#endif
 
 #endif // PHYSPROPCLIENTSIDE_H

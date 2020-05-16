@@ -84,7 +84,7 @@ END_DATADESC()
 
 
 LINK_ENTITY_TO_CLASS(obj_dispenser, CObjectDispenser);
-PRECACHE_REGISTER(obj_dispenser);
+//PRECACHE_REGISTER(obj_dispenser);
 
 #define DISPENSER_MAX_HEALTH	150
 

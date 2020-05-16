@@ -59,6 +59,7 @@
 #include "tf_viewmodel.h"
 #include "cdll_int.h"
 #include "filesystem.h"
+#include "of_loadout.h"
 
 #include "dt_utlvector_recv.h"
 
@@ -90,7 +91,9 @@ ConVar tf_playergib_maxspeed( "tf_playergib_maxspeed", "400", FCVAR_CHEAT, "Max 
 
 ConVar cl_autorezoom( "cl_autorezoom", "1", FCVAR_USERINFO | FCVAR_ARCHIVE, "When set to 1, sniper rifle will re-zoom after firing a zoomed shot." );
 
-ConVar of_muzzlelight("of_muzzlelight", "1", FCVAR_ARCHIVE, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
+// ficool2: disabled this by default as it causes framerate issues
+ConVar of_muzzlelight("of_muzzlelight", "0", FCVAR_CHEAT, "Enable dynamic lights for muzzleflashes, projectiles and the flamethrower.");
+
 ConVar of_beta_muzzleflash("of_beta_muzzleflash", "0", FCVAR_ARCHIVE, "Enable the TF2 beta muzzleflash model when firing.");
 
 ConVar of_idleview("of_idleview", "0", FCVAR_ARCHIVE, "Enables/Disables idle shake." );
@@ -120,10 +123,13 @@ ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces dea
 
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
 
+ConVar of_respawn_particles( "of_respawn_particles", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Draw respawn particles of players?" );
+
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
 
 extern const char *g_aLoadoutConvarNames[];
+extern const char *g_aArsenalConvarNames[];
 
 void RefreshDesiredCosmetics( int iClass )
 {
@@ -155,6 +161,89 @@ void RefreshDesiredCosmetics( int iClass )
 	}
 }
 
+void RefreshDesiredWeapons( int iClass )
+{
+	if( GetLoadout() )
+	{
+		KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+		if( pWeapons )
+		{
+			KeyValues *pClass = pWeapons->FindKey( g_aPlayerClassNames_NonLocalized[iClass] );
+			if( pClass )
+			{
+				KeyValues *pWeapon = pClass->GetFirstValue();
+				char szCommand[128];
+				szCommand[0] = '\0';
+				for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
+				{
+					if( szCommand[0] != '\0' )
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s %d", szCommand, pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					else
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+				}
+				ConVarRef var( g_aArsenalConvarNames[iClass] );
+				if ( var.IsValid() )
+				{
+					var.SetValue(szCommand);
+				}
+			}
+		}
+	}
+}
+
+
+void OnCosmeticEquip( const CCommand& args, KeyValues *pClass )
+{
+	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
+
+	if( !pValue )
+		return;
+
+	const char *szRegion = pValue->GetString( "region", "none" );
+	
+	pClass->SetString( szRegion, args[3] );
+
+	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
+	
+	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+}
+
+void OnWeaponEquip( const CCommand& args, KeyValues *pClass )
+{
+	KeyValues *pValue = GetWeaponFromSchema( args[3] );
+
+	if( !pValue )
+		return;
+	
+	KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		KeyValues *pLoadoutClass = pWeapons->FindKey( args[2] );
+		if( pLoadoutClass )
+		{
+			int iOtherSlot = (atoi( args[4] ) - 1) ? 1 : 2;
+			const char *szOtherWeapon = pLoadoutClass->GetString( VarArgs("%d", iOtherSlot) );
+			if( !Q_strcmp( args[3], szOtherWeapon ) )
+			{
+				pLoadoutClass->SetString( VarArgs( "%d", iOtherSlot), pLoadoutClass->GetString( args[4] ) );
+				if( GLoadoutPanel() )
+				{
+					GLoadoutPanel()->SelectWeapon( iOtherSlot, pLoadoutClass->GetString(args[4]), true );
+				}
+			}
+		}
+	}
+
+	pClass->SetString( args[4], args[3] );
+
+	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
+
+	if( GLoadoutPanel() )
+		GLoadoutPanel()->SelectWeapon( atoi(args[4]), args[3] );
+
+	RefreshDesiredWeapons( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );		
+}
+
 // --------------------------------------------------------------------
 // Purpose: Cycle through the aim & move modes.
 // --------------------------------------------------------------------
@@ -163,17 +252,32 @@ void LoadoutEquip( const CCommand& args )
 	// args[1] if ever needed, this will check the class
 	if( !GetLoadout() )
 		return;
-
+	
+	int iCategory = 0;
+	
+	char szCategory[64];
+	Q_strncpy(szCategory, args[1], sizeof(szCategory) );
+	strlwr(szCategory);	
+	
+	for( int i = 0; i < 2 ; i++ )
+	{
+		if( !Q_strcmp( szCategory, g_aLoadoutCategories[i] ) )
+		{
+			iCategory = i;
+			break;
+		}
+	}
+	
 	KeyValues *pCategory = GetLoadout()->FindKey( args[1] );
 	
 	if( !pCategory )
 	{
-		for ( int i = 0; i < 1; i++ )
+		for ( int i = 0; i < 2; i++ )
 		{
-			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+			size_t length = strlen( g_aLoadoutCategories[i] );
 
-			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], args[1], length ) )
-				ResetLoadout();
+			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], szCategory, length ) )
+				ResetLoadout( szCategory );
 		}
 		return;
 	}
@@ -185,20 +289,21 @@ void LoadoutEquip( const CCommand& args )
 			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
 
 			if ( length <= strlen( args[2] ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], args[2], length ) )
-				ResetLoadout();
+				ResetLoadout( args[1] );
 		}
 		return;
 	}
-	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
-	if( !pValue )
-		return;
 	
-	const char *szRegion = pValue->GetString( "region", "none" );
-	
-	pClass->SetString( szRegion, args[3] );
-	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
-
-	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			OnCosmeticEquip( args, pClass );
+		break;
+		case 1:
+			OnWeaponEquip( args, pClass );
+		break;
+	}
 }
 static ConCommand loadout_equip("loadout_equip", LoadoutEquip );
 
@@ -208,16 +313,31 @@ void LoadoutUnEquip( const CCommand& args )
 	if( !GetLoadout() )
 		return;
 
+	int iCategory = 0;
+	
+	char szCategory[64];
+	Q_strncpy(szCategory, args[1], sizeof(szCategory) );
+	strlwr(szCategory);	
+	
+	for( int i = 0; i < 2 ; i++ )
+	{
+		if( !Q_strcmp( szCategory, g_aLoadoutCategories[i] ) )
+		{
+			iCategory = i;
+			break;
+		}
+	}
+	
 	KeyValues *pCategory = GetLoadout()->FindKey( args[1] );
 	
 	if( !pCategory )
 	{
-		for ( int i = 0; i < 1; i++ )
+		for ( int i = 0; i < 2; i++ )
 		{
-			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
+			size_t length = strlen( g_aLoadoutCategories[i] );
 
-			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], args[1], length ) )
-				ResetLoadout();
+			if ( length <= strlen( args[1] ) && !Q_strnicmp( g_aLoadoutCategories[i], szCategory, length ) )
+				ResetLoadout( szCategory );
 		}
 		return;
 	}
@@ -229,20 +349,48 @@ void LoadoutUnEquip( const CCommand& args )
 			size_t length = strlen( g_aPlayerClassNames_NonLocalized[i] );
 
 			if ( length <= strlen( args[2] ) && !Q_strnicmp( g_aPlayerClassNames_NonLocalized[i], args[2], length ) )
-				ResetLoadout();
+				ResetLoadout( args[1] );
 		}
 		return;
 	}
-	KeyValues *pValue = GetCosmetic( abs( atoi(args[3]) ) );
+	KeyValues *pValue;
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			pValue = GetCosmetic( abs( atoi(args[3]) ) );
+		break;
+		case 1:
+			pValue = GetWeaponFromSchema( args[3] );
+		break;
+	}
+	
 	if( !pValue )
 		return;
 	
-	const char *szRegion = pValue->GetString( "region", "none" );
+	if( iCategory == 1 )
+	{
+		const char *szRegion = pValue->GetString( "region", "none" );
 	
-	pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
+		pClass->RemoveSubKey( pClass->FindKey( szRegion ) );
+	}
+	else
+	{
+		pClass->RemoveSubKey( pClass->FindKey( args[4] ) );
+	}
+
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 	
-	RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+	switch( iCategory )
+	{
+		default:
+		case 0:
+			RefreshDesiredCosmetics( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+		break;
+		case 1:
+			RefreshDesiredWeapons( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );
+		break;
+	}
 }
 static ConCommand loadout_unequip("loadout_unequip", LoadoutUnEquip );
 
@@ -533,6 +681,7 @@ IMPLEMENT_CLIENTCLASS_DT_NOBASE( C_TFRagdoll, DT_TFRagdoll, CTFRagdoll )
 	RecvPropInt( RECVINFO( m_iGoreLeftLeg ) ),
 	RecvPropInt( RECVINFO( m_iGoreRightLeg ) ),
 	RecvPropBool( RECVINFO( m_bFlagOnGround ) ),
+	RecvPropBool( RECVINFO( m_bDissolve ) ),
 END_RECV_TABLE()
 
 //-----------------------------------------------------------------------------
@@ -569,6 +718,7 @@ C_TFRagdoll::C_TFRagdoll()
 	m_iGoreRightLeg = 0;
 
 	m_bFlagOnGround = false;
+	m_bDissolve = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -736,7 +886,7 @@ void C_TFRagdoll::DismemberHead()
 	}
 }
 
-void C_TFRagdoll::DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone )
+void C_TFRagdoll::DismemberBase( char const *szBodyPart, bool bLevel, bool bBloodEffects, char const *szParticleBone )
 {
 	int m_Bodygroup = FindBodygroupByName( szBodyPart );
 
@@ -1124,17 +1274,19 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 
 		SetModelIndex( nModelIndex );
 
-		if ( m_iTeam == TF_TEAM_RED )
+		int iVisibleTeam = m_iTeam < TF_TEAM_RED ? TF_TEAM_MERCENARY : m_iTeam;
+		
+		if ( iVisibleTeam == TF_TEAM_RED )
 		{
 			m_nSkin = 0;
 		}
-		else if ( m_iTeam == TF_TEAM_BLUE )
+		else if ( iVisibleTeam == TF_TEAM_BLUE )
 		{
 			m_nSkin = 1;
 		}
-		else if ( m_iTeam == TF_TEAM_MERCENARY ) //mercenary
+		else if ( iVisibleTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			if ( of_tennisball.GetBool() && m_iClass == TF_TEAM_MERCENARY )
+			if ( of_tennisball.GetBool() && m_iClass == TF_CLASS_MERCENARY )
 				m_nSkin = 6;
 			else
 				m_nSkin = 4;
@@ -1193,6 +1345,45 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 
 		m_nBody = pPlayer->GetBody();
+		
+		if( !of_disable_cosmetics.GetBool() )
+		{
+			for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+			{
+				if ( pPlayer->m_iCosmetics[i] )
+				{
+					KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+					if( !pCosmetic )
+						continue;
+
+					// can't draw headwear regions in firstperson ragdolls
+					if ( cl_fp_ragdoll.GetBool() && pPlayer == C_TFPlayer::GetLocalTFPlayer() )
+					{
+						const char *pRegion = pCosmetic->GetString( "region" );
+						if ( pRegion && ( !Q_strcmp( pRegion, "hat" ) || 
+							 !Q_strcmp( pRegion, "face" ) || 
+							 !Q_strcmp( pRegion, "glasses" ) ) )
+						{
+							continue;
+						}
+					}
+
+					if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+					{
+
+						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+						
+						if( handle )
+						{
+							int iVisibleTeam = m_iTeam < TF_TEAM_RED ? TF_TEAM_MERCENARY : m_iTeam;
+							handle->m_nSkin = iVisibleTeam - 2;
+							
+							m_hCosmetic.AddToTail(handle);
+						}
+					}
+				}
+			}
+		}
 	}
 	else
 	{
@@ -1202,14 +1393,14 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		SetAbsVelocity( m_vecRagdollVelocity );
 
 		Interp_Reset( GetVarMapping() );
-	}
-
+	}	
+	
 	bool bPlayDeathAnim = false;
 	int iRandom = random->RandomInt( 0 , 3 ); // 25% chance to play
 
 	if ( pPlayer && m_bFlagOnGround && ( iRandom == 1 || tf_always_deathanim.GetBool() ) )
 	{
-		int iSeq = pPlayer->m_Shared.PlayDeathAnimation( this, m_iDamageCustom );
+		int iSeq = pPlayer->m_Shared.PlayDeathAnimation( this, m_iDamageCustom, m_bDissolve );
 
 		if ( iSeq != -1 )
 		{
@@ -1320,32 +1511,6 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	// must think immediately for dismemberment
 	SetNextClientThink( gpGlobals->curtime + 0.1f );
 
-	if( !of_disable_cosmetics.GetBool() && pPlayer )
-	{
-		for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
-		{
-			if ( pPlayer->m_iCosmetics[i] )
-			{
-				KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
-				if( !pCosmetic )
-					continue;
-
-				if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
-				{
-					CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-					
-					if( handle )
-					{
-						int iVisibleTeam = m_iTeam;
-						handle->m_nSkin = iVisibleTeam - 2;
-						
-						m_hCosmetic.AddToTail(handle);
-					}
-				}
-			}
-		}
-	}
-
 	// Birthday mode.
 	if ( pPlayer && TFGameRules() && TFGameRules()->IsBirthday() )
 	{
@@ -1420,8 +1585,8 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 			{
 				bCreateRagdoll = false;
 			}
-		}
-
+		}	
+		
 		if ( bCreateRagdoll )
 		{
 			if ( m_bGib )
@@ -1435,6 +1600,21 @@ void C_TFRagdoll::OnDataChanged( DataUpdateType_t type )
 				if ( of_gore.GetBool() && m_bGoreEnabled )
 				{
 					InitDismember();
+				}
+			}
+		}
+		C_TFPlayer *pPlayer = NULL;
+		if ( hPlayer )
+		{
+			pPlayer = dynamic_cast<C_TFPlayer*>( hPlayer.Get() );
+		}
+		if( pPlayer )
+		{
+			for ( int i = 0; i < pPlayer->m_hCosmetic.Count(); i++ )
+			{
+				if ( pPlayer->m_hCosmetic[i] )
+				{
+					pPlayer->m_hCosmetic[i]->Release();
 				}
 			}
 		}
@@ -1577,7 +1757,6 @@ void C_TFRagdoll::EndFadeOut()
 		}
 	}
 	m_hCosmetic.Purge();
-
 	SetNextClientThink( CLIENT_THINK_NEVER );
 	ClearRagdoll();
 	SetRenderMode( kRenderNone );
@@ -2302,7 +2481,6 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFLocalPlayerExclusive )
 		0, 
 		"player_object_array"	),
 
-	RecvPropEHandle( RECVINFO( m_hLadder ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 //	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
 
@@ -2335,13 +2513,20 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropEHandle( RECVINFO(m_hItem ) ),
 	
 	RecvPropVector( RECVINFO( m_vecPlayerColor ) ),
+	
+	RecvPropVector( RECVINFO( m_vecViewmodelOffset ) ),
+	RecvPropVector( RECVINFO( m_vecViewmodelAngle ) ),
+	
+	RecvPropBool( RECVINFO( m_bCentered ) ),
+	RecvPropBool( RECVINFO( m_bMinimized ) ),
 
 	RecvPropDataTable( "tflocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFLocalPlayerExclusive) ),
 	RecvPropDataTable( "tfnonlocaldata", 0, 0, &REFERENCE_RECV_TABLE(DT_TFNonLocalPlayerExclusive) ),
 
 	RecvPropInt( RECVINFO( m_iSpawnCounter ) ),
-	RecvPropInt( RECVINFO( m_iUpdateCosmetics ) ),
-	//
+	
+	RecvPropInt( RECVINFO( m_bResupplied ) ),
+
 	RecvPropInt( RECVINFO( m_iAccount ) ),
 
 	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropFloat(NULL,0,0) ),
@@ -2415,10 +2600,9 @@ C_TFPlayer::C_TFPlayer() :
 
 	m_bUpdateObjectHudState = false;
 	
-	iUpdatedCosmetics = 0;
+	iCosmeticCount = 0;
 
 	ListenForGameEvent( "player_jump" );
-	ListenForGameEvent( "force_cosmetic_refresh" );
 
 	//LoadMapMusic(::filesystem);
 
@@ -2576,7 +2760,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 	// If I'm burning, stop the burning sounds
 	if ( !IsDormant() && bDormant )
 	{
-		if ( m_pBurningSound) 
+		if ( m_pBurningSound ) 
 		{
 			StopBurningSound();
 		}
@@ -2589,6 +2773,7 @@ void C_TFPlayer::SetDormant( bool bDormant )
 	if ( IsDormant() && !bDormant )
 	{
 		m_bUpdatePlayerAttachments = true;
+		m_bUpdateCosmetics = true;
 	}
 
 	// Deliberately skip base combat weapon
@@ -2606,6 +2791,8 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	m_iOldPlayerClass = m_PlayerClass.GetClassIndex();
 	m_iOldState = m_Shared.GetCond();
 	m_iOldSpawnCounter = m_iSpawnCounter;
+	m_bOldResupplied = m_bResupplied;
+	
 	m_bOldSaveMeParity = m_bSaveMeParity;
 	m_nOldWaterLevel = GetWaterLevel();
 
@@ -2632,7 +2819,6 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 
 		InitInvulnerableMaterial();
@@ -2643,6 +2829,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		{
 			InitInvulnerableMaterial();
 			m_bUpdatePlayerAttachments = true;
+			m_bUpdateCosmetics = true;
 		}
 	}
 
@@ -2669,8 +2856,21 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 		bJustSpawned = true;
 		m_bUpdatePlayerAttachments = true;
+		m_bUpdateCosmetics = true;
 	}
-
+	
+	if ( m_bOldResupplied != m_bResupplied )
+	{
+		m_bUpdateCosmetics = true;
+		m_bOldResupplied = m_bResupplied;
+	}
+	
+	if( bCosmeticsDisabled != of_disable_cosmetics.GetBool() )
+	{
+		m_bUpdateCosmetics = true;
+		bCosmeticsDisabled = of_disable_cosmetics.GetBool();
+	}
+	
 	// update the chat bubble on the player (when he is typing a chat message)
 	CreateChattingEffect();
 
@@ -3104,6 +3304,7 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 	}	
 
 	m_bUpdatePlayerAttachments = true;
+	m_bUpdateCosmetics = true;
 
 	return hdr;
 }
@@ -3186,72 +3387,6 @@ void C_TFPlayer::UpdateSpyMask( void )
 	}
 }
 
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Update the hats you're wearing
-//-----------------------------------------------------------------------------
-void C_TFPlayer::UpdateWearables( void )
-{
-	for( int i = 0; i < GetNumBodyGroups(); i++ )
-	{
-		SetBodygroup( i, 0 );
-	}	
-	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
-	{
-		if ( m_hCosmetic[i] )
-			m_hCosmetic[i].Get()->Release();
-	}
-	m_hCosmetic.Purge();
-
-	if( of_disable_cosmetics.GetBool() )
-		return;
-
-	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
-	{
-		return;
-	}
-	for( int i = 0; i < m_iCosmetics.Count(); i++ )
-	{
-		if( m_iCosmetics[i] == 0 )
-		{
-			continue;
-		}
-		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
-		if( !pCosmetic )
-			continue;
-
-		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
-		if( pBodygroups )
-		{
-			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
-			{
-				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
-
-				if ( m_Bodygroup >= 0 )
-					SetBodygroup( m_Bodygroup, sub->GetInt() );
-			}
-		}
-
-		if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
-		{
-			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-			
-			if( handle )
-			{
-				int iVisibleTeam = GetTeamNumber();
-				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
-				{
-					iVisibleTeam = m_Shared.GetDisguiseTeam();
-				}
-				handle->m_nSkin = iVisibleTeam - 2;
-
-				m_hCosmetic.AddToTail(handle);
-			}
-		}
-	}
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: Attachments used for gameplay IE Shield powerup go here
 //-----------------------------------------------------------------------------
@@ -3273,6 +3408,73 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 				}
 				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
 			}
+		}
+	}
+}
+void C_TFPlayer::UpdateWearables( void )
+{
+	DevMsg("UpdateWearables: Triggered Update Wearables\n");
+	for( int i = 0; i < GetNumBodyGroups(); i++ )
+	{
+		SetBodygroup( i, 0 );
+	}	
+	for ( int i = 0; i < m_hCosmetic.Count(); i++ )
+	{
+		if ( m_hCosmetic[i] )
+			m_hCosmetic[i].Get()->Release();
+	}
+	m_hCosmetic.Purge();
+
+	if( of_disable_cosmetics.GetBool() )
+		return;
+
+	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
+	{
+		DevMsg("UpdateWearables: Mismatching cosmetic count\n");
+		return;
+	}
+
+	for( int i = 0; i < m_iCosmetics.Count(); i++ )
+	{
+		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
+		if( !pCosmetic )
+		{
+			DevMsg("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			continue;
+		}
+		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+		if( pBodygroups )
+		{
+			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+			{
+				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
+
+				if ( m_Bodygroup >= 0 )
+					SetBodygroup( m_Bodygroup, sub->GetInt() );
+			}
+		}
+
+		if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+		{
+			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+
+			if( handle )
+			{
+				int iVisibleTeam = GetTeamNumber();
+				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				{
+					iVisibleTeam = m_Shared.GetDisguiseTeam();
+				}
+				
+				iVisibleTeam = iVisibleTeam - 2;
+				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+				m_hCosmetic.AddToTail(handle);
+			}
+		}
+		else
+		{
+			DevMsg("UpdateWearables: Blank model\n");
 		}
 	}
 }
@@ -3527,11 +3729,11 @@ void C_TFPlayer::ClientThink()
 		UpdatePlayerAttachedModels();
 		m_bUpdatePlayerAttachments = false;
 	}
-
-	if( iUpdatedCosmetics != m_iUpdateCosmetics || m_hCosmetic.Count() != m_iCosmetics.Count() || (of_disable_cosmetics.GetBool() && m_hCosmetic.Count() > 0 ) )
+	
+	if ( m_bUpdateCosmetics )
 	{
 		UpdateWearables();
-		iUpdatedCosmetics = m_iUpdateCosmetics;
+		m_bUpdateCosmetics = false;
 	}
 	
 	if ( m_pSaveMeEffect )
@@ -4568,13 +4770,7 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 {
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
-	{
-		// coop needs to return false
-		if ( TFGameRules() && TFGameRules()->IsCoopGamemode() )
-		{
-			return false;
-		}
-		
+	{	
 		switch( GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
@@ -4796,11 +4992,6 @@ void C_TFPlayer::ReplayMapMusic( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::ClientPlayerRespawn( void )
 {
-	for( int i = 0; i < GetNumBodyGroups(); i++ )
-	{
-		SetBodygroup( i, 0 );
-	}
-
 	if ( IsLocalPlayer() )
 	{
 		// Dod called these, not sure why
@@ -4819,19 +5010,23 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		KeyUp( &in_ducktoggle, NULL );
 		
 		RefreshDesiredCosmetics( GetPlayerClass()->GetClassIndex() );
+		RefreshDesiredWeapons( GetPlayerClass()->GetClassIndex() );
 	}
 	
-	// don't draw the respawn particle in first person
-	if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
+	// don't draw the respawn particle in first person or if the client has them disabled
+	if ( of_respawn_particles.GetBool() )
 	{
-		char pEffectName[32];
-		pEffectName[0] = '\0';
-		if ( m_Shared.GetSpawnEffects() < 10 )
-			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
-		else
-			Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
-		if ( pEffectName[0] != '\0' )
-			m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() && ( !InFirstPersonView() || !IsLocalPlayer() || of_first_person_respawn_particles.GetBool() ) )
+		{
+			char pEffectName[32];
+			pEffectName[0] = '\0';
+			if ( m_Shared.GetSpawnEffects() < 10 )
+				Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_0%d", m_Shared.GetSpawnEffects() );
+			else
+				Q_snprintf( pEffectName, sizeof( pEffectName ), "dm_respawn_%d", m_Shared.GetSpawnEffects() );
+			if ( pEffectName[0] != '\0' )
+				m_Shared.UpdateParticleColor( ParticleProp()->Create( pEffectName, PATTACH_ABSORIGIN ) );
+		}
 	}
 	
 	UpdateVisibility();
@@ -5192,9 +5387,7 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 		
 		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
 		{
-			char jmpSound[128];
-			Q_snprintf(jmpSound, sizeof(jmpSound), GetPlayerClass()->GetJumpSound());
-			EmitSound( jmpSound );
+			EmitSound( GetPlayerClass()->GetJumpSound() );
 		}
 
 		m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
@@ -5623,20 +5816,6 @@ void C_TFPlayer::CalcViewIdle(QAngle& eyeAngles)
 int C_TFPlayer::GetAccount() const
 {
 	return m_iAccount;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Helper to remove from ladder
-//-----------------------------------------------------------------------------
-void C_TFPlayer::ExitLadder()
-{
-	if ( MOVETYPE_LADDER != GetMoveType() )
-		return;
-	
-	SetMoveType( MOVETYPE_WALK );
-	SetMoveCollide( MOVECOLLIDE_DEFAULT );
-	// Remove from ladder
-	/*m_HL2Local.*/m_hLadder = NULL;
 }
 
 void C_TFPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )

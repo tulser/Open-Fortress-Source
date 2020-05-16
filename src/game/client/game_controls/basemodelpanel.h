@@ -19,8 +19,6 @@
 
 class C_SceneEntity;
 
-extern ConVar ColorTest;
-
 class CModelPanelModel : public C_BaseFlex
 {
 public:
@@ -29,6 +27,7 @@ public:
 
 	virtual bool IsMenuModel() const{ return true; }
 	
+#ifdef OF_CLIENT_DLL
 	float red, green, blue;
 	
 	virtual Vector GetItemTintColor( void ) 
@@ -41,6 +40,7 @@ public:
 	}	
 	virtual void SetModelColor( Vector vecColor ) { red = vecColor.x; green = vecColor.y; blue = vecColor.z; }
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return this; }
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -102,7 +102,11 @@ public:
 	CModelPanelAttachedModelInfo()
 	{
 		m_pszModelName = NULL;
+#ifdef OF_CLIENT_DLL
 		m_nSkin = -1;
+#else
+		m_nSkin = 0;
+#endif
 	}
 
 	~CModelPanelAttachedModelInfo()
@@ -118,6 +122,34 @@ public:
 	const char	*m_pszModelName;
 	int			m_nSkin;
 };
+
+#ifdef OF_CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CModelPanelBodygroupInfo
+{
+public:
+	CModelPanelBodygroupInfo()
+	{
+		m_pszGroup = NULL;
+		m_nBody = -1;
+	}
+
+	~CModelPanelBodygroupInfo()
+	{
+		if ( m_pszGroup && m_pszGroup[0] )
+		{
+			delete[] m_pszGroup;
+			m_pszGroup = NULL;
+		}
+	}
+
+public:
+	const char* m_pszGroup;
+	int			m_nBody;
+};
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -151,6 +183,9 @@ public:
 
 		m_Animations.PurgeAndDeleteElements();
 		m_AttachedModelsInfo.PurgeAndDeleteElements();
+#ifdef OF_CLIENT_DLL
+		m_Bodygroups.PurgeAndDeleteElements();
+#endif
 	}
 
 public:
@@ -165,6 +200,9 @@ public:
 
 	CUtlVector<CModelPanelModelAnimation*>		m_Animations;
 	CUtlVector<CModelPanelAttachedModelInfo*>	m_AttachedModelsInfo;
+#ifdef OF_CLIENT_DLL
+	CUtlVector<CModelPanelBodygroupInfo*>		m_Bodygroups;
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -192,9 +230,18 @@ public:
 	MESSAGE_FUNC_PARAMS( OnSetAnimation, "SetAnimation", data );
 
 	void	SetSkin( int nSkin );
+	void	SetAttachmentsSkin( int nSkin );
 	void	SetDefaultAnimation( const char *pszName );
+#ifdef OF_CLIENT_DLL
+	void	SetBodygroup( const char* pszName, int nBody );
+	void	AddAttachment( const char* pszAttached );
+#endif
+#ifdef OF_CLIENT_DLL
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
-	
+#else
+	void	SwapModel( const char *pszName, const char *pszAttached = NULL );
+#endif
+
 	virtual void GetModelPos( float &x, float &y, float &z );
 	virtual void SetModelPos( float x, float y, float z );
 
@@ -206,8 +253,10 @@ public:
 	void		ZoomToFrameDistance( void );
 
 	void		UpdateModel();
+#ifdef OF_CLIENT_DLL
 	virtual void		SetModelColor( Vector vecColor );
 	Vector ModelColor;
+#endif
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event );
 

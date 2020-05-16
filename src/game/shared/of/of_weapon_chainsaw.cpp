@@ -78,7 +78,7 @@ BEGIN_PREDICTION_DATA( CTFChainsaw )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_chainsaw, CTFChainsaw );
-PRECACHE_WEAPON_REGISTER( tf_weapon_chainsaw );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_chainsaw );
 
 CTFChainsaw::CTFChainsaw()
 {

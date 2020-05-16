@@ -80,6 +80,11 @@ COPY_DLL_TO_SRV = 0
 # http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
 LDFLAGS += -Wl,--build-id
 
+# OPEN FORTRESS LINKER PATH.
+# Simulates Windows linker searchpath for fmod and discord shared libs.
+# Replaces the much hackier `ldproxy` :)
+LDFLAGS += -Wl,-rpath,'$$ORIGIN'
+
 #
 # If we should be running in a chroot, check to see if we are. If not, then prefix everything with the 
 # required chroot
@@ -150,6 +155,16 @@ ifeq ($(CLANG_BUILD),1)
 	CXX := $(CCACHE) $(CXX) -Qunused-arguments -fcolor-diagnostics
 endif
 LINK ?= $(CC)
+
+#OPEN FORTRESS G++ 4.6 DETECTION
+# If the string isn't empty,
+# we're compiling with g++ 4.6
+#ifneq ($(shell $(CXX) --version | grep g++-4.6 ),)
+ifneq ($(shell $(CXX) --version | grep 4.6.3 ),)
+	_ := $(info [OF] G++ 4.6 Detected)
+	# echo 4.6 doesnt support the override keyword, so we remove it.
+	CXXFLAGS += -Doverride=""
+endif
 
 ifeq ($(STEAM_BRANCH),1)
 	WARN_FLAGS = -Wall -Wextra -Wshadow -Wno-invalid-offsetof

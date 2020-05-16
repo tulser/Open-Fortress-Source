@@ -15,7 +15,7 @@
 #include "c_playerresource.h"
 #include "voice_common.h"
 #include "vgui_avatarimage.h"
-#if defined (OPENFORTRESS_DLL)
+#ifdef OF_CLIENT_DLL
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #endif
@@ -135,7 +135,11 @@ private:
 	CPanelAnimationVarAliasType( float, item_wide, "item_wide", "160", "proportional_float" );
 	CPanelAnimationVarAliasType( float, item_spacing, "item_spacing", "2", "proportional_float" );
 
+#ifdef OF_CLIENT_DLL
 	CPanelAnimationVarAliasType( bool, show_avatar, "show_avatar", "1", "bool" );
+#else
+	CPanelAnimationVarAliasType( bool, show_avatar, "show_avatar", "0", "bool" );
+#endif
 	CPanelAnimationVarAliasType( bool, show_friend, "show_friend", "1", "bool" );
 	CPanelAnimationVarAliasType( float, avatar_ypos, "avatar_ypos", "0", "proportional_float" );
 	CPanelAnimationVarAliasType( float, avatar_xpos, "avatar_xpos", "16", "proportional_float" );
@@ -147,7 +151,9 @@ private:
 	CPanelAnimationVarAliasType( float, voice_icon_xpos, "icon_xpos", "24", "proportional_float" );
 	CPanelAnimationVarAliasType( float, voice_icon_tall, "icon_tall", "16", "proportional_float" );
 	CPanelAnimationVarAliasType( float, voice_icon_wide, "icon_wide", "16", "proportional_float" );
+#ifdef OF_CLIENT_DLL
 	CPanelAnimationVarAliasType( float, voice_icon_alpha, "icon_alpha", "128", "proportional_float" );
+#endif
 
 	CPanelAnimationVarAliasType( bool, show_dead_icon, "show_dead_icon", "1", "bool" );
 	CPanelAnimationVarAliasType( float, dead_icon_ypos, "dead_ypos", "0", "proportional_float" );
@@ -174,7 +180,11 @@ CHudVoiceStatus::CHudVoiceStatus( const char *pName ) :
 
 	SetHiddenBits( 0 );
 
+#ifdef OF_CLIENT_DLL
 	m_clrIcon = Color(255,255,255,voice_icon_alpha);
+#else
+	m_clrIcon = Color(255,255,255,255);
+#endif
 
 	m_iDeadImageID = surface()->DrawGetTextureId( "hud/leaderboard_dead" );
 	if ( m_iDeadImageID == -1 ) // we didn't find it, so create a new one
@@ -360,10 +370,10 @@ void CHudVoiceStatus::Paint()
 		float oldAlphaMultiplier = surface()->DrawGetAlphaMultiplier();
 		surface()->DrawSetAlphaMultiplier(oldAlphaMultiplier * m_SpeakingList[i].fAlpha);
 
-#if defined(OPENFORTRESS_DLL)
+#ifdef OF_CLIENT_DLL
 		Color c;
 
-		if (TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
+		if ( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() )
 		{
 			C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
 			c = tf_PR->GetPlayerColor(playerId);
@@ -417,7 +427,11 @@ void CHudVoiceStatus::Paint()
 
 		// Draw the item background
 		surface()->DrawSetColor( c );
+#ifdef OF_CLIENT_DLL		
 		surface()->DrawFilledRect( 1, ypos, item_wide, ypos + item_tall );
+#else
+		surface()->DrawFilledRect( 0, ypos, item_wide, ypos + item_tall );
+#endif
 
 		if ( show_dead_icon && bIsAlive == false && m_iDeadImageID != -1 )
 		{
@@ -439,19 +453,38 @@ void CHudVoiceStatus::Paint()
 			surface()->DrawSetColor(COLOR_WHITE);
 			surface()->DrawTexturedPolygon( 4, vert );
 		}
+		
+#ifndef OF_CLIENT_DLL		
+		//=============================================================================
+		// HPE_BEGIN:
+		// [pfreese] Draw the avatar for the given player
+		//=============================================================================
+
+		// Draw the players icon
+		if (show_avatar && m_SpeakingList[i].pAvatar)
+		{
+			m_SpeakingList[i].pAvatar->SetPos( avatar_xpos, ypos + avatar_ypos );
+			m_SpeakingList[i].pAvatar->Paint();
+		}		
+#endif
 
 		//=============================================================================
 		// HPE_END
 		//=============================================================================
 
 		// Draw the voice icon
+#ifdef OF_CLIENT_DLL		
 		if (show_voice_icon && bIsAlive)
+#else
+		if (show_voice_icon)
+#endif
 			m_pVoiceIcon->DrawSelf( voice_icon_xpos, ypos + voice_icon_ypos, voice_icon_wide, voice_icon_tall, m_clrIcon );
 
 		// Draw the player's name
 		surface()->DrawSetTextColor(COLOR_WHITE);
 		surface()->DrawSetTextPos( text_xpos, ypos + ( item_tall / 2 ) - ( iFontHeight / 2 ) );
 
+#ifdef OF_CLIENT_DLL		
 		//=============================================================================
 		// HPE_BEGIN:
 		// [pfreese] Draw the avatar for the given player
@@ -463,6 +496,7 @@ void CHudVoiceStatus::Paint()
 			m_SpeakingList[i].pAvatar->SetPos(avatar_xpos, ypos + avatar_ypos);
 			m_SpeakingList[i].pAvatar->Paint();
 		}
+#endif
 
 		int iTextSpace = item_wide - text_xpos;
 

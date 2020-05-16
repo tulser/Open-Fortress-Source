@@ -213,13 +213,6 @@ BEGIN_DATADESC( CBaseAnimating )
 	DEFINE_KEYFIELD( m_flModelScale, FIELD_FLOAT, "modelscale" ),
 	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetModelScale", InputSetModelScale ),
 
-#ifdef MAPBASE
-	DEFINE_INPUTFUNC( FIELD_STRING,	"SetModel",	InputSetModel ),
-
-	DEFINE_INPUTFUNC( FIELD_FLOAT,	"SetCycle",	InputSetCycle ),
-	DEFINE_INPUTFUNC( FIELD_FLOAT,	"SetPlaybackRate",	InputSetPlaybackRate ),
-#endif
-
 	DEFINE_FIELD( m_fBoneCacheFlags, FIELD_SHORT ),
 
 	END_DATADESC()
@@ -268,9 +261,11 @@ IMPLEMENT_SERVERCLASS_ST(CBaseAnimating, DT_BaseAnimating)
 	SendPropFloat( SENDINFO( m_fadeMaxDist ), 0, SPROP_NOSCALE ),
 	SendPropFloat( SENDINFO( m_flFadeScale ), 0, SPROP_NOSCALE ),
 
+#ifdef OF_DLL
 #ifdef GLOWS_ENABLE
 	SendPropBool( SENDINFO( m_bGlowEnabled ) ),
 #endif // GLOWS_ENABLE
+#endif
 
 END_SEND_TABLE()
 
@@ -300,9 +295,11 @@ CBaseAnimating::CBaseAnimating()
 	m_flFadeScale = 0.0f;
 	m_fBoneCacheFlags = 0;
 
+#ifdef OF_DLL
 #ifdef GLOWS_ENABLE
 	m_bGlowEnabled.Set( false );
 #endif // GLOWS_ENABLE
+#endif
 }
 
 CBaseAnimating::~CBaseAnimating()
@@ -315,7 +312,7 @@ CBaseAnimating::~CBaseAnimating()
 
 void CBaseAnimating::Precache()
 {
-#if !defined( TF_DLL ) && !defined( TF_MOD )
+#if !defined( TF_DLL ) && !defined( OF_DLL )
 	// Anything derived from this class can potentially burn - true, but do we want it to!
 	PrecacheParticleSystem( "burning_character" );
 #endif
@@ -636,37 +633,6 @@ void CBaseAnimating::InputSetModelScale( inputdata_t &inputdata )
 	SetModelScale( vecScale.x, vecScale.y );
 }
 
-#ifdef MAPBASE
-//-----------------------------------------------------------------------------
-// Purpose: Sets our current model
-//-----------------------------------------------------------------------------
-void CBaseAnimating::InputSetModel( inputdata_t &inputdata )
-{
-	const char *szModel = inputdata.value.String();
-	if (PrecacheModel(szModel) != -1)
-	{
-		SetModelName(AllocPooledString(szModel));
-		SetModel(szModel);
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our current cycle
-//-----------------------------------------------------------------------------
-void CBaseAnimating::InputSetCycle( inputdata_t &inputdata )
-{
-	SetCycle( inputdata.value.Float() );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our current cycle
-//-----------------------------------------------------------------------------
-void CBaseAnimating::InputSetPlaybackRate( inputdata_t &inputdata )
-{
-	SetPlaybackRate( inputdata.value.Float() );
-}
-#endif
-
 //=========================================================
 // SelectWeightedSequence
 //=========================================================
@@ -984,7 +950,7 @@ float CBaseAnimating::SequenceDuration( CStudioHdr *pStudioHdr, int iSequence )
 {
 	if ( !pStudioHdr )
 	{
-		DevWarning( 3, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
 		return 0.1;
 	}
 	if ( !pStudioHdr->SequencesAvailable() )
@@ -993,7 +959,7 @@ float CBaseAnimating::SequenceDuration( CStudioHdr *pStudioHdr, int iSequence )
 	}
 	if (iSequence >= pStudioHdr->GetNumSeq() || iSequence < 0 )
 	{
-		DevWarning( 3, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
+		DevWarning( 2, "CBaseAnimating::SequenceDuration( %d ) out of range\n", iSequence );
 		return 0.1;
 	}
 
@@ -1019,7 +985,7 @@ float CBaseAnimating::GetLastVisibleCycle( CStudioHdr *pStudioHdr, int iSequence
 {
 	if ( !pStudioHdr )
 	{
-		DevWarning( 3, "CBaseAnimating::LastVisibleCycle( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
+		DevWarning( 2, "CBaseAnimating::LastVisibleCycle( %d ) NULL pstudiohdr on %s!\n", iSequence, GetClassname() );
 		return 1.0;
 	}
 
@@ -1561,6 +1527,7 @@ void CBaseAnimating::InitStepHeightAdjust( void )
 	m_flEstIkOffset = 0;
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1599,15 +1566,18 @@ bool CBaseAnimating::IsGlowEffectActive( void )
 	return m_bGlowEnabled;
 }
 #endif // GLOWS_ENABLE
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Changing team, maintain associated data
 //-----------------------------------------------------------------------------
 void CBaseAnimating::ChangeTeam( int iTeamNum )
 {
+#ifdef OF_DLL
 #ifdef GLOWS_ENABLE
 	RemoveGlowEffect();
 #endif // GLOWS_ENABLE
+#endif
 
 	BaseClass::ChangeTeam( iTeamNum );
 }
@@ -2690,7 +2660,7 @@ CBoneCache *CBaseAnimating::GetBoneCache( void )
 	int boneMask = BONE_USED_BY_HITBOX | BONE_USED_BY_ATTACHMENT;
 
 	// TF queries these bones to position weapons when players are killed
-#if defined( TF_DLL ) || defined( TF_MOD )
+#if defined( TF_DLL ) || defined( OF_DLL )
 	boneMask |= BONE_USED_BY_BONE_MERGE;
 #endif
 	if ( pcache )

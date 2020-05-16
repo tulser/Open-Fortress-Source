@@ -151,8 +151,11 @@ void CDecal::StaticDecal( void )
 
 		virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 		{
+#ifndef OF_DLL			
 			static const char *ppszIgnoredClasses[] = 
 			{
+				"prop_*",
+				"tf_*",
 				"weapon_*",
 				"item_*",
 				"prop_ragdoll",
@@ -164,6 +167,7 @@ void CDecal::StaticDecal( void )
 				"tf_ammo_pack",
 				"tf_dropped_weapon",
 			};
+#endif
 
 			CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
 
@@ -171,12 +175,16 @@ void CDecal::StaticDecal( void )
 			if ( pEntity->IsEffectActive( EF_NODRAW ) )
 				return false;
 
+#ifdef OF_DLL	// optimization
+			if ( V_strncmp( "tf_", pEntity->GetClassname(), 3 ) == 0 || V_strncmp( "prop_", pEntity->GetClassname(), 5 ) == 0 ) 
+				return false;
+#else
 			for ( int i = 0; i < ARRAYSIZE(ppszIgnoredClasses); i++ )
 			{
 				if ( pEntity->ClassMatches( ppszIgnoredClasses[i] ) )
 					return false;
 			}
-
+#endif
 
 			return CTraceFilterSimple::ShouldHitEntity( pServerEntity, contentsMask );
 		}
@@ -639,6 +647,7 @@ void CWorld::Precache( void )
 
 	g_Language.SetValue( LANGUAGE_ENGLISH );	// TODO use VGUI to get current language
 
+#ifndef OF_DLL
 	if ( g_Language.GetInt() == LANGUAGE_GERMAN )
 	{
 		PrecacheModel( "models/germangibs.mdl" );
@@ -647,6 +656,7 @@ void CWorld::Precache( void )
 	{
 		PrecacheModel( "models/gibs/hgibs.mdl" );
 	}
+#endif
 
 	PrecacheScriptSound( "BaseEntity.EnterWater" );
 	PrecacheScriptSound( "BaseEntity.ExitWater" );

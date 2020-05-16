@@ -1962,8 +1962,13 @@ void CResponseSystem::LoadFromBuffer( const char *scriptfile, const char *buffer
 		{
 			int byteoffset = m_ScriptStack[ 0 ].currenttoken - (const char *)m_ScriptStack[ 0 ].buffer;
 
+#ifdef OF_DLL
 			Error( "Error loading respone rules!\nIf you are getting this error, your game likely didn't download or update properly. Go to the open_fortress/scripts/talker/ folder and delete the response_rules.txt, and cleanup & update the SVN again.\n\nTechnical Information:\nCResponseSystem::LoadFromBuffer: Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n", 
 				token, scriptfile, byteoffset );
+#else
+			Error( "CResponseSystem::LoadFromBuffer:  Unknown entry type '%s', expecting 'response', 'criterion', 'enumeration' or 'rules' in file %s(offset:%i)\n", 
+#endif
+
 			break;
 		}
 	}
@@ -3041,7 +3046,7 @@ CON_COMMAND( rr_reloadresponsesystems, "Reload all response system scripts." )
 
 	defaultresponsesytem.ReloadAllResponseSystems();
 
-#if defined( TF_DLL ) || defined ( TF_MOD )
+#if defined( TF_DLL ) || defined ( OF_DLL )
 	// This is kind of hacky, but I need to get it in for now!
 	if( g_pGameRules->IsMultiplayer() )
 	{

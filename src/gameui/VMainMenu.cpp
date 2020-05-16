@@ -44,8 +44,6 @@
 #include "tier0/icommandline.h"
 #include "fmtstr.h"
 
-#include "../game/shared/hl2ce/steamworks_stuff.h"
-
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -102,26 +100,6 @@ MainMenu::~MainMenu()
 //=============================================================================
 void MainMenu::OnCommand( const char *command )
 {
-	if (g_bSteamworksError)
-	{
-		GenericConfirmation* confirmation =
-			static_cast<GenericConfirmation*>(CBaseModPanel::GetSingleton().OpenWindow(WT_GENERICCONFIRMATION, this, false));
-
-		GenericConfirmation::Data_t data;
-
-		data.pWindowTitle = "Steamworks Error";
-		data.pMessageText = "#HL2CEUI_BuyHL2AndInstallSDK";
-
-		data.bOkButtonEnabled = true;
-		data.pfnOkCallback = &AcceptQuitGameCallback;
-		data.bCancelButtonEnabled = false;
-
-		confirmation->SetUsageData(data);
-
-		NavigateFrom();
-	}
-
-
 	int iUserSlot = CBaseModPanel::GetSingleton().GetLastActiveUserId();
 
 	if ( UI_IsDebug() )
@@ -693,9 +671,6 @@ void MainMenu::ApplySchemeSettings( IScheme *pScheme )
 	//SetFooterState();
 
 	const char *pSettings = "Resource/UI/BaseModUI/MainMenu.res";
-
-	if (g_bSteamworksError)
-		pSettings = "Resource/UI/BaseModUI/mainmenu_steamworkserror.res";
 
 #if !defined( _X360 )
 	/*

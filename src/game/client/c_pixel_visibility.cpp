@@ -523,7 +523,11 @@ void CPixelVisibilitySystem::LevelInitPreEntity()
 	bool fastqueries = HasFastQueries();
 	// printf("\n ** fast queries: %s **", fastqueries?"true":"false" );
 	
+#ifdef OF_CLIENT_DLL	
 	m_hwCanTestGlows = r_dopixelvisibility.GetBool() && fastqueries;
+#else
+	m_hwCanTestGlows = r_dopixelvisibility.GetBool() && fastqueries && engine->GetDXSupportLevel() >= 80;
+#endif
 	if ( m_hwCanTestGlows )
 	{
 		CMatRenderContextPtr pRenderContext( materials );

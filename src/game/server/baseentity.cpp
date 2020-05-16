@@ -62,10 +62,6 @@
 #include "env_debughistory.h"
 #include "tier1/utlstring.h"
 #include "utlhashtable.h"
-#ifdef MAPBASE
-#include "of/datadesc_mod.h"
-#include "of/matchers.h"
-#endif
 
 #if defined( TF_DLL )
 #include "tf_gamerules.h"
@@ -1013,7 +1009,11 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( m_iGlobalname != NULL_STRING )
 		{
+#ifdef OF_DLL
 			Q_snprintf( tempstr, sizeof(tempstr), "Globalname: %s", STRING(m_iGlobalname) );
+#else
+			Q_snprintf( tempstr, sizeof(tempstr), "GLOBALNAME: %s", STRING(m_iGlobalname) );
+#endif
 			EntityText(offset,tempstr, 0);
 			offset++;
 		}
@@ -1025,14 +1025,23 @@ int CBaseEntity::DrawDebugTextOverlays(void)
 
 		if( GetModelName() != NULL_STRING || GetBaseAnimating() )
 		{
+#ifdef OF_DLL
+
 			Q_snprintf(tempstr, sizeof(tempstr), "Model: %s", STRING(GetModelName()) );
+#else			
+			Q_snprintf(tempstr, sizeof(tempstr), "Model:%s", STRING(GetModelName()) );
+#endif
 			EntityText(offset,tempstr,0);
 			offset++;
 		}
 
 		if( m_hDamageFilter.Get() != NULL )
 		{
+#ifdef OF_DLL
 			Q_snprintf( tempstr, sizeof(tempstr), "Damage Filter: %s", m_hDamageFilter->GetDebugName() );
+#else
+			Q_snprintf( tempstr, sizeof(tempstr), "DAMAGE FILTER:%s", m_hDamageFilter->GetDebugName() );
+#endif
 			EntityText( offset,tempstr,0 );
 			offset++;
 		}
@@ -1442,72 +1451,6 @@ int CBaseEntity::OnTakeDamage( const CTakeDamageInfo &info )
 	return 1;
 }
 
-// inflict damage on this entity.  bitsDamageType indicates type of damage inflicted, ie: DMG_CRUSH
-
-int CBaseEntity::OnTakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage )
-{
-	Vector			vecTemp;
-
-	if ( !edict() || !m_takedamage )
-		return 0;
-
-	if ( info.GetInflictor() )
-	{
-		vecTemp = info.GetInflictor()->WorldSpaceCenter() - ( WorldSpaceCenter() );
-	}
-	else
-	{
-		vecTemp.Init( 1, 0, 0 );
-	}
-
-	// this global is still used for glass and other non-NPC killables, along with decals.
-	g_vecAttackDir = vecTemp;
-	VectorNormalize(g_vecAttackDir);
-		
-	// save damage based on the target's armor level
-
-	// figure momentum add (don't let hurt brushes or other triggers move player)
-
-	// physics objects have their own calcs for this: (don't let fire move things around!)
-	if ( !IsEFlagSet( EFL_NO_DAMAGE_FORCES ) )
-	{
-		if ( ( GetMoveType() == MOVETYPE_VPHYSICS ) )
-		{
-			VPhysicsTakeDamage( info );
-		}
-		else
-		{
-			if ( info.GetInflictor() && (GetMoveType() == MOVETYPE_WALK || GetMoveType() == MOVETYPE_STEP) && 
-				!info.GetAttacker()->IsSolidFlagSet(FSOLID_TRIGGER) )
-			{
-				Vector vecDir, vecInflictorCentroid;
-				vecDir = WorldSpaceCenter( );
-				vecInflictorCentroid = info.GetInflictor()->WorldSpaceCenter( );
-				vecDir -= vecInflictorCentroid;
-				VectorNormalize( vecDir );
-
-				float flForce = flTotalDamage * ((32 * 32 * 72.0) / (WorldAlignSize().x * WorldAlignSize().y * WorldAlignSize().z)) * 5;
-				
-				if (flForce > 1000.0) 
-					flForce = 1000.0;
-				ApplyAbsVelocityImpulse( vecDir * flForce );
-			}
-		}
-	}
-
-	if ( m_takedamage != DAMAGE_EVENTS_ONLY )
-	{
-	// do the damage
-		m_iHealth -= info.GetDamage();
-		if (m_iHealth <= 0)
-		{
-			Event_Killed( info );
-			return 0;
-		}
-	}
-
-	return 1;
-}
 //-----------------------------------------------------------------------------
 // Purpose: Scale damage done and call OnTakeDamage
 //-----------------------------------------------------------------------------
@@ -1516,6 +1459,7 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( !g_pGameRules )
 		return 0;
 
+#ifndef OF_DLL
 	bool bHasPhysicsForceDamage = !g_pGameRules->Damage_NoPhysicsForce( inputInfo.GetDamageType() );
 	if ( bHasPhysicsForceDamage && inputInfo.GetDamageType() != DMG_GENERIC )
 	{
@@ -1530,7 +1474,7 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 		{
 			static int warningCount = 0;
 			if ( ++warningCount < 10 )
-			{
+			{			
 				if ( inputInfo.GetDamageForce() == vec3_origin )
 				{
 					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
@@ -1542,6 +1486,7 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 			}
 		}
 	}
+#endif
 
 	// Make sure our damage filter allows the damage.
 	if ( !PassesDamageFilter( inputInfo ))
@@ -1574,77 +1519,6 @@ int CBaseEntity::TakeDamage( const CTakeDamageInfo &inputInfo )
 		//Msg("%s took %.2f Damage, at %.2f\n", GetClassname(), info.GetDamage(), gpGlobals->curtime );
 
 		return OnTakeDamage( info );
-	}
-	return 0;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Scale damage done and call OnTakeSelfDamage
-//-----------------------------------------------------------------------------
-int CBaseEntity::TakeSelfDamage( const CTakeDamageInfo &inputInfo, float flTotalDamage )
-{
-	if ( !g_pGameRules )
-		return 0;
-
-	bool bHasPhysicsForceDamage = !g_pGameRules->Damage_NoPhysicsForce( inputInfo.GetDamageType() );
-	if ( bHasPhysicsForceDamage && inputInfo.GetDamageType() != DMG_GENERIC )
-	{
-		// If you hit this assert, you've called TakeDamage with a damage type that requires a physics damage
-		// force & position without specifying one or both of them. Decide whether your damage that's causing 
-		// this is something you believe should impart physics force on the receiver. If it is, you need to 
-		// setup the damage force & position inside the CTakeDamageInfo (Utility functions for this are in
-		// takedamageinfo.cpp. If you think the damage shouldn't cause force (unlikely!) then you can set the 
-		// damage type to DMG_GENERIC, or | DMG_CRUSH if you need to preserve the damage type for purposes of HUD display.
-
-		if ( inputInfo.GetDamageForce() == vec3_origin || inputInfo.GetDamagePosition() == vec3_origin )
-		{
-			static int warningCount = 0;
-			if ( ++warningCount < 10 )
-			{
-				if ( inputInfo.GetDamageForce() == vec3_origin )
-				{
-					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamageForce() == vec3_origin\n" );
-				}
-				if ( inputInfo.GetDamagePosition() == vec3_origin )
-				{
-					DevMsg( "CBaseEntity::TakeDamage:  with inputInfo.GetDamagePosition() == vec3_origin\n" );
-				}
-			}
-		}
-	}
-
-	// Make sure our damage filter allows the damage.
-	if ( !PassesDamageFilter( inputInfo ))
-	{
-		return 0;
-	}
-
-	if( !g_pGameRules->AllowDamage(this, inputInfo) )
-	{
-		return 0;
-	}
-
-	if ( PhysIsInCallback() )
-	{
-		PhysCallbackDamage( this, inputInfo );
-	}
-	else
-	{
-		CTakeDamageInfo info = inputInfo;
-		
-		// Scale the damage by the attacker's modifier.
-		if ( info.GetAttacker() )
-		{
-			info.ScaleDamage( info.GetAttacker()->GetAttackDamageScale( this ) );
-		}
-
-		// Scale the damage by my own modifiers
-		info.ScaleDamage( GetReceivedDamageScale( info.GetAttacker() ) );
-
-		//Msg("%s took %.2f Damage, at %.2f\n", GetClassname(), info.GetDamage(), gpGlobals->curtime );
-
-		return OnTakeSelfDamage( info, flTotalDamage );
 	}
 	return 0;
 }
@@ -1706,9 +1580,9 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		// damage type to DMG_GENERIC, or | DMG_CRUSH if you need to preserve the damage type for purposes of HUD display.
 #if !defined( TF_DLL )
 		Assert( force != vec3_origin && offset != vec3_origin );
-#else
+#elif !defined ( OF_DLL )
 		// this was spamming the console for Payload maps in TF (trigger_hurt entity on the front of the cart)
-		if ( !TFGameRules() || !TFGameRules()->InGameType(TF_GAMETYPE_ESCORT)  )
+		if ( !TFGameRules() || TFGameRules()->GetGameType() != TF_GAMETYPE_ESCORT )
 		{
 			Assert( force != vec3_origin && offset != vec3_origin );
 		}
@@ -1717,8 +1591,8 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 		unsigned short gameFlags = VPhysicsGetObject()->GetGameFlags();
 		if ( gameFlags & FVPHYSICS_PLAYER_HELD )
 		{
-			// if the player is holding the object, use it's real mass (player holding reduced the mass)
-			
+#ifdef OF_DLL		
+			// if the player is holding the object, use it's real mass (player holding reduced the mass)		
 			CBasePlayer *pPlayer = NULL;
 
 			if (gpGlobals->maxClients == 1)
@@ -1739,6 +1613,9 @@ int CBaseEntity::VPhysicsTakeDamage( const CTakeDamageInfo &info )
 					}
 				}
 			}
+#else
+			CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+#endif
 
 			if ( pPlayer )
 			{
@@ -1987,10 +1864,18 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_EMBEDDED( m_Collision ),
 	DEFINE_EMBEDDED( m_Network ),
 
+#ifdef OF_DLL
 	DEFINE_KEYFIELD( m_MoveType, FIELD_CHARACTER, "MoveType" ),
+#else
+	DEFINE_FIELD( m_MoveType, FIELD_CHARACTER ),
+#endif
 	DEFINE_FIELD( m_MoveCollide, FIELD_CHARACTER ),
-	DEFINE_KEYFIELD( m_hOwnerEntity, FIELD_EHANDLE, "OwnerEntity" ),
+	DEFINE_FIELD( m_hOwnerEntity, FIELD_EHANDLE ),
+#ifdef OF_DLL
 	DEFINE_KEYFIELD( m_CollisionGroup, FIELD_INTEGER, "CollisionGroup" ),
+#else
+	DEFINE_FIELD( m_CollisionGroup, FIELD_INTEGER ),
+#endif
 	DEFINE_PHYSPTR( m_pPhysicsObject ),
 	DEFINE_FIELD( m_flElasticity, FIELD_FLOAT ),
 	DEFINE_KEYFIELD( m_flShadowCastDistance, FIELD_FLOAT, "shadowcastdist" ),
@@ -2040,7 +1925,7 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_KEYFIELD( m_vecViewOffset, FIELD_VECTOR, "view_ofs" ),
 
-	DEFINE_KEYFIELD( m_fFlags, FIELD_INTEGER, "m_fFlags" ),
+	DEFINE_FIELD( m_fFlags, FIELD_INTEGER ),
 #if !defined( NO_ENTITY_PREDICTION )
 //	DEFINE_FIELD( m_bIsPlayerSimulated, FIELD_INTEGER ),
 //	DEFINE_FIELD( m_hPlayerSimulationOwner, FIELD_EHANDLE ),
@@ -2090,10 +1975,6 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_INPUTFUNC( FIELD_STRING, "AddOutput", InputAddOutput ),
 
-#ifdef MAPBASE
-	DEFINE_INPUTFUNC( FIELD_STRING, "ChangeVariable", InputChangeVariable ),
-#endif
-
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser1", InputFireUser1 ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser2", InputFireUser2 ),
 	DEFINE_INPUTFUNC( FIELD_STRING, "FireUser3", InputFireUser3 ),
@@ -2103,41 +1984,6 @@ BEGIN_DATADESC_NO_BASE( CBaseEntity )
 	DEFINE_OUTPUT( m_OnUser2, "OnUser2" ),
 	DEFINE_OUTPUT( m_OnUser3, "OnUser3" ),
 	DEFINE_OUTPUT( m_OnUser4, "OnUser4" ),
-
-#ifdef MAPBASE
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetTarget", InputSetTarget ),
-	DEFINE_INPUTFUNC( FIELD_EHANDLE, "SetOwnerEntity", InputSetOwnerEntity ),
-
-	DEFINE_INPUTFUNC( FIELD_STRING, "FireOutput", InputFireOutput ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "RemoveOutput", InputRemoveOutput ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "CancelPending", InputCancelPending ),
-
-	DEFINE_INPUTFUNC( FIELD_VOID, "FreeChildren", InputFreeChildren ),
-
-	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalOrigin", InputSetLocalOrigin ),
-	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngles", InputSetLocalAngles ),
-	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalVelocity", InputSetLocalVelocity ),
-	DEFINE_INPUTFUNC( FIELD_VECTOR, "SetLocalAngularVelocity", InputSetLocalAngularVelocity ),
-
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddSpawnFlags", InputAddSpawnFlags ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveSpawnFlags", InputRemoveSpawnFlags ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderMode", InputSetRenderMode ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetRenderFX", InputSetRenderFX ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEffects", InputAddEffects ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEffects", InputRemoveEffects ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "EnableDraw", InputDrawEntity ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "DisableDraw", InputUndrawEntity ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddEFlags", InputAddEFlags ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "RemoveEFlags", InputRemoveEFlags ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoveType", InputSetMoveType ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetCollisionGroup", InputSetCollisionGroup ),
-
-	DEFINE_INPUTFUNC( FIELD_EHANDLE, "Touch", InputTouch ),
-
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetThinkNull", InputSetThinkNull ),
-
-	DEFINE_OUTPUT( m_OnKilled, "OnKilled" ),
-#endif
 
 	// Function Pointers
 	DEFINE_FUNCTION( SUB_Remove ),
@@ -2218,7 +2064,7 @@ void CBaseEntity::UpdateOnRemove( void )
 	}
 
 	// entities have a bruh moment after a round restart because of this, disabled
-	/*
+#ifdef OF_DLL	
 	if ( m_iGlobalname != NULL_STRING )
 	{
 		// NOTE: During level shutdown the global list will suppress this
@@ -2226,7 +2072,7 @@ void CBaseEntity::UpdateOnRemove( void )
 		// causing the whole list to be flushed
 		GlobalEntity_SetState( m_iGlobalname, GLOBAL_DEAD );
 	}
-	*/
+#endif
 
 	VPhysicsDestroyObject();
 
@@ -3954,6 +3800,7 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 	}
 	AddTimedOverlay(bigstring, 10.0);
 
+#ifdef OF_DLL
 	if ( g_pDeveloper->GetInt() > 1 )
 		return;
 
@@ -3967,6 +3814,18 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 	}
 	else
 		ConDColorMsg( Color( 93, 210, 255, 255 ), "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+#else
+	if ( Value.FieldType() == FIELD_INTEGER )
+	{	
+		DevMsg( 2, "input: (%s,%d) -> (%s,%s), from (%s)\n", szInputName, Value.Int(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);	
+	}
+	else if ( Value.FieldType() == FIELD_STRING )
+	{
+		DevMsg( 2, "input: (%s,%s) -> (%s,%s), from (%s)\n", szInputName, Value.String(), STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+	}
+	else
+		DevMsg( 2, "input: (%s) -> (%s,%s), from (%s)\n", szInputName, STRING(m_iClassname), GetDebugName(), pCaller ? pCaller->GetDebugName() : NULL);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3976,7 +3835,6 @@ void CBaseEntity::DrawInputOverlay(const char *szInputName, CBaseEntity *pCaller
 //------------------------------------------------------------------------------
 void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 {
-	//ConColorMsg( clr, "\"%s\" = \"%s\"", var->GetName(), value );
 	// Print to entity
 	char bigstring[1024];
 	if ( ev->m_flDelay )
@@ -3989,6 +3847,7 @@ void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 	}
 	AddTimedOverlay(bigstring, 10.0);
 
+#ifdef OF_DLL
 	if ( g_pDeveloper->GetInt() > 1 )
 		return;
 
@@ -4001,6 +3860,17 @@ void CBaseEntity::DrawOutputOverlay(CEventAction *ev)
 	{
 		ConDColorMsg( Color( 80, 185, 240, 255 ), "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
 	}
+#else
+	// Now print to the console
+	if ( ev->m_flDelay )
+	{
+		DevMsg( 2, "output: (%s,%s) -> (%s,%s,%.1f)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput), ev->m_flDelay );
+	}
+	else
+	{
+		DevMsg( 2, "output: (%s,%s) -> (%s,%s)\n", STRING(m_iClassname), GetDebugName(), STRING(ev->m_iTarget), STRING(ev->m_iTargetInput) );
+	}
+#endif
 }
 
 
@@ -4119,8 +3989,12 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 						Q_snprintf( szBuffer, sizeof(szBuffer), "(%0.2f) input <NULL>: %s.%s(%s)\n", gpGlobals->curtime, GetDebugName(), szInputName, Value.String() );
 					}
 
+#ifdef OF_DLL
 					if ( g_pDeveloper->GetInt() > 1 )
 						ConDColorMsg( Color( 100, 126, 200, 255 ), "%s", szBuffer );
+#else
+					DevMsg( 2, "%s", szBuffer );
+#endif
 
 					ADD_DEBUG_HISTORY( HISTORY_ENTITY_IO, szBuffer );
 
@@ -4181,9 +4055,13 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 		}
 	}
 
+#ifdef OF_DLL
 	if ( g_pDeveloper->GetInt() > 1 )
 		ConDColorMsg( Color( 200, 191, 231, 255 ), "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
-	
+#else
+		DevMsg( 2, "unhandled input: (%s) -> (%s,%s)\n", szInputName, STRING(m_iClassname), GetDebugName()/*,", from (%s,%s)" STRING(pCaller->m_iClassname), STRING(pCaller->m_iName)*/ );
+#endif
+
 	return false;
 }
 
@@ -4329,8 +4207,10 @@ void CBaseEntity::GetInputDispatchEffectPosition( const char *sInputString, Vect
 //-----------------------------------------------------------------------------
 void CBaseEntity::InputKill( inputdata_t &inputdata )
 {
+#ifdef OF_DLL
 	if ( IsPlayer() )
 		return;
+#endif
 
 	// tell owner ( if any ) that we're dead.This is mostly for NPCMaker functionality.
 	CBaseEntity *pOwner = GetOwnerEntity();
@@ -4346,8 +4226,10 @@ void CBaseEntity::InputKill( inputdata_t &inputdata )
 
 void CBaseEntity::InputKillHierarchy( inputdata_t &inputdata )
 {
+#ifdef OF_DLL
 	if ( IsPlayer() )
 		return;
+#endif
 
 	CBaseEntity *pChild, *pNext;
 	for ( pChild = FirstMoveChild(); pChild; pChild = pNext )
@@ -4980,7 +4862,9 @@ void CBaseEntity::PrecacheModelComponents( int nModelIndex )
 
 			if ( Q_stristr( extension, "mdl" ) )
 			{
+#ifndef OF_DLL			
 				DevMsg( 2, "Late precache of %s, need to rebuild modelsounds.cache\n", name );
+#endif
 			}
 			else
 			{
@@ -5048,7 +4932,11 @@ void CBaseEntity::PrecacheModelComponents( int nModelIndex )
 						{
 							char token[256];
 							const char *pOptions = pEvent->pszOptions();
+#ifdef OF_DLL							
 							nexttoken( token, pOptions, ' ', sizeof(token) );
+#else
+							nexttoken( token, pOptions, ' ' );
+#endif
 							if ( token[0] ) 
 							{
 								PrecacheParticleSystem( token );
@@ -5296,12 +5184,15 @@ void CC_Ent_Remove( const CCommand& args )
 	// Found one?
 	if ( pEntity )
 	{
+#ifdef OF_DLL
 		if ( pEntity->IsPlayer() )
 		{
 			Msg("Attempted to remove a player entity\n");
 		}
 		else
+#endif			
 		{
+			
 			Msg("Removed %s(%s)\n", STRING(pEntity->m_iClassname), pEntity->GetDebugName());
 			UTIL_Remove(pEntity);
 		}
@@ -5328,11 +5219,13 @@ void CC_Ent_RemoveAll( const CCommand& args )
 				  (ent->m_iClassname != NULL_STRING	&& FStrEq(args[1], STRING(ent->m_iClassname))) ||
 				  (ent->GetClassname() != NULL && FStrEq(args[1], ent->GetClassname())))
 			{
+#ifdef OF_DLL			
 				if ( ent->IsPlayer() )
 				{
 					Msg("Attempted to remove player entities\n");
 				}
 				else
+#endif					
 				{
 					UTIL_Remove(ent);
 					iCount++;
@@ -5578,7 +5471,11 @@ public:
 		{
 			const char *target = "", *action = "Use";
 			variant_t value;
+#ifdef OF_DLL			
 			float delay = 0;
+#else
+			int delay = 0;
+#endif
 
 			target = STRING( AllocPooledString(command.Arg( 1 ) ) );
 
@@ -5593,8 +5490,7 @@ public:
 			// So, I'm removing the ability for anyone to execute ent_fires on dedicated servers (we can't check to see if
 			// this command is going to connect with a point_servercommand entity here, because they could delay the event and create it later).
 
-			// re-enabled ent_fire in multiplayer :bastard:
-			/*
+#ifndef OF_DLL
 			if ( engine->IsDedicatedServer() )
 			{
 				// We allow people with disabled autokick to do it, because they already have rcon.
@@ -5609,7 +5505,7 @@ public:
 				if ( pPlayer != pHostPlayer )
 					return;
 			}
-			*/
+#endif
 
 			if ( command.ArgC() >= 3 )
 			{
@@ -5748,14 +5644,6 @@ private:
 				if ( !( field->flags & FTYPEDESC_INPUT ) )
 					continue;
 
-#ifndef MAPBASE // What did input variables ever do to you?
-
-				// Only want input functions
-				if ( field->flags & FTYPEDESC_SAVE )
-					continue;
-
-#endif
-
 				// See if we've got a partial string for the input name already
 				if ( inputPartial != NULL )
 				{
@@ -5869,153 +5757,6 @@ void CC_Ent_Info( const CCommand& args )
 	}
 }
 static ConCommand ent_info("ent_info", CC_Ent_Info, "Usage:\n   ent_info <class name>\n", FCVAR_CHEAT);
-
-#ifdef MAPBASE
-//------------------------------------------------------------------------------
-// Purpose : 
-// Input   :
-// Output  :
-//------------------------------------------------------------------------------
-void CC_Ent_Info_Datatable( const CCommand& args )
-{
-	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
-	if (!pPlayer)
-	{
-		return;
-	}
-	
-	if ( args.ArgC() < 2 )
-	{
-		ClientPrint( pPlayer, HUD_PRINTCONSOLE, "Usage:\n   ent_info_datatable <class name>\n" );
-	}
-	else
-	{
-		// Each element corresponds to a specific field type.
-		// Hey, if you've got a better idea, be my guest.
-		static const char *g_FieldStrings[FIELD_TYPECOUNT] = 
-		{
-			"VOID",
-			"FLOAT",
-			"STRING",
-			"VECTOR",
-			"QUATERNION",
-			"INTEGER",
-			"BOOLEAN",
-			"SHORT",
-			"CHARACTER",
-			"COLOR32",
-			"EMBEDDED",
-			"CUSTOM",
-
-			"CLASSPTR",
-			"EHANDLE",
-			"EDICT",
-
-			"POSITION_VECTOR",
-			"TIME",
-			"TICK",
-			"MODELNAME",
-			"SOUNDNAME",
-
-			"INPUT",
-			"FUNCTION",
-			"VMATRIX",
-			"VMATRIX_WORLDSPACE",
-			"MATRIX3X4_WORLDSPACE",
-			"INTERVAL",
-			"MODELINDEX",
-			"MATERIALINDEX",
-
-			"VECTOR2D",
-		};
-
-		// iterate through all the ents printing out their details
-		CBaseEntity *ent = CreateEntityByName( args[1] );
-
-		if ( ent )
-		{
-#define ENT_INFO_BY_HIERARCHY 1
-#ifdef ENT_INFO_BY_HIERARCHY
-			CUtlVector<const char*> dmap_namelist;
-
-			CUtlVector< CUtlVector<const char*> > dmap_fieldlist;
-			CUtlVector< CUtlVector<int> > dmap_fieldtypelist;
-
-			datamap_t *dmap;
-			int dmapnum = 0;
-			for ( dmap = ent->GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
-			{
-				dmap_fieldlist.AddToTail();
-				dmap_fieldtypelist.AddToTail();
-
-				// search through all the actions in the data description, printing out details
-				for ( int i = 0; i < dmap->dataNumFields; i++ )
-				{
-					dmap_fieldlist[dmapnum].AddToTail(dmap->dataDesc[i].fieldName);
-					dmap_fieldtypelist[dmapnum].AddToTail(dmap->dataDesc[i].fieldType);
-				}
-
-				dmapnum++;
-				dmap_namelist.AddToTail(dmap->dataClassName);
-			}
-
-			char offset[64] = { 0 }; // Needed so garbage isn't spewed at the beginning
-			for ( int i = 0; i < dmapnum; i++ )
-			{
-				Q_strncat(offset, "  ", sizeof(offset));
-
-				// Header for each class
-				ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("%s=========| %s |=========\n", offset, dmap_namelist[i]) );
-
-				Q_strncat(offset, " ", sizeof(offset));
-
-				int iFieldCount = dmap_fieldlist[i].Count();
-				for ( int index = 0; index < iFieldCount; index++ )
-				{
-					int iType = dmap_fieldtypelist[i][index];
-					ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("%s%s (%i): %s\n", offset, g_FieldStrings[iType], iType, dmap_fieldlist[i][index]) );
-				}
-
-				// Clean up after ourselves
-				dmap_fieldlist[i].RemoveAll();
-				dmap_fieldtypelist[i].RemoveAll();
-			}
-#else // This sorts by field type instead
-			CUtlVector<const char*> fieldlist[FIELD_TYPECOUNT];
-
-			datamap_t *dmap;
-			for ( dmap = ent->GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
-			{
-				// search through all the actions in the data description, printing out details
-				for ( int i = 0; i < dmap->dataNumFields; i++ )
-				{
-					fieldlist[dmap->dataDesc[i].fieldType].AddToTail(dmap->dataDesc[i].fieldName);
-				}
-			}
-
-			for ( int i = 0; i < FIELD_TYPECOUNT; i++ )
-			{
-				const char *typestring = g_FieldStrings[i];
-				for ( int index = 0; index < fieldlist[i].Count(); index++ )
-				{
-					ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("  %s (%i): %s\n", typestring, i, fieldlist[i][index]) );
-				}
-
-				// Clean up after ourselves
-				fieldlist[i].RemoveAll();
-			}
-#endif
-
-			delete ent;
-		}
-		else
-		{
-			ClientPrint( pPlayer, HUD_PRINTCONSOLE, UTIL_VarArgs("no such entity %s\n", args[1]) );
-		}
-	}
-}
-static ConCommand ent_info_datatable("ent_info_datatable", CC_Ent_Info_Datatable, "Usage:\n   ent_info_datatable <class name>\n", FCVAR_CHEAT);
-#endif
 
 //------------------------------------------------------------------------------
 // Purpose : 
@@ -6438,7 +6179,11 @@ void CBaseEntity::SetLocalOrigin( const Vector& origin )
 	{
 		if ( CheckEmitReasonablePhysicsSpew() )
 		{
+#ifdef OF_DLL			
 			DevMsg( 2, "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
+#else
+			Warning( "Bad SetLocalOrigin(%f,%f,%f) on %s\n", origin.x, origin.y, origin.z, GetDebugName() );
+#endif
 		}
 		Assert( false );
 		return;
@@ -6472,9 +6217,31 @@ void CBaseEntity::SetLocalAngles( const QAngle& angles )
 	// And actually normalize the angles rather than freeze the entity and spam warnings
 	if ( !IsEntityQAngleReasonable( angles ) )
 	{
+#ifdef OF_DLL		
 		QAngle angleNormalize(AngleNormalize(angles.x), AngleNormalize(angles.y), AngleNormalize(angles.z));
-		SetLocalAngles(angleNormalize);
+		if ( IsEntityQAngleReasonable( angleNormalize ) )
+		{
+			if ( CheckEmitReasonablePhysicsSpew() )
+			{			
+				DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s, using normalized version.\n", angles.x, angles.y, angles.z, GetDebugName() );
+			}
+			SetLocalAngles(angleNormalize);
+		}
+		else
+		{
+			
+			DevMsg( 2, "Bad SetLocalAngles(%f,%f,%f) on %s, and failed to normalize! Ignoring..\n", angles.x, angles.y, angles.z, GetDebugName() );
+		}
+		
 		return;
+#else
+		if ( CheckEmitReasonablePhysicsSpew() )
+		{
+			Warning( "Bad SetLocalAngles(%f,%f,%f) on %s\n", angles.x, angles.y, angles.z, GetDebugName() );
+		}
+		Assert( false );
+		return;	
+#endif	
 	}
 
 	if (m_angRotation != angles)
@@ -6891,287 +6658,6 @@ void CBaseEntity::InputFireUser4( inputdata_t& inputdata )
 	m_OnUser4.FireOutput( inputdata.pActivator, this );
 }
 
-#ifdef MAPBASE
-//-----------------------------------------------------------------------------
-// Purpose: Sets the generic target field.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetTarget( inputdata_t& inputdata )
-{
-	m_target = inputdata.value.StringID();
-	Activate();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our owner entity.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetOwnerEntity( inputdata_t& inputdata )
-{
-	SetOwnerEntity(inputdata.value.Entity());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Forces the named output to fire.
-//			In addition to the output itself, parameter may include !activator, !caller, and what to pass.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputFireOutput( inputdata_t& inputdata )
-{
-	char sParameter[MAX_PATH];
-	Q_strncpy( sParameter, inputdata.value.String(), sizeof(sParameter) );
-	if ( sParameter )
-	{
-		int iter = 0;
-		char *data[5] = {sParameter};
-		char *sToken = strtok( sParameter, ":" );
-		while ( sToken && iter < 5 )
-		{
-			data[iter] = sToken;
-			iter++;
-			sToken = strtok( NULL, ":" );
-		}
-
-		//DevMsg("data[0]: %s\ndata[1]: %s\ndata[2]: %s\ndata[3]: %s\ndata[4]: %s\n", data[0], data[1], data[2], data[3], data[4]);
-
-		// Format: <output name>:<activator>:<caller>:<parameter>:<delay>
-		// 
-		// data[0] = Output Name
-		// data[1] = Activator
-		// data[2] = Caller
-		// data[3] = Parameter
-		// data[4] = Delay
-		// 
-		CBaseEntity *pActivator = inputdata.pActivator;
-		if (data[1])
-			pActivator = gEntList.FindEntityByName(NULL, data[1], this, inputdata.pActivator, inputdata.pCaller);
-
-		CBaseEntity *pCaller = this;
-		if (data[2])
-			pCaller = gEntList.FindEntityByName(NULL, data[2], this, inputdata.pActivator, inputdata.pCaller);
-
-		variant_t parameter;
-		if (data[3])
-		{
-			parameter.SetString(MAKE_STRING(data[3]));
-		}
-
-		float flDelay = 0.0f;
-		if (data[4])
-			flDelay = atof(data[4]);
-
-		FireNamedOutput(data[0], parameter, pActivator, pCaller, flDelay);
-		//Msg("Output Name: %s, Activator: %s, Caller: %s, Data: %s, Delay: %f\n", data[0], pActivator->GetDebugName(), pCaller->GetDebugName(), parameter.String(), flDelay);
-	}
-	else
-	{
-		Warning("FireOutput input fired with bad parameter. Format: <output name>:<activator>:<caller>:<parameter>:<delay>\n");
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Removes all outputs of the specified name.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputRemoveOutput( inputdata_t& inputdata )
-{
-	const char *szOutput = inputdata.value.String();
-	datamap_t *dmap = GetDataDescMap();
-	while ( dmap )
-	{
-		int fields = dmap->dataNumFields;
-		for ( int i = 0; i < fields; i++ )
-		{
-			typedescription_t *dataDesc = &dmap->dataDesc[i];
-			if ( ( dataDesc->fieldType == FIELD_CUSTOM ) && ( dataDesc->flags & FTYPEDESC_OUTPUT ) )
-			{
-				// If our names match, remove
-				if (Matcher_NamesMatch(szOutput, dataDesc->externalName))
-				{
-					CBaseEntityOutput *pOutput = (CBaseEntityOutput *)((int)this + (int)dataDesc->fieldOffset[0]);
-					pOutput->DeleteAllElements();
-				}
-			}
-		}
-
-		dmap = dmap->baseMap;
-	}
-}
-
-//------------------------------------------------------------------------------
-// Purpose: Cancels any I/O events in the queue that were fired by this entity.
-//------------------------------------------------------------------------------
-void CBaseEntity::InputCancelPending( inputdata_t &inputdata )
-{ 
-	g_EventQueue.CancelEvents( this );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Frees all of our children, entities parented to this entity.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputFreeChildren( inputdata_t& inputdata )
-{
-	UnlinkAllChildren( this );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our origin.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetLocalOrigin( inputdata_t& inputdata )
-{
-	Vector vec;
-	inputdata.value.Vector3D(vec);
-	SetLocalOrigin(vec);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our angles.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetLocalAngles( inputdata_t& inputdata )
-{
-	Vector vec;
-	inputdata.value.Vector3D(vec);
-	SetLocalAngles(QAngle(vec.x, vec.y, vec.z));
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our velocity.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetLocalVelocity( inputdata_t& inputdata )
-{
-	Vector vec;
-	inputdata.value.Vector3D(vec);
-	SetLocalVelocity(vec);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our angular velocity.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetLocalAngularVelocity( inputdata_t& inputdata )
-{
-	Vector vec;
-	inputdata.value.Vector3D(vec);
-	SetLocalAngularVelocity(QAngle(vec.x, vec.y, vec.z));
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Adds spawn flags.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputAddSpawnFlags( inputdata_t& inputdata )
-{
-	AddSpawnFlags(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Removes spawn flags.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputRemoveSpawnFlags( inputdata_t& inputdata )
-{
-	RemoveSpawnFlags(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our render mode.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetRenderMode( inputdata_t& inputdata )
-{
-	SetRenderMode((RenderMode_t)inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets our render FX.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetRenderFX( inputdata_t& inputdata )
-{
-	m_nRenderFX = inputdata.value.Int();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Adds effects.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputAddEffects( inputdata_t& inputdata )
-{
-	AddEffects(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Removes effects.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputRemoveEffects( inputdata_t& inputdata )
-{
-	RemoveEffects(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Shortcut for removing nodraw.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputDrawEntity( inputdata_t& inputdata )
-{
-	RemoveEffects(EF_NODRAW);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Shortcut to adding nodraw.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputUndrawEntity( inputdata_t& inputdata )
-{
-	AddEffects(EF_NODRAW);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Adds eflags.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputAddEFlags( inputdata_t& inputdata )
-{
-	AddEFlags(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Removes eflags.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputRemoveEFlags( inputdata_t& inputdata )
-{
-	RemoveEFlags(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets the movetype.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetMoveType( inputdata_t& inputdata )
-{
-	SetMoveType((MoveType_t)inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets the collision group.
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetCollisionGroup( inputdata_t& inputdata )
-{
-	SetCollisionGroup(inputdata.value.Int());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Touch touch :)
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputTouch( inputdata_t& inputdata )
-{
-	Touch(inputdata.value.Entity());
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Stop thinking
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputSetThinkNull( inputdata_t& inputdata )
-{
-	const char *szContext = inputdata.value.String();
-	if (szContext && szContext[0] != '\0')
-	{
-		SetContextThink( NULL, TICK_NEVER_THINK, szContext );
-	}
-	else
-	{
-		SetThink( NULL );
-		SetNextThink( TICK_NEVER_THINK );
-	}
-}
-#endif
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *contextName - 
@@ -7264,67 +6750,6 @@ void CBaseEntity::InputEnableShadow( inputdata_t &inputdata )
 {
 	RemoveEffects( EF_NOSHADOW );
 }
-
-#ifdef MAPBASE
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
-//-----------------------------------------------------------------------------
-void CBaseEntity::InputChangeVariable( inputdata_t &inputdata )
-{
-	const char *szKeyName = NULL;
-	const char *szValue = NULL;
-
-	char sOutputName[MAX_PATH];
-	Q_strncpy( sOutputName, inputdata.value.String(), sizeof(sOutputName) );
-	char *sChar = strchr( sOutputName, ' ' );
-	if ( sChar )
-	{
-		*sChar = '\0';
-		// Now replace all the :'s in the string with ,'s.
-		// Has to be done this way because Hammer doesn't allow ,'s inside parameters.
-		char *sColon = strchr( sChar+1, ':' );
-		while ( sColon )
-		{
-			*sColon = ',';
-			sColon = strchr( sChar+1, ':' );
-		}
-
-		szKeyName = sOutputName;
-		szValue = sChar + 1;
-	}
-	else
-	{
-		Warning("ChangeVariable input fired with bad string. Format: <output name> <targetname>,<inputname>,<parameter>,<delay>,<max times to fire (-1 == infinite)>\n");
-		return;
-	}
-
-	if (szKeyName == NULL)
-		return;
-
-	for ( datamap_t *dmap = GetDataDescMap(); dmap != NULL; dmap = dmap->baseMap )
-	{
-		// search through all the readable fields in the data description, looking for a match
-		for ( int i = 0; i < dmap->dataNumFields; i++ )
-		{
-			if ( dmap->dataDesc[i].flags & (FTYPEDESC_SAVE | FTYPEDESC_KEY) )
-			{
-				if ( Matcher_NamesMatch(szKeyName, dmap->dataDesc[i].fieldName) )
-				{
-					// Copied from ::ParseKeyvalue...or technically logic_datadesc_accessor...
-					typedescription_t *pField = &dmap->dataDesc[i];
-					char *data = Datadesc_SetFieldString( szValue, this, pField, NULL );
-
-					if (!data)
-					{
-						Warning( "%s cannot set field of type %i.\n", GetDebugName(), dmap->dataDesc[i].fieldType );
-					}
-				}
-			}
-		}
-	}
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: An input to add a new connection from this entity
@@ -8034,7 +7459,7 @@ void CC_Ent_Create( const CCommand& args )
 		return;
 
 	// Don't allow regular users to create point_servercommand entities for the same reason as blocking ent_fire
-	if ( !Q_stricmp( args[1], "point_servercommand" ) || !Q_stricmp( args[1], "point_clientcommand" ) )
+	if ( !Q_stricmp( args[1], "point_servercommand" ) )
 	{
 		if ( engine->IsDedicatedServer() )
 		{
@@ -8050,9 +7475,6 @@ void CC_Ent_Create( const CCommand& args )
 				return;
 		}
 	}
-	
-	if ( !Q_stricmp( args[1], "player" ) || !Q_stricmp( args[1], "tf_bot" ) || !Q_stricmp( args[1], "worldspawn" ) )
-		return;
 	
 	bool allowPrecache = CBaseEntity::IsPrecacheAllowed();
 	CBaseEntity::SetAllowPrecache( true );

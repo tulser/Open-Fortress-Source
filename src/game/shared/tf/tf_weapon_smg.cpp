@@ -30,7 +30,7 @@ BEGIN_PREDICTION_DATA( CTFSMG )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_smg, CTFSMG );
-PRECACHE_WEAPON_REGISTER( tf_weapon_smg );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_smg );
 
 //=============================================================================
 //
@@ -46,7 +46,7 @@ BEGIN_PREDICTION_DATA( CTFSMG_Mercenary )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_smg_mercenary, CTFSMG_Mercenary );
-PRECACHE_WEAPON_REGISTER( tf_weapon_smg_mercenary );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_smg_mercenary );
 
 //=============================================================================
 //
@@ -63,7 +63,7 @@ BEGIN_PREDICTION_DATA( CTFTommyGun )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_tommygun, CTFTommyGun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_tommygun );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_tommygun );
 
 
 //=============================================================================
@@ -83,7 +83,7 @@ END_PREDICTION_DATA()
 
 
 LINK_ENTITY_TO_CLASS( tf_weapon_assaultrifle, CTFAssaultRifle );
-PRECACHE_WEAPON_REGISTER( tf_weapon_assaultrifle );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_assaultrifle );
 
 //=============================================================================
 //
@@ -100,7 +100,7 @@ BEGIN_PREDICTION_DATA( CTFCAssaultRifle)
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_assault_rifle, CTFCAssaultRifle);
-PRECACHE_WEAPON_REGISTER( tfc_weapon_assault_rifle );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_assault_rifle );
 
 // Server specific.
 #ifndef CLIENT_DLL

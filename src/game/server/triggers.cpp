@@ -34,18 +34,19 @@
 #include "ai_behavior_lead.h"
 #include "gameinterface.h"
 #include "ilagcompensationmanager.h"
-#include "baseanimating.h"
 
-//#ifdef HL2_DLL
-//#include "hl2_player.h"
-//#endif
+#ifdef HL2_DLL
+#include "hl2_player.h"
+#endif
 
+#ifdef OF_DLL
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #include "team.h"
 #include "tf_bot.h"
-
+#include "baseanimating.h"
 #include "entity_croc.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -59,7 +60,6 @@ CUtlVector< CHandle<CTriggerMultiple> >	g_hWeaponFireTriggers;
 
 extern CServerGameDLL	g_ServerGameDLL;
 extern bool				g_fGameOver;
-extern bool				Transitioned;
 ConVar showtriggers( "showtriggers", "0", FCVAR_CHEAT, "Shows trigger brushes" );
 
 bool IsTriggerClass( CBaseEntity *pEntity );
@@ -371,7 +371,7 @@ bool CBaseTrigger::PassesTriggerFilters(CBaseEntity *pOther)
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_NPCS) && (pOther->GetFlags() & FL_NPC)) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_PUSHABLES) && FClassnameIs(pOther, "func_pushable")) ||
 		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS) 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined ( TF_MOD )		
+#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined ( OF_DLL )		
 		||
 		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) && 
 			(pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS ||
@@ -1596,66 +1596,16 @@ void CChangeLevel::WarnAboutActiveLead( void )
 	}
 }
 
-extern ConVar mp_transition_players_percent;
-extern ConVar sv_transitions;
-
 void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 {
+	CBaseEntity	*pLandmark;
+	levellist_t	levels[16];
 
+	Assert(!FStrEq(m_szMapName, ""));
 
-	//CBaseEntity	*pLandmark;
-	//levellist_t	levels[16];	
-
-	//Assert(!FStrEq(m_szMapName, ""));
-
-	CTFPlayer *pPlayer = ToTFPlayer( pActivator );
-
-	if ( !pPlayer )
+	// Don't work in deathmatch
+	if ( g_pGameRules->IsDeathmatch() )
 		return;
-	
-	if ( pPlayer->IsAlive() && !pPlayer->m_bTransition )
-	{
-		// good enough
-		pPlayer->m_bTransition = true;
-		DevMsg( "Transitions: Not enough players to trigger level change\n" );
-		UTIL_ClientPrintAll( HUD_PRINTCENTER, "More players required to change level\n" );
-	}
-
-
-	if ( mp_transition_players_percent.GetInt() > 0 )
-	{
-		// checking all teams doesn't work so im just hardcoding it to DM team
-		CTeam *pTeam = GetGlobalTeam( TF_TEAM_MERCENARY );
-
-		int totalPlayers = pTeam->GetNumPlayers(); /*0*/
-		int transitionPlayers = 0;
-
-		for ( int i = /*1*/ 0; i /*<= gpGlobals->maxClients*/ < totalPlayers; i++ )
-		{
-			//CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
-			//CTFPlayer *pPlayer = UTIL_PlayerByIndex(i);
-			CTFPlayer *pPlayer = ToTFPlayer( pTeam->GetPlayer( i ) );
-			if ( pPlayer && pPlayer->IsAlive() )
-			{
-				//totalPlayers++;
-				if ( pPlayer->m_bTransition )
-					transitionPlayers++;
-			}
-		}
-
-		//if ( ( ( int )( transitionPlayers / totalPlayers * 100 ) ) < mp_transition_players_percent.GetInt() )
-		//if ( ( ( float )( transitionPlayers / totalPlayers * 100 ) ) < mp_transition_players_percent.GetInt() )
-		if ( roundf( (float)transitionPlayers / (float)totalPlayers * 100 ) < mp_transition_players_percent.GetInt() )
-		{
-			DevMsg( "Transitions: Not enough players to trigger level change\n" );
-			UTIL_ClientPrintAll( HUD_PRINTCENTER, "More players required to change level\n" );
-				return;
-		}
-	}
-
-	//CTFPlayer *p2Player = (CTFPlayer *)UTIL_GetLocalPlayer();
-
-	//Transitioned = true;
 
 	// Some people are firing these multiple times in a frame, disable
 	if ( m_bTouched )
@@ -1663,7 +1613,8 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 	m_bTouched = true;
 
-	/*
+	CBaseEntity *pPlayer = (pActivator && pActivator->IsPlayer()) ? pActivator : UTIL_GetLocalPlayer();
+
 	int transitionState = InTransitionVolume(pPlayer, m_szLandmarkName);
 	if ( transitionState == TRANSITION_VOLUME_SCREENED_OUT )
 	{
@@ -1673,19 +1624,10 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 	// look for a landmark entity		
 	pLandmark = FindLandmark( m_szLandmarkName );
-	*/
 
-	//if ( !pLandmark )
-		//return;
+	if ( !pLandmark )
+		return;
 
-	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
-	Q_strncpy( st_szNextMap, m_szMapName, sizeof( st_szNextMap ) );
-
-	// Change to the next map.
-	engine->ChangeLevel( st_szNextMap, NULL );
-
-
-	/*
 	// no transition volumes, check PVS of landmark
 	if ( transitionState == TRANSITION_VOLUME_NOT_FOUND )
 	{
@@ -1709,25 +1651,22 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 			}
 		}
 	}
-	*/
 
-	/*
 	WarnAboutActiveLead();
 
 	g_iDebuggingTransition = 0;
 	st_szNextSpot[0] = 0;	// Init landmark to NULL
-	Q_strncpy( st_szNextSpot, m_szLandmarkName,sizeof( st_szNextSpot ) );
+	Q_strncpy(st_szNextSpot, m_szLandmarkName,sizeof(st_szNextSpot));
 	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
-	Q_strncpy( st_szNextMap, m_szMapName, sizeof( st_szNextMap ) );
+	Q_strncpy(st_szNextMap, m_szMapName, sizeof(st_szNextMap));
 
 	m_hActivator = pActivator;
 
-	m_OnChangeLevel.FireOutput( pActivator, this );
+	m_OnChangeLevel.FireOutput(pActivator, this);
 
 	NotifyEntitiesOutOfTransition();
-	*/
 
-	/*
+
 ////	Msg( "Level touches %d levels\n", ChangeList( levels, 16 ) );
 	if ( g_debug_transitions.GetInt() )
 	{
@@ -1739,9 +1678,6 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 	{
 		engine->ChangeLevel( st_szNextMap, st_szNextSpot );
 	}
-	*/
-
-	/*
 	else
 	{
 		// Build a change list so we can see what would be transitioning
@@ -1755,7 +1691,6 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 		SetTouch( NULL );
 	}
-	*/
 }
 
 //
@@ -2320,13 +2255,21 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 
 	if (!PassesTriggerFilters(pOther))
 		return;
+	
+	// ignore grappling hooks or tf ents
+	// WTF?
+#ifdef OF_DLL
+	if ( !pOther->IsPlayer() )
+	{
+		if ( V_strncmp( "gr", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+		if ( V_strncmp( "tf", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+	}
+#endif
 
 	// FIXME: If something is hierarchically attached, should we try to push the parent?
 	if (pOther->GetMoveParent())
-		return;
-
-	// ignore grappling hooks
-	if ( FClassnameIs( pOther, "grapple_hook" ) )
 		return;
 
 	// Transform the push dir into global space
@@ -2367,6 +2310,7 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 
 	default:
 		{
+#if defined( HL2_DLL )
 			// HACK HACK  HL2 players on ladders will only be disengaged if the sf is set, otherwise no push occurs.
 			if ( pOther->IsPlayer() && 
 				 pOther->GetMoveType() == MOVETYPE_LADDER )
@@ -2377,6 +2321,7 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 					return;
 				}
 			}
+#endif
 
 			Vector vecPush = (m_flPushSpeed * vecAbsDir);
 			if ( ( pOther->GetFlags() & FL_BASEVELOCITY ) && !lagcompensation->IsCurrentlyDoingLagCompensation() )
@@ -2413,7 +2358,26 @@ void CTriggerPush::Touch( CBaseEntity *pOther )
 // Teleport trigger
 //-----------------------------------------------------------------------------
 const int SF_TELEPORT_PRESERVE_ANGLES = 0x20;	// Preserve angles even when a local landmark is not specified
+#ifdef OF_DLL
 const int SF_TELEPORT_ADJUST_ANGLES = 0x2000; // adjust angles and velocity when a local landmark is specified
+#endif
+
+#ifndef OF_DLL
+class CTriggerTeleport : public CBaseTrigger
+{
+public:
+	DECLARE_CLASS( CTriggerTeleport, CBaseTrigger );
+
+	virtual void Spawn( void ) OVERRIDE;
+	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+
+	virtual bool PassesTriggerFilters(CBaseEntity *pOther);
+
+	string_t m_iLandmark;
+
+	DECLARE_DATADESC();
+};
+#endif
 
 LINK_ENTITY_TO_CLASS(trigger_teleport, CTriggerTeleport);
 
@@ -2441,14 +2405,26 @@ void CTriggerTeleport::Spawn( void )
 //-----------------------------------------------------------------------------
 void CTriggerTeleport::Touch( CBaseEntity *pOther )
 {
+#ifndef OF_DLL
+	CBaseEntity	*pentTarget = NULL;
+#endif
+
 	if (!PassesTriggerFilters(pOther))
 	{
 		return;
 	}
-
-	// ignore grappling hooks
-	if ( FClassnameIs( pOther, "grapple_hook" ) )
-		return;
+	
+	// ignore grappling hooks or tf ents
+	// WTF?
+#ifdef OF_DLL
+	if ( !pOther->IsPlayer() )
+	{
+		if ( V_strncmp( "gr", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+		if ( V_strncmp( "tf", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+	}
+#endif
 
 	// The activator and caller are the same
 	pentTarget = gEntList.FindEntityByName( pentTarget, m_target, NULL, pOther, pOther );
@@ -2457,6 +2433,7 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	   return;
 	}
 
+#ifdef OF_DLL
 	CTFBot *actor = ToTFBot( pOther );
 	if ( actor )
 		actor->m_bTouchedTeleport = true;
@@ -2468,7 +2445,8 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	// They need to live until we call pOther->Teleport(), as above pXx might point to computedXx
 	QAngle computedAngles;
 	Vector computedVelocity;
-	
+#endif
+
 	//
 	// If a landmark was specified, offset the player relative to the landmark.
 	//
@@ -2481,6 +2459,8 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 		if (pentLandmark)
 		{
 			vecLandmarkOffset = pOther->GetAbsOrigin() - pentLandmark->GetAbsOrigin();
+			
+#ifdef OF_DLL
 			if ( HasSpawnFlags(SF_TELEPORT_ADJUST_ANGLES) )
 			{
 				//relative angle = landmark -> target
@@ -2504,6 +2484,7 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 				computedVelocity.z = othersVelocity.z;
 				pVelocity = &computedVelocity;
 			}
+#endif
 		}
 	}
 
@@ -2520,25 +2501,38 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	//
 	// Only modify the toucher's angles and zero their velocity if no landmark was specified.
 	//
+#ifndef OF_DLL
+	const QAngle *pAngles = NULL;
+	Vector *pVelocity = NULL;
+#endif
 
 #ifdef HL1_DLL
 	Vector vecZero(0,0,0);		
 #endif
 
+#ifdef OF_DLL
 	if (!pentLandmark)
+#else
+	if (!pentLandmark && !HasSpawnFlags(SF_TELEPORT_PRESERVE_ANGLES) )
+#endif
 	{
 		pAngles = &pentTarget->GetAbsAngles();
-
-#ifdef HL1_DLL
-		pVelocity = &vecZero;
-#else
-		pVelocity = NULL;	//BUGBUG - This does not set the player's velocity to zero!!!
-#endif
+		
+		float flSize = pOther->GetAbsVelocity().Length();
+		
+		Vector vForward; AngleVectors( *pAngles, &vForward );
+		
+		VectorNormalize(vForward);
+		
+		const Vector vNewVel( vForward.x * flSize, vForward.y * flSize, vForward.z * flSize );
+		
+		pVelocity = &vNewVel;
 	}
 
 	tmp += vecLandmarkOffset;
 	pOther->Teleport( &tmp, pAngles, pVelocity );
 
+#ifdef OF_DLL
 	// telefragging
 	if ( pOther->IsPlayer() )
 	{
@@ -2558,77 +2552,8 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 			}
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns true if this entity passes the filter criteria, false if not.
-// Input  : pOther - The entity to be filtered.
-//-----------------------------------------------------------------------------
-bool CTriggerTeleport::PassesTriggerFilters(CBaseEntity *pOther)
-{
-	// First test spawn flag filters
-	if ( HasSpawnFlags(SF_TRIGGER_ALLOW_ALL) ||
-		(HasSpawnFlags(SF_TRIGGER_ALLOW_CLIENTS) && (pOther->GetFlags() & FL_CLIENT)) ||
-		(HasSpawnFlags(SF_TRIGGER_ALLOW_NPCS) && (pOther->GetFlags() & FL_NPC)) ||
-		(HasSpawnFlags(SF_TRIGGER_ALLOW_PUSHABLES) && FClassnameIs(pOther, "func_pushable")) ||
-		(HasSpawnFlags(SF_TRIGGER_ALLOW_PHYSICS) && pOther->GetMoveType() == MOVETYPE_VPHYSICS) 
-#if defined( HL2_EPISODIC ) || defined( TF_DLL ) || defined ( TF_MOD )		
-		||
-		(	HasSpawnFlags(SF_TRIG_TOUCH_DEBRIS) && 
-			(pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS ||
-			pOther->GetCollisionGroup() == COLLISION_GROUP_DEBRIS_TRIGGER || 
-			pOther->GetCollisionGroup() == COLLISION_GROUP_INTERACTIVE_DEBRIS)
-		)
 #endif
-		)
-	{
-		if ( pOther->GetFlags() & FL_NPC )
-		{
-			CAI_BaseNPC *pNPC = pOther->MyNPCPointer();
-
-			if ( HasSpawnFlags( SF_TRIGGER_ONLY_PLAYER_ALLY_NPCS ) )
-			{
-				if ( !pNPC || !pNPC->IsPlayerAlly() )
-				{
-					return false;
-				}
-			}
-
-			if ( HasSpawnFlags( SF_TRIGGER_ONLY_NPCS_IN_VEHICLES ) )
-			{
-				if ( !pNPC || !pNPC->IsInAVehicle() )
-					return false;
-			}
-		}
-
-		bool bOtherIsPlayer = pOther->IsPlayer();
-
-		if ( bOtherIsPlayer )
-		{
-			CBasePlayer *pPlayer = (CBasePlayer*)pOther;
-			if ( !pPlayer->IsAlive() )
-				return false;
-
-
-			if ( HasSpawnFlags(SF_TRIGGER_ONLY_CLIENTS_OUT_OF_VEHICLES) )
-			{
-				if ( pPlayer->IsInAVehicle() )
-					return false;
-			}
-
-			if ( HasSpawnFlags( SF_TRIGGER_DISALLOW_BOTS ) )
-			{
-				if ( pPlayer->IsFakeClient() )
-					return false;
-			}
-		}
-
-		CBaseFilter *pFilter = m_hFilter.Get();
-		return (!pFilter) ? true : pFilter->PassesFilter( this, pOther );
-	}
-	return false;
 }
-
 
 LINK_ENTITY_TO_CLASS( info_teleport_destination, CPointEntity );
 
@@ -2641,8 +2566,8 @@ class CTriggerTeleportRelative : public CBaseTrigger
 public:
 	DECLARE_CLASS(CTriggerTeleportRelative, CBaseTrigger);
 
-	virtual void Spawn( void ) OVERRIDE;
-	virtual void Touch( CBaseEntity *pOther ) OVERRIDE;
+	virtual void Spawn( void ) override;
+	virtual void Touch( CBaseEntity *pOther ) override;
 
 	Vector m_TeleportOffset;
 
@@ -3021,7 +2946,6 @@ void CAI_ChangeHintGroup::InputActivate( inputdata_t &inputdata )
 #define SF_CAMERA_PLAYER_SNAP_TO		16
 #define SF_CAMERA_PLAYER_NOT_SOLID		32
 #define SF_CAMERA_PLAYER_INTERRUPT		64
-#define SF_CAMERA_PLAYER_SETFOV         128
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -3065,9 +2989,6 @@ private:
 	float m_deceleration;
 	int	  m_state;
 	Vector m_vecMoveDir;
-
-	float m_fov;
-	float m_fovSpeed;
 
 	string_t m_iszTargetAttachment;
 	int	  m_iAttachmentIndex;
@@ -3123,9 +3044,6 @@ BEGIN_DATADESC( CTriggerCamera )
 #endif
 	DEFINE_FIELD( m_nPlayerButtons, FIELD_INTEGER ),
 	DEFINE_FIELD( m_nOldTakeDamage, FIELD_INTEGER ),
-
-	DEFINE_KEYFIELD( m_fov, FIELD_FLOAT, "fov" ),
-	DEFINE_KEYFIELD( m_fovSpeed, FIELD_FLOAT, "fov_rate" ),
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "Enable", InputEnable ),
@@ -3307,18 +3225,6 @@ void CTriggerCamera::Enable( void )
 		m_bSnapToGoal = true;
 	}
 
-	if (HasSpawnFlags(SF_CAMERA_PLAYER_SETFOV))
-	{
-		if (pPlayer)
-		{
-			if (pPlayer->GetFOVOwner() && (FClassnameIs(pPlayer->GetFOVOwner(), "point_viewcontrol_multiplayer") || FClassnameIs(pPlayer->GetFOVOwner(), "point_viewcontrol")))
-			{
-				pPlayer->ClearZoomOwner();
-			}
-			pPlayer->SetFOV(this, m_fov, m_fovSpeed);
-		}
-	}
-
 	if ( HasSpawnFlags(SF_CAMERA_PLAYER_TARGET ) )
 	{
 		m_hTarget = m_hPlayer;
@@ -3428,37 +3334,31 @@ void CTriggerCamera::Enable( void )
 //-----------------------------------------------------------------------------
 void CTriggerCamera::Disable(void)
 {
-	if (m_hPlayer)
+	if ( m_hPlayer && m_hPlayer->IsAlive() )
 	{
-		CBasePlayer *pBasePlayer = (CBasePlayer*)m_hPlayer.Get();
-
-		if (pBasePlayer->IsAlive())
+		if ( HasSpawnFlags( SF_CAMERA_PLAYER_NOT_SOLID ) )
 		{
-			if (HasSpawnFlags(SF_CAMERA_PLAYER_NOT_SOLID))
-			{
-				pBasePlayer->RemoveSolidFlags(FSOLID_NOT_SOLID);
-			}
-
-			pBasePlayer->SetViewEntity(NULL);
-			pBasePlayer->EnableControl(TRUE);
-			pBasePlayer->m_Local.m_bDrawViewmodel = true;
+			m_hPlayer->RemoveSolidFlags( FSOLID_NOT_SOLID );
 		}
 
-		if (HasSpawnFlags(SF_CAMERA_PLAYER_SETFOV))
-		{
-			pBasePlayer->SetFOV(this, 0, m_fovSpeed);
-		}
+		((CBasePlayer*)m_hPlayer.Get())->SetViewEntity( m_hPlayer );
+		((CBasePlayer*)m_hPlayer.Get())->EnableControl(TRUE);
 
+		// Restore the player's viewmodel
+		if ( ((CBasePlayer*)m_hPlayer.Get())->GetActiveWeapon() )
+		{
+			((CBasePlayer*)m_hPlayer.Get())->GetActiveWeapon()->RemoveEffects( EF_NODRAW );
+		}
 		//return the player to previous takedamage state
 		m_hPlayer->m_takedamage = m_nOldTakeDamage;
 	}
 
 	m_state = USE_OFF;
 	m_flReturnTime = gpGlobals->curtime;
-	SetThink(NULL);
+	SetThink( NULL );
 
 	m_OnEndFollow.FireOutput(this, this); // dvsents2: what is the best name for this output?
-	SetLocalAngularVelocity(vec3_angle);
+	SetLocalAngularVelocity( vec3_angle );
 
 	DispatchUpdateTransmitState();
 }
@@ -5252,7 +5152,7 @@ void CFrictionModifier::EndTouch( CBaseEntity *pOther )
 
 #endif //HL1_DLL
 
-
+#ifdef OF_DLL
 class CFuncCroc : public CBaseTrigger
 {
 	DECLARE_CLASS( CFuncCroc, CBaseTrigger );
@@ -5320,7 +5220,7 @@ void CFuncCroc::EndTouch( CBaseEntity *pOther )
 	if ( !pOther->IsPlayer() )
 		return;
 }
-
+#endif
 
 bool IsTriggerClass( CBaseEntity *pEntity )
 {

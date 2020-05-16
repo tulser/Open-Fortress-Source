@@ -74,7 +74,9 @@ void cc_cl_interp_all_changed( IConVar *pConVar, const char *pOldString, float f
 
 
 static ConVar  cl_extrapolate( "cl_extrapolate", "1", FCVAR_CHEAT, "Enable/disable extrapolation if interpolation history runs out." );
+#ifdef OF_CLIENT_DLL
 static ConVar  cl_interp_npcs( "cl_interp_npcs", "0.1", FCVAR_USERINFO, "Interpolate NPC positions starting this many seconds in past (or cl_interp, if greater)" );  
+#endif
 static ConVar  cl_interp_all( "cl_interp_all", "0", 0, "Disable interpolation list optimizations.", 0, 0, 0, 0, cc_cl_interp_all_changed );
 ConVar  r_drawmodeldecals( "r_drawmodeldecals", "1" );
 extern ConVar	cl_showerror;
@@ -2972,16 +2974,20 @@ void C_BaseEntity::CreateLightEffects( void )
 		dl->color.r = dl->color.g = dl->color.b = 250;
 		dl->radius = random->RandomFloat(400,431);
 		dl->die = gpGlobals->curtime + 0.001;
+#ifdef OF_CLIENT_DLL
 		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 	}
 	if (IsEffectActive(EF_DIMLIGHT))
-	{			
+	{		
 		dl = effects->CL_AllocDlight ( index );
 		dl->origin = GetAbsOrigin();
 		dl->color.r = dl->color.g = dl->color.b = 100;
 		dl->radius = random->RandomFloat(200,231);
 		dl->die = gpGlobals->curtime + 0.001;
+#ifdef OF_CLIENT_DLL
 		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 	}
 }
 
@@ -3474,7 +3480,11 @@ void C_BaseEntity::ComputeFxBlend( void )
 			{
 				SetRenderColorA( 180 );
 				if ( dist <= 100 )
+#ifdef OF_CLIENT_DLL					
 					blend = m_clrRender->a * 0.75f;
+#else
+					blend = m_clrRender->a;
+#endif
 				else
 					blend = (int) ((1.0 - (dist - 100) * (1.0 / 400.0)) * m_clrRender->a);
 				blend += random->RandomInt(-32,31);

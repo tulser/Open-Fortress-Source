@@ -519,7 +519,10 @@ void GetSequenceLinearMotion( CStudioHdr *pstudiohdr, int iSequence, const float
 {
 	if ( !pstudiohdr)
 	{
-		DevMsg( 3, "Bad pstudiohdr in GetSequenceLinearMotion()!\n" );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
+#else
+		ExecuteNTimes( 20, Msg( "Bad pstudiohdr in GetSequenceLinearMotion()!\n" ) );
+#endif
 		return;
 	}
 
@@ -531,7 +534,10 @@ void GetSequenceLinearMotion( CStudioHdr *pstudiohdr, int iSequence, const float
 		// Don't spam on bogus model
 		if ( pstudiohdr->GetNumSeq() > 0 )
 		{
-			DevMsg( "Bad sequence (%i out of %i max) in GetSequenceLinearMotion() for model '%s'!\n", iSequence, pstudiohdr->GetNumSeq(), pstudiohdr->pszName() );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )				
+#else
+			ExecuteNTimes( 20, Msg( "Bad sequence (%i out of %i max) in GetSequenceLinearMotion() for model '%s'!\n", iSequence, pstudiohdr->GetNumSeq(), pstudiohdr->pszName() ) );
+#endif
 		}
 		pVec->Init();
 		return;

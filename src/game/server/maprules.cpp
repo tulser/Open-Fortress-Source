@@ -21,9 +21,11 @@ class CRuleEntity : public CBaseEntity
 public:
 	DECLARE_CLASS( CRuleEntity, CBaseEntity );
 
+#ifdef OF_DLL
 	// Zombie Master Reborn fix
-	// Make all game_* entities server only and not take up the entity limit
+	// Make all game_* entities server only and not take up edict slots
     CRuleEntity() : CBaseEntity( true ) {}
+#endif
 
 	void	Spawn( void );
 
@@ -278,8 +280,10 @@ public:
 
 	void InputDisplay( inputdata_t &inputdata );
 	void Display( CBaseEntity *pActivator );
+#ifdef OF_DLL
 	void InputSetText(inputdata_t &inputdata);
 	void SetText(const char* pszStr);
+#endif
 
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 	{
@@ -313,7 +317,9 @@ BEGIN_DATADESC( CGameText )
 
 	// Inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "Display", InputDisplay ),
+#ifdef OF_DLL
 	DEFINE_INPUTFUNC(FIELD_STRING, "SetText", InputSetText),
+#endif
 
 END_DATADESC()
 
@@ -376,6 +382,7 @@ void CGameText::Display( CBaseEntity *pActivator )
 	}
 }
 
+#ifdef OF_DLL
 void CGameText::InputSetText(inputdata_t &inputdata)
 {
 	SetText(inputdata.value.String());
@@ -385,7 +392,7 @@ void CGameText::SetText(const char* pszStr)
 {
 	m_iszMessage = AllocPooledString(pszStr);
 }
-
+#endif
 
 /* TODO: Replace with an entity I/O version
 //

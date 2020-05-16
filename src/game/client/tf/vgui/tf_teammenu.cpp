@@ -332,9 +332,7 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 				return;
 			}
 
-			gViewPortInterface->ShowPanel(PANEL_CLASS_RED, false);
-			gViewPortInterface->ShowPanel(PANEL_CLASS_BLUE, false);
-			gViewPortInterface->ShowPanel(PANEL_CLASS_MERCENARY, false);
+			gViewPortInterface->ShowPanel(PANEL_CLASS, false);
 
 			engine->CheckPoint("TeamMenu");
 
@@ -755,8 +753,6 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "Escort";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_PAYLOAD ) && !TFGameRules()->m_bEscortOverride )
 		GameType = "Payload";
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_COOP ) )
-		GameType = "Coop";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
 		GameType = "Infection";
 	return GameType;
@@ -796,9 +792,7 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 			return;
 		}
 
-		gViewPortInterface->ShowPanel(PANEL_CLASS_RED, false);
-		gViewPortInterface->ShowPanel(PANEL_CLASS_BLUE, false);
-		gViewPortInterface->ShowPanel(PANEL_CLASS_MERCENARY, false);
+		gViewPortInterface->ShowPanel(PANEL_CLASS, false);
 
 		engine->CheckPoint("TeamMenu");
 		Activate();
@@ -836,6 +830,8 @@ int CTFDMTeamMenu::GetGamemodeSkin( void )
 	{
 		if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 			GameType = 2;
+		else if( TFGameRules()->IsMutator( ARSENAL ) )
+			GameType = 4;
 	}
 //	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 //		GameType = "ControlPoint";

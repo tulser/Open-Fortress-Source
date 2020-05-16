@@ -124,8 +124,8 @@ Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *ac
 		}
 
 		// OFBOTTODO: Once sniper behavior is fixed, remove the DM bool here
-		if ( pWeapon && !bDM && !TFGameRules()->IsInfGamemode() )
-			return new CTFBotSniperLurk; // OFBOTTODO: This is completely broken
+		//if ( pWeapon && !bDM && !TFGameRules()->IsInfGamemode() )
+		//	return new CTFBotSniperLurk; // OFBOTTODO: This is completely broken
 		
 		/*if ( actor->IsPlayerClass( TF_CLASS_SNIPER ) ) // OFBOT: Allclass support
 			return new CTFBotSniperLurk;*/

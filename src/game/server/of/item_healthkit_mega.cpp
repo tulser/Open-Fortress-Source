@@ -7,7 +7,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_DLL
 ConVar sk_item_healthkit_mega( "sk_item_healthkit_mega","100" );
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"

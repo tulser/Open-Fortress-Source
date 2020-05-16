@@ -233,7 +233,11 @@ CEntityDissolve *CEntityDissolve::Create( CBaseEntity *pTarget, const char *pMat
 			if ( pTarget->m_lifeState == LIFE_ALIVE )
 			{
 				// SecobMod__Enable_Fixed_Multiplayer_AI
+#ifdef OF_DLL
 				CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+#else
+				CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
+#endif	
 				CTakeDamageInfo ragdollInfo( pPlayer, pPlayer, 10000.0, DMG_SHOCK | DMG_REMOVENORAGDOLL | DMG_PREVENT_PHYSICS_FORCE );
 				pTarget->TakeDamage( ragdollInfo );
 			}
@@ -348,13 +352,30 @@ void CEntityDissolve::DissolveThink( void )
 		// Necessary to cause it to do the appropriate death cleanup
 		// Yeah, the player may have nothing to do with it, but
 		// passing NULL to TakeDamage causes bad things to happen
-		// SecobMod__Enable_Fixed_Multiplayer_AI
-		CBasePlayer *pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
+		
+		// why not just pass "this" instead??
+#ifndef OF_DLL		
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex( 1 );
 		int iNoPhysicsDamage = g_pGameRules->Damage_GetNoPhysicsForce();
-		CTakeDamageInfo info( pPlayer, pPlayer, 10000.0, DMG_GENERIC | DMG_REMOVENORAGDOLL | iNoPhysicsDamage );
-		pTarget->TakeDamage( info );
+#endif
 
+#ifdef OF_DLL
+		if ( m_nRenderFX != kRenderFxRagdoll && !pTarget->IsPlayer() ) // sigh...
+#endif
+		{
+#ifdef OF_DLL
+			CTakeDamageInfo info( this, this, 10000.0, DMG_GENERIC | DMG_PREVENT_PHYSICS_FORCE );
+#else
+			CTakeDamageInfo info( pPlayer, pPlayer, 10000.0, DMG_GENERIC | DMG_REMOVENORAGDOLL | iNoPhysicsDamage );
+#endif
+			pTarget->TakeDamage( info );
+		}
+		
+#ifdef OF_DLL
+		if ( !pTarget->IsPlayer() )
+#else
 		if ( pTarget != pPlayer )
+#endif
 		{
 			UTIL_Remove( pTarget );
 		}

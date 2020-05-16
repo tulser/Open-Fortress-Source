@@ -66,7 +66,7 @@ BEGIN_PREDICTION_DATA( CTFFlag )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_c4, CTFFlag );
-PRECACHE_WEAPON_REGISTER( tf_weapon_c4 );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_c4 );
 
 // Server specific.
 

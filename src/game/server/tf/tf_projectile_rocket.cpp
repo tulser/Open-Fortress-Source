@@ -44,6 +44,7 @@ CTFProjectile_Rocket *CTFProjectile_Rocket::Create ( CTFWeaponBase *pWeapon, con
 void CTFProjectile_Rocket::Spawn()
 {
 	SetModel( ROCKET_MODEL );
+	
 	BaseClass::Spawn();
 }
 

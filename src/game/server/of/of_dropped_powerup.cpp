@@ -105,8 +105,10 @@ void CTFDroppedPowerup::PackTouch( CBaseEntity *pOther )
 		int iRandom = random->RandomInt( 0, 1 );
 		pTFPlayer->SpeakConceptIfAllowed( ( iRandom == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
 		
-		Vector vecOrigin;
-		QAngle vecAngles;
+		// vecOrigin and vecAngles don't matter,
+		// so long as they're reasonable values. (no Inf/NaN)
+		Vector vecOrigin(0, 0, 0);
+		QAngle vecAngles(0, 0, 0);
 		
 		CTFDroppedPowerup *pPowerup = static_cast<CTFDroppedPowerup*>( CBaseAnimating::CreateNoSpawn( "tf_dropped_powerup", vecOrigin, vecAngles, pTFPlayer ) );
 		if( pPowerup )

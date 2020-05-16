@@ -1661,7 +1661,7 @@ void CMathCounter::UpdateOutValue(CBaseEntity *pActivator, float fNewValue)
 	m_OutValue.Set(fNewValue, pActivator, this);
 }
 
-
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: Generates a random value between 2 bounds
 //-----------------------------------------------------------------------------
@@ -1827,6 +1827,7 @@ void CLogicRandom::InputDisable( inputdata_t &inputdata )
 {
 	m_bDisabled = true;
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Compares a single string input to up to 16 case values, firing an

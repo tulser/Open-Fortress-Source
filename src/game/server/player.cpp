@@ -69,24 +69,27 @@
 #include "dt_utlvector_send.h"
 #include "vote_controller.h"
 #include "ai_speech.h"
+
+#ifdef OF_DLL
 #include "tf_shareddefs.h"
 #include "info_camera_link.h"
-#include "script_intro.h"
 #include "point_camera.h"
+#endif
 
 #if defined USES_ECON_ITEMS
 #include "econ_wearable.h"
 #endif
 
+#ifdef OF_DLL
 #include "tf_weaponbase.h"
-
 #include "tf_player.h"
 #include "tf_gamerules.h"
+#endif
 
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
-#if defined (HL2_DLL) || defined (OPENFORTRESS_DLL)
+#if defined (HL2_DLL)
 #include "combine_mine.h"
 #include "weapon_physcannon.h"
 #endif
@@ -116,10 +119,17 @@ bool IsInCommentaryMode( void );
 bool IsListeningToCommentary( void );
 
 #if !defined( CSTRIKE_DLL )
+#ifdef OF_DLL
 ConVar cl_sidespeed( "cl_sidespeed", "720", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar cl_upspeed( "cl_upspeed", "720", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar cl_forwardspeed( "cl_forwardspeed", "720", FCVAR_REPLICATED | FCVAR_CHEAT );
 ConVar cl_backspeed( "cl_backspeed", "720", FCVAR_REPLICATED | FCVAR_CHEAT );
+#else
+ConVar cl_sidespeed( "cl_sidespeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar cl_upspeed( "cl_upspeed", "320", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar cl_forwardspeed( "cl_forwardspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar cl_backspeed( "cl_backspeed", "450", FCVAR_REPLICATED | FCVAR_CHEAT );
+#endif
 #endif // CSTRIKE_DLL
 
 // This is declared in the engine, too
@@ -192,7 +202,9 @@ ConVar	sk_player_stomach( "sk_player_stomach","1" );
 ConVar	sk_player_arm( "sk_player_arm","1" );
 ConVar	sk_player_leg( "sk_player_leg","1" );
 
-//ConVar	player_usercommand_timeout( "player_usercommand_timeout", "10", 0, "After this many seconds without a usercommand from a player, the client is kicked." );
+#ifdef OF_DLL
+ConVar	player_usercommand_timeout( "player_usercommand_timeout", "5", 0, "After this many seconds without a usercommand from a player, the client is kicked." );
+#endif
 #ifdef _DEBUG
 ConVar  sv_player_net_suppress_usercommands( "sv_player_net_suppress_usercommands", "0", FCVAR_CHEAT, "For testing usercommand hacking sideeffects. DO NOT SHIP" );
 #endif // _DEBUG
@@ -203,11 +215,11 @@ ConVar  player_debug_print_damage( "player_debug_print_damage", "0", FCVAR_CHEAT
 
 void CC_GiveCurrentAmmo( void )
 {
-	#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-		CBasePlayer *pPlayer = UTIL_GetCommandClient(); 
-	#else
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
-	#endif //SecobMod__Enable_Fixed_Multiplayer_AI
+#ifdef OF_DLL
+	CBasePlayer *pPlayer = UTIL_GetCommandClient(); 
+#else
+	CBasePlayer *pPlayer = UTIL_PlayerByIndex(1);
+#endif
 
 	if( pPlayer )
 	{
@@ -215,7 +227,36 @@ void CC_GiveCurrentAmmo( void )
 
 		if( pWeapon )
 		{
+#ifndef OF_DLL			
+			if( pWeapon->UsesPrimaryAmmo() )
+			{
+				int ammoIndex = pWeapon->GetPrimaryAmmoType();
+
+				if( ammoIndex != -1 )
+				{
+					int giveAmount;
+					giveAmount = GetAmmoDef()->MaxCarry(ammoIndex);
+					pPlayer->GiveAmmo( giveAmount, GetAmmoDef()->GetAmmoOfIndex(ammoIndex)->pName );
+				}
+			}
+			if( pWeapon->UsesSecondaryAmmo() && pWeapon->HasSecondaryAmmo() )
+			{
+				// Give secondary ammo out, as long as the player already has some
+				// from a presumeably natural source. This prevents players on XBox
+				// having Combine Balls and so forth in areas of the game that
+				// were not tested with these items.
+				int ammoIndex = pWeapon->GetSecondaryAmmoType();
+
+				if( ammoIndex != -1 )
+				{
+					int giveAmount;
+					giveAmount = GetAmmoDef()->MaxCarry(ammoIndex);
+					pPlayer->GiveAmmo( giveAmount, GetAmmoDef()->GetAmmoOfIndex(ammoIndex)->pName );
+				}
+			}
+#else	
 			pWeapon->m_iReserveAmmo = pWeapon->GetMaxReserveAmmo(); 
+#endif
 		}
 	}
 }
@@ -240,9 +281,6 @@ END_DATADESC()
 
 // Global Savedata for player
 BEGIN_DATADESC( CBasePlayer )
-	DEFINE_FIELD( m_bTransition, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bTransitionTeleported, FIELD_BOOLEAN ),
-
 	DEFINE_EMBEDDED( m_Local ),
 #if defined USES_ECON_ITEMS
 	DEFINE_EMBEDDED( m_AttributeList ),
@@ -353,11 +391,15 @@ BEGIN_DATADESC( CBasePlayer )
 
 	DEFINE_FIELD( m_iFrags, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iDeaths, FIELD_INTEGER ),
+#ifdef OF_DLL
 	DEFINE_FIELD( m_iGGLevel, FIELD_INTEGER ),
 	DEFINE_FIELD( m_iLives, FIELD_INTEGER ),
+#endif
 	DEFINE_FIELD( m_bAllowInstantSpawn, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_flNextDecalTime, FIELD_TIME ),
+#ifdef OF_DLL
 	DEFINE_FIELD( m_flNextJingleTime, FIELD_TIME ),
+#endif
 	//DEFINE_AUTO_ARRAY( m_szTeamName, FIELD_STRING ), // mp
 
 	//DEFINE_FIELD( m_iConnected, FIELD_INTEGER ),
@@ -544,9 +586,6 @@ CBasePlayer::CBasePlayer( )
 {
 	AddEFlags( EFL_NO_AUTO_EDICT_ATTACH );
 	
-	m_bTransition = false;
-	m_bTransitionTeleported = false;
-
 #ifdef _DEBUG
 	m_vecAutoAim.Init();
 	m_vecAdditionalPVSOrigin.Init();
@@ -590,7 +629,11 @@ CBasePlayer::CBasePlayer( )
 
 	m_hZoomOwner = NULL;
 
+#ifdef OF_DLL
 	m_nUpdateRate = 66;  // cl_updaterate defualt
+#else
+	m_nUpdateRate = 20;
+#endif
 	m_fLerpTime = 0.1f; // cl_interp default
 	m_bPredictWeapons = true;
 	m_bLagCompensation = false;
@@ -637,8 +680,10 @@ CBasePlayer::CBasePlayer( )
 
 	m_flLastObjectiveTime = -1.f;
 
+#ifdef OF_DLL
 	m_iStringcmds = 0;
 	m_fStringcmdsResetTime = 0.0f;
+#endif
 }
 
 CBasePlayer::~CBasePlayer( )
@@ -672,25 +717,10 @@ void CBasePlayer::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 void CBasePlayer::SetupVisibility( CBaseEntity *pViewEntity, unsigned char *pvs, int pvssize )
 {
+#ifdef OF_DLL
     int area = pViewEntity ? pViewEntity->NetworkProp()->AreaNum() : NetworkProp()->AreaNum();
     PointCameraSetupVisibility( this, area, pvs, pvssize );
-
-    // If the intro script is playing, we want to get it's visibility points
-    if ( g_hIntroScript )
-    {
-        Vector vecOrigin;
-        CBaseEntity *pCamera;
-        if ( g_hIntroScript->GetIncludedPVSOrigin( &vecOrigin, &pCamera ) )
-        {
-            // If it's a point camera, turn it on
-            CPointCamera *pPointCamera = dynamic_cast< CPointCamera* >(pCamera); 
-            if ( pPointCamera )
-            {
-                pPointCamera->SetActive( true );
-            }
-            engine->AddOriginToPVS( vecOrigin );
-        }
-    }
+#endif
 
 	// If we have a viewentity, we don't add the player's origin.
 	if ( pViewEntity )
@@ -752,7 +782,7 @@ int CBasePlayer::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 bool CBasePlayer::WantsLagCompensationOnEntity( const CBaseEntity *pEntity, const CUserCmd *pCmd, const CBitVec<MAX_EDICTS> *pEntityTransmitBits ) const
 {
 	// Team members shouldn't be adjusted unless friendly fire is on.
-	if ( pEntity->GetTeamNumber() == 77 || pEntity->GetTeamNumber() == 4 || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY )
+	if ( pEntity->GetTeamNumber() == TF_TEAM_MERCENARY )
 		return true;
 	
 	if ( !friendlyfire.GetInt() && pEntity->GetTeamNumber() == GetTeamNumber() ) 
@@ -2506,7 +2536,7 @@ void CBasePlayer::ValidateCurrentObserverTarget( void )
 		}
 		else
 		{
-#if !defined( TF_DLL ) && !defined( TF_MOD )
+#if !defined( TF_DLL ) && !defined( OF_DLL )
 			// couldn't find new target, switch to temporary mode
 			if ( mp_forcecamera.GetInt() == OBS_ALLOW_ALL )
 			{
@@ -2825,7 +2855,7 @@ bool CBasePlayer::IsUseableEntity( CBaseEntity *pEntity, unsigned int requiredCa
 bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float sizeLimit )
 {
 	// UNDONE: Make this virtual and move to HL2 player
-#if defined (HL2_DLL) || defined (OPENFORTRESS_DLL)
+#if defined (HL2_DLL) || defined (OF_DLL)
 	//Must be valid
 	if ( pObject == NULL )
 		return false;
@@ -2835,7 +2865,7 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 		return false;
 
 	// can't pick up dropped weapons or ammo packs from TF2 players
-	if ( FClassnameIs( pObject, "tf_dropped_weapon" ) || FClassnameIs( pObject, "tf_ammo_pack" ) ) 
+	if ( V_strncmp( "tf_", pObject->GetClassname(), 3 ) == 0 ) 
 		return false;
 
 	IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
@@ -2869,10 +2899,12 @@ bool CBasePlayer::CanPickupObject( CBaseEntity *pObject, float massLimit, float 
 
 	if ( checkEnable )
 	{
+#ifndef OF_DLL
 		// Allowing picking up of bouncebombs.
 		CBounceBomb *pBomb = dynamic_cast<CBounceBomb*>(pObject);
 		if( pBomb )
 			return true;
+#endif
 
 		// Allow pickup of phys props that are motion enabled on player pickup
 		CPhysicsProp *pProp = dynamic_cast<CPhysicsProp*>(pObject);
@@ -2905,11 +2937,13 @@ float CBasePlayer::GetHeldObjectMass( IPhysicsObject *pHeldObject )
 	return 0;
 }
 
+#ifdef OF_DLL
+
 CBaseEntity	*CBasePlayer::GetHeldObject(void)
 {
 	return NULL;
 }
-
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:	Server side of jumping rules.  Most jumping logic is already
@@ -2952,6 +2986,7 @@ void CBasePlayer::IncrementFragCount( int nCount )
 	pl.frags = m_iFrags;
 }
 
+#ifdef OF_DLL
 void CBasePlayer::ResetGGLevel()
 {
 	m_iGGLevel = 0;
@@ -2960,18 +2995,6 @@ void CBasePlayer::ResetGGLevel()
 void CBasePlayer::IncrementGGLevel( int nCount )
 {
 	m_iGGLevel += nCount;
-}
-
-void CBasePlayer::ResetDeathCount()
-{
-	m_iDeaths = 0;
-	pl.deaths = m_iDeaths;
-}
-
-void CBasePlayer::IncrementDeathCount( int nCount )
-{
-	m_iDeaths += nCount;
-	pl.deaths = m_iDeaths;
 }
 
 void CBasePlayer::ResetLives()
@@ -2988,6 +3011,21 @@ void CBasePlayer::SetLives( int nCount )
 {
 	m_iLives = nCount;
 }
+
+#endif
+
+void CBasePlayer::ResetDeathCount()
+{
+	m_iDeaths = 0;
+	pl.deaths = m_iDeaths;
+}
+
+void CBasePlayer::IncrementDeathCount( int nCount )
+{
+	m_iDeaths += nCount;
+	pl.deaths = m_iDeaths;
+}
+
 void CBasePlayer::AddPoints( int score, bool bAllowNegativeScore )
 {
 	// Positive score always adds
@@ -3138,7 +3176,11 @@ int CBasePlayer::DetermineSimulationTicks( void )
 }
 
 // 2 ticks ahead or behind current clock means we need to fix clock on client
+#ifdef OF_DLL
 static ConVar sv_clockcorrection_msecs( "sv_clockcorrection_msecs", "30", 0, "The server tries to keep each player's m_nTickBase withing this many msecs of the server absolute tickcount" );
+#else
+static ConVar sv_clockcorrection_msecs( "sv_clockcorrection_msecs", "60", 0, "The server tries to keep each player's m_nTickBase withing this many msecs of the server absolute tickcount" );	
+#endif
 static ConVar sv_playerperfhistorycount( "sv_playerperfhistorycount", "60", 0, "Number of samples to maintain in player perf history", true, 1.0f, true, 128.0 );
 
 //-----------------------------------------------------------------------------
@@ -3442,6 +3484,14 @@ void CBasePlayer::PhysicsSimulate( void )
 			pi->m_nNumCmds = commandsToRun;
 		}
 	}
+#ifdef OF_DLL
+	else if ( GetTimeSinceLastUserCommand() > player_usercommand_timeout.GetFloat() )
+	{
+		// kicking is too aggressive, instead just send a fake command so the Think and gamestate are handled
+		// engine->ServerCommand( UTIL_VarArgs( "kickid %d %s\n", GetUserID(), "UserCommand Timeout" ) );
+		RunNullCommand();
+	}
+#endif
 
 	// Restore the true server clock
 	// FIXME:  Should this occur after simulation of children so
@@ -3593,8 +3643,6 @@ bool CBasePlayer::IsUserCmdDataValid( CUserCmd *pCmd )
 	bool bValid = ( pCmd->tick_count >= nMinDelta && pCmd->tick_count < nMaxDelta ) &&
 				  // Prevent clients from sending invalid view angles to try to get leaf server code to crash
 				  ( pCmd->viewangles.IsValid() && IsEntityQAngleReasonable( pCmd->viewangles ) ) &&
-				  // Prevent roll speed hack
-				  ( pCmd->viewangles.z < 51.0f ) &&
 				  // Movement ranges
 				  ( IsFinite( pCmd->forwardmove ) && IsEntityCoordinateReasonable( pCmd->forwardmove ) ) &&
 				  ( IsFinite( pCmd->sidemove ) && IsEntityCoordinateReasonable( pCmd->sidemove ) ) &&
@@ -5020,7 +5068,9 @@ void CBasePlayer::Spawn( void )
 	SetFOV( this, 0 );
 
 	m_flNextDecalTime	= 0; // Let this player decal as soon as he spawns.
+#ifdef OF_DLL
 	m_flNextJingleTime  = 0; // Ditto, but for jingles.
+#endif
 
 	m_flgeigerDelay = gpGlobals->curtime + 2.0;	// wait a few seconds until user-defined message registrations
 												// are recieved by all clients
@@ -5100,7 +5150,7 @@ void CBasePlayer::Spawn( void )
 	m_vecSmoothedVelocity = vec3_origin;
 	InitVCollision( GetAbsOrigin(), GetAbsVelocity() );
 
-#if !( defined( TF_DLL ) || defined( TF_MOD ) )
+#if !( defined( TF_DLL ) || defined( OF_DLL ) )
 	IGameEvent *event = gameeventmanager->CreateEvent( "player_spawn" );
 	
 	if ( event )
@@ -5456,7 +5506,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 	if ( pVehicle->GetPassenger( nRole ) )
 		return false;
 
-	/*
+#ifndef OF_DLL
 	// Must be able to holster our current weapon (ie. grav gun!)
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5465,7 +5515,7 @@ bool CBasePlayer::CanEnterVehicle( IServerVehicle *pVehicle, int nRole )
 		if ( ( pWeapon != NULL ) && ( pWeapon->CanHolster() == false ) )
 			return false;
 	}
-	*/
+#endif
 
 	// Must be alive
 	if ( IsAlive() == false )
@@ -5493,7 +5543,7 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 	CBaseEntity *pEnt = pVehicle->GetVehicleEnt();
 	Assert( pEnt );
 
-	/*
+#ifndef OF_DLL
 	// Try to stow weapons
 	if ( pVehicle->IsPassengerUsingStandardWeapons( nRole ) == false )
 	{
@@ -5512,10 +5562,9 @@ bool CBasePlayer::GetInVehicle( IServerVehicle *pVehicle, int nRole )
 
 	if ( !pVehicle->IsPassengerVisible( nRole ) )
 	{
-		// No! visible thirdperson in vehicles :bastard:
-		//AddEffects( EF_NODRAW );
+		AddEffects( EF_NODRAW );
 	}
-	*/
+#endif
 
 	// Put us in the vehicle
 	pVehicle->SetPassenger( nRole, this );
@@ -5629,7 +5678,7 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 	m_hVehicle = NULL;
 	pVehicle->SetPassenger(nRole, NULL);
 
-    /*
+#ifndef OF_DLL
 	// Re-deploy our weapon
 	if ( IsAlive() )
 	{
@@ -5639,7 +5688,7 @@ void CBasePlayer::LeaveVehicle( const Vector &vecExitPoint, const QAngle &vecExi
 			ShowCrosshair( true );
 		}
 	}
-    */
+#endif
 	
 	// Just cut all of the rumble effects. 
 	RumbleEffect( RUMBLE_STOP_ALL, 0, RUMBLE_FLAGS_NONE );
@@ -6038,8 +6087,12 @@ void CBasePlayer::ImpulseCommands( )
 
 		break;
 
-	case	202:// player jungle sound 
+	case	202:// player jingle sound 
+#ifdef OF_DLL	
 		if ( gpGlobals->curtime < m_flNextJingleTime )
+#else
+		if ( gpGlobals->curtime < m_flNextDecalTime )
+#endif
 		{
 			// too early!
 			break;
@@ -6050,7 +6103,11 @@ void CBasePlayer::ImpulseCommands( )
 			WRITE_BYTE( PLAY_PLAYER_JINGLE );
 		MessageEnd();
 
+#ifdef OF_DLL
 		m_flNextJingleTime = gpGlobals->curtime + jinglefrequency.GetFloat();
+#else
+		m_flNextDecalTime = gpGlobals->curtime + jinglefrequency.GetFloat();
+#endif
 		break;
 
 	default:
@@ -6243,7 +6300,7 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 #ifdef HL2_EPISODIC
 		GiveAmmo( 5,	"Hopwire" );
 #endif		
-		GiveNamedItem( "tf_weapon_flamethrower" );
+		GiveNamedItem( "weapon_smg1" );
 		GiveNamedItem( "weapon_frag" );
 		GiveNamedItem( "weapon_crowbar" );
 		GiveNamedItem( "weapon_pistol" );
@@ -6448,6 +6505,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 	}
 	else if ( stricmp( cmd, "spectate" ) == 0 ) // join spectator team & start observer mode
 	{
+#ifdef OF_DLL
 		CTFPlayer *pTFPlayer = ToTFPlayer( this );
 
 		// civ can't change teams
@@ -6455,6 +6513,7 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		{
 			return true;
 		}
+#endif
 
 		if ( GetTeamNumber() == TEAM_SPECTATOR )
 			return true;
@@ -6725,12 +6784,13 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 
 		Weapon_Equip( pWeapon );
 		
+#ifndef OF_DLL		
 		if ( IsInAVehicle() )
 		{
-			// pWeapon->Holster();
+			pWeapon->Holster();
 		}
-		
 		else
+#endif
 		{
 #ifdef HL2_DLL
 
@@ -7438,7 +7498,9 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 {
 	BaseClass::Weapon_Equip( pWeapon );
 
-//	int bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
+#ifndef OF_DLL
+	bool bShouldSwitch = g_pGameRules->FShouldSwitchWeapon( this, pWeapon );
+#endif
 
 #ifdef HL2_DLL
 	if ( bShouldSwitch == false && PhysCannonGetHeldEntity( GetActiveWeapon() ) == pWeapon && 
@@ -7447,8 +7509,13 @@ void CBasePlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 		bShouldSwitch = true;
 	}
 #endif//HL2_DLL
-//	if ( bShouldSwitch )
-//		Weapon_Switch( pWeapon );
+
+#ifndef OF_DLL
+	if ( bShouldSwitch )
+	{
+		Weapon_Switch( pWeapon );
+	}
+#endif
 }
 
 
@@ -7814,12 +7881,6 @@ void CRevertSaved::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 
 void CRevertSaved::InputReload( inputdata_t &inputdata )
 {
-	if ( TFGameRules()->IsCoopGamemode() )
-	{
-		// todo: come back and fix this for zombie survival, and use something else than blue team...
-		TFGameRules()->SetWinningTeam( TF_TEAM_BLUE, WINREASON_COOP_FAIL );
-	}
-
 	UTIL_ScreenFadeAll( m_clrRender, Duration(), HoldTime(), FFADE_OUT );
 
 #ifdef HL1_DLL
@@ -7866,16 +7927,6 @@ void CRevertSaved::LoadThink( void )
 	{
 		engine->ServerCommand("reload\n");
 	}
-#ifdef SecobMod__Enable_Fixed_Multiplayer_AI
-//SecobMod__Information: Here we change level to the map we're already on if a vital ally such as Alyx is killed etc etc etc.
-	else
-	{
-		char *szDefaultMapName = new char[32];
-		Q_strncpy( szDefaultMapName, STRING(gpGlobals->mapname), 32 );
-		engine->ChangeLevel( szDefaultMapName, NULL );
-		return;
-	}
-#endif //SecobMod__Enable_Fixed_Multiplayer_AI	
 }
 
 #define SF_SPEED_MOD_SUPPRESS_WEAPONS	(1<<0)	// Take away weapons
@@ -7952,8 +8003,7 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 	}
 	else if ( !g_pGameRules->IsDeathmatch() )
 	{
-		//  SecobMod__Enable_Fixed_Multiplayer_AI
-		pPlayer = UTIL_GetNearestPlayer(GetAbsOrigin());
+		pPlayer = UTIL_GetLocalPlayer();
 	}
 
 	if ( pPlayer )
@@ -8759,12 +8809,11 @@ void CBasePlayer::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CBasePlayer::InputSetHealth( inputdata_t &inputdata )
 {
-	// not necessary as armor doesn't exist here
 	int iNewHealth = inputdata.value.Int();
 	int iDelta = abs(GetHealth() - iNewHealth);
 	if ( iNewHealth > GetHealth() )
 	{
-		TakeDamage( CTakeDamageInfo( this, this, iDelta, DMG_GENERIC ) );
+		TakeHealth( iDelta, DMG_GENERIC );
 	}
 	else if ( iNewHealth < GetHealth() )
 	{
@@ -9131,6 +9180,7 @@ int	CPlayerInfo::GetFragCount()
 	return m_pParent->FragCount(); 
 }
 
+#ifdef OF_DLL
 int	CPlayerInfo::GetGGLevel() 
 { 
 	Assert( m_pParent );
@@ -9142,6 +9192,8 @@ int	CPlayerInfo::GetLives()
 	Assert( m_pParent );
 	return m_pParent->Lives(); 
 }
+#endif
+
 int	CPlayerInfo::GetDeathCount() 
 { 
 	Assert( m_pParent );

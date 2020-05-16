@@ -21,7 +21,9 @@
 
 #if defined( CLIENT_DLL )
 #define CBaseCombatWeapon C_BaseCombatWeapon
+#if defined ( OF_CLIENT_DLL )
 #include "baseparticleentity.h"
+#endif
 #endif
 
 // Hacky
@@ -56,7 +58,7 @@ class CUserCmd;
 // Put this in your derived class definition to declare it's activity table
 // UNDONE: Cascade these?
 #define DECLARE_ACTTABLE()		static acttable_t m_acttable[];\
-	virtual acttable_t *ActivityList( int &iActivityCount ) OVERRIDE;
+	virtual acttable_t *ActivityList( int &iActivityCount ) override;
 
 // You also need to include the activity table itself in your class' implementation:
 // e.g.
@@ -194,7 +196,9 @@ public:
 
 	virtual void			Spawn( void );
 	virtual void			Precache( void );
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual void			ParseWeaponScript( bool bReParse );
+#endif
 
 	void					MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
 
@@ -276,7 +280,7 @@ public:
 
 #ifdef CLIENT_DLL
 	virtual void			CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles ) {}
-	virtual int				CalcOverrideModelIndex() OVERRIDE;
+	virtual int				CalcOverrideModelIndex() override;
 #endif
 
 	virtual bool			IsWeaponZoomed() { return false; }		// Is this weapon in its 'zoomed in' mode?
@@ -288,6 +292,12 @@ public:
 	virtual bool			Reload( void );
 	bool					DefaultReload( int iClipSize1, int iClipSize2, int iActivity );
 	bool					ReloadsSingly( void ) const;
+	
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	virtual bool			AutoFiresFullClip( void ) const { return false; }
+	virtual void			UpdateAutoFire( void );
+#endif
 
 	// Weapon firing
 	virtual void			PrimaryAttack( void );						// do "+ATTACK"
@@ -334,7 +344,11 @@ public:
 	virtual char			*GetDeathNoticeName( void );	// Get the string to print death notices with
 
 	CBaseCombatCharacter	*GetOwner() const;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual	void			SetOwner( CBaseCombatCharacter *owner );
+#else
+	void					SetOwner( CBaseCombatCharacter *owner );
+#endif
 	virtual void			OnPickedUp( CBaseCombatCharacter *pNewOwner );
 
 	virtual void			AddViewmodelBob( CBaseViewModel *viewmodel, Vector &origin, QAngle &angles ) {};
@@ -365,15 +379,17 @@ public:
 	virtual int				GetMaxClip2( void ) const;
 	virtual int				GetDefaultClip1( void ) const;
 	virtual int				GetDefaultClip2( void ) const;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual int				GetMaxReserveAmmo( void ) const;
 	virtual int				GetDefaultReserveAmmo( void ) const;
+#endif
 	virtual int				GetWeight( void ) const;
 	virtual bool			AllowsAutoSwitchTo( void ) const;
 	virtual bool			AllowsAutoSwitchFrom( void ) const;
 	virtual bool			ForceWeaponSwitch( void ) const { return false; }
 	virtual int				GetWeaponFlags( void ) const;
-	virtual int				GetSlot( void ) const;
-	virtual int				GetPosition( void ) const;
+	virtual int				GetSlot( void );
+	virtual int				GetPosition( void );
 	virtual char const		*GetName( void ) const;
 	virtual char const		*GetPrintName( void ) const;
 	virtual char const		*GetShootSound( int iIndex ) const;
@@ -389,8 +405,10 @@ public:
 	virtual int				GetSecondaryAmmoType( void )  const { return m_iSecondaryAmmoType; }
 	virtual int				Clip1() { return m_iClip1; }
 	virtual int				Clip2() { return m_iClip2; }
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual	int				ReserveAmmo() { return m_iReserveAmmo; }
 	virtual int				DefaultReserveAmmo() { return m_iDefaultReserveAmmo; }
+#endif
 
 	// Ammo quantity queries for weapons that do not use clips. These are only
 	// used to determine how much ammo is in a weapon that does not have an owner.
@@ -429,7 +447,9 @@ public:
 
 	// Weapon spawning
 	bool					IsConstrained() { return m_pConstraint != NULL; }
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual void			SetConstrained( IPhysicsConstraint	*pConstraint ) { m_pConstraint = pConstraint; }
+#endif
 	bool					IsInBadPosition ( void );				// Is weapon in bad position to pickup?
 	bool					RepositionWeapon ( void );				// Attempts to reposition the weapon in a location where it can be
 	virtual void			Materialize( void );					// make a weapon visible and tangible
@@ -554,7 +574,7 @@ private:
 	CNetworkVar( CBaseCombatCharacterHandle, m_hOwner );				// Player carrying this weapon
 
 protected:
-#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL ) || defined ( TF_MOD ) || defined ( TF_MOD_CLIENT )
+#if defined ( TF_CLIENT_DLL ) || defined ( TF_DLL )
 	// Regulate crit frequency to reduce client-side seed hacking
 	void					AddToCritBucket( float flAmount );
 	void					RemoveFromCritBucket( float flAmount ) { m_flCritTokenBucket -= flAmount; }
@@ -577,6 +597,11 @@ public:
 	// Weapon state
 	bool					m_bInReload;			// Are we in the middle of a reload;
 	bool					m_bFireOnEmpty;			// True when the gun is empty and the player is still holding down the attack key(s)
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#else
+	bool					m_bFiringWholeClip;		// Are we in the middle of firing the whole clip;
+#endif
+
 	// Weapon art
 	CNetworkVar( int, m_iViewModelIndex );
 	CNetworkVar( int, m_iWorldModelIndex );
@@ -615,8 +640,10 @@ public:
 	CNetworkVar( int, m_iSecondaryAmmoType );	// "secondary" ammo index into the ammo info array
 	CNetworkVar( int, m_iClip1 );				// number of shots left in the primary weapon clip, -1 it not used
 	CNetworkVar( int, m_iClip2 );				// number of shots left in the secondary weapon clip, -1 it not used
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	CNetworkVar( int, m_iReserveAmmo );				// number of shots left in the primary weapon clip, -1 it not used
 	CNetworkVar( int, m_iDefaultReserveAmmo );
+#endif
 	bool					m_bFiresUnderwater;		// true if this weapon can fire underwater
 	bool					m_bAltFiresUnderwater;		// true if this weapon can fire underwater
 	float					m_fMinRange1;			// What's the closest this weapon can be used?

@@ -111,7 +111,7 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 	}
 
 	QueryResultType hurry = me->GetIntentionInterface()->ShouldHurry( me );
-	if ( !( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) && ( hurry == ANSWER_YES || m_checkUseTeleportTimer.IsElapsed() ) )
+	if ( !TFGameRules()->IsFreeRoam() && ( hurry == ANSWER_YES || m_checkUseTeleportTimer.IsElapsed() ) )
 	{
 		m_checkUseTeleportTimer.Start( RandomFloat( 2.0f, 3.0f ) );
 
@@ -135,10 +135,60 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 	}
 	else
 	{
-		// OFbot: these values don't play too good 
-		//m_checkUseTeleportTimer.Start( RandomFloat( 0.3f, 0.5f ) );
+		if ( !TFGameRules()->IsFreeRoam() )
+			m_checkUseTeleportTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+	
+		if ( !me->m_Shared.IsZombie() )
+		{
+			if ( m_checkGetWeaponTimer.IsElapsed() && !me->m_Shared.IsZombie() )
+			{
+				if ( CTFBotGetWeapon::IsPossible( me ) )
+				{
+					m_checkGetWeaponTimer.Start( RandomFloat( 5.0f, 10.0f ) );
+					return Action<CTFBot>::SuspendFor( new CTFBotGetWeapon, "Grabbing nearby weapon" );
+				}
 
-		m_checkUseTeleportTimer.Start( RandomFloat( 1.0f, 2.0f ) );
+				m_checkGetWeaponTimer.Start( RandomFloat( 10.0f, 15.0f ) );
+			}
+
+			bool bLowHealth = false;
+
+			CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
+
+			// OFBOT: Allclass support
+			if ( ( me->GetTimeSinceWeaponFired() < 2.0f || /*me->IsPlayerClass( TF_CLASS_SNIPER )*/ ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) ) && 
+				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat() ) )
+			{
+				bLowHealth = true;
+			}
+			else if ( me->m_Shared.InCond( TF_COND_BURNING ) ||
+				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_ok_ratio.GetFloat() )
+			{
+				bLowHealth = true;
+			}
+
+			if ( bLowHealth && CTFBotGetHealth::IsPossible( me ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotGetHealth, "Grabbing nearby health" );
+
+			if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
+				return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
+
+			if ( TFGameRules()->IsFreeRoam() && m_checkGetPowerupTimer.IsElapsed() )
+			{
+				if ( CTFBotGetPowerup::IsPossible( me ) )
+				{
+					m_checkGetPowerupTimer.Start( RandomFloat( 15.0f, 25.0f ) );
+					return Action<CTFBot>::SuspendFor( new CTFBotGetPowerup, "Grabbing nearby powerup" );
+				}
+				else
+				{
+					m_checkGetPowerupTimer.Start( RandomFloat( 8.0f, 11.0f ) );
+				}
+			}
+		}
+
+		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
+			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 
 		if ( TFGameRules()->IsFreeRoam() )
 		{
@@ -165,60 +215,6 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 				}
 			}
 		}
-	
-
-		if ( !me->m_Shared.IsZombie() )
-		{
-			CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >( me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY ) );
-			if ( ( pWeapon == nullptr || m_checkGetWeaponTimer.IsElapsed() ) && !me->m_Shared.IsZombie() )
-			{
-				if ( CTFBotGetWeapon::IsPossible( me ) )
-				{
-					m_checkGetWeaponTimer.Start( RandomFloat( 5.0f, 8.0f ) );
-					return Action<CTFBot>::SuspendFor( new CTFBotGetWeapon, "Grabbing nearby weapon" );
-				}
-
-				m_checkGetWeaponTimer.Start( RandomFloat( 1.0f, 4.0f ) );
-			}
-
-			bool bLowHealth = false;
-
-			pWeapon = me->GetActiveTFWeapon();
-
-			// OFBOT: Allclass support
-			if ( ( me->GetTimeSinceWeaponFired() < 2.0f || /*me->IsPlayerClass( TF_CLASS_SNIPER )*/ ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) ) && 
-				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat() ) )
-			{
-				bLowHealth = true;
-			}
-			else if ( me->m_Shared.InCond( TF_COND_BURNING ) ||
-				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_ok_ratio.GetFloat() )
-			{
-				bLowHealth = true;
-			}
-
-			if ( bLowHealth && CTFBotGetHealth::IsPossible( me ) )
-				return Action<CTFBot>::SuspendFor( new CTFBotGetHealth, "Grabbing nearby health" );
-
-			if ( me->IsAmmoLow() && CTFBotGetAmmo::IsPossible( me ) )
-				return Action<CTFBot>::SuspendFor( new CTFBotGetAmmo, "Grabbing nearby ammo" );
-
-			if ( TFGameRules()->IsFreeRoam() )
-			{
-				if ( CTFBotGetPowerup::IsPossible( me ) )
-				{
-					m_checkGetPowerupTimer.Start( RandomFloat( 10.0f, 20.0f ) );
-					return Action<CTFBot>::SuspendFor( new CTFBotGetPowerup, "Grabbing nearby powerup" );
-				}
-				else
-				{
-					m_checkGetPowerupTimer.Start( RandomFloat( 3.0f, 5.0f ) );
-				}
-			}
-		}
-
-		if ( me->m_hTargetSentry && CTFBotDestroyEnemySentry::IsPossible( me ) )
-			return BaseClass::SuspendFor( new CTFBotDestroyEnemySentry, "Going after an enemy sentry to destroy it" );
 	}
 
 	MonitorArmedStickybombs( me );
@@ -411,8 +407,15 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 
 	m_stickyMonitorDelay.Start( RandomFloat( 0.3f, 1.0f ) );
 
-	CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher *>( actor->Weapon_GetSlot( 1 ) );
-	if ( pLauncher == nullptr || pLauncher->m_Pipebombs.IsEmpty() )
+	CTFWeaponBase *pWeapon = actor->Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER );
+	if ( pWeapon == nullptr )
+		return;
+
+	CTFPipebombLauncher *pLauncher = static_cast<CTFPipebombLauncher *>( pWeapon );
+	if ( pLauncher == nullptr )
+		return;
+		
+	if ( pLauncher->m_Pipebombs.IsEmpty() )
 		return;
 	
 	CUtlVector<CKnownEntity> knowns;
@@ -422,16 +425,19 @@ void CTFBotTacticalMonitor::MonitorArmedStickybombs( CTFBot *actor )
 	{
 		for ( const CKnownEntity &pKnown : knowns )
 		{
-			if ( pKnown.IsObsolete() || pKnown.GetEntity()->IsBaseObject() )
+			if ( pKnown.IsObsolete() /* || pKnown.GetEntity()->IsBaseObject() */ )
 				continue;
 
-			if ( GetEnemyTeam( pKnown.GetEntity() ) == pGrenade->GetTeamNumber() )
+			if ( actor->GetTeamNumber() != TF_TEAM_MERCENARY && GetEnemyTeam( pKnown.GetEntity() ) != pGrenade->GetTeamNumber() )
 				continue;
 
 			if ( pGrenade->GetAbsOrigin().DistToSqr( pKnown.GetLastKnownPosition() ) >= Square( 150.0 ) )
 				continue;
 
-			actor->GetBodyInterface()->AimHeadTowards( pGrenade->WorldSpaceCenter() + RandomVector( -10.0f, 10.0f ), IBody::IMPORTANT, 0.5f, &detReply, "Looking toward stickies to detonate" );
+			// OFBOT: this was intended to work with scottish resistance... don't need that here
+			//actor->GetBodyInterface()->AimHeadTowards( pGrenade->WorldSpaceCenter() + RandomVector( -10.0f, 10.0f ), IBody::IMPORTANT, 0.5f, &detReply, "Looking toward stickies to detonate" );
+			actor->PressAltFireButton();
+
 			return;
 		}
 	}

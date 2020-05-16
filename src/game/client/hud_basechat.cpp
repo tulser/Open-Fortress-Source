@@ -26,7 +26,9 @@
 #include "multiplay_gamerules.h"
 #include "voice_status.h"
 
+#ifdef OF_CLIENT_DLL
 #include "tf_gamerules.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -36,8 +38,10 @@
 #ifndef _XBOX
 ConVar hud_saytext_time( "hud_saytext_time", "12", 0 );
 ConVar cl_showtextmsg( "cl_showtextmsg", "1", 0, "Enable/disable text messages printing on the screen." );
+#ifdef OF_CLIENT_DLL
 ConVar cl_chatmsgsound( "cl_chatmsgsound", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Enable/disable text message notification sounds." );
 ConVar cl_chatmsgvolume( "cl_chatmsgvolume", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Text message volume.", true, 0.0f, true, 1.0f );
+#endif
 ConVar cl_chatfilters( "cl_chatfilters", "63", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Stores the chat filter settings " );
 ConVar cl_chatfilter_version( "cl_chatfilter_version", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN, "Stores the chat filter version" );
 ConVar cl_mute_all_comms("cl_mute_all_comms", "1", FCVAR_ARCHIVE, "If 1, then all communications from a player will be blocked when that player is muted, including chat messages.");
@@ -46,12 +50,13 @@ const int kChatFilterVersion = 1;
 
 Color g_ColorBlue( 153, 204, 255, 255 );
 Color g_ColorRed( 255, 63, 63, 255 );
-Color g_ColorMercenary( 128, 0, 128, 255 );
 Color g_ColorGreen( 153, 255, 153, 255 );
 Color g_ColorDarkGreen( 64, 255, 64, 255 );
 Color g_ColorYellow( 255, 178, 0, 255 );
 Color g_ColorGrey( 204, 204, 204, 255 );
-
+#ifdef OF_CLIENT_DLL
+Color g_ColorMercenary( 128, 0, 128, 255 );
+#endif
 
 // removes all color markup characters, so Msg can deal with the string properly
 // returns a pointer to str
@@ -783,7 +788,8 @@ void CBaseHudChat::MsgFunc_SayText( bf_read &msg )
 		// try to lookup translated string
 		Printf( CHAT_FILTER_NONE, "%s", hudtextmessage->LookupString( szString ) );
 	}
-
+	
+#ifdef OF_CLIENT_DLL
 	if ( cl_chatmsgsound.GetInt() )
 	{
 		CSoundParameters params;
@@ -796,9 +802,16 @@ void CBaseHudChat::MsgFunc_SayText( bf_read &msg )
 			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, params );
 		}
 	}
+#else
+	CLocalPlayerFilter filter;
+	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );	
+#endif
 
+#ifndef OF_CLIENT_DLL
 	// TERROR: color console echo
-	//Msg( "%s", szString );
+	Msg( "%s", szString );
+#endif
+
 }
 
 int CBaseHudChat::GetFilterForString( const char *pString )
@@ -851,8 +864,11 @@ void CBaseHudChat::MsgFunc_SayText2( bf_read &msg )
 		// print raw chat text
 		ChatPrintf( client, iFilter, "%s", ansiString );
 
-		//Msg( "%s\n", RemoveColorMarkup(ansiString) );
+#ifndef OF_CLIENT_DLL
+		Msg( "%s\n", RemoveColorMarkup(ansiString) );
+#endif
 
+#ifdef OF_CLIENT_DLL
 		if ( cl_chatmsgsound.GetInt() )
 		{
 			CSoundParameters params;
@@ -865,6 +881,10 @@ void CBaseHudChat::MsgFunc_SayText2( bf_read &msg )
 				C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, params );
 			}
 		}
+#else
+		CLocalPlayerFilter filter;
+		C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, "HudChat.Message" );	
+#endif
 	}
 	else
 	{
@@ -917,7 +937,12 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 		}
 	}
 
-	if ( !cl_showtextmsg.GetInt() || engine->IsLevelMainMenuBackground() )
+#ifdef OF_CLIENT_DLL
+	if ( engine->IsLevelMainMenuBackground() )
+		return;
+#endif
+
+	if ( !cl_showtextmsg.GetInt() )
 		return;
 
 	int len;
@@ -948,8 +973,12 @@ void CBaseHudChat::MsgFunc_TextMsg( bf_read &msg )
 			Q_strncat( szString, "\n", sizeof(szString), 1 );
 		}
 		Printf( CHAT_FILTER_NONE, "%s", ConvertCRtoNL( szString ) );
+		
+#ifndef OF_CLIENT_DLL		
 		// TERROR: color console echo
-		//Msg( "%s", ConvertCRtoNL( szString ) );
+		Msg( "%s", ConvertCRtoNL( szString ) );
+#endif
+	
 		break;
 
 	case HUD_PRINTCONSOLE:
@@ -971,11 +1000,18 @@ void CBaseHudChat::MsgFunc_VoiceSubtitle( bf_read &msg )
 	if ( !g_PR )
 		return;
 
+#ifdef OF_CLIENT_DLL
 	// TODO: when spam checks are added, uncomment this if
 	// if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() || TFGameRules()->IsInfGamemode() ) )
 		return;
+#endif
 
-	if ( !cl_showtextmsg.GetInt() || engine->IsLevelMainMenuBackground() )
+#ifdef OF_CLIENT_DLL
+	if ( engine->IsLevelMainMenuBackground() )
+		return;
+#endif
+
+	if ( !cl_showtextmsg.GetInt() )
 		return;
 
 	char szString[2048];
@@ -1190,6 +1226,7 @@ void CBaseHudChat::Printf( int iFilter, const char *fmt, ... )
 //-----------------------------------------------------------------------------
 void CBaseHudChat::StartMessageMode( int iMessageModeType )
 {
+#ifdef OF_CLIENT_DLL
 	m_nMessageMode = iMessageModeType;
 
 	if ( !IsConsole() )
@@ -1221,7 +1258,12 @@ void CBaseHudChat::StartMessageMode( int iMessageModeType )
 
 		// Place the mouse cursor near the text so people notice it.
 		int x, y, w, h;
+#ifdef OF_CLIENT_DLL
 		GetBounds( x, y, w, h );
+#else
+		GetChatHistory()->GetBounds( x, y, w, h );
+#endif
+
 #ifndef INFESTED_DLL
 		vgui::input()->SetCursorPos( x + ( w/2), y + (h/2) );
 #endif
@@ -1231,6 +1273,61 @@ void CBaseHudChat::StartMessageMode( int iMessageModeType )
 	m_flHistoryFadeTime = gpGlobals->curtime + CHAT_HISTORY_FADE_TIME;
 
 	engine->ClientCmd_Unrestricted( "gameui_preventescapetoshow\n" );
+#else
+#ifndef _XBOX
+	m_nMessageMode = iMessageModeType;
+
+	m_pChatInput->ClearEntry();
+
+	const wchar_t *pszPrompt = ( m_nMessageMode == MM_SAY ) ? g_pVGuiLocalize->Find( "#chat_say" ) : g_pVGuiLocalize->Find( "#chat_say_team" ); 
+	if ( pszPrompt )
+	{
+		m_pChatInput->SetPrompt( pszPrompt );
+	}
+	else
+	{
+		if ( m_nMessageMode == MM_SAY )
+		{
+			m_pChatInput->SetPrompt( L"Say :" );
+		}
+		else
+		{
+			m_pChatInput->SetPrompt( L"Say (TEAM) :" );
+		}
+	}
+	
+	if ( GetChatHistory() )
+	{
+		GetChatHistory()->SetMouseInputEnabled( true );
+		GetChatHistory()->SetKeyBoardInputEnabled( false );
+		GetChatHistory()->SetVerticalScrollbar( true );
+		GetChatHistory()->ResetAllFades( true );
+		GetChatHistory()->SetPaintBorderEnabled( true );
+		GetChatHistory()->SetVisible( true );
+	}
+
+	vgui::SETUP_PANEL( this );
+	SetKeyBoardInputEnabled( true );
+	SetMouseInputEnabled( true );
+	m_pChatInput->SetVisible( true );
+	vgui::surface()->CalculateMouseVisible();
+	m_pChatInput->RequestFocus();
+	m_pChatInput->SetPaintBorderEnabled( true );
+	m_pChatInput->SetMouseInputEnabled( true );
+
+	//Place the mouse cursor near the text so people notice it.
+	int x, y, w, h;
+	GetChatHistory()->GetBounds( x, y, w, h );
+	vgui::input()->SetCursorPos( x + ( w/2), y + (h/2) );
+
+	m_flHistoryFadeTime = gpGlobals->curtime + CHAT_HISTORY_FADE_TIME;
+
+	m_pFilterPanel->SetVisible( false );
+
+	engine->ClientCmd_Unrestricted( "gameui_preventescapetoshow\n" );
+		
+#endif
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1254,8 +1351,11 @@ void CBaseHudChat::StopMessageMode( void )
 		GetChatHistory()->ResetAllFades( false, true, CHAT_HISTORY_FADE_TIME );
 		GetChatHistory()->SelectNoText();
 	}
-
+	
+#ifdef OF_CLIENT_DLL
 	m_nMessageMode = MM_NONE; // TERROR
+#endif
+
 	//Clear the entry since we wont need it anymore.
 	m_pChatInput->ClearEntry();
 
@@ -1572,7 +1672,9 @@ void CBaseHudChatLine::Colorize( int alpha )
 			InsertString( wText );
 
 			// TERROR: color console echo
+#ifdef OF_CLIENT_DLL				
 			ConColorMsg( color, "%ls", wText );
+#endif
 
 			CBaseHudChat *pChat = dynamic_cast<CBaseHudChat*>(GetParent() );
 
@@ -1591,7 +1693,9 @@ void CBaseHudChatLine::Colorize( int alpha )
 		}
 	}
 
+#ifdef OF_CLIENT_DLL
 	Msg( "\n" );
+#endif
 
 	InvalidateLayout( true );
 }
@@ -1634,6 +1738,12 @@ This is a very long string that I am going to attempt to paste into the cs hud c
 
 	if ( len > 0 )
 	{
+		// Let the game rules at it
+		if ( GameRules() )
+		{
+			GameRules()->ModifySentChat( ansi, ARRAYSIZE(ansi) );
+		}
+		
 		char szbuf[144];	// more than 128
 		Q_snprintf( szbuf, sizeof(szbuf), "%s \"%s\"", m_nMessageMode == MM_SAY ? "say" : "say_team", ansi );
 
@@ -1641,7 +1751,9 @@ This is a very long string that I am going to attempt to paste into the cs hud c
 	}
 	
 	m_pChatInput->ClearEntry();
+#ifdef OF_CLIENT_DLL
 	m_nMessageMode = MM_NONE;	// TERROR
+#endif
 #endif
 }
 
@@ -1733,9 +1845,11 @@ void CBaseHudChat::ChatPrintf( int iPlayerIndex, int iFilter, const char *fmt, .
 	{
 		msg[ strlen( msg ) - 1 ] = 0;
 	}
-	 
+	
+#ifdef OF_CLIENT_DLL
 	// Strip any trailing whitespace
 	Q_StripPrecedingAndTrailingWhitespace( msg );
+#endif 
 
 	// Strip leading \n characters ( or notify/color signifiers ) for empty string check
 	char *pmsg = msg;

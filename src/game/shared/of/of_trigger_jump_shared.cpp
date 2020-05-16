@@ -24,9 +24,15 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 	if( pOther->GetMoveType() != MOVETYPE_WALK && pOther->GetMoveType() != MOVETYPE_VPHYSICS && pOther->GetMoveType() != MOVETYPE_FLYGRAVITY && pOther->GetMoveType() != MOVETYPE_STEP )
 		return;
 
-	// ignore grappling hooks
-	if ( FClassnameIs( pOther, "grapple_hook" ) )
-		return;
+	// ignore grappling hooks or tf ents
+	// WTF?
+	if ( !pOther->IsPlayer() )
+	{
+		if ( V_strncmp( "gr", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+		if ( V_strncmp( "tf", pOther->GetClassname(), 2 ) == 0 ) 
+			return;
+	}
 
 	float flGravScale = 1.0f;
 

@@ -183,12 +183,6 @@ typedef signed char int8;
 		#define __m128				__vector4
 	#endif
 
-	// Use this to specify that a function is an override of a virtual function.
-	// This lets the compiler catch cases where you meant to override a virtual
-	// function but you accidentally changed the function signature and created
-	// an overloaded function. Usage in function declarations is like this:
-	// int GetData() const OVERRIDE;
-	#define OVERRIDE override
 
 	#define maxval __max
 	#define minval __min
@@ -211,17 +205,10 @@ typedef signed char int8;
 	typedef void *HWND;
 
 	#define _atoi64 atoll
-	// Avoid redefinition warnings if a previous header defines this.
-	#undef OVERRIDE
-	#if __cplusplus >= 201103L
-		#define OVERRIDE override
-		#if defined(__clang__)
-			// warning: 'override' keyword is a C++11 extension [-Wc++11-extensions]
-			// Disabling this warning is less intrusive than enabling C++11 extensions
-			#pragma GCC diagnostic ignored "-Wc++11-extensions"
-		#endif
-	#else
-		#define OVERRIDE
+	#if __cplusplus >= 201103L && defined(__clang__)
+		// warning: 'override' keyword is a C++11 extension [-Wc++11-extensions]
+		// Disabling this warning is less intrusive than enabling C++11 extensions
+		#pragma GCC diagnostic ignored "-Wc++11-extensions"
 	#endif
 
 #endif // else _WIN32

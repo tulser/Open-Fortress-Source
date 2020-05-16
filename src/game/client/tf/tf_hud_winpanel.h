@@ -21,75 +21,42 @@
 
 using namespace vgui;
 
-#define NUM_NOTABLE_PLAYERS	3
-#define NUM_CATEGORIES	2
-#define NUM_ITEMS_PER_CATEGORY	3
-
-class CTFWinPanel : public EditablePanel, public CHudElement
+class ExitCircle : public ImagePanel
 {
-private:
-	DECLARE_CLASS_SIMPLE( CTFWinPanel, EditablePanel );
+	DECLARE_CLASS_SIMPLE(ExitCircle, ImagePanel);
 
 public:
-	CTFWinPanel( const char *pElementName );
-
-	virtual void Reset();
-	virtual void Init();
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void ApplySettings( KeyValues *inResourceData );
-	virtual void FireGameEvent( IGameEvent * event );
-	virtual void OnThink();
-	virtual bool ShouldDraw( void );
-	virtual void SetVisible( bool state );
-
-	virtual int GetRenderGroupPriority() { return 70; }
+	ExitCircle(Panel *parent, const char *name, const char *cmd);
+	virtual void OnMouseReleased(MouseCode code);
 
 private:
-	EditablePanel *m_pTeamScorePanel;
-
-	float	m_flTimeUpdateTeamScore;
-	int		m_iBlueTeamScore;
-	int		m_iRedTeamScore;
-	int		m_iMercenaryTeamScore;
-
-	bool	m_bShouldBeVisible;
+	char command[32];
+	Panel* m_pParent;
 };
 
 class CTFWinPanelDM : public EditablePanel, public CHudElement
 {
 private:
-	DECLARE_CLASS_SIMPLE( CTFWinPanelDM, EditablePanel );
+	DECLARE_CLASS_SIMPLE(CTFWinPanelDM, EditablePanel);
 
 public:
-	CTFWinPanelDM( const char *pElementName );
+	CTFWinPanelDM(const char *pElementName);
 
 	virtual void Reset();
-	virtual void Init();
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void ApplySettings( KeyValues *inResourceData );
-	virtual void FireGameEvent( IGameEvent * event );
-	virtual void OnThink();
-	virtual bool ShouldDraw( void );
-	virtual void SetVisible( bool state );
-	virtual void OnCommand( const char *command );
-	virtual bool HasInputElements( void ) { return true; }
+	virtual void FireGameEvent(IGameEvent * event);
+	virtual bool ShouldDraw(void);
+	virtual void SetVisible(bool state);
+	virtual void OnCommand(const char *command);
+	virtual bool HasInputElements(void) { return true; }
 	virtual int GetRenderGroupPriority() { return 70; }
 
 private:
-	EditablePanel *m_pTeamScorePanel;
-
-	float	m_flTimeUpdateTeamScore;
-	int		m_iBlueTeamScore;
-	int		m_iRedTeamScore;
-	int		m_iMercenaryTeamScore;
-
-	bool	m_bShouldBeVisible;
-	
-	CExButton			*m_pClose;
-	
-	CModelPanel *m_pPlayer1Model;
-	CModelPanel *m_pPlayer2Model;
-	CModelPanel *m_pPlayer3Model;
+	ExitCircle	  *m_XClose;
 };
 
 #endif //TFWINPANEL_H
+
+//Leftover for possible future usage
+/*
+*m_pTeamScorePanel;
+*/

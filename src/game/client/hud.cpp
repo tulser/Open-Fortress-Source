@@ -32,7 +32,9 @@
 
 static 	CClassMemoryPool< CHudTexture >	 g_HudTextureMemoryPool( 128 );
 
+#ifdef OF_CLIENT_DLL
 extern ConVar cl_drawhud;
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Parses the weapon txt files to get the sprites needed.
@@ -243,7 +245,7 @@ CHudElement::CHudElement( const char *pElementName )
 	m_bIsParentedToClientDLLRootPanel = false;
 
 	// Make this for all hud elements, but when its a bit safer
-#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL ) || defined( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined( DOD_DLL ) || defined( OF_CLIENT_DLL )
 	RegisterForRenderGroup( "global" );
 #endif
 }
@@ -291,9 +293,11 @@ bool CHudElement::ShouldDraw( void )
 {
 	bool bShouldDraw = ( !gHUD.IsHidden( m_iHiddenBits ) );
 	
+#ifdef OF_CLIENT_DLL
 	if ( AffectedByDrawHUD() && !cl_drawhud.GetBool() )
 		return false;
-	
+#endif
+
 	if ( bShouldDraw )
 	{
 		// for each render group
@@ -981,7 +985,7 @@ bool CHud::IsHidden( int iHudFlags )
 		return true;
 
 	// Hide all HUD elements during screenshot if the user's set hud_freezecamhide ( TF2 )
-#if defined( TF_CLIENT_DLL )  || defined( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL )  || defined( OF_CLIENT_DLL )
 	extern bool IsTakingAFreezecamScreenshot();
 	extern ConVar hud_freezecamhide;
 

@@ -87,7 +87,12 @@ extern ConVar sensitivity;
 
 static C_BasePlayer *s_pLocalPlayer = NULL;
 
+#ifdef OF_CLIENT_DLL
 static ConVar	cl_customsounds ( "cl_customsounds", "1", 0, "Enable customized player sound playback" );
+#else
+static ConVar	cl_customsounds ( "cl_customsounds", "0", 0, "Enable customized player sound playback" );
+#endif
+
 static ConVar	spec_track		( "spec_track", "0", 0, "Tracks an entity in spec mode" );
 static ConVar	cl_smooth		( "cl_smooth", "1", 0, "Smooth view/eye origin after prediction errors" );
 static ConVar	cl_smoothtime	( 
@@ -111,7 +116,11 @@ ConVar	spec_freeze_distance_min( "spec_freeze_distance_min", "96", FCVAR_CHEAT, 
 ConVar	spec_freeze_distance_max( "spec_freeze_distance_max", "200", FCVAR_CHEAT, "Maximum random distance from the target to stop when framing them in observer freeze cam." );
 #endif
 
-ConVar	cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
+#ifdef OF_CLIENT_DLL
+ConVar cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
+#else
+static ConVar cl_first_person_uses_world_model ( "cl_first_person_uses_world_model", "0", FCVAR_ARCHIVE, "Causes the third person model to be drawn instead of the view model" );
+#endif
 
 ConVar demo_fov_override( "demo_fov_override", "0", FCVAR_CLIENTDLL | FCVAR_DONTRECORD, "If nonzero, this value will be used to override FOV during demo playback." );
 
@@ -179,9 +188,6 @@ BEGIN_RECV_TABLE_NOBASE( CPlayerLocalData, DT_Local )
 	// 3d skybox data
 	RecvPropInt(RECVINFO(m_skybox3d.scale)),
 	RecvPropVector(RECVINFO(m_skybox3d.origin)),
-#ifdef MAPBASE
-	RecvPropVector(RECVINFO(m_skybox3d.angles)),
-#endif
 	RecvPropInt(RECVINFO(m_skybox3d.area)),
 
 	// 3d skybox fog data
@@ -1428,6 +1434,7 @@ int C_BasePlayer::DrawModel( int flags )
 Vector C_BasePlayer::GetChaseCamViewOffset( CBaseEntity *target )
 {
 	// this fixes the camera being off in base_boss entity (and npcs too)
+#ifdef OF_CLIENT_DLL
 	if ( target-IsNPC() )
 	{
 		if ( target->IsAlive() )
@@ -1435,6 +1442,7 @@ Vector C_BasePlayer::GetChaseCamViewOffset( CBaseEntity *target )
 		else
 			return VEC_DEAD_VIEWHEIGHT;
 	}
+#endif
 
 	C_BasePlayer *player = ToBasePlayer( target );
 	
@@ -1649,8 +1657,10 @@ void C_BasePlayer::CalcFreezeCamView( Vector& eyeOrigin, QAngle& eyeAngles, floa
 		vecCamTarget.z -= (maxs.z * 0.5);
 
 		// don't do this for base_boss / npcs
+#ifdef OF_CLIENT_DLL	
 		if ( pTarget->IsNPC() )
 			maxs = pTarget->WorldAlignMaxs();
+#endif
 	}
 	else
 	{
@@ -1806,7 +1816,8 @@ void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		QAngle aKiller; VectorAngles( vKiller, aKiller );
 		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );
 	};
-
+	
+#ifdef OF_CLIENT_DLL
 	// eyeposition fails on base_boss / npcs
 	if ( pKiller && pKiller->IsNPC() && (pKiller != this) ) 
 	{
@@ -1814,6 +1825,7 @@ void C_BasePlayer::CalcDeathCamView(Vector& eyeOrigin, QAngle& eyeAngles, float&
 		QAngle aKiller; VectorAngles( vKiller, aKiller );
 		InterpolateAngles( aForward, aKiller, eyeAngles, interpolation );
 	};
+#endif
 
 	Vector vForward; AngleVectors( eyeAngles, &vForward );
 
@@ -3051,12 +3063,14 @@ void CC_DumpClientSoundscapeData( const CCommand& args )
 }
 static ConCommand soundscape_dumpclient("soundscape_dumpclient", CC_DumpClientSoundscapeData, "Dumps the client's soundscape data.\n", FCVAR_CHEAT);
 
+#ifdef OF_CLIENT_DLL
 //SecobMod__Information: Tony Sergi has said on the hl2coders list that third person models need to invalidate their bone cache, so we do that here.
 const Vector &C_BasePlayer::GetRenderOrigin(void)
 {
-	if (IsInAVehicle())
+	if ( IsInAVehicle() )
 	{
 		InvalidateBoneCache();
 	}
 	return BaseClass::GetRenderOrigin();
 }
+#endif

@@ -31,6 +31,8 @@ C_PlayerAttachedModel *C_PlayerAttachedModel::Create( const char *pszModelName, 
 	return pFlash;
 }
 
+ConVar helpmeplease("helpmeplease", "1", FCVAR_NONE);
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -38,7 +40,7 @@ bool C_PlayerAttachedModel::Initialize( const char *pszModelName, C_BaseEntity *
 {
 	m_bSpyMask = false;
 	AddEffects( EF_NOSHADOW | iEffects );
-	if ( InitializeAsClientEntity( pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
+	if ( InitializeAsClientEntity( pszModelName, helpmeplease.GetBool() ? RENDER_GROUP_TRANSLUCENT_ENTITY : RENDER_GROUP_OPAQUE_ENTITY ) == false )
 	{
 		Release();
 		return false;
@@ -172,9 +174,9 @@ int C_PlayerAttachedModel::DrawOverriddenViewmodel( int flags )
 
 bool C_PlayerAttachedModel::ShouldDraw( void )
 {
+	C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 	if ( m_bSpyMask )
 	{
-		C_TFPlayer *pOwner = ToTFPlayer( GetOwnerEntity() );
 		if ( !pOwner )
 			return false;
 
@@ -188,6 +190,15 @@ bool C_PlayerAttachedModel::ShouldDraw( void )
 	}
 	else
 	{
+		if ( !pOwner )
+			return false;
+		
+		if ( !pOwner->ShouldDrawThisPlayer() )
+			return false;
+		
+		if ( pOwner->IsEffectActive(EF_NODRAW) )
+			return false;
+		
 		return BaseClass::ShouldDraw();
 	}
 }

@@ -130,28 +130,28 @@ public:
 		return m_aIncursionDistances[ iTeamNum ];
 	}
 
-	inline void CTFNavArea::AddTFAttributes( int bits )
+	inline void AddTFAttributes( int bits )
 	{
 		m_nAttributes |= bits;
 	}
-	inline int CTFNavArea::GetTFAttributes( void ) const
+	inline int GetTFAttributes( void ) const
 	{
 		return m_nAttributes;
 	}
-	inline bool CTFNavArea::HasTFAttributes( int bits ) const
+	inline bool HasTFAttributes( int bits ) const
 	{
 		return ( m_nAttributes & bits ) != 0;
 	}
-	inline void CTFNavArea::RemoveTFAttributes( int bits )
+	inline void RemoveTFAttributes( int bits )
 	{
 		m_nAttributes &= ~bits;
 	}
 
-	void CTFNavArea::SetBombTargetDistance( float distance )
+	void SetBombTargetDistance( float distance )
 	{
 		m_flBombTargetDistance = distance;
 	}
-	float CTFNavArea::GetBombTargetDistance( void ) const
+	float GetBombTargetDistance( void ) const
 	{
 		return m_flBombTargetDistance;
 	}

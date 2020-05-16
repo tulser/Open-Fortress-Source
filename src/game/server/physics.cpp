@@ -276,26 +276,57 @@ void CPhysicsHook::LevelShutdownPreEntity()
 
 void CPhysicsHook::LevelShutdownPostEntity() 
 {
-	if ( !physics )
-		return;
-
 	if ( !physenv )
-		return;
-
-	if ( !g_EntityCollisionHash )
 		return;
 
 	g_pPhysSaveRestoreManager->ForgetAllModels();
 
 	g_Collisions.LevelShutdown();
 
-	physics->DestroyEnvironment( physenv );
-	physenv = NULL;
+#ifdef OF_DLL // attempting to solve a rare random vphysics crash here...
+	if ( physics )
+#endif
+	{
+		// strict nullptr checks
+#ifdef OF_DLL
+		if ( physenv )
+			physenv->CleanupDeleteList();
 
-	physics->DestroyObjectPairHash( g_EntityCollisionHash );
-	g_EntityCollisionHash = NULL;
+		DevMsg( 4, "VPhysics PreDestruct...\n");
 
-	physics->DestroyAllCollisionSets();
+		if ( physenv && physics )
+#endif
+			physics->DestroyEnvironment( physenv );
+
+		// a crash is happening somewhere in this block, using these devmsgs to be 100% sure I catch the correct line in the crash dump
+#ifdef OF_DLL
+		DevMsg( 4, "VPhysics Destruction...\n");
+#endif
+
+		physenv = NULL;
+
+#ifdef OF_DLL
+		if ( g_EntityCollisionHash && physics )
+#endif
+		{
+#ifdef OF_DLL
+			physics->DestroyAllCollisionSets();
+
+			DevMsg( 4, "VPhysics Destruction: Part 2\n");
+
+			if ( physics )
+#endif
+				physics->DestroyObjectPairHash( g_EntityCollisionHash );
+
+#ifdef OF_DLL
+			DevMsg( 4, "VPhysics Destruction: Part 3\n");
+#endif
+
+			g_EntityCollisionHash = NULL;
+		}
+
+		physics->DestroyAllCollisionSets();
+	}
 
 	g_PhysWorldObject = NULL;
 
@@ -735,8 +766,7 @@ bool CCollisionEvent::ShouldFreezeContacts( IPhysicsObject **pObjectList, int ob
 #endif
 	}
 	m_lastTickFrictionError = gpGlobals->tickcount;
-	//return false;
-	return true;
+	return false;
 }
 
 // NOTE: these are fully edge triggered events 
@@ -1155,13 +1185,21 @@ void PhysSolidOverride( solid_t &solid, string_t overrideScript )
 
 		// suck out the comma delimited tokens and turn them into quoted key/values
 		char szToken[256];
+#ifdef OF_DLL		
 		const char *pStr = nexttoken(szToken, STRING(overrideScript), ',', sizeof(szToken));
+#else
+		const char *pStr = nexttoken(szToken, STRING(overrideScript), ',');
+#endif
 		while ( szToken[0] != 0 )
 		{
 			Q_strncat( pTmpString, "\"", sizeof(pTmpString), COPY_ALL_CHARACTERS );
 			Q_strncat( pTmpString, szToken, sizeof(pTmpString), COPY_ALL_CHARACTERS );
 			Q_strncat( pTmpString, "\" ", sizeof(pTmpString), COPY_ALL_CHARACTERS );
+#ifdef OF_DLL			
 			pStr = nexttoken(szToken, pStr, ',', sizeof(szToken));
+#else
+			pStr = nexttoken(szToken, pStr, ',');
+#endif
 		}
 		// terminate the script
 		Q_strncat( pTmpString, "}", sizeof(pTmpString), COPY_ALL_CHARACTERS );

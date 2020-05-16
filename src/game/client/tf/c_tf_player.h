@@ -23,8 +23,6 @@
 #include "iinput.h"
 #include "physpropclientside.h"
 
-#include "hl_movedata.h"
-
 class C_MuzzleFlashModel;
 class C_BaseObject;
 
@@ -35,6 +33,7 @@ extern ConVar cl_autorezoom;
 extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
+extern ConVar of_disable_cosmetics;
 
 typedef CHandle<C_PlayerAttachedModel>	CosmeticHandle;
 
@@ -198,11 +197,6 @@ public:
 
 	Vector 	GetClassEyeHeight( void );
 
-	// HL2 ladder related methods
-	LadderMove_t		*GetLadderMove() { return &/*m_HL2Local.*/m_LadderMove; }
-	virtual void		ExitLadder();
-	//virtual surfacedata_t *GetLadderSurface(const Vector &origin);
-
 	void			ForceUpdateObjectHudState( void );
 
 	bool			GetMedigunAutoHeal( void ){ return tf_medigun_autoheal.GetBool(); }
@@ -295,6 +289,11 @@ private:
 	QAngle				m_angTauntEngViewAngles;
 
 public:
+	CNetworkVector( m_vecViewmodelOffset );
+	CNetworkVector( m_vecViewmodelAngle );
+
+	CNetworkVar( bool, m_bCentered );
+	CNetworkVar( bool, m_bMinimized );
 
 	Vector				m_vecPlayerColor;	
 	CUtlVector<float> 	m_iCosmetics;
@@ -302,8 +301,8 @@ public:
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );
 	void UpdateSpyMask( void );
-	void UpdateWearables( void );
 	void UpdateGameplayAttachments( void );
+	void UpdateWearables( void );
 	
 	bool WearsPartyHat( void );
 private:
@@ -322,6 +321,11 @@ private:
 	int					bInitialSpawn;
 	int					m_iOldState;
 	int					m_iOldSpawnCounter;
+
+	int					m_bResupplied;
+	int					m_bOldResupplied;
+	
+	bool				bCosmeticsDisabled;
 
 	// Healer
 	CHandle<C_TFPlayer>	m_hHealer;
@@ -369,9 +373,7 @@ public:
 	QAngle	m_angEyeAngles;
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
 	
-	CNetworkVar( int, m_iUpdateCosmetics );
-	
-	int iUpdatedCosmetics;
+	bool m_bUpdateCosmetics;
 
 	CNetworkHandle( C_TFItem, m_hItem );
 
@@ -423,6 +425,8 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
+	int								iCosmeticCount;
+	
 	
 	virtual void CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov);
 	virtual void CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
@@ -434,10 +438,6 @@ public:
 	double BobTime;
 	float BobLastTime;
 	float IdleScale;
-
-	// Ladder related data
-	EHANDLE			m_hLadder;
-	LadderMove_t	m_LadderMove;
 	
 	Color TennisBall;
 private:
@@ -500,7 +500,7 @@ public:
 	void InitDismember( void );
 
 	void DismemberHead( );
-	void DismemberBase( char *szBodyPart, bool bLevel, bool bBloodEffects, char *szParticleBone );
+	void DismemberBase( char const *szBodyPart, bool bLevel, bool bBloodEffects, char const *szParticleBone );
 	void DismemberLeftArm( bool bLevel );
 	void DismemberRightArm( bool bLevel );
 	void DismemberLeftLeg( bool bLevel );
@@ -558,6 +558,8 @@ private:
 	// takedamageinfo.h
 	//int				m_bitsDamageType;
 	int				m_iDamageCustom;
+	// for cool dissolves
+	bool			m_bDissolve;
 	
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
 };

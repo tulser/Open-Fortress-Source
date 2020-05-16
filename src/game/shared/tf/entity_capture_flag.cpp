@@ -40,6 +40,7 @@ ConVar cl_flag_return_size( "cl_flag_return_size", "20", FCVAR_CHEAT );
 #include "func_bomb_target.h"
 
 extern ConVar tf_flag_caps_per_round;
+extern ConVar of_mctf_flag_caps_per_round;
 
 ConVar cl_flag_return_height( "cl_flag_return_height", "82", FCVAR_CHEAT );
 ConVar tf_flag_return_on_touch( "tf_flag_return_on_touch", "0", FCVAR_CHEAT, "if this is set, your flag must be at base in order to capture the enemy flag. Remote friendly flags return to your base instantly when you touch them." );
@@ -447,7 +448,8 @@ void CCaptureFlag::FlagTouch( CBaseEntity *pOther )
 			return;
 	}
 
-	if ( m_nType == TF_FLAGTYPE_INVADE || m_nType == TF_FLAGTYPE_SPECIAL_DELIVERY && GetTeamNumber() != TEAM_UNASSIGNED )
+	// don't do this in invade anymore
+	if ( ( /* m_nType == TF_FLAGTYPE_INVADE || */ m_nType == TF_FLAGTYPE_SPECIAL_DELIVERY  ) && GetTeamNumber() != TEAM_UNASSIGNED )
 	{
 		if ( pPlayer->GetTeamNumber() != GetTeamNumber() )
 			return;
@@ -676,11 +678,23 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		bool bNotify = true;
 
 		// don't play any sounds if this is going to win the round for one of the teams (victory sound will be played instead)
-		if ( tf_flag_caps_per_round.GetInt() > 0 )
+		bool bRound = false;
+		if ( TFGameRules()->IsDMGamemode() && of_mctf_flag_caps_per_round.GetInt() > 0 )
+			bRound = true;
+		else if ( !TFGameRules()->IsDMGamemode() && tf_flag_caps_per_round.GetInt() > 0 )
+			bRound = true;
+		
+		if ( bRound )
 		{
 			int nCaps = TFTeamMgr()->GetFlagCaptures( pPlayer->GetTeamNumber() );
-
-			if ( ( nCaps >= 0 ) && ( tf_flag_caps_per_round.GetInt() - nCaps <= 1 ) )
+			
+			bool bToWin = false;
+			if ( TFGameRules()->IsDMGamemode() && ( nCaps >= 0 ) && ( of_mctf_flag_caps_per_round.GetInt() - nCaps <= 1 ) )
+				bToWin = true;
+			else if ( !TFGameRules()->IsDMGamemode() && ( nCaps >= 0 ) && ( tf_flag_caps_per_round.GetInt() - nCaps <= 1 ) )
+				bToWin = true;
+			
+			if ( bToWin )
 			{
 				// this cap is going to win, so don't play a sound
 				bNotify = false;
@@ -710,7 +724,13 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		CTF_GameStats.Event_PlayerCapturedPoint( pPlayer );
 
 		// Reward the team
-		if ( tf_flag_caps_per_round.GetInt() > 0 )
+		bool bRewardTeam = false;
+		if ( TFGameRules()->IsDMGamemode() && of_mctf_flag_caps_per_round.GetInt() > 0 )
+			bRewardTeam = true;
+		else if ( !TFGameRules()->IsDMGamemode() && tf_flag_caps_per_round.GetInt() > 0 )
+			bRewardTeam = true;		
+		
+		if ( bRewardTeam )
 		{
 			TFTeamMgr()->IncrementFlagCaptures( pPlayer->GetTeamNumber() );
 		}
@@ -781,7 +801,13 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 		TFTeamMgr()->AddTeamScore( pPlayer->GetTeamNumber(), TF_INVADE_CAPTURED_TEAM_FRAGS );
 
 		// add the scores (different from other flag types)
-		if ( tf_flag_caps_per_round.GetInt() > 0 )
+		bool bAddScore = false;
+		if ( TFGameRules()->IsDMGamemode() && of_mctf_flag_caps_per_round.GetInt() > 0 )
+			bAddScore = true;
+		else if ( !TFGameRules()->IsDMGamemode() && tf_flag_caps_per_round.GetInt() > 0 )
+			bAddScore = true;		
+		
+		if ( bAddScore )
 		{
 			TFTeamMgr()->IncrementFlagCaptures( pPlayer->GetTeamNumber() );
 		}
@@ -824,9 +850,18 @@ void CCaptureFlag::Capture( CTFPlayer *pPlayer, int nCapturePoint )
 			return;
 
 		// if we still need more caps to trigger a win, give them to us
-		if ( pTeam->GetFlagCaptures() < tf_flag_caps_per_round.GetInt() )
+		bool bMoreNeeded = false;
+		if ( TFGameRules()->IsDMGamemode() && pTeam->GetFlagCaptures() < of_mctf_flag_caps_per_round.GetInt() )
+			bMoreNeeded = true;
+		else if ( !TFGameRules()->IsDMGamemode() && pTeam->GetFlagCaptures() < tf_flag_caps_per_round.GetInt() )
+			bMoreNeeded = true;
+		
+		if ( bMoreNeeded )
 		{
-			pTeam->SetFlagCaptures( tf_flag_caps_per_round.GetInt() );
+			if ( TFGameRules()->IsDMGamemode() )
+				pTeam->SetFlagCaptures( of_mctf_flag_caps_per_round.GetInt() );
+			else
+				pTeam->SetFlagCaptures( tf_flag_caps_per_round.GetInt() );
 		}	
 	}
 

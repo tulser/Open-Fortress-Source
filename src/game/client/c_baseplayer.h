@@ -83,8 +83,10 @@ public:
 	virtual void	SharedSpawn(); // Shared between client and server.
 	virtual bool	GetSteamID( CSteamID *pID );
 
+#ifdef OF_CLIENT_DLL
 	// SecobMod__ALLOW_PLAYER_MODELS_IN_VEHICLES
 	virtual const Vector &GetRenderOrigin();
+#endif
 
 	// IClientEntity overrides.
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
@@ -119,7 +121,11 @@ public:
 	// Handle view smoothing when going up stairs
 	void				SmoothViewOnStairs( Vector& eyeOrigin );
 	virtual float		CalcRoll (const QAngle& angles, const Vector& velocity, float rollangle, float rollspeed);
-	virtual void        CalcViewRoll(QAngle& eyeAngles);
+#ifdef OF_CLIENT_DLL
+	virtual void		CalcViewRoll( QAngle& eyeAngles );
+#else
+	void        		CalcViewRoll(QAngle& eyeAngles);
+#endif
 	void				CreateWaterEffects( void );
 
 	virtual void			SetPlayerUnderwater( bool state );
@@ -172,7 +178,7 @@ public:
 	virtual IRagdoll* GetRepresentativeRagdoll() const;
 
 	// override the initial bone position for ragdolls
-	virtual bool GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt ) OVERRIDE;
+	virtual bool GetRagdollInitBoneArrays( matrix3x4_t *pDeltaBones0, matrix3x4_t *pDeltaBones1, matrix3x4_t *pCurrentBones, float boneDt ) override;
 
 	// Returns eye vectors
 	void			EyeVectors( Vector *pForward, Vector *pRight = NULL, Vector *pUp = NULL );
@@ -210,7 +216,11 @@ public:
 
 	virtual bool				ShouldReceiveProjectedTextures( int flags )
 	{
+#ifdef OF_CLIENT_DLL	
 		return true;
+#else
+		return false;
+#endif
 	}
 
 
@@ -448,9 +458,14 @@ public:
 
 protected:
 
+#ifdef OF_CLIENT_DLL
     virtual void        CalcPlayerView(Vector& eyeOrigin, QAngle& eyeAngles, float& fov);
 	virtual void        CalcVehicleView(IClientVehicle* pVehicle, Vector& eyeOrigin, QAngle& eyeAngles,float& zNear, float& zFar, float& fov);
-	
+#else	
+	void				CalcPlayerView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
+	void				CalcVehicleView(IClientVehicle *pVehicle, Vector& eyeOrigin, QAngle& eyeAngles, float& zNear, float& zFar, float& fov );
+#endif	
+
 	virtual void		CalcObserverView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );
 	virtual Vector		GetChaseCamViewOffset( CBaseEntity *target );
 	void				CalcChaseCamView( Vector& eyeOrigin, QAngle& eyeAngles, float& fov );

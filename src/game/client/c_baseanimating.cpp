@@ -51,19 +51,22 @@
 #include "posedebugger.h"
 #include "tier0/icommandline.h"
 #include "prediction.h"
+#ifndef OF_CLIENT_DLL
 #include "replay/replay_ragdoll.h"
+#endif
 #include "studio_stats.h"
 #include "tier1/callqueue.h"
+
+#ifdef OF_CLIENT_DLL
 #include "tf_weapon_parse.h"
 #include "tf_weaponbase.h"
 #include "tf_player_shared.h"
 #include "tf_viewmodel.h"
 #include "c_tf_player.h"
-#include "tempent.h"
 #include "physpropclientside.h"
 #include "ai_debug_shared.h"
-
 #include "teamplayroundbased_gamerules.h"
+#endif
 
 #ifdef TF_CLIENT_DLL
 #include "c_tf_player.h"
@@ -216,9 +219,11 @@ IMPLEMENT_CLIENTCLASS_DT(C_BaseAnimating, DT_BaseAnimating, CBaseAnimating)
 	RecvPropFloat( RECVINFO( m_fadeMaxDist ) ), 
 	RecvPropFloat( RECVINFO( m_flFadeScale ) ), 
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	RecvPropBool( RECVINFO( m_bGlowEnabled ) ),
 #endif // GLOWS_ENABLE
+#endif
 
 END_RECV_TABLE()
 
@@ -404,45 +409,54 @@ void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char 
 	if( !pPhysicsObject )
 		return;
 
-	Vector vecDir;
+#ifdef OF_CLIENT_DLL
+	Vector dir;
 
-	VectorSubtract( pTrace->endpos, pTrace->startpos, vecDir );
+	VectorSubtract( pTrace->endpos, pTrace->startpos, dir );
+#else
+	Vector dir = pTrace->endpos - pTrace->startpos;
+#endif
 
 	if ( iDamageType == DMG_BLAST )
 	{
+#ifdef OF_CLIENT_DLL
 		// don't affect gibs
 		if ( m_pRagdoll )
 		{
+#endif
 			// Adjust the impact strength and apply the force at the center of mass.
+#ifdef OF_CLIENT_DLL			
 			if ( iDamageType & DMG_CRITICAL )
-				vecDir *= 1500;
+				dir *= 1500;
 			else
-				vecDir *= 500;
+#endif
+				dir *= 500;
 
-			pPhysicsObject->ApplyForceCenter( vecDir );
+			pPhysicsObject->ApplyForceCenter( dir );
 		}
 	}
 	else
 	{
+#ifdef OF_CLIENT_DLL	
 		// Find the apporx. impact point.
 		Vector vecHitPos;  
-		VectorMA( pTrace->startpos, pTrace->fraction, vecDir, vecHitPos );
-		VectorNormalize( vecDir );
+		VectorMA( pTrace->startpos, pTrace->fraction, dir, vecHitPos );
+		VectorNormalize( dir );
 
 		// Adjust the impact strength and apply the force at the impact point..
 		if ( m_pRagdoll )
 		{
 			if ( iDamageType & DMG_CRITICAL )
-				vecDir *= 20000;
+				dir *= 20000;
 			else
-				vecDir *= 5000;
+				dir *= 5000;
 		}
 		else
 		{
-			vecDir *= 1000;
+			dir *= 1000;
 		}
 
-		pPhysicsObject->ApplyForceOffset( vecDir, vecHitPos );	
+		pPhysicsObject->ApplyForceOffset( dir, vecHitPos );	
 
 		// make ragdolls emit blood decals
 		// not a great way to do it, but it only works if all of it is defined here for some reason
@@ -455,13 +469,13 @@ void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char 
 
 		int cCount = 3;
 
-		flNoise = 0.3;
+		flNoise = 5;
 
 		float flTraceDist = 172;
 
 		for ( i = 0 ; i < cCount ; i++ )
 		{
-			vecTraceDir = vecDir * -1;// trace in the opposite direction the shot came from (the direction the shot is going)
+			vecTraceDir = dir * -1;// trace in the opposite direction the shot came from (the direction the shot is going)
 
 			vecTraceDir.x += random->RandomFloat( -flNoise, flNoise );
 			vecTraceDir.y += random->RandomFloat( -flNoise, flNoise );
@@ -475,6 +489,17 @@ void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char 
 				UTIL_BloodDecalTrace( &Bloodtr, BLOOD_COLOR_RED );
 			}
 		}
+#else
+		Vector hitpos;  
+	
+		VectorMA( pTrace->startpos, pTrace->fraction, dir, hitpos );
+		VectorNormalize( dir );
+
+		dir *= 4000;  // adjust impact strenght
+
+		// apply force where we hit it
+		pPhysicsObject->ApplyForceOffset( dir, hitpos );	
+#endif
 	}
 
 	m_pRagdoll->ResetRagdollSleepAfterTime();
@@ -808,12 +833,14 @@ C_BaseAnimating::C_BaseAnimating() :
 	m_flCycle = 0;
 	m_flOldCycle = 0;
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	m_pGlowEffect = NULL;
 	m_bGlowEnabled = false;
 	m_bOldGlowEnabled = false;
 	m_bClientSideGlowEnabled = false;
 #endif // GLOWS_ENABLE
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -855,9 +882,11 @@ C_BaseAnimating::~C_BaseAnimating()
 		m_pAttachedTo = NULL;
 	}
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	DestroyGlowEffect();
 #endif // GLOWS_ENABLE
+#endif
 }
 
 bool C_BaseAnimating::UsesPowerOfTwoFrameBufferTexture( void )
@@ -934,6 +963,7 @@ void C_BaseAnimating::SetPredictable( bool state )
 	UpdateRelevantInterpolatedVars();
 }
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1007,6 +1037,7 @@ void C_BaseAnimating::DestroyGlowEffect( void )
 	}
 }
 #endif // GLOWS_ENABLE
+#endif // OF_CLIENT_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose: sets client side animation
@@ -3160,7 +3191,9 @@ C_BaseAnimating* C_BaseAnimating::FindFollowedEntity()
 
 	if ( !follow->GetModel() )
 	{
-		//Warning( "mod_studio: MOVETYPE_FOLLOW with no model.\n" );
+#ifndef OF_CLIENT_DLL		
+		Warning( "mod_studio: MOVETYPE_FOLLOW with no model.\n" );
+#endif
 		return NULL;
 	}
 
@@ -3287,7 +3320,7 @@ int C_BaseAnimating::DrawModel( int flags )
 
 	int drawn = 0;
 
-#if defined( TF_CLIENT_DLL ) || defined ( TF_MOD_CLIENT )
+#if defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
 	ValidateModelIndex();
 #endif
 
@@ -3320,12 +3353,16 @@ int C_BaseAnimating::DrawModel( int flags )
 		// Necessary for lighting blending
 		CreateModelInstance();
 
+#ifdef OF_CLIENT_DLL
 		// Ok so basicaly, this bitch is for some reason taking the folow entities ::DRAW shit
 		// and viewmodels use Overriden Draw so it just draws it normaly and basicaly this is fucking stupid
 		// so if this entity is following a viewmodel ( Like arms ) it does its own Draw functions
 		// leading to it using Draw Overriden Viewmodel when it needs to
 		CTFViewModel *pMainViewmodel = dynamic_cast<CTFViewModel*> (GetFollowedEntity());
 		if ( !IsFollowingEntity() || pMainViewmodel )
+#else			
+		if ( !IsFollowingEntity() )	
+#endif	
 		{
 			drawn = InternalDrawModel( flags|extraFlags );
 		}
@@ -3530,12 +3567,20 @@ int C_BaseAnimating::InternalDrawModel( int flags )
 	return bMarkAsDrawn;
 }
 
+#ifdef OF_CLIENT_DLL
 extern ConVar of_muzzlelight;
+#else
+extern ConVar muzzleflash_light;
+#endif
 
 void C_BaseAnimating::ProcessMuzzleFlashEvent()
 {
 	// If we have an attachment, then stick a light on it.
+#ifdef OF_CLIENT_DLL
 	if ( of_muzzlelight.GetBool() )
+#else
+	if ( muzzleflash_light.GetBool() )
+#endif
 	{
 		//FIXME: We should really use a named attachment for this
 		if ( m_Attachments.Count() > 0 )
@@ -3548,14 +3593,15 @@ void C_BaseAnimating::ProcessMuzzleFlashEvent()
 			dlight_t *el = effects->CL_AllocElight( LIGHT_INDEX_MUZZLEFLASH + index );
 			el->origin = vAttachment;
 			el->radius = random->RandomInt( 32, 64 ); 
+#ifdef OF_CLIENT_DLL		
 			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
+#endif
 			el->decay = el->radius / 0.05f;
 			el->die = gpGlobals->curtime + 0.05f;
 			el->color.r = 255;
 			el->color.g = 192;
 			el->color.b = 64;
 			el->color.exponent = 5;
-			el->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		}
 	}
 }
@@ -3612,7 +3658,9 @@ void C_BaseAnimating::DoAnimationEvents( CStudioHdr *pStudioHdr )
 	if ( nSeqNum >= nStudioNumSeq )
 	{
 		// This can happen e.g. while reloading Heavy's shotgun, switch to the minigun.
-		DevMsg( "%s[%d]: Playing sequence %d but there's only %d in total?\n", GetDebugName(), entindex(), nSeqNum, nStudioNumSeq );
+#ifndef OF_CLIENT_DLL
+		Warning( "%s[%d]: Playing sequence %d but there's only %d in total?\n", GetDebugName(), entindex(), nSeqNum, nStudioNumSeq );
+#endif
 		return;
 	}
 
@@ -3761,7 +3809,11 @@ bool C_BaseAnimating::DispatchMuzzleEffect( const char *options, bool isFirstPer
 	int			weaponType = 0;
 
 	// Get the first parameter
+#ifdef OF_CLIENT_DLL
 	p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+	p = nexttoken( token, p, ' ' );
+#endif
 
 	// Find the weapon type
 	if ( token[0] ) 
@@ -3805,7 +3857,11 @@ bool C_BaseAnimating::DispatchMuzzleEffect( const char *options, bool isFirstPer
 	}
 
 	// Get the second parameter
-p = nexttoken( token, p, ' ', sizeof(token) );
+#ifdef OF_CLIENT_DLL
+	p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+	p = nexttoken( token, p, ' ' );
+#endif
 
 	int	attachmentIndex = -1;
 
@@ -3906,6 +3962,9 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 	Vector attachOrigin;
 	QAngle attachAngles; 
 
+	// temporarily disabled as I'm suspecting this is responsible for crashes related to vphysics
+#if 0
+#ifdef OF_CLIENT_DLL
     CTFPlayer *pOwner = ToTFPlayer(this);
     CTFWeaponBase *pGun = NULL;
     const CTFWeaponInfo *pTFInfo = NULL;
@@ -3915,219 +3974,225 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
         if ( pGun )
              pTFInfo = &pGun->GetTFWpnData();
     }	
+#endif
+#endif
+
 	switch( event )
-	{
-
-
-	// mag eject system, similar to CSGO
-	// eject2 is for akimbo
-	case AE_CL_MAG_EJECT2:
-    case AE_CL_MAG_EJECT:
-	{
-		if ( pOwner && pGun )
+	{	
+		// temporarily disabled as I'm suspecting this is responsible for crashes related to vphysics
+#ifdef OF_CLIENT_DLL
+#if 0
+		case AE_CL_MAG_EJECT2:
+		case AE_CL_MAG_EJECT:
 		{
-			if ( pGun->GetTFWpnData().m_bDropsMag )
+			// create clientside physics based magazins during reload
+			// eject2 is for akimbo
+			if ( pOwner && pGun )
 			{
-				if ( event == AE_CL_MAG_EJECT )
+				if ( pGun->GetTFWpnData().m_bDropsMag )
 				{
-					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
-
-					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
-
-					if ( !pEntity )
-						return;
-
-					const model_t *model = modelinfo->GetModel( iModel );
-
-					if ( !model )
+					if ( event == AE_CL_MAG_EJECT )
 					{
-						DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
-						return;
+						int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
+
+						C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
+
+						if ( !pEntity )
+							return;
+
+						const model_t *model = modelinfo->GetModel( iModel );
+
+						if ( !model )
+						{
+							DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
+							return;
+						}
+
+						int iAttachment = pGun->LookupAttachment( "mag_eject" );
+
+						Vector vecSrc;
+						QAngle vecAng;
+						pGun->GetAttachment( iAttachment, vecSrc, vecAng );
+							
+						pEntity->SetModelName( modelinfo->GetModelName( model ) );
+						pEntity->SetAbsOrigin( vecSrc );
+						pEntity->SetAbsAngles( vecAng );
+						pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
+						pEntity->AddEffects( EF_NOSHADOW );
+
+						if ( !pEntity->Initialize() )
+						{
+							pEntity->Release();
+							return;
+						}
+
+						IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
+
+						// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
+						/*
+						Vector vecDir;
+						Vector vecForceOrigin;
+
+						if ( pPhysicsObject )
+						{
+							// apply force to the physics object, relative to the player
+							Vector vecForce = vecDir;
+							Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
+							pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
+						}
+						else
+						{
+							// failed to create a physics object
+							pEntity->Release();
+							return;
+						}
+						*/
+
+						if ( pPhysicsObject )
+						{
+						}
+						else 
+						{
+							// failed to create a physics object
+							pEntity->Release();
+							return;
+						}
+
+						pEntity->StartFadeOut( 5.0f );
+
+						/*
+						if ( !pOwner )
+							return;
+
+						pOwner->g_Mags.AddToTail( pEntity );
+
+						// Calculate the surplus
+						// maximum mag count per player is 2
+						int surplus = pOwner->g_Mags.Count() - 2;
+
+						if ( surplus <= 0 )
+							return;
+
+						int i;
+
+						C_FadingPhysPropClientside *pCandidate;
+						for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
+						{
+							pCandidate = pOwner->g_Mags[i];
+							Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+
+							pOwner->g_Mags.Remove( i );
+
+							pCandidate->AddEffects( EF_NORECEIVESHADOW );
+
+							pCandidate->StartFadeOut( 0.1 );
+
+							surplus--;
+						}
+						*/
 					}
-
-					int iAttachment = pGun->LookupAttachment( "mag_eject" );
-
-					Vector vecSrc;
-					QAngle vecAng;
-					pGun->GetAttachment( iAttachment, vecSrc, vecAng );
-						
-					pEntity->SetModelName( modelinfo->GetModelName( model ) );
-					pEntity->SetAbsOrigin( vecSrc );
-					pEntity->SetAbsAngles( vecAng );
-					pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
-					pEntity->AddEffects( EF_NOSHADOW );
-
-					if ( !pEntity->Initialize() )
+					if ( event == AE_CL_MAG_EJECT2 )
 					{
-						pEntity->Release();
-						return;
-					}
+						int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
 
-					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
+						C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
 
-					// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
-					/*
-					Vector vecDir;
-					Vector vecForceOrigin;
+						if ( !pEntity )
+							return;
 
-					if ( pPhysicsObject )
-					{
-						// apply force to the physics object, relative to the player
-						Vector vecForce = vecDir;
-						Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
-						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
-					}
-					else
-					{
-						// failed to create a physics object
-						pEntity->Release();
-						return;
-					}
-					*/
+						const model_t *model = modelinfo->GetModel( iModel );
 
-					if ( pPhysicsObject )
-					{
-					}
-					else 
-					{
-						// failed to create a physics object
-						pEntity->Release();
-						return;
-					}
+						if ( !model )
+						{
+							DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
+							return;
+						}
 
-					pEntity->StartFadeOut( 5.0f );
+						int iAttachment = pGun->LookupAttachment( "mag_eject" );
 
-					/*
-					if ( !pOwner )
-						return;
+						Vector vecSrc;
+						QAngle vecAng;
+						pGun->GetAttachment( iAttachment, vecSrc, vecAng );
+							
+						pEntity->SetModelName( modelinfo->GetModelName( model ) );
+						pEntity->SetAbsOrigin( vecSrc );
+						pEntity->SetAbsAngles( vecAng );
+						pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
+						pEntity->AddEffects( EF_NOSHADOW );
 
-					pOwner->g_Mags.AddToTail( pEntity );
+						if ( !pEntity->Initialize() )
+						{
+							pEntity->Release();
+							return;
+						}
 
-					// Calculate the surplus
-					// maximum mag count per player is 2
-					int surplus = pOwner->g_Mags.Count() - 2;
+						IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
 
-					if ( surplus <= 0 )
-						return;
+						// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
+						/*
+						Vector vecDir;
+						Vector vecForceOrigin;
 
-					int i;
+						if ( pPhysicsObject )
+						{
+							// apply force to the physics object, relative to the player
+							Vector vecForce = vecDir;
+							Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
+							pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
+						}
+						else
+						{
+							// failed to create a physics object
+							pEntity->Release();
+							return;
+						}
+						*/
 
-					C_FadingPhysPropClientside *pCandidate;
-					for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
-					{
-						pCandidate = pOwner->g_Mags[i];
-						Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
+						if ( pPhysicsObject )
+						{
+						}
+						else 
+						{
+							// failed to create a physics object
+							pEntity->Release();
+							return;
+						}
 
-						pOwner->g_Mags.Remove( i );
+						if ( !pOwner )
+							return;
 
-						pCandidate->AddEffects( EF_NORECEIVESHADOW );
+						pOwner->g_Mags.AddToTail( pEntity );
 
-						pCandidate->StartFadeOut( 0.1 );
+						// Calculate the surplus
+						// maximum mag count per player is 2
+						int surplus = pOwner->g_Mags.Count() - 2;
 
-						surplus--;
-					}
-					*/
-				}
-				if ( event == AE_CL_MAG_EJECT2 )
-				{
-					int iModel = modelinfo->GetModelIndex( pTFInfo->m_szMagModel );
+						if ( surplus <= 0 )
+							return;
 
-					C_FadingPhysPropClientside *pEntity = new C_FadingPhysPropClientside();
+						int i;
 
-					if ( !pEntity )
-						return;
+						C_FadingPhysPropClientside *pCandidate;
+						for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
+						{
+							pCandidate = pOwner->g_Mags[i];
+							Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
 
-					const model_t *model = modelinfo->GetModel( iModel );
+							pOwner->g_Mags.Remove( i );
 
-					if ( !model )
-					{
-						DevMsg( "AE_CL_MAG_EJECT: model index %i not found, physics object not created\n", iModel );
-						return;
-					}
+							pCandidate->AddEffects( EF_NORECEIVESHADOW );
 
-					int iAttachment = pGun->LookupAttachment( "mag_eject" );
+							pCandidate->StartFadeOut( 0.1 );
 
-					Vector vecSrc;
-					QAngle vecAng;
-					pGun->GetAttachment( iAttachment, vecSrc, vecAng );
-						
-					pEntity->SetModelName( modelinfo->GetModelName( model ) );
-					pEntity->SetAbsOrigin( vecSrc );
-					pEntity->SetAbsAngles( vecAng );
-					pEntity->SetPhysicsMode( PHYSICS_MULTIPLAYER_CLIENTSIDE );
-					pEntity->AddEffects( EF_NOSHADOW );
-
-					if ( !pEntity->Initialize() )
-					{
-						pEntity->Release();
-						return;
-					}
-
-					IPhysicsObject *pPhysicsObject = pEntity->VPhysicsGetObject();
-
-					// fixme: this causes vphysics crashes as the mags get insane velocity! velocity code needs fixing and needs some sanity checks probably
-					/*
-					Vector vecDir;
-					Vector vecForceOrigin;
-
-					if ( pPhysicsObject )
-					{
-						// apply force to the physics object, relative to the player
-						Vector vecForce = vecDir;
-						Vector vecOffset = vecForceOrigin - pEntity->GetAbsOrigin();
-						pPhysicsObject->ApplyForceOffset( vecForce, vecOffset );
-					}
-					else
-					{
-						// failed to create a physics object
-						pEntity->Release();
-						return;
-					}
-					*/
-
-					if ( pPhysicsObject )
-					{
-					}
-					else 
-					{
-						// failed to create a physics object
-						pEntity->Release();
-						return;
-					}
-
-					if ( !pOwner )
-						return;
-
-					pOwner->g_Mags.AddToTail( pEntity );
-
-					// Calculate the surplus
-					// maximum mag count per player is 2
-					int surplus = pOwner->g_Mags.Count() - 2;
-
-					if ( surplus <= 0 )
-						return;
-
-					int i;
-
-					C_FadingPhysPropClientside *pCandidate;
-					for ( i = 0; i < pOwner->g_Mags.Count() && surplus > 0; i++ )
-					{
-						pCandidate = pOwner->g_Mags[i];
-						Assert( !pCandidate->IsEffectActive( EF_NORECEIVESHADOW ) );
-
-						pOwner->g_Mags.Remove( i );
-
-						pCandidate->AddEffects( EF_NORECEIVESHADOW );
-
-						pCandidate->StartFadeOut( 0.1 );
-
-						surplus--;
+							surplus--;
+						}
 					}
 				}
 			}
 		}
-	}
 		break;
+#endif
+#endif
 
 	case AE_CL_CREATE_PARTICLE_EFFECT:
 		{
@@ -4138,15 +4203,23 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 
 			// Get the particle effect name
 			const char *p = options;
+#ifdef OF_CLIENT_DLL			
 			p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+			p = nexttoken( token, p, ' ' );
+#endif
 
 			const char* mtoken = ModifyEventParticles( token );
 			if ( !mtoken || mtoken[0] == '\0' )
 				return;
 			Q_strncpy( szParticleEffect, mtoken, sizeof(szParticleEffect) );
 
+#ifdef OF_CLIENT_DLL
 			// Get the attachment type
 			p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+			p = nexttoken( token, p, ' ' );
+#endif
 
 			iAttachType = GetAttachTypeFromString( token );
 			if ( iAttachType == -1 )
@@ -4156,7 +4229,11 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 			}
 
 			// Get the attachment point index
+#ifdef OF_CLIENT_DLL		
 			p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+			p = nexttoken( token, p, ' ' );
+#endif
 			if ( token[0] )
 			{
 				iAttachment = atoi(token);
@@ -4360,11 +4437,19 @@ void C_BaseAnimating::FireEvent( const Vector& origin, const QAngle& angles, int
 			const char *p = options;
 
 			// Bodygroup Name
+#ifdef OF_CLIENT_DLL		
 			p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+			p = nexttoken( token, p, ' ' );
+#endif
 			Q_strncpy( szBodygroupName, token, sizeof(szBodygroupName) );
 
 			// Get the desired value
+#ifdef OF_CLIENT_DLL				
 			p = nexttoken( token, p, ' ', sizeof(token) );
+#else
+			p = nexttoken( token, p, ' ' );
+#endif
 			value = token[0] ? atoi( token ) : 0;
 
 			int index = FindBodygroupByName( szBodygroupName );
@@ -4401,6 +4486,7 @@ void C_BaseAnimating::FireObsoleteEvent( const Vector& origin, const QAngle& ang
 
 			const char *p = options;
 
+#ifdef OF_CLIENT_DLL
 			p = nexttoken( token, p, ' ', sizeof(token) );
 			Q_strncpy( effectFunc, token, sizeof(effectFunc) );
 
@@ -4409,6 +4495,16 @@ void C_BaseAnimating::FireObsoleteEvent( const Vector& origin, const QAngle& ang
 
 			p = nexttoken( token, p, ' ', sizeof(token) );
 			iParam = token[0] ? atoi(token) : 0;
+#else
+			p = nexttoken( token, p, ' ') );
+			Q_strncpy( effectFunc, token, sizeof(effectFunc) );
+
+			p = nexttoken( token, p, ' ' );
+			iAttachment = token[0] ? atoi(token) : -1;
+
+			p = nexttoken( token, p, ' ' );
+			iParam = token[0] ? atoi(token) : 0;
+#endif
 
 			if ( iAttachment != -1 && m_Attachments.Count() >= iAttachment )
 			{
@@ -4949,10 +5045,12 @@ void C_BaseAnimating::OnPreDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnPreDataChanged( updateType );
 
 	m_bLastClientSideFrameReset = m_bClientSideFrameReset;
-
+	
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	m_bOldGlowEnabled = m_bGlowEnabled;
 #endif // GLOWS_ENABLE
+#endif
 }
 
 bool C_BaseAnimating::ForceSetupBonesAtTime( matrix3x4_t *pBonesOut, float flTime )
@@ -5252,12 +5350,14 @@ void C_BaseAnimating::OnDataChanged( DataUpdateType_t updateType )
 		m_pRagdollInfo = NULL;
 	}
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	if ( m_bOldGlowEnabled != m_bGlowEnabled )
 	{
 		UpdateGlowEffect();
 	}
 #endif // GLOWS_ENABLE
+#endif
 }
 
 //-----------------------------------------------------------------------------

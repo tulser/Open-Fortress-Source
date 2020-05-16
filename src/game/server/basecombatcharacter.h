@@ -387,7 +387,9 @@ public:
 	// I can't use my current weapon anymore. Switch me to the next best weapon.
 	bool SwitchToNextBestWeapon(CBaseCombatWeapon *pCurrent);
 
+#ifdef OF_DLL
 	void	ApplyAirBlastImpulse( const Vector &vec );
+#endif
 
 	// This is a hack to copy the relationship strings used by monstermaker
 	void SetRelationshipString( string_t theString ) { m_RelationshipString = theString; }
@@ -402,7 +404,9 @@ public:
 	void				SetPreventWeaponPickup( bool bPrevent ) { m_bPreventWeaponPickup = bPrevent; }
 	bool				m_bPreventWeaponPickup;
 
+#ifdef OF_DLL
 	virtual bool	IsDeflectable( void ) { return true; }
+#endif
 
 	virtual CNavArea *GetLastKnownArea( void ) const		{ return m_lastNavArea; }		// return the last nav area the player occupied - NULL if unknown
 	virtual bool IsAreaTraversable( const CNavArea *area ) const;							// return true if we can use the given area 
@@ -415,6 +419,15 @@ public:
 	// Notification from INextBots.
 	// -----------------------
 	virtual void		OnPursuedBy( INextBot * RESTRICT pPursuer ){} // called every frame while pursued by a bot in DirectChase.
+	
+#ifndef OF_DLL
+#ifdef GLOWS_ENABLE
+	// Glows
+	void				AddGlowEffect( void );
+	void				RemoveGlowEffect( void );
+	bool				IsGlowEffectActive( void );
+#endif // GLOWS_ENABLE
+#endif
 
 #ifdef INVASION_DLL
 public:
@@ -452,9 +465,19 @@ protected:
 
 public:
 	CNetworkVar( float, m_flNextAttack );			// cannot attack again until this time
+	
+#ifndef OF_DLL	
+#ifdef GLOWS_ENABLE
+protected:
+	CNetworkVar( bool, m_bGlowEnabled );
+#endif // GLOWS_ENABLE
+#endif
 
 private:
 	Hull_t		m_eHull;
+
+	void				UpdateGlowEffect( void );
+	void				DestroyGlowEffect( void );
 
 protected:
 	int			m_bloodColor;			// color of blood particless

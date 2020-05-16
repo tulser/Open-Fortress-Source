@@ -54,6 +54,7 @@ ipch
 *.bak
 
 # Ignore tier1 since its compiled in VPC projs
+
 /src/lib/public/tier1.lib
 /src/lib/public/raytrace.lib
 /src/lib/public/mathlib.lib
@@ -68,7 +69,6 @@ ipch
 # Compiled stuff
 /src/vgui2/vgui_controls/Debug/*
 /src/vgui2/vgui_controls/Release/*
-/src/vgui2/vgui_controls/obj_vgui_controls_osx32/*
 /src/game/client/Debug_open_fortress/*
 /src/game/client/Release_open_fortress/*
 /src/game/server/Debug_open_fortress/*
@@ -78,18 +78,8 @@ ipch
 /src/gameui/obj_gameui_linux32/*
 /src/mathlib/Debug/*
 /src/mathlib/Release/*
-/src/mathlib/obj_mathlib_osx32/*
 /src/tier1/Debug/*
 /src/tier1/Release/*
-/src/tier1/obj_tier1_osx32
-/src/game/client/obj_client_ofd_osx32/*
-/src/game/server/obj_server_ofd_osx32/*
-/src/game/client/obj_client_ofd_linux32/*
-/src/game/server/obj_server_ofd_linux32/*
-/src/raytrace/obj_raytrace_linux32/*
-/src/mathlib/obj_mathlib_linux32/*
-/src/tier1/obj_tier1_linux32/*
-/src/vgui2/vgui_controls/obj_vgui_controls_linux32/*
 /src/build/*
 /src/vgui_editor/Debug_vgui_editor_2013/*
 /src/vgui_editor/Release_vgui_editor_2013/*
@@ -97,6 +87,9 @@ ipch
 /src/materialsystem/procshader/Release_procshader_2013/*
 /src/shadereditor/Debug_shader_editor_2013/*
 /src/shadereditor/Release_shader_editor_2013/*
+# Linux and macosx build dirs
+obj_*_linux32/
+obj_*_macosx/
 
 # Lua
 /src/thirdparty/lua-5.2.3/Debug
@@ -112,3 +105,7 @@ ipch
 
 # These makefiles are hand-made, and required for linux builds.
 !/src/devtools/*.mak
+/src/lib/public/mathlib.lib
+/src/lib/public/raytrace.lib
+/src/lib/public/tier1.lib
+/src/lib/public/vgui_controls.lib

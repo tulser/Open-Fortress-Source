@@ -133,9 +133,7 @@ enum
 //-----------------------------------------------------------------------------
 // TF-specific viewport panels
 //-----------------------------------------------------------------------------
-#define PANEL_CLASS_BLUE		"class_blue"
-#define PANEL_CLASS_RED			"class_red"
-#define PANEL_CLASS_MERCENARY	"class_mercenary"
+#define PANEL_CLASS				"class"
 #define PANEL_MAPINFO			"mapinfo"
 #define PANEL_ROUNDINFO			"roundinfo"
 #define PANEL_DMTEAMSELECT      "dmteamselect"
@@ -243,8 +241,6 @@ enum
 	TF_GAMETYPE_DOM, // Domination, also used with Escort
 	TF_GAMETYPE_GG, // Gun Game
 	TF_GAMETYPE_3WAVE, // 3 Wave
-	TF_GAMETYPE_ZS, // Zombie Survival (not implemented yet)
-	TF_GAMETYPE_COOP, // Co-op (ZS inherits from this, and any other future gamemodes)
 	TF_GAMETYPE_INF, // Infection
 	TF_GAMETYPE_LAST
 };
@@ -409,19 +405,15 @@ enum TFWeaponIDs
 	TF_WEAPON_GRENADELAUNCHER_MERCENARY,
 	TF_WEAPON_ROCKETLAUNCHER_DM,
 	TF_WEAPON_ASSAULTRIFLE,
-	TF_WEAPON_SWORD,
 	TF_WEAPON_C4,
 	TF_WEAPON_BERSERK,
 	TF_WEAPON_PHYSCANNON,
 	TF_WEAPON_SUPER_ROCKETLAUNCHER,
 	TF_WEAPON_CHAINSAW,
 	TF_WEAPON_DYNAMITE_BUNDLE,
-	TF_WEAPON_TRIPMINE,
 	TF_WEAPON_LIGHTNING_GUN,
 	TF_WEAPON_GRAPPLE,
-	TF_WEAPON_FLAREGUN,
 	TF_WEAPON_GIB,
-	TF_WEAPON_THUNDERGUN,
 	TF_WEAPON_CLAWS,
 	
 	TFC_WEAPON_SHOTGUN_SB,
@@ -480,6 +472,7 @@ enum TFViewModelIndexes
 	TF_VIEWMODEL_WEAPON = 0,
 	TF_VIEWMODEL_SPYWATCH,
 	TF_VIEWMODEL_ARMS,
+	TF_VIEWMODEL_COSMETICS,
 };
 
 enum RetroMode
@@ -495,9 +488,9 @@ enum RetroMode
 extern const Vector g_vecFixedPattern[];
 
 extern const char *g_aWeaponNames[];
-extern int g_aWeaponDamageTypes[];
+extern uint g_aWeaponDamageTypes[];
 extern const char *g_aGrenadeNames[];
-extern int g_aGrenadeDamageTypes[];
+extern uint g_aGrenadeDamageTypes[];
 
 int GetWeaponId( const char *pszWeaponName );
 #ifdef GAME_DLL

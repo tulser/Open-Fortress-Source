@@ -10,11 +10,18 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef OF_DLL
 class CWeaponCubemap : public CTFWeaponBase
+#else
+class CWeaponCubemap : public CBaseCombatWeapon
+#endif
 {
 public:
-
+#ifdef OF_DLL
 	DECLARE_CLASS( CWeaponCubemap, CTFWeaponBase );
+#else
+	DECLARE_CLASS( CWeaponCubemap, CBaseCombatWeapon );
+#endif
 
 	void	Precache( void );
 

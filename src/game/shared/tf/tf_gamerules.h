@@ -49,18 +49,20 @@
 
 #endif
 
-extern ConVar	tf_avoidteammates;
+extern ConVar tf_avoidteammates;
+extern ConVar tf_particles_disable_weather;
 
 // Mutator enums
 enum
 {
 	NO_MUTATOR = 0,
-	INSTAGIB = 1,
-	INSTAGIB_NO_MELEE = 2,
-	CLAN_ARENA = 3,
-	UNHOLY_TRINITY = 4,
-	ROCKET_ARENA = 5,
-	GUN_GAME = 6,
+	INSTAGIB, 	// 1
+	INSTAGIB_NO_MELEE, // 2
+	CLAN_ARENA, 	// 3
+	UNHOLY_TRINITY, // 4
+	ROCKET_ARENA, 	// 5
+	GUN_GAME, 		// 6
+	ARSENAL, 		// 7
 };
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
@@ -319,8 +321,12 @@ public:
 	
 	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
 	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
+	CBaseCombatCharacter *GetActiveBoss( void ) const           { if ( m_hBosses.IsEmpty() ) return nullptr; return m_hBosses[0]; }
+	void			StartBossTimer( float time )				{ m_bossSpawnTimer.Start( time ); }
 
 	virtual void	Activate();
+
+	virtual void	PrecacheGameMode();
 
 	virtual void	OnNavMeshLoad( void );
 
@@ -413,6 +419,8 @@ public:
 	bool			ShouldShowTeamGoal( void );
 
 	const char *GetVideoFileForMap( bool bWithExtension = true );
+	
+	virtual bool AllowWeatherParticles( void ) { return !tf_particles_disable_weather.GetBool(); }
 
 #else
 
@@ -528,7 +536,10 @@ private:
 	float m_flTimerMayExpireAt;
 	bool m_bStartedVote;
 	bool m_bEntityLimitPrevented;
-	
+public:
+	float m_flMapStartTime;	// used for voting to see how long map lasted
+private:
+
 	CUtlVector< CHandle<CBaseCombatCharacter> > m_hBosses;
 
 	CHandle<CTeamTrainWatcher> m_hRedAttackTrain;
@@ -545,9 +556,12 @@ private:
 
 #endif
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
-	CNetworkVar( int, m_nMutator ); // Type of game this map is (CTF, CP)
+	CNetworkVar( int, m_nMutator ); // What mutator are we using?
+	CNetworkVar( int, m_nRetroMode ); // The TFC mode type
 	CNetworkVar( int, m_nCurrFrags ); // Biggest frag count
 	CNetworkVar( bool, m_bKOTH ); // is the gamemode KOTH right now?
+	CNetworkVar( bool, m_bAllClass ); // are all classes enabled in dm, infection (humans only) etc.
+	CNetworkVar( bool, m_bAllClassZombie ); // are all classes enabled for zombies in infection
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hRedKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hBlueKothTimer );
 	CNetworkVar( CHandle<CTeamRoundTimer>, m_hInfectionTimer );
@@ -582,7 +596,6 @@ public:
 	virtual void	DisableSpawns( int iTeamNumber );
 	bool			bMultiweapons;
 
-	bool m_bHasTeamSpawns;
 	bool m_bHasCivilianSpawns;
 	bool m_bHasJuggernautSpawns;
 #endif
@@ -593,7 +606,7 @@ public:
 	CNetworkVar( int, m_iMaxLevel );
 	bool			m_bListOnly;
 	int				m_iRequiredKills;
-	
+	bool			m_bIsFreeRoamMap;
 	bool	IsDMGamemode(void);
 	bool	IsTDMGamemode(void);
 	bool	IsDOMGamemode(void);
@@ -604,11 +617,9 @@ public:
 	bool	Is3WaveGamemode(void);
 	bool	IsArenaGamemode(void);
 	bool	IsESCGamemode(void);
-	bool	IsCoopGamemode(void);
 	bool	IsZSGamemode(void);
 	bool	IsInfGamemode(void);
 	bool	IsPayloadOverride(void);
-	bool	IsHL2(void);
 	bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	bool	IsFreeRoam(void); // this is used for bots
 	bool	UsesMoney(void);
@@ -628,14 +639,22 @@ public:
 	void AddGametype( int nGametype );	
 	void RemoveGametype( int nGametype );	
 
-
 	int GetMutator( void );
 	bool IsMutator( int nMutator );
+
+	int GetRetroMode( void );
+	bool IsRetroMode( int nRetroMode );
+#ifdef GAME_DLL
+	void SetRetroMode( int nRetroMode );
+#endif
+
+	bool	IsAllClassEnabled( void ) { return m_bAllClass; }
+	bool	IsAllClassZombieEnabled( void ) { return m_bAllClassZombie; }
+	bool	IsRetroModeEnabled( void ) { return ( m_nRetroMode > 0 ); }
 
 #ifdef GAME_DLL
 	void SetMutator( int nMutator );	
 
-	bool HasTeamSpawns( void ) { return m_bHasTeamSpawns; }
 	bool HasCivilianSpawns( void ) { return m_bHasCivilianSpawns; }
 	bool HasJuggernautSpawns( void ) { return m_bHasJuggernautSpawns; }
 #endif
@@ -648,23 +667,6 @@ public:
 								   // which would make it fairly unoptimized and the fact that its used in a lot of places
 								   // we decided to make a bool thats set on the start of the round
 								   // should we find a better solution this could get removed
-	CNetworkVar( bool, m_bIsHL2 );
-	
-#ifdef GAME_DLL
-	bool	NPC_ShouldDropGrenade( CBasePlayer *pRecipient );
-	bool	NPC_ShouldDropHealth( CBasePlayer *pRecipient );
-	void	NPC_DroppedHealth( void );
-	void	NPC_DroppedGrenade( void );
-	bool	MegaPhyscannonActive( void ) { return false;	}
-	
-	virtual bool IsAlyxInDarknessMode();
-	virtual bool			ShouldBurningPropsEmitLight();
-
-	virtual void			InitDefaultAIRelationships( void );
-	virtual const char*		AIClassText(int classType);
-#endif
-	float	m_flLastHealthDropTime;
-	float	m_flLastGrenadeDropTime;
 };
 
 //-----------------------------------------------------------------------------

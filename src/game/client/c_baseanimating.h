@@ -27,9 +27,11 @@
 #include "tier0/threadtools.h"
 #include "datacache/idatacache.h"
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 #include "glow_outline_effect.h"
 #endif // GLOWS_ENABLE
+#endif
 
 #define LIPSYNC_POSEPARAM_NAME "mouth"
 #define NUM_HITBOX_FIRES	10
@@ -346,6 +348,7 @@ public:
 	void							ClientSideAnimationChanged();
 	virtual unsigned int			ComputeClientSideAnimationFlags();
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	CGlowObject			*GetGlowObject( void ){ return m_pGlowEffect; }
 	virtual void		GetGlowEffectColor( float *r, float *g, float *b );
@@ -354,6 +357,7 @@ public:
 	void				SetClientSideGlowEnabled( bool bEnabled ){ m_bClientSideGlowEnabled = bEnabled; UpdateGlowEffect(); }
 	bool				IsClientSideGlowEnabled( void ){ return m_bClientSideGlowEnabled; }
 #endif // GLOWS_ENABLE
+#endif
 
 	virtual void ResetClientsideFrame( void ) { SetCycle( 0 ); }
 
@@ -368,12 +372,14 @@ public:
 	int GetBodygroupCount( int iGroup );
 	int GetNumBodyGroups( void );
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 	bool				m_bClientSideGlowEnabled;	// client-side only value used for spectator
 	bool				m_bGlowEnabled;				// networked value
 	bool				m_bOldGlowEnabled;
 	CGlowObject			*m_pGlowEffect;
 #endif // GLOWS_ENABLE
+#endif
 
 	class CBoneCache				*GetBoneCache( CStudioHdr *pStudioHdr );
 	void							SetHitboxSet( int setnum );
@@ -485,10 +491,12 @@ protected:
 
 	virtual bool					CalcAttachments();
 
+#ifdef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE	
 	virtual void		UpdateGlowEffect( void );
 	virtual void		DestroyGlowEffect( void );
 #endif // GLOWS_ENABLE
+#endif
 
 private:
 	// This method should return true if the bones have changed + SetupBones needs to be called

@@ -199,7 +199,14 @@ public:
 	unsigned int operator()( const NavVisPair_t &item ) const
 	{
 		COMPILE_TIME_ASSERT( sizeof(CNavArea *) == 4 );
-		int key[2] = { (int)item.pAreas[0] + item.pAreas[1]->GetID(), (int)(item.pAreas[1] + item.pAreas[0]->GetID()) };
+#ifdef OF_DLL	
+		int key[2] = {
+			(int)(item.pAreas[0] + item.pAreas[1]->GetID()),
+			(int)(item.pAreas[1] + item.pAreas[0]->GetID())
+		};
+#else
+		int key[2] = { (int)item.pAreas[0] + item.pAreas[1]->GetID(), (int)item.pAreas[1] + item.pAreas[0]->GetID() };
+#endif
 		return Hash8( key );	
 	}
 };
@@ -1158,11 +1165,15 @@ private:
 	NavDirType m_generationDir;
 	CNavNode *AddNode( const Vector &destPos, const Vector &destNormal, NavDirType dir, CNavNode *source, bool isOnDisplacement, float obstacleHeight, float flObstacleStartDist, float flObstacleEndDist );		// add a nav node and connect it, update current node
 
+#ifdef OF_DLL
 public:
+#endif
 	NavLadderVector m_ladders;									// list of ladder navigation representations
 	void BuildLadders( void );
 	void DestroyLadders( void );
+#ifdef OF_DLL
 private:
+#endif
 
 	bool SampleStep( void );									// sample the walkable areas of the map
 	void CreateNavAreasFromNodes( void );						// cover all of the sampled nodes with nav areas

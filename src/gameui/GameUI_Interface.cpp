@@ -898,10 +898,14 @@ void CGameUI::StopProgressBar(bool bError, const char *failureReason, const char
 {
 	if ( bError )
 	{
+		// kill the FUCKING modules so they stop eating precious input
+		GameConsole().Hide();
+		g_VModuleLoader.DeactivateModule("Servers");
+
 		bool bDatatable = false;
 		if ( failureReason )
 		{
-			if ( Q_strcmp( failureReason, "Server uses different class tables" ) == 0 )
+			if ( Q_strstr( failureReason, "class tables" ) )
 			{
 				bDatatable = true;
 			}

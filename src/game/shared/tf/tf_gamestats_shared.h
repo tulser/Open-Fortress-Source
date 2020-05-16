@@ -188,7 +188,7 @@ public:
 		int				m_iTotalTime;								// total # of seconds of all rounds
 		int				m_iBlueWins;								// # of blue team wins
 		int				m_iRedWins;									// # of red team wins
-		int				m_iMercenaryWins;									// # of red team wins
+		int				m_iMercenaryWins;									// # of mercenary team wins
 		int				m_iStalemates;								// # of stalemates
 		int				m_iBlueSuddenDeathWins;						// # of blue team wins during sudden death
 		int				m_iRedSuddenDeathWins;						// # of red team wins during sudden death
@@ -204,7 +204,7 @@ public:
 			m_iStalemates += other.m_iStalemates;
 			m_iBlueSuddenDeathWins += other.m_iBlueSuddenDeathWins;
 			m_iRedSuddenDeathWins += other.m_iRedSuddenDeathWins;
-			m_iMercenarySuddenDeathWins += other.m_iRedSuddenDeathWins;
+			m_iMercenarySuddenDeathWins += other.m_iMercenarySuddenDeathWins;
 		}
 	};
 

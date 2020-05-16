@@ -156,19 +156,19 @@ public:
 	CChromePainter( CClientHandler *pParent );
 	~CChromePainter();
 
-	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) OVERRIDE { return false; }
-	virtual bool GetScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect) OVERRIDE { return false; }
-	virtual bool GetScreenPoint(CefRefPtr<CefBrowser> browser, int viewX, int viewY, int& screenX, int& screenY) OVERRIDE { return false; }
+	virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override { return false; }
+	virtual bool GetScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override { return false; }
+	virtual bool GetScreenPoint(CefRefPtr<CefBrowser> browser, int viewX, int viewY, int& screenX, int& screenY) override { return false; }
 
-	virtual void OnPopupShow(CefRefPtr<CefBrowser> browser, bool show) OVERRIDE; 
-	virtual void OnPopupSize(CefRefPtr<CefBrowser> browser, const CefRect& rect) OVERRIDE;
+	virtual void OnPopupShow(CefRefPtr<CefBrowser> browser, bool show) override; 
+	virtual void OnPopupSize(CefRefPtr<CefBrowser> browser, const CefRect& rect) override;
 
-	virtual void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer) OVERRIDE;
-	virtual void OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor) OVERRIDE {}
-	virtual bool OnSetCursor( CefRefPtr<CefBrowser> browser, const CursorType type, const void *pchIconData, int iWide, int iTall, int xHotSpot, int yHotSpot ) OVERRIDE;
-	virtual bool OnFileOpenDialog( CefRefPtr<CefBrowser> browser, bool bMultiSelect, const CefString &default_title, const CefString &default_file, CefWebFileChooserCallback *pCallback  ) OVERRIDE;
-	virtual bool OnEnterFullScreen( CefRefPtr<CefBrowser> browser  ) OVERRIDE;
-	virtual bool OnExitFullScreen( CefRefPtr<CefBrowser> browser  ) OVERRIDE;
+	virtual void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type, const RectList& dirtyRects, const void* buffer) override;
+	virtual void OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor) override {}
+	virtual bool OnSetCursor( CefRefPtr<CefBrowser> browser, const CursorType type, const void *pchIconData, int iWide, int iTall, int xHotSpot, int yHotSpot ) override;
+	virtual bool OnFileOpenDialog( CefRefPtr<CefBrowser> browser, bool bMultiSelect, const CefString &default_title, const CefString &default_file, CefWebFileChooserCallback *pCallback  ) override;
+	virtual bool OnEnterFullScreen( CefRefPtr<CefBrowser> browser  ) override;
+	virtual bool OnExitFullScreen( CefRefPtr<CefBrowser> browser  ) override;
 	
 	bool BUpdated();
 	void SetUpdated( bool state );
@@ -263,53 +263,53 @@ public:
 	~CClientHandler();
 
 	// CefClient methods
-	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() OVERRIDE {
+	virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() OVERRIDE {
+	virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() OVERRIDE {
+	virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() OVERRIDE {
+	virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() OVERRIDE {
+	virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override {
 		return &m_Painter;
 	}
 
-	virtual CefRefPtr<CefFocusHandler> GetFocusHandler() OVERRIDE {
+	virtual CefRefPtr<CefFocusHandler> GetFocusHandler() override {
 		return this;
 	}
 
-	virtual CefRefPtr<CefMenuHandler> GetMenuHandler() OVERRIDE {
+	virtual CefRefPtr<CefMenuHandler> GetMenuHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() OVERRIDE {
+	virtual CefRefPtr<CefPermissionHandler> GetPermissionHandler() override {
 		return this;
 	}
 
-	virtual CefRefPtr<CefFindHandler> GetFindHandler() OVERRIDE {
+	virtual CefRefPtr<CefFindHandler> GetFindHandler() override {
 		return this;
 	}
-	virtual CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() OVERRIDE {
+	virtual CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() override {
 		return this;
 	}
 
 
 	// CefLifeSpanHandler methods
 
-	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser, const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, const CefString& url, CefRefPtr<CefClient>& client, CefBrowserSettings& settings) OVERRIDE;
-	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) OVERRIDE;
-	virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser)  OVERRIDE;
+	virtual bool OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser, const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, const CefString& url, CefRefPtr<CefClient>& client, CefBrowserSettings& settings) override;
+	virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
+	virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser)  override;
 	virtual bool DoClose(CefRefPtr<CefBrowser> browser) { return false; }
 	virtual bool OnNewTab(CefRefPtr<CefBrowser> parentBrowser, const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, const CefString& url, bool bForeground, CefRefPtr<CefClient>& client, CefBrowserSettings& settings );
 
 	// CefLoadHandler methods
-	virtual void OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, bool bIsNewNavigation ) OVERRIDE;
+	virtual void OnLoadStart(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, bool bIsNewNavigation ) override;
 
-	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode, CefRefPtr<CefRequest> request ) OVERRIDE;
+	virtual void OnLoadEnd(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int httpStatusCode, CefRefPtr<CefRequest> request ) override;
 	virtual bool OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode, const CefString& failedUrl, CefString& errorText);
 
 	// CefRequestHandler methods
@@ -317,9 +317,9 @@ public:
 	virtual bool OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser, CefRefPtr<CefRequest> request, CefString& redirectUrl, CefRefPtr<CefStreamReader>& resourceStream, CefRefPtr<CefResponse> response, int loadFlags);
 
 	// CefDisplayHandler methods
-	virtual void OnNavStateChange(CefRefPtr<CefBrowser> browser, bool canGoBack, bool canGoForward) OVERRIDE {}
-	virtual void OnAddressChange(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& url) OVERRIDE { } 
-	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) OVERRIDE;
+	virtual void OnNavStateChange(CefRefPtr<CefBrowser> browser, bool canGoBack, bool canGoForward) override {}
+	virtual void OnAddressChange(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& url) override { } 
+	virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override;
 
 	virtual bool OnTooltip(CefRefPtr<CefBrowser> browser, CefString& text);
 	virtual void OnStatusMessage(CefRefPtr<CefBrowser> browser, const CefString& value, StatusType type);

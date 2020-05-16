@@ -61,7 +61,7 @@ void HUDMinModeChangedCallBack( IConVar *var, const char *pOldString, float flOl
 	engine->ExecuteClientCmd( "hud_reloadscheme" );
 }
 ConVar cl_hud_minmode( "cl_hud_minmode", "0", FCVAR_ARCHIVE, "Set to 1 to turn on the advanced minimalist HUD mode.", HUDMinModeChangedCallBack );
-#ifdef OPENFORTRESS_DLL
+#ifdef OF_CLIENT_DLL
 ConVar of_coloredhud( "of_coloredhud", "0", FCVAR_ARCHIVE, "Enable colored hud panels", HUDMinModeChangedCallBack);
 #endif 
 
@@ -95,8 +95,6 @@ CLIENTEFFECT_REGISTER_END_CONDITIONAL( engine->GetDXSupportLevel() >= 90 )
 
 #define SCREEN_FILE		"scripts/vgui_screens.txt"
 
-vgui::HScheme g_hVGuiCombineScheme = 0;
-
 void CTFModeManager::Init()
 {
 	g_pClientMode = GetClientModeNormal();
@@ -107,13 +105,6 @@ void CTFModeManager::Init()
 	LoadObjectInfos( ::filesystem );
 
 	GetClientVoiceMgr()->SetHeadLabelOffset( 40 );
-
-	// Load up the combine control panel scheme
-	g_hVGuiCombineScheme = vgui::scheme()->LoadSchemeFromFileEx( enginevgui->GetPanel( PANEL_CLIENTDLL ), IsXbox() ? "resource/ClientScheme.res" : "resource/CombinePanelScheme.res", "CombineScheme" );
-	if (!g_hVGuiCombineScheme)
-	{
-		Warning( "Couldn't load combine panel scheme!\n" );
-	}
 }
 
 void CTFModeManager::LevelInit( const char *newmap )

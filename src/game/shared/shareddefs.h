@@ -19,15 +19,16 @@
 #define ROUND_TO_TICKS( t )		( TICK_INTERVAL * TIME_TO_TICKS( t ) )
 #define TICK_NEVER_THINK		(-1)
 
-#if defined( TF_DLL ) || defined( TF_MOD )
+#if defined( TF_DLL ) || defined( OF_DLL )
 #define ANIMATION_CYCLE_BITS		10
 #else
 #define ANIMATION_CYCLE_BITS		15
 #endif
 #define ANIMATION_CYCLE_MINFRAC		(1.0f / (1<<ANIMATION_CYCLE_BITS))
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define SecobMod__MiscFixes //Used when a fix doesn't quite fit in any of the other defined categories. 
-#define SecobMod__Enable_Fixed_Multiplayer_AI //Allow AI in your mod, also fixes numerous crashes to do with AI and 
+#endif
 
 // Each mod defines these for itself.
 class CViewVectors
@@ -105,7 +106,7 @@ public:
 
 #define MAX_CLIMB_SPEED		200
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined(TF_MOD) || defined(TF_MOD_CLIENT)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined(OF_DLL) || defined(OF_CLIENT_DLL)
 	#define TIME_TO_DUCK		0.2
 	#define TIME_TO_DUCK_MS		200.0f
 #else
@@ -115,17 +116,21 @@ public:
 #define TIME_TO_UNDUCK		0.2
 #define TIME_TO_UNDUCK_MS	200.0f
 
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define MAX_WEAPON_SLOTS		9	// hud item selection slots
+#else
+#define MAX_WEAPON_SLOTS		6	// hud item selection slots
+#endif
 #define MAX_WEAPON_POSITIONS	20	// max number of items within a slot
 #define MAX_ITEM_TYPES			6	// hud item selection slots
-#define MAX_WEAPONS				99	// Max number of weapons available
+#define MAX_WEAPONS				48	// Max number of weapons available	
 
 #define MAX_ITEMS				9	// hard coded item types
 
 #define WEAPON_NOCLIP			-1	// clip sizes set to this tell the weapon it doesn't use a clip
 
-#define	MAX_AMMO_TYPES	128		// ???
-#define MAX_AMMO_SLOTS  128		// not really slots
+#define	MAX_AMMO_TYPES	32		// ???
+#define MAX_AMMO_SLOTS  32		// not really slots
 
 #define HUD_PRINTNOTIFY		1
 #define HUD_PRINTCONSOLE	2
@@ -161,9 +166,11 @@ typedef enum
 	VOTE_FAILED_MODIFICATION_ALREADY_ACTIVE,
 
 	// OF-Specfic
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	VOTE_FAILED_MUTATOR_INVALID,
 	VOTE_FAILED_INTERMISSION,
 	VOTE_FAILED_NOT_ENOUGH_PLAYERS,
+#endif
 } vote_create_failed_t;
 
 enum
@@ -178,7 +185,11 @@ enum
 #define MAX_VOTE_DETAILS_LENGTH 64
 #define INVALID_ISSUE			-1
 #define MAX_VOTE_OPTIONS		5
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define DEDICATED_SERVER		129
+#else
+#define DEDICATED_SERVER		99
+#endif
 
 enum CastVote
 {
@@ -237,13 +248,16 @@ enum CastVote
 #if defined( CSTRIKE_DLL )
 	#define MAX_PLAYERS				128  // Absolute max players supported
 #else
-	// anything over 128 causes entities to fail
-	#define MAX_PLAYERS				128  // Absolute max players supported
+	#define MAX_PLAYERS				65  // Absolute max players supported
 #endif
 
 #define MAX_PLACE_NAME_LENGTH		18
 
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define MAX_FOV						130
+#else
+#define MAX_FOV						90
+#endif
 
 //===================================================================================================================
 // Team Defines
@@ -292,7 +306,11 @@ enum CastVote
 
 // Humans only have left and right hands, though we might have aliens with more
 //  than two, sigh
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define MAX_VIEWMODELS			4
+#else
+#define MAX_VIEWMODELS			2	
+#endif
 
 #define MAX_BEAM_ENTS			10
 
@@ -370,7 +388,9 @@ enum PLAYER_ANIM
 	PLAYER_RELOAD,
 	PLAYER_START_AIMING,
 	PLAYER_LEAVE_AIMING,
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	PLAYER_PULLBACK,
+#endif
 };
 
 #ifdef HL2_DLL
@@ -535,12 +555,14 @@ typedef enum
 // basic team colors
 #define COLOR_RED		Color(255, 64, 64, 255)
 #define COLOR_BLUE		Color(153, 204, 255, 255)
-#define COLOR_MERCENARY	Color(128, 0, 128, 255)
 #define COLOR_YELLOW	Color(255, 178, 0, 255)
 #define COLOR_GREEN		Color(153, 255, 153, 255)
 #define COLOR_GREY		Color(204, 204, 204, 255)
 #define COLOR_WHITE		Color(255, 255, 255, 255)
 #define COLOR_BLACK		Color(0, 0, 0, 255)
+#if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#define COLOR_MERCENARY	Color(128, 0, 128, 255)
+#endif
 
 // All NPCs need this data
 enum
@@ -703,10 +725,16 @@ struct FireBulletsInfo_t
 #endif
 		m_bPrimaryAttack = true;
 		m_bUseServerRandomSeed = false;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )		
 		m_bCreateDecals = true;
+#endif
 	}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	FireBulletsInfo_t( int nShots, const Vector &vecSrc, const Vector &vecDir, const Vector &vecSpread, float flDistance, int nAmmoType, bool bPrimaryAttack = true, bool bDecals = true )
+#else
+	FireBulletsInfo_t( int nShots, const Vector &vecSrc, const Vector &vecDir, const Vector &vecSpread, float flDistance, int nAmmoType, bool bPrimaryAttack = true )
+#endif
 	{
 		m_iShots = nShots;
 		m_vecSrc = vecSrc;
@@ -723,7 +751,9 @@ struct FireBulletsInfo_t
 		m_flDamageForceScale = 1.0f;
 		m_bPrimaryAttack = bPrimaryAttack;
 		m_bUseServerRandomSeed = false;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		m_bCreateDecals = bDecals;
+#endif
 	}
 
 	int m_iShots;
@@ -741,7 +771,9 @@ struct FireBulletsInfo_t
 	CBaseEntity *m_pAdditionalIgnoreEnt;
 	bool m_bPrimaryAttack;
 	bool m_bUseServerRandomSeed;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	bool m_bCreateDecals;
+#endif
 };
 
 //-----------------------------------------------------------------------------
@@ -849,8 +881,8 @@ struct EmitSound_t
 //-----------------------------------------------------------------------------
 // Multiplayer specific defines
 //-----------------------------------------------------------------------------
-#define MAX_CONTROL_POINTS			32
-#define MAX_CONTROL_POINT_GROUPS	32
+#define MAX_CONTROL_POINTS			8
+#define MAX_CONTROL_POINT_GROUPS	8
 
 // Maximum number of points that a control point may need owned to be cappable
 #define MAX_PREVIOUS_POINTS			3
@@ -901,7 +933,7 @@ enum
 //-----------------------------------------------------------------------------
 // Commentary Mode
 //-----------------------------------------------------------------------------
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL) /*|| defined(TF_MOD) || defined(TF_MOD_CLIENT)*/
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
 #define GAME_HAS_NO_USE_KEY
 
 #if defined( SPROP_COORD )

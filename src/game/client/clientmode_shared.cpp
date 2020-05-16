@@ -37,7 +37,7 @@
 #include "hud_vote.h"
 #include "ienginevgui.h"
 #include "sourcevr/isourcevirtualreality.h"
-#include "of_announcer_system.h"
+
 #if defined( _X360 )
 #include "xbox/xbox_console.h"
 #endif
@@ -66,7 +66,10 @@ extern ConVar replay_rendersetting_renderglow;
 #include "econ_item_description.h"
 #endif
 
+#ifdef OF_CLIENT_DLL
+#include "of_announcer_system.h"
 #include "tf_gamerules.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -79,12 +82,19 @@ class CHudVote;
 
 static vgui::HContext s_hVGuiContext = DEFAULT_VGUI_CONTEXT;
 
+#ifdef OF_CLIENT_DLL
 ConVar cl_drawhud( "cl_drawhud", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE , "Toggles HUD rendering." );
+#else
+ConVar cl_drawhud( "cl_drawhud", "1", FCVAR_CHEAT, "Enable the rendering of the hud" );
+#endif
 ConVar hud_takesshots( "hud_takesshots", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Auto-save a scoreboard screenshot at the end of a map." );
 ConVar hud_freezecamhide( "hud_freezecamhide", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Hides the HUD during death cam." );
 ConVar cl_show_num_particle_systems( "cl_show_num_particle_systems", "0", FCVAR_CLIENTDLL, "Display the number of active particle systems." );
+
+#ifdef OF_CLIENT_DLL
 ConVar of_announcer_override("of_announcer_override", "none", FCVAR_CLIENTDLL | FCVAR_ARCHIVE , "Sets your preffered Announcer." );
 ConVar of_announcer_events("of_announcer_events", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Weather or not to play special event sounds\nie Humiliation, Impressive, Excellent." );
+#endif
 
 extern ConVar v_viewmodel_fov;
 extern ConVar voice_modenable;
@@ -358,7 +368,9 @@ void ClientModeShared::Init()
 	ListenForGameEvent( "server_cvar" );
 	ListenForGameEvent( "player_changename" );
 	ListenForGameEvent( "teamplay_broadcast_audio" );
+#ifdef OF_CLIENT_DLL
 	ListenForGameEvent( "ffa_broadcast_audio" );
+#endif
 	ListenForGameEvent( "achievement_earned" );
 
 #if defined( TF_CLIENT_DLL )
@@ -612,10 +624,14 @@ void ClientModeShared::Update()
 	UpdateReplayMessages();
 #endif
 
-//	if ( m_pViewport->IsVisible() != cl_drawhud.GetBool() )
-//	{
-		m_pViewport->SetVisible( true );//cl_drawhud.GetBool() );
-//	}
+#ifdef OF_CLIENT_DLL
+	m_pViewport->SetVisible( true );
+#else
+	if ( m_pViewport->IsVisible() != cl_drawhud.GetBool() )
+	{
+		m_pViewport->SetVisible( cl_drawhud.GetBool() );
+	}	
+#endif
 
 	UpdateRumbleEffects();
 
@@ -682,6 +698,7 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 	}
 	
 	// If we're voting...
+#if defined ( VOTING_ENABLED ) || defined ( OF_CLIENT_DLL )
 	CHudVote *pHudVote = GET_HUDELEMENT( CHudVote );
 	if ( pHudVote && pHudVote->IsVisible() )
 	{
@@ -690,6 +707,7 @@ int	ClientModeShared::KeyInput( int down, ButtonCode_t keynum, const char *pszCu
 			return 0;
 		}
 	}
+#endif
 
 	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
 
@@ -993,8 +1011,16 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 	}
 	else if ( Q_strcmp( "player_disconnect", eventname ) == 0 )
 	{
+		// fix disconnect messages not appearing half of the time
+#ifdef OF_CLIENT_DLL		
 		if ( !hudChat )
 			return;
+#else
+		C_BasePlayer *pPlayer = USERID2PLAYER( event->GetInt("userid") );
+
+		if ( !hudChat || !pPlayer )	
+			return;
+#endif
 
 		if ( PlayerNameNotSetYet(event->GetString("name")) )
 			return;
@@ -1002,8 +1028,11 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 		if ( !IsInCommentaryMode() )
 		{
 			wchar_t wszPlayerName[MAX_PLAYER_NAME_LENGTH];
+#ifdef OF_CLIENT_DLL					
 			g_pVGuiLocalize->ConvertANSIToUnicode( event->GetString( "name" ), wszPlayerName, sizeof(wszPlayerName) );
-
+#else
+			g_pVGuiLocalize->ConvertANSIToUnicode( pPlayer->GetPlayerName(), wszPlayerName, sizeof(wszPlayerName) );
+#endif
 			wchar_t wszReason[64];
 			const char *pszReason = event->GetString( "reason" );
 			if ( pszReason && ( pszReason[0] == '#' ) && g_pVGuiLocalize->Find( pszReason ) )
@@ -1071,6 +1100,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 				wchar_t wszLocalized[100];
 
 				// show a different string in DM rather than <player> joined team Mercenary
+#ifdef OF_CLIENT_DLL				
 				if ( TFGameRules() && TFGameRules()->IsInfGamemode() )
 				{
 					if ( team == TF_TEAM_BLUE )
@@ -1101,7 +1131,12 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 						g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_team" ), 2, wszPlayerName, wszTeam );
 					}
 				}
-
+#else
+				if ( bAutoTeamed )
+				{
+					g_pVGuiLocalize->ConstructString( wszLocalized, sizeof( wszLocalized ), g_pVGuiLocalize->Find( "#game_player_joined_autoteam" ), 2, wszPlayerName, wszTeam );
+				}
+#endif
 				char szLocalized[100];
 				g_pVGuiLocalize->ConvertUnicodeToANSI( wszLocalized, szLocalized, sizeof(szLocalized) );
 
@@ -1141,8 +1176,10 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 	else if (Q_strcmp( "teamplay_broadcast_audio", eventname ) == 0 )
 	{
 		int team = event->GetInt( "team" );
-		
+	
+#ifdef OF_CLIENT_DLL	
 		bool announcer = event->GetBool( "announcer" );
+#endif
 
 		bool bValidTeam = false;
 
@@ -1177,20 +1214,26 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 
 		if ( bValidTeam == true )
 		{
+#ifdef OF_CLIENT_DLL			
 			char szFullSound[128];
 			Q_snprintf( szFullSound, sizeof(szFullSound), "%s", event->GetString("sound") );
-			DevMsg("%s\n", szFullSound );
 			if ( announcer )
 				Q_snprintf( szFullSound, sizeof(szFullSound), "%s.%s", GetAnnouncer(), event->GetString("sound") );
-			DevMsg("%s\n", szFullSound );
+#endif
+
 			EmitSound_t et;
+#ifdef OF_CLIENT_DLL			
+			et.m_pSoundName = event->GetString("sound");
+#else
 			et.m_pSoundName = szFullSound;
+#endif
 			et.m_nFlags = event->GetInt("additional_flags");
 
 			CLocalPlayerFilter filter;
 			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, et );
 		}
 	}
+#ifdef OF_CLIENT_DLL
 	else if (Q_strcmp( "ffa_broadcast_audio", eventname ) == 0 )
 	{
 		if ( !of_announcer_events.GetBool() 
@@ -1256,6 +1299,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 			C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, et );
 		}
 	}
+#endif
 	else if ( Q_strcmp( "server_cvar", eventname ) == 0 )
 	{
 		if ( !IsInCommentaryMode() )
@@ -1496,6 +1540,7 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 	}
 }
 
+#ifdef OF_CLIENT_DLL
 const char* ClientModeShared::GetAnnouncer()
 {
 	char szDefaultAnnouncer[MAX_PATH];
@@ -1528,8 +1573,15 @@ const char* ClientModeShared::GetAnnouncer()
 			if ( pAnnouncer && TFGameRules() )
 			{
 				if ( (TFGameRules()->InGametype(TF_GAMETYPE_CTF) && pAnnouncer->GetBool( "CTF" ) )
-					|| ( ( TFGameRules()->InGametype(TF_GAMETYPE_CP) || TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) || TFGameRules()->InGametype(TF_GAMETYPE_DOM) ) && pAnnouncer->GetBool( "CP" ) )
+					
+					|| ( ( TFGameRules()->InGametype(TF_GAMETYPE_CP) 
+					|| TFGameRules()->InGametype(TF_GAMETYPE_PAYLOAD) 
+					|| TFGameRules()->InGametype(TF_GAMETYPE_DOM) ) && pAnnouncer->GetBool( "CP" ) )
+					
 					|| ( TFGameRules()->InGametype(TF_GAMETYPE_ESC) && pAnnouncer->GetBool( "ESC" ) )
+					
+					|| ( TFGameRules()->InGametype(TF_GAMETYPE_INF) && pAnnouncer->GetBool( "INFECTION" ) )
+					
 					|| ( TFGameRules()->InGametype(TF_GAMETYPE_ARENA) && pAnnouncer->GetBool( "ARENA" ) )
 					|| ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() && pAnnouncer->GetBool( "DM" ) ) )
 					return of_announcer_override.GetString();
@@ -1545,6 +1597,8 @@ const char* ClientModeShared::GetAnnouncer()
 	else
 		return "Announcer";
 }
+#endif
+
 void ClientModeShared::UpdateReplayMessages()
 {
 #if defined( REPLAY_ENABLED )

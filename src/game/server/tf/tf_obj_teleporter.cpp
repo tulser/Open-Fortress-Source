@@ -42,7 +42,7 @@ BEGIN_DATADESC( CObjectTeleporter )
 	DEFINE_ENTITYFUNC( TeleporterTouch ),
 END_DATADESC()
 
-PRECACHE_REGISTER( obj_teleporter );
+//PRECACHE_REGISTER( obj_teleporter );
 
 #define TELEPORTER_MAX_HEALTH	150
 

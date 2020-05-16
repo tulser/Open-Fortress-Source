@@ -217,10 +217,12 @@ void CPlayerMove::FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *mo
 
 	// Convert final pitch to body pitch
 	float pitch = move->m_vecAngles[ PITCH ];
-	/*if ( pitch > 180.0f )
+#ifndef OF_DLL
+	if ( pitch > 180.0f )
 	{
 		pitch -= 360.0f;
-	}*/
+	}
+#endif
 	pitch = clamp( pitch, -90.f, 90.f );
 
 	move->m_vecAngles[ PITCH ] = pitch;

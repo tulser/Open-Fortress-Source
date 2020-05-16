@@ -62,10 +62,17 @@ class CBoundedCvar_InterpRatio : public ConVar_ServerBounded
 {
 public:
 	CBoundedCvar_InterpRatio() :
+#ifdef OF_CLIENT_DLL
 	  ConVar_ServerBounded( "cl_interp_ratio", 
 		  "1.0", 
 		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
 		  "Sets the interpolation amount (final amount is cl_interp_ratio / cl_updaterate)." )
+#else
+	  ConVar_ServerBounded( "cl_interp_ratio", 
+		  "2.0", 
+		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
+		  "Sets the interpolation amount (final amount is cl_interp_ratio / cl_updaterate)." )	
+#endif
 	  {
 	  }
 
@@ -96,10 +103,17 @@ class CBoundedCvar_Interp : public ConVar_ServerBounded
 {
 public:
 	CBoundedCvar_Interp() :
+#ifdef OF_CLIENT_DLL	
 	  ConVar_ServerBounded( "cl_interp", 
 		  "0.05", 
 		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
 		  "Sets the interpolation amount (bounded on low side by server interp ratio settings).", true, 0.0f, true, 0.5f )
+#else
+	  ConVar_ServerBounded( "cl_interp", 
+		  "0.1", 
+		  FCVAR_USERINFO | FCVAR_NOT_CONNECTED, 
+		  "Sets the interpolation amount (bounded on low side by server interp ratio settings).", true, 0.0f, true, 0.5f )	
+#endif
 	  {
 	  }
 

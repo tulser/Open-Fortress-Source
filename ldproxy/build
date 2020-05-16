@@ -1,1 +1,0 @@
-gcc ldproxy.c -shared -m32 -ldl -o ../game/open_fortress/bin/ldproxy/client.so

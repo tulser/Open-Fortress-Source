@@ -82,7 +82,11 @@ bool CBaseCombatCharacter::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 			return false;
 	}
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	if ( !pWeapon->HasAnyAmmo() && !pWeapon->ReserveAmmo() )
+#else
+	if ( !pWeapon->HasAnyAmmo() && !GetAmmoCount( pWeapon->m_iPrimaryAmmoType ) )
+#endif
 		return false;
 
 	if ( !pWeapon->CanDeploy() )

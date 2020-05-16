@@ -16,6 +16,7 @@
 class CNavArea;
 
 
+#ifdef OF_DLL
 //--------------------------------------------------------------------------------------------------------------
 /**
  * Placeholder ladder class that holds the mins and maxs for a ladder, since its brushes
@@ -32,6 +33,7 @@ public:
 	Vector mins;
 	Vector maxs;
 };
+#endif
 
 //--------------------------------------------------------------------------------------------------------------
 /**

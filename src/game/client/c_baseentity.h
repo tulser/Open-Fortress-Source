@@ -193,7 +193,9 @@ public:
 	// FireBullets uses shared code for prediction.
 	virtual void					FireBullets( const FireBulletsInfo_t &info );
 	virtual void					ModifyFireBulletsDamage( CTakeDamageInfo* dmgInfo ) {}
+#if defined( HL2_DLL )
 	virtual bool					ShouldDrawUnderwaterBulletBubbles();
+#endif
 	virtual bool					ShouldDrawWaterImpacts( void ) { return true; }
 	virtual bool					HandleShotImpactingWater( const FireBulletsInfo_t &info, 
 		const Vector &vecEnd, ITraceFilter *pTraceFilter, Vector *pVecTracerDest );
@@ -1691,10 +1693,12 @@ protected:
 	CThreadFastMutex m_CalcAbsolutePositionMutex;
 	CThreadFastMutex m_CalcAbsoluteVelocityMutex;
 	
+#ifdef OF_CLIENT_DLL
 public:
 	virtual Vector GetItemTintColor( void ) { return vec3_origin; }
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetOwnerEntity(); }
-	
+#endif
+
 #ifdef TF_CLIENT_DLL
 	// TF prevents drawing of any entity attached to players that aren't items in the inventory of the player.
 	// This is to prevent servers creating fake cosmetic items and attaching them to players.

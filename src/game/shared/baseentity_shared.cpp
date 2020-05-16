@@ -1610,10 +1610,9 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	
 	bool bDoServerEffects = true;
 
-//SecobMod__Information: This is a fix which is meant to allow tracers from mounted guns to display once more in-game, by always making sure it returns true.
-/*#if defined( HL2MP ) && defined( GAME_DLL )
+#if defined( HL2MP ) && defined( GAME_DLL )
 	bDoServerEffects = false;
-#endif*/
+#endif
 
 #if defined( GAME_DLL )
 	if( IsPlayer() )
@@ -1676,12 +1675,14 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 	}
 #endif // SERVER_DLL
 
-	bool bUnderwaterBullets = ShouldDrawUnderwaterBulletBubbles();
 	bool bStartedInWater = false;
+#if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
+	bool bUnderwaterBullets = ShouldDrawUnderwaterBulletBubbles();
 	if ( bUnderwaterBullets )
 	{
 		bStartedInWater = ( enginetrace->GetPointContents( info.m_vecSrc ) & (CONTENTS_WATER|CONTENTS_SLIME) ) != 0;
 	}
+#endif
 
 	// Prediction is only usable on players
 	int iSeed = 0;
@@ -2041,20 +2042,17 @@ void CBaseEntity::FireBullets( const FireBulletsInfo_t &info )
 #endif
 }
 
-
+// NOTE: HL2_DLL implies GAME_DLL
+#if defined( HL2_DLL )
 //-----------------------------------------------------------------------------
 // Should we draw bubbles underwater?
 //-----------------------------------------------------------------------------
 bool CBaseEntity::ShouldDrawUnderwaterBulletBubbles()
 {
-#if defined( HL2_DLL ) && defined( GAME_DLL )
 	CBaseEntity *pPlayer = ( gpGlobals->maxClients == 1 ) ? UTIL_GetLocalPlayer() : NULL;
 	return pPlayer && (pPlayer->GetWaterLevel() == 3);
-#else
-	return false;
-#endif
 }
-
+#endif // hl2
 
 //-----------------------------------------------------------------------------
 // Handle shot entering water
@@ -2087,7 +2085,7 @@ bool CBaseEntity::HandleShotImpactingWater( const FireBulletsInfo_t &info,
 		DispatchEffect( "gunshotsplash", data );
 	}
 
-#ifdef GAME_DLL
+#if defined( HL2_DLL )
 	if ( ShouldDrawUnderwaterBulletBubbles() )
 	{
 		CWaterBullet *pWaterBullet = ( CWaterBullet * )CreateEntityByName( "waterbullet" );
@@ -2170,17 +2168,19 @@ void CBaseEntity::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CBaseEntity::ComputeTracerStartPosition( const Vector &vecShotSrc, Vector *pVecTracerStart )
 {
-	/*
 #ifndef HL2MP
 	if ( g_pGameRules->IsMultiplayer() )
 	{
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 		// NOTE: we do this because in MakeTracer, we force it to use the attachment position
 		// in multiplayer, so the results from this function should never actually get used.
 		pVecTracerStart->Init( 999, 999, 999 );
+#else
+		pVecTracerStart->Init( 99999, 99999, 99999 );
+#endif
 		return;
 	}
 #endif
-	*/
 
 	if ( IsPlayer() )
 	{

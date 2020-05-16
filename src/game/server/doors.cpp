@@ -21,7 +21,9 @@
 #include "KeyValues.h"
 #endif
 
+#if defined ( TF_DLL ) || defined ( OF_DLL )
 #include "tf_gamerules.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -335,11 +337,15 @@ void CBaseDoor::Spawn()
 
 	CreateVPhysics();
 
+#if defined (TF_DLL ) || defined ( OF_DLL )
 	if ( TFGameRules() && TFGameRules()->IsMultiplayer() )
 	{
 		// Never block doors in TF2 - to prevent various exploits.
 		m_bIgnoreNonPlayerEntsOnBlock = true;
 	}
+#else
+	m_bIgnoreNonPlayerEntsOnBlock = false;
+#endif // TF_DLL
 }
 
 void CBaseDoor::MovingSoundThink( void )

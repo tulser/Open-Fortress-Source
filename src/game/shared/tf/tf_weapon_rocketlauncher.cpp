@@ -38,7 +38,7 @@ BEGIN_PREDICTION_DATA( CTFRocketLauncher )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_rocketlauncher, CTFRocketLauncher );
-PRECACHE_WEAPON_REGISTER( tf_weapon_rocketlauncher );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_rocketlauncher );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -55,7 +55,7 @@ BEGIN_PREDICTION_DATA( CTFCRPG)
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_rpg, CTFCRPG );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_rpg );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_rpg );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -72,7 +72,7 @@ BEGIN_PREDICTION_DATA( CTFCIncendiaryCannon)
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_incendiarycannon, CTFCIncendiaryCannon );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_incendiarycannon );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_incendiarycannon );
 
 // Server specific.
 #ifndef CLIENT_DLL
@@ -435,7 +435,7 @@ void CTFSuperRocketLauncher::SwitchHomingModes()
 	
 	m_bHoming = !m_bHoming;
 	
-	DevMsg("Switched modes to %d\n", m_bHoming);
+	DevMsg("Switched modes to %s\n", m_bHoming ? "homing" : "non-homing");
 	
 	for ( int i = 0; i < count; i++ )
 	{
@@ -581,7 +581,7 @@ BEGIN_PREDICTION_DATA( CTFOriginal )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS(tf_weapon_rocketlauncher_dm, CTFOriginal);
-PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
+//PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
 
 IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
 
@@ -603,4 +603,4 @@ BEGIN_PREDICTION_DATA( CTFSuperRocketLauncher )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS(tf_weapon_super_rocketlauncher, CTFSuperRocketLauncher);
-PRECACHE_WEAPON_REGISTER(tf_weapon_super_rocketlauncher);
+//PRECACHE_WEAPON_REGISTER(tf_weapon_super_rocketlauncher);

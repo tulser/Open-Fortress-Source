@@ -5,7 +5,7 @@
 #include "tf_bot_get_weapon.h"
 #include "entity_weapon_spawner.h"
 
-ConVar tf_bot_weapon_search_range( "tf_bot_weapon_search_range", "1400", FCVAR_CHEAT, "How far bots will search to find weapon around them" );
+ConVar tf_bot_weapon_search_range( "tf_bot_weapon_search_range", "1500", FCVAR_CHEAT, "How far bots will search to find weapon around them" );
 ConVar tf_bot_debug_weapon_scavanging( "tf_bot_debug_weapon_scavanging", "0", FCVAR_CHEAT );
 
 
@@ -134,7 +134,7 @@ bool CTFBotGetWeapon::IsPossible( CTFBot *actor )
 	if ( weapons.IsEmpty() )
 	{
 		if ( actor->IsDebugging( NEXTBOT_BEHAVIOR ) )
-			DevMsg( "%3.2f: No weapon nearby.\n", gpGlobals->curtime );
+			Warning( "%3.2f: No weapon nearby.\n", gpGlobals->curtime );
 
 		return false;
 	}
@@ -143,9 +143,6 @@ bool CTFBotGetWeapon::IsPossible( CTFBot *actor )
 	for( int i=0; i<weapons.Count(); ++i )
 	{
 		if ( !weapons[i] )
-			continue;
-
-		if ( weapons[i]->GetTeamNumber() == GetEnemyTeam( actor ) )
 			continue;
 
 		pWeapon = weapons[i];
@@ -211,9 +208,12 @@ bool CWeaponFilter::IsSelected( const CBaseEntity *ent ) const
 			if ( pSpawner->m_bRespawning ) // don't go for spawners that are respawning
 				return false;
 
-			int iWeaponID = AliasToWeaponID( pSpawner->m_iszWeaponName );
+			if ( pSpawner->m_bDisabled ) // don't go for spawners that are disabled
+				return false;
 
-			if ( m_pActor && m_pActor->Weapon_OwnsThisID( iWeaponID ) ) // don't go for spawners that we already have a weapon from
+			int iWeaponID = AliasToWeaponID( pSpawner->m_iszWeaponName.Get() );
+
+			if ( m_pActor->Weapon_OwnsThisID( iWeaponID ) ) // don't go for spawners that we already have a weapon from
 				return false;
 		}
 	}

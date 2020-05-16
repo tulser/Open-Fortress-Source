@@ -62,7 +62,7 @@ END_PREDICTION_DATA()
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_lightning_gun, CTFLightningGun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_lightning_gun );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_lightning_gun );
 
 BEGIN_DATADESC( CTFLightningGun )
 END_DATADESC()
@@ -86,6 +86,9 @@ CTFLightningGun::CTFLightningGun()
 CTFLightningGun::~CTFLightningGun()
 {
 	DestroySounds();
+#if defined ( CLIENT_DLL )
+	StopLightning();
+#endif	
 }
 
 void CTFLightningGun::DestroySounds( void )

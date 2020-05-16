@@ -78,6 +78,7 @@ void CPointDevShotCamera::Spawn( void )
 {
 	BaseClass::Spawn();
 
+#ifdef OF_DLL
 	// Remove this entity immediately if the no prop fading parameter exists
 
 	// Why is this here? Prop fading cannot be disabled without engine access,
@@ -94,6 +95,7 @@ void CPointDevShotCamera::Spawn( void )
 			return;
 		}
 	}
+#endif
 
 	// Remove this entity immediately if we're not making devshots
 	if ( !CommandLine()->FindParm("-makedevshots") )
@@ -211,6 +213,7 @@ public:
 
 	virtual void SafeRemoveIfDesired( void )
 	{
+#ifdef OF_DLL	
 		// Why is this here? Prop fading cannot be disabled without engine access,
 		// However the -makedevshots does disable prop fading in the engine
 		// Therefore I added this convar to cancel out any -makedevshots behaviour
@@ -225,6 +228,7 @@ public:
 				return;
 			}
 		}
+#endif
 
 		// If we're not making devshots, remove this system immediately
 		if ( !CommandLine()->FindParm("-makedevshots") )
@@ -277,7 +281,7 @@ public:
 				}
 			}
 
-#ifdef MAPBASE // VDC Memory Leak Fixes
+#ifdef OF_DLL // VDC Memory Leak Fixes
 			pkvMapCameras->deleteThis();
 #endif
 

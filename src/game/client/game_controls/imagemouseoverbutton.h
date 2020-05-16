@@ -34,6 +34,7 @@ public:
 	void SetInactiveImage( const char *imagename );
 	void SetActiveImage( vgui::IImage *image );
 	void SetInactiveImage( vgui::IImage *image );
+	bool GetScaleImage( void ){ return m_bScaleImage; };
 
 public:
 	virtual void Paint();

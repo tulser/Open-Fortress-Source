@@ -185,18 +185,7 @@ void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int i
 		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
 		dl->die = gpGlobals->curtime + 0.1f;
 	}
-	else
-	{
-		dlight_t *dl = effects->CL_AllocDlight(LIGHT_INDEX_TE_DYNAMIC);
-		dl->origin = vecOrigin;
-		dl->color.r = 255;
-		dl->color.g = 220;
-		dl->color.b = 128;
-		dl->decay = 200;
-		dl->radius = 340.f;
-		dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
-		dl->die = gpGlobals->curtime + 0.1f;
-	}
+
 	if( pPlayer && pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
 	{
 		Vector Color = pPlayer->m_vecPlayerColor;

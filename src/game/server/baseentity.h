@@ -87,7 +87,7 @@ class IHasAttributes;
 
 typedef CUtlVector< CBaseEntity* > EntityList_t;
 
-#if TRUE //defined( HL2_DLL )
+#ifdef HL2_DLL
 
 // For CLASSIFY
 enum Class_T
@@ -663,46 +663,10 @@ public:
 	void InputDisableShadow( inputdata_t &inputdata );
 	void InputEnableShadow( inputdata_t &inputdata );
 	void InputAddOutput( inputdata_t &inputdata );
-#ifdef MAPBASE
-	void InputChangeVariable( inputdata_t &inputdata );
-#endif
 	void InputFireUser1( inputdata_t &inputdata );
 	void InputFireUser2( inputdata_t &inputdata );
 	void InputFireUser3( inputdata_t &inputdata );
 	void InputFireUser4( inputdata_t &inputdata );
-
-#ifdef MAPBASE
-	virtual void InputSetTarget( inputdata_t &inputdata );
-	virtual void InputSetOwnerEntity( inputdata_t &inputdata );
-
-	void InputFireOutput( inputdata_t &inputdata );
-	void InputRemoveOutput( inputdata_t &inputdata );
-	virtual void InputCancelPending( inputdata_t &inputdata );
-
-	void InputFreeChildren( inputdata_t &inputdata );
-
-	void InputSetLocalOrigin( inputdata_t &inputdata );
-	void InputSetLocalAngles( inputdata_t &inputdata );
-	void InputSetLocalVelocity( inputdata_t &inputdata );
-	void InputSetLocalAngularVelocity( inputdata_t &inputdata );
-
-	void InputAddSpawnFlags( inputdata_t &inputdata );
-	void InputRemoveSpawnFlags( inputdata_t &inputdata );
-	void InputSetRenderMode( inputdata_t &inputdata );
-	void InputSetRenderFX( inputdata_t &inputdata );
-	void InputAddEffects( inputdata_t &inputdata );
-	void InputRemoveEffects( inputdata_t &inputdata );
-	void InputDrawEntity( inputdata_t &inputdata );
-	void InputUndrawEntity( inputdata_t &inputdata );
-	void InputAddEFlags( inputdata_t &inputdata );
-	void InputRemoveEFlags( inputdata_t &inputdata );
-	void InputSetMoveType( inputdata_t &inputdata );
-	void InputSetCollisionGroup( inputdata_t &inputdata );
-
-	void InputTouch( inputdata_t &inputdata );
-
-	void InputSetThinkNull( inputdata_t &inputdata );
-#endif
 
 	// Returns the origin at which to play an inputted dispatcheffect 
 	virtual void GetInputDispatchEffectPosition( const char *sInputString, Vector &pOrigin, QAngle &pAngles );
@@ -938,11 +902,9 @@ public:
 
 	// returns the amount of damage inflicted
 	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
-	virtual int		OnTakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage );
 
 	// This is what you should call to apply damage to an entity.
 	int TakeDamage( const CTakeDamageInfo &info );
-	int TakeSelfDamage( const CTakeDamageInfo &info, float flTotalDamage );
 	virtual void AdjustDamageDirection( const CTakeDamageInfo &info, Vector &dir, CBaseEntity *pEnt ) {}
 
 	virtual int		TakeHealth( float flHealth, int bitsDamageType );
@@ -1609,8 +1571,10 @@ private:
 	// Handle shot entering water
 	void HandleShotImpactingGlass( const FireBulletsInfo_t &info, const trace_t &tr, const Vector &vecDir, ITraceFilter *pTraceFilter );
 
+#if defined( HL2_DLL ) || defined( HL2_CLIENT_DLL )
 	// Should we draw bubbles underwater?
 	bool ShouldDrawUnderwaterBulletBubbles();
+#endif
 
 	// Computes the tracer start position
 	void ComputeTracerStartPosition( const Vector &vecShotSrc, Vector *pVecTracerStart );
@@ -1737,8 +1701,6 @@ private:
 	COutputEvent m_OnUser2;
 	COutputEvent m_OnUser3;
 	COutputEvent m_OnUser4;
-
-	COutputEvent m_OnKilled;
 
 	QAngle			m_angAbsRotation;
 

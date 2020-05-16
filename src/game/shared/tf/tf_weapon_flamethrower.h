@@ -108,6 +108,7 @@ private:
 	bool		m_bFiringLoopCritical;
 	bool		m_bFlameEffects;
 	CSoundPatch *m_pPilotLightSound;
+	CNewParticleEffect	*m_pFireParticle;
 #endif
 
 	CTFFlameThrower( const CTFFlameThrower & );

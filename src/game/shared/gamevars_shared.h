@@ -17,6 +17,8 @@ extern ConVar mp_forcecamera;
 extern ConVar mp_allowspectators;
 extern ConVar friendlyfire;
 extern ConVar mp_fadetoblack;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 extern ConVar of_teamplay_knockback;
+#endif
 
 #endif // CS_GAMEVARS_SHARED_H

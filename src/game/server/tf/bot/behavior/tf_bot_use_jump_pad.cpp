@@ -187,12 +187,14 @@ CJumpPadFilter::CJumpPadFilter( CTFPlayer *actor )
 
 bool CJumpPadFilter::IsSelected( const CBaseEntity *ent ) const
 {
+	/*
 	CClosestTFPlayer functor( ent->WorldSpaceCenter() );
 	ForEachPlayer( functor );
 
 	// Don't run into enemies while trying to scavenge
-	/*if ( functor.m_pPlayer && !functor.m_pPlayer->InSameTeam( m_pActor ) )
-		return false;*/
+	if ( functor.m_pPlayer && !functor.m_pPlayer->InSameTeam( m_pActor ) )
+		return false;
+	*/
 
 	CTFNavArea *pArea = static_cast<CTFNavArea *>( TheNavMesh->GetNearestNavArea( ent->WorldSpaceCenter() ) );
 	if ( !pArea )

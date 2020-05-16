@@ -47,10 +47,16 @@ ConVar sv_vote_failure_timer( "sv_vote_failure_timer", "300", FCVAR_NONE, "A vot
 ConVar sv_vote_failure_timer_mvm( "sv_vote_failure_timer_mvm", "120", FCVAR_NONE, "A vote that fails in MvM cannot be re-submitted for this long" );
 #endif // TF_DLL
 ConVar sv_vote_creation_timer( "sv_vote_creation_timer", "150", FCVAR_NONE, "How long before a player can attempt to call another vote (in seconds)." );
+#ifdef OF_DLL
+ConVar sv_vote_quorum_ratio( "sv_vote_quorum_ratio", "0.8", FCVAR_NOTIFY, "The minimum ratio of eligible players needed to pass a vote.  Min 0.5, Max 1.0.", true, 0.1f, true, 1.0f );
+#else
 ConVar sv_vote_quorum_ratio( "sv_vote_quorum_ratio", "0.6", FCVAR_NOTIFY, "The minimum ratio of eligible players needed to pass a vote.  Min 0.5, Max 1.0.", true, 0.1f, true, 1.0f );
+#endif
 ConVar sv_vote_allow_spectators( "sv_vote_allow_spectators", "0", FCVAR_NONE, "Allow spectators to vote?" );
 ConVar sv_vote_ui_hide_disabled_issues( "sv_vote_ui_hide_disabled_issues", "1", FCVAR_NONE, "Suppress listing of disabled issues in the vote setup screen." );
+#ifdef OF_DLL
 ConVar sv_vote_allow_bots( "sv_vote_allow_bots", "0", FCVAR_NONE, "Allow bot votes to count, for debugging." );
+#endif
 
 static const int k_nKickWatchListMaxDuration = 300;
 
@@ -222,17 +228,17 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 	if ( !pVoteCaller )
 		return;
 
-	edict_t *pClient = NULL;
-
-	pClient = pVoteCaller->edict();
+	// WTF WTF WTF
+#ifdef OF_DLL
+	edict_t *pClient = pVoteCaller->edict();
 
 	if ( pClient )
 	{
 		// close main menu when this get called, needs to be called twice
-		// THIS IS HORRENDOUS
 		engine->ClientCommand( pClient, "escape" );
 		engine->ClientCommand( pClient, "escape" );
 	}
+#endif
 
 	if ( !sv_vote_allow_spectators.GetBool() )
 	{
@@ -245,7 +251,11 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 
 	if ( g_voteController->IsVoteActive() )
 	{
+#ifdef OF_DLL	
 		g_voteController->SendVoteCreationFailedMessage( VOTE_FAILED_VOTE_IN_PROGRESS, pVoteCaller );
+#else
+		ClientPrint( pVoteCaller, HUD_PRINTCONSOLE, "#GameUI_vote_failed_vote_in_progress" );
+#endif
 		return;
 	}
 
@@ -272,6 +282,7 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 		return;
 	}
 
+#ifdef OF_DLL
 	CSteamID steamID;
 	if ( pVoteCaller->GetSteamID( &steamID ) && steamID.IsValid() )
 	{
@@ -285,6 +296,7 @@ CON_COMMAND( callvote, "Start a vote on an issue." )
 		Msg( "Vote Controller: A vote was created. Username: %s SteamID: <none> Details: %s\n", 
 			pVoteCaller->GetPlayerName(), arg3 );
 	}
+#endif
 
 	g_voteController->CreateVote( pVoteCaller->entindex(), arg2, arg3 );
 }
@@ -444,9 +456,11 @@ bool CVoteController::SetupVote( int iEntIndex )
 //-----------------------------------------------------------------------------
 bool CVoteController::CreateVote( int iEntIndex, const char *pszTypeString, const char *pszDetailString )
 {
+#ifdef OF_DLL
 	// don't call votes in a map background!!
 	if ( gpGlobals->eLoadType == MapLoad_Background )
 		return false;
+#endif
 
 	// Terrible Hack:  Dedicated servers pass 129 as the EntIndex
 	bool bDedicatedServer = ( iEntIndex == DEDICATED_SERVER ) ? true : false;
@@ -582,7 +596,7 @@ void CVoteController::SendVoteFailedToPassMessage( vote_create_failed_t nReason 
 {
 	Assert( m_potentialIssues[m_iActiveIssueIndex] );
 
-	DevMsg( "Vote failed \"%s %s\" with code %i\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString(), (int)nReason );
+	UTIL_LogPrintf( "Vote failed \"%s %s\" with code %i\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString(), (int)nReason );
 
 	CBroadcastRecipientFilter filter;
 	filter.MakeReliable();
@@ -763,7 +777,7 @@ void CVoteController::VoteControllerThink( void )
 			m_executeCommandTimer.Start( flDelay );
 			m_resetVoteTimer.Start( 5.f );
 
-			DevMsg( "Vote succeeded \"%s %s\"\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString() );
+			UTIL_LogPrintf( "Vote succeeded \"%s %s\"\n", m_potentialIssues[m_iActiveIssueIndex]->GetTypeString(), m_potentialIssues[m_iActiveIssueIndex]->GetDetailsString() );
 
 			CBroadcastRecipientFilter filter;
 			filter.MakeReliable();
@@ -844,6 +858,7 @@ bool CVoteController::IsValidVoter( CBasePlayer *pWhom )
 			return false;
 	}
 
+#ifdef OF_DLL
 	if ( !sv_vote_allow_bots.GetBool() )
 	{
 		if ( pWhom->IsBot() )
@@ -852,7 +867,13 @@ bool CVoteController::IsValidVoter( CBasePlayer *pWhom )
 		if ( pWhom->IsFakeClient() )
 			return false;
 	}
+#elif defined ( _DEBUG ) // Don't want to do this check for debug builds (so we can test with bots)
+	if ( pWhom->IsBot() )
+		return false;
 
+	if ( pWhom->IsFakeClient() )
+		return false;
+#endif
 	if ( pWhom->IsHLTV() )
 		return false;
 
@@ -1157,12 +1178,14 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 	if ( iEntIndex == -1 )
 		return false;
 
+#ifdef OF_DLL
 	if ( !IsEnabled() )
 	{
 		nFailCode = VOTE_FAILED_ISSUE_DISABLED;
 		nTime = m_flNextCallTime - gpGlobals->curtime;
 		return false;
 	}
+#endif
 
 	// Note: Issue timers reset on level change because the class is created/destroyed during transitions.
 	// It'd be nice to refactor the basic framework of the system to get rid of side-effects like this.
@@ -1173,9 +1196,16 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 		return false;
 	}
 
+#if defined ( TF_DLL ) || defined ( OF_DLL )
+#ifdef OF_DLL
 	if ( TFGameRules() )
+#endif
 	{
+#ifdef TF_DLL
+		if ( TFGameRules() && TFGameRules()->IsInWaitingForPlayers() && !TFGameRules()->IsInTournamentMode() )
+#elif defined ( OF_DLL )
 		if ( TFGameRules()->IsInWaitingForPlayers() )
+#endif
 		{
 			nFailCode = VOTE_FAILED_WAITINGFORPLAYERS;
 			return false;
@@ -1186,7 +1216,7 @@ bool CBaseIssue::CanCallVote( int iEntIndex, const char *pszDetails, vote_create
 			return false;
 		}
 	}
-
+#endif
 	CBaseEntity *pVoteCaller = UTIL_EntityByIndex( iEntIndex );
 	if ( pVoteCaller && !CanTeamCallVote( GetVoterTeam( pVoteCaller ) ) )
 	{

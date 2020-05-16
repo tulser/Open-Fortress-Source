@@ -1212,14 +1212,20 @@ static NavErrorType CheckNavFile( const char *bspFilename )
 	Q_snprintf(filename,sizeof(filename), FORMAT_NAVFILE, baseName);
 
 	bool navIsInBsp = false;
+#ifdef OF_DLL
 	FileHandle_t file = filesystem->Open( filename, "rb", "GAME" );	// this ignores .nav files embedded in the .bsp ...
+#else
+	FileHandle_t file = filesystem->Open( filename, "rb", "MOD" );	// this ignores .nav files embedded in the .bsp ...
+#endif
 	if ( !file )
 	{
 		navIsInBsp = true;
 		file = filesystem->Open( filename, "rb", "GAME" );	// ... and this looks for one if it's the only one around.
 
+#ifdef OF_DLL
 		if ( !file )
-			file = filesystem->Open( "maps/embed.nav", "rb", "GAME" );	// ... aaand this looks for maps/embed.nav (TF2)
+			file = filesystem->Open( "maps/embed.nav", "rb", "BSP" );	// ... aaand this looks for maps/embed.nav (TF2)
+#endif
 	}
 
 	if ( !file )
@@ -1311,10 +1317,12 @@ const CUtlVector< Place > *CNavMesh::GetPlacesFromNavFile( bool *hasUnnamedPlace
 
 	CUtlBuffer fileBuffer( 4096, 1024*1024, CUtlBuffer::READ_ONLY );
 	if ( !filesystem->ReadFile( filename, "GAME", fileBuffer ) )	// this ignores .nav files embedded in the .bsp ...
-	{
-		if ( !filesystem->ReadFile( filename, "GAME", fileBuffer ) )	// ... and this looks for one if it's the only one around.
+	{		
+		if ( !filesystem->ReadFile( filename, "BSP", fileBuffer ) )	// ... and this looks for one if it's the only one around.
 		{
-			if ( !filesystem->ReadFile( "maps/embed.nav", "GAME", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+#ifdef OF_DLL			
+			if ( !filesystem->ReadFile( "maps/embed.nav", "BSP", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+#endif
 			{
 				return NULL;
 			}
@@ -1407,9 +1415,11 @@ NavErrorType CNavMesh::Load( void )
 	if ( !filesystem->ReadFile( filename, "GAME", fileBuffer ) )	// this ignores .nav files embedded in the .bsp ...
 	{
 		navIsInBsp = true;
-		if ( !filesystem->ReadFile( filename, "GAME", fileBuffer ) )	// ... and this looks for one if it's the only one around.
+		if ( !filesystem->ReadFile( filename, "BSP", fileBuffer ) )	// ... and this looks for one if it's the only one around.
 		{
-			if ( !filesystem->ReadFile( "maps/embed.nav", "GAME", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+#ifdef OF_DLL			
+			if ( !filesystem->ReadFile( "maps/embed.nav", "BSP", fileBuffer ) )	// ... aaand this looks for maps/embed.nav (TF2)
+#endif
 			{
 				return NAV_CANT_ACCESS_FILE;
 			}
@@ -1568,7 +1578,7 @@ NavErrorType CNavMesh::Load( void )
 	{
 		BuildLadders();
 	}
-#else
+#elif defined( OF_DLL )
 	BuildLadders();
 #endif
 

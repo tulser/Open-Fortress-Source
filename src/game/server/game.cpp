@@ -30,7 +30,11 @@ ConVar  servercfgfile( "servercfgfile","server.cfg" );
 ConVar  lservercfgfile( "lservercfgfile","listenserver.cfg" );
 
 // multiplayer server rules
+#ifdef OF_DLL
 ConVar	teamplay( "mp_teamplay","-1", FCVAR_NOTIFY, "Toggles Team Deathmatch." );
+#else
+ConVar	teamplay( "mp_teamplay","0", FCVAR_NOTIFY );
+#endif
 ConVar	falldamage( "mp_falldamage","0", FCVAR_NOTIFY );
 ConVar	weaponstay( "mp_weaponstay","0", FCVAR_NOTIFY, "Weapons dont disappear.");
 ConVar	forcerespawn( "mp_forcerespawn","1", FCVAR_NOTIFY );
@@ -41,8 +45,14 @@ ConVar	flashlight( "mp_flashlight","1", FCVAR_NOTIFY );
 ConVar	flashlight( "mp_flashlight","0", FCVAR_NOTIFY );
 #endif
 ConVar	aimcrosshair( "mp_autocrosshair","1", FCVAR_NOTIFY );
-ConVar	decalfrequency( "decalfrequency","1.2", FCVAR_NOTIFY );
+#ifdef OF_DLL
+ConVar	decalfrequency( "decalfrequency","2.0", FCVAR_NOTIFY );
+#else
+ConVar	decalfrequency( "decalfrequency","10", FCVAR_NOTIFY );
+#endif
+#ifdef OF_DLL
 ConVar	jinglefrequency( "jinglefrequency", "1.2", FCVAR_NOTIFY );
+#endif
 ConVar	teamlist( "mp_teamlist","hgrunt;scientist", FCVAR_NOTIFY );
 ConVar	teamoverride( "mp_teamoverride","1" );
 ConVar	defaultteam( "mp_defaultteam","0" );

@@ -21,23 +21,26 @@ public:
 	CTFDroppedWeapon() {}
 
 	virtual void Spawn();
-	virtual void Precache();		
+	virtual void Precache();	
 
 	void EXPORT FlyThink( void );
 	void EXPORT PackTouch( CBaseEntity *pOther );
 
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
+	const char *pszWeaponName;
+	CTFWeaponInfo *pWeaponInfo;
 	int WeaponID;
 
-	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName );
+	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname );
 
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
 
 public:
-		CNetworkVar( int, m_iReserveAmmo );
-		CNetworkVar( int, m_iClip );
+	CNetworkVar( int, m_iReserveAmmo );
+	CNetworkVar( int, m_iClip );
+	CNetworkVar( bool, m_bFlamethrower );
 private:
 	float m_flCreationTime;
 

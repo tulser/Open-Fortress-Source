@@ -592,11 +592,27 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 	if ( !actor->GetIntentionInterface()->ShouldAttack( actor, threat ) || TFGameRules()->InSetup() )
 		return;
 
+	// this is so bots don't charge their stickybomb launchers constantly
+	if ( pWeapon->IsWeapon( TF_WEAPON_PIPEBOMBLAUNCHER ) )
+	{
+		actor->PressFireButton( 0.1f );
+		return;
+	}
+
 	if ( !actor->GetBodyInterface()->IsHeadAimingOnTarget() )
 		return;
 
 	if ( pWeapon->IsMeleeWeapon() )
 	{
+		if ( pWeapon->IsWeapon ( TF_WEAPON_CHAINSAW ) )
+		{
+			// OFBot: this charging detection is horrendous...
+			if ( actor->IsRangeLessThan( threat->GetEntity(), 250.0f ) )
+				actor->PressFireButton( tf_bot_fire_weapon_min_time.GetFloat() );
+			else
+				actor->PressAltFireButton();
+		}
+
 		if ( actor->IsRangeLessThan( threat->GetEntity(), 250.0f ) )
 			actor->PressFireButton();
 
@@ -635,22 +651,26 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *actor )
 
 	if ( WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) )
 	{
-		if ( !actor->m_Shared.InCond( TF_COND_ZOOMED ) )
-			return;
+		// OFBOT: noscope if at close range
+		if ( !actor->IsRangeLessThan( threat->GetEntity(), 512.0f ) )
+		{
+			if ( !actor->m_Shared.InCond( TF_COND_ZOOMED ) )
+				return;
 
-		if ( !m_sniperSteadyInterval.HasStarted() || m_sniperSteadyInterval.IsLessThen( 0.1f ) )
-			return;
+			if ( !m_sniperSteadyInterval.HasStarted() || m_sniperSteadyInterval.IsLessThen( 0.1f ) )
+				return;
 
-		Vector vecFwd;
-		actor->EyeVectors( &vecFwd );
+			Vector vecFwd;
+			actor->EyeVectors( &vecFwd );
 
-		trace_t trace;
-		UTIL_TraceLine( actor->EyePosition(),
-						actor->EyePosition() + vecFwd * 9000.0f,
-						MASK_SHOT, actor, COLLISION_GROUP_NONE, &trace );
+			trace_t trace;
+			UTIL_TraceLine( actor->EyePosition(),
+							actor->EyePosition() + vecFwd * 9000.0f,
+							MASK_SHOT, actor, COLLISION_GROUP_NONE, &trace );
 
-		if ( trace.m_pEnt != threat->GetEntity() )
-			return;
+			if ( trace.m_pEnt != threat->GetEntity() )
+				return;
+		}
 
 		actor->PressFireButton();
 		return;

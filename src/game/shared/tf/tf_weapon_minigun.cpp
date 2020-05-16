@@ -47,7 +47,7 @@ END_PREDICTION_DATA()
 #endif
 
 LINK_ENTITY_TO_CLASS( tf_weapon_minigun, CTFMinigun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_minigun );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_minigun );
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFGatlingGun, DT_WeaponGatlingGun )
 
@@ -58,7 +58,7 @@ BEGIN_PREDICTION_DATA( CTFGatlingGun )
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_gatlinggun, CTFGatlingGun );
-PRECACHE_WEAPON_REGISTER( tf_weapon_gatlinggun );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_gatlinggun );
 
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCAssaultCannon, DT_TFCAssaultCannon )
@@ -70,7 +70,7 @@ BEGIN_PREDICTION_DATA( CTFCAssaultCannon)
 END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tfc_weapon_assaultcannon, CTFCAssaultCannon );
-PRECACHE_WEAPON_REGISTER( tfc_weapon_assaultcannon );
+//PRECACHE_WEAPON_REGISTER( tfc_weapon_assaultcannon );
 
 #ifdef CLIENT_DLL
 

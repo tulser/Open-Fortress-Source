@@ -14,8 +14,10 @@
 #include "mathlib/vector.h"
 #include "video/ivideoservices.h"
 #include "const.h"
+#ifdef OF_CLIENT_DLL
 #include "avi/ibik.h"
 #include "avi/iavi.h"
+#endif
 
 //-----------------------------------------------------------------------------
 // Forward declarations
@@ -52,14 +54,18 @@ public:
 	void DrawFrame( RenderMode_t nRenderMode, int frame, int x, int y, const wrect_t *prcSubRect );
 	void DrawFrameOfSize( RenderMode_t nRenderMode, int frame, int x, int y, int iWidth, int iHeight, const wrect_t *prcSubRect);
 	bool IsVideo();
+#ifdef OF_CLIENT_DLL	
 	bool IsAVI();
 	bool IsBIK();
+#endif
 	void GetTexCoordRange( float *pMinU, float *pMinV, float *pMaxU, float *pMaxV );
 
 private:
 	IVideoMaterial *m_VideoMaterial;
+#ifdef OF_CLIENT_DLL
 	BIKMaterial_t m_hBIKMaterial;
 	AVIMaterial_t m_hAVIMaterial;
+#endif
 	int m_width;
 	int m_height;
 	int m_numFrames;

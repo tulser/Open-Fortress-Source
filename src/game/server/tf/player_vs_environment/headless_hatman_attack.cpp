@@ -90,36 +90,7 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanAttack::Update( CHeadlessHatman *me
 			}
 		}
 
-		if ( !me->IsRangeGreaterThan( pVictim, 100.0f ) && me->IsAbleToSee( pVictim, CBaseCombatCharacter::USE_FOV ) )
-		{
-			if ( me->IsRangeLessThan( pVictim, tf_halloween_bot_attack_range.GetFloat() ) )
-			{
-				if ( m_terrifyTimer.IsElapsed() && pVictim->IsPlayer() )
-				{
-					m_terrifyTimer.Reset();
-					return Action<CHeadlessHatman>::SuspendFor( new CHeadlessHatmanTerrify, "Boo!" );
-				}
-
-				if ( m_attackDuration.IsElapsed() && m_attackTimer.IsElapsed() )
-				{
-					if ( TFGameRules()->IsHalloweenScenario( CTFGameRules::HALLOWEEN_SCENARIO_DOOMSDAY ) )
-						me->AddGesture( ACT_MP_ATTACK_STAND_ITEM2 );
-					else
-						me->AddGesture( ACT_MP_ATTACK_STAND_ITEM1 );
-
-					m_attackTimer.Start( 0.58f );
-					me->EmitSound( "Halloween.HeadlessBossAttack" );
-					m_attackDuration.Start( 1.0f );
-				}
-
-				me->GetLocomotionInterface()->FaceTowards( pVictim->WorldSpaceCenter() );
-			}
-
-			UpdateAxeSwing( me );
-
-			return Action<CHeadlessHatman>::Continue();
-		}
-		else
+		if (me->IsRangeGreaterThan( pVictim, 100.0f ) || !me->IsLineOfSightClear( pVictim ))
 		{
 			if (m_PathFollower.GetAge() > 1.0f)
 			{
@@ -130,15 +101,17 @@ ActionResult<CHeadlessHatman> CHeadlessHatmanAttack::Update( CHeadlessHatman *me
 			m_PathFollower.Update( me );
 		}
 	}
-
-	if (me->IsRangeGreaterThan( m_vecHome, 50.0f ))
+	else
 	{
-		m_PathFollower.Update( me );
-
-		if (m_PathFollower.GetAge() > 3.0f)
+		if (me->IsRangeGreaterThan( m_vecHome, 50.0f ))
 		{
-			CHeadlessHatmanPathCost func( me );
-			m_PathFollower.Compute( me, m_vecHome, func );
+			m_PathFollower.Update( me );
+
+			if (m_PathFollower.GetAge() > 3.0f)
+			{
+				CHeadlessHatmanPathCost func( me );
+				m_PathFollower.Compute( me, m_vecHome, func );
+			}
 		}
 	}
 	
@@ -345,7 +318,7 @@ bool CHeadlessHatmanAttack::IsPotentiallyChaseable( CHeadlessHatman *actor, CTFP
 	if (!area || area->HasTFAttributes( RED_SPAWN_ROOM|BLUE_SPAWN_ROOM ))
 		return false;
 
-	if (!actor->GetGroundEntity())
+	if (!victim->GetGroundEntity())
 	{
 		if (( victim->GetAbsOrigin() - m_vecHome ).LengthSqr() > Square( tf_halloween_bot_quit_range.GetFloat() ))
 			return false;

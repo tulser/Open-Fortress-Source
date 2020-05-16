@@ -44,8 +44,11 @@ private:
 	void DestroyGlowEffect( void );
 #endif // GLOWS_ENABLE
 
+#ifdef OF_CLIENT_DLL
 public:
 	CNetworkVar( int, m_nTeam );
+#endif
+
 private:
 
 	// === Networked Data ===

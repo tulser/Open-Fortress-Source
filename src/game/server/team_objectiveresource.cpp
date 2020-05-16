@@ -300,6 +300,7 @@ void CBaseTeamObjectiveResource::SetCPPosition( int index, const Vector& vPositi
 	m_vCPPositions.Set( index, vPosition );
 }
 
+#ifdef OF_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -308,6 +309,7 @@ Vector CBaseTeamObjectiveResource::GetCPPosition( int index )
 	AssertValidIndex(index);
 	return m_vCPPositions.Get(index);
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

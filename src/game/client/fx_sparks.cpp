@@ -1375,8 +1375,9 @@ void FX_ConcussiveExplosion( Vector &origin, Vector &normal )
 	dl->color.r = dl->color.g = dl->color.b = 64;
 	dl->radius	= random->RandomFloat(128,256);
 	dl->die		= gpGlobals->curtime + 0.1;
+#ifdef OF_CLIENT_DLL	
 	dl->flags = DLIGHT_NO_MODEL_ILLUMINATION;
-
+#endif
 
 	//
 	// Moving lines
