@@ -506,6 +506,15 @@ void CHud::InitFonts()
 //-----------------------------------------------------------------------------
 void CHud::Shutdown( void )
 {
+	int c = m_Icons.Count();
+	for ( int i = c - 1; i >= 0; i-- )
+	{
+		CHudTexture *tex = m_Icons[ i ];
+		g_HudTextureMemoryPool.Free( tex );
+	}
+	m_Icons.Purge();
+	DevMsg(">>> Purged CHud textures!");
+
 	gLCD.Shutdown();
 
 	// Deleting hudlist items can result in them being removed from the same hudlist (m_bNeedsRemove).
@@ -558,15 +567,7 @@ void CHud::LevelShutdown( void )
 //-----------------------------------------------------------------------------
 CHud::~CHud()
 {
-	int c = m_Icons.Count();
-	for ( int i = c - 1; i >= 0; i-- )
-	{
-		CHudTexture *tex = m_Icons[ i ];
-		g_HudTextureMemoryPool.Free( tex );
-	}
-	m_Icons.Purge();
-
-	c = m_RenderGroups.Count();
+	int c = m_RenderGroups.Count();
 	for ( int i = c - 1; i >= 0; i-- )
 	{
 		CHudRenderGroup *group = m_RenderGroups[ i ];

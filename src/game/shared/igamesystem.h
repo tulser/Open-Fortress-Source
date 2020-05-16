@@ -93,7 +93,7 @@ public:
 	static void FrameUpdatePreEntityThinkAllSystems();
 	static void FrameUpdatePostEntityThinkAllSystems();
 	static void PreClientUpdateAllSystems();
-#endif
+#endif // else CLIENT_DLL
 };
 
 class IGameSystemPerFrame : public IGameSystem

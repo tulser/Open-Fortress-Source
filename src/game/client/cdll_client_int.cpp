@@ -1479,6 +1479,12 @@ void CHLClient::Shutdown( void )
 	FMODManager()->ExitFMOD();
 #endif
 
+#ifdef OF_CLIENT_DLL
+	//NOPEY: calling the c_rope deconstructor to free
+	//		the textures before vgui::surface() dies
+	RopeManager()->~IRopeManager();
+#endif
+
 	input->Shutdown_All();
 	C_BaseTempEntity::ClearDynamicTempEnts();
 	TermSmokeFogOverlay();
