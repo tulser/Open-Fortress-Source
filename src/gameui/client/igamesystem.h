@@ -11,6 +11,8 @@
 #pragma once
 #endif
 
+#include "tier0/platform.h"
+
 //-----------------------------------------------------------------------------
 // Game systems are singleton objects in the client + server codebase responsible for
 // various tasks

@@ -37,6 +37,7 @@
 #include "ModInfo.h"
 #include "game/client/IGameClientExports.h"
 #include "materialsystem/imaterialsystem.h"
+#include "SoundEmitterSystem/isoundemittersystembase.h"
 #include "ixboxsystem.h"
 #include "iachievementmgr.h"
 #include "IGameUIFuncs.h"
@@ -96,7 +97,12 @@ CGlobalVarsBase *gpGlobals = NULL;
 IEngineSound *enginesound = NULL;
 ISoundEmitterSystemBase *soundemitterbase = NULL;
 IXboxSystem *xboxsystem = NULL;
+#if 0
+// NOPEY: this conflicts with the declaration in tier3.a.
+//		If it's erroring, we need to figure out what macros
+//		we can check to decide whether to define this or not.
 IVideoServices *g_pVideo = NULL;
+#endif // 0
 
 static CSteamAPIContext g_SteamAPIContext;
 CSteamAPIContext *steamapicontext = &g_SteamAPIContext;
@@ -1147,6 +1153,11 @@ char *VarArgs(const char *format, ...)
 	return string;
 }
 
+void GetHudSize(int& w, int &h)
+{
+	vgui::surface()->GetScreenSize(w, h);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: ScreenHeight returns the height of the screen, in pixels
 // Output : int
@@ -1167,11 +1178,6 @@ int ScreenWidth(void)
 	int w, h;
 	GetHudSize(w, h);
 	return w;
-}
-
-void GetHudSize(int& w, int &h)
-{
-	vgui::surface()->GetScreenSize(w, h);
 }
 
 void UTIL_StringToIntArray( int *pVector, int count, const char *pString )

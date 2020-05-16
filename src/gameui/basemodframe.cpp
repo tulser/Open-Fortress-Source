@@ -4,7 +4,6 @@
 //
 //=====================================================================================//
 
-#include "cbase.h"
 #include <ctype.h>
 #include "basemodframe.h"
 #include "BaseModPanel.h"

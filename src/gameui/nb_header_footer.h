@@ -8,6 +8,7 @@
 #include <vgui_controls/EditablePanel.h>
 
 #include "video/ivideoservices.h"
+#include "SoundEmitterSystem/isoundemittersystembase.h"
 
 #define GAMEIU_MULTI_MOVIES
 

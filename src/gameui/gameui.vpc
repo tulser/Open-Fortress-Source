@@ -39,6 +39,7 @@ $Configuration
 	{
 		$AdditionalIncludeDirectories	".\client;"
 		$PreprocessorDefinitions		"$BASE;TF_MOD_CLIENT;OPEN_FORTRESS;GAMEUI_DLL"
+		$PreprocessorDefinitions		"$BASE;ENABLE_ADDONS" [$ENABLE_ADDONS]
 	}
 }
 
@@ -115,7 +116,7 @@ $Project "GameUI"
 
 		$File	"vachievements.h"		
 		$File	"vaddonassociation.h"
-		$File	"VAddons.h"
+		$File	"VAddons.h" [$ENABLE_ADDONS]
 		$File	"VAttractScreen.h"
 		$File	"VAudio.h"
 		$File	"VAudioVideo.h"
@@ -144,7 +145,7 @@ $Project "GameUI"
 		$File	"optionsmousedialog.cpp"
 		$File	"vachievements.cpp"
 		$File	"vaddonassociation.cpp"
-		$File	"VAddons.cpp"
+		$File	"VAddons.cpp" [$ENABLE_ADDONS]
 		$File	"VAttractScreen.cpp"
 		$File	"VAudio.cpp"
 		$File	"VAudioVideo.cpp"
@@ -265,7 +266,7 @@ $Project "GameUI"
 
 	$Folder	"Link Libraries" [$LINUX]
 	{
-		$Lib		HLLib
+		$Lib		HLLib [$ENABLE_ADDONS]
 		$Lib		bitmap
 		$Lib		libjpeg
 		$Lib		mathlib
@@ -280,7 +281,7 @@ $Project "GameUI"
 
 	$Folder	"Link Libraries" [$WIN32]
 	{
-		$File	"$SRCDIR\lib\public\HLLib.lib"
+		$File	"$SRCDIR\lib\public\HLLib.lib" [$ENABLE_ADDONS]
 		$File	"$SRCDIR\lib\public\bitmap.lib"
 		$File	"$SRCDIR\lib\common\jpeglib.lib"
 		$File	"$SRCDIR\lib\public\mathlib.lib"

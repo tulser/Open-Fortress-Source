@@ -7,6 +7,7 @@
 //=============================================================================//
 
 #include "cbase.h"
+#include "tier3/tier3.h" // mdlcache
 #include "igamesystem.h"
 #include "datacache/imdlcache.h"
 #include "utlvector.h"
@@ -41,9 +42,6 @@ static CUtlVector<IGameSystemPerFrame*> s_GameSystemsPerFrame( 0, 4 );
 
 // The map name
 static char* s_pMapName = 0;
-
-static CBasePlayer *s_pRunCommandPlayer = NULL;
-static CUserCmd *s_pRunCommandUserCmd = NULL;
 
 //-----------------------------------------------------------------------------
 // Auto-registration of game systems
@@ -148,18 +146,6 @@ char const*	IGameSystem::MapName()
 {
 	return s_pMapName;
 }
-
-#ifndef CLIENT_DLL
-CBasePlayer *IGameSystem::RunCommandPlayer()
-{
-	return s_pRunCommandPlayer;
-}
-
-CUserCmd *IGameSystem::RunCommandUserCmd()
-{
-	return s_pRunCommandUserCmd;
-}
-#endif
 
 //-----------------------------------------------------------------------------
 // Invokes methods on all installed game systems

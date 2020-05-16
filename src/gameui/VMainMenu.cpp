@@ -12,7 +12,9 @@
 #include "vhybridbutton.h"
 #include "VFlyoutMenu.h"
 #include "VGenericConfirmation.h"
+#ifdef ENABLE_ADDONS
 #include "VAddons.h"
+#endif
 //#include "VQuickJoin.h"
 //#include "BaseModPanel.h"
 //#include "UIGameData.h"
@@ -391,10 +393,12 @@ void MainMenu::OnCommand( const char *command )
 		confirmation->SetUsageData(data);
 		NavigateFrom();
 	}
+#ifdef ENABLE_ADDONS
 	else if( !Q_strcmp( command, "Addons" ) )
 	{
 		CBaseModPanel::GetSingleton().OpenWindow( WT_ADDONS, this, true );
 	}
+#endif
 	else if( !Q_strcmp( command, "MyUGC" ) )
 	{
 		CBaseModPanel::GetSingleton().OpenWindow( WT_MYUGC, this, true );

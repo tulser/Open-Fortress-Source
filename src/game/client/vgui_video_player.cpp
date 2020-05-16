@@ -4,7 +4,7 @@
 //
 //=============================================================================
 
-#include "cbase.h"
+#include "materialsystem/imesh.h"
 #include <vgui/IVGui.h>
 #include "vgui/IInput.h"
 #include <vgui/ISurface.h>

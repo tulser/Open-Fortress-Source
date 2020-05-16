@@ -17,6 +17,7 @@
 
 #include "game/client/IGameClientExports.h"
 #include "GameUI_Interface.h"
+#include "cdll_client_int.h"
 
 #include "vgui/ILocalize.h"
 #include "vgui_controls/Button.h"

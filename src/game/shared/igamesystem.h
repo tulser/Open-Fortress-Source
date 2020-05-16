@@ -93,10 +93,6 @@ public:
 	static void FrameUpdatePreEntityThinkAllSystems();
 	static void FrameUpdatePostEntityThinkAllSystems();
 	static void PreClientUpdateAllSystems();
-
-	// Accessors for the above function
-	static CBasePlayer *RunCommandPlayer();
-	static CUserCmd *RunCommandUserCmd();
 #endif
 };
 

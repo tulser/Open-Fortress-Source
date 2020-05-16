@@ -12,6 +12,7 @@
 #include "vgui/IScheme.h"
 #include "const.h"
 #include "loadingtippanel.h"
+#include "igameevents.h"
 
 namespace BaseModUI {
 

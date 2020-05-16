@@ -1,12 +1,14 @@
-#include "cbase.h"
 #include "nb_header_footer.h"
 #include "vgui_controls/Label.h"
 #include "vgui_controls/ImagePanel.h"
 #include <vgui/ISurface.h>
 #include "vgui_video_player.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
+#include "igameevents.h"
 #include "EngineInterface.h"
 #include "BaseModPanel.h"
+#include "cdll_util.h"
+#include "util_shared.h"
 
 #include "../game/shared/hl2ce/steamworks_stuff.h"
 

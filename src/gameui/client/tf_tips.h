@@ -10,6 +10,8 @@
 #pragma once
 #endif
 
+#include "client/igamesystem.h"
+
 #define TF_FIRST_NORMAL_CLASS 0
 #define TF_LAST_NORMAL_CLASS 10
 

@@ -1,10 +1,10 @@
-#include "cbase.h"
 #include "BaseModPanel.h"
 #include "./GameUI/IGameUI.h"
 #include "ienginevgui.h"
 #include "engine/IEngineSound.h"
 #include "EngineInterface.h"
 #include "tier0/dbg.h"
+#include "utlbuffer.h"
 #include "ixboxsystem.h"
 #include "GameUI_Interface.h"
 #include "game/client/IGameClientExports.h"
@@ -701,9 +701,12 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 		case WT_ACHIEVEMENTS:
 //			m_Frames[wt] = new Achievements(this, "Achievements");
 			break;
+
+#ifdef ENABLE_ADDONS
 		case WT_ADDONS:
 			m_Frames[wt] = new Addons( this, "Addons" );
 			break;
+#endif
 
 		case WT_ADDONASSOCIATION:
 			m_Frames[wt] = new AddonAssociation( this, "AddonAssociation" );
