@@ -10,7 +10,7 @@ $Macro GAMENAME   "open_fortress"
 
 $MacroRequired "GAMENAME"
 
-$Macro OUTBINNAME	"gameui"
+$Macro OUTBINNAME	"GameUI"
 $Macro OUTBINDIR	"$SRCDIR\..\game\$GAMENAME\bin"
 
 $include "$SRCDIR\vpc_scripts\source_dll_base.vpc"	[$WIN32||$LINUX]

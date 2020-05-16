@@ -71,6 +71,8 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 			m_pServerPage->SetMap(startMap);
 		}
 	}
+#else
+	m_pSavedData = NULL;
 #endif
 
 	if ( m_bBotsEnabled )

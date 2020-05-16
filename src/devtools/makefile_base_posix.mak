@@ -201,7 +201,8 @@ VSIGN ?= true
 
 ifeq ($(SOURCE_SDK), 1)
 	Srv_GAMEOUTPUTFILE := $(GAMEOUTPUTFILE:.so=_srv.so)
-	COPY_DLL_TO_SRV := 1
+	# NOPEY: i'm just gonna disable this for now.. whoopsi-daisy!
+	# COPY_DLL_TO_SRV := 1
 endif
 
 LINK_MAP_FLAGS = -Wl,-Map,$(@:.so=).map
