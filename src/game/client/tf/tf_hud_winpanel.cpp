@@ -114,8 +114,6 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent * event)
 	if (!tf_PR)
 		return;
 
-	Msg("Win panel event received\n");
-
 	//Outside of the loop So we do not declare values three times
 	char szPlayerVal[64] = "", pAttachedModel[128], szPlacement[16], szVCD[128], szClassModelName[128];
 	const char *pszClassName;
@@ -126,7 +124,6 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent * event)
 	KeyValues *pModelAttachement = new KeyValues("Models");
 	pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
 
-	// look for the top 3 players sent in the event
 	for (int i = 1; i <= 3; i++)
 	{
 		// get player index and round points from the event
@@ -176,8 +173,6 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent * event)
 			{
 				Q_snprintf(szClassModelName, sizeof(szClassModelName), "%s_%s_model", pszClassName, szPlacement);
 				Q_strncpy(pAttachedModel, pModelAttachement->GetString(szClassModelName), sizeof(pAttachedModel));
-				if (i == 3)
-					pModelAttachement->deleteThis();
 			}
 
 			//Finalize player model setup
@@ -222,7 +217,8 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent * event)
 		playerScore->SetVisible(true);
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelIntro");
 	}
-
+	
+	pModelAttachement->deleteThis();
 	SetVisible(true);
 	MoveToFront();
 }
