@@ -211,6 +211,8 @@ FilePlayerClassInfo_t::FilePlayerClassInfo_t()
 	m_szSelectCmd[0] = 0;
 }
 
+FilePlayerClassInfo_t::~FilePlayerClassInfo_t() {}
+
 void FilePlayerClassInfo_t::Parse( KeyValues *pKeyValuesData, const char *szPlayerClassName )
 {
 	// Okay, we tried at least once to look this up...

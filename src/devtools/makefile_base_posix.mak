@@ -162,8 +162,8 @@ LINK ?= $(CC)
 #ifneq ($(shell $(CXX) --version | grep g++-4.6 ),)
 ifneq ($(shell $(CXX) --version | grep 4.6.3 ),)
 	_ := $(info [OF] G++ 4.6 Detected)
-	# echo 4.6 doesnt support the override keyword, so we remove it.
-	CXXFLAGS += -Doverride=""
+	# echo 4.6 doesnt support C++11, so we remove the new keywords.
+	CXXFLAGS += -Doverride="" -Dfinal=""
 endif
 
 #OPEN FORTRESS QUIET TIME (QUIET_YOU)
