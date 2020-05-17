@@ -5493,8 +5493,13 @@ void CTFGameRules::SendWinPanelInfo( void )
 			PlayerStats_t *pStats = CTF_GameStats.FindPlayerStats( pTFPlayer );
 			if ( pStats )
 			{
-				iRoundScore = CalcPlayerScore( &pStats->statsCurrentRound );
-				iTotalScore = CalcPlayerScore( &pStats->statsAccumulated );
+				if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
+					iRoundScore = iTotalScore = pTFPlayer->FragCount();
+				else
+				{
+					iRoundScore = CalcPlayerScore( &pStats->statsCurrentRound );
+					iTotalScore = CalcPlayerScore( &pStats->statsAccumulated );
+				}
 			}
 			PlayerRoundScore_t &playerRoundScore = vecPlayerScore[vecPlayerScore.AddToTail()];
 			playerRoundScore.iPlayerIndex = iPlayerIndex;
@@ -6335,8 +6340,7 @@ int CTFGameRules::CalcPlayerScore( RoundStats_t *pRoundStats )
 					( pRoundStats->m_iStat[TFSTAT_TELEPORTS] / TF_SCORE_TELEPORTS_PER_POINT ) +
 					( pRoundStats->m_iStat[TFSTAT_INVULNS] / TF_SCORE_INVULN ) +
 					( pRoundStats->m_iStat[TFSTAT_REVENGE] / TF_SCORE_REVENGE );
-	if ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
-		iScore = ( pRoundStats->m_iStat[TFSTAT_KILLS] * TF_SCORE_KILL );
+	
 	return Max( iScore, 0 );
 }
 

@@ -2210,9 +2210,9 @@ void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 	
 	KeyValues *kvDesiredWeapons = new KeyValues("DesiredWeapons");
 	
-	kvDesiredWeapons->SetString("1", "tf_weapon_assaultrifle");
-	kvDesiredWeapons->SetString("2", "tf_weapon_pistol_mercenary");
-	kvDesiredWeapons->SetString("3", "tf_weapon_crowbar");
+	kvDesiredWeapons->SetString("1", UTIL_VarArgs("%d", GetItemSchema()->GetWeaponID( "tf_weapon_assaultrifle")) );
+	kvDesiredWeapons->SetString("2", UTIL_VarArgs("%d", GetItemSchema()->GetWeaponID( "tf_weapon_pistol_mercenary")) );
+	kvDesiredWeapons->SetString("3", UTIL_VarArgs("%d", GetItemSchema()->GetWeaponID( "tf_weapon_crowbar")) );
 	
 	CCommand args;
 	args.Tokenize(szDesired);
@@ -2234,9 +2234,9 @@ void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 			iDesiredSlot = pSlot->GetInt( "mercenary", -1 );
 		}
 		
-		if( iDesiredSlot == 3 && atoi(args[i]) != iDesiredSlot )
+		if( (atoi(args[i]) == 3 && iDesiredSlot != 3) || (iDesiredSlot > -1 && iDesiredSlot != atoi(args[i])) )
 			continue;
-		
+
 		if( kvDesiredWeapons )
 			kvDesiredWeapons->SetString( args[i], args[i+1] );
 	}

@@ -7,25 +7,24 @@
 #include "cbase.h"
 #include "weapon_selection.h"
 #include "iclientmode.h"
+#include "hud_macros.h"
 #include "history_resource.h"
-
+#include "menu.h"
+#include "in_buttons.h"
 #include <KeyValues.h>
-#include <vgui/IScheme.h>
+#include "filesystem.h"
+#include "iinput.h"
+#include "vgui/ILocalize.h"
 #include <vgui/ISurface.h>
-#include <vgui/ISystem.h>
 #include <vgui_controls/AnimationController.h>
+#include "c_tf_player.h"
+#include "c_tf_weapon_builder.h"
+#include "tf_imagepanel.h"
 #include <vgui_controls/Panel.h>
 #include <vgui_controls/EditablePanel.h>
 
-#include "vgui/ILocalize.h"
-
-#include <string.h>
-#include "baseobject_shared.h"
-#include "tf_imagepanel.h"
-#include "c_tf_player.h"
-#include "c_tf_weapon_builder.h"
-#include "in_buttons.h"
-#include "iinput.h"
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 #define SELECTION_TIMEOUT_THRESHOLD		2.5f	// Seconds
 #define SELECTION_FADEOUT_TIME			3.0f
@@ -35,6 +34,7 @@
 
 ConVar tf_weapon_select_demo_start_delay( "tf_weapon_select_demo_start_delay", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Delay after spawning to start the weapon bucket demo." );
 ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Time to pulse each weapon bucket upon spawning as a new class. 0 to turn off." );
+ConVar of_hide_weapon_selection( "of_hide_weapon_selection", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "When enabled, makes the weapon selection hidden after selecting a weapon." );
 
 //-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
@@ -48,6 +48,7 @@ public:
 
 	virtual bool ShouldDraw();
 	virtual void OnWeaponPickup( CTFWeaponBase *pWeapon );
+	virtual void SelectWeapon();
 
 	virtual void CycleToNextWeapon( void );
 	virtual void CycleToPrevWeapon( void );
@@ -63,7 +64,7 @@ public:
 
 	virtual void Init();
 	virtual void LevelInit();
-
+	
 	virtual void FireGameEvent( IGameEvent *event );
 
 	virtual void Reset(void)
@@ -211,6 +212,41 @@ void CHudWeaponSelection::OnWeaponPickup( CTFWeaponBase *pWeapon )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Player has chosen to draw the currently selected weapon
+//-----------------------------------------------------------------------------
+void CHudWeaponSelection::SelectWeapon( void )
+{
+	if ( !GetSelectedWeapon() )
+	{
+		engine->ClientCmd( "cancelselect\n" );
+		return;
+	}
+
+	C_BasePlayer *player = C_BasePlayer::GetLocalPlayer();
+	if ( !player )
+		return;
+
+	// Don't allow selections of weapons that can't be selected (out of ammo, etc)
+	if ( !GetSelectedWeapon()->CanBeSelected() )
+	{
+		player->EmitSound( "Player.DenyWeaponSelection" );
+	}
+	else
+	{
+		SetWeaponSelected();
+		
+		if( of_hide_weapon_selection.GetBool() || hud_fastswitch.GetInt() != HUDTYPE_FASTSWITCH )
+		{
+			m_hSelectedWeapon = NULL;
+	
+			engine->ClientCmd( "cancelselect\n" );
+		}
+		// Play the "weapon selected" sound
+		player->EmitSound( "Player.WeaponSelected" );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: updates animation status
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::OnThink()
@@ -262,7 +298,7 @@ bool CHudWeaponSelection::ShouldDrawInternal()
 	}
 
 	// Make sure the player's allowed to switch weapons
-	if ( pPlayer->IsAllowedToSwitchWeapons() == false )
+	if( !( !of_hide_weapon_selection.GetBool() && hud_fastswitch.GetInt() == HUDTYPE_FASTSWITCH ) && pPlayer->IsAllowedToSwitchWeapons() == false )
 		return false;
 
 	if ( pPlayer->IsAlive() == false )
@@ -282,6 +318,9 @@ bool CHudWeaponSelection::ShouldDrawInternal()
 	if ( hud_fastswitch.GetBool() && ( gpGlobals->curtime - m_flSelectionTime ) < (FASTSWITCH_DISPLAY_TIMEOUT + FASTSWITCH_FADEOUT_TIME) )
 		return true;
 
+	if( !of_hide_weapon_selection.GetBool() && hud_fastswitch.GetInt() == HUDTYPE_FASTSWITCH )
+		return true;
+	
 	return ( m_bSelectionVisible ) ? true : false;
 }
 
@@ -336,6 +375,10 @@ int CHudWeaponSelection::GetNumVisibleSlots()
 //-------------------------------------------------------------------------
 void CHudWeaponSelection::PostChildPaint()
 {
+	if( !of_hide_weapon_selection.GetBool() && hud_fastswitch.GetInt() == HUDTYPE_FASTSWITCH )
+	// kill any fastswitch display
+	m_flSelectionTime = gpGlobals->curtime + SELECTION_FADEOUT_TIME;
+	
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
@@ -497,7 +540,9 @@ void CHudWeaponSelection::PostChildPaint()
 			}
 		}
 	break;
-
+	case HUDTYPE_FASTSWITCH:
+	if( of_hide_weapon_selection.GetBool() )
+		break;
 	case HUDTYPE_BUCKETS:
 	default:
 		{
@@ -567,6 +612,18 @@ void CHudWeaponSelection::PostChildPaint()
 							wchar_t *pText = g_pVGuiLocalize->Find( "#TF_OUT_OF_AMMO" );
 							DrawString( pText, msgX, msgY, ammoColor, true );
 						}
+						else if( pWeapon->ReserveAmmo() > -1 )
+						{
+							int msgX = xpos + ( m_flLargeBoxWide * 0.5 );
+							int msgY = ypos + (int)m_flErrorYPos;
+							Color ammoColor = Color( 255, 0, 0, 255 );
+							wchar_t pText[32];
+							g_pVGuiLocalize->ConstructString( pText, sizeof( pText ), 
+							pWeapon->Clip1() > -1 ? VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo() ) : VarArgs("%d", pWeapon->ReserveAmmo() ), 
+							0 );
+							DrawString( pText, msgX+1, msgY+1, m_NumberShadowColor, true );
+							DrawString( pText, msgX, msgY, m_NumberColor, true );
+						}
 
 						xpos -= ( m_flLargeBoxWide + m_flBoxGap );
 						
@@ -576,7 +633,7 @@ void CHudWeaponSelection::PostChildPaint()
 						{
 							Color numberColor = m_NumberColor;
 							Color numberShadowColor = m_NumberShadowColor;
-							numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+							//numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
 							surface()->DrawSetTextFont(m_hNumberFont);
 							wchar_t wch = '0' + shortcut;
 
@@ -624,7 +681,7 @@ void CHudWeaponSelection::PostChildPaint()
 
 						Color numberColor = m_NumberColor;
 						Color numberShadowColor = m_NumberShadowColor;
-						numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
+						//numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
 						surface()->DrawSetTextFont(m_hNumberFont);
 						wchar_t wch = '0' + (i+1);
 
@@ -636,6 +693,18 @@ void CHudWeaponSelection::PostChildPaint()
 						surface()->DrawSetTextPos( xStartPos - XRES(5) - m_flSelectionNumberXPos, ypos + YRES(5) + m_flSelectionNumberYPos );
 						surface()->DrawUnicodeChar(wch);
 
+						if( pWeapon->ReserveAmmo() > -1 )
+						{
+							int msgX = xStartPos - XRES(4) - m_flSmallBoxWide - m_flSelectionNumberXPos;
+							int msgY = ypos + YRES(6) + m_flSelectionNumberYPos;
+							wchar_t pText[32];
+							g_pVGuiLocalize->ConstructString( pText, sizeof( pText ), 
+							pWeapon->Clip1() > -1 ? VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo() ) : VarArgs("%d", pWeapon->ReserveAmmo() ), 
+							0 );
+							DrawString( pText, msgX+1, msgY+1, numberShadowColor, true );
+							DrawString( pText, msgX, msgY, numberColor, true );
+						}
+						
 						ypos += ( m_flSmallBoxTall + m_flBoxGap );	
 					}
 							
@@ -1110,6 +1179,7 @@ void CHudWeaponSelection::FastWeaponSwitch( int iWeaponSlot )
 		pPlayer->EmitSound( "Player.DenyWeaponSelection" );
 	}
 
+	if( of_hide_weapon_selection.GetBool() )
 	// kill any fastswitch display
 	m_flSelectionTime = 0.0f;
 }
@@ -1221,12 +1291,6 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 
 	switch( hud_fastswitch.GetInt() )
 	{
-	case HUDTYPE_FASTSWITCH:
-		{
-			FastWeaponSwitch( iSlot );
-			return;
-		}
-		
 	case HUDTYPE_PLUS:
 		{
 			if ( !IsInSelectionMode() )
@@ -1238,7 +1302,12 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 			PlusTypeFastWeaponSwitch( iSlot );
 		}
 		break;
-
+	case HUDTYPE_FASTSWITCH:
+		{
+			FastWeaponSwitch( iSlot );
+			if( of_hide_weapon_selection.GetBool() )
+				return;
+		}
 	case HUDTYPE_BUCKETS:
 		{
 			int slotPos = 0;

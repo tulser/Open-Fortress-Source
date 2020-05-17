@@ -395,7 +395,7 @@ void CTFItemSchema::AddWeapon( const char *szWeaponName )
 
 KeyValues *CTFItemSchema::GetWeapon( int iID )
 {
-	if( iID > m_hWeaponNames.Count() || iID < 0 )
+	if( iID >= m_hWeaponNames.Count() || iID < 0 )
 		return NULL;
 	
 	return GetWeaponFromSchema( m_hWeaponNames[iID] );
