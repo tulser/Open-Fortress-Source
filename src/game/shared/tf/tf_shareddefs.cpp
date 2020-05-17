@@ -256,7 +256,8 @@ const char *g_aGameTypeNames[] =
 	"#Gametype_3WAVE",
 	"#Gametype_ZS",
 	"#Gametype_COOP",
-	"#Gametype_INF"
+	"#Gametype_INF",
+	"#Gametype_JUG"
 };
 
 //-----------------------------------------------------------------------------
@@ -369,6 +370,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_GRAPPLE",
 	"TF_WEAPON_GIB",
 	"TF_WEAPON_CLAWS",
+	"TF_WEAPON_JUGGERNAUGHT",
 
 	"TFC_WEAPON_SHOTGUN_SB",
 	"TFC_WEAPON_SHOTGUN_DB",
@@ -521,6 +523,7 @@ uint g_aWeaponDamageTypes[] =
 	DMG_GENERIC,		// TF_WEAPON_GRAPPLE,
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,		// TF_WEAPON_GIB,
 	DMG_SLASH, // TF_WEAPON_CLAWS
+	DMG_CLUB,		// TF_WEAPON_JUGGERNAUGHT,
 	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD, //TFC_WEAPON_SHOTGUN_DB

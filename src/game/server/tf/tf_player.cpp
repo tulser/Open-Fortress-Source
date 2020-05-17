@@ -156,6 +156,7 @@ extern ConVar tf_spectalk;
 extern ConVar of_allow_special_teams;
 extern ConVar of_spawnprotecttime;
 extern ConVar friendlyfire;
+extern ConVar of_juggernaught_wintime;
 
 ConVar of_teamplay_collision	( "of_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables collision with teammates in teamplay." );
 ConVar of_dynamic_color_update	( "of_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Updates player color immediately." );
@@ -524,6 +525,10 @@ CTFPlayer::CTFPlayer()
 	
 	m_chzVMCosmeticGloves = NULL;
 	m_chzVMCosmeticSleeves = NULL;
+
+	m_bIsJuggernaught = false;
+	m_iJuggernaughtScore = 0;
+	m_iJuggernaughtTimer = 0;
 }
 
 
@@ -763,7 +768,6 @@ void CTFPlayer::FlashlightTurnOff( void )
 	if( IsAlive() ) EmitSound( "HL2Player.FlashLightOff" );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -783,6 +787,22 @@ void CTFPlayer::PostThink()
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
     m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
+
+	if ( TFGameRules()->IsJugGamemode() )
+	{
+		if ( IsJuggernaught() )
+		{
+			if ( gpGlobals->curtime > ( m_iJuggernaughtTimer + 1 ) )
+			{
+				m_iJuggernaughtTimer = gpGlobals->curtime + 1;
+				m_iJuggernaughtScore++;
+			}
+		}
+
+		//MOVE THIS TO GAMERULES
+		if ( m_iJuggernaughtScore == of_juggernaught_wintime.GetInt() )
+			TFGameRules()->SetWinningTeam(TF_TEAM_MERCENARY, WINREASON_JUGGERNAUGHT_TIMER, true, true, false);;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -5654,6 +5674,12 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		UpdateModel();
 	}
 
+	if ( m_bIsJuggernaught )
+	{
+		m_bIsJuggernaught = false; 
+		m_Shared.OnRemoveJauggernaught();
+	}
+
 	RemoveTeleportEffect();
 	
 	// Stop being invisible
@@ -5929,7 +5955,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			}
 		}
 	}
-	
+
 	BaseClass::Event_Killed( info_modified );
 	bool bDissolve = false;
 	if ( info.GetDamageType() & DMG_DISSOLVE )
@@ -6694,9 +6720,8 @@ void CTFPlayer::UpdateSkin( int iTeam )
 //-----------------------------------------------------------------------------
 // Purpose: Utility function for live-changing classes (without respawning player)
 //-----------------------------------------------------------------------------
-void CTFPlayer::UpdatePlayerClass( int iPlayerClass )
+void CTFPlayer::UpdatePlayerClass( int iPlayerClass, bool bRefreshWeapons )
 {
-	//If we call without defining a class to change to just refresh class visuals
 	if ( !iPlayerClass == TF_CLASS_UNDEFINED )
 	{
 		TeamFortress_RemoveEverythingFromWorld();
@@ -6710,18 +6735,33 @@ void CTFPlayer::UpdatePlayerClass( int iPlayerClass )
 
 		if (IsRetroModeOn())
 			iModifiers |= (1 << TF_CLASSMOD_TFC);
-
-		GetPlayerClass()->Init( iPlayerClass, iModifiers );
 		
 		m_Shared.FadeInvis( 0.1 );
 
 		RemoveTeleportEffect();
+
+		SetHealth( GetPlayerClass()->GetMaxHealth() );
+	}
+	
+	if ( bRefreshWeapons )
+	{
+		StripWeapons();
+		GiveDefaultItems();
 	}
 
 	UpdateModel();
 	UpdateArmModel();
 	UpdateSkin( GetTeamNumber() );
+	UpdateCosmetics();
 }
+
+void CTFPlayer::BecomeJuggernaught()
+{
+	m_bIsJuggernaught = true;
+
+	m_Shared.OnAddJauggernaught();
+}
+
 
 //=========================================================================
 // Displays the state of the items specified by the Goal passed in

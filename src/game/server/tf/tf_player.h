@@ -213,7 +213,7 @@ public:
 	void				UpdateModel( void );
 	void				UpdateArmModel( void );
 	void				UpdateSkin( int iTeam );
-	void				UpdatePlayerClass( int iPlayerClass = TF_CLASS_UNDEFINED );
+	void				UpdatePlayerClass( int iPlayerClass = TF_CLASS_UNDEFINED, bool bRefreshWeapons = false );
 
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
 	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
@@ -424,6 +424,12 @@ public:
 	float radsuit_finished;
 
 	int m_flNextTimeCheck;		// Next time the player can execute a "timeleft" command
+
+	int	m_iJuggernaughtScore;
+	int m_iJuggernaughtTimer;
+	bool m_bIsJuggernaught;
+	void BecomeJuggernaught();
+	bool IsJuggernaught() { return m_bIsJuggernaught; }
 
 	// TEAMFORTRESS VARIABLES
 	int		no_sentry_message;

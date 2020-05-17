@@ -13,7 +13,7 @@
 #include "tf_gamerules.h"
 #include "engine/IEngineSound.h"
 
-#if defined( OF_DLL )
+#if defined( GAME_DLL )
 #include "tf_gamestats.h"
 #include "of_music_player.h"
 #endif
@@ -1649,6 +1649,11 @@ void CTeamplayRoundBasedRules::State_Enter_RND_RUNNING( void )
 	if( !IsInWaitingForPlayers() )
 	{
 		PlayStartRoundVoice();
+
+		if (TFGameRules() && (TFGameRules()->IsJugGamemode()))
+		{
+			TFGameRules()->PickJuggernaught();
+		}
 	}
 
 	m_bChangeLevelOnRoundEnd = false;

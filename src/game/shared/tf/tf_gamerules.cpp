@@ -131,6 +131,7 @@ ConVar tf_birthday						( "tf_birthday", "0", FCVAR_NOTIFY | FCVAR_REPLICATED );
 ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Arena mode." );
 ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
 ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
+ConVar of_juggernaught				( "of_juggernaught", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Juggernaught mode." );
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
@@ -174,6 +175,10 @@ ConVar mp_humans_must_join_team( "mp_humans_must_join_team", "any", FCVAR_GAMEDL
 ConVar of_infection_preparetime		 ( "of_infection_preparetime", "20", FCVAR_GAMEDLL, "How many seconds survivors have to prepare before the Infection." );
 ConVar of_infection_roundtime		 ( "of_infection_roundtime", "300", FCVAR_GAMEDLL, "How many seconds survivors need to... survive for after the Infection." );
 ConVar of_infection_zombie_threshold ( "of_infection_zombie_threshold", "6", FCVAR_GAMEDLL, "For every n humans, this many zombies are selected when the Infection starts." );
+
+//Juggernaught
+ConVar of_juggernaught_preparetime		 ( "of_juggernaught_preparetime", "15", FCVAR_GAMEDLL, "How many seconds before a player is randomly changed into the Juggernaught." );
+ConVar of_juggernaught_wintime			 ( "of_juggernaught_wintime", "90", FCVAR_GAMEDLL, "How many seconds a player needs to be the Juggernaught until they win." );
 
 ConVar of_dominations( "of_dominations", "1", FCVAR_GAMEDLL, "Enable or disable dominations for players." );
 
@@ -693,6 +698,23 @@ void CTFLogicTDM::Spawn( void )
 }
 
 LINK_ENTITY_TO_CLASS( of_logic_tdm, CTFLogicTDM);
+
+//-----------------------------------------------------------------------------
+// JUG Logic 
+//-----------------------------------------------------------------------------
+class CTFLogicJug : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CTFLogicJug, CBaseEntity );
+	void	Spawn( void );
+};
+
+void CTFLogicJug::Spawn( void )
+{
+	BaseClass::Spawn();
+}
+
+LINK_ENTITY_TO_CLASS( of_logic_jug, CTFLogicJug);
 
 //-----------------------------------------------------------------------------
 // Civ Escort Logic 
@@ -1662,6 +1684,14 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 	
+	if ( gEntList.FindEntityByClassname(NULL, "of_logic_jug") || !Q_strncmp(STRING(gpGlobals->mapname), "jug_", 4) || of_juggernaught.GetBool() )
+	{
+		AddGametype(TF_GAMETYPE_JUG);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Juggernaught gamemode config file\n");
+		engine->ServerCommand("exec config_default_jug.cfg \n");
+		engine->ServerExecute();
+	}
+	
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( of_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
 	{
 		AddGametype(TF_GAMETYPE_ESC);
@@ -2027,7 +2057,7 @@ bool CTFGameRules::IsTeamplay( void )
 
 bool CTFGameRules::DontCountKills( void )
 { 
-	return m_nbDontCountKills || IsGGGamemode(); 
+	return m_nbDontCountKills || IsGGGamemode() || IsJugGamemode(); 
 }
 
 bool CTFGameRules::IsGGGamemode( void )
@@ -2053,6 +2083,11 @@ bool CTFGameRules::IsESCGamemode( void )
 bool CTFGameRules::IsInfGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_INF );
+}
+
+bool CTFGameRules::IsJugGamemode( void )
+{ 
+	return InGametype( TF_GAMETYPE_JUG );
 }
 
 bool CTFGameRules::IsPayloadOverride( void )
@@ -2087,6 +2122,8 @@ void CTFGameRules::FireGamemodeOutputs()
 			pProxy->FireTeamplayOutput();
 		if ( InGametype( TF_GAMETYPE_GG ) )
 			pProxy->FireGunGameOutput();
+		if ( InGametype( TF_GAMETYPE_JUG ) )
+			pProxy->FireJugOutput();
 	}
 #endif
 }
@@ -5005,7 +5042,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			}
 		}
 	}
-	
+
 	if ( IsGGGamemode() )
 	{			
 		if ( pTFPlayerScorer && pTFPlayerScorer->GGLevel() == m_iMaxLevel )
@@ -6509,7 +6546,7 @@ int	CTFGameRules::GetCaptureValueForPlayer( CBasePlayer *pPlayer )
 
 bool CTFGameRules::UsesDMBuckets()
 {
-	return ( of_multiweapons.GetBool() && ( IsDMGamemode() || IsInfGamemode() ) && !of_randomizer.GetBool() );
+	return ( of_multiweapons.GetBool() && ( IsDMGamemode() || IsInfGamemode() || IsJugGamemode() ) && !of_randomizer.GetBool() );
 }
 
 //-----------------------------------------------------------------------------
@@ -6744,6 +6781,8 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DOM]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_INF]);
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_JUG) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_JUG]);
 	return GameType;
 }
 
@@ -7230,6 +7269,90 @@ void CTFGameRules::SelectInfector( void )
 void CTFGameRules::FinishInfection( void )
 {
 	SetWinningTeam( TF_TEAM_RED, WINREASON_DEFEND_UNTIL_TIME_LIMIT, false );
+}
+
+
+
+void CTFGameRules::PickJuggernaught( void )
+{
+	Msg("TFGameRulesJuggernaught: Selecting possible Juggernaught...\n");
+	
+	// Find random player(s) to infect
+	// This is based on the amount of players (default ratio: 1 zombie for every 6 humans, rounded up)
+	CBasePlayer *pPlayer = NULL;
+	int i;
+
+	int playercount = 0;
+	int targets = 0;
+	int candidates = 0;
+	
+	// Get a count of all players, and then a count of those players who will be suitable targets
+	for ( i = 1; i <= gpGlobals->maxClients; i++ )
+	{
+		pPlayer = UTIL_PlayerByIndex( i );
+
+		if ( pPlayer )
+		{
+			playercount++;
+			targets++;
+		}
+	}
+
+	if ( targets <= 0 )
+	{
+		Msg( "TFGameRulesJuggernaught: Found no players to become Juggernaught!\n" );
+		TFGameRules()->SetInWaitingForPlayers( true );
+		return;
+	}
+
+	if ( targets > 1 )
+	{
+		int threshold = 1;
+		
+		// Get a count of players who will be selected as zombies, this division is rounded up
+		candidates = ceil( (float)targets / threshold );
+
+		if ( candidates <= 0 )
+		{
+			Msg( "TFGameRulesJuggernaught: Candidates for Juggernaught is 0!\n" );
+			TFGameRules()->SetInWaitingForPlayers( true );
+			return;
+		}
+	}
+	else
+	{
+		Msg( "TFGameRulesJuggernaught: Needs more than 1 player to begin.\n" );
+		TFGameRules()->SetInWaitingForPlayers( true );
+		return;
+	}
+	
+	int failsafe = 0;
+
+	// Pick a random player index between 0 and the player count, and zombify them, until all candidates are exhausted
+	do
+	{
+		Msg( "TFGameRulesJuggernaught: Finding a potential candidate...\n" );
+		int index = RandomInt( 0, playercount - 1 );
+		
+		// Potential fix for an infinite loop here
+		failsafe++;	
+
+		pPlayer = UTIL_PlayerByIndex( index );
+
+		if ( pPlayer )
+		{
+			candidates--;
+
+			CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+
+			if ( pTFPlayer )
+			{
+				Msg( "TFGameRulesJuggernaught: Found a suitable candidate!\n" );
+				pTFPlayer->BecomeJuggernaught();
+			}
+		}
+	} 
+	while ( candidates > 0 && failsafe < 65 );
 }
 
 #endif

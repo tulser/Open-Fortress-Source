@@ -214,6 +214,9 @@ void CTFWinPanel::FireGameEvent( IGameEvent * event )
 		case WINREASON_POINTLIMIT:
 			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_PointLimit" ), 0 );
 			break;			
+		case WINREASON_JUGGERNAUGHT_TIMER:
+			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_JuggernautTimer" ), 0 );
+			break;			
 		default:
 			Assert( false );
 			break;
@@ -578,6 +581,9 @@ void CTFWinPanelDM::FireGameEvent( IGameEvent * event )
 			break;
 		case WINREASON_POINTLIMIT:
 			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_PointLimit" ), 0 );
+			break;			
+		case WINREASON_JUGGERNAUGHT_TIMER:
+			g_pVGuiLocalize->ConstructString( wzWinReason, sizeof( wzWinReason ), g_pVGuiLocalize->Find( "#Winreason_JuggernautTimer" ), 0 );
 			break;			
 		default:
 			Assert( false );
