@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2004, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2004, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -427,6 +427,27 @@ bool WeaponID_IsGrenadeWeapon( int iWeaponID )
 		iWeaponID == TFC_WEAPON_GRENADELAUNCHER;
 }
 
+bool WeaponID_IsMeleeWeapon(int iWeaponID)
+{
+	return iWeaponID == TF_WEAPON_BAT ||
+		iWeaponID == TF_WEAPON_BOTTLE ||
+		iWeaponID == TF_WEAPON_FIREAXE ||
+		iWeaponID == TF_WEAPON_CLUB ||
+		iWeaponID == TF_WEAPON_CROWBAR ||
+		iWeaponID == TF_WEAPON_KNIFE ||
+		iWeaponID == TF_WEAPON_FISTS ||
+		iWeaponID == TF_WEAPON_SHOVEL ||
+		iWeaponID == TF_WEAPON_WRENCH ||
+		iWeaponID == TF_WEAPON_BONESAW ||
+		iWeaponID == TF_WEAPON_KNIFE ||
+		iWeaponID == TF_WEAPON_UMBRELLA ||
+		iWeaponID == TF_WEAPON_BERSERK ||
+		iWeaponID == TFC_WEAPON_CROWBAR ||
+		iWeaponID == TFC_WEAPON_UMBRELLA ||
+		iWeaponID == TFC_WEAPON_KNIFE ||
+		iWeaponID == TFC_WEAPON_WRENCH;
+}
+
 const char *g_aGrenadeNames[] =
 {
 	"TF_GRENADE_NONE",
@@ -448,6 +469,31 @@ const char *g_aGrenadeNames[] =
 
 	"TF_GRENADE_COUNT",	// end marker, do not add below here 
 };
+
+const char *g_aExplosiveNames[] =
+{
+	"TF_GRENADE_NORMAL",
+	"TF_GRENADE_NORMAL_ENGINEER",
+	"TF_GRENADE_MIRV",
+	"TF_GRENADE_PIPEBOMB",
+	"TF_GRENADE_FLARE",
+	"TF_PROJECTILE_ROCKET",
+	"TF_PROJECTILE_PIPEBOMB",
+	"TF_PROJECTILE_INCENDROCKET",
+	"TF_GRENADE_NORMAL",
+};
+
+bool IsExplosiveProjectile(const char *alias)
+{
+	if (alias)
+	{
+		for (int i = 0; g_aExplosiveNames[i] != NULL; ++i)
+			if (!Q_stricmp(g_aExplosiveNames[i], alias))
+				return true;
+	}
+
+	return false;
+}
 
 int AliasToWeaponID( const char *alias )
 {
