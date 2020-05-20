@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2006, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -293,10 +293,12 @@ enum
 };
 
 int AliasToWeaponID( const char *alias );
+bool IsExplosiveProjectile(const char *alias);
 
 bool WeaponID_IsSniperRifle( int iWeaponID );
 bool WeaponID_IsRocketWeapon( int iWeaponID );
 bool WeaponID_IsGrenadeWeapon( int iWeaponID );
+bool WeaponID_IsMeleeWeapon(int iWeaponID);
 
 //-----------------------------------------------------------------------------
 // Grenade Launcher mode (for pipebombs).
