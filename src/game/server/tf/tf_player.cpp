@@ -1321,6 +1321,14 @@ void CTFPlayer::Spawn()
 	}
 	
 	UpdateCosmetics();
+
+	//reset medal related values
+	m_iPowerupKills = 0;
+	m_iEXKills = 0;
+	m_fEXTime = 0;
+	m_iSpreeKills = 0;
+	m_iImpressiveCount = 0;
+	m_SuicideEntity = NULL;
 }
 
 void CTFPlayer::UpdateCosmetics()
@@ -5330,6 +5338,8 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		m_Shared.Burn( ToTFPlayer( pAttacker ), 0 );
 	}
 
+	CTFPlayer *pPlayer = ToTFPlayer(pAttacker);
+
 	// Fire a global game event - "player_hurt"
 	IGameEvent * event = gameeventmanager->CreateEvent( "player_hurt" );
 	if ( event )
@@ -5338,6 +5348,12 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		event->SetInt( "health", max( 0, m_iHealth ) );
 		event->SetInt( "damageamount", ( iOldHealth - m_iHealth ) );
 		event->SetBool( "crit", ( info.GetDamageType() & DMG_CRITICAL ) != 0 );
+
+		if (pPlayer->m_iImpressiveCount == 2)
+		{
+			event->SetBool("impressive", true);
+			pPlayer->m_iImpressiveCount = 0;
+		}
 		
 		// HLTV event priority, not transmitted
 		event->SetInt( "priority", 5 );	
@@ -5351,7 +5367,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
         gameeventmanager->FireEvent( event );
 	}
 	
-	CTFPlayer *pPlayer = ToTFPlayer( pAttacker );
+	/* undone, now executed as part of the medaling system
 	CTFWeaponBase *pActiveWeapon = pPlayer ? pPlayer->GetActiveTFWeapon() : NULL;
 	if ( pActiveWeapon && pPlayer )
 	{
@@ -5373,6 +5389,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 			pPlayer->trickshot = 0;
 		}
 	}
+	*/
 	
 	if ( pAttacker != this && pAttacker->IsPlayer() )
 	{
@@ -5504,7 +5521,8 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			if ( pTFVictim != pTFAttacker )
 				pTFVictim->GotKilled();
-		
+			
+			/* undone, now it's executed in the new medaling system
 			if ( pTFVictim != pTFAttacker && pTFAttacker->last_kill > ( gpGlobals->curtime - 2.0f ) && TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
 			{
 				TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFAttacker->entindex(), "Excellent" ); // 2 kills in 2 seconds
@@ -5512,6 +5530,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 			}
 			else
 				pTFAttacker->last_kill = gpGlobals->curtime;
+			*/
 		}
 		
 		// Custom death handlers
@@ -5623,6 +5642,20 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: check if player has a powerup
+//-----------------------------------------------------------------------------
+
+bool CTFPlayer::InPowerupCond(CTFPlayer *pPlayerAttacker)
+{
+	for (int i = TF_COND_SPAWNPROTECT; i <= TF_COND_HASTE; i++)
+	{
+		if (pPlayerAttacker->m_Shared.InCond(i))
+			return true;
+	}
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
@@ -5638,8 +5671,29 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	if ( info.GetAttacker() && info.GetAttacker()->IsPlayer() )
 	{
 		pPlayerAttacker = ToTFPlayer( info.GetAttacker() );
+
+		//Kamikaze
+		if (pPlayerAttacker == this)
+		{
+			m_SuicideEntity = pInflictor;
+		}
+		else
+		{
+			//Powerup Massacre
+			pPlayerAttacker->m_iPowerupKills = InPowerupCond(pPlayerAttacker) ? pPlayerAttacker->m_iPowerupKills + 1 : 0; //count kills while holding powerup
+
+			//Excellent
+			if (pPlayerAttacker->m_iEXKills >= 9) //reset after achieving the highest EX medal
+				pPlayerAttacker->m_iEXKills = 0;
+			pPlayerAttacker->m_iEXKills = gpGlobals->curtime < pPlayerAttacker->m_fEXTime + 3.f ? pPlayerAttacker->m_iEXKills + 1 : 0;	//kills must me done within 3 seconds from one another, otherwise counter resets
+			pPlayerAttacker->m_fEXTime = gpGlobals->curtime;
+
+			//Killing Spree
+			pPlayerAttacker->m_iSpreeKills++;
+		}
 	}
 	
+	/* undone for medals system
 	CTFWeaponBaseMelee *pWeapon = dynamic_cast<CTFWeaponBaseMelee*>(info.GetWeapon());
 
 	if ( pWeapon && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
@@ -5657,7 +5711,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( info.GetAttacker()->entindex(), "Humiliation" ); 
 			TeamplayRoundBasedRules()->BroadcastSoundFFA( entindex(), "Humiliation" ); 			
 		}
-	}	
+	}
+	*/
 	
 	bool bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	// we want the ragdoll to burn if the player was burning and was not a pryo (who only burns momentarily)

@@ -107,7 +107,7 @@ public:
 
 	//virtual Color GetInfoTextColor( int iDeathNoticeMsg ){ return Color( 255, 255, 255, 255 ); }
 	virtual Color GetInfoTextColor( int iDeathNoticeMsg, bool bLocalPlayerInvolved ){ return bLocalPlayerInvolved ? Color( 0, 0, 0, 255 ) : Color( 255, 255, 255, 255 ); }
-	void PlayRivalrySounds( int iKillerIndex, int iVictimIndex, int iType );
+	//void PlayRivalrySounds( int iKillerIndex, int iVictimIndex, int iType );
 
 protected:
 	virtual void OnGameEvent( IGameEvent *event, int iDeathNoticeMsg );
@@ -634,6 +634,7 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 	}
 }
 
+/* undone for medals system
 void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, int iType )
 {
 	int iLocalPlayerIndex = GetLocalPlayerIndex();
@@ -676,7 +677,7 @@ void CTFHudDeathNotice::PlayRivalrySounds( int iKillerIndex, int iVictimIndex, i
 
 	CLocalPlayerFilter filter;
 	C_BaseEntity::EmitSound( filter, SOUND_FROM_LOCAL_PLAYER, pszSoundName );
-}
+}*/
 
 //-----------------------------------------------------------------------------
 // Purpose: Called when a game event happens and a death notice is about to be 
@@ -715,35 +716,37 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 			}
 		}
 
-		if ( !bIsObjectDestroyed )
+		/* undone for medals update
+		if (!bIsObjectDestroyed)
 		{
 			// if this death involved a player dominating another player or getting revenge on another player, add an additional message
 			// mentioning that
-			int iKillerID = engine->GetPlayerForUserID( event->GetInt( "attacker" ) );
-			int iVictimID = engine->GetPlayerForUserID( event->GetInt( "userid" ) );
-		
-			if ( event->GetInt( "dominated" ) > 0 )
+			int iKillerID = engine->GetPlayerForUserID(event->GetInt("attacker"));
+			int iVictimID = engine->GetPlayerForUserID(event->GetInt("userid"));
+
+			if (event->GetInt("dominated") > 0)
 			{
-				AddAdditionalMsg( iKillerID, iVictimID, "#Msg_Dominating" );
-				PlayRivalrySounds( iKillerID, iVictimID, TF_DEATH_DOMINATION );
+				AddAdditionalMsg(iKillerID, iVictimID, "#Msg_Dominating");
+				PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_DOMINATION);
 			}
-			if ( event->GetInt( "assister_dominated" ) > 0 && ( iAssisterID > 0 ) )
+			if (event->GetInt("assister_dominated") > 0 && (iAssisterID > 0))
 			{
-				AddAdditionalMsg( iAssisterID, iVictimID, "#Msg_Dominating" );
-				PlayRivalrySounds( iAssisterID, iVictimID, TF_DEATH_DOMINATION );
+				AddAdditionalMsg(iAssisterID, iVictimID, "#Msg_Dominating");
+				PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_DOMINATION);
 			}
-			if ( event->GetInt( "revenge" ) > 0 ) 
+			if (event->GetInt("revenge") > 0)
 			{
-				AddAdditionalMsg( iKillerID, iVictimID, "#Msg_Revenge" );
-				PlayRivalrySounds( iKillerID, iVictimID, TF_DEATH_REVENGE );
+				AddAdditionalMsg(iKillerID, iVictimID, "#Msg_Revenge");
+				PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_REVENGE);
 			}
-			if ( event->GetInt( "assister_revenge" ) > 0 && ( iAssisterID > 0 ) ) 
+			if (event->GetInt("assister_revenge") > 0 && (iAssisterID > 0))
 			{
-				AddAdditionalMsg( iAssisterID, iVictimID, "#Msg_Revenge" );
-				PlayRivalrySounds( iAssisterID, iVictimID, TF_DEATH_REVENGE );
+				AddAdditionalMsg(iAssisterID, iVictimID, "#Msg_Revenge");
+				PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_REVENGE);
 			}
-		}
-		else
+		}*/
+
+		if ( bIsObjectDestroyed )
 		{
 			// if this is an object destroyed message, set the victim name to "<object type> (<owner>)"
 			int iObjectType = event->GetInt( "objecttype" );

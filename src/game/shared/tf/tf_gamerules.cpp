@@ -5317,55 +5317,104 @@ CBasePlayer *CTFGameRules::GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pI
 //			*pKiller - 
 //			*pInflictor - 
 //-----------------------------------------------------------------------------
-void CTFGameRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info )
+void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info)
 {
-	int killer_ID = 0;
-
 	// Find the killer & the scorer
-	CTFPlayer *pTFPlayerVictim = ToTFPlayer( pVictim );
+	CTFPlayer *pTFPlayerVictim = ToTFPlayer(pVictim);
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pKiller = info.GetAttacker();
-	CBasePlayer *pScorer = GetDeathScorer( pKiller, pInflictor, pVictim );
-	CTFPlayer *pAssister = ToTFPlayer( GetAssister( pVictim, pScorer, pInflictor ) );
+	CBasePlayer *pScorer = GetDeathScorer(pKiller, pInflictor, pVictim);
+	CTFPlayer *pAssister = ToTFPlayer(GetAssister(pVictim, pScorer, pInflictor));
 
 	// Work out what killed the player, and send a message to all clients about it
-	const char *killer_weapon_name = GetKillingWeaponName( info, pTFPlayerVictim );
+	const char *killer_weapon_name = GetKillingWeaponName(info, pTFPlayerVictim);
 
-	if ( pScorer )	// Is the killer a client?
+	IGameEvent *event = gameeventmanager->CreateEvent("player_death");
+
+	if (event)
 	{
-		killer_ID = pScorer->GetUserID();
+		event->SetInt("userid", pVictim->GetUserID());
+		event->SetInt("assister", pAssister ? pAssister->GetUserID() : -1);
+		event->SetString("weapon", killer_weapon_name);
+		event->SetInt("damagebits", info.GetDamageType());
+		event->SetInt("customkill", info.GetDamageCustom());
+		event->SetInt("priority", 7);	// HLTV event priority, not transmitted
+
+		/* undone for medals system
+		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_DOMINATION)
+			event->SetInt("dominated", 1);
+		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_DOMINATION)
+			event->SetInt("assister_dominated", 1);
+		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_REVENGE)
+			event->SetInt("revenge", 1);
+		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_REVENGE)
+			event->SetInt("assister_revenge", 1);
+		*/
+
+		//medals stuff
+		if(pScorer)
+		{
+			event->SetInt("attacker", pScorer->GetUserID());
+
+			//streaks
+			CTFPlayer *pTFPlayerScorer = ToTFPlayer(pScorer);
+			event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
+			event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
+			event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
+
+			//weapon specifics
+			int weaponType = GetKillingWeaponType(pInflictor, pScorer);
+			event->SetBool("humiliation", weaponType == 1 ? true : false);
+			event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & FL_ONGROUND) && weaponType == 2 ? true : false);
+
+			//first blood
+			event->SetBool("firstblood", !m_firstBlood ? true : false);
+			m_firstBlood = true;
+
+			//Kamikaze
+			event->SetBool("kamikaze", pInflictor == pTFPlayerScorer->m_SuicideEntity ? true : false);
+		}
+		else
+		{
+			event->SetInt("attacker", 0);
+			event->SetInt("killer_pupkills", 0);
+			event->SetInt("killer_kspree", 0);
+			event->SetInt("ex_streak", 0);
+			event->SetBool("midair", false);
+			event->SetBool("humiliation", false);
+			event->SetBool("firstblood", false);
+		}
+
+		//more streaks
+		event->SetInt("victim_pupkills", !pTFPlayerVictim->InPowerupCond(pTFPlayerVictim) ? -1 : pTFPlayerVictim->m_iPowerupKills);
+		event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
+
+		gameeventmanager->FireEvent(event);
+	}
+}
+
+int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer) //0 no special weapon, 1 railgun, 2 melee, 3 explosive projectile
+{
+	if (pScorer && pInflictor && (pInflictor == pScorer))
+	{
+		CTFWeaponBase *pWeapon = ToTFPlayer(pScorer)->GetActiveTFWeapon();
+		int weaponID = 0;
+
+		if (pWeapon)
+			weaponID = pWeapon->GetWeaponID();
+		else
+			return weaponID;
+
+		if(WeaponID_IsMeleeWeapon(weaponID))
+			return 1;
+	}
+	else if (pInflictor)
+	{
+		if(IsExplosiveProjectile(STRING(pInflictor->m_iClassname)))
+			return 2;
 	}
 
-	IGameEvent * event = gameeventmanager->CreateEvent( "player_death" );
-
-	if ( event )
-	{
-		event->SetInt( "userid", pVictim->GetUserID() );
-		event->SetInt( "attacker", killer_ID );
-		event->SetInt( "assister", pAssister ? pAssister->GetUserID() : -1 );
-		event->SetString( "weapon", killer_weapon_name );
-		event->SetInt( "damagebits", info.GetDamageType() );
-		event->SetInt( "customkill", info.GetDamageCustom() );
-		event->SetInt( "priority", 7 );	// HLTV event priority, not transmitted
-		if ( pTFPlayerVictim->GetDeathFlags() & TF_DEATH_DOMINATION )
-		{
-			event->SetInt( "dominated", 1 );
-		}
-		if ( pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_DOMINATION )
-		{
-			event->SetInt( "assister_dominated", 1 );
-		}
-		if ( pTFPlayerVictim->GetDeathFlags() & TF_DEATH_REVENGE )
-		{
-			event->SetInt( "revenge", 1 );
-		}
-		if ( pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_REVENGE )
-		{
-			event->SetInt( "assister_revenge", 1 );
-		}
-
-		gameeventmanager->FireEvent( event );
-	}		
+	return 0; //no special weapon
 }
 
 void CTFGameRules::ClientDisconnected( edict_t *pClient )
