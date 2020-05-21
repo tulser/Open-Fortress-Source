@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2006, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2006, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -35,6 +35,7 @@
 ConVar tf_weapon_select_demo_start_delay( "tf_weapon_select_demo_start_delay", "1.0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Delay after spawning to start the weapon bucket demo." );
 ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Time to pulse each weapon bucket upon spawning as a new class. 0 to turn off." );
 ConVar of_hide_weapon_selection( "of_hide_weapon_selection", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "When enabled, makes the weapon selection hidden after selecting a weapon." );
+ConVar of_weaponswitch_flat( "of_weaponswitch_flat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "When enabled, makes numkeys switch to slot in respect to available weapons." );
 
 //-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
@@ -556,6 +557,7 @@ void CHudWeaponSelection::PostChildPaint()
 
 			// draw the bucket set
 			// iterate over all the weapon slots
+			int actualPos = 0;
 			for ( int i = 0; i < m_iMaxSlots; i++ )
 			{
 				Color col( 255, 255, 255, 255 );
@@ -628,6 +630,10 @@ void CHudWeaponSelection::PostChildPaint()
 						xpos -= ( m_flLargeBoxWide + m_flBoxGap );
 						
 						int shortcut = bFirstItem ? i + 1 : -1;
+						if(of_weaponswitch_flat.GetInt()) {
+							shortcut = (actualPos+1);
+							if( pWeapon == GetFirstPos(i) ) actualPos++;
+						}
 
 						if ( IsPC() && shortcut >= 0 )
 						{
@@ -684,6 +690,12 @@ void CHudWeaponSelection::PostChildPaint()
 						//numberColor[3] *= m_flSelectionAlphaOverride / 255.0f;
 						surface()->DrawSetTextFont(m_hNumberFont);
 						wchar_t wch = '0' + (i+1);
+
+						if(of_weaponswitch_flat.GetInt()) {
+							wch = '0' + (actualPos+1);
+							if( pWeapon == GetFirstPos(i) ) actualPos++;
+						}
+
 
 						surface()->DrawSetTextPos( xStartPos - XRES(4) - m_flSelectionNumberXPos, ypos + YRES(6) + m_flSelectionNumberYPos );
 						surface()->DrawSetTextColor(numberShadowColor);
@@ -965,6 +977,7 @@ CTFWeaponBase *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCurrent
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::CycleToNextWeapon( void )
 {
+	return;
 	// Get the local player.
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
@@ -1289,6 +1302,23 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 	if ( pPlayer->IsAllowedToSwitchWeapons() == false )
 		return;
 
+	if( of_weaponswitch_flat.GetInt() ) {
+		CTFWeaponBase *pWeapon;
+		int actualPos = 0, i =0;
+		for(int i = 0; i < MAX_WEAPON_POSITIONS; i++) {
+			if( GetFirstPos( i ) ) {
+				pWeapon = (CTFWeaponBase *)GetFirstPos(i);
+				if( !pWeapon ) continue;
+
+				actualPos++;
+
+				if( iSlot == actualPos-1 ) break;
+			}
+		}
+
+		iSlot = pWeapon->GetSlot();
+	}
+
 	switch( hud_fastswitch.GetInt() )
 	{
 	case HUDTYPE_PLUS:
@@ -1303,7 +1333,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 		}
 		break;
 	case HUDTYPE_FASTSWITCH:
-		{
+		{				
 			FastWeaponSwitch( iSlot );
 			if( of_hide_weapon_selection.GetBool() )
 				return;
@@ -1319,8 +1349,10 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 				slotPos = pActiveWeapon->GetPosition() + 1;
 			}
 
+
 			// find the weapon in this slot
 			pActiveWeapon = (CTFWeaponBase *)GetNextActivePos(iSlot, slotPos);
+
 			if ( !pActiveWeapon )
 			{
 				pActiveWeapon = (CTFWeaponBase *)GetNextActivePos(iSlot, 0);
