@@ -977,7 +977,6 @@ CTFWeaponBase *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCurrent
 //-----------------------------------------------------------------------------
 void CHudWeaponSelection::CycleToNextWeapon( void )
 {
-	return;
 	// Get the local player.
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
