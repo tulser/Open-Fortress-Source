@@ -1303,7 +1303,7 @@ void CHudWeaponSelection::SelectWeaponSlot( int iSlot )
 
 	if( of_weaponswitch_flat.GetInt() ) {
 		CTFWeaponBase *pWeapon;
-		int actualPos = 0, i =0;
+		int actualPos = 0;
 		for(int i = 0; i < MAX_WEAPON_POSITIONS; i++) {
 			if( GetFirstPos( i ) ) {
 				pWeapon = (CTFWeaponBase *)GetFirstPos(i);
