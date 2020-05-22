@@ -1323,6 +1323,7 @@ void CTFPlayer::Spawn()
 	UpdateCosmetics();
 
 	//reset medal related values
+	m_bHadPowerup = false;
 	m_iPowerupKills = 0;
 	m_iEXKills = 0;
 	m_fEXTime = 0;
@@ -5338,8 +5339,6 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		m_Shared.Burn( ToTFPlayer( pAttacker ), 0 );
 	}
 
-	CTFPlayer *pPlayer = ToTFPlayer(pAttacker);
-
 	// Fire a global game event - "player_hurt"
 	IGameEvent * event = gameeventmanager->CreateEvent( "player_hurt" );
 	if ( event )
@@ -5348,21 +5347,21 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 		event->SetInt( "health", max( 0, m_iHealth ) );
 		event->SetInt( "damageamount", ( iOldHealth - m_iHealth ) );
 		event->SetBool( "crit", ( info.GetDamageType() & DMG_CRITICAL ) != 0 );
-
-		if (pPlayer->m_iImpressiveCount == 2)
-		{
-			event->SetBool("impressive", true);
-			pPlayer->m_iImpressiveCount = 0;
-		}
 		
 		// HLTV event priority, not transmitted
 		event->SetInt( "priority", 5 );	
 
-		CBasePlayer *pPlayer = ToBasePlayer( pAttacker );
-		event->SetInt( "attacker", pPlayer ? pPlayer->GetUserID() : 0 );
+		CTFPlayer *pPlayer = ToTFPlayer(pAttacker);
 
+		event->SetInt( "attacker", pPlayer ? pPlayer->GetUserID() : 0 );
 		event->SetInt( "victim_index", entindex() );
 		event->SetInt( "attacker_index", pAttacker->entindex() );
+
+		if (pPlayer && pPlayer->m_iImpressiveCount == 2)
+		{
+			event->SetBool("impressive", true);
+			pPlayer->m_iImpressiveCount = 0;
+		}
 
         gameeventmanager->FireEvent( event );
 	}
@@ -5642,20 +5641,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: check if player has a powerup
-//-----------------------------------------------------------------------------
-
-bool CTFPlayer::InPowerupCond(CTFPlayer *pPlayerAttacker)
-{
-	for (int i = TF_COND_SPAWNPROTECT; i <= TF_COND_HASTE; i++)
-	{
-		if (pPlayerAttacker->m_Shared.InCond(i))
-			return true;
-	}
-	return false;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
@@ -5680,7 +5665,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		else
 		{
 			//Powerup Massacre
-			pPlayerAttacker->m_iPowerupKills = InPowerupCond(pPlayerAttacker) ? pPlayerAttacker->m_iPowerupKills + 1 : 0; //count kills while holding powerup
+			pPlayerAttacker->m_iPowerupKills = m_Shared.InPowerupCond() ? pPlayerAttacker->m_iPowerupKills + 1 : 0; //count kills while holding powerup
 
 			//Excellent
 			if (pPlayerAttacker->m_iEXKills >= 9) //reset after achieving the highest EX medal
@@ -5721,6 +5706,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	bool bFlagOnGround = ( ( GetFlags() & FL_ONGROUND ) != NULL );
 
 	// Remove all conditions...
+	if (m_Shared.InPowerupCond())
+		m_bHadPowerup = true;
 	m_Shared.RemoveAllCond( NULL );
 
 	// Reset our model if we were disguised

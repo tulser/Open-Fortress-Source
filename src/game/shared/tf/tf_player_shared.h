@@ -102,7 +102,8 @@ public:
 	
 	bool	InCond( int nCond );
 	bool	WearsHat( int nHat );
-	void	RemoveAllCond( CTFPlayer *pPlayer );
+	void	RemoveAllCond(CTFPlayer *pPlayer);
+	bool	InPowerupCond(); //check if player has powerup
 	void	OnConditionAdded( int nCond );
 	void	OnConditionRemoved( int nCond );
 	void	ConditionThink( void );

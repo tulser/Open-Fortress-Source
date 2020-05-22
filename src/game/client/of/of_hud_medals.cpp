@@ -35,8 +35,8 @@ DECLARE_HUDELEMENT(CTFHudMedals);
 //-----------------------------------------------------------------------------
 
 const char *CTFHudMedals::medalNames[DENIED + 1] =
-{ "FirstBlood", "Perfect",		"Impressive", "Perforated", "Humiliation", "Kamikaze", "Midair",		  "Headshot",	 "Excellent",	  "MultiKill", "UltraKill",
-  "HolyShit",	"KillingSpree",	"Rampage",	  "Dominating", "Unstoppable", "GodLike",  "PowerupMassacre", "ShowStopper", "Party Breaker", "Denied"					 };
+{ "FirstBlood", "Perfect",		"Impressive", "Perforated", "Humiliation", "Kamikaze", "Midair",		  "Headshot",	 "Excellent",	 "MultiKill", "UltraKill",
+  "HolyShit",	"KillingSpree",	"Rampage",	  "Dominating", "Unstoppable", "GodLike",  "PowerupMassacre", "ShowStopper", "PartyBreaker", "Denied"				   };
 
 const char *CTFHudMedals::medalPaths[DENIED + 1] =
 { "../hud/medals/firstblood_medal_def",		"../hud/medals/perfect_medal_def",			"../hud/medals/impressive_medal_def",	"../hud/medals/perforated_medal_def",

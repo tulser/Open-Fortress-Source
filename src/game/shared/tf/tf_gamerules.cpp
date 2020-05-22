@@ -5386,7 +5386,8 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		}
 
 		//more streaks
-		event->SetInt("victim_pupkills", !pTFPlayerVictim->InPowerupCond(pTFPlayerVictim) ? -1 : pTFPlayerVictim->m_iPowerupKills);
+		event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
+		Msg("%d", pTFPlayerVictim->m_Shared.InPowerupCond() ? 1 : 0);
 		event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 
 		gameeventmanager->FireEvent(event);

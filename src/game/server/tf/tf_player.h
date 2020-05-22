@@ -541,8 +541,7 @@ public:
 	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
 
 	//medals
-	bool InPowerupCond(CTFPlayer *pPlayerAttacker); //check if player has powerup
-
+	bool				m_bHadPowerup;
 	int					m_iPowerupKills;
 	int					m_iEXKills;
 	float				m_fEXTime;
