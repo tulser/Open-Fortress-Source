@@ -154,12 +154,11 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 
 	if (!Q_strcmp("teamplay_win_panel", eventname)) //perfect
 	{
-		if (event->GetInt("player_1") != pPlayer->entindex() || died)
-			return;
-
-		AddMedal(PERFECT);
+		if (event->GetInt("player_1") == pPlayer->entindex() && !died)
+			AddMedal(PERFECT);
 
 		medalsQueue.Purge(); //no medals shown after match is over
+		m_pMedalImage->SetVisible(false);
 	}
 	else if (!Q_strcmp("player_hurt", eventname))
 	{
