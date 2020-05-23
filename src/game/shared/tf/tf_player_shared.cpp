@@ -616,16 +616,6 @@ void CTFPlayerShared::RemoveAllCond(CTFPlayer *pPlayer)
 	m_nPlayerCondEx4 = 0;
 }
 
-bool CTFPlayerShared::InPowerupCond()
-{
-	for (int i = TF_COND_BERSERK; i < TF_COND_LAST; i++)
-	{
-		if (InCond(i))
-			return true;
-	}
-	return false;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: Called on both client and server. Server when we add the bit,
 // and client when it recieves the new cond bits and finds one added
@@ -3708,4 +3698,18 @@ void CTFPlayerShared::RemoveCondInvis( void )
 {
 	RemoveCond( TF_COND_STEALTHED );
 	RemoveCond( TF_COND_INVIS_POWERUP );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: check if player has any powerup
+//-----------------------------------------------------------------------------
+
+bool CTFPlayerShared::InPowerupCond()
+{
+	for (int i = TF_COND_BERSERK; i < TF_COND_LAST; i++)
+	{
+		if (InCond(i))
+			return true;
+	}
+	return false;
 }

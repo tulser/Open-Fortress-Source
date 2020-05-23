@@ -5365,7 +5365,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			//weapon specifics
 			int weaponType = GetKillingWeaponType(pInflictor, pScorer);
 			event->SetBool("humiliation", weaponType == 1 ? true : false);
-			event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & FL_ONGROUND) && weaponType == 2 ? true : false);
+			event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & (FL_ONGROUND|FL_INWATER)) && weaponType == 2 ? true : false); //not on the ground and not in water
 
 			//first blood
 			event->SetBool("firstblood", !m_firstBlood ? true : false);
@@ -5387,7 +5387,6 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 
 		//more streaks
 		event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
-		Msg("%d", pTFPlayerVictim->m_Shared.InPowerupCond() ? 1 : 0);
 		event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 
 		gameeventmanager->FireEvent(event);
