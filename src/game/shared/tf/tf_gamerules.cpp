@@ -5393,7 +5393,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 	}
 }
 
-int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer) //0 no special weapon, 1 railgun, 2 melee, 3 explosive projectile
+int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer)
 {
 	if (pScorer && pInflictor && (pInflictor == pScorer))
 	{
@@ -5406,12 +5406,12 @@ int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pSc
 			return weaponID;
 
 		if(WeaponID_IsMeleeWeapon(weaponID))
-			return 1;
+			return 1; //meleee
 	}
 	else if (pInflictor)
 	{
 		if(IsExplosiveProjectile(STRING(pInflictor->m_iClassname)))
-			return 2;
+			return 2; //explosive projectile
 	}
 
 	return 0; //no special weapon

@@ -32,7 +32,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-DECLARE_HUDELEMENT_DEPTH(CTFWinPanel, 1);
+DECLARE_HUDELEMENT_DEPTH(CTFWinPanel, 70);
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
