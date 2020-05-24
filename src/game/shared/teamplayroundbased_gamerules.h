@@ -95,6 +95,7 @@ enum {
 	// open fortress
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	WINREASON_POINTLIMIT,
+	WINREASON_JUGGERNAUGHT_TIMER,
 #endif
 };
 

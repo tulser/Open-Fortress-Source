@@ -156,6 +156,7 @@ extern ConVar tf_spectalk;
 extern ConVar of_allow_special_teams;
 extern ConVar of_spawnprotecttime;
 extern ConVar friendlyfire;
+extern ConVar of_juggernaught_wintime;
 
 ConVar of_teamplay_collision	( "of_teamplay_collision", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables collision with teammates in teamplay." );
 ConVar of_dynamic_color_update	( "of_dynamic_color_update", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Updates player color immediately." );
@@ -423,7 +424,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
-	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
 
 END_SEND_TABLE()
 
@@ -524,6 +525,10 @@ CTFPlayer::CTFPlayer()
 	
 	m_chzVMCosmeticGloves = NULL;
 	m_chzVMCosmeticSleeves = NULL;
+
+	m_bIsJuggernaught = false;
+	m_iJuggernaughtScore = 0;
+	m_iJuggernaughtTimer = 0;
 }
 
 
@@ -763,7 +768,6 @@ void CTFPlayer::FlashlightTurnOff( void )
 	if( IsAlive() ) EmitSound( "HL2Player.FlashLightOff" );
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -783,6 +787,22 @@ void CTFPlayer::PostThink()
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
     m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
+
+	if ( TFGameRules()->IsJugGamemode() )
+	{
+		if ( IsJuggernaught() )
+		{
+			if ( gpGlobals->curtime > ( m_iJuggernaughtTimer + 1 ) )
+			{
+				m_iJuggernaughtTimer = gpGlobals->curtime + 1;
+				m_iJuggernaughtScore++;
+			}
+		}
+
+		//MOVE THIS TO GAMERULES
+		if ( m_iJuggernaughtScore == of_juggernaught_wintime.GetInt() )
+			TFGameRules()->SetWinningTeam(TF_TEAM_MERCENARY, WINREASON_JUGGERNAUGHT_TIMER, true, true, false);;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1357,7 +1377,7 @@ void CTFPlayer::UpdateCosmetics()
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
-			m_iCosmetics.AddToTail(pHat->GetFloat());
+			m_iCosmetics.AddToTail(pHat->GetInt());
 			NetworkStateChanged();
 		}
 
@@ -2489,7 +2509,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 		if ( !pSpot )
 		{
 			Warning( "Player Spawn: no valid spawn point was found for class %s on team %i found, even though at least one spawn entity exists.\n", 
-				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName, GetTeamNumber() );
+				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName.Get(), GetTeamNumber() );
 
 			pSpot = CBaseEntity::Instance( INDEXENT(0) );
 		}
@@ -3450,7 +3470,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
+Vector CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
 {
 	if ( !weapon )
 		return GetAbsOrigin();
@@ -3466,7 +3486,7 @@ const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
+Vector CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
 {
 	float initVel = charge * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) + TF_PIPEBOMB_MIN_CHARGE_VEL;
 	//CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
@@ -3477,7 +3497,7 @@ const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
+Vector CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
 {
 	Vector vecForward, vecRight, vecUp;
 	QAngle angles( pitch, yaw, 0.0f );
@@ -5654,6 +5674,12 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		UpdateModel();
 	}
 
+	if ( m_bIsJuggernaught )
+	{
+		m_bIsJuggernaught = false; 
+		m_Shared.OnRemoveJauggernaught();
+	}
+
 	RemoveTeleportEffect();
 	
 	// Stop being invisible
@@ -5929,7 +5955,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			}
 		}
 	}
-	
+
 	BaseClass::Event_Killed( info_modified );
 	bool bDissolve = false;
 	if ( info.GetDamageType() & DMG_DISSOLVE )
@@ -6690,6 +6716,52 @@ void CTFPlayer::UpdateSkin( int iTeam )
 		m_iLastSkin = iSkin;
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Utility function for live-changing classes (without respawning player)
+//-----------------------------------------------------------------------------
+void CTFPlayer::UpdatePlayerClass( int iPlayerClass, bool bRefreshWeapons )
+{
+	if ( !iPlayerClass == TF_CLASS_UNDEFINED )
+	{
+		TeamFortress_RemoveEverythingFromWorld();
+
+		GetPlayerClass()->SetClass( iPlayerClass );
+
+		int iModifiers = 0;
+
+		if (m_Shared.IsZombie())
+			iModifiers |= (1 << TF_CLASSMOD_ZOMBIE);
+
+		if (IsRetroModeOn())
+			iModifiers |= (1 << TF_CLASSMOD_TFC);
+		
+		m_Shared.FadeInvis( 0.1 );
+
+		RemoveTeleportEffect();
+
+		SetHealth( GetPlayerClass()->GetMaxHealth() );
+	}
+	
+	if ( bRefreshWeapons )
+	{
+		StripWeapons();
+		GiveDefaultItems();
+	}
+
+	UpdateModel();
+	UpdateArmModel();
+	UpdateSkin( GetTeamNumber() );
+	UpdateCosmetics();
+}
+
+void CTFPlayer::BecomeJuggernaught()
+{
+	m_bIsJuggernaught = true;
+
+	m_Shared.OnAddJauggernaught();
+}
+
 
 //=========================================================================
 // Displays the state of the items specified by the Goal passed in
@@ -8730,8 +8802,15 @@ void CTFPlayer::TauntEffectThink()
 			if ( tr.fraction < 1.0f )
 			{
 				CBaseEntity *pEntity = tr.m_pEnt;
-				if ( pEntity && pEntity->IsPlayer() || pEntity->IsNPC() && ( !InSameTeam( pEntity ) || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY || pEntity->GetTeamNumber() == TEAM_UNASSIGNED ) )
-				{
+				if ( pEntity && (
+						( pEntity->IsPlayer() || pEntity->IsNPC() )
+						&& (
+							!InSameTeam( pEntity )
+							|| pEntity->GetTeamNumber() == TF_TEAM_MERCENARY
+							|| pEntity->GetTeamNumber() == TEAM_UNASSIGNED 
+						)
+					)
+				){
 					Vector vecForce, vecDamagePos;
 					QAngle angForce( -45, angShot[YAW], 0 );
 					AngleVectors( angForce, &vecForce );

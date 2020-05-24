@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2006, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2006, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -242,6 +242,8 @@ enum
 	TF_GAMETYPE_GG, // Gun Game
 	TF_GAMETYPE_3WAVE, // 3 Wave
 	TF_GAMETYPE_INF, // Infection
+	TF_GAMETYPE_JUG, // Juggernaught
+
 	TF_GAMETYPE_LAST
 };
 
@@ -291,10 +293,12 @@ enum
 };
 
 int AliasToWeaponID( const char *alias );
+bool IsExplosiveProjectile(const char *alias);
 
 bool WeaponID_IsSniperRifle( int iWeaponID );
 bool WeaponID_IsRocketWeapon( int iWeaponID );
 bool WeaponID_IsGrenadeWeapon( int iWeaponID );
+bool WeaponID_IsMeleeWeapon(int iWeaponID);
 
 //-----------------------------------------------------------------------------
 // Grenade Launcher mode (for pipebombs).
@@ -325,7 +329,7 @@ extern const char *g_aAmmoNames[];
 // Weapons.
 //-----------------------------------------------------------------------------
 #define TF_PLAYER_WEAPON_COUNT		38
-#define TF_PLAYER_GRENADE_COUNT		2
+#define TF_PLAYER_GRENADE_COUNT		3
 #define TF_PLAYER_BUILDABLE_COUNT	4
 
 #define TF_WEAPON_PRIMARY_MODE		0
@@ -415,6 +419,7 @@ enum TFWeaponIDs
 	TF_WEAPON_GRAPPLE,
 	TF_WEAPON_GIB,
 	TF_WEAPON_CLAWS,
+	TF_WEAPON_JUGGERNAUGHT,
 	
 	TFC_WEAPON_SHOTGUN_SB,
 	TFC_WEAPON_SHOTGUN_DB,
@@ -687,6 +692,7 @@ enum
 	TF_COND_CRIT_POWERUP, // 131
 	TF_COND_INVIS_POWERUP, // 132
 	TF_COND_HASTE, // 133
+	TF_COND_JAUGGERNAUGHT, // 134
 
 	TF_COND_LAST
 };

@@ -156,9 +156,15 @@ ActionResult<CTFBot> CTFBotTacticalMonitor::Update( CTFBot *me, float dt )
 			CTFWeaponBase *pWeapon = me->GetActiveTFWeapon();
 
 			// OFBOT: Allclass support
-			if ( ( me->GetTimeSinceWeaponFired() < 2.0f || /*me->IsPlayerClass( TF_CLASS_SNIPER )*/ ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) ) && 
-				(float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat() ) )
-			{
+			// NOPEY: added brackets here, cos i don't think bLowHealth 
+			//		should be true every time me->GetTimeSinceWeaponFired() < 2.0f
+			if ( (
+					me->GetTimeSinceWeaponFired() < 2.0f
+					|| /*me->IsPlayerClass( TF_CLASS_SNIPER )*/
+					( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) )
+				)
+				&& (float)me->GetHealth() / (float)me->GetMaxHealth() < tf_bot_health_critical_ratio.GetFloat()
+			) {
 				bLowHealth = true;
 			}
 			else if ( me->m_Shared.InCond( TF_COND_BURNING ) ||

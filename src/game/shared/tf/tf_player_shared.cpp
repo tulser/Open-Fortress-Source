@@ -271,6 +271,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_iDisguiseWeaponModelIndex = -1;
 	m_pDisguiseWeaponInfo = NULL;
 #endif
+
+	m_iJauggernaughtOldClass = TF_CLASS_UNDEFINED;
 }
 
 void CTFPlayerShared::Init( CTFPlayer *pPlayer )
@@ -688,6 +690,9 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_HASTE:
 		OnAddHaste();
 		break;
+	case TF_COND_JAUGGERNAUGHT:
+		OnAddJauggernaught();
+		break;		
 	default:
 		break;
 	}
@@ -761,6 +766,9 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		break;			
 	case TF_COND_HASTE:
 		OnRemoveHaste();
+		break;
+	case TF_COND_JAUGGERNAUGHT:
+		OnRemoveJauggernaught();
 		break;
 	default:
 		break;
@@ -1318,6 +1326,42 @@ void CTFPlayerShared::OnRemoveBerserk( void )
 	}
 	m_pOuter->TeamFortress_SetSpeed();
 	m_pOuter->StopSound("HeartbeatLoop");
+#endif
+}
+
+void CTFPlayerShared::OnAddJauggernaught( void )
+{
+#ifdef GAME_DLL
+
+	m_iJauggernaughtOldClass = m_pOuter->GetPlayerClass()->GetClass();
+
+	m_pOuter->UpdatePlayerClass( TF_CLASS_JUGGERNAUT, true );
+
+	int iHealth;
+
+	iHealth = m_pOuter->GetPlayerClass()->GetMaxHealth() * ( TFGameRules()->CountActivePlayers() - 1 ) ;
+
+	//fixes a solo juggernaught having no health...
+	if ( iHealth == 0 )
+		iHealth = m_pOuter->GetPlayerClass()->GetMaxHealth();
+
+	m_pOuter->SetMaxHealth(iHealth);
+
+	OnAddHaste();
+
+#endif
+}
+
+void CTFPlayerShared::OnRemoveJauggernaught( void )
+{
+#ifdef GAME_DLL
+	
+	m_pOuter->UpdatePlayerClass( m_iJauggernaughtOldClass, true );
+
+	m_iJauggernaughtOldClass = TF_CLASS_UNDEFINED;
+
+	OnRemoveHaste();
+
 #endif
 }
 
@@ -2038,7 +2082,7 @@ void CTFPlayerShared::RemoveDisguise( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::DoLungeCheck( void )
 {
-	if ( IsZombie() && (m_pOuter->m_nButtons & IN_ATTACK2) )
+	if ( ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT ) && (m_pOuter->m_nButtons & IN_ATTACK2) )
 	{
 		if ( m_flNextLungeTime <= gpGlobals->curtime )
 		{

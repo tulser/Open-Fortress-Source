@@ -459,7 +459,12 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 
 	// Cannot jump while in the unduck transition.
-	if ( !of_crouchjump.GetBool() && ( player->m_Local.m_bDucking && ( player->GetFlags() & FL_DUCKING ) ) || ( player->m_Local.m_flDuckJumpTime > 0.0f ) )
+	if (
+		( !of_crouchjump.GetBool()
+			&& player->m_Local.m_bDucking
+			&& player->GetFlags() & FL_DUCKING
+		) || player->m_Local.m_flDuckJumpTime > 0.0f
+	)
 		return false;
 
 	// Cannot jump again until the jump button has been released.
@@ -623,7 +628,7 @@ bool CTFGameMovement::CheckJumpButton()
 #else
 	if( gpGlobals->curtime >= m_pTFPlayer->m_flJumpSoundDelay )
 	{
-		if ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
+		if ( ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 ) || of_jumpsound.GetInt() == 2 )
 		{
 			m_pTFPlayer->EmitSound( m_pTFPlayer->GetPlayerClass()->GetJumpSound() );
 		}

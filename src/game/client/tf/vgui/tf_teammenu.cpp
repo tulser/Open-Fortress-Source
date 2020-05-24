@@ -755,6 +755,8 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "Payload";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_INF ) )
 		GameType = "Infection";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_JUG ) )
+		GameType = "Juggernaught";
 	return GameType;
 }
 

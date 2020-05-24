@@ -171,6 +171,9 @@ const char* CTFDroppedPowerup::GetPowerupDroppedLine( void )
 		case TF_COND_BERSERK:
 		return "BerserkDropped";
 		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "BerserkDropped"; //change me
+		break;
 	}
 	return "None";
 }

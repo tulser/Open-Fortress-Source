@@ -789,8 +789,12 @@ CTeamControlPoint *CTFBot::GetMyControlPoint( void )
 		CTFWeaponBase *pWeapon = GetActiveTFWeapon();
 		
 		// OFBOT: Allclass Support
-		if ( ( ( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) || IsPlayerClass( TF_CLASS_ENGINEER )/* || BYTE( this + 10061 ) & ( 1 << 4 ) */) && !defensePoints.IsEmpty() ) )
-		{
+		if ( (
+				( pWeapon && WeaponID_IsSniperRifle( pWeapon->GetWeaponID() ) )
+				|| IsPlayerClass( TF_CLASS_ENGINEER )
+				/* || BYTE( this + 10061 ) & ( 1 << 4 ) */
+			) && !defensePoints.IsEmpty()
+		) {
 			CTeamControlPoint *pPoint = SelectPointToDefend( defensePoints );
 			if ( pPoint )
 			{
@@ -2734,9 +2738,9 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 		{
 			char szBotName[32];
 			if ( args.ArgC() > 4 )
-				Q_snprintf( szBotName, 32, args.Arg( 4 ) );
+				Q_strncpy( szBotName, args.Arg( 4 ), sizeof(szBotName) );
 			else
-				Q_strcpy( szBotName, TheTFBots().GetRandomBotName() );
+				Q_strncpy( szBotName, TheTFBots().GetRandomBotName(), sizeof(szBotName) );
 
 			CTFBot *bot = NextBotCreatePlayerBot<CTFBot>( szBotName );
 			if ( bot == nullptr )
@@ -2746,15 +2750,15 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 			if ( args.ArgC() > 2 )
 			{
 				if ( IsTeamName( args.Arg( 2 ) ) )
-					Q_snprintf( szTeam, 10, args.Arg( 2 ) );
+					Q_strncpy( szTeam, args.Arg( 2 ), sizeof(szTeam) );
 				else
 				{
 					Warning( "Invalid argument '%s'\n", args.Arg( 2 ) );
-					Q_snprintf( szTeam, 5, "auto" );
+					Q_strncpy( szTeam, "auto", sizeof(szTeam) );
 				}
 			}
 			else
-				Q_snprintf( szTeam, 5, "auto" );
+				Q_strncpy( szTeam, "auto", sizeof(szTeam) );
 
 			bot->HandleCommand_JoinTeam( szTeam );
 
@@ -2783,24 +2787,24 @@ CON_COMMAND_F( tf_bot_add, "Add a bot.", FCVAR_GAMEDLL )
 				// BOTTODO: Mercenary and Civilian
 				const int iClassIdx = GetClassIndexFromString( szForceClassName, TF_CLASS_CIVILIAN );
 				if ( iClassIdx != TF_CLASS_UNDEFINED )
-					Q_snprintf( szClassName, 32, szForceClassName );
+					Q_strncpy( szClassName, szForceClassName, sizeof(szClassName) );
 				else 
-					Q_snprintf( szClassName, 7, "random" );
+					Q_strncpy( szClassName, "random", sizeof(szClassName) );
 			}
 			else
 			{
 				if ( args.ArgC() > 3 )
 				{
 					if ( IsPlayerClassName( args.Arg( 3 ) ) )
-						Q_snprintf( szClassName, 32, args.Arg( 3 ) );
+						Q_strncpy( szClassName, args.Arg( 3 ), sizeof(szClassName) );
 					else
 					{
 						Warning( "Invalid argument '%s'\n", args.Arg( 3 ) );
-						Q_snprintf( szClassName, 7, "random" );
+						Q_strncpy( szClassName, "random", sizeof(szClassName) );
 					}
 				}
 				else
-					Q_snprintf( szClassName, 7, "random" );
+					Q_strncpy( szClassName, "random", sizeof(szClassName) );
 			}
 
 			bot->HandleCommand_JoinClass( szClassName );

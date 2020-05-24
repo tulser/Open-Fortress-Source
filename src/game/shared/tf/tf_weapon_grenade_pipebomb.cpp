@@ -722,8 +722,8 @@ bool CTFGrenadePipebombProjectile::ExplodeOnImpact( void )
 {
 	CTFWeaponBase *pTFWeapon = dynamic_cast<CTFWeaponBase*>( GetOriginalLauncher() );
 	if (pTFWeapon &&
-		(pTFWeapon->GetTFWpnData().m_bExplodeOnImpact) ||
-		(GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact))
+		(pTFWeapon->GetTFWpnData().m_bExplodeOnImpact ||
+		(GetWeaponID() == TF_WEAPON_GRENADE_MIRVBOMB && pTFWeapon->GetTFWpnData().m_bBombletImpact)))
 		return true;
 	else if (pTFWeapon && !of_stabilize_grenades.GetBool() &&
 		(pTFWeapon->GetTFWpnData().m_flImpactBeforeTime > 0.0f && m_flSpawnTime + pTFWeapon->GetTFWpnData().m_flImpactBeforeTime >= gpGlobals->curtime))

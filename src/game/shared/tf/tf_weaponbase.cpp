@@ -854,6 +854,10 @@ bool CTFWeaponBase::CanHolster( void ) const
 	
 	if ( ( m_iShotsDue > 0 || m_bInBarrage || m_bWindingUp ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
 		return false;
+
+	if ( pPlayer->m_Shared.InCond( TF_COND_JAUGGERNAUGHT ) )
+		return false;
+
 	return BaseClass::CanHolster();
 }
 

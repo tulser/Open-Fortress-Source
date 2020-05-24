@@ -329,7 +329,7 @@ RecvProp RecvPropInt(
 #endif
 		else
 		{
-			Assert(!"RecvPropInt var has invalid size");
+			AssertMsg(false, "RecvPropInt var %s has invalid size", pVarName);
 			varProxy = RecvProxy_Int32ToInt8;	// safest one...
 		}
 	}

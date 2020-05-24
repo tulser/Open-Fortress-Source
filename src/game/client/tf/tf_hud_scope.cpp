@@ -26,7 +26,7 @@
 #include "shake.h"
 #include "view_scene.h"
 
-#include "tf_weapon_sniperrifle.h"
+// #include "tf_weapon_sniperrifle.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -109,14 +109,16 @@ bool CHudScopeCharge::ShouldDraw( void )
 		return false;
 	}
 	
-	CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
+	//TODO: Maybe re-add a similar check for whether the current weapon can scope
+	// CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
 	if ( !pWeapon )
 		return false;
 	
 	if ( !pWeapon->GetTFWpnData().m_bNoSniperCharge )
 		return CHudElement::ShouldDraw();
-	else
-		return false;
+
+	return false;
 }
 
 
@@ -139,7 +141,11 @@ void CHudScopeCharge::Paint( void )
 		return;
 
 	// Make sure the current weapon is a sniper rifle
-	CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+	//TODO: Maybe re-add a similar check for whether the current weapon can scope
+	//CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+
+	// Check that we're holding a weapon
+	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
 	if ( !pWeapon )
 		return;
 

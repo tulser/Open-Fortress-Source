@@ -68,7 +68,7 @@ public:
 	void			UpgradeThink( void );
 	virtual bool	IsUpgrading( void ) const;
 
-	bool CObjectTeleporter::IsReady( void );
+	bool IsReady( void );
 
 	// Engineer hit me with a wrench
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );

@@ -77,7 +77,7 @@ bool CHudLungeMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer || !pPlayer->m_Shared.IsZombie() )
+	if ( !pPlayer || !pPlayer->m_Shared.IsZombie() || ( pPlayer->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT ) )
 	{
 		return false;
 	}

@@ -16,6 +16,7 @@
 #define CTFFists C_TFFists
 #define CTFBerserk C_TFBerserk
 #define CTFClaws C_TFClaws
+#define CTFJuggernaught C_TFJuggernaught
 #endif
 
 //=============================================================================
@@ -80,6 +81,23 @@ public:
 private:
 
 	CTFClaws( const CTFClaws & ) {}
+};
+
+class CTFJuggernaught : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS( CTFJuggernaught, CTFWeaponBaseMelee );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+	
+	virtual bool	CanHolster( void ) const { return false; }
+	CTFJuggernaught() {}
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_JUGGERNAUGHT; }
+
+private:
+
+	CTFJuggernaught( const CTFJuggernaught & ) {}
 };
 
 #endif // TF_WEAPON_FISTS_H

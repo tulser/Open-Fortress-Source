@@ -45,6 +45,8 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tf_weapon_berserk, CTFBerserk );
 //PRECACHE_WEAPON_REGISTER( tf_weapon_berserk );
 
+
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFClaws, DT_TFWeaponClaws )
 
 BEGIN_NETWORK_TABLE( CTFClaws, DT_TFWeaponClaws )
@@ -55,6 +57,20 @@ END_PREDICTION_DATA()
 
 LINK_ENTITY_TO_CLASS( tf_weapon_claws, CTFClaws );
 //PRECACHE_WEAPON_REGISTER( tf_weapon_claws );
+
+
+
+IMPLEMENT_NETWORKCLASS_ALIASED( TFJuggernaught, DT_TFWeaponJuggernaught )
+
+BEGIN_NETWORK_TABLE( CTFJuggernaught, DT_TFWeaponJuggernaught )
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFJuggernaught )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_juggernaught, CTFJuggernaught);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_juggernaught );
+
 
 //=============================================================================
 //

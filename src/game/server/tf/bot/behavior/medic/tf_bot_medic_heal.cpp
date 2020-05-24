@@ -763,7 +763,10 @@ CTFPlayer *CTFBotMedicHeal::SelectPatient( CTFBot *actor, CTFPlayer *currPatient
 				pBestPatient = ToTFPlayer( pMedigun->GetHealTarget() );
 		}
 
-		if ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
+		//NOPEY: added brackets, changed the semantics of this if.
+		// I think its better to switch patients if pBestPatient is NULL,
+		// which I assume happens when an ubered patient falls in a pit. (thus making pBestPatient NULL)
+		if ( ( pMedigun->IsReleasingCharge() || IsReadyToDeployUber( pMedigun ) ) && pBestPatient && IsGoodUberTarget( pBestPatient ) )
 			return pBestPatient;
 	}
 

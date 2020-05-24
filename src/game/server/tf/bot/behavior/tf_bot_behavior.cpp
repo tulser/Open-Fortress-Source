@@ -121,14 +121,14 @@ EventDesiredResult<CTFBot> CTFBotMainAction::OnStuck( CTFBot *me )
 {
 	me->GetLocomotionInterface()->ClearStuckStatus();
 
-	UTIL_LogPrintf( "\"%s<%i><%s><%s>\" stuck (position \"%3.2f %3.2f %3.2f\") (duration \"%3.2f\") ",
+	UTIL_LogPrintf( "\"%s<%i><%s><%s>\" stuck (position \"%s\") (duration \"%3.2f\") ",
 					me->GetPlayerName(), me->entindex(), me->GetNetworkIDString(), me->GetTeam()->GetName(),
 					VecToString( me->GetAbsOrigin() ),
 					me->GetLocomotionInterface()->GetStuckDuration() );
 	if ( me->GetCurrentPath() && me->GetCurrentPath()->IsValid() )
 	{
-		UTIL_LogPrintf( "   path_goal ( \"%3.2f %3.2f %3.2f\" )\n",
-						me->GetCurrentPath()->GetEndPosition() );
+		UTIL_LogPrintf( "   path_goal ( \"%s\" )\n",
+						VecToString( me->GetCurrentPath()->GetEndPosition() ) );
 	}
 	else
 	{

@@ -245,6 +245,9 @@ const char* CCondPowerup::GetPowerupPickupLineSelf( void )
 		case TF_COND_BERSERK:
 		return "BerserkTakenSelf";
 		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "BerserkTakenSelf"; //change me
+		break;
 	}
 	return "None";
 }
@@ -272,6 +275,9 @@ const char* CCondPowerup::GetPowerupPickupLine( void )
 		break;
 		case TF_COND_BERSERK:
 		return "BerserkTaken";
+		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "BerserkTaken"; //change me
 		break;
 	}
 	return "None";
@@ -301,6 +307,9 @@ const char* CCondPowerup::GetPowerupPickupSound( void )
 		case TF_COND_HASTE:
 		return "Powerup.Haste";
 		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "Powerup.Berserk"; //change me
+		break;
 	}
 	return "None";
 }
@@ -329,6 +338,9 @@ const char* CCondPowerup::GetPowerupRespawnLine( void )
 		case TF_COND_BERSERK:
 		return "Berserk";
 		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "Berserk"; //change me
+		break;
 	}
 	return "None";
 }
@@ -356,6 +368,9 @@ const char *CCondPowerup::GetPowerupPickupIncomingLine( void )
 		break;
 		case TF_COND_BERSERK:
 		return "BerserkIncoming";
+		break;
+		case TF_COND_JAUGGERNAUGHT:
+		return "BerserkIncoming"; //change me
 		break;
 	}
 	return "PowerupsIncoming";

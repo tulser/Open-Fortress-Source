@@ -117,6 +117,9 @@ void CTFHudPowerups::FireGameEvent( IGameEvent * event )
 				case TF_COND_STEALTHED:
 					s_aPowerupTimer.m_pBar->SetFgImage("../effects/powerup_invis_hud");
 					break;
+				case TF_COND_JAUGGERNAUGHT: //change me
+					s_aPowerupTimer.m_pBar->SetFgImage("../effects/powerup_knockout_hud");
+					break;
 			}
 		}
 		else

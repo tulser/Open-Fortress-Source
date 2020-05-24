@@ -280,6 +280,7 @@ class CPositionInterpolator_Rope : public IPositionInterpolator
 {
 public:
 						CPositionInterpolator_Rope();
+	virtual				~CPositionInterpolator_Rope();
 
 	virtual void		Release();
 	virtual void		GetDetails( char **outName, int *outMinKeyReq, int *outMaxKeyReq );
@@ -313,6 +314,8 @@ CPositionInterpolator_Rope::CPositionInterpolator_Rope()
 	for( int i=0; i < 2; i++ )
 		m_Delegate.m_CurEndPoints[i] = Vector( 1e24, 1e24, 1e24 );
 }
+
+CPositionInterpolator_Rope::~CPositionInterpolator_Rope() {}
 
 void CPositionInterpolator_Rope::Release()
 {

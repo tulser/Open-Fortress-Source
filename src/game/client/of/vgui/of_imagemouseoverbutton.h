@@ -74,8 +74,8 @@ void CTFImageMouseOverButton<T>::ApplySettings( KeyValues *inResourceData )
 
 	CImageMouseOverButton<T>::ApplySettings( inResourceData );
 	
-	if( pTmpParent && GetClassPanel() )
-		GetClassPanel()->SetParent(pTmpParent);
+	if( pTmpParent && MouseOverButton<T>::GetClassPanel() )
+		MouseOverButton<T>::GetClassPanel()->SetParent(pTmpParent);
 	
 	UpdateButtonImages();
 }
@@ -89,12 +89,12 @@ void CTFImageMouseOverButton<T>::UpdateButtonImages( void )
 		if ( m_szTeamActiveImageName[m_iBGTeam] && m_szTeamActiveImageName[m_iBGTeam][0] )
 		{
 			this->SetActiveImage( m_szTeamActiveImageName[m_iBGTeam] );
-			this->SetActiveImage( vgui::scheme()->GetImage( m_szTeamActiveImageName[m_iBGTeam], GetScaleImage() ) );
+			this->SetActiveImage( vgui::scheme()->GetImage( m_szTeamActiveImageName[m_iBGTeam], CImageMouseOverButton<T>::GetScaleImage() ) );
 		}
 		if ( m_szTeamInactiveImageName[m_iBGTeam] && m_szTeamInactiveImageName[m_iBGTeam][0] )
 		{
 			this->SetInactiveImage( m_szTeamInactiveImageName[m_iBGTeam] );
-			this->SetInactiveImage( vgui::scheme()->GetImage( m_szTeamInactiveImageName[m_iBGTeam], GetScaleImage() ) );
+			this->SetInactiveImage( vgui::scheme()->GetImage( m_szTeamInactiveImageName[m_iBGTeam], CImageMouseOverButton<T>::GetScaleImage() ) );
 		}
 	}
 }

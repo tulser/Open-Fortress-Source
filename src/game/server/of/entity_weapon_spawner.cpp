@@ -118,7 +118,7 @@ void CWeaponSpawner::Spawn( void )
 					if ( pWeaponSpawners )
 					{
 						char pTemp[256];
-						Q_snprintf( pTemp, sizeof(pTemp), "%d", m_iIndex );					
+						Q_snprintf( pTemp, sizeof(pTemp), "%d", m_iIndex.Get() );
 						KeyValues* pWeaponSpawner = pWeaponSpawners->FindKey( pTemp );
 						if ( pWeaponSpawner )
 						{

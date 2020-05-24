@@ -105,7 +105,41 @@ obj_*_macosx/
 
 # These makefiles are hand-made, and required for linux builds.
 !/src/devtools/*.mak
+
+# unsorted
 /src/lib/public/mathlib.lib
 /src/lib/public/raytrace.lib
 /src/lib/public/tier1.lib
 /src/lib/public/vgui_controls.lib
+src/utils/captioncompiler/Release/captioncompiler.exe
+src/utils/captioncompiler/Release/captioncompiler.lib
+src/utils/captioncompiler/Release/captioncompiler.pdb
+src/utils/glview/Release/glview.exe
+src/utils/glview/Release/glview.lib
+src/utils/glview/Release/glview.pdb
+src/utils/height2normal/Release/height2normal.exe
+src/utils/height2normal/Release/height2normal.lib
+src/utils/height2normal/Release/height2normal.pdb
+src/utils/motionmapper/Release/motionmapper.exe
+src/utils/motionmapper/Release/motionmapper.lib
+src/utils/motionmapper/Release/motionmapper.pdb
+src/utils/serverplugin_sample/Release/serverplugin_empty.dll
+src/utils/serverplugin_sample/Release/serverplugin_empty.lib
+src/utils/serverplugin_sample/Release/serverplugin_empty.pdb
+src/utils/tgadiff/Release/tgadiff.exe
+src/utils/tgadiff/Release/tgadiff.lib
+src/utils/tgadiff/Release/tgadiff.pdb
+src/utils/vice/Release/vice.exe
+src/utils/vice/Release/vice.lib
+src/utils/vice/Release/vice.pdb
+src/utils/vrad/Release/vrad_dll.dll
+src/utils/vrad/Release/vrad_dll.lib
+src/utils/vrad/Release/vrad_dll.pdb
+src/utils/vtf2tga/Release/vtf2tga.exe
+src/utils/vtf2tga/Release/vtf2tga.lib
+src/utils/vtf2tga/Release/vtf2tga.pdb
+src/utils/vtfdiff/Release/vtfdiff.exe
+src/utils/vtfdiff/Release/vtfdiff.pdb
+src/utils/vvis/Release/vvis_dll.dll
+src/utils/vvis/Release/vvis_dll.lib
+src/utils/vvis/Release/vvis_dll.pdb

@@ -1,8 +1,8 @@
 # Compiling for Linux
 from..
 * [Ubuntu/Debian](#for-the-lucky),
-* [Some other *nix](#for-the-rest-of-us),
-* or even [Microsoft Windows](#for-the-foolish).
+* [Some other *nix](#for-the-foolish),
+* or even [Microsoft Windows](#for-the-rest-of-you).
 [Appendix A: Dedicated Server]
 
 ## For the lucky

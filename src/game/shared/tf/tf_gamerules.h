@@ -103,12 +103,14 @@ public:
 	COutputEvent m_OutputIsDM;
 	COutputEvent m_OutputIsTeamplay;
 	COutputEvent m_OutputIsGunGame;
+	COutputEvent m_OutputIsJug;
 	
 	void	FireCTFOutput(void) {m_OutputIsCTF.FireOutput(NULL,this);}
 	void	FireCPOutput(void) {m_OutputIsCP.FireOutput(NULL,this);}
 	void	FireDMOutput(void) {m_OutputIsDM.FireOutput(NULL,this);}
 	void	FireTeamplayOutput(void) {m_OutputIsTeamplay.FireOutput(NULL,this);}
 	void	FireGunGameOutput(void) {m_OutputIsGunGame.FireOutput(NULL,this);}
+	void	FireJugOutput(void) {m_OutputIsJug.FireOutput(NULL,this);}
 #endif
 };
 
@@ -374,6 +376,8 @@ public:
 	void BeginInfection( void );
 	void SelectInfector( void );
 	void FinishInfection( void );
+	
+	void PickJuggernaught( void );
 
 	virtual int GetMaxHunted( int iTeamNumber );
 	virtual int GetHuntedCount( int iTeamNumber );
@@ -491,12 +495,12 @@ public:
 
 	int		GetPreviousRoundWinners( void ) { return m_iPreviousRoundWinners; }
 	
-	const CUtlVector<EHANDLE> &GetAmmoEnts( void ) const { Assert( m_hAmmoEntities.Count() ); return m_hAmmoEntities; }
-	const CUtlVector<EHANDLE> &GetHealthEnts( void ) const { Assert( m_hHealthEntities.Count() ); return m_hHealthEntities; }
-	const CUtlVector<EHANDLE> &GetWeaponEnts( void ) const { Assert( m_hWeaponEntities.Count() ); return m_hWeaponEntities; }
-	const CUtlVector<EHANDLE> &GetMapTeleportEnts( void ) const { Assert( m_hMapTeleportEntities.Count() ); return m_hMapTeleportEntities; }
-	const CUtlVector<EHANDLE> &GetJumpPadEnts( void ) const { Assert( m_hJumpPadEntities.Count() ); return m_hJumpPadEntities; }
-	const CUtlVector<EHANDLE> &GetPowerupEnts( void ) const { Assert( m_hPowerupEntities.Count() ); return m_hPowerupEntities; }
+	const CUtlVector<EHANDLE> &GetAmmoEnts			( void ) const { return m_hAmmoEntities; }
+	const CUtlVector<EHANDLE> &GetHealthEnts		( void ) const { return m_hHealthEntities; }
+	const CUtlVector<EHANDLE> &GetWeaponEnts		( void ) const { return m_hWeaponEntities; }
+	const CUtlVector<EHANDLE> &GetMapTeleportEnts	( void ) const { return m_hMapTeleportEntities; }
+	const CUtlVector<EHANDLE> &GetJumpPadEnts		( void ) const { return m_hJumpPadEntities; }
+	const CUtlVector<EHANDLE> &GetPowerupEnts		( void ) const { return m_hPowerupEntities; }
 
 	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
@@ -619,6 +623,7 @@ public:
 	bool	IsESCGamemode(void);
 	bool	IsZSGamemode(void);
 	bool	IsInfGamemode(void);
+	bool	IsJugGamemode(void);
 	bool	IsPayloadOverride(void);
 	bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	bool	IsFreeRoam(void); // this is used for bots

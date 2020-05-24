@@ -104,7 +104,7 @@ CTFNavArea::CTFNavArea()
 
 CTFNavArea::~CTFNavArea()
 {
-	for ( int i = 0; i < 4; i++ )
+	for ( int i = 0; i < TF_NAV_AREA_PASTLASTTEAM; i++ )
 		m_InvasionAreas[i].Purge();
 }
 
@@ -112,7 +112,7 @@ void CTFNavArea::OnServerActivate()
 {
 	CNavArea::OnServerActivate();
 
-	for ( int i = 0; i < 4; i++ )
+	for ( int i = 0; i < TF_NAV_AREA_PASTLASTTEAM; i++ )
 		m_InvasionAreas[i].RemoveAll();
 
 	m_fCombatIntensity = 0;
@@ -387,7 +387,7 @@ CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
 
 	float incursionDist = GetIncursionDistance( teamNum );
 
-	for ( int i = 0; i < 4; i++ )
+	for ( int i = 0; i < TF_NAV_AREA_PASTLASTTEAM; i++ )
 	{
 		for ( int j = 0; j < m_InvasionAreas[i].Count(); j++ )
 		{
@@ -406,7 +406,7 @@ CTFNavArea *CTFNavArea::GetNextIncursionArea( int teamNum ) const
 
 void CTFNavArea::ComputeInvasionAreaVectors()
 {
-	for ( int i=0; i<4; ++i )
+	for ( int i=0; i<TF_NAV_AREA_PASTLASTTEAM; ++i )
 		m_InvasionAreas[i].RemoveAll();
 
 	static int searchMarker = RandomInt( 0, Square( 1024 ) );
@@ -426,8 +426,8 @@ void CTFNavArea::ComputeInvasionAreaVectors()
 
 bool CTFNavArea::IsAwayFromInvasionAreas( int teamNum, float radius ) const
 {
-	Assert( teamNum >= 0 && teamNum < 4 );
-	if ( teamNum < 4 )
+	Assert( teamNum >= 0 && teamNum < TF_NAV_AREA_PASTLASTTEAM );
+	if ( teamNum < TF_NAV_AREA_PASTLASTTEAM )
 	{
 		const CUtlVector<CTFNavArea *> &invasionAreas = m_InvasionAreas[teamNum];
 		for ( int i=0; i<invasionAreas.Count(); ++i )

@@ -13,7 +13,7 @@
 #include "tf_gamerules.h"
 #include "engine/IEngineSound.h"
 
-#if defined( OF_DLL )
+#if defined( GAME_DLL )
 #include "tf_gamestats.h"
 #include "of_music_player.h"
 #endif
@@ -271,7 +271,7 @@ static ConCommand mp_switchteams( "mp_switchteams", cc_SwitchTeams, "Switch team
 void cc_ScrambleTeams( const CCommand& args )
 {
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() ) )
 		return;
 #endif
 	
@@ -1649,6 +1649,11 @@ void CTeamplayRoundBasedRules::State_Enter_RND_RUNNING( void )
 	if( !IsInWaitingForPlayers() )
 	{
 		PlayStartRoundVoice();
+
+		if (TFGameRules() && (TFGameRules()->IsJugGamemode()))
+		{
+			TFGameRules()->PickJuggernaught();
+		}
 	}
 
 	m_bChangeLevelOnRoundEnd = false;
@@ -3326,7 +3331,7 @@ void CTeamplayRoundBasedRules::CheckRespawnWaves( void )
 void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 {
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() ) )
 		return;
 #endif
 
