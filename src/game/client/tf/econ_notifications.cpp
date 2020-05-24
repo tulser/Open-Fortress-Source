@@ -25,7 +25,7 @@ CEconNotification::~CEconNotification()
 
 void CEconNotification::SetText( const char *a2 )
 {
-	strncpy( sText, a2, sizeof( sText ) );
+	Q_strncpy( sText, a2, sizeof( sText ) );
 }
 
 void CEconNotification::AddStringToken( const char *a2, const wchar_t *a3 )
