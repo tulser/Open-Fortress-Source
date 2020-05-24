@@ -18,10 +18,9 @@
 
 using namespace vgui;
 
-#include <vgui/ILocalize.h>
-
-
-#include <KeyValues.h>
+#include "vgui/ILocalize.h"
+#include "filesystem.h"
+#include "KeyValues.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>

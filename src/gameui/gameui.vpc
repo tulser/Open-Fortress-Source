@@ -50,9 +50,6 @@ $Configuration
 		$AdditionalIncludeDirectories	"$BASE;.\;$SRCDIR\game\shared;$SRCDIR\game\client;$SRCDIR\game\client\game_controls;.\client;.\;$SRCDIR\public;"
 		$PreprocessorDefinitions		"$BASE;SUPPRESS_INVALID_PARAMETER_NO_INFO;_CRT_NO_VA_START_VALIDATION;NO_STRING_T;CLIENT_DLL;VECTOR;VERSION_SAFE_STEAM_API_INTERFACES;DISABLE_PROTECTED_THINGS;strncpy=use_Q_strncpy_instead;_snprintf=use_Q_snprintf_instead" 
 		$PreprocessorDefinitions		"$BASE;GAMEUI_EXPORTS"
-		$Create/UsePrecompiledHeader	"Use Precompiled Header (/Yu)"
-		$Create/UsePCHThroughFile		"cbase.h"
-		$PrecompiledHeaderFile			"$(IntDir)/gameui.pch"
 	}
 
 	$Linker
@@ -167,7 +164,7 @@ $Project "GameUI"
 		$File	"VVideo.cpp"
 		$File	"UI_Shared.cpp"
 		$File	"UIGameData.cpp"
-		$File	"$SRCDIR\public\tier0\platform.cpp"
+		$File	"$SRCDIR\public\tier0\platform.cpp" [$POSIX]
 
 		$File	"BackgroundMenuButton.cpp" \
 				"BaseSaveGameDialog.cpp" \
@@ -221,30 +218,7 @@ $Project "GameUI"
 				"$SRCDIR\public\filesystem_helpers.cpp" \
 				"$SRCDIR\common\randoverride.cpp" \
 				"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
-		{
-			$Configuration
-			{
-				$Compiler
-				{
-					$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
-				}
-			}
-		}
 		$File	"OptionsSubHL2CE.cpp"
-	}
-
-	$Folder	"Precompiled Header"
-	{
-		$File "stdafx.cpp"
-		{
-			$Configuration
-			{
-				$Compiler
-				{
-					$Create/UsePrecompiledHeader	"Create Precompiled Header (/Yc)"
-				}
-			}
-		}
 	}
 
 	$Folder	"Public Header Files"

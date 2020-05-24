@@ -3,7 +3,7 @@
 // Purpose: VGUI panel which can play back video, in-engine
 //
 //=============================================================================
-
+#include "cbase.h"
 #include "materialsystem/imesh.h"
 #include <vgui/IVGui.h>
 #include "vgui/IInput.h"

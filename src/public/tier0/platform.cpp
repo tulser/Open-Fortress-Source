@@ -1,3 +1,5 @@
+// LINUX/OSX COMPATIBILITY FILE FOR GAMEUI
+// (in public for some reason)
 #include "platform.h"
 
 #include <cstdio>
@@ -24,8 +26,8 @@ bool DeleteFile(const char* file)
 	return !std::remove(file);
 }
 
-void itoa(int val, char* buf, int base)
-{		
+char *itoa(int val, char* buf, int base)
+{
 	int i = 64;
 	
 	for(; val && i ; --i, val /= base)
