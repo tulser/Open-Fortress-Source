@@ -268,7 +268,7 @@ void CBaseViewModel::SetOwner( CBaseEntity *pEntity )
 void CBaseViewModel::SetIndex( int nIndex )
 {
 	m_nViewModelIndex = nIndex;
-	Assert( m_nViewModelIndex < (1 << VIEWMODEL_INDEX_BITS) );
+	AssertMsg( m_nViewModelIndex < (1 << VIEWMODEL_INDEX_BITS), "SetIndex(%d) out of range", nIndex );
 }
 
 //-----------------------------------------------------------------------------

@@ -210,7 +210,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::Update( CTFBot *me, float dt )
 			m_PathFollower.Update( me );
 
 		float flDistToSpot = ( me->GetAbsOrigin() - m_vecAttackSpot ).LengthSqr();
-		if ( me->IsLineOfFireClear( m_vecAttackSpot ) && flDistToSpot < Square( 25.0f ) || me->IsLineOfFireClear( m_hSentry ) )
+		if ( ( me->IsLineOfFireClear( m_vecAttackSpot ) && flDistToSpot < Square( 25.0f ) ) || me->IsLineOfFireClear( m_hSentry ) )
 		{
 			if ( me->IsRangeLessThan( m_hSentry, 1000.0f ) )
 				return BaseClass::ChangeTo( new CTFBotStickybombSentrygun( m_hSentry ), "Destroying sentry with stickies." );

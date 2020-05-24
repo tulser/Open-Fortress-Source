@@ -27,7 +27,7 @@
 	BEGIN_PREDICTION_DATA( C##WpnName )						\
 	END_PREDICTION_DATA()									\
 															\
-	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			//\
+	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
 	//PRECACHE_WEAPON_REGISTER( entityname );
 #define CREATE_SIMPLE_WEAPON_TABLE_OLD(WpnName, entityname)			    \
 																	\
@@ -39,7 +39,7 @@
 	BEGIN_PREDICTION_DATA( C##WpnName## )							\
 	END_PREDICTION_DATA()											\
 																	\
-	LINK_ENTITY_TO_CLASS( ##entityname##, C##WpnName## );			//\
+	LINK_ENTITY_TO_CLASS( ##entityname##, C##WpnName## );			\
 	//PRECACHE_WEAPON_REGISTER( ##entityname## );
 	
 

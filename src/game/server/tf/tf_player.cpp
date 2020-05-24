@@ -424,7 +424,7 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 
-	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropFloat( NULL, 0, 0, 0, SPROP_NOSCALE ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
 
 END_SEND_TABLE()
 
@@ -1377,7 +1377,7 @@ void CTFPlayer::UpdateCosmetics()
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
-			m_iCosmetics.AddToTail(pHat->GetFloat());
+			m_iCosmetics.AddToTail(pHat->GetInt());
 			NetworkStateChanged();
 		}
 
@@ -2509,7 +2509,7 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 		if ( !pSpot )
 		{
 			Warning( "Player Spawn: no valid spawn point was found for class %s on team %i found, even though at least one spawn entity exists.\n", 
-				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName, GetTeamNumber() );
+				GetPlayerClassData( GetPlayerClass()->GetClassIndex() )->m_szLocalizableName.Get(), GetTeamNumber() );
 
 			pSpot = CBaseEntity::Instance( INDEXENT(0) );
 		}
@@ -3470,7 +3470,7 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
+Vector CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon )
 {
 	if ( !weapon )
 		return GetAbsOrigin();
@@ -3486,7 +3486,7 @@ const Vector &CTFPlayer::EstimateProjectileImpactPosition( CTFWeaponBaseGun *wea
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
+Vector CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge )
 {
 	float initVel = charge * ( TF_PIPEBOMB_MAX_CHARGE_VEL - TF_PIPEBOMB_MIN_CHARGE_VEL ) + TF_PIPEBOMB_MIN_CHARGE_VEL;
 	//CALL_ATTRIB_HOOK_FLOAT( initVel, mult_projectile_range );
@@ -3497,7 +3497,7 @@ const Vector &CTFPlayer::EstimateStickybombProjectileImpactPosition( float pitch
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-const Vector &CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
+Vector CTFPlayer::EstimateProjectileImpactPosition( float pitch, float yaw, float initVel )
 {
 	Vector vecForward, vecRight, vecUp;
 	QAngle angles( pitch, yaw, 0.0f );
@@ -8802,8 +8802,15 @@ void CTFPlayer::TauntEffectThink()
 			if ( tr.fraction < 1.0f )
 			{
 				CBaseEntity *pEntity = tr.m_pEnt;
-				if ( pEntity && pEntity->IsPlayer() || pEntity->IsNPC() && ( !InSameTeam( pEntity ) || pEntity->GetTeamNumber() == TF_TEAM_MERCENARY || pEntity->GetTeamNumber() == TEAM_UNASSIGNED ) )
-				{
+				if ( pEntity && (
+						( pEntity->IsPlayer() || pEntity->IsNPC() )
+						&& (
+							!InSameTeam( pEntity )
+							|| pEntity->GetTeamNumber() == TF_TEAM_MERCENARY
+							|| pEntity->GetTeamNumber() == TEAM_UNASSIGNED 
+						)
+					)
+				){
 					Vector vecForce, vecDamagePos;
 					QAngle angForce( -45, angShot[YAW], 0 );
 					AngleVectors( angForce, &vecForce );

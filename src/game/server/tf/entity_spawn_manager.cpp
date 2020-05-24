@@ -254,7 +254,7 @@ bool CEntitySpawnManager::CanMakeEntity( )
 //-----------------------------------------------------------------------------
 void CEntitySpawnManager::SpawnerThink ( void )
 {
-	if ( !m_bSpawned && m_iEntityCount > 0 && m_nLiveChildren >= m_iSpawnCount || m_nLiveChildren >= m_iEntityCount )
+	if ( ( !m_bSpawned && m_iEntityCount > 0 && m_nLiveChildren >= m_iSpawnCount ) || m_nLiveChildren >= m_iEntityCount )
 	{
 		m_bSpawned = true;
 		SetNextThink( gpGlobals->curtime + 8.0f );

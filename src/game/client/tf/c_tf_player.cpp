@@ -2529,7 +2529,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 
 	RecvPropInt( RECVINFO( m_iAccount ) ),
 
-	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropFloat(NULL,0,0) ),
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
 
 END_RECV_TABLE()
 

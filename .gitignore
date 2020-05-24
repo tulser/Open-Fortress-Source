@@ -104,6 +104,8 @@ obj_*_macosx/
 
 # These makefiles are hand-made, and required for linux builds.
 !/src/devtools/*.mak
+
+# unsorted
 /src/lib/public/mathlib.lib
 /src/lib/public/raytrace.lib
 /src/lib/public/tier1.lib

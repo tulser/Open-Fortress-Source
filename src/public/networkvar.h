@@ -721,20 +721,20 @@ private:
 		\
 		const type& Get( int i ) const \
 		{ \
-			Assert( i >= 0 && i < count ); \
+			AssertMsg( i >= 0 && i < count, "CNetworkVar %s Get() index %d out of range [0..%d)", #name, i, count ); \
 			return m_Value[i]; \
 		} \
 		\
 		type& GetForModify( int i ) \
 		{ \
-			Assert( i >= 0 && i < count ); \
+			AssertMsg( i >= 0 && i < count, "CNetworkVar %s GetForModify() index %d out of range [0..%d)", #name, i, count ); \
 			NetworkStateChanged( i ); \
 			return m_Value[i]; \
 		} \
 		\
 		void Set( int i, const type &val ) \
 		{ \
-			Assert( i >= 0 && i < count ); \
+			AssertMsg( i >= 0 && i < count, "CNetworkVar %s Set() index %d out of range [0..%d)", #name, i, count ); \
 			if( memcmp( &m_Value[i], &val, sizeof(type) ) ) \
 			{ \
 				NetworkStateChanged( i ); \

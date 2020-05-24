@@ -18,6 +18,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <typeinfo>
 
 #ifdef POSIX
 #define __cdecl
@@ -595,10 +596,16 @@ public:
 
 
 #ifdef _DEBUG
+class CDbgFmtMsg;
 template<typename DEST_POINTER_TYPE, typename SOURCE_POINTER_TYPE>
 inline DEST_POINTER_TYPE assert_cast(SOURCE_POINTER_TYPE* pSource)
 {
-    Assert( static_cast<DEST_POINTER_TYPE>(pSource) == dynamic_cast<DEST_POINTER_TYPE>(pSource) );
+	AssertMsg(
+		static_cast<DEST_POINTER_TYPE>(pSource) == dynamic_cast<DEST_POINTER_TYPE>(pSource),
+		"assert_cast: cast from %s to %s failed.\n",
+		typeid(SOURCE_POINTER_TYPE).name(),
+		typeid(DEST_POINTER_TYPE).name()
+	);
     return static_cast<DEST_POINTER_TYPE>(pSource);
 }
 #else

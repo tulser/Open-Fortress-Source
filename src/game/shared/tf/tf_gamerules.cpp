@@ -294,7 +294,7 @@ static CViewVectors g_HLViewVectors(
 const CViewVectors *CTFGameRules::GetViewVectors() const
 {
 
-	if ( m_bUsesHL2Hull && of_usehl2hull.GetInt() < 0 || of_usehl2hull.GetInt() > 0 )
+	if ( ( m_bUsesHL2Hull && of_usehl2hull.GetInt() < 0) || of_usehl2hull.GetInt() > 0 )
 		return &g_HLViewVectors;
 
 	return &g_TFViewVectors;
@@ -2391,7 +2391,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 			m_hAmmoEntities.AddToTail( hndl );
 		}
 
-		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_healthkit*" ) && !pEnt->ClassMatches( "item_healthkit_tiny" ) ) // don't want bots to go after these...
+		if ( pEnt->ClassMatches( "func_regenerate" ) || ( pEnt->ClassMatches( "item_healthkit*" ) && !pEnt->ClassMatches( "item_healthkit_tiny" ) ) ) // don't want bots to go after these...
 		{
 			EHANDLE hndl( pEnt );
 			m_hHealthEntities.AddToTail( hndl );
@@ -5003,7 +5003,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
 					&& !TFGameRules()->IsInWaitingForPlayers() )
 				{
-					DevMsg( "VoteController: Team fraglimit is 80%, begin nextlevel voting... \n" );
+					DevMsg( "VoteController: Team fraglimit is 80%%, begin nextlevel voting... \n" );
 					m_bStartedVote = true;
 					//engine->ServerCommand( "callvote nextlevel" );
 					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -5031,7 +5031,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					// one of our players is at 80% of the fragcount, start voting for next map
 					if ( !m_bStartedVote && ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
 					{
-						DevMsg( "VoteController: Player fraglimit is 80%, begin nextlevel voting... \n" );
+						DevMsg( "VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n" );
 						m_bStartedVote = true;
 						//engine->ServerCommand( "callvote nextlevel" );
 						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -5052,7 +5052,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 
 		if ( !m_bStartedVote && ( pTFPlayerScorer->GGLevel() >= ( (float)m_iMaxLevel * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
 		{
-			DevMsg( "VoteController: GGLevel is 80%, begin nextlevel voting... \n" );
+			DevMsg( "VoteController: GGLevel is 80%%, begin nextlevel voting... \n" );
 			m_bStartedVote = true;
 			//engine->ServerCommand( "callvote nextlevel" );
 			char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];

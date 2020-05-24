@@ -42,6 +42,10 @@ CModelSoundsCache::CModelSoundsCache( const CModelSoundsCache& src )
 	sounds = src.sounds;
 }
 
+CModelSoundsCache::~CModelSoundsCache()
+{
+}
+
 char const *CModelSoundsCache::GetSoundName( int index )
 {
 	return soundemitterbase->GetSoundName( sounds[ index ] );

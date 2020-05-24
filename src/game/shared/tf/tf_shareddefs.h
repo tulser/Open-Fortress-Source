@@ -329,7 +329,7 @@ extern const char *g_aAmmoNames[];
 // Weapons.
 //-----------------------------------------------------------------------------
 #define TF_PLAYER_WEAPON_COUNT		38
-#define TF_PLAYER_GRENADE_COUNT		2
+#define TF_PLAYER_GRENADE_COUNT		3
 #define TF_PLAYER_BUILDABLE_COUNT	4
 
 #define TF_WEAPON_PRIMARY_MODE		0

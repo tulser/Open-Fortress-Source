@@ -271,7 +271,7 @@ static ConCommand mp_switchteams( "mp_switchteams", cc_SwitchTeams, "Switch team
 void cc_ScrambleTeams( const CCommand& args )
 {
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() ) )
 		return;
 #endif
 	
@@ -3331,7 +3331,7 @@ void CTeamplayRoundBasedRules::CheckRespawnWaves( void )
 void CTeamplayRoundBasedRules::BalanceTeams( bool bRequireSwitcheesToBeDead )
 {
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( TFGameRules() && ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	if ( TFGameRules() && ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() ) )
 		return;
 #endif
 

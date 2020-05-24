@@ -2,6 +2,9 @@
 #define __TF_NAV_AREA_H__
 
 #include "nav_area.h"
+#include "tf_shareddefs.h"
+
+#define TF_NAV_AREA_PASTLASTTEAM (TF_TEAM_MERCENARY+1)
 
 enum TFNavAttributeType
 {
@@ -75,7 +78,7 @@ public:
 
 	virtual bool IsPotentiallyVisibleToTeam( int iTeamNum ) const override
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_NAV_AREA_PASTLASTTEAM );
 		return !m_PVNPCs[ iTeamNum ].IsEmpty();
 	}
 
@@ -87,7 +90,7 @@ public:
 	bool IsAwayFromInvasionAreas( int iTeamNum, float radius ) const;
 	const CUtlVector<CTFNavArea *> &GetInvasionAreasForTeam( int iTeamNum ) const
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_NAV_AREA_PASTLASTTEAM );
 		return m_InvasionAreas[ iTeamNum ];
 	}
 
@@ -121,12 +124,12 @@ public:
 
 	void SetIncursionDistance( int iTeamNum, float distance )
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_NAV_AREA_PASTLASTTEAM );
 		m_aIncursionDistances[ iTeamNum ] = distance;
 	}
 	float GetIncursionDistance( int iTeamNum ) const
 	{
-		Assert( iTeamNum > -1 && iTeamNum < 4 );
+		Assert( iTeamNum > -1 && iTeamNum < TF_NAV_AREA_PASTLASTTEAM );
 		return m_aIncursionDistances[ iTeamNum ];
 	}
 
@@ -159,8 +162,8 @@ public:
 	static int m_masterTFMark;
 
 private:
-	float m_aIncursionDistances[4];
-	CUtlVector<CTFNavArea *> m_InvasionAreas[4];
+	float m_aIncursionDistances[TF_NAV_AREA_PASTLASTTEAM];
+	CUtlVector<CTFNavArea *> m_InvasionAreas[TF_NAV_AREA_PASTLASTTEAM];
 
 public:
 	int m_TFSearchMarker;
@@ -168,7 +171,7 @@ public:
 private:
 	int m_nAttributes;
 
-	CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[4];
+	CUtlVector< CHandle<CBaseCombatCharacter> > m_PVNPCs[TF_NAV_AREA_PASTLASTTEAM];
 
 	float m_fCombatIntensity;
 	IntervalTimer m_combatTimer;

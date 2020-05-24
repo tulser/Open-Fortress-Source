@@ -85,6 +85,8 @@ private:
 	float m_flDeathDropHeight;
 };
 
+// declare this function so we can friend it.
+static void tf_bot_add( const CCommand &args );
 
 //=============================================================================
 //
@@ -407,7 +409,7 @@ public:
 	CNetworkVar( bool, m_bCentered );
 	CNetworkVar( bool, m_bMinimized );
 	
-	CUtlVector<float> m_iCosmetics;
+	CUtlVector<int> m_iCosmetics;
 	KeyValues *kvDesiredCosmetics;
 	CTFPlayerShared m_Shared;
 	int	    item_list;			// Used to keep track of which goalitems are 
@@ -473,9 +475,9 @@ public:
 	int 				GetDesiredWeaponCount( TFPlayerClassData_t *pData );
 	int 				GetDesiredWeapon( int iWeapon, TFPlayerClassData_t *pData );
 	
-	const Vector		&EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
-	const Vector		&EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
-	const Vector		&EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
+	Vector				EstimateProjectileImpactPosition( CTFWeaponBaseGun *weapon );
+	Vector				EstimateProjectileImpactPosition( float pitch, float yaw, float speed );
+	Vector				EstimateStickybombProjectileImpactPosition( float pitch, float yaw, float charge );
 
 	bool				IsCapturingPoint( void );
 
@@ -582,11 +584,10 @@ private:
 	
 	// Linux gives us errors when this function is static
 	// but windows gives us errors when its not...
-#ifdef __linux__
+	// NOPEY: I found a workaround, declaring tf_bot_add static above
+	//			If this doesn't work on MSVC, I reckon we should just
+	//			ifdef guard it and #define TF_BOT_CPP in tf_bot.cpp
 	friend void tf_bot_add( const CCommand &args );
-#else
-	friend static void tf_bot_add( const CCommand &args );
-#endif
 	friend class CTFBot; friend class CTFBotManager;
 
 	// Physics.

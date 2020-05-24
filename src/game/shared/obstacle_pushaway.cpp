@@ -32,7 +32,8 @@ ConVar sv_turbophysics( "sv_turbophysics", "0", FCVAR_REPLICATED, "Turns on turb
 #else
 extern ConVar sv_turbophysics;
 #endif
-
+//-----------------------------------------------------------------------------------------------------
+CPushAwayEnumerator::~CPushAwayEnumerator() {}
 //-----------------------------------------------------------------------------------------------------
 bool IsPushAwayEntity( CBaseEntity *pEnt )
 {
