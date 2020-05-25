@@ -37,7 +37,7 @@ CCommentaryExplanationDialog::CCommentaryExplanationDialog(vgui::Panel *parent, 
 	GameUI().PreventEngineHideGameUI();
 
 	// Save off the finish command
-	Q_snprintf( m_pszFinishCommand, sizeof( m_pszFinishCommand ), pszFinishCommand );
+	Q_strncpy( m_pszFinishCommand, pszFinishCommand, sizeof( m_pszFinishCommand ) );
 }
 
 //-----------------------------------------------------------------------------

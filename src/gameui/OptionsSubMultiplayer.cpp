@@ -1237,18 +1237,18 @@ static void ReadTGAHeader(FILE *infile, TGAHeader &header)
 		return;
 	}
 
-	fread(&header.identsize, sizeof(header.identsize), 1, infile);
-	fread(&header.colourmaptype, sizeof(header.colourmaptype), 1, infile);
-	fread(&header.imagetype, sizeof(header.imagetype), 1, infile);
-	fread(&header.colourmapstart, sizeof(header.colourmapstart), 1, infile);
-	fread(&header.colourmaplength, sizeof(header.colourmaplength), 1, infile);
-	fread(&header.colourmapbits, sizeof(header.colourmapbits), 1, infile);
-	fread(&header.xstart, sizeof(header.xstart), 1, infile);
-	fread(&header.ystart, sizeof(header.ystart), 1, infile);
-	fread(&header.width, sizeof(header.width), 1, infile);
-	fread(&header.height, sizeof(header.height), 1, infile);
-	fread(&header.bits, sizeof(header.bits), 1, infile);
-	fread(&header.descriptor, sizeof(header.descriptor), 1, infile);
+	Assert(fread(&header.identsize, sizeof(header.identsize), 1, infile));
+	Assert(fread(&header.colourmaptype, sizeof(header.colourmaptype), 1, infile));
+	Assert(fread(&header.imagetype, sizeof(header.imagetype), 1, infile));
+	Assert(fread(&header.colourmapstart, sizeof(header.colourmapstart), 1, infile));
+	Assert(fread(&header.colourmaplength, sizeof(header.colourmaplength), 1, infile));
+	Assert(fread(&header.colourmapbits, sizeof(header.colourmapbits), 1, infile));
+	Assert(fread(&header.xstart, sizeof(header.xstart), 1, infile));
+	Assert(fread(&header.ystart, sizeof(header.ystart), 1, infile));
+	Assert(fread(&header.width, sizeof(header.width), 1, infile));
+	Assert(fread(&header.height, sizeof(header.height), 1, infile));
+	Assert(fread(&header.bits, sizeof(header.bits), 1, infile));
+	Assert(fread(&header.descriptor, sizeof(header.descriptor), 1, infile));
 }
 
 // write a TGA header to the current point in the file stream.
@@ -1305,7 +1305,7 @@ unsigned char * COptionsSubMultiplayer::ReadTGAAsRGBA(const char *tgaPath, int &
 		return NULL;
 	}
 
-	fread(tgaData, 1, tgaDataSize, tgaFile);
+	Assert(fread(tgaData, 1, tgaDataSize, tgaFile));
 
 	fclose(tgaFile);
 
@@ -1657,6 +1657,10 @@ ConversionErrorType COptionsSubMultiplayer::ConvertTGAToVTF(const char *tgaPath)
 
 	// read out the header of the image.
 	TGAHeader header;
+
+	// silence a warning
+	header.width = header.height = 0; header.bits = 0;
+
 	ReadTGAHeader(infile, header);
 
 	// check to make sure that the TGA has the proper dimensions and size.

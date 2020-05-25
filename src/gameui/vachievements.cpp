@@ -4,6 +4,8 @@
 //
 //=====================================================================================//
 
+#if 0
+
 #include "cbase.h"
 #include "EngineInterface.h"
 #include "VGenericPanelList.h"
@@ -40,7 +42,7 @@
 
 using namespace vgui;
 using namespace BaseModUI;
-/*
+
 KeyValues *g_pPreloadedAchievementListItemLayout = NULL;
 
 #pragma warning( disable : 4800 ) // warning C4800: 'uint64' : forcing value to bool 'true' or 'false' (performance warning)
@@ -278,7 +280,7 @@ void AchievementListItem::ApplySchemeSettings(IScheme *pScheme)
 		}
 	}
 	*/
-/* stickynote
+
 #else	
 	SetBgColor(pScheme->GetColor( "Button.BgColor", Color( 32, 32, 32, 255 ) ) );
 #endif
@@ -337,7 +339,6 @@ void AchievementListItem::PerformLayout( void )
 		}
 	}
 	*/
-/* stickynote
 #endif
 }
 
@@ -396,7 +397,6 @@ void AchievementListItem::OnCommand( const char *command )
 			SetControlString( "LblDetails", "#GameUI_ShowDetails" );
 		}
 		*/
-/* stickynote
 		InvalidateLayout();
 	}
 #endif
@@ -833,7 +833,6 @@ void Achievements::PaintBackground()
 		vgui::surface()->DrawFilledRectFade( iHalfWide, nBarPosY, wide, nBarPosY + nBarHeight, 255, 0, true );
 		vgui::surface()->DrawFilledRectFade( 0, nBarPosY, iHalfWide, nBarPosY + nBarHeight, 0, 255, true );
 */
-/* Stickynote	
 		// draw highlights
 		nBarHeight = YRES( 2 );
 		nBarPosY = y;
@@ -860,4 +859,5 @@ void Achievements::PaintBackground()
 
 
 
-*/
+
+#endif // 0

@@ -137,8 +137,8 @@ void GenericPanelList::OnKeyCodePressed( KeyCode code )
 				}
 				else // otherwise navigate to the next item in the list
 				{
-					unsigned short index;
-					GetPanelItemIndex( m_CurrentSelectedItem, index );
+					unsigned short index = 0;
+					if (GetPanelItemIndex( m_CurrentSelectedItem, index ))
 					itemSelected = SelectPanelItem( index + 1, GenericPanelList::SD_DOWN );
 				}
 
@@ -185,8 +185,8 @@ void GenericPanelList::OnKeyCodePressed( KeyCode code )
 				}
 				else // otherwise navigate to the next item in the list
 				{
-					unsigned short index;
-					GetPanelItemIndex( m_CurrentSelectedItem, index );
+					unsigned short index = 0;
+					if (GetPanelItemIndex( m_CurrentSelectedItem, index ))
 					itemSelected = SelectPanelItem( index - 1, GenericPanelList::SD_UP );
 				}
 

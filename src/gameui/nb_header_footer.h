@@ -15,10 +15,6 @@
 #include "avi/ibik.h"
 #include "avi/iavi.h"
 
-
-// == MANAGED_CLASS_DECLARATIONS_START: Do not edit by hand ==
-class vgui::Label;
-// == MANAGED_CLASS_DECLARATIONS_END ==
 class HUDVideoPanel;
 class CNB_Gradient_Bar;
 

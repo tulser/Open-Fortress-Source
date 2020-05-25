@@ -149,7 +149,7 @@ bool CAttractScreen::IsUserIdleForAttractMode()
 //
 //////////////////////////////////////////////////////////////////////////
 
-class CAttractScreenDeviceSelector : public ISelectStorageDeviceClient
+class CAttractScreenDeviceSelector final: public ISelectStorageDeviceClient
 {
 public:
 	CAttractScreenDeviceSelector( int iCtrlr, bool bForce, bool bAllowDeclined ) :

@@ -655,7 +655,7 @@ void CNewGameDialog::UpdateMenuComponents( EScrollDirection dir )
 		{
 			wchar_t buffer[ MAX_PATH ];
 			m_ChapterPanels[ m_PanelIndex[centerIdx] ]->m_pChapterNameLabel->GetText( buffer, sizeof(buffer) );
-			m_pChapterTitleLabels[m_ActiveTitleIdx]->SetText( buffer );
+			m_pChapterTitleLabels[(int)m_ActiveTitleIdx]->SetText( buffer );
 
 			// If it has bonuses show the scroll up and down arrows
 			bHasBonus = m_ChapterPanels[ m_PanelIndex[centerIdx] ]->HasBonus();
@@ -1165,7 +1165,7 @@ void CNewGameDialog::AnimateSelectionPanels( void )
 		
 		// Crossfade the chapter title labels
 		int inactiveTitleIdx = m_ActiveTitleIdx ^ 0x01;
-		GetAnimationController()->RunAnimationCommand( m_pChapterTitleLabels[m_ActiveTitleIdx], "alpha", 255, 0, m_ScrollSpeed, vgui::AnimationController::INTERPOLATOR_LINEAR );
+		GetAnimationController()->RunAnimationCommand( m_pChapterTitleLabels[(int)m_ActiveTitleIdx], "alpha", 255, 0, m_ScrollSpeed, vgui::AnimationController::INTERPOLATOR_LINEAR );
 		GetAnimationController()->RunAnimationCommand( m_pChapterTitleLabels[inactiveTitleIdx], "alpha", 0, 0, m_ScrollSpeed, vgui::AnimationController::INTERPOLATOR_LINEAR );
 		
 		// Scrolling up through chapters, offset is negative

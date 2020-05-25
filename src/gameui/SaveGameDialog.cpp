@@ -95,7 +95,7 @@ void CSaveGameDialog::OnCommand( const char *command )
 			// save to a new name
 			char saveName[128];
 			FindSaveSlot( saveName, sizeof(saveName) );
-			if ( saveName && saveName[ 0 ] )
+			if ( saveName[ 0 ] )
 			{
 				// Load the game, return to top and switch to engine
 				char sz[ 256 ];

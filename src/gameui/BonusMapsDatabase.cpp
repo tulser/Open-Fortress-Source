@@ -810,7 +810,7 @@ void CBonusMapsDatabase::ParseBonusMapData( char const *pszFileName, char const 
 
 	KeyValues *kv = new KeyValues( pszShortName );
 	if ( !kv->LoadFromFile( g_pFullFileSystem, szMapInfo, NULL ) )
-		DevMsg( "Unable to load bonus map info file\n", szMapInfo );
+		DevMsg( "Unable to load bonus map info file '%s'\n", szMapInfo );
 
 	while ( kv )
 	{
