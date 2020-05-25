@@ -5,9 +5,6 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#undef fopen
-#include <fstream>
-
 #if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h> // SRC only!!
 #include <io.h>
@@ -804,13 +801,20 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 
 		if (!failed)
 		{
-			std::ifstream existcheck(finalPath);
-			if (!existcheck.good()){
-				std::ifstream from(vtfPath, std::ios::binary);
-				std::ofstream to(finalPath, std::ios::binary);
-
-				to << from.rdbuf();
-			}
+			do{
+				// Inefficient but cross platform
+				// and doesn't use exceptions (MSVC has unwind semantics disabled)
+				FILE *from, *to;
+				Assert( ( to = fopen( finalPath, "w" ) ) != NULL );
+				if (!to) break;
+				Assert( ( from = fopen( vtfPath, "r" ) ) != NULL );
+				char c = fgetc(from);
+				while (c != EOF)
+				{
+					fputc(c, to);
+					c = fgetc(from);
+				}
+			} while (false);
 
 			// refresh the logo list so the new spray shows up.
 			InitLogoList(m_pLogoList);
@@ -829,7 +833,7 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 	// delete the intermediate VTF file if one was made.
 	if (deleteIntermediateVTF)
 	{
-		std::remove(vtfPath);
+		remove(vtfPath);
 
 		// the TGA->VTF conversion process generates a .txt file if one wasn't already there.
 		// in this case, delete the .txt file.
@@ -839,13 +843,13 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 			--c;
 		}
 		Q_strncpy(c, "txt", sizeof(vtfPath)-(c-vtfPath));
-		std::remove(vtfPath);
+		remove(vtfPath);
 	}
 
 	// delete the intermediate TGA file if one was made.
 	if (deleteIntermediateTGA)
 	{
-		std::remove(tgaPath);
+		remove(tgaPath);
 	}
 
 	// change the cursor back to normal

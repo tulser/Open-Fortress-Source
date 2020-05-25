@@ -9,7 +9,8 @@
 #define SYS_UTILS_H
 #ifdef _WIN32
 #pragma once
-#endif
+
+typedef void *WHANDLE; 
 
 // ERROR HANDLING
 extern const unsigned int SYS_NO_ERROR;
@@ -44,4 +45,5 @@ void Sys_SetCursorPos(int x, int y);
 
 
 
+#endif
 #endif // SYS_UTILS_H
