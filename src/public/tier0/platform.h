@@ -406,11 +406,6 @@ typedef struct tagRGBQUAD {
   BYTE rgbReserved;
 } RGBQUAD;
 
-// Compatibility functions for GameUI
-bool CopyFile(const char* source, const char* destination, bool dontoverwrite);
-bool DeleteFile(const char* file);
-char *itoa(int val, char* buf, int base);
-
 #endif // defined(_WIN32) && !defined(WINDED)
 
 

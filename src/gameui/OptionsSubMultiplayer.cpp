@@ -6,6 +6,7 @@
 //=============================================================================//
 
 #undef fopen
+#include <fstream>
 
 #if defined( WIN32 ) && !defined( _X360 )
 #include <windows.h> // SRC only!!
@@ -803,8 +804,13 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 
 		if (!failed)
 		{
-			// copy vtf file to the final location.
-			CopyFile(vtfPath, finalPath, true);
+			std::ifstream existcheck(finalPath);
+			if (!existcheck.good()){
+				std::ifstream from(vtfPath, std::ios::binary);
+				std::ofstream to(finalPath, std::ios::binary);
+
+				to << from.rdbuf();
+			}
 
 			// refresh the logo list so the new spray shows up.
 			InitLogoList(m_pLogoList);
@@ -823,7 +829,7 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 	// delete the intermediate VTF file if one was made.
 	if (deleteIntermediateVTF)
 	{
-		DeleteFile(vtfPath);
+		std::remove(vtfPath);
 
 		// the TGA->VTF conversion process generates a .txt file if one wasn't already there.
 		// in this case, delete the .txt file.
@@ -833,13 +839,13 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 			--c;
 		}
 		Q_strncpy(c, "txt", sizeof(vtfPath)-(c-vtfPath));
-		DeleteFile(vtfPath);
+		std::remove(vtfPath);
 	}
 
 	// delete the intermediate TGA file if one was made.
 	if (deleteIntermediateTGA)
 	{
-		DeleteFile(tgaPath);
+		std::remove(tgaPath);
 	}
 
 	// change the cursor back to normal

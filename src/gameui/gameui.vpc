@@ -164,7 +164,6 @@ $Project "GameUI"
 		$File	"VVideo.cpp"
 		$File	"UI_Shared.cpp"
 		$File	"UIGameData.cpp"
-		$File	"$SRCDIR\public\tier0\platform.cpp" [$POSIX]
 
 		$File	"BackgroundMenuButton.cpp" \
 				"BaseSaveGameDialog.cpp" \

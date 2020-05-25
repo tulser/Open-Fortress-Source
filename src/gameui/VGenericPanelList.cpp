@@ -654,11 +654,11 @@ void GenericPanelList::UpdateArrows()
 	int nLabelLast = GetLastVisibleItemNumber();
 
 	// Construct achievement progress string
-	itoa( nLabelCount, buffer, 10 );
+	V_snprintf(buffer, sizeof(buffer), "%d", nLabelCount);
 	V_UTF8ToUnicode( buffer, wTotalAchievements, sizeof( wTotalAchievements ) );
-	itoa( ( nLabelCount == 0 ) ? 0 : nLabelFirst + 1, buffer, 10 );
+	V_snprintf(buffer, sizeof(buffer), "%d", ( nLabelCount == 0 ) ? 0 : nLabelFirst + 1);
 	V_UTF8ToUnicode( buffer, wFirstInView, sizeof( wFirstInView ) );
-	itoa( ( nLabelCount == 0 ) ? 0 : nLabelLast + 1, buffer, 10 );
+	V_snprintf(buffer, sizeof(buffer), "%d", ( nLabelCount == 0 ) ? 0 : nLabelLast + 1);
 	V_UTF8ToUnicode( buffer, wLastInView, sizeof( wLastInView ) );
 
 	g_pVGuiLocalize->ConstructString( localizedScrollProgress, sizeof( localizedScrollProgress ), g_pVGuiLocalize->Find( "#L4D360UI_Scroll_Progress" ), 3, wFirstInView, wLastInView, wTotalAchievements );
