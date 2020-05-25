@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Implements all the functions exported by the GameUI dll
 //
@@ -97,12 +97,6 @@ CGlobalVarsBase *gpGlobals = NULL;
 IEngineSound *enginesound = NULL;
 ISoundEmitterSystemBase *soundemitterbase = NULL;
 IXboxSystem *xboxsystem = NULL;
-#if 0
-// NOPEY: this conflicts with the declaration in tier3.a.
-//		If it's erroring, we need to figure out what macros
-//		we can check to decide whether to define this or not.
-IVideoServices *g_pVideo = NULL;
-#endif // 0
 
 static CSteamAPIContext g_SteamAPIContext;
 CSteamAPIContext *steamapicontext = &g_SteamAPIContext;
@@ -125,6 +119,7 @@ vgui::VPANEL g_hLoadingBackgroundDialog = NULL;
 static CGameUI g_GameUI;
 static WHANDLE g_hMutex = NULL;
 static WHANDLE g_hWaitMutex = NULL;
+
 
 static IGameClientExports *g_pGameClientExports = NULL;
 IGameClientExports *GameClientExports()
@@ -422,7 +417,7 @@ void CGameUI::Start()
 		Q_strncpy( szConfigDir, m_szPlatformDir, sizeof( szConfigDir ) );
 		Q_strncat( szConfigDir, "config", sizeof( szConfigDir ), COPY_ALL_CHARACTERS );
 
-		Msg( "Steam config directory: %s\n", szConfigDir );
+		DevMsg( "[GameUI] Steam config directory: %s\n", szConfigDir );
 
 		g_pFullFileSystem->AddSearchPath(szConfigDir, "CONFIG");
 		g_pFullFileSystem->CreateDirHierarchy("", "CONFIG");
@@ -468,6 +463,7 @@ void CGameUI::Start()
 			Sys_EnumWindows(SendShutdownMsgFunc, 1);
 		}
 	}
+#endif // _WIN32
 
 	// Delay playing the startup music until two frames
 	// this allows cbuf commands that occur on the first frame that may start a map
@@ -476,15 +472,45 @@ void CGameUI::Start()
 	// now we are set up to check every frame to see if we can friends/server browser
 	m_bTryingToLoadFriends = true;
 	m_iFriendsLoadPauseFrames = 1;
-#endif // _WIN32
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: Validates the user has a cdkey in the registry
 //-----------------------------------------------------------------------------
-void CGameUI::ValidateCDKey()
+void CGameUI::ValidateCDKey() // Remove this function?
 {
 }
+
+#if defined(POSIX)
+// based off game/shared/of/util/os_utils.cpp (momentum mod)
+bool linux_platformdir_helper( char *buf, int size)
+{
+	FILE *f = fopen("/proc/self/maps", "r");
+	if (!f) return false;
+
+	while (!feof(f))
+	{
+		if (!fgets(buf, size, f)) break;
+
+		char *tmp = strrchr(buf, '\n');
+		if (tmp) *tmp = '\0';
+
+		char *mapname = strchr(buf, '/');
+		if (!mapname) continue;
+
+		if (strcmp(basename(mapname), "hl2_linux") == 0)
+		{
+			fclose(f);
+			memmove(buf, mapname, strlen(mapname)+1);
+			return true;
+		}
+	}
+
+	fclose(f);
+	buf[0] = '\0';
+	return false;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Finds which directory the platform resides in
@@ -499,13 +525,21 @@ bool CGameUI::FindPlatformDirectory(char *platformDir, int bufferSize)
 		// we're not under steam, so setup using path relative to game
 		if ( IsPC() )
 		{
-			if ( GetModuleFileName( ( HINSTANCE )GetModuleHandle( NULL ), platformDir, bufferSize ) )
+#if defined(_WIN32)
+			if ( GetModuleInformation( ( void* ) GetModuleHandle( NULL ), platformDir, bufferSize ) )
 			{
 				char *lastslash = strrchr(platformDir, '\\'); // this should be just before the filename
+#elif defined(POSIX)
+			if ( linux_platformdir_helper(platformDir, bufferSize) )
+			{
+				char *lastslash = strrchr(platformDir, '/'); // this should be just before the filename
+#else
+#error "GameUI: Mac OSX Support is for people who look in os_utils.cpp for inspiration!"
+#endif
 				if ( lastslash )
 				{
 					*lastslash = 0;
-					Q_strncat(platformDir, "\\platform\\", bufferSize, COPY_ALL_CHARACTERS );
+					Q_strncat(platformDir, "/platform/", bufferSize, COPY_ALL_CHARACTERS );
 					return true;
 				}
 			}
@@ -682,20 +716,30 @@ void CGameUI::RunFrame()
 		}
 	}
 
+	// On POSIX and Mac OSX just load it without any care for race conditions
+	// hackhack: posix steam gameui usage is rude and racey
+	// -nopey
+
+	if ( IsPC() && m_bTryingToLoadFriends && m_iFriendsLoadPauseFrames-- < 1
 #ifdef _WIN32
-	if ( IsPC() && m_bTryingToLoadFriends && m_iFriendsLoadPauseFrames-- < 1 && g_hMutex && g_hWaitMutex )
-	{
+		&& g_hMutex && g_hWaitMutex
+#endif
+	){
 		// try and load Steam platform files
+#ifdef _WIN32
 		unsigned int waitResult = Sys_WaitForSingleObject(g_hMutex, 0);
 		if (waitResult == SYS_WAIT_OBJECT_0 || waitResult == SYS_WAIT_ABANDONED)
+#endif
 		{
 			// we got the mutex, so load Friends/Serverbrowser
 			// clear the loading flag
 			m_bTryingToLoadFriends = false;
 			g_VModuleLoader.LoadPlatformModules(&m_GameFactory, 1, false);
 
+#ifdef _WIN32
 			// release the wait mutex
 			Sys_ReleaseMutex(g_hWaitMutex);
+#endif
 
 			// notify the game of our game name
 			const char *fullGamePath = engine->GetGameDirectory();
@@ -726,7 +770,6 @@ void CGameUI::RunFrame()
 			}
 		}
 	}
-#endif // _WIN32
 }
 
 //-----------------------------------------------------------------------------

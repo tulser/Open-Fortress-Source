@@ -11,8 +11,6 @@
 #pragma once
 #endif
 
-typedef int WHANDLE;
-
 // ERROR HANDLING
 extern const unsigned int SYS_NO_ERROR;
 extern const unsigned int SYS_ERROR_INVALID_HANDLE;

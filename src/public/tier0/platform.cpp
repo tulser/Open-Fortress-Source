@@ -33,4 +33,6 @@ char *itoa(int val, char* buf, int base)
 	for(; val && i ; --i, val /= base)
 		buf[i] = "0123456789abcdef"[val % base];
 		val /= base;
+
+	return &buf[i+1];
 }

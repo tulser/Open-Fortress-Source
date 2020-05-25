@@ -3,7 +3,12 @@
 // Purpose: VGUI panel which can play back video, in-engine
 //
 //=============================================================================
-#include "cbase.h"
+//HACKHACK: This file must include the precompiled header to satisfy
+// MSVC's C1010. However, on linux, using the cbase.h in gameui
+// breaks things! the sharp angle brackets cause this cbase.h to use the client cbase.h
+// in the client only, and use the empty dud for gameui. -nopey
+// TLDR: Please do not change these angle brackets to quote marks.
+#include <cbase.h>
 #include "materialsystem/imesh.h"
 #include <vgui/IVGui.h>
 #include "vgui/IInput.h"

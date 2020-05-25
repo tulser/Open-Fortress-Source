@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2008, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -7,9 +7,7 @@
 #include <stdio.h>
 
 #include "VGuiSystemModuleLoader.h"
-#ifdef _WIN32
 #include "sys_utils.h"
-#endif
 #include "IVGuiModule.h"
 #include "ServerBrowser/IServerBrowser.h"
 
@@ -158,13 +156,19 @@ bool CVGuiSystemModuleLoader::LoadPlatformModules(CreateInterfaceFn *factorylist
 			continue;
 
 		// get copy out of steam cache
+#if defined(_WIN32)
 		const char *dllPath = it->GetString("dll");
-
+#elif defined(__linux__)
+		const char *dllPath = it->GetString("dll_linux");
+#else // (OSX)
+		const char *dllPath = it->GetString("dll_osx");
+#endif
 		// load the module (LoadModule calls GetLocalCopy() under steam)
 		CSysModule *mod = g_pFullFileSystem->LoadModule(dllPath, "EXECUTABLE_PATH");
+
 		if (!mod)
 		{
-			Warning("Platform Error: bad module '%s', not loading\n", it->GetString("dll"));
+			Warning("Platform Error: bad module '%s', not loading\n", dllPath);
 			bSuccess = false;
 			continue;
 		}
