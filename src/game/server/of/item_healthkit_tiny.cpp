@@ -25,15 +25,6 @@ DEFINE_KEYFIELD(m_iszPickupSound, FIELD_STRING, "pickup_sound"),
 
 END_DATADESC()
 
-CHealthKitTiny::CHealthKitTiny()
-{
-	m_iszModel = MAKE_STRING("");
-	m_iszModelOLD = MAKE_STRING("");
-	m_iszPickupSound = MAKE_STRING("HealthKitTiny.Touch");
-
-	m_bDontHeal = false;
-}
-
 bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSound = true)
 {
 	bool bSuccess = false;
@@ -114,4 +105,3 @@ void CHealthKitTiny::Materialize(void)
 	BaseClass::Materialize();
 	m_bDontHeal = false;
 }
-

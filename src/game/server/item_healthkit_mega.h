@@ -3,11 +3,6 @@
 // Purpose: Mega Health "powerup".
 //
 //=============================================================================//
-#include "cbase.h"
-#include "basecombatweapon.h"
-#include "gamerules.h"
-#include "items.h"
-#include "engine/IEngineSound.h"
 #include "entity_healthkit.h"
 #include "tf_player.h"
 

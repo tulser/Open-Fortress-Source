@@ -3,11 +3,6 @@
 // Purpose: Quake-like health shards in the form of pills. Louis would be very happy.
 //
 //=============================================================================//
-#include "cbase.h"
-#include "basecombatweapon.h"
-#include "gamerules.h"
-#include "items.h"
-#include "engine/IEngineSound.h"
 #include "entity_healthkit.h"
 #include "tf_player.h"
 
@@ -16,8 +11,6 @@ class CHealthKitTiny : public CHealthKit
 public:
 
 	DECLARE_CLASS(CHealthKitTiny, CHealthKit);
-
-	CHealthKitTiny();
 
 	virtual const char *GetPowerupModel(void) { return "models/items/medkit_overheal.mdl"; }
 	powerupsize_t GetPowerupSize(void) { return POWERUP_TINY; }

@@ -77,4 +77,3 @@ bool CHealthKitMega::MyTouch(CBasePlayer *pPlayer)
 	}
 	return true;
 }
-
