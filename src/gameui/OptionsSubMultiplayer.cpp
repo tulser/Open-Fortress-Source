@@ -808,6 +808,7 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 				Assert( to != NULL );
 				if (!to) break;
 				Assert( from != NULL );
+				if (!from) break;
 				char c = fgetc(from);
 				while (c != EOF)
 				{
