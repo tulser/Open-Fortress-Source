@@ -3,10 +3,6 @@
 #include "gamerules.h"
 #include "items.h"
 #include "engine/IEngineSound.h"
-
-#include "entity_ammopack.h"
-#include "entity_healthkit.h"
-#include "tf_player.h"
 #include "item_healthkit_mega.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -14,7 +10,6 @@
 
 #ifdef OF_DLL
 ConVar sk_item_healthkit_mega("sk_item_healthkit_mega", "100");
-
 
 #define TF_HEALTHKIT_PICKUP_SOUND	"HealthKitMega.Touch"
 
@@ -52,19 +47,6 @@ bool ITEM_GiveTFMegaAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppre
 }
 #endif
 
-void CHealthKitMega::Spawn(void)
-{
-	Precache();
-	if (m_iszModel == MAKE_STRING(""))
-	{
-		if (m_iszModelOLD != MAKE_STRING(""))
-			SetModel(STRING(m_iszModelOLD));
-		else
-			SetModel(GetPowerupModel());
-	}
-	else SetModel(STRING(m_iszModel));
-	BaseClass::Spawn();
-}
 void CHealthKitMega::Precache(void)
 {
 	if (m_iszModel == MAKE_STRING(""))
@@ -74,15 +56,19 @@ void CHealthKitMega::Precache(void)
 		else
 			PrecacheModel(GetPowerupModel());
 	}
-	else PrecacheModel(STRING(m_iszModel));
-	PrecacheScriptSound(STRING(m_iszPickupSound));
+	else
+	{
+		PrecacheModel(STRING(m_iszModel));
+	}
+
+	PrecacheScriptSound(TF_HEALTHKIT_PICKUP_SOUND);
 }
 
 bool CHealthKitMega::MyTouch(CBasePlayer *pPlayer)
 {
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);  // And the tf player,       Guess we could just use the tf player, no?
-	if (pTFPlayer && pTFPlayer->m_Shared.IsZombie())
+	if (!ValidTouch(pPlayer))
 		return false;
+
 	if (ITEM_GiveTFMegaAmmoHealth(pPlayer, PackRatios[POWERUP_MEGA]))
 	{
 		CSingleUserRecipientFilter filter(pPlayer);

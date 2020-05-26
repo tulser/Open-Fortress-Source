@@ -528,8 +528,6 @@ private:
 	Vector2D	m_vecPlayerPositions[MAX_PLAYERS];
 
 	CUtlVector<CHandle<CHealthKit> > m_hDisabledHealthKits;
-	CUtlVector<CHandle<CHealthKitTiny> > m_hDisabledHealthPills;
-	CUtlVector<CHandle<CHealthKitMega> > m_hDisabledHealthMega;
 	CUtlVector<CHandle<CAmmoPack> >  m_hDisabledAmmoPack;
 	CUtlVector<CHandle<CWeaponSpawner> >  m_hDisabledWeaponSpawners;
 

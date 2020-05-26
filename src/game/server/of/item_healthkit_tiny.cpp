@@ -3,10 +3,6 @@
 #include "gamerules.h"
 #include "items.h"
 #include "engine/IEngineSound.h"
-
-#include "entity_ammopack.h"
-#include "entity_healthkit.h"
-#include "tf_player.h"
 #include "item_healthkit_tiny.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -14,7 +10,6 @@
 
 #ifdef OF_DLL
 ConVar sk_item_healthkit_tiny("sk_item_healthkit_tiny", "8");
-
 
 #define TF_HEALTHKIT_PICKUP_SOUND	"HealthKitTiny.Touch"
 
@@ -48,9 +43,11 @@ bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSo
 	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 	if (!pTFPlayer)
 		return false;
+
 	int iHealthBefore = pTFPlayer->GetHealth();
 	iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth());
 	iHealthRestored = pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
+
 	if (pPlayer->GetHealth() > pTFPlayer->m_Shared.GetDefaultHealth())
 	{
 		if (iHealthBefore >= pTFPlayer->m_Shared.GetDefaultHealth())
@@ -58,11 +55,15 @@ bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSo
 			iHealthToAdd = sk_item_healthkit_tiny.GetFloat();
 			if (pTFPlayer->m_Shared.m_flMegaOverheal + iHealthToAdd > pTFPlayer->m_Shared.GetMaxBuffedHealthDM())
 				iHealthToAdd = (pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth()) - pTFPlayer->m_Shared.m_flMegaOverheal;
+
 			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
 			iHealthRestored = 1;
 		}
 		else
+		{
 			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd + iHealthBefore - pTFPlayer->m_Shared.GetDefaultHealth();
+		}
+
 		pTFPlayer->m_Shared.m_flMegaOverheal = min(pTFPlayer->m_Shared.m_flMegaOverheal, pTFPlayer->m_Shared.GetMaxBuffedHealthDM());
 	}
 
@@ -73,19 +74,6 @@ bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSo
 }
 #endif
 
-void CHealthKitTiny::Spawn(void)
-{
-	Precache();
-	if (m_iszModel == MAKE_STRING(""))
-	{
-		if (m_iszModelOLD != MAKE_STRING(""))
-			SetModel(STRING(m_iszModelOLD));
-		else
-			SetModel(GetPowerupModel());
-	}
-	else SetModel(STRING(m_iszModel));
-	BaseClass::Spawn();
-}
 void CHealthKitTiny::Precache(void)
 {
 	if (m_iszModel == MAKE_STRING(""))
@@ -95,8 +83,12 @@ void CHealthKitTiny::Precache(void)
 		else
 			PrecacheModel(GetPowerupModel());
 	}
-	else PrecacheModel(STRING(m_iszModel));
-	PrecacheScriptSound(STRING(m_iszPickupSound));
+	else
+	{
+		PrecacheModel(STRING(m_iszModel));
+	}
+
+	PrecacheScriptSound(TF_HEALTHKIT_PICKUP_SOUND);
 }
 
 bool CHealthKitTiny::MyTouch(CBasePlayer *pPlayer)
@@ -104,8 +96,7 @@ bool CHealthKitTiny::MyTouch(CBasePlayer *pPlayer)
 	if (m_bDontHeal)
 		return false;
 
-	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);  // And the tf player,       Guess we could just use the tf player, no?
-	if (pTFPlayer && pTFPlayer->m_Shared.IsZombie())
+	if (!ValidTouch(pPlayer))
 		return false;
 
 	if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))

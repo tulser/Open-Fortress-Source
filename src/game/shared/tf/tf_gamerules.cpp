@@ -25,52 +25,52 @@
 #include "c_tf_player.h"
 #include "c_tf_objective_resource.h"
 #else
-#include "basemultiplayerplayer.h"
-#include "voice_gamemgr.h"
-#include "items.h"
-#include "team.h"
-#include "tf_bot_temp.h"
-#include "tf_player.h"
-#include "tf_team.h"
-#include "player_resource.h"
-#include "entity_tfstart.h"
-#include "filesystem.h"
-#include "tf_obj.h"
-#include "tf_objective_resource.h"
-#include "tf_player_resource.h"
-#include "team_control_point_master.h"
-#include "entity_roundwin.h"
-#include "playerclass_info_parse.h"
-#include "team_train_watcher.h"
-#include "entity_roundwin.h"
-#include "coordsize.h"
-#include "entity_healthkit.h"
-#include "item_healthkit_tiny.h"
-#include "item_healthkit_mega.h"
-#include "entity_ammopack.h"
-#include "tf_gamestats.h"
-#include "entity_capture_flag.h"
-#include "entity_weapon_spawner.h"
-#include "tf_player_resource.h"
-#include "tf_obj_sentrygun.h"
-#include "tier0/icommandline.h"
-#include "activitylist.h"
-#include "AI_ResponseSystem.h"
-#include "hl2orange.spa.h"
-#include "hltvdirector.h"
-#include "globalstate.h"
-#include "igameevents.h"
-#include "trains.h"
-#include "pathtrack.h"
-#include "entitylist.h"
-#include "trigger_area_capture.h"
-#include "ai_basenpc.h"
-#include "ai_dynamiclink.h"
-#include "vote_controller.h"
-#include "tf_weaponbase_grenadeproj.h"
-#include "tf_voteissues.h"
-#include "nav_mesh.h"
-#include "bot/tf_bot_manager.h"
+	#include "basemultiplayerplayer.h"
+	#include "voice_gamemgr.h"
+	#include "items.h"
+	#include "team.h"
+	#include "tf_bot_temp.h"
+	#include "tf_player.h"
+	#include "tf_team.h"
+	#include "player_resource.h"
+	#include "entity_tfstart.h"
+	#include "filesystem.h"
+	#include "tf_obj.h"
+	#include "tf_objective_resource.h"
+	#include "tf_player_resource.h"
+	#include "team_control_point_master.h"
+	#include "entity_roundwin.h"
+	#include "playerclass_info_parse.h"
+	#include "team_train_watcher.h"
+	#include "entity_roundwin.h"
+	#include "coordsize.h"
+	#include "entity_healthkit.h"
+	#include "item_healthkit_tiny.h"
+	#include "item_healthkit_mega.h"
+	#include "entity_ammopack.h"
+	#include "tf_gamestats.h"
+	#include "entity_capture_flag.h"
+	#include "entity_weapon_spawner.h"
+	#include "tf_player_resource.h"
+	#include "tf_obj_sentrygun.h"
+	#include "tier0/icommandline.h"
+	#include "activitylist.h"
+	#include "AI_ResponseSystem.h"
+	#include "hl2orange.spa.h"
+	#include "hltvdirector.h"
+	#include "globalstate.h"
+	#include "igameevents.h"
+	#include "trains.h"
+	#include "pathtrack.h"
+	#include "entitylist.h"
+	#include "trigger_area_capture.h"
+	#include "ai_basenpc.h"
+	#include "ai_dynamiclink.h"
+	#include "vote_controller.h"
+	#include "tf_weaponbase_grenadeproj.h"
+	#include "tf_voteissues.h"
+	#include "nav_mesh.h"
+	#include "bot/tf_bot_manager.h"
 
 #endif
 
@@ -2491,30 +2491,6 @@ void CTFGameRules::SetupOnRoundStart(void)
 			}
 			pHealthPack = gEntList.NextEntByClass(pHealthPack);
 		}
-		// pills NOT here, ha get pranked
-		m_hDisabledHealthPills.Purge();
-		CHealthKitTiny *pHealthPackTiny = gEntList.NextEntByClass((CHealthKitTiny *)NULL);
-		while (pHealthPackTiny)
-		{
-			if (!pHealthPackTiny->IsDisabled())
-			{
-				pHealthPackTiny->SetDisabled(true);
-				m_hDisabledHealthPills.AddToTail(pHealthPackTiny);
-			}
-			pHealthPackTiny = gEntList.NextEntByClass(pHealthPackTiny);
-		}
-		// also don't want Mega health here.
-		m_hDisabledHealthMega.Purge();
-		CHealthKitMega *pHealthPackMega = gEntList.NextEntByClass((CHealthKitMega *)NULL);
-		while (pHealthPackMega)
-		{
-			if (!pHealthPackMega->IsDisabled())
-			{
-				pHealthPackMega->SetDisabled(true);
-				m_hDisabledHealthMega.AddToTail(pHealthPackMega);
-			}
-			pHealthPackMega = gEntList.NextEntByClass(pHealthPackMega);
-		}
 	}
 	else
 	{
@@ -2522,35 +2498,14 @@ void CTFGameRules::SetupOnRoundStart(void)
 		for (int i = 0; i < m_hDisabledHealthKits.Count(); i++)
 		{
 			if (m_hDisabledHealthKits[i])
-			{
 				m_hDisabledHealthKits[i]->SetDisabled(false);
-			}
 		}
-
 		m_hDisabledHealthKits.Purge();
-		for (int i = 0; i < m_hDisabledHealthPills.Count(); i++)
-		{
-			if (m_hDisabledHealthPills[i])
-			{
-				m_hDisabledHealthPills[i]->SetDisabled(false);
-			}
-		}
-
-		m_hDisabledHealthPills.Purge();
-		for (int i = 0; i < m_hDisabledHealthMega.Count(); i++)
-		{
-			if (m_hDisabledHealthMega[i])
-			{
-				m_hDisabledHealthMega[i]->SetDisabled(false);
-			}
-		}
-
-		m_hDisabledHealthMega.Purge();
 	}
 
 	if (of_randomizer.GetBool())
 	{
-		// Disable all the active health packs in the world
+		// Disable all the active weapon spawners in the world
 		m_hDisabledWeaponSpawners.Purge();
 		CWeaponSpawner *pWeaponSpawner = gEntList.NextEntByClass((CWeaponSpawner *)NULL);
 		while (pWeaponSpawner)
@@ -2606,9 +2561,7 @@ void CTFGameRules::SetupOnRoundStart(void)
 		for (int i = 0; i < m_hDisabledAmmoPack.Count(); i++)
 		{
 			if (m_hDisabledAmmoPack[i])
-			{
 				m_hDisabledAmmoPack[i]->SetDisabled(false);
-			}
 		}
 
 		m_hDisabledAmmoPack.Purge();
@@ -2947,28 +2900,6 @@ void CTFGameRules::SetupOnStalemateStart(void)
 			m_hDisabledHealthKits.AddToTail(pHealthPack);
 		}
 		pHealthPack = gEntList.NextEntByClass(pHealthPack);
-	}
-	m_hDisabledHealthPills.Purge();
-	CHealthKitTiny *pHealthPackTiny = gEntList.NextEntByClass((CHealthKitTiny *)NULL);
-	while (pHealthPackTiny)
-	{
-		if (!pHealthPackTiny->IsDisabled())
-		{
-			pHealthPackTiny->SetDisabled(true);
-			m_hDisabledHealthPills.AddToTail(pHealthPackTiny);
-		}
-		pHealthPackTiny = gEntList.NextEntByClass(pHealthPackTiny);
-	}
-	m_hDisabledHealthMega.Purge();
-	CHealthKitMega *pHealthPackMega = gEntList.NextEntByClass((CHealthKitMega *)NULL);
-	while (pHealthPackMega)
-	{
-		if (!pHealthPackMega->IsDisabled())
-		{
-			pHealthPackMega->SetDisabled(true);
-			m_hDisabledHealthMega.AddToTail(pHealthPackMega);
-		}
-		pHealthPackMega = gEntList.NextEntByClass(pHealthPackMega);
 	}
 
 	CTFPlayer *pPlayer;
