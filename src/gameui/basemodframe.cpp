@@ -482,21 +482,19 @@ void CBaseModFrame::SetHelpText(const char* helpText)
 //-----------------------------------------------------------------------------
 void CBaseModFrame::OnNavigateTo( const char* panelName )
 {
+	Panel *child;
+	BaseTooltip *tootip;
+	const char *helpText;
+
 	for(int i = 0; i < GetChildCount(); ++i)
 	{
-		Panel* child = GetChild(i);
-		if(child != NULL && (!Q_strcmp(panelName, child->GetName())))
+		child = GetChild(i);
+		tootip = child->GetTooltip();
+
+		if (child != NULL && tootip && (!Q_strcmp(panelName, child->GetName())))
 		{
-			const char* helpText = child->GetTooltip()->GetText();
-			if(helpText && *helpText)
-			{
-				SetHelpText(helpText);
-			}
-			else
-			{
-				SetHelpText("");
-			}
-						
+			helpText = tootip->GetText();
+			SetHelpText(helpText ? helpText : "");
 			m_ActiveControl = child;
 			break;
 		}

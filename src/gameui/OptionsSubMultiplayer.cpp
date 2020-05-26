@@ -804,11 +804,16 @@ void COptionsSubMultiplayer::OnFileSelected(const char *fullpath)
 			do{
 				// Inefficient but cross platform
 				// and doesn't use exceptions (MSVC has unwind semantics disabled)
-				FILE *to = fopen(finalPath, "w"), *from = fopen(vtfPath, "r");
+				FILE *to, *from;
+
+				to = fopen(finalPath, "w");
 				Assert( to != NULL );
 				if (!to) break;
+
+				from = fopen(vtfPath, "r");
 				Assert( from != NULL );
 				if (!from) break;
+
 				char c = fgetc(from);
 				while (c != EOF)
 				{
