@@ -25,12 +25,13 @@ public:
 	void	Spawn( void );
 	void	Precache( void );
 	bool	MyTouch( CBasePlayer *pPlayer );
-	string_t m_iszModel=MAKE_STRING( "" );
-	string_t m_iszModelOLD=MAKE_STRING( "" );
-	string_t m_iszPickupSound=MAKE_STRING( "HealthKit.Touch" );
-	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_large.mdl"; }
+	virtual const char *GetPowerupModel(void) { return "models/items/medkit_large.mdl"; }
+	powerupsize_t GetPowerupSize(void) { return POWERUP_FULL; }
 
-	powerupsize_t	GetPowerupSize( void ) { return POWERUP_FULL; }
+	string_t m_iszModel = MAKE_STRING( "" );
+	string_t m_iszModelOLD = MAKE_STRING( "" );
+	string_t m_iszPickupSound = MAKE_STRING( "HealthKit.Touch" );
+	
 	DECLARE_DATADESC();
 };
 
@@ -38,7 +39,7 @@ class CHealthKitSmall : public CHealthKit
 {
 public:
 	DECLARE_CLASS( CHealthKitSmall, CHealthKit );
-	powerupsize_t	GetPowerupSize( void ) { return POWERUP_SMALL; }
+	powerupsize_t GetPowerupSize( void ) { return POWERUP_SMALL; }
 	virtual const char *GetPowerupModel( void ) { return "models/items/medkit_small.mdl"; }
 	DECLARE_DATADESC();
 };
