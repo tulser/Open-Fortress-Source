@@ -21,7 +21,7 @@
 #include <vgui_controls/ProgressBar.h>
 #include <vgui_controls/Label.h>
 #include <string>
-#include <../shared/gamemovement.h>;
+#include <../shared/gamemovement.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -45,6 +45,9 @@ public:
 	virtual void	OnTick(void);
 	virtual void	Paint(void);
 
+	Color NormaliseColour( Color color);
+	Color GetComplimentaryColour( Color color );
+
 private:
 	// The speed bar 
 	vgui::ContinuousProgressBar *m_pSpeedPercentageMeter;
@@ -59,6 +62,16 @@ private:
 	float cyflymder_ddoe = 0.0f;
 	float cyflymder_echdoe = 0.0f;
 	bool groundedInPreviousFrame = false;
+
+	Color playerColourBase;						// The player's chosen Merc colour
+	//Color playerColourNormalised;				// The player's colour, normalised
+	Color playerColourComplimentary;			// The colour that compliments the player's colour - pls allow this for cosmetics <3
+	Color *playerColour = &playerColourBase;	// The colour we'll use if the player-colour convar is 1 (This references one of the above two)
+
+	Color defaultVelVectorCol = Color(255, 0, 0, 255);
+	Color defaultInputVectorCol = Color(0, 0, 255, 255);
+	Color *vectorColor_vel = &defaultVelVectorCol;
+	Color *vectorColor_input = &defaultInputVectorCol;
 };
 
 DECLARE_HUDELEMENT(CHudSpeedometer);
@@ -77,10 +90,13 @@ ConVar hud_speedometer("hud_speedometer", "0", FCVAR_ARCHIVE, "0: Off. 1: Shows 
 ConVar hud_speedometer_maxspeed("hud_speedometer_maxspeed", "1000", FCVAR_ARCHIVE, "The maximum speed to use when drawing the speedometer bar with hud_speedometer set to 2.", true, 400.0f, true, 2000.0f );
 ConVar hud_speedometer_delta("hud_speedometer_delta", "1", FCVAR_ARCHIVE, "0: Off, 1: Shows the change in speed between each jump.");
 ConVar hud_speedometer_opacity("hud_speedometer_opacity", "150", FCVAR_ARCHIVE, "Sets the opacity of the speedometer overlay.", true, 0.0f, true, 255.0f);
-ConVar hud_speedometer_useplayercolour("hud_speedometer_useplayercolour", "0", FCVAR_ARCHIVE, "0: Speedometer UI uses default colours. 1: Speedometer UI uses the player's colour.");
+ConVar hud_speedometer_useplayercolour("hud_speedometer_useplayercolour", "0", FCVAR_ARCHIVE, "0: Speedometer UI uses default colours. 1: Speedometer UI uses the player's colour. 2: Uses complimentary colour.");
+//ConVar hud_speedometer_normaliseplayercolour("hud_speedometer_normaliseplayercolour", "0", FCVAR_ARCHIVE, "0: If using player colour, use the raw colour. 1: Use the normalised colour (Forces a level of saturation and brightness), allowing dark user colours over the dropshadow to be visible.");
+
 
 ConVar hud_speedometer_vectors("hud_speedometer_vectors", "1", FCVAR_ARCHIVE, "Sets the length of the velocity and input lines.");
 ConVar hud_speedometer_vectors_length("hud_speedometer_vectors_length", "0.2f", FCVAR_ARCHIVE, "Sets the length of the velocity and input lines.", true, 0.01f, true, 1.0f);
+ConVar hud_speedometer_vectors_useplayercolour("hud_speedometer_vectors_useplayercolour", "0", FCVAR_ARCHIVE, "0: Speedometer vectors use default colours. 1: Speedometer vectors use the player's colour and complimentary colour.");
 
 // Used to colour certain parts of the UI in code, while still giving users control over it (Not ideal, ought to be in .res)
 extern ConVar of_color_r;
@@ -104,19 +120,66 @@ CHudSpeedometer::CHudSpeedometer(const char *pElementName) : CHudElement(pElemen
 	// Text gets overwritten 
 	m_pSpeedTextLabel = new Label(this, "HudSpeedometerText", "CYMRUAMBYTH");
 
+	playerColourBase = Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat());
+	//playerColourNormalised = NormaliseColour(playerColourBase);
+
+	/*if (hud_speedometer_normaliseplayercolour.GetInt() > 0) {
+		// Colour to use is now Normlised Colour
+		playerColour = &playerColourNormalised;
+	}*/
+
+	if (hud_speedometer_vectors_useplayercolour.GetInt() > 0) {
+		playerColourComplimentary = GetComplimentaryColour(playerColourBase);
+
+		vectorColor_input = &playerColourBase;
+		vectorColor_vel = &playerColourComplimentary;
+	}
+
 	if (hud_speedometer_useplayercolour.GetInt() > 0) {
-		m_pSpeedTextLabel->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
-		m_pDeltaTextLabel->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
+
+		// If 2, use the complimentary!
+		if (hud_speedometer_useplayercolour.GetInt() > 1) {
+			playerColour = &playerColourComplimentary;
+		}
+
+		m_pSpeedTextLabel->SetFgColor(*playerColour);
+		m_pDeltaTextLabel->SetFgColor(*playerColour);
 
 		// Cannot be set in .res? Need to do it here :( sorry HUD Modders
 		// If anyone knows how to have this in the .res file instead, that'd be ideal.
-		m_pSpeedPercentageMeter->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
+		m_pSpeedPercentageMeter->SetFgColor(*playerColour);
 	}
 	SetDialogVariable("speeddelta", "~0");
 
 	SetHiddenBits(HIDEHUD_MISCSTATUS);
 
 	vgui::ivgui()->AddTickSignal(GetVPanel());
+}
+
+Color CHudSpeedometer::NormaliseColour(Color colorIn) {
+	Vector colorAsVector = Vector(colorIn.r(), colorIn.g(), colorIn.b());
+	colorAsVector /= 255.0f;
+	colorAsVector = colorAsVector.Normalized();
+	colorAsVector *= 255.0f;
+	return Color(colorAsVector.x, colorAsVector.y, colorAsVector.z, colorIn.a());
+}
+
+Color CHudSpeedometer::GetComplimentaryColour(Color colorIn) {
+	int white = 0xFFFFFF;
+	// Save the alpha for output
+	int alpha = colorIn.a();
+
+	// Use RGB only, no A!
+	colorIn = Color(colorIn.r(), colorIn.g(), colorIn.b(), 0 );
+	
+	Color out;
+	// Calculate complimentary using RGB only
+	out.SetRawColor( white - colorIn.GetRawColor() );
+
+	// Add the alpha back in
+	out = Color(out.r(), out.g(), out.b(), alpha);
+
+	return out;
 }
 
 //-----------------------------------------------------------------------------
@@ -132,9 +195,43 @@ void CHudSpeedometer::ApplySchemeSettings(IScheme *pScheme)
 
 	// Update to player's colour and opacity desires.
 	if (hud_speedometer_useplayercolour.GetInt() > 0) {
-		m_pSpeedPercentageMeter->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
-		m_pSpeedTextLabel->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
-		m_pDeltaTextLabel->SetFgColor(Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat()));
+
+		// Grab the colour
+		playerColourBase = Color(of_color_r.GetFloat(), of_color_g.GetFloat(), of_color_b.GetFloat(), hud_speedometer_opacity.GetFloat());
+
+
+		//playerColourNormalised = NormaliseColour(playerColourBase);
+		/*if (hud_speedometer_normaliseplayercolour.GetInt() > 0) {
+			// Colour to use is now Normlised Colour!
+			playerColour = &playerColourNormalised;
+		} else {
+			// Just use the base colour in this case
+			playerColour = &playerColourBase;
+		}*/
+		
+		// If we're colouring the on-screen vectors according to the player, recalculate the complimentary colour
+		if (hud_speedometer_vectors_useplayercolour.GetInt() > 0) {
+			playerColourComplimentary = GetComplimentaryColour(playerColourBase);
+
+			// We use the player's colour and complimentary colour
+			vectorColor_input = &playerColourBase;
+			vectorColor_vel = &playerColourComplimentary;
+		}
+		else {
+			// Switch back to the defaults
+			vectorColor_input = &defaultInputVectorCol;
+			vectorColor_vel = &defaultVelVectorCol;
+		}
+
+		// If 2, use the complimentary!
+		if (hud_speedometer_useplayercolour.GetInt() > 1) {
+			playerColour = &playerColourComplimentary;
+		}
+
+		// Update all our HUD elements accordingly
+		m_pSpeedPercentageMeter->SetFgColor(*playerColour);
+		m_pSpeedTextLabel->SetFgColor(*playerColour);
+		m_pDeltaTextLabel->SetFgColor(*playerColour);
 	}
 }
 
@@ -270,11 +367,11 @@ void CHudSpeedometer::Paint(void) {
 		// Draw the input vectors (The player's WASD, as a line)
 		float inputLongitudinal = -g_pMoveData->m_flForwardMove * hud_speedometer_vectors_length.GetFloat();
 		float inputLateral = g_pMoveData->m_flSideMove * hud_speedometer_vectors_length.GetFloat();
-		surface()->DrawSetColor(0, 0, 255, 255);
+		surface()->DrawSetColor(*vectorColor_input);
 		surface()->DrawLine(centreX, centreY, centreX + inputLateral, centreY + inputLongitudinal);
 
 		// Draw the velocity vectors (The player's actual velocity, horizontally, relative to the view direction)
-		surface()->DrawSetColor(255, 0, 0, 255);
+		surface()->DrawSetColor(*vectorColor_vel);
 		surface()->DrawLine(centreX, centreY, centreX + velocityLateralGlobal, centreY + velocityLongitudinalGlobal);
 	}
 }
