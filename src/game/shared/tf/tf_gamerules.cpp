@@ -21,9 +21,9 @@
 #include "entity_bossresource.h"
 
 #ifdef CLIENT_DLL
-#include <game/client/iviewport.h>
-#include "c_tf_player.h"
-#include "c_tf_objective_resource.h"
+	#include <game/client/iviewport.h>
+	#include "c_tf_player.h"
+	#include "c_tf_objective_resource.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -45,8 +45,6 @@
 	#include "entity_roundwin.h"
 	#include "coordsize.h"
 	#include "entity_healthkit.h"
-	#include "item_healthkit_tiny.h"
-	#include "item_healthkit_mega.h"
 	#include "entity_ammopack.h"
 	#include "tf_gamestats.h"
 	#include "entity_capture_flag.h"
@@ -296,7 +294,7 @@ static CViewVectors g_HLViewVectors(
 const CViewVectors *CTFGameRules::GetViewVectors() const
 {
 
-	if (m_bUsesHL2Hull && of_usehl2hull.GetInt() < 0 || of_usehl2hull.GetInt() > 0)
+	if ((m_bUsesHL2Hull && of_usehl2hull.GetInt() < 0) || of_usehl2hull.GetInt() > 0)
 		return &g_HLViewVectors;
 
 	return &g_TFViewVectors;
@@ -2393,7 +2391,7 @@ void CTFGameRules::SetupOnRoundStart(void)
 			m_hAmmoEntities.AddToTail(hndl);
 		}
 
-		if (pEnt->ClassMatches("func_regenerate") || pEnt->ClassMatches("item_healthkit*") && !pEnt->ClassMatches("item_healthkit_tiny")) // don't want bots to go after these...
+		if (pEnt->ClassMatches("func_regenerate") || (pEnt->ClassMatches("item_healthkit*") && !pEnt->ClassMatches("item_healthkit_tiny"))) // don't want bots to go after these...
 		{
 			EHANDLE hndl(pEnt);
 			m_hHealthEntities.AddToTail(hndl);
@@ -2498,14 +2496,17 @@ void CTFGameRules::SetupOnRoundStart(void)
 		for (int i = 0; i < m_hDisabledHealthKits.Count(); i++)
 		{
 			if (m_hDisabledHealthKits[i])
+			{
 				m_hDisabledHealthKits[i]->SetDisabled(false);
+			}
 		}
+
 		m_hDisabledHealthKits.Purge();
 	}
 
 	if (of_randomizer.GetBool())
 	{
-		// Disable all the active weapon spawners in the world
+		// Disable all the active health packs in the world
 		m_hDisabledWeaponSpawners.Purge();
 		CWeaponSpawner *pWeaponSpawner = gEntList.NextEntByClass((CWeaponSpawner *)NULL);
 		while (pWeaponSpawner)
@@ -2561,7 +2562,9 @@ void CTFGameRules::SetupOnRoundStart(void)
 		for (int i = 0; i < m_hDisabledAmmoPack.Count(); i++)
 		{
 			if (m_hDisabledAmmoPack[i])
+			{
 				m_hDisabledAmmoPack[i]->SetDisabled(false);
+			}
 		}
 
 		m_hDisabledAmmoPack.Purge();
@@ -5000,7 +5003,7 @@ void CTFGameRules::PlayerKilled(CBasePlayer *pVictim, const CTakeDamageInfo &inf
 					(TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ((float)iFragLimit * 0.8)))
 					&& !TFGameRules()->IsInWaitingForPlayers())
 				{
-					DevMsg("VoteController: Team fraglimit is 80%, begin nextlevel voting... \n");
+					DevMsg("VoteController: Team fraglimit is 80%%, begin nextlevel voting... \n");
 					m_bStartedVote = true;
 					//engine->ServerCommand( "callvote nextlevel" );
 					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -5028,7 +5031,7 @@ void CTFGameRules::PlayerKilled(CBasePlayer *pVictim, const CTakeDamageInfo &inf
 					// one of our players is at 80% of the fragcount, start voting for next map
 					if (!m_bStartedVote && (pTFPlayerScorer->FragCount() >= ((float)iFragLimit * 0.8)) && !TFGameRules()->IsInWaitingForPlayers())
 					{
-						DevMsg("VoteController: Player fraglimit is 80%, begin nextlevel voting... \n");
+						DevMsg("VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n");
 						m_bStartedVote = true;
 						//engine->ServerCommand( "callvote nextlevel" );
 						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -5049,7 +5052,7 @@ void CTFGameRules::PlayerKilled(CBasePlayer *pVictim, const CTakeDamageInfo &inf
 
 		if (!m_bStartedVote && (pTFPlayerScorer->GGLevel() >= ((float)m_iMaxLevel * 0.8)) && !TFGameRules()->IsInWaitingForPlayers())
 		{
-			DevMsg("VoteController: GGLevel is 80%, begin nextlevel voting... \n");
+			DevMsg("VoteController: GGLevel is 80%%, begin nextlevel voting... \n");
 			m_bStartedVote = true;
 			//engine->ServerCommand( "callvote nextlevel" );
 			char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];

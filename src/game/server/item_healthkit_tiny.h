@@ -16,11 +16,8 @@ public:
 	powerupsize_t GetPowerupSize(void) { return POWERUP_TINY; }
 	string_t m_iszPickupSound = MAKE_STRING("HealthKitTiny.Touch");
 
-	void Materialize(void);
 	bool MyTouch(CBasePlayer *pPlayer);
 	void Precache(void);
-
-	bool m_bDontHeal;
 
 	DECLARE_DATADESC();
 };

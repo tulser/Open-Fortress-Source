@@ -84,11 +84,10 @@ void CHealthKitTiny::Precache(void)
 
 bool CHealthKitTiny::MyTouch(CBasePlayer *pPlayer)
 {
-	if (m_bDontHeal)
-		return false;
+	bool m_bDontHeal = false;
 
 	if (!ValidTouch(pPlayer))
-		return false;
+		return m_bDontHeal;
 
 	if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))
 	{
@@ -97,11 +96,5 @@ bool CHealthKitTiny::MyTouch(CBasePlayer *pPlayer)
 		EmitSound(filter, entindex(), STRING(m_iszPickupSound));
 		AddEffects(EF_NODRAW);
 	}
-	return true;
-}
-
-void CHealthKitTiny::Materialize(void)
-{
-	BaseClass::Materialize();
-	m_bDontHeal = false;
+	return m_bDontHeal;
 }
