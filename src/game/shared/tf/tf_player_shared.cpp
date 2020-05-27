@@ -599,15 +599,13 @@ void CTFPlayerShared::UpdateConditions( int nCond, int nCondOld, int nCondOffset
 //-----------------------------------------------------------------------------
 // Purpose: Remove any conditions affecting players
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::RemoveAllCond( CTFPlayer *pPlayer )
+void CTFPlayerShared::RemoveAllCond(CTFPlayer *pPlayer)
 {
 	int i;
-	for ( i=0;i<TF_COND_LAST;i++ )
+	for (i = 0; i < TF_COND_LAST; i++)
 	{
 		if ( InCond( i ) )
-		{
 			RemoveCond( i );
-		}
 	}
 
 	// Now remove all the rest
@@ -617,7 +615,6 @@ void CTFPlayerShared::RemoveAllCond( CTFPlayer *pPlayer )
 	m_nPlayerCondEx3 = 0;
 	m_nPlayerCondEx4 = 0;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Called on both client and server. Server when we add the bit,
@@ -3701,4 +3698,18 @@ void CTFPlayerShared::RemoveCondInvis( void )
 {
 	RemoveCond( TF_COND_STEALTHED );
 	RemoveCond( TF_COND_INVIS_POWERUP );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: check if player has any powerup
+//-----------------------------------------------------------------------------
+
+bool CTFPlayerShared::InPowerupCond()
+{
+	for (int i = TF_COND_BERSERK; i < TF_COND_LAST; i++)
+	{
+		if (InCond(i))
+			return true;
+	}
+	return false;
 }

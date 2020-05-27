@@ -479,6 +479,7 @@ public:
 
 	void CalcDominationAndRevenge( CTFPlayer *pAttacker, CTFPlayer *pVictim, bool bIsAssist, int *piDeathFlags );
 
+	int GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer);
 	const char *GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim );
 	CBasePlayer *GetAssister( CBasePlayer *pVictim, CBasePlayer *pScorer, CBaseEntity *pInflictor );
 	CTFPlayer *GetRecentDamager( CTFPlayer *pVictim, int iDamager, float flMaxElapsed );
@@ -517,6 +518,7 @@ private:
 	CountdownTimer	m_mobSpawnTimer;
 	int				m_nZombiesToSpawn;
 	Vector			m_vecMobSpawnLocation;
+	bool			m_bFirstBlood;
 #endif
 
 private:
