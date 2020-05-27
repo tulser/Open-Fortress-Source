@@ -716,7 +716,6 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 			}
 		}
 
-		/* undone for medals update
 		if (!bIsObjectDestroyed)
 		{
 			// if this death involved a player dominating another player or getting revenge on another player, add an additional message
@@ -727,24 +726,24 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 			if (event->GetInt("dominated") > 0)
 			{
 				AddAdditionalMsg(iKillerID, iVictimID, "#Msg_Dominating");
-				PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_DOMINATION);
+				//PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_DOMINATION);
 			}
 			if (event->GetInt("assister_dominated") > 0 && (iAssisterID > 0))
 			{
 				AddAdditionalMsg(iAssisterID, iVictimID, "#Msg_Dominating");
-				PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_DOMINATION);
+				//PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_DOMINATION);
 			}
 			if (event->GetInt("revenge") > 0)
 			{
 				AddAdditionalMsg(iKillerID, iVictimID, "#Msg_Revenge");
-				PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_REVENGE);
+				//PlayRivalrySounds(iKillerID, iVictimID, TF_DEATH_REVENGE);
 			}
 			if (event->GetInt("assister_revenge") > 0 && (iAssisterID > 0))
 			{
 				AddAdditionalMsg(iAssisterID, iVictimID, "#Msg_Revenge");
-				PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_REVENGE);
+				//PlayRivalrySounds(iAssisterID, iVictimID, TF_DEATH_REVENGE);
 			}
-		}*/
+		}
 
 		if ( bIsObjectDestroyed )
 		{
