@@ -70,7 +70,7 @@ CTFHudMedals::CTFHudMedals(const char *pElementName) : CHudElement(pElementName)
 
 	m_pMedalImage->SetVisible(false);
 	
-	died = drawTime = medalScreenTime = 0;
+	died = drawTime = 0;
 	for (int i = 0; i <= DENIED; i++)
 		medals_counter[i] = 0;
 	medalsQueue.Purge();
@@ -92,7 +92,7 @@ void CTFHudMedals::Reset(void)
 {
 	m_pMedalImage->SetVisible(false);
 
-	died = drawTime = medalScreenTime = 0;
+	died = drawTime = 0;
 	for (int i = 0; i <= DENIED; i++)
 		medals_counter[i] = 0;
 	medalsQueue.Purge();
@@ -105,10 +105,7 @@ void CTFHudMedals::Reset(void)
 void CTFHudMedals::OnThink(void)
 {
 	if (!medalsQueue.Size())
-	{
-		m_pMedalImage->SetPos((GetWide() - MEDAL_SIZE) / 2, (MEDAL_SIZE / 4) * 3);
 		return;
-	}
 
 	//Initialize the time frame medal should be drawn
 	if (!drawTime)
@@ -121,16 +118,14 @@ void CTFHudMedals::OnThink(void)
 		drawTime = gpGlobals->curtime + MEDAL_TIME;
 	}
 
-	int YPos = m_pMedalImage->GetYPos() + (medalScreenTime % 6 == 0 ? 1 : 0);
-	m_pMedalImage->SetPos((GetWide() - MEDAL_SIZE) / 2, min(MEDAL_SIZE, YPos));
-	medalScreenTime++;
+	m_pMedalImage->SetPos((GetWide() - MEDAL_SIZE) / 2, MEDAL_SIZE);
 
 	if (gpGlobals->curtime <= drawTime)
 		return;
 
 	//Remove medal
 	medalsQueue.Remove(0);
-	drawTime = medalScreenTime = 0;
+	drawTime = 0;
 	if (!medalsQueue.Size())
 		m_pMedalImage->SetVisible(false);
 }

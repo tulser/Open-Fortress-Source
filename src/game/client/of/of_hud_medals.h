@@ -27,13 +27,9 @@ public:
 	CTFHudMedals(const char *pElementName);
 
 	virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
-
 	virtual void FireGameEvent(IGameEvent *event);
-
 	virtual void Reset();
-
 	virtual bool ShouldDraw(void);
-
 	virtual int GetMedalCount(int medalIndex);
 
 protected:
@@ -48,16 +44,13 @@ protected:
 	CUtlVector<medal_info> medalsQueue;
 
 	virtual void AddMedal(int medalIndex);
-
 	virtual void OnThink(void);
 
 private:
 
 	bool died;
-
 	int medals_counter[DENIED + 1];
-	int medalScreenTime;
-
+	
 	ImagePanel *m_pMedalImage;
 };
 

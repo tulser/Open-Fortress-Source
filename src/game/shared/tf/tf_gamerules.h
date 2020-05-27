@@ -518,7 +518,7 @@ private:
 	CountdownTimer	m_mobSpawnTimer;
 	int				m_nZombiesToSpawn;
 	Vector			m_vecMobSpawnLocation;
-	bool			m_firstBlood;
+	bool			m_bFirstBlood;
 #endif
 
 private:

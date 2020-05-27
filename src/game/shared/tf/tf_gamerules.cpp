@@ -1329,6 +1329,8 @@ CTFGameRules::CTFGameRules()
 	m_bHasJuggernautSpawns = false;
 	m_bEntityLimitPrevented = false;
 
+	m_bFirstBlood = false;
+
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
 
@@ -5366,8 +5368,8 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & (FL_ONGROUND|FL_INWATER)) && weaponType == 2 ? true : false); //not on the ground and not in water
 
 			//first blood
-			event->SetBool("firstblood", !m_firstBlood ? true : false);
-			m_firstBlood = true;
+			event->SetBool("firstblood", !m_bFirstBlood ? true : false);
+			m_bFirstBlood = true;
 
 			//Kamikaze, suicide entity exists, inflictor is the suicide entity of the scorer, inflictor is an explosive projectile
 			bool Kamikaze = pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
