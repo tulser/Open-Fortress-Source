@@ -5340,7 +5340,6 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		event->SetInt("customkill", info.GetDamageCustom());
 		event->SetInt("priority", 7);	// HLTV event priority, not transmitted
 
-		/* undone for medals system
 		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_DOMINATION)
 			event->SetInt("dominated", 1);
 		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_DOMINATION)
@@ -5349,7 +5348,6 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			event->SetInt("revenge", 1);
 		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_REVENGE)
 			event->SetInt("assister_revenge", 1);
-		*/
 
 		//medals stuff
 		if(pScorer)

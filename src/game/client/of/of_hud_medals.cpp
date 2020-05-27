@@ -26,7 +26,7 @@ using namespace vgui;
 #define MEDAL_TIME 2.5f
 #define MEDAL_SIZE 128
 
-ConVar cl_show_medals("cl_show_medals", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO);
+ConVar cl_show_medals("cl_show_medals", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
 
 DECLARE_HUDELEMENT(CTFHudMedals);
 
