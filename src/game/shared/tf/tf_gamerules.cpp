@@ -5372,7 +5372,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			m_bFirstBlood = true;
 
 			//Kamikaze, suicide entity exists, inflictor is the suicide entity of the scorer, inflictor is an explosive projectile
-			bool Kamikaze = pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
+			bool Kamikaze = pVictim != pKiller && pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
 			event->SetBool("kamikaze", Kamikaze);
 			if(Kamikaze)
 				pTFPlayerScorer->m_SuicideEntity = NULL;
