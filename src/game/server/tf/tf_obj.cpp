@@ -1877,7 +1877,7 @@ void CBaseObject::CreateObjectGibs( void )
 		Assert( pAmmoPack );
 		if ( pAmmoPack )
 		{
-			pAmmoPack->ActivateWhenAtRest();
+			//pAmmoPack->ActivateWhenAtRest();
 
 			// Fill up the ammo pack.
 			pAmmoPack->GiveAmmo( nMetalPerGib, TF_AMMO_METAL );
