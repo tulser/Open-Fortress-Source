@@ -14,7 +14,8 @@
 
 float GetCurrentGravity( void );
 
-extern ConVar sv_movementmode;
+extern ConVar of_movementmode;
+extern ConVar of_q3airaccelerate;
 extern ConVar sv_gravity;
 extern ConVar sv_stopspeed;
 extern ConVar sv_noclipaccelerate;
@@ -22,7 +23,6 @@ extern ConVar sv_noclipspeed;
 extern ConVar sv_maxspeed;
 extern ConVar sv_accelerate;
 extern ConVar sv_airaccelerate;
-extern ConVar sv_q3airaccelerate;
 extern ConVar sv_wateraccelerate;
 extern ConVar sv_waterfriction;
 extern ConVar sv_footsteps;

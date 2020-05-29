@@ -1144,9 +1144,9 @@ void CTFGameMovement::AirMove(void)
 	}
 
 	//Accelerate
-	movementmode = sv_movementmode.GetInt();											//get the value only once
+	movementmode = of_movementmode.GetInt();											//get the value only once
 	q3accel = movementmode == 1 || (movementmode > 1 && fmove && smove);				//determine which movement mode should be used
-	airaccel = q3accel ? sv_q3airaccelerate.GetFloat() : sv_airaccelerate.GetFloat();	//determine the needed air acceleration value
+	airaccel = q3accel ? of_q3airaccelerate.GetFloat() : sv_airaccelerate.GetFloat();	//determine the needed air acceleration value
 	AirAccelerate(wishdir, wishspeed, airaccel, q3accel);								//calculate acceleration accordingly
 
 	// Add in any base velocity to the current velocity.
