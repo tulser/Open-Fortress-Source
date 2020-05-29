@@ -1108,9 +1108,7 @@ void CTFGameMovement::WalkMove( void )
 //-----------------------------------------------------------------------------
 void CTFGameMovement::AirMove(void)
 {
-	bool		q3accel;
 	int			movementmode;
-	float		airaccel;
 	Vector		wishvel;
 	float		fmove, smove;
 	Vector		wishdir;
@@ -1144,10 +1142,22 @@ void CTFGameMovement::AirMove(void)
 	}
 
 	//Accelerate
-	movementmode = of_movementmode.GetInt();											//get the value only once
-	q3accel = movementmode == 1 || (movementmode > 1 && fmove && smove);				//determine which movement mode should be used
-	airaccel = q3accel ? of_q3airaccelerate.GetFloat() : sv_airaccelerate.GetFloat();	//determine the needed air acceleration value
-	AirAccelerate(wishdir, wishspeed, airaccel, q3accel);								//calculate acceleration accordingly
+	movementmode = of_movementmode.GetInt();	//get the value only once
+
+	if (!movementmode) //default OF
+	{
+		AirAccelerate(wishdir, wishspeed, sv_airaccelerate.GetFloat());
+	}
+	else if (movementmode == 1) //Q3
+	{
+		AirAccelerate(wishdir, wishspeed, of_q3airaccelerate.GetFloat(), false);
+	}
+	else //CPMA
+	{
+		bool CPMA = !fmove && smove;
+		float airaccel = CPMA ? sv_airaccelerate.GetFloat() : of_q3airaccelerate.GetFloat();
+		AirAccelerate(wishdir, wishspeed, airaccel, CPMA);
+	}
 
 	// Add in any base velocity to the current velocity.
 	VectorAdd(mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity);

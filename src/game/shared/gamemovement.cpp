@@ -1710,7 +1710,7 @@ void CGameMovement::FinishGravity( void )
 // Input  : wishdir - 
 //			accel - 
 //-----------------------------------------------------------------------------
-void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q3accel)
+void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
 	float addspeed, currentspeed;
 	float wishspd;
@@ -1725,7 +1725,7 @@ void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel,
 
 	// Cap speed, this is the only thing to edit to allow
 	// Q3 style strafejumping, if Q3 movement is on it is ignored
-	if (!q3accel)
+	if (q1accel)
 	{
 		if (wishspd > GetAirSpeedCap())
 			wishspd = GetAirSpeedCap();
