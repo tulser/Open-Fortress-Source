@@ -629,11 +629,9 @@ bool CTFGameMovement::CheckJumpButton()
 	if( gpGlobals->curtime >= m_pTFPlayer->m_flJumpSoundDelay )
 	{
 		if ( ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 ) || of_jumpsound.GetInt() == 2 )
-		{
 			m_pTFPlayer->EmitSound( m_pTFPlayer->GetPlayerClass()->GetJumpSound() );
-		}
-		m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 	}
+	m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 #endif
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
