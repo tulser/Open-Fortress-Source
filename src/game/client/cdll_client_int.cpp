@@ -1057,9 +1057,11 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	
 #ifdef OF_CLIENT_DLL	
 	AddRequiredSearchPaths();
-#endif
 
-#ifdef OF_CLIENT_DLL
+	// Why on earth would you only automatically enable this in Valve games????!?!?
+	engine->SetRestrictServerCommands( true );
+	engine->SetRestrictClientCommands( true );
+
 	// crude way to detect if TF2 is mounted properly
 	IMaterial *testmat = materials->FindMaterial("console/title_war", TEXTURE_GROUP_OTHER );
 	if ( testmat->IsErrorMaterial() )
