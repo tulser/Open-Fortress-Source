@@ -106,6 +106,7 @@ static int g_TauntCamAchievements[] =
 	0,		// TF_CLASS_COUNT_ALL,
 };
 
+extern ConVar sv_movementmode;
 extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;
 extern ConVar of_bunnyhop;
@@ -116,6 +117,7 @@ extern ConVar fraglimit;
 extern ConVar of_bunnyhop_max_speed_factor;
 extern ConVar tf_maxspeed;
 extern ConVar sv_airaccelerate;
+extern ConVar sv_q3airaccelerate;
 extern ConVar of_knockback_all;
 extern ConVar of_knockback_bullets;
 extern ConVar of_knockback_melee;

@@ -1106,52 +1106,56 @@ void CTFGameMovement::WalkMove( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFGameMovement::AirMove( void )
+void CTFGameMovement::AirMove(void)
 {
-	int			i;
+	bool		q3accel;
+	int			movementmode;
+	float		airaccel;
 	Vector		wishvel;
 	float		fmove, smove;
 	Vector		wishdir;
 	float		wishspeed;
-	Vector forward, right, up;
+	Vector		forward, right, up;
 
-	AngleVectors (mv->m_vecViewAngles, &forward, &right, &up);  // Determine movement angles
+	AngleVectors(mv->m_vecViewAngles, &forward, &right, &up);  // Determine movement angles
 
 	// Copy movement amounts
 	fmove = mv->m_flForwardMove;
 	smove = mv->m_flSideMove;
 
 	// Zero out z components of movement vectors
-	forward[2] = 0;
-	right[2]   = 0;
-	VectorNormalize(forward);  // Normalize remainder of vectors
-	VectorNormalize(right);    // 
+	forward[2] = right[2] = wishvel[2] = 0;
 
-	for (i=0 ; i<2 ; i++)       // Determine x and y parts of velocity
-		wishvel[i] = forward[i]*fmove + right[i]*smove;
-	wishvel[2] = 0;             // Zero out z part of velocity
+	//create wishdir vector
+	VectorNormalize(forward);
+	VectorNormalize(right);
 
-	VectorCopy (wishvel, wishdir);   // Determine maginitude of speed of move
+	for (int i = 0; i < 2; i++)       // Determine x and y parts of velocity
+		wishvel[i] = forward[i] * fmove + right[i] * smove;
+
+	VectorCopy(wishvel, wishdir);   // Determine magnitude of speed of move
 	wishspeed = VectorNormalize(wishdir);
 
-	//
 	// clamp to server defined max speed
-	//
-	if ( wishspeed != 0 && (wishspeed > mv->m_flMaxSpeed))
+	if (wishspeed && wishspeed > mv->m_flMaxSpeed)
 	{
-		VectorScale (wishvel, mv->m_flMaxSpeed/wishspeed, wishvel);
+		VectorScale(wishvel, mv->m_flMaxSpeed / wishspeed, wishvel);
 		wishspeed = mv->m_flMaxSpeed;
 	}
 
-	AirAccelerate( wishdir, wishspeed, sv_airaccelerate.GetFloat() );
+	//Accelerate
+	movementmode = sv_movementmode.GetInt();											//get the value only once
+	q3accel = movementmode == 1 || (movementmode > 1 && fmove && smove);				//determine which movement mode should be used
+	airaccel = q3accel ? sv_q3airaccelerate.GetFloat() : sv_airaccelerate.GetFloat();	//determine the needed air acceleration value
+	AirAccelerate(wishdir, wishspeed, airaccel, q3accel);								//calculate acceleration accordingly
 
 	// Add in any base velocity to the current velocity.
-	VectorAdd( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
+	VectorAdd(mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity);
 
 	TryPlayerMove();
 
 	// Now pull the base velocity back out.   Base velocity is set if you are on a moving object, like a conveyor (or maybe another monster?)
-	VectorSubtract( mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity );
+	VectorSubtract(mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity);
 }
 
 float CTFGameMovement::GetAirSpeedCap( void )
