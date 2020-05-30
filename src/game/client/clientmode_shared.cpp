@@ -93,7 +93,7 @@ ConVar cl_show_num_particle_systems( "cl_show_num_particle_systems", "0", FCVAR_
 
 #ifdef OF_CLIENT_DLL
 ConVar of_announcer_override("of_announcer_override", "none", FCVAR_CLIENTDLL | FCVAR_ARCHIVE , "Sets your preffered Announcer." );
-//ConVar of_announcer_events("of_announcer_events", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Weather or not to play special event sounds\nie Humiliation, Impressive, Excellent." );
+ConVar of_announcer_events("of_announcer_events", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Weather or not to play special event sounds\nie Humiliation, Impressive, Excellent." );
 #endif
 
 extern ConVar v_viewmodel_fov;
@@ -1236,15 +1236,14 @@ void ClientModeShared::FireGameEvent( IGameEvent *event )
 #ifdef OF_CLIENT_DLL
 	else if (Q_strcmp( "ffa_broadcast_audio", eventname ) == 0 )
 	{
-		/* undone for medal system inclusion
-		if ( !of_announcer_events.GetBool() 
-		&& (!strcmp( event->GetString("sound"), "Dominating" )
-		|| !strcmp( event->GetString("sound"), "Revenge" ) 
-		|| !strcmp( event->GetString("sound"), "Impressive" )
-		|| !strcmp( event->GetString("sound"), "Excellent" )
-		|| !strcmp( event->GetString("sound"), "Humiliation" ) ) )
+		if ( !of_announcer_events.GetBool() &&
+			(!strcmp(event->GetString("sound"), "Dominating") ||
+			!strcmp(event->GetString("sound"), "Revenge")))
 			return;
-		*/
+		//|| !strcmp( event->GetString("sound"), "Revenge" ) 
+		//|| !strcmp( event->GetString("sound"), "Impressive" )
+		//|| !strcmp( event->GetString("sound"), "Excellent" )
+		//|| !strcmp( event->GetString("sound"), "Humiliation" ) )
 
 		int playerid = event->GetInt( "player" );
 		
