@@ -613,6 +613,7 @@ public:
 	bool			m_bListOnly;
 	int				m_iRequiredKills;
 	bool			m_bIsFreeRoamMap;
+	bool			m_bIsCoop;
 	bool	IsDMGamemode(void);
 	bool	IsTDMGamemode(void);
 	bool	IsDOMGamemode(void);
@@ -629,6 +630,7 @@ public:
 	bool	IsPayloadOverride(void);
 	bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	bool	IsFreeRoam(void); // this is used for bots
+	bool	IsCoopEnabled(void); // pacifist gamemode
 	bool	UsesMoney(void);
 	bool	UsesDMBuckets( void );
 	void	FireGamemodeOutputs(void);

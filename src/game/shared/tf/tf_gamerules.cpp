@@ -134,6 +134,7 @@ ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle
 ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
 ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar of_juggernaught				( "of_juggernaught", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Juggernaught mode." );
+ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode. (Pacifism)" );
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
@@ -1592,14 +1593,14 @@ void CTFGameRules::Activate()
 		|| !Q_strncmp( STRING( gpGlobals->mapname), "duel_", 5 ) 
 		|| !Q_strncmp( STRING( gpGlobals->mapname), "inf_", 4 ) ) )
 		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || ( TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopEnabled() ) )
 		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
 #else
 	if ( ( !Q_strncmp( STRING( engine->GetLevelName() ), "dm_", 3 ) 
 		|| !Q_strncmp( STRING( engine->GetLevelName() ), "duel_", 5 ) 
 		|| !Q_strncmp( STRING( engine->GetLevelName() ), "inf_", 4 ) ) )
 		m_bIsFreeRoamMap = true;	// dm and infection specific maps must always be freeroam due to the layout, used for mutators
-	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || TFGameRules()->IsInfGamemode() )
+	else if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || ( TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopEnabled() ) )
 		m_bIsFreeRoamMap = true;	// also account for enabling DM or infection on maps such as ctf_2fort
 #endif
 
@@ -2102,6 +2103,11 @@ bool CTFGameRules::IsPayloadOverride( void )
 bool CTFGameRules::IsFreeRoam( void )
 { 
 	return m_bIsFreeRoamMap;
+}
+
+bool CTFGameRules::IsCoopEnabled(void)
+{
+	return of_coop.GetBool();
 }
 
 bool CTFGameRules::UsesMoney( void )

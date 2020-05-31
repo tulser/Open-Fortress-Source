@@ -585,6 +585,18 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	if ( cvar == NULL )
 		return false;
 
+#ifdef OF_DLL
+	// ------------------------------
+	// Force CELT audio codec, instead of the one from Steam
+	// ------------------------------
+	ConVar *sv_voicecodec = NULL;
+	sv_voicecodec = g_pCVar->FindVar( "sv_voicecodec" );
+	if ( sv_voicecodec )
+	{
+		sv_voicecodec->SetValue( "vaudio_celt" );
+	}
+#endif
+
 #ifndef _X360
 	s_SteamAPIContext.Init();
 	s_SteamGameServerAPIContext.Init();

@@ -4064,7 +4064,7 @@ bool CTFPlayer::CanDisguise( void )
 	}
 
 	// no disguising in infection or DM
-	if ( TFGameRules() && ( TFGameRules()->IsInfGamemode() || ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) ) )
+	if ( TFGameRules() && ( ( TFGameRules()->IsInfGamemode() || TFGameRules()->IsCoopEnabled() ) || ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) ) )
 		return false;
 
 	return true;
@@ -5178,10 +5178,12 @@ bool CTFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{
+		// coop needs to return false
+		if ( TFGameRules() && TFGameRules()->IsCoopEnabled() )
+			return false;
+
 		if (TFGameRules() && TFGameRules()->IsDMGamemode() && !of_allowteams.GetBool() && !TFGameRules()->IsTeamplay())
-		{
 			return BaseClass::ShouldCollide(collisionGroup, contentsMask);
-		}
 		
 		if ( of_teamplay_collision.GetBool() && TFGameRules()->IsTeamplay() )
 			return true;
