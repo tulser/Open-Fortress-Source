@@ -46,9 +46,12 @@
 	#include "coordsize.h"
 	#include "entity_healthkit.h"
 	#include "entity_ammopack.h"
+	#include "func_respawnroom.h"
+	#include "func_regenerate.h"
 	#include "tf_gamestats.h"
 	#include "entity_capture_flag.h"
 	#include "entity_weapon_spawner.h"
+	#include "entity_condpowerup.h"
 	#include "tf_player_resource.h"
 	#include "tf_obj_sentrygun.h"
 	#include "tier0/icommandline.h"
@@ -144,7 +147,7 @@ ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_
 ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Healthkits." );
 ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
-							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
+							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game\n 7 : Arsenal",
 							true, 0, true, 7 );
 
 /*	List of mutators:
@@ -2379,13 +2382,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_hRedDefendTrain = NULL;
 	m_hBlueDefendTrain = NULL;
 
-	m_hAmmoEntities.RemoveAll();
-	m_hHealthEntities.RemoveAll();
-	m_hWeaponEntities.RemoveAll();
-	m_hMapTeleportEntities.RemoveAll();
-	m_hJumpPadEntities.RemoveAll();
-	m_hPowerupEntities.RemoveAll();
-
 	SetIT( NULL );
 
 	// Let all entities know that a new round is starting
@@ -2394,43 +2390,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 	{
 		variant_t emptyVariant;
 		pEnt->AcceptInput( "RoundSpawn", NULL, NULL, emptyVariant, 0 );
-		
-		if ( pEnt->ClassMatches( "func_regenerate" ) || pEnt->ClassMatches( "item_ammopack*" ) )
-		{
-			EHANDLE hndl( pEnt );
-			m_hAmmoEntities.AddToTail( hndl );
-		}
-
-		if ( pEnt->ClassMatches( "func_regenerate" ) || ( pEnt->ClassMatches( "item_healthkit*" ) && !pEnt->ClassMatches( "item_healthkit_tiny" ) ) ) // don't want bots to go after these...
-		{
-			EHANDLE hndl( pEnt );
-			m_hHealthEntities.AddToTail( hndl );
-		}
-
-		if ( pEnt->ClassMatches( "dm_weapon_spawner" ) )
-		{
-			EHANDLE hndl( pEnt );
-			m_hWeaponEntities.AddToTail( hndl );
-		}
-
-		if ( pEnt->ClassMatches( "ofd_trigger_jump" ) )
-		{
-			EHANDLE hndl( pEnt );
-			m_hJumpPadEntities.AddToTail( hndl );
-		}
-
-		if ( pEnt->ClassMatches( "trigger_teleport" ) )
-		{
-			EHANDLE hndl( pEnt );
-			m_hMapTeleportEntities.AddToTail( hndl );
-		}
-
-		if ( pEnt->ClassMatches( "dm_powerup_spawner" ) )
-		{
-			EHANDLE hndl( pEnt );
-			m_hPowerupEntities.AddToTail( hndl );
-		}
-
 
 		pEnt = gEntList.NextEnt( pEnt );
 	}
@@ -2485,62 +2444,73 @@ void CTFGameRules::SetupOnRoundStart( void )
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
+
 	if ( of_disable_healthkits.GetBool() )
 	{
-		// Disable all the active health packs in the world
-		m_hDisabledHealthKits.Purge();
-		CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
-		while ( pHealthPack )
+		for ( int i = 0; i < IHealthKitAutoList::AutoList().Count(); ++i )
 		{
-			if ( !pHealthPack->IsDisabled() )
-			{
-				pHealthPack->SetDisabled( true );
-				m_hDisabledHealthKits.AddToTail( pHealthPack );
-			}
-			pHealthPack = gEntList.NextEntByClass( pHealthPack );
+			CHealthKit *pHealthKit = static_cast< CHealthKit* >( IHealthKitAutoList::AutoList()[ i ] );
+			pHealthKit->SetDisabled( true );
 		}
 	}
 	else
 	{
-		// Reenable all the health packs we disabled
-		for ( int i = 0; i < m_hDisabledHealthKits.Count(); i++ )
+		for ( int i = 0; i < IHealthKitAutoList::AutoList().Count(); ++i )
 		{
-			if ( m_hDisabledHealthKits[i] )
-			{
-				m_hDisabledHealthKits[i]->SetDisabled( false );
-			}
+			CHealthKit *pHealthKit = static_cast< CHealthKit* >( IHealthKitAutoList::AutoList()[ i ] );
+			pHealthKit->SetDisabled( false );
 		}
+	}
 
-		m_hDisabledHealthKits.Purge();		
+	if ( of_disable_ammopacks.GetBool() )
+	{
+		for ( int i = 0; i < IAmmoPackAutoList::AutoList().Count(); ++i )
+		{
+			CAmmoPack *pAmmoPack = static_cast< CAmmoPack* >( IAmmoPackAutoList::AutoList()[ i ] );
+			pAmmoPack->SetDisabled( true );
+		}
+	}
+	else
+	{
+		for ( int i = 0; i < IAmmoPackAutoList::AutoList().Count(); ++i )
+		{
+			CAmmoPack *pAmmoPack = static_cast< CAmmoPack* >( IAmmoPackAutoList::AutoList()[ i ] );
+			pAmmoPack->SetDisabled( false );
+		}
 	}
 	
-	if ( of_randomizer.GetBool() )
+	if ( !of_weaponspawners.GetBool() || of_randomizer.GetBool() || !TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->IsGGGamemode() )
 	{
-		// Disable all the active health packs in the world
-		m_hDisabledWeaponSpawners.Purge();
-		CWeaponSpawner *pWeaponSpawner = gEntList.NextEntByClass( (CWeaponSpawner *)NULL );
-		while ( pWeaponSpawner )
+		for ( int i = 0; i < IWeaponSpawnerAutoList::AutoList().Count(); ++i )
 		{
-			if ( !pWeaponSpawner->IsDisabled() )
-			{
-				pWeaponSpawner->SetDisabled( true );
-				m_hDisabledWeaponSpawners.AddToTail( pWeaponSpawner );
-			}
-			pWeaponSpawner = gEntList.NextEntByClass( pWeaponSpawner );
+			CWeaponSpawner *pWeaponSpawner = static_cast< CWeaponSpawner* >( IWeaponSpawnerAutoList::AutoList()[ i ] );
+			pWeaponSpawner->SetDisabled( true );
 		}
 	}
 	else
 	{
-		// Reenable all the health packs we disabled
-		for ( int i = 0; i < m_hDisabledWeaponSpawners.Count(); i++ )
+		for ( int i = 0; i < IWeaponSpawnerAutoList::AutoList().Count(); ++i )
 		{
-			if ( m_hDisabledWeaponSpawners[i] )
-			{
-				m_hDisabledWeaponSpawners[i]->SetDisabled( false );
-			}
+			CWeaponSpawner *pWeaponSpawner = static_cast< CWeaponSpawner* >( IWeaponSpawnerAutoList::AutoList()[ i ] );
+			pWeaponSpawner->SetDisabled( false );
 		}
+	}	
 
-		m_hDisabledWeaponSpawners.Purge();				
+	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) || !of_powerups.GetBool() )
+	{
+		for ( int i = 0; i < ICondPowerupAutoList::AutoList().Count(); ++i )
+		{
+			CCondPowerup *pPowerup = static_cast< CCondPowerup* >( ICondPowerupAutoList::AutoList()[ i ] );
+			pPowerup->SetDisabled( true );
+		}
+	}
+	else
+	{
+		for ( int i = 0; i < ICondPowerupAutoList::AutoList().Count(); ++i )
+		{
+			CCondPowerup *pPowerup = static_cast< CCondPowerup* >( ICondPowerupAutoList::AutoList()[ i ] );
+			pPowerup->SetDisabled( false );
+		}
 	}	
 
 	m_hLogicLoadout.Purge();
@@ -2550,35 +2520,6 @@ void CTFGameRules::SetupOnRoundStart( void )
 		m_hLogicLoadout.AddToTail( pLogicLoadout );
 		pLogicLoadout = gEntList.NextEntByClass( pLogicLoadout );
 	}	
-	
-	if ( of_disable_ammopacks.GetBool() )
-	{
-		// Disable all the active health packs in the world
-		m_hDisabledAmmoPack.Purge();
-		CAmmoPack *pAmmoPack = gEntList.NextEntByClass( (CAmmoPack *)NULL );
-		while ( pAmmoPack )
-		{
-			if ( !pAmmoPack->IsDisabled() )
-			{
-				pAmmoPack->SetDisabled( true );
-				m_hDisabledAmmoPack.AddToTail( pAmmoPack );
-			}
-			pAmmoPack = gEntList.NextEntByClass( pAmmoPack );
-		}
-	}
-	else
-	{
-		// Reenable all the health packs we disabled
-		for ( int i = 0; i < m_hDisabledAmmoPack.Count(); i++ )
-		{
-			if ( m_hDisabledAmmoPack[i] )
-			{
-				m_hDisabledAmmoPack[i]->SetDisabled( false );
-			}
-		}
-
-		m_hDisabledAmmoPack.Purge();				
-	}
 	
 	if ( TFGameRules()->IsInfGamemode() )
 	{
@@ -2611,17 +2552,25 @@ void CTFGameRules::SetupOnRoundStart( void )
 			{
 				UTIL_Remove( pEntity );
 			}
-		}
-
+		}		
 
 		// no more visualizers, or respawn rooms, or regenerate lockers
-		CBaseEntity *pEntity = NULL;
-		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_respawnroomvisualizer" ) ) != NULL )
-			UTIL_Remove( pEntity );
-		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_respawnroom" ) ) != NULL )
-			UTIL_Remove( pEntity );
-		while ( ( pEntity = gEntList.FindEntityByClassname( pEntity, "func_regenerate" ) ) != NULL )
-			UTIL_Remove( pEntity );
+		for ( int i = 0; i < IRegenerateZoneAutoList::AutoList().Count(); ++i )
+		{
+			UTIL_Remove( static_cast< CRegenerateZone* >( IRegenerateZoneAutoList::AutoList()[ i ] ) );
+		}
+		for ( int i = 0; i < IFuncRespawnRoomAutoList::AutoList().Count(); ++i )
+		{
+			CFuncRespawnRoom *pRespawnRoom = static_cast< CFuncRespawnRoom* >( IFuncRespawnRoomAutoList::AutoList()[ i ] );
+
+			for ( int j = 0; j < pRespawnRoom->m_hVisualizers.Count(); j++ )
+			{
+				if ( pRespawnRoom->m_hVisualizers[j].IsValid() )
+					UTIL_Remove( pRespawnRoom->m_hVisualizers[j].Get() );
+			}
+
+			UTIL_Remove( pRespawnRoom );
+		}
 
 		if ( !IsInWaitingForPlayers() )
 		{
@@ -2903,16 +2852,10 @@ void CTFGameRules::SetupOnStalemateStart( void )
 	}
 
 	// Disable all the active health packs in the world
-	m_hDisabledHealthKits.Purge();
-	CHealthKit *pHealthPack = gEntList.NextEntByClass( (CHealthKit *)NULL );
-	while ( pHealthPack )
+	for ( int i = 0; i < IHealthKitAutoList::AutoList().Count(); ++i )
 	{
-		if ( !pHealthPack->IsDisabled() )
-		{
-			pHealthPack->SetDisabled( true );
-			m_hDisabledHealthKits.AddToTail( pHealthPack );
-		}
-		pHealthPack = gEntList.NextEntByClass( pHealthPack );
+		CHealthKit *pHealthKit = static_cast< CHealthKit* >( IHealthKitAutoList::AutoList()[ i ] );
+		pHealthKit->SetDisabled( true );
 	}
 
 	CTFPlayer *pPlayer;
@@ -2932,16 +2875,11 @@ void CTFGameRules::SetupOnStalemateStart( void )
 //-----------------------------------------------------------------------------
 void CTFGameRules::SetupOnStalemateEnd( void )
 {
-	// Reenable all the health packs we disabled
-	for ( int i = 0; i < m_hDisabledHealthKits.Count(); i++ )
+	for ( int i = 0; i < IHealthKitAutoList::AutoList().Count(); ++i )
 	{
-		if ( m_hDisabledHealthKits[i] )
-		{
-			m_hDisabledHealthKits[i]->SetDisabled( false );
-		}
+		CHealthKit *pHealthKit = static_cast< CHealthKit* >( IHealthKitAutoList::AutoList()[ i ] );
+		pHealthKit->SetDisabled( false );
 	}
-
-	m_hDisabledHealthKits.Purge();
 }
 
 //-----------------------------------------------------------------------------

@@ -495,13 +495,6 @@ public:
 	virtual bool UseSuicidePenalty() { return false; }
 
 	int		GetPreviousRoundWinners( void ) { return m_iPreviousRoundWinners; }
-	
-	const CUtlVector<EHANDLE> &GetAmmoEnts			( void ) const { return m_hAmmoEntities; }
-	const CUtlVector<EHANDLE> &GetHealthEnts		( void ) const { return m_hHealthEntities; }
-	const CUtlVector<EHANDLE> &GetWeaponEnts		( void ) const { return m_hWeaponEntities; }
-	const CUtlVector<EHANDLE> &GetMapTeleportEnts	( void ) const { return m_hMapTeleportEntities; }
-	const CUtlVector<EHANDLE> &GetJumpPadEnts		( void ) const { return m_hJumpPadEntities; }
-	const CUtlVector<EHANDLE> &GetPowerupEnts		( void ) const { return m_hPowerupEntities; }
 
 	void			PushAllPlayersAway( Vector const &vecPos, float flRange, float flForce, int iTeamNum, CUtlVector<CTFPlayer *> *outVector );
 
@@ -526,10 +519,6 @@ private:
 #ifdef GAME_DLL
 
 	Vector2D	m_vecPlayerPositions[MAX_PLAYERS];
-
-	CUtlVector<CHandle<CHealthKit> > m_hDisabledHealthKits;	
-	CUtlVector<CHandle<CAmmoPack> >  m_hDisabledAmmoPack;	
-	CUtlVector<CHandle<CWeaponSpawner> >  m_hDisabledWeaponSpawners;
 	
 	char	m_szMostRecentCappers[MAX_PLAYERS+1];	// list of players who made most recent capture.  Stored as string so it can be passed in events.
 	int		m_iNumCaps[TF_TEAM_COUNT];				// # of captures ever by each team during a round
@@ -552,13 +541,6 @@ private:
 	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
-
-	CUtlVector<EHANDLE> m_hAmmoEntities;
-	CUtlVector<EHANDLE> m_hHealthEntities;
-	CUtlVector<EHANDLE> m_hWeaponEntities;
-	CUtlVector<EHANDLE> m_hMapTeleportEntities;
-	CUtlVector<EHANDLE> m_hJumpPadEntities;
-	CUtlVector<EHANDLE> m_hPowerupEntities;
 
 #endif
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)

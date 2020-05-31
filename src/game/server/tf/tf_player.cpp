@@ -2278,6 +2278,13 @@ void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 
 	if( kvDesiredWeapons )
 		kvDesiredWeapons->deleteThis();
+
+	// Remove chainsaw charging condition to fix an exploit with changing weapons and resupplying
+	if ( m_Shared.InCond( TF_COND_SHIELD_CHARGE ) )
+	{
+		if ( !Weapon_OwnsThisID( TF_WEAPON_CHAINSAW ) )
+			m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
+	}
 }
 
 //-----------------------------------------------------------------------------

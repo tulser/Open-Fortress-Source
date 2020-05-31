@@ -27,8 +27,11 @@ BEGIN_DATADESC( CRegenerateZone )
 	DEFINE_KEYFIELD( m_iszAssociatedModel, FIELD_STRING, "associatedmodel" ),
 
 	// Functions.
-	DEFINE_FUNCTION( Touch ),
+	DEFINE_ENTITYFUNC( Touch ),
 END_DATADESC();
+
+IMPLEMENT_AUTO_LIST( IRegenerateZoneAutoList );
+
 
 //=============================================================================
 //

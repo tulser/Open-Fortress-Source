@@ -132,6 +132,8 @@ extern ConVar tf_mm_servermode;
 #include "gamemounter.h"
 #include "of_shared_schemas.h"
 #include "of_modelloader.h"
+#include "materialsystem/imaterialsystem.h"
+#include "materialsystem/imaterial.h"
 #endif
 
 extern IToolFrameworkServer *g_pToolFrameworkServer;
@@ -772,6 +774,15 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	// init the gamestatsupload connection
 	gamestatsuploader->InitConnection();
+#endif
+
+#ifdef OF_DLL
+	// crude way to detect if TF2 is mounting correctly
+	IMaterial *testmat = materials->FindMaterial("console/title_war", TEXTURE_GROUP_OTHER );
+	if ( testmat->IsErrorMaterial() )
+	{
+		Error("Your server is not mounting Team Fortress 2 correctly.\nTry specifying full paths to TF2 in the gameinfo.txt");
+	}
 #endif
 
 	return true;

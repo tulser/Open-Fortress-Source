@@ -17,7 +17,8 @@
 //
 // CTF Regenerate Zone class.
 //
-class CRegenerateZone : public CBaseTrigger
+DECLARE_AUTO_LIST(IRegenerateZoneAutoList)
+class CRegenerateZone : public CBaseTrigger, public IRegenerateZoneAutoList
 {
 public:
 	DECLARE_CLASS( CRegenerateZone, CBaseTrigger );
