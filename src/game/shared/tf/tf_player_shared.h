@@ -248,6 +248,10 @@ public:
 	bool	IsPlayerDominated( int iPlayerIndex );
 	bool	IsPlayerDominatingMe( int iPlayerIndex );
 	void	SetPlayerDominatingMe( CTFPlayer *pPlayer, bool bDominated );
+
+	//jump buffering
+	void	SetJumpBuffer(bool buffer);
+	bool	GetJumpBuffer();
 	
 private:
 
@@ -405,6 +409,8 @@ private:
 #endif
 
 	int m_iJauggernaughtOldClass;
+
+	bool m_bBlockJump;
 };			   
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim

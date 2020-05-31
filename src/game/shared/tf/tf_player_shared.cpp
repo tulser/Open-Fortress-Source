@@ -3713,3 +3713,17 @@ bool CTFPlayerShared::InPowerupCond()
 	}
 	return false;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: jump buffer related
+//-----------------------------------------------------------------------------
+
+void CTFPlayerShared::SetJumpBuffer(bool buffer)
+{
+	m_bBlockJump = buffer;
+}
+
+bool CTFPlayerShared::GetJumpBuffer()
+{
+	return m_bBlockJump;
+}

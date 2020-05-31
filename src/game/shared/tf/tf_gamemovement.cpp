@@ -41,7 +41,8 @@ ConVar	tf_clamp_back_speed( "tf_clamp_back_speed", "0.9", FCVAR_REPLICATED  );
 ConVar  tf_clamp_back_speed_min( "tf_clamp_back_speed_min", "100", FCVAR_REPLICATED  );
 ConVar	of_shield_charge_speed("of_shield_charge_speed", "720", FCVAR_REPLICATED);
 
-ConVar 	of_bunnyhop( "of_bunnyhop", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED , "Toggle bunnyhoping.\n-1: Mercenary Only\n0: None\n1:All Classes except Zombies\n2:All Classes including Zombies" );
+ConVar 	of_bunnyhop( "of_bunnyhop", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED , "Toggle bunnyhoping.\n-1: Mercenary Only\n 0: None\n 1: All Classes except Zombies\n 2: All Classes including Zombies" );
+ConVar 	of_jumpbuffer("of_jumpbuffer", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle jump buffering\nOverrides of_bunnyhop when non 0.\n-1: Merc Only\n 0: None\n 1: All Classes except Zombies\n 2: All Classes including Zombies");
 ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "Allows enables/disables crouch jumping." );
 ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED , "Max Speed achievable with bunnyhoping." );
 ConVar 	of_jump_velocity( "of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED , "The velocity applied when a player jumps." );
@@ -446,7 +447,7 @@ bool CTFGameMovement::CheckJumpButton()
 	// Check to see if the player is a scout.
 	bool bCanAirDash = m_pTFPlayer->GetPlayerClass()->CanAirDash();
 	bool bAirDash = false;
-	bool bOnGround = ( player->GetGroundEntity() != NULL );
+	bool bOnGround = player->GetGroundEntity() != NULL;
 
 	// Cannot jump while ducked.
 	if ( player->GetFlags() & FL_DUCKING )
@@ -459,33 +460,45 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 
 	// Cannot jump while in the unduck transition.
-	if (
-		( !of_crouchjump.GetBool()
-			&& player->m_Local.m_bDucking
-			&& player->GetFlags() & FL_DUCKING
-		) || player->m_Local.m_flDuckJumpTime > 0.0f
-	)
+	if ((!of_crouchjump.GetBool() && player->m_Local.m_bDucking && player->GetFlags() & FL_DUCKING) ||
+		player->m_Local.m_flDuckJumpTime > 0.0f)
 		return false;
 
-	// Cannot jump again until the jump button has been released.
-	if ( mv->m_nOldButtons & IN_JUMP)
+	//Jump buffer shenanigans
+	int JumpBuffer = of_jumpbuffer.GetInt();
+	if (JumpBuffer)
 	{
-		if ( !bOnGround )
-			return false;
-		if ( of_bunnyhop.GetInt() == 0 )
-			return false;
-		if ( of_bunnyhop.GetInt() == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY )
-			return false;
-		if ( m_pTFPlayer->m_Shared.IsZombie() && of_bunnyhop.GetInt() != 2 )
-			return false;
+		if (JumpBuffer == 2 ||																				//everybody buffer
+			(JumpBuffer == 1 && !m_pTFPlayer->m_Shared.IsZombie()) ||										//no zombie allowed
+			(JumpBuffer == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY))		//only Merc can have jump buffer
+		{
+			JumpBuffer = 1;
+		}
+		else
+		{
+			if (mv->m_nOldButtons & IN_JUMP)																//people without buffer get to jump like when bunyhop is off
+				return false;
+		}
 	}
+	else //jump buffering excludes the regular OF jumping routing, only evaluate is of_jumpbuffer == 0
+	{
+		// Cannot jump again until the jump button has been released.
+		int bHop = of_bunnyhop.GetInt();
+		if (mv->m_nOldButtons & IN_JUMP)
+		{
+			if (!bOnGround ||																				//not on ground
+				!bHop ||																					//nobody can bhop
+				(bHop == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY) ||		//only Merc allowed
+				(m_pTFPlayer->m_Shared.IsZombie() && bHop != 2))											//everybody jump!
+				return false;
+		}
+	}
+
 	// In air, so ignore jumps (unless you are a scout).
-	if ( !bOnGround )
+	if (!bOnGround)
 	{
 		if ( bCanAirDash && m_pTFPlayer->m_Shared.GetAirDashCount() < m_pTFPlayer->GetPlayerClass()->MaxAirDashCount() )
-		{
 			bAirDash = true;
-		}
 		else
 		{
 			mv->m_nOldButtons |= IN_JUMP;
@@ -632,11 +645,12 @@ bool CTFGameMovement::CheckJumpButton()
 		{
 			m_pTFPlayer->EmitSound( m_pTFPlayer->GetPlayerClass()->GetJumpSound() );
 		}
-		m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 	}
+	m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 #endif
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
+	m_pTFPlayer->m_Shared.SetJumpBuffer(JumpBuffer == 1 ? true : false); //jump successful, set the buffer
 	return true;
 }
 
@@ -654,7 +668,7 @@ bool CTFGameMovement::CheckLunge()
 	// Check to see if the player is a scout.
 	bool bOnGround = ( player->GetGroundEntity() != NULL );
 
-	// In air, so ignore jumps (unless you are a scout).
+	// In air, so ignore jumps
 	if ( !bOnGround )
 	{
 		mv->m_nOldButtons |= IN_JUMP;
@@ -708,6 +722,7 @@ bool CTFGameMovement::CheckLunge()
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
 	mv->m_nOldButtons |= IN_ATTACK2;
+	m_pTFPlayer->m_Shared.SetJumpBuffer(true);
 	return true;
 }
 
@@ -1556,14 +1571,16 @@ void CTFGameMovement::FullWalkMove()
 
 	if (mv->m_nButtons & IN_JUMP)
 	{
-		CheckJumpButton();
+		if (!m_pTFPlayer->m_Shared.GetJumpBuffer())
+			CheckJumpButton();
 	}
 	else
 	{
 		mv->m_nOldButtons &= ~IN_JUMP;
+		m_pTFPlayer->m_Shared.SetJumpBuffer(false);
 	}
-	
-	if( m_pTFPlayer->m_Shared.DoLungeCheck() )
+
+	if (m_pTFPlayer->m_Shared.DoLungeCheck()) //you jump or you lunge
 		CheckLunge();
 
 	// Make sure velocity is valid.
