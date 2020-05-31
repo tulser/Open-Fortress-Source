@@ -4599,7 +4599,7 @@ void CGameMovement::PlayerMove( void )
 	// If we are not on ground, store off how fast we are moving down
 	if ( player->GetGroundEntity() == NULL )
 	{
-		player->m_Local.m_flFallVelocity = -mv->m_vecVelocity[ 2 ];
+		player->m_Local.m_flFallVelocity = -mv->m_vecVelocity[2];
 	}
 
 	m_nOnLadder = 0;

@@ -47,7 +47,7 @@ ConVar 	of_crouchjump( "of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED , "
 ConVar 	of_bunnyhop_max_speed_factor( "of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED , "Max Speed achievable with bunnyhoping." );
 ConVar 	of_jump_velocity( "of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED , "The velocity applied when a player jumps." );
 ConVar  of_zombie_lunge_speed( "of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge." );
-ConVar  of_ramp_jump( "of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump." );
+ConVar  of_ramp_jump( "of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump.\n0- None\n1- Quake Style ramp jumps\n2- Source Style Trimping" );
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect." );
 ConVar  of_ramp_up_multiplier("of_ramp_up_multiplier", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_up_forward_multiplier("of_ramp_up_forward_multiplier", "1.1", FCVAR_REPLICATED | FCVAR_NOTIFY);
@@ -118,6 +118,7 @@ protected:
 	virtual void CheckWaterJump(void );
 	void		 FullWalkMoveUnderwater();
 	virtual void HandleDuckingSpeedCrop();
+	virtual void StartGravity();
 
 private:
 
@@ -277,6 +278,7 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 	{
 		ShieldChargeMove();
 	}
+
 	PlayerMove();
 	FinishMove();
 }
@@ -534,6 +536,32 @@ bool CTFGameMovement::CheckJumpButton()
 	Assert( sv_gravity.GetFloat() == 800.0f );
 	float flMul = of_jump_velocity.GetFloat() * flGroundFactor;	
 	
+	float flStartZ;
+	if (player->m_Local.m_bDucking || player->GetFlags() & FL_DUCKING)
+	{
+		flStartZ = mv->m_vecVelocity[2];
+		mv->m_vecVelocity[2] = flMul;
+	}
+	else
+	{
+		int ramp_jump = of_ramp_jump.GetInt();
+		if (ramp_jump == 1)
+		{
+			//Set Vel to be the one player had before touching ground
+			flStartZ = mv->m_vecVelocity[2] = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel());
+
+			//jump height is scaled only if player already has a positive vertical velocity value
+			mv->m_vecVelocity[2] += (mv->m_vecVelocity[2] > 0 ? of_ramp_up_multiplier.GetFloat() : 1) * flMul;
+		}
+		else
+		{
+			// Save the current z velocity.
+			flStartZ = mv->m_vecVelocity[2];
+			mv->m_vecVelocity[2] += flMul;
+		}
+	}
+
+	/* TO DO: clean up trimping and set it to of_ramp_jump == 2
 	if( of_ramp_jump.GetBool() )
 	{
 		bool bTrimped = false;
@@ -603,27 +631,7 @@ bool CTFGameMovement::CheckJumpButton()
 				}
 			}
 		}
-	}
-
-	// Save the current z velocity.
-	float flStartZ = mv->m_vecVelocity[2];
-
-	// Acclerate upward
-	if ( (  player->m_Local.m_bDucking ) || (  player->GetFlags() & FL_DUCKING ) )
-	{
-		// If we are ducking...
-		// d = 0.5 * g * t^2		- distance traveled with linear accel
-		// t = sqrt(2.0 * 45 / g)	- how long to fall 45 units
-		// v = g * t				- velocity at the end (just invert it to jump up that high)
-		// v = g * sqrt(2.0 * 45 / g )
-		// v^2 = g * g * 2.0 * 45 / g
-		// v = sqrt( g * 2.0 * 45 )
-		mv->m_vecVelocity[2] = flMul;  // 2 * gravity * jump_height * ground_factor
-	}
-	else
-	{
-		mv->m_vecVelocity[2] += flMul;  // 2 * gravity * jump_height * ground_factor
-	}
+	}*/
 
 	// Apply gravity.
 	FinishGravity();
@@ -631,6 +639,7 @@ bool CTFGameMovement::CheckJumpButton()
 	// Save the output data for the physics system to react to if need be.
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
 	mv->m_outStepHeight += 0.15f;
+
 #ifdef GAME_DLL
 	IGameEvent *event = gameeventmanager->CreateEvent( "player_jump" );
 	if ( event )
@@ -648,12 +657,12 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 	m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 #endif
+
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
 	m_pTFPlayer->m_Shared.SetJumpBuffer(JumpBuffer == 1 ? true : false); //jump successful, set the buffer
 	return true;
 }
-
 
 bool CTFGameMovement::CheckLunge()
 {
@@ -1540,6 +1549,29 @@ void CTFGameMovement::HandleDuckingSpeedCrop( void )
 }
 
 
+void CTFGameMovement::StartGravity(void)
+{
+	float ent_gravity;
+
+	ent_gravity = player->GetGravity() ? player->GetGravity() : 1.f;
+
+	// Add gravity so they'll be in the correct position during movement
+	// yes, this 0.5 looks wrong, but it's not.
+	float scaled_gravity = player->GetBaseVelocity()[2] * gpGlobals->frametime - ent_gravity * GetCurrentGravity() * 0.5 * gpGlobals->frametime;
+	mv->m_vecVelocity[2] += scaled_gravity;
+
+	// Ivory: predict the velocity player should have when touching the ground (needed for ramp jumps)
+	// cause engine makes VelZ 0 whenever player is on ground before movement is processed
+	if (player->GetGroundEntity() != NULL)
+		m_pTFPlayer->m_Shared.SetRampJumpVel(mv->m_vecVelocity[2] + scaled_gravity);
+
+	Vector temp = player->GetBaseVelocity();
+	temp[2] = 0;
+	player->SetBaseVelocity(temp);
+
+	CheckVelocity();
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -1580,7 +1612,7 @@ void CTFGameMovement::FullWalkMove()
 		m_pTFPlayer->m_Shared.SetJumpBuffer(false);
 	}
 
-	if (m_pTFPlayer->m_Shared.DoLungeCheck()) //you jump or you lunge
+	if (m_pTFPlayer->m_Shared.DoLungeCheck())
 		CheckLunge();
 
 	// Make sure velocity is valid.
@@ -1588,7 +1620,7 @@ void CTFGameMovement::FullWalkMove()
 
 	if (player->GetGroundEntity() != NULL)
 	{
-		mv->m_vecVelocity[2] = 0.0;
+		mv->m_vecVelocity[2] = 0;
 		Friction();
 		WalkMove();
 	}

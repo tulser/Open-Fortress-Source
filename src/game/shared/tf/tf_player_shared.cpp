@@ -3727,3 +3727,17 @@ bool CTFPlayerShared::GetJumpBuffer()
 {
 	return m_bBlockJump;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: ramp jump related
+//-----------------------------------------------------------------------------
+
+void CTFPlayerShared::SetRampJumpVel(float VelZ)
+{
+	m_fRampJumpVel = VelZ;
+}
+
+float CTFPlayerShared::GetRampJumpVel()
+{
+	return m_fRampJumpVel;
+}

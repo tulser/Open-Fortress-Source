@@ -252,6 +252,10 @@ public:
 	//jump buffering
 	void	SetJumpBuffer(bool buffer);
 	bool	GetJumpBuffer();
+
+	//ramp jumping
+	void	SetRampJumpVel(float VelZ);
+	float	GetRampJumpVel();
 	
 private:
 
@@ -410,7 +414,9 @@ private:
 
 	int m_iJauggernaughtOldClass;
 
-	bool m_bBlockJump;
+	//Movement expansions
+	bool  m_bBlockJump;
+	float m_fRampJumpVel;
 };			   
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim
