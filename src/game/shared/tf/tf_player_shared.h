@@ -248,6 +248,9 @@ public:
 	bool	IsPlayerDominated( int iPlayerIndex );
 	bool	IsPlayerDominatingMe( int iPlayerIndex );
 	void	SetPlayerDominatingMe( CTFPlayer *pPlayer, bool bDominated );
+
+	float 	m_flJumpSoundDelay;
+	float	m_flStepSoundDelay;
 	
 private:
 

@@ -264,6 +264,8 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
+	m_flJumpSoundDelay = 0.f;
+	m_flStepSoundDelay = 0.f;
 	
 	m_iDesiredPlayerClass = 0;
 

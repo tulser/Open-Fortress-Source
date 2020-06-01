@@ -117,6 +117,7 @@ protected:
 	virtual void CheckWaterJump(void );
 	void		 FullWalkMoveUnderwater();
 	virtual void HandleDuckingSpeedCrop();
+	virtual void AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel = true);
 
 private:
 
@@ -504,8 +505,11 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// Start jump animation and player sound (specific TF animation and flags).
 	m_pTFPlayer->DoAnimationEvent( PLAYERANIMEVENT_JUMP );
-	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
 	m_pTFPlayer->m_Shared.SetJumping( true );
+
+	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flStepSoundDelay)
+		player->PlayStepSound((Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
+	m_pTFPlayer->m_Shared.m_flStepSoundDelay = gpGlobals->curtime + 0.25f;
 
 	// Set the player as in the air.
 	SetGroundEntity( NULL );
@@ -618,23 +622,23 @@ bool CTFGameMovement::CheckJumpButton()
 	// Save the output data for the physics system to react to if need be.
 	mv->m_outJumpVel.z += mv->m_vecVelocity[2] - flStartZ;
 	mv->m_outStepHeight += 0.15f;
+
+	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flJumpSoundDelay)
+	{
 #ifdef GAME_DLL
-	IGameEvent *event = gameeventmanager->CreateEvent( "player_jump" );
-	if ( event )
-	{
-		event->SetInt( "playerid", m_pTFPlayer->entindex() );
-		gameeventmanager->FireEvent( event );
-	}
-#else
-	if( gpGlobals->curtime >= m_pTFPlayer->m_flJumpSoundDelay )
-	{
-		if ( ( of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 ) || of_jumpsound.GetInt() == 2 )
+		IGameEvent *event = gameeventmanager->CreateEvent( "player_jump" );
+		if ( event )
 		{
-			m_pTFPlayer->EmitSound( m_pTFPlayer->GetPlayerClass()->GetJumpSound() );
+			event->SetInt( "playerid", m_pTFPlayer->entindex() );
+			gameeventmanager->FireEvent( event );
 		}
-		m_pTFPlayer->m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
-	}
+#else
+		if ((of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9) || of_jumpsound.GetInt() == 2)
+			m_pTFPlayer->EmitSound(m_pTFPlayer->GetPlayerClass()->GetJumpSound());
 #endif
+	}
+	m_pTFPlayer->m_Shared.m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
+
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_JUMP;
 	return true;
@@ -1101,6 +1105,49 @@ void CTFGameMovement::WalkMove( void )
 	}
 
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
+void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
+{
+	float addspeed, currentspeed;
+	float wishspd;
+
+	wishspd = wishspeed;
+
+	if (player->pl.deadflag)
+		return;
+
+	if (player->m_flWaterJumpTime)
+		return;
+
+	// Cap speed, this is the only thing to edit to allow
+	// Q3 style strafejumping, if Q3 movement is on it is ignored
+	if (q1accel)
+	{
+		if (wishspd > GetAirSpeedCap())
+			wishspd = GetAirSpeedCap();
+	}
+
+	// Determine veer amount
+	currentspeed = mv->m_vecVelocity.Dot(wishdir);
+
+	// See how much to add
+	addspeed = wishspd - currentspeed;
+
+	// If not adding any, done.
+	if (addspeed <= 0)
+		return;
+
+	// Determine acceleration speed after acceleration and cap it
+	float accelspeed = min(accel * wishspeed * gpGlobals->frametime * player->m_surfaceFriction, addspeed);
+
+	// Adjust pmove vel.
+	VectorAdd(mv->m_vecVelocity, accelspeed * wishdir, mv->m_vecVelocity);
+	VectorAdd(mv->m_outWishVel, accelspeed * wishdir, mv->m_outWishVel);
 }
 
 //-----------------------------------------------------------------------------
