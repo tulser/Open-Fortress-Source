@@ -256,6 +256,10 @@ public:
 	//ramp jumping
 	void	SetRampJumpVel(float VelZ);
 	float	GetRampJumpVel();
+
+	//crouchs slide
+	void	SetCSlideDuration(float duration);
+	float	GetCSlideDuration();
 	
 private:
 
@@ -417,6 +421,7 @@ private:
 	//Movement expansions
 	bool  m_bBlockJump;
 	float m_fRampJumpVel;
+	int	  m_iCSlideDuration;
 };			   
 
 #define TF_DEATH_DOMINATION				0x0001	// killer is dominating victim

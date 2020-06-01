@@ -1710,9 +1710,10 @@ void CGameMovement::FinishGravity( void )
 // Input  : wishdir - 
 //			accel - 
 //-----------------------------------------------------------------------------
-void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
+void CGameMovement::AirAccelerate( Vector& wishdir, float wishspeed, float accel )
 {
-	float addspeed, currentspeed;
+	int i;
+	float addspeed, accelspeed, currentspeed;
 	float wishspd;
 
 	wishspd = wishspeed;
@@ -1723,13 +1724,9 @@ void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel,
 	if (player->m_flWaterJumpTime)
 		return;
 
-	// Cap speed, this is the only thing to edit to allow
-	// Q3 style strafejumping, if Q3 movement is on it is ignored
-	if (q1accel)
-	{
-		if (wishspd > GetAirSpeedCap())
-			wishspd = GetAirSpeedCap();
-	}
+	// Cap speed
+	if ( wishspd > GetAirSpeedCap() )
+		wishspd = GetAirSpeedCap();
 
 	// Determine veer amount
 	currentspeed = mv->m_vecVelocity.Dot(wishdir);
@@ -1741,12 +1738,19 @@ void CGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel,
 	if (addspeed <= 0)
 		return;
 
-	// Determine acceleration speed after acceleration and cap it
-	float accelspeed = min(accel * wishspeed * gpGlobals->frametime * player->m_surfaceFriction, addspeed);
+	// Determine acceleration speed after acceleration
+	accelspeed = accel * wishspeed * gpGlobals->frametime * player->m_surfaceFriction;
+
+	// Cap it
+	if (accelspeed > addspeed)
+		accelspeed = addspeed;
 	
 	// Adjust pmove vel.
-	VectorAdd(mv->m_vecVelocity, accelspeed * wishdir, mv->m_vecVelocity);
-	VectorAdd(mv->m_outWishVel, accelspeed * wishdir, mv->m_outWishVel);
+	for (i=0 ; i<3 ; i++)
+	{
+		mv->m_vecVelocity[i] += accelspeed * wishdir[i];
+		mv->m_outWishVel[i] += accelspeed * wishdir[i];
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -1823,6 +1827,7 @@ bool CGameMovement::CanAccelerate()
 //-----------------------------------------------------------------------------
 void CGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel )
 {
+	int i;
 	float addspeed, accelspeed, currentspeed;
 
 	// This gets overridden because some games (CSPort) want to allow dead (observer) players
@@ -1841,10 +1846,17 @@ void CGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel )
 		return;
 
 	// Determine amount of accleration.
-	accelspeed = min(accel * gpGlobals->frametime * wishspeed * player->m_surfaceFriction, addspeed);
+	accelspeed = accel * gpGlobals->frametime * wishspeed * player->m_surfaceFriction;
+
+	// Cap at addspeed
+	if (accelspeed > addspeed)
+		accelspeed = addspeed;
 	
 	// Adjust velocity.
-	VectorAdd(mv->m_vecVelocity, accelspeed * wishdir, mv->m_vecVelocity);
+	for (i=0 ; i<3 ; i++)
+	{
+		mv->m_vecVelocity[i] += accelspeed * wishdir[i];	
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -4599,7 +4611,7 @@ void CGameMovement::PlayerMove( void )
 	// If we are not on ground, store off how fast we are moving down
 	if ( player->GetGroundEntity() == NULL )
 	{
-		player->m_Local.m_flFallVelocity = -mv->m_vecVelocity[2];
+		player->m_Local.m_flFallVelocity = -mv->m_vecVelocity[ 2 ];
 	}
 
 	m_nOnLadder = 0;

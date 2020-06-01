@@ -3741,3 +3741,17 @@ float CTFPlayerShared::GetRampJumpVel()
 {
 	return m_fRampJumpVel;
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: crouch slide related
+//-----------------------------------------------------------------------------
+
+void CTFPlayerShared::SetCSlideDuration(float duration)
+{
+	m_iCSlideDuration = duration;
+}
+
+float CTFPlayerShared::GetCSlideDuration()
+{
+	return m_iCSlideDuration;
+}
