@@ -47,11 +47,11 @@ ConVar 	of_crouchjump("of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Al
 ConVar 	of_bunnyhop_max_speed_factor("of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max Speed achievable with bunnyhoping.");
 ConVar 	of_jump_velocity("of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED, "The velocity applied when a player jumps.");
 ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge.");
-ConVar  of_ramp_jump("of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump.\n0- None\n1- Quake Style ramp jumps\n2- Source Style Trimping");
+ConVar  of_ramp_jump("of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump.\n0- None\n1- Source Style Trimping\n2- Quake Style ramp jumps");
+ConVar  of_ramp_multiplier("of_ramp_multiplier", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect.");
-ConVar  of_ramp_up_multiplier("of_ramp_up_multiplier", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY);
-ConVar  of_ramp_up_forward_multiplier("of_ramp_up_forward_multiplier", "1.1", FCVAR_REPLICATED | FCVAR_NOTIFY);
-ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
+//ConVar  of_ramp_up_forward_multiplier("of_ramp_up_forward_multiplier", "1.1", FCVAR_REPLICATED | FCVAR_NOTIFY);
+//ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
 #if defined (CLIENT_DLL)
 ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hough", true, 0, true, 2);
 #endif
@@ -127,6 +127,7 @@ private:
 	bool		CheckWaterJumpButton(void);
 	void		AirDash(void);
 	void		PreventBunnyJumping();
+	float		CheckTrimp(float flMul);
 
 private:
 
@@ -537,104 +538,38 @@ bool CTFGameMovement::CheckJumpButton()
 	Assert(sv_gravity.GetFloat() == 800.0f);
 	float flMul = of_jump_velocity.GetFloat() * flGroundFactor;
 
-	float flStartZ;
-	if (player->m_Local.m_bDucking || player->GetFlags() & FL_DUCKING)
+	//Calculate vertical velocity
+	float flStartZ = mv->m_vecVelocity[2];
+
+	if (player->m_Local.m_bDucking || player->GetFlags() & FL_DUCKING) //crouch jump
 	{
-		flStartZ = mv->m_vecVelocity[2];
 		mv->m_vecVelocity[2] = flMul;
 	}
 	else
 	{
 		int ramp_jump = of_ramp_jump.GetInt();
-		if (ramp_jump == 1)
+
+		if (ramp_jump == 2)	//Quake ramp jumps
 		{
 			//Set Vel to be the one player had before touching ground, retouched according to the current player state
 			float ent_gravity = player->GetGravity() ? player->GetGravity() : 1.0;
 			float scaled_gravity = player->GetBaseVelocity()[2] * gpGlobals->frametime - ent_gravity * GetCurrentGravity() * gpGlobals->frametime * 0.5;
-			flStartZ = mv->m_vecVelocity[2] = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel() + scaled_gravity);
+			float ramp_velocity = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel() + scaled_gravity);
 
 			//jump height is scaled only if player already has a positive vertical velocity value
-			mv->m_vecVelocity[2] += (mv->m_vecVelocity[2] > 0 ? of_ramp_up_multiplier.GetFloat() : 1) * flMul;
+			mv->m_vecVelocity[2] += (ramp_velocity > 0 ? of_ramp_multiplier.GetFloat() : 1) * flMul;
+		}
+		else if (ramp_jump == 1) //Source trimping
+		{
+			flMul = CheckTrimp(flMul);
+			mv->m_vecVelocity[2] += flMul;
 		}
 		else
 		{
 			// Save the current z velocity.
-			flStartZ = mv->m_vecVelocity[2];
 			mv->m_vecVelocity[2] += flMul;
 		}
 	}
-
-	/* TO DO: clean up trimping and set it to of_ramp_jump == 2
-	if( of_ramp_jump.GetBool() )
-	{
-	bool bTrimped = false;
-	bool bDownTrimped = false;
-
-	trace_t pm;
-
-	// Adjusted for bboxes.
-	// TODO: Look at this later
-	Vector vecStart = mv->GetAbsOrigin(); // + Vector(0, 0, GetPlayerMins()[2] + 1.0f);
-	Vector vecStop = vecStart - Vector(0, 0, 60.0f);
-
-	TracePlayerBBox(vecStart, vecStop, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
-
-	// Found the floor
-	if(pm.fraction != 1.0f)
-	{
-	// Take the lateral velocity
-	Vector vecVelocity = mv->m_vecVelocity * Vector(1.0f, 1.0f, 0.0f);
-	float flHorizontalSpeed = vecVelocity.Length();
-
-	if (flHorizontalSpeed > 0)
-	vecVelocity /= flHorizontalSpeed;
-
-	float flDotProduct = DotProduct(vecVelocity, pm.plane.normal);
-	float flRampSlideDotProduct = DotProduct(mv->m_vecVelocity, pm.plane.normal);
-
-	// They have to be at least moving a bit
-	if (flHorizontalSpeed > of_ramp_min_speed.GetFloat())
-	{
-	// Don't do anything for flat ground or downwardly sloping (relative to motion)
-	// Changed to 0.15f to make it a bit less trimpy on only slightly uneven ground
-	//if (flDotProduct < -0.15f || flDotProduct > 0.15f)
-	if (flDotProduct < -0.15f)
-	{
-	float flForwardMul = flMul + ( -flDotProduct * flHorizontalSpeed * of_ramp_up_forward_multiplier.GetFloat() );
-	// This is one way to do it
-	flMul += -flDotProduct * flHorizontalSpeed * of_ramp_up_multiplier.GetFloat(); //0.6f;
-	DevMsg("[S] Trimp %f! Dotproduct:%f. Horizontal speed:%f. Rampslide dot.p.:%f\n", flMul, flDotProduct, flHorizontalSpeed, flRampSlideDotProduct);
-
-	bTrimped = true;
-
-	mv->m_vecVelocity[0] *= flForwardMul;
-	mv->m_vecVelocity[1] *= flForwardMul;
-	// This is another that'll give some different height results
-	// UNDONE: Reverted back to the original way for now
-	//Vector reflect = mv->m_vecVelocity + (-2.0f * pm.plane.normal * DotProduct(mv->m_vecVelocity, pm.plane.normal));
-	//float flSpeedAmount = clamp((flLength - 400.0f) / 800.0f, 0, 1.0f);
-	//flMul += reflect.z * flSpeedAmount;
-	}
-	}
-	// trigger downwards trimp at any speed
-	if (flHorizontalSpeed > 50.0f)
-	{
-	if (flDotProduct > 0.15f) // AfterShock: travelling downwards onto a downward ramp - give boost horizontally
-	{
-	// This is one way to do it
-	//mv->m_vecVelocity[1] += -flDotProduct * mv->m_vecVelocity[2] * sv_trimpmultiplier.GetFloat(); //0.6f;
-	//mv->m_vecVelocity[0] += -flDotProduct * mv->m_vecVelocity[2] * sv_trimpmultiplier.GetFloat(); //0.6f;
-	//mv->m_vecVelocity[1] += -flDotProduct * flMul * sv_trimpmultiplier.GetFloat(); //0.6f;
-	//mv->m_vecVelocity[0] += -flDotProduct * flMul * sv_trimpmultiplier.GetFloat(); //0.6f;
-	DevMsg("[S] Down Trimp %f! Dotproduct:%f, upwards vel:%f, vel 1:%f, vel 0:%f\n", flMul, flDotProduct,mv->m_vecVelocity[2],mv->m_vecVelocity[1],mv->m_vecVelocity[0]);
-
-	bDownTrimped = true;
-
-	flMul *= (1.0f / of_ramp_down_multiplier.GetFloat());
-	}
-	}
-	}
-	}*/
 
 	// Apply gravity.
 	FinishGravity();
@@ -665,6 +600,52 @@ bool CTFGameMovement::CheckJumpButton()
 	mv->m_nOldButtons |= IN_JUMP;
 	m_pTFPlayer->m_Shared.SetJumpBuffer(JumpBuffer == 1 ? true : false); //jump successful, set the buffer
 	return true;
+}
+
+float CTFGameMovement::CheckTrimp(float flMul)
+{
+	// Take the lateral velocity
+	Vector vecVelocity = mv->m_vecVelocity * Vector(1.0f, 1.0f, 0.0f);
+	float flHorizontalSpeed = vecVelocity.Length();
+
+	if (flHorizontalSpeed < of_ramp_min_speed.GetFloat()) //not enough speed, abort
+		return flMul;
+
+	//Try find the floor
+	trace_t pm;
+	Vector vecStart = mv->GetAbsOrigin();
+	Vector vecStop = vecStart - Vector(0, 0, 60.0f);
+	TracePlayerBBox(vecStart, vecStop, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+
+	// no floor, abort
+	if (pm.fraction == 1.0f)
+		return flMul;
+
+	//Calculate dot product of horizontal velocity and surface
+	VectorNormalize(vecVelocity);
+	float flDotProduct = DotProduct(vecVelocity, pm.plane.normal);
+	float absDot = abs(flDotProduct);
+
+	//not enough trimping power
+	if (absDot < 0.05f)
+		return flMul;
+
+	float ramp_multi = of_ramp_multiplier.GetFloat();
+	if (flDotProduct < 0) //going up a slope
+	{
+		//increase jump power according to the dot product and horizontal velocity
+		flMul += absDot * flHorizontalSpeed * ramp_multi;
+	}
+	else
+	{
+		//jump velocity must be demultiplied and horizontal speed must be increased
+		for (int i = 0; i < 2; i++)
+			mv->m_vecVelocity[i] += absDot * mv->m_vecVelocity[i] * ramp_multi;
+
+		flMul *= absDot / ramp_multi;
+	}
+
+	return flMul;
 }
 
 bool CTFGameMovement::CheckLunge()
@@ -2010,3 +1991,76 @@ void CTFGameMovement::PlayerRoughLandingEffects(float fvol)
 
 	BaseClass::PlayerRoughLandingEffects(fvol);
 }
+
+/*
+if (of_ramp_jump.GetBool())
+{
+	bool bTrimped = false;
+	bool bDownTrimped = false;
+
+	trace_t pm;
+
+	// Adjusted for bboxes.
+	// TODO: Look at this later
+	Vector vecStart = mv->GetAbsOrigin(); // + Vector(0, 0, GetPlayerMins()[2] + 1.0f);
+	Vector vecStop = vecStart - Vector(0, 0, 60.0f);
+
+	TracePlayerBBox(vecStart, vecStop, MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+
+	// Found the floor
+	if (pm.fraction != 1.0f)
+	{
+		// Take the lateral velocity
+		Vector vecVelocity = mv->m_vecVelocity * Vector(1.0f, 1.0f, 0.0f);
+		float flHorizontalSpeed = vecVelocity.Length();
+
+		if (flHorizontalSpeed > 0)
+			vecVelocity /= flHorizontalSpeed;
+
+		float flDotProduct = DotProduct(vecVelocity, pm.plane.normal);
+		float flRampSlideDotProduct = DotProduct(mv->m_vecVelocity, pm.plane.normal);
+
+		// They have to be at least moving a bit
+		if (flHorizontalSpeed > of_ramp_min_speed.GetFloat())
+		{
+			// Don't do anything for flat ground or downwardly sloping (relative to motion)
+			// Changed to 0.15f to make it a bit less trimpy on only slightly uneven ground
+			//if (flDotProduct < -0.15f || flDotProduct > 0.15f)
+			if (flDotProduct < -0.15f)
+			{
+				float flForwardMul = flMul + (-flDotProduct * flHorizontalSpeed * of_ramp_up_forward_multiplier.GetFloat());
+				// This is one way to do it
+				flMul += -flDotProduct * flHorizontalSpeed * of_ramp_up_multiplier.GetFloat(); //0.6f;
+				DevMsg("[S] Trimp %f! Dotproduct:%f. Horizontal speed:%f. Rampslide dot.p.:%f\n", flMul, flDotProduct, flHorizontalSpeed, flRampSlideDotProduct);
+
+				bTrimped = true;
+
+				mv->m_vecVelocity[0] *= flForwardMul;
+				mv->m_vecVelocity[1] *= flForwardMul;
+				// This is another that'll give some different height results
+				// UNDONE: Reverted back to the original way for now
+				//Vector reflect = mv->m_vecVelocity + (-2.0f * pm.plane.normal * DotProduct(mv->m_vecVelocity, pm.plane.normal));
+				//float flSpeedAmount = clamp((flLength - 400.0f) / 800.0f, 0, 1.0f);
+				//flMul += reflect.z * flSpeedAmount;
+			}
+		}
+		// trigger downwards trimp at any speed
+		if (flHorizontalSpeed > 50.0f)
+		{
+			if (flDotProduct > 0.15f) // AfterShock: travelling downwards onto a downward ramp - give boost horizontally
+			{
+				// This is one way to do it
+				//mv->m_vecVelocity[1] += -flDotProduct * mv->m_vecVelocity[2] * sv_trimpmultiplier.GetFloat(); //0.6f;
+				//mv->m_vecVelocity[0] += -flDotProduct * mv->m_vecVelocity[2] * sv_trimpmultiplier.GetFloat(); //0.6f;
+				//mv->m_vecVelocity[1] += -flDotProduct * flMul * sv_trimpmultiplier.GetFloat(); //0.6f;
+				//mv->m_vecVelocity[0] += -flDotProduct * flMul * sv_trimpmultiplier.GetFloat(); //0.6f;
+				DevMsg("[S] Down Trimp %f! Dotproduct:%f, upwards vel:%f, vel 1:%f, vel 0:%f\n", flMul, flDotProduct, mv->m_vecVelocity[2], mv->m_vecVelocity[1], mv->m_vecVelocity[0]);
+
+				bDownTrimped = true;
+
+				flMul *= (1.0f / of_ramp_down_multiplier.GetFloat());
+			}
+		}
+	}
+}
+*/
