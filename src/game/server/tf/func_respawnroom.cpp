@@ -18,7 +18,7 @@
 LINK_ENTITY_TO_CLASS( func_respawnroom, CFuncRespawnRoom);
 
 BEGIN_DATADESC( CFuncRespawnRoom )
-	DEFINE_ENTITYFUNC( Touch ),
+	DEFINE_ENTITYFUNC( RespawnRoomTouch ),
 	// inputs
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetActive", InputSetActive ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "SetInactive", InputSetInactive ),
@@ -51,7 +51,7 @@ void CFuncRespawnRoom::Spawn( void )
 	SetCollisionGroup( TFCOLLISION_GROUP_RESPAWNROOMS );
 
 	m_bActive = true;
-	SetTouch( &CFuncRespawnRoom::Touch );
+	SetTouch( &CFuncRespawnRoom::RespawnRoomTouch );
 }
 
 //-----------------------------------------------------------------------------

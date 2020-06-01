@@ -28,7 +28,7 @@ public:
 	void	Spawn( void );
 	void	Precache( void );
 	void	Activate( void );
-	void	Touch( CBaseEntity *pOther );
+	void	RegenerateTouch( CBaseEntity *pOther );
 
 	bool	IsDisabled( void );
 	void	SetDisabled( bool bDisabled );
