@@ -48,7 +48,7 @@ ConVar 	of_bunnyhop_max_speed_factor("of_bunnyhop_max_speed_factor", "1.2", FCVA
 ConVar 	of_jump_velocity("of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED, "The velocity applied when a player jumps.");
 ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge.");
 ConVar  of_ramp_jump("of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump.\n0- None\n1- Source Style Trimping\n2- Quake Style ramp jumps");
-ConVar  of_ramp_multiplier("of_ramp_multiplier", "0.8", FCVAR_REPLICATED | FCVAR_NOTIFY);
+ConVar  of_ramp_multiplier("of_ramp_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect.");
 //ConVar  of_ramp_up_forward_multiplier("of_ramp_up_forward_multiplier", "1.1", FCVAR_REPLICATED | FCVAR_NOTIFY);
 //ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
@@ -986,29 +986,35 @@ void CTFGameMovement::WalkMove(bool CSliding)
 
 	// Find the direction,velocity in the x,y plane.
 	Vector vecWishDirection(((vecForward.x * flForwardMove) + (vecRight.x * flSideMove)),
-							((vecForward.y * flForwardMove) + (vecRight.y * flSideMove)),
-							0.0f);
+		((vecForward.y * flForwardMove) + (vecRight.y * flSideMove)),
+		0.0f);
 
 	// Calculate the speed and direction of movement, then clamp the speed.
-	float flWishSpeed = VectorNormalize(vecWishDirection);
-	flWishSpeed = clamp(flWishSpeed, 0.0f, mv->m_flMaxSpeed);
 
 	// Accelerate in the x,y plane.
+	float flWishSpeed;
 	mv->m_vecVelocity.z = 0;
-	Accelerate(vecWishDirection, flWishSpeed, CSliding ? of_cslideaccelerate.GetFloat() : sv_accelerate.GetFloat());
-	Assert(mv->m_vecVelocity.z == 0.0f);
-
-	// Clamp the players speed in x,y.
-	if (!CSliding)
+	if (CSliding)
 	{
+		VectorNormalize(vecWishDirection);
+		flWishSpeed = 320.f;
+		AirAccelerate(vecWishDirection, flWishSpeed, of_cslideaccelerate.GetFloat(), false);
+	}
+	else
+	{
+		flWishSpeed = min(VectorNormalize(vecWishDirection), mv->m_flMaxSpeed);
+		Accelerate(vecWishDirection, flWishSpeed, sv_accelerate.GetFloat());
+
+		// Clamp the players speed in x,y.
 		float flNewSpeed = VectorLength(mv->m_vecVelocity);
 		if (flNewSpeed > mv->m_flMaxSpeed)
 		{
-			float flScale = mv->m_flMaxSpeed / flNewSpeed;
+			float flScale = (mv->m_flMaxSpeed / flNewSpeed);
 			mv->m_vecVelocity.x *= flScale;
 			mv->m_vecVelocity.y *= flScale;
 		}
 	}
+	Assert(mv->m_vecVelocity.z == 0.0f);
 
 	// Now reduce their backwards speed to some percent of max, if they are travelling backwards
 	// unless they are under some minimum, to not penalize deployed snipers or heavies
@@ -1185,15 +1191,10 @@ void CTFGameMovement::AirMove(void)
 	for (int i = 0; i < 2; i++)       // Determine x and y parts of velocity
 		wishvel[i] = forward[i] * fmove + right[i] * smove;
 
-	VectorCopy(wishvel, wishdir);   // Determine magnitude of speed of move
+	// Determine magnitude of speed of move
+	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
-
-	// clamp to server defined max speed
-	if (wishspeed && wishspeed > mv->m_flMaxSpeed)
-	{
-		VectorScale(wishvel, mv->m_flMaxSpeed / wishspeed, wishvel);
-		wishspeed = mv->m_flMaxSpeed;
-	}
+	wishspeed = min(wishspeed, mv->m_flMaxSpeed);
 
 	//Accelerate
 	movementmode = of_movementmode.GetInt();	//get the value only once
@@ -1232,7 +1233,6 @@ float CTFGameMovement::GetAirSpeedCap(void)
 extern void TracePlayerBBoxForGround(const Vector& start, const Vector& end, const Vector& minsSrc,
 	const Vector& maxsSrc, IHandleEntity *player, unsigned int fMask,
 	int collisionGroup, trace_t& pm);
-
 
 //-----------------------------------------------------------------------------
 // This filter checks against buildable objects.
@@ -1605,58 +1605,40 @@ void CTFGameMovement::Friction(bool CSliding)
 	speed = VectorLength(mv->m_vecVelocity);
 
 	// If too slow, return
-	if (speed < 0.1f)
-	{
+	if (speed < 0.1f || player->GetGroundEntity() == NULL)
 		return;
-	}
-
-	drop = 0;
 
 	// apply ground friction
-	if (player->GetGroundEntity() != NULL)  // On an entity that is the ground
+	friction = (CSliding ? of_cslidefriction.GetFloat() : sv_friction.GetFloat()) * player->m_surfaceFriction;
+
+	// Bleed off some speed, but if we have less than the bleed
+	// threshold, bleed the threshold amount.
+	if (IsX360())
 	{
-		friction = (CSliding ? of_cslidefriction.GetFloat() : sv_friction.GetFloat()) * player->m_surfaceFriction;
-
-		// Bleed off some speed, but if we have less than the bleed
-		//  threshold, bleed the threshold amount.
-
-		if (IsX360())
-		{
-			if (player->m_Local.m_bDucked)
-			{
-				control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
-			}
-			else
-			{
-#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
-				control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
-#else
-				control = (speed < sv_stopspeed.GetFloat()) ? (sv_stopspeed.GetFloat() * 2.0f) : speed;
-#endif
-			}
-		}
-		else
+		if (player->m_Local.m_bDucked)
 		{
 			control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
 		}
-
-		// Add the amount to the drop amount.
-		drop += control * friction * gpGlobals->frametime;
+		else
+		{
+#if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
+			control = (speed < sv_stopspeed.GetFloat()) ? sv_stopspeed.GetFloat() : speed;
+#else
+			control = (speed < sv_stopspeed.GetFloat()) ? (sv_stopspeed.GetFloat() * 2.0f) : speed;
+#endif
+		}
 	}
+	else
+	{
+		control = speed < sv_stopspeed.GetFloat() ? sv_stopspeed.GetFloat() : speed;
+	}
+
+	// Add the amount to the drop amount.
+	drop = control * friction * gpGlobals->frametime;
 
 	// scale the velocity
-	newspeed = speed - drop;
-	if (newspeed < 0)
-		newspeed = 0;
-
-	if (newspeed != speed)
-	{
-		// Determine proportion of old speed we are using.
-		newspeed /= speed;
-		// Adjust velocity according to proportion.
-		VectorScale(mv->m_vecVelocity, newspeed, mv->m_vecVelocity);
-	}
-
+	newspeed = max(speed - drop, 0) / speed;
+	VectorScale(mv->m_vecVelocity, newspeed, mv->m_vecVelocity);
 	mv->m_outWishVel -= (1.f - newspeed) * mv->m_vecVelocity;
 }
 
@@ -1666,9 +1648,7 @@ void CTFGameMovement::Friction(bool CSliding)
 void CTFGameMovement::FullWalkMove()
 {
 	if (!InWater())
-	{
 		StartGravity();
-	}
 
 	// If we are leaping out of the water, just update the counters.
 	if (player->m_flWaterJumpTime)
@@ -1709,9 +1689,9 @@ void CTFGameMovement::FullWalkMove()
 	if (player->GetGroundEntity() != NULL)
 	{
 		CSliding = (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is dusked/ducking
-					(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
-					gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() &&	//there is crouch slide to spend
-					of_cslide.GetBool();												//crouch sliding is enabled
+			(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
+			gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() &&	//there is crouch slide to spend
+			of_cslide.GetBool();												//crouch sliding is enabled
 
 		Friction(CSliding);
 		WalkMove(CSliding);
@@ -2062,5 +2042,4 @@ if (of_ramp_jump.GetBool())
 			}
 		}
 	}
-}
-*/
+}*/
