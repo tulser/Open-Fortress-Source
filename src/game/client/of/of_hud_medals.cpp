@@ -84,7 +84,7 @@ bool CTFHudMedals::ShouldDraw(void)
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if (!pPlayer || !medalsQueue.Size())
+	if (!pPlayer || !TFGameRules()->IsDMGamemode() || !medalsQueue.Size())
 		return false;
 	return CHudElement::ShouldDraw();
 }
@@ -146,16 +146,6 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 
 	if (!pPlayer)
 		return;
-	
-	if (!of_show_medals.GetBool())
-	{
-		//this may seem redundant but this needs to be checked even when medals are off
-		//to not have faulty "Perfect" medals awarded if medals are turned on later in the match
-		if (!Q_strcmp("player_death", event->GetName()) && event->GetInt("userid") == pPlayer->GetUserID())
-			died = true;
-
-		return;
-	}
 
 	const char *eventname = event->GetName();
 	int pIndex = pPlayer->GetUserID();
@@ -258,7 +248,9 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 //-----------------------------------------------------------------------------
 void CTFHudMedals::AddMedal(int medalIndex)
 {
-	medalsQueue.AddToTail({ medalPaths[medalIndex], medalNames[medalIndex] });
+	if (of_show_medals.GetBool())
+		medalsQueue.AddToTail({ medalPaths[medalIndex], medalNames[medalIndex] });
+
 	medals_counter[medalIndex] = medalIndex < 2 ? 1 : medals_counter[medalIndex] + 1;
 }
 
