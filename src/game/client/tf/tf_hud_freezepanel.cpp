@@ -238,9 +238,7 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 			{
 				iKillerHealth = 0;
 			}
-
-			if ( m_pKillerHealth )
-				m_pKillerHealth->SetHealth( iKillerHealth, pKiller->GetMaxHealth(), iMaxBuffedHealth );
+			m_pKillerHealth->SetHealth( iKillerHealth, pKiller->GetMaxHealth(), iMaxBuffedHealth );
 
 			if ( pKiller->IsPlayer() )
 			{
@@ -248,29 +246,26 @@ void CTFFreezePanel::FireGameEvent( IGameEvent * event )
 				CTFPlayer *pTFKiller = ToTFPlayer( pKiller );
 
 				//If this was just a regular kill but this guy is our nemesis then just show it.
-				if ( m_pFreezeLabel )
+				if ( pVictim && pTFKiller && pTFKiller->m_Shared.IsPlayerDominated( pVictim->entindex() ) )
 				{
-					if ( pVictim && pTFKiller && pTFKiller->m_Shared.IsPlayerDominated( pVictim->entindex() ) )
+					if ( !pKiller->IsAlive() )
 					{
-						if ( !pKiller->IsAlive() )
-						{
-							m_pFreezeLabel->SetText( "#FreezePanel_Nemesis_Dead" );
-						}
-						else
-						{
-							m_pFreezeLabel->SetText( "#FreezePanel_Nemesis" );
-						}
+						m_pFreezeLabel->SetText( "#FreezePanel_Nemesis_Dead" );
 					}
 					else
 					{
-						if ( !pKiller->IsAlive() )
-						{
-							m_pFreezeLabel->SetText( "#FreezePanel_Killer_Dead" );
-						}
-						else
-						{
-							m_pFreezeLabel->SetText( "#FreezePanel_Killer" );
-						}
+						m_pFreezeLabel->SetText( "#FreezePanel_Nemesis" );
+					}
+				}
+				else
+				{
+					if ( !pKiller->IsAlive() )
+					{
+						m_pFreezeLabel->SetText( "#FreezePanel_Killer_Dead" );
+					}
+					else
+					{
+						m_pFreezeLabel->SetText( "#FreezePanel_Killer" );
 					}
 				}
 

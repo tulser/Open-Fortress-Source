@@ -184,7 +184,7 @@ Activity CTFPlayerAnimState::TranslateActivity( Activity actDesired )
 		}
 	}
 
-	if ( GetTFPlayer()->GetActiveWeapon() && GetTFPlayer()->GetActiveWeapon()->GetTFPlayerOwner() )
+	if ( GetTFPlayer()->GetActiveWeapon() )
 	{
 		translateActivity = GetTFPlayer()->GetActiveWeapon()->ActivityOverride( translateActivity, NULL );
 	}
