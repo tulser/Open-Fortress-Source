@@ -139,7 +139,7 @@ void CTFHudMedals::OnThink(void)
 
 void CTFHudMedals::FireGameEvent(IGameEvent *event)
 {
-	if (!event)
+	if (!event || TFGameRules()->IsInWaitingForPlayers())
 		return;
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();

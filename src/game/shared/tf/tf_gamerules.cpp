@@ -5301,46 +5301,40 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		if (pTFPlayerVictim->GetDeathFlags() & TF_DEATH_ASSISTER_REVENGE)
 			event->SetInt("assister_revenge", 1);
 
-		//medals stuff
 		if(pScorer)
-		{
 			event->SetInt("attacker", pScorer->GetUserID());
 
-			//streaks
-			CTFPlayer *pTFPlayerScorer = ToTFPlayer(pScorer);
-			event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
-			event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
-			event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
+		//medals, only activate after warmup
+		if(!IsInWaitingForPlayers())
+		{
+			if(pScorer)
+			{
+				//streaks
+				CTFPlayer *pTFPlayerScorer = ToTFPlayer(pScorer);
+				event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
+				event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
+				event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
 
-			//weapon specifics
-			int weaponType = GetKillingWeaponType(pInflictor, pScorer);
-			event->SetBool("humiliation", weaponType == 1 ? true : false);
-			event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & (FL_ONGROUND|FL_INWATER)) && weaponType == 2 ? true : false); //not on the ground and not in water
+				//weapon specifics
+				int weaponType = GetKillingWeaponType(pInflictor, pScorer);
+				event->SetBool("humiliation", weaponType == 1 ? true : false);
+				event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & (FL_ONGROUND|FL_INWATER)) && weaponType == 2 ? true : false); //not on the ground and not in water
+
+				//Kamikaze, suicide entity exists, inflictor is the suicide entity of the scorer, inflictor is an explosive projectile
+				bool Kamikaze = pVictim != pKiller && pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
+				event->SetBool("kamikaze", Kamikaze);
+				if(Kamikaze)
+					pTFPlayerScorer->m_SuicideEntity = NULL;
+			}
 
 			//first blood
 			event->SetBool("firstblood", !m_bFirstBlood ? true : false);
 			m_bFirstBlood = true;
 
-			//Kamikaze, suicide entity exists, inflictor is the suicide entity of the scorer, inflictor is an explosive projectile
-			bool Kamikaze = pVictim != pKiller && pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
-			event->SetBool("kamikaze", Kamikaze);
-			if(Kamikaze)
-				pTFPlayerScorer->m_SuicideEntity = NULL;
+			//more streaks
+			event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
+			event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 		}
-		else
-		{
-			event->SetInt("attacker", 0);
-			event->SetInt("killer_pupkills", 0);
-			event->SetInt("killer_kspree", 0);
-			event->SetInt("ex_streak", 0);
-			event->SetBool("midair", false);
-			event->SetBool("humiliation", false);
-			event->SetBool("firstblood", false);
-		}
-
-		//more streaks
-		event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
-		event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 
 		gameeventmanager->FireEvent(event);
 	}
