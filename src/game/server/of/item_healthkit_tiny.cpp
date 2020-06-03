@@ -25,43 +25,23 @@ DEFINE_KEYFIELD(m_iszPickupSound, FIELD_STRING, "pickup_sound"),
 
 END_DATADESC()
 
-bool ITEM_GiveTFAmmoHealth(CBasePlayer *pPlayer, float flCount, bool bSuppressSound = true)
+bool ITEM_GiveTFTinyHealth(CBasePlayer *pPlayer)
 {
-	bool bSuccess = false;
-	int iHealthRestored = 0;
-	int iHealthToAdd = sk_item_healthkit_tiny.GetFloat();
-
 	CTFPlayer *pTFPlayer = ToTFPlayer(pPlayer);
 	if (!pTFPlayer)
 		return false;
 
 	int iHealthBefore = pTFPlayer->GetHealth();
-	iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth());
-	iHealthRestored = pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
+	int iHealthToAdd = clamp(sk_item_healthkit_tiny.GetInt(), 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth());
 
-	if (pPlayer->GetHealth() > pTFPlayer->m_Shared.GetDefaultHealth())
-	{
-		if (iHealthBefore >= pTFPlayer->m_Shared.GetDefaultHealth())
-		{
-			iHealthToAdd = sk_item_healthkit_tiny.GetFloat();
-			if (pTFPlayer->m_Shared.m_flMegaOverheal + iHealthToAdd > pTFPlayer->m_Shared.GetMaxBuffedHealthDM())
-				iHealthToAdd = (pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth()) - pTFPlayer->m_Shared.m_flMegaOverheal;
+	if (iHealthBefore > pTFPlayer->m_Shared.GetDefaultHealth())
+		pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
+	else
+		pTFPlayer->m_Shared.m_flMegaOverheal += (iHealthBefore + iHealthToAdd) - pTFPlayer->m_Shared.GetDefaultHealth(); //health we end up having - the regular max health
 
-			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
-			iHealthRestored = 1;
-		}
-		else
-		{
-			pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd + iHealthBefore - pTFPlayer->m_Shared.GetDefaultHealth();
-		}
+	pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
 
-		pTFPlayer->m_Shared.m_flMegaOverheal = min(pTFPlayer->m_Shared.m_flMegaOverheal, pTFPlayer->m_Shared.GetMaxBuffedHealthDM());
-	}
-
-	if (iHealthRestored)
-		bSuccess = true;
-
-	return bSuccess;
+	return true;
 }
 #endif
 
@@ -84,17 +64,18 @@ void CHealthKitTiny::Precache(void)
 
 bool CHealthKitTiny::MyTouch(CBasePlayer *pPlayer)
 {
-	bool m_bDontHeal = false;
+	bool m_bDoHeal = false;
 
 	if (!ValidTouch(pPlayer))
-		return m_bDontHeal;
+		return m_bDoHeal;
 
-	if (ITEM_GiveTFAmmoHealth(pPlayer, PackRatios[POWERUP_TINY]))
+	if (ITEM_GiveTFTinyHealth(pPlayer))
 	{
-		m_bDontHeal = true;
 		CSingleUserRecipientFilter filter(pPlayer);
 		EmitSound(filter, entindex(), STRING(m_iszPickupSound));
 		AddEffects(EF_NODRAW);
+		m_bDoHeal = true;
 	}
-	return m_bDontHeal;
+
+	return m_bDoHeal;
 }

@@ -4403,23 +4403,16 @@ int CTFPlayer::TakeHealth( float flHealth, int bitsDamageType )
 	}
 	else
 	{
-		float flHealthToAdd = flHealth;
 		float flMaxHealth = GetPlayerClass()->GetMaxHealth();
 		
 		// don't want to add more than we're allowed to have
-		if ( flHealthToAdd > flMaxHealth - m_iHealth )
-		{
-			flHealthToAdd = flMaxHealth - m_iHealth;
-		}
+		if (flHealth > flMaxHealth - m_iHealth)
+			flHealth = flMaxHealth - m_iHealth;
 
-		if ( flHealthToAdd <= 0 )
-		{
+		if (flHealth <= 0)
 			bResult = false;
-		}
 		else
-		{
-			bResult = BaseClass::TakeHealth( flHealthToAdd, bitsDamageType );
-		}
+			bResult = BaseClass::TakeHealth(flHealth, bitsDamageType);
 	}
 
 	return bResult;
