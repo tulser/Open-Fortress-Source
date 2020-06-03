@@ -128,6 +128,7 @@ private:
 	void		AirDash(void);
 	void		PreventBunnyJumping();
 	float		CheckTrimp(float flMul);
+	void		CheckCSlideSound(bool CSliding);
 
 private:
 
@@ -985,24 +986,26 @@ void CTFGameMovement::WalkMove(bool CSliding)
 	float flSideMove = mv->m_flSideMove;
 
 	// Find the direction,velocity in the x,y plane.
-	Vector vecWishDirection(((vecForward.x * flForwardMove) + (vecRight.x * flSideMove)),
-		((vecForward.y * flForwardMove) + (vecRight.y * flSideMove)),
-		0.0f);
-
-	// Calculate the speed and direction of movement, then clamp the speed.
+	Vector vecWishDirection(vecForward.x * flForwardMove + vecRight.x * flSideMove,
+							vecForward.y * flForwardMove + vecRight.y * flSideMove,
+							0.0f);
 
 	// Accelerate in the x,y plane.
 	float flWishSpeed;
-	mv->m_vecVelocity.z = 0;
 	if (CSliding)
 	{
 		VectorNormalize(vecWishDirection);
-		flWishSpeed = 320.f;
+		flWishSpeed = min(mv->m_vecVelocity.Length(), 320.f);
+		mv->m_vecVelocity.z = 0;
 		AirAccelerate(vecWishDirection, flWishSpeed, of_cslideaccelerate.GetFloat(), false);
 	}
 	else
 	{
-		flWishSpeed = min(VectorNormalize(vecWishDirection), mv->m_flMaxSpeed);
+		// Calculate the speed and direction of movement, then clamp the speed.
+		flWishSpeed = VectorNormalize(vecWishDirection);
+		flWishSpeed = clamp(flWishSpeed, 0.f, mv->m_flMaxSpeed);
+		mv->m_vecVelocity.z = 0;
+
 		Accelerate(vecWishDirection, flWishSpeed, sv_accelerate.GetFloat());
 
 		// Clamp the players speed in x,y.
@@ -1689,9 +1692,9 @@ void CTFGameMovement::FullWalkMove()
 	if (player->GetGroundEntity() != NULL)
 	{
 		CSliding = (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is dusked/ducking
-			(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
-			gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() &&	//there is crouch slide to spend
-			of_cslide.GetBool();												//crouch sliding is enabled
+					(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
+					gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() &&	//there is crouch slide to spend
+					of_cslide.GetBool();												//crouch sliding is enabled
 
 		Friction(CSliding);
 		WalkMove(CSliding);
@@ -1722,6 +1725,25 @@ void CTFGameMovement::FullWalkMove()
 
 	// Make sure velocity is valid.
 	CheckVelocity();
+
+	CheckCSlideSound(CSliding);
+}
+
+void CTFGameMovement::CheckCSlideSound(bool CSliding)
+{
+	if (CSliding) //always go here if cslide is happening
+	{
+		if (!player->m_bIsCSliding)
+		{
+			player->EmitSound("Player.Slide");
+			player->m_bIsCSliding = true;
+		}
+	}
+	else if (player->m_bIsCSliding)
+	{
+		player->StopSound("Player.Slide");
+		player->m_bIsCSliding = false;
+	}
 }
 
 void CTFGameMovement::CheckFalling(bool CSliding)
