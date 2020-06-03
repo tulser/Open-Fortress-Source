@@ -3729,20 +3729,6 @@ bool CTFPlayerShared::GetJumpBuffer()
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: ramp jump related
-//-----------------------------------------------------------------------------
-
-void CTFPlayerShared::SetRampJumpVel(float VelZ)
-{
-	m_fRampJumpVel = VelZ;
-}
-
-float CTFPlayerShared::GetRampJumpVel()
-{
-	return m_fRampJumpVel;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: crouch slide related
 //-----------------------------------------------------------------------------
 

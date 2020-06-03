@@ -47,11 +47,11 @@ ConVar 	of_crouchjump("of_crouchjump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Al
 ConVar 	of_bunnyhop_max_speed_factor("of_bunnyhop_max_speed_factor", "1.2", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max Speed achievable with bunnyhoping.");
 ConVar 	of_jump_velocity("of_jump_velocity", "268.3281572999747", FCVAR_NOTIFY | FCVAR_REPLICATED, "The velocity applied when a player jumps.");
 ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge.");
-ConVar  of_ramp_jump("of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump.\n0- None\n1- Source Style Trimping\n2- Quake Style ramp jumps");
-ConVar  of_ramp_multiplier("of_ramp_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
+ConVar  of_ramp_jump("of_ramp_jump", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Enables ramp jump");
+ConVar  of_ramp_up_multiplier("of_ramp_up_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
+ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect.");
 //ConVar  of_ramp_up_forward_multiplier("of_ramp_up_forward_multiplier", "1.1", FCVAR_REPLICATED | FCVAR_NOTIFY);
-//ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "1", FCVAR_REPLICATED | FCVAR_NOTIFY);
 #if defined (CLIENT_DLL)
 ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hough", true, 0, true, 2);
 #endif
@@ -118,7 +118,6 @@ protected:
 	virtual void CheckWaterJump(void);
 	void		 FullWalkMoveUnderwater();
 	virtual void HandleDuckingSpeedCrop();
-	virtual void FinishGravity();
 	virtual void AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel = true);
 	void		 Friction(bool CSliding);
 
@@ -548,28 +547,11 @@ bool CTFGameMovement::CheckJumpButton()
 	}
 	else
 	{
-		int ramp_jump = of_ramp_jump.GetInt();
-
-		if (ramp_jump == 2)	//Quake ramp jumps
-		{
-			//Set Vel to be the one player had before touching ground, retouched according to the current player state
-			float ent_gravity = player->GetGravity() ? player->GetGravity() : 1.0;
-			float scaled_gravity = player->GetBaseVelocity()[2] * gpGlobals->frametime - ent_gravity * GetCurrentGravity() * gpGlobals->frametime * 0.5;
-			float ramp_velocity = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel() + scaled_gravity);
-
-			//jump height is scaled only if player already has a positive vertical velocity value
-			mv->m_vecVelocity[2] += (ramp_velocity > 0 ? of_ramp_multiplier.GetFloat() : 1) * flMul;
-		}
-		else if (ramp_jump == 1) //Source trimping
-		{
+		//Trimping
+		if (of_ramp_jump.GetBool())
 			flMul = CheckTrimp(flMul);
-			mv->m_vecVelocity[2] += flMul;
-		}
-		else
-		{
-			// Save the current z velocity.
-			mv->m_vecVelocity[2] += flMul;
-		}
+
+		mv->m_vecVelocity[2] += flMul;
 	}
 
 	// Apply gravity.
@@ -631,19 +613,18 @@ float CTFGameMovement::CheckTrimp(float flMul)
 	if (absDot < 0.05f)
 		return flMul;
 
-	float ramp_multi = of_ramp_multiplier.GetFloat();
 	if (flDotProduct < 0) //going up a slope
 	{
 		//increase jump power according to the dot product and horizontal velocity
-		flMul += absDot * flHorizontalSpeed * ramp_multi;
+		flMul += absDot * flHorizontalSpeed * of_ramp_up_multiplier.GetFloat();
 	}
 	else
 	{
+		float ramp_multi = of_ramp_down_multiplier.GetFloat();
 		//jump velocity must be demultiplied and horizontal speed must be increased
+		flMul *= absDot / ramp_multi;
 		for (int i = 0; i < 2; i++)
 			mv->m_vecVelocity[i] += absDot * mv->m_vecVelocity[i] * ramp_multi;
-
-		flMul *= absDot / ramp_multi;
 	}
 
 	return flMul;
@@ -1143,10 +1124,7 @@ void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float acce
 	// Cap speed, this is the only thing to edit to allow
 	// Q3 style strafejumping, if Q3 movement is on it is ignored
 	if (q1accel)
-	{
-		if (wishspd > GetAirSpeedCap())
-			wishspd = GetAirSpeedCap();
-	}
+		wishspd = min(wishspd, GetAirSpeedCap());
 
 	// Determine veer amount
 	currentspeed = mv->m_vecVelocity.Dot(wishdir);
@@ -1172,7 +1150,6 @@ void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float acce
 void CTFGameMovement::AirMove(void)
 {
 	int			movementmode;
-	Vector		wishvel;
 	float		fmove, smove;
 	Vector		wishdir;
 	float		wishspeed;
@@ -1185,17 +1162,12 @@ void CTFGameMovement::AirMove(void)
 	smove = mv->m_flSideMove;
 
 	// Zero out z components of movement vectors
-	forward[2] = right[2] = wishvel[2] = 0;
+	forward[2] = right[2] = wishdir[2] = 0;
 
-	//create wishdir vector
-	VectorNormalize(forward);
-	VectorNormalize(right);
-
-	for (int i = 0; i < 2; i++)       // Determine x and y parts of velocity
-		wishvel[i] = forward[i] * fmove + right[i] * smove;
+	for (int i = 0; i < 3; i++)       // Determine x and y parts of velocity
+		wishdir[i] = forward[i] * fmove + right[i] * smove;
 
 	// Determine magnitude of speed of move
-	VectorCopy(wishvel, wishdir);
 	wishspeed = VectorNormalize(wishdir);
 	wishspeed = min(wishspeed, mv->m_flMaxSpeed);
 
@@ -1561,33 +1533,6 @@ void CTFGameMovement::HandleDuckingSpeedCrop(void)
 		mv->m_flSideMove = 0.0f;
 		mv->m_flUpMove = 0.0f;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-
-void CTFGameMovement::FinishGravity(void)
-{
-	float ent_gravity;
-
-	if (player->m_flWaterJumpTime)
-		return;
-
-	if (player->GetGravity())
-		ent_gravity = player->GetGravity();
-	else
-		ent_gravity = 1.0;
-
-	// Get the correct velocity for the end of the dt
-	float scaled_gravity = ent_gravity * GetCurrentGravity() * gpGlobals->frametime * 0.5;
-	mv->m_vecVelocity[2] -= scaled_gravity;
-
-	// Ivory: store pre landing vel for ramp jumps
-	if (player->GetGroundEntity() != NULL)
-		m_pTFPlayer->m_Shared.SetRampJumpVel(mv->m_vecVelocity[2]);
-
-	CheckVelocity();
 }
 
 //-----------------------------------------------------------------------------

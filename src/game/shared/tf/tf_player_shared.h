@@ -253,10 +253,6 @@ public:
 	void	SetJumpBuffer(bool buffer);
 	bool	GetJumpBuffer();
 
-	//ramp jumping
-	void	SetRampJumpVel(float VelZ);
-	float	GetRampJumpVel();
-
 	//crouchs slide
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration();
