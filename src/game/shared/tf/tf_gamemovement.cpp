@@ -126,7 +126,7 @@ private:
 	bool		CheckWaterJumpButton(void);
 	void		AirDash(void);
 	void		PreventBunnyJumping();
-	float		CheckTrimp(float flMul);
+	float		CheckTrimp(float flMul, int rampMode);
 	void		CheckCSlideSound(bool CSliding);
 
 private:
@@ -548,8 +548,9 @@ bool CTFGameMovement::CheckJumpButton()
 	else
 	{
 		//Trimping
-		if (of_ramp_jump.GetBool())
-			flMul = CheckTrimp(flMul);
+		int rampMode = of_ramp_jump.GetInt();
+		if (rampMode)
+			flMul = CheckTrimp(flMul, rampMode);
 
 		mv->m_vecVelocity[2] += flMul;
 	}
@@ -585,7 +586,7 @@ bool CTFGameMovement::CheckJumpButton()
 	return true;
 }
 
-float CTFGameMovement::CheckTrimp(float flMul)
+float CTFGameMovement::CheckTrimp(float flMul, int rampMode)
 {
 	// Take the lateral velocity
 	Vector vecVelocity = mv->m_vecVelocity * Vector(1.0f, 1.0f, 0.0f);
@@ -618,7 +619,7 @@ float CTFGameMovement::CheckTrimp(float flMul)
 		//increase jump power according to the dot product and horizontal velocity
 		flMul += absDot * flHorizontalSpeed * of_ramp_up_multiplier.GetFloat();
 	}
-	else
+	else if (rampMode == 2)
 	{
 		float ramp_multi = of_ramp_down_multiplier.GetFloat();
 		//jump velocity must be demultiplied and horizontal speed must be increased
