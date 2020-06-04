@@ -34,7 +34,11 @@ bool ITEM_GiveTFTinyHealth(CBasePlayer *pPlayer)
 	int iHealthBefore = pTFPlayer->GetHealth();
 	int iHealthToAdd = clamp(sk_item_healthkit_tiny.GetInt(), 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - iHealthBefore);
 	pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
-	pTFPlayer->m_Shared.m_flMegaOverheal += (iHealthBefore >= pTFPlayer->m_Shared.GetDefaultHealth()) ? iHealthToAdd : pTFPlayer->GetHealth() - pTFPlayer->m_Shared.GetDefaultHealth();
+
+	if (iHealthBefore < pTFPlayer->m_Shared.GetDefaultHealth())
+		iHealthToAdd = max(0, pTFPlayer->GetHealth() - pTFPlayer->m_Shared.GetDefaultHealth());
+
+	pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
 
 	return true;
 }
