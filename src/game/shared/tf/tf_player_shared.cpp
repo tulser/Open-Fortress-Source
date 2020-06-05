@@ -264,8 +264,9 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
-	m_flJumpSoundDelay = 0.f;
+
 	m_flStepSoundDelay = 0.f;
+	m_flJumpSoundDelay = 0.f;
 	
 	m_iDesiredPlayerClass = 0;
 
@@ -3714,4 +3715,32 @@ bool CTFPlayerShared::InPowerupCond()
 			return true;
 	}
 	return false;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: jump buffer related
+//-----------------------------------------------------------------------------
+
+void CTFPlayerShared::SetJumpBuffer(bool buffer)
+{
+	m_bBlockJump = buffer;
+}
+
+bool CTFPlayerShared::GetJumpBuffer()
+{
+	return m_bBlockJump;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: crouch slide related
+//-----------------------------------------------------------------------------
+
+void CTFPlayerShared::SetCSlideDuration(float duration)
+{
+	m_iCSlideDuration = duration;
+}
+
+float CTFPlayerShared::GetCSlideDuration()
+{
+	return m_iCSlideDuration;
 }
