@@ -14,6 +14,7 @@
 #include "tf_gamerules.h"
 #include "c_tf_player.h"
 #include "c_tf_playerresource.h"
+#include "engine/IEngineSound.h"
 #include "of_hud_medals.h"
 
 using namespace vgui;
@@ -26,7 +27,7 @@ using namespace vgui;
 #define MEDAL_TIME 2.5f
 #define MEDAL_SIZE 128
 
-ConVar cl_show_medals("cl_show_medals", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar of_show_medals("of_show_medals", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
 
 DECLARE_HUDELEMENT(CTFHudMedals);
 
@@ -83,7 +84,7 @@ bool CTFHudMedals::ShouldDraw(void)
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if (!pPlayer || !cl_show_medals.GetBool())
+	if (!pPlayer || !TFGameRules()->IsDMGamemode() || !medalsQueue.Size())
 		return false;
 	return CHudElement::ShouldDraw();
 }
@@ -110,8 +111,10 @@ void CTFHudMedals::OnThink(void)
 	//Initialize the time frame medal should be drawn
 	if (!drawTime)
 	{
-		if (TeamplayRoundBasedRules())
-			TeamplayRoundBasedRules()->BroadcastSoundFFA(GetLocalPlayerIndex(), medalsQueue[0].medal_sound);
+		char szFullSound[32];
+		Q_snprintf(szFullSound, sizeof(szFullSound), "%s.%s", "Benja", medalsQueue[0].medal_sound);
+		CLocalPlayerFilter filter;
+		C_TFPlayer::GetLocalTFPlayer()->EmitSound(filter, SOUND_FROM_LOCAL_PLAYER, szFullSound);
 
 		m_pMedalImage->SetImage(medalsQueue[0].medal_name);
 		m_pMedalImage->SetVisible(true);
@@ -136,7 +139,7 @@ void CTFHudMedals::OnThink(void)
 
 void CTFHudMedals::FireGameEvent(IGameEvent *event)
 {
-	if (!event)
+	if (!event || TFGameRules()->IsInWaitingForPlayers())
 		return;
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -172,7 +175,6 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 			if (event->GetBool("kamikaze"))
 				AddMedal(KAMIKAZE);
 
-			//No perfect at match over
 			died = true;
 		}
 		else if (event->GetInt("attacker") == pIndex) //you killed
@@ -246,7 +248,9 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 //-----------------------------------------------------------------------------
 void CTFHudMedals::AddMedal(int medalIndex)
 {
-	medalsQueue.AddToTail({ medalPaths[medalIndex], medalNames[medalIndex] });
+	if (of_show_medals.GetBool())
+		medalsQueue.AddToTail({ medalPaths[medalIndex], medalNames[medalIndex] });
+
 	medals_counter[medalIndex] = medalIndex < 2 ? 1 : medals_counter[medalIndex] + 1;
 }
 

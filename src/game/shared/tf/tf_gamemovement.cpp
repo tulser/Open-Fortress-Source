@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2004, Valve LLC, All rights reserved. ============
+//========= Copyright Â© 1996-2004, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -524,6 +524,10 @@ bool CTFGameMovement::CheckJumpButton()
 	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flStepSoundDelay)
 		player->PlayStepSound((Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
 	m_pTFPlayer->m_Shared.SetJumping(true);
+
+	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flStepSoundDelay)
+		player->PlayStepSound((Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
+	m_pTFPlayer->m_Shared.m_flStepSoundDelay = gpGlobals->curtime + 0.25f;
 
 	// Set the player as in the air.
 	SetGroundEntity(NULL);

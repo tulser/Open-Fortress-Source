@@ -19,5 +19,7 @@ public:
 	bool MyTouch(CBasePlayer *pPlayer);
 	void Precache(void);
 
+	virtual bool   IsMega(void) { return true; }
+
 	DECLARE_DATADESC();
 };

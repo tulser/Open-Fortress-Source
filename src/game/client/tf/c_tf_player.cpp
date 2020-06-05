@@ -4770,6 +4770,9 @@ bool C_TFPlayer::ShouldCollide( int collisionGroup, int contentsMask ) const
 	if ( ( ( collisionGroup == COLLISION_GROUP_PLAYER_MOVEMENT ) && tf_avoidteammates.GetBool() ) ||
 		collisionGroup == TFCOLLISION_GROUP_ROCKETS )
 	{	
+		if ( TFGameRules()->IsCoopEnabled() ) 
+			return false;
+
 		switch( GetTeamNumber() )
 		{
 		case TF_TEAM_RED:
@@ -5370,7 +5373,7 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 
 	const char *eventname = event->GetName();
 
-	if ( Q_strcmp( "player_jump", eventname ) == 0 )
+	if ( !Q_strcmp( "player_jump", eventname ))
 	{
 		if( !of_jumpsound.GetBool() )
 			return;

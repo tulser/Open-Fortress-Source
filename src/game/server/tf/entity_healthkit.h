@@ -17,7 +17,9 @@
 // CTF HealthKit class.
 //
 
-class CHealthKit : public CTFPowerup
+DECLARE_AUTO_LIST(IHealthKitAutoList)
+
+class CHealthKit : public CTFPowerup, public IHealthKitAutoList
 {
 public:
 	DECLARE_CLASS( CHealthKit, CTFPowerup );
@@ -33,6 +35,9 @@ public:
 	string_t m_iszPickupSound = MAKE_STRING( "HealthKit.Touch" );
 	
 	DECLARE_DATADESC();
+
+	bool   IsTiny( void ) { return false; }
+	bool   IsMega( void ) { return false; }
 };
 
 class CHealthKitSmall : public CHealthKit

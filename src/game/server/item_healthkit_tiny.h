@@ -19,5 +19,7 @@ public:
 	bool MyTouch(CBasePlayer *pPlayer);
 	void Precache(void);
 
+	virtual bool   IsTiny(void) { return true; }
+
 	DECLARE_DATADESC();
 };
