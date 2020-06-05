@@ -256,6 +256,9 @@ public:
 	//crouchs slide
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration();
+
+	float	m_flStepSoundDelay;
+	float	m_flJumpSoundDelay;
 	
 private:
 
