@@ -1640,10 +1640,12 @@ void CTFGameMovement::FullWalkMove()
 	bool CSliding = false;
 	if (player->GetGroundEntity() != NULL)
 	{
-		CSliding = (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is dusked/ducking
+		CSliding = (of_cslide.GetBool() &&												//crouch sliding is enabled
+					mv->m_flMaxSpeed > 5 &&												//player is allowed to move
+					!m_pTFPlayer->GetWaterLevel() &&		 							//player is not in water
+					(player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&		//player is ducked/ducking
 					(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
-					gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() &&	//there is crouch slide to spend
-					of_cslide.GetBool();												//crouch sliding is enabled
+					gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration());	//there has crouch slide to spend
 
 		Friction(CSliding);
 		WalkMove(CSliding);
