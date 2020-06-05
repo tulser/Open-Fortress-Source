@@ -126,13 +126,6 @@ namespace BaseModUI
 		
 		MESSAGE_FUNC_CHARPTR( OnNavigateTo, "OnNavigateTo", panelName );
 
-		bool IsMenuBackgroundMovieValid( void );
-
-		bool IsBackgroundMusicPlaying();
-		bool StartBackgroundMusic( float fVol );
-		void UpdateBackgroundMusicVolume( float fVol );
-		void ReleaseBackgroundMusic();
-
 		void SafeNavigateTo( Panel *pExpectedFrom, Panel *pDesiredTo, bool bAllowStealFocus );
 
 #if defined( _X360 ) && defined( _DEMO )
@@ -157,6 +150,8 @@ namespace BaseModUI
 		void OnEngineLevelLoadingSession( KeyValues *pEvent );
 		bool ActivateBackgroundEffects();
 
+		void PlayGameStartupSound();
+
 		static CBaseModPanel* m_CFactoryBasePanel;
 
 		vgui::DHANDLE< CBaseModFrame > m_Frames[WT_WINDOW_COUNT];
@@ -180,9 +175,6 @@ namespace BaseModUI
 		float m_flBlurScale;
 		float m_flLastBlurTime;
 
-		CUtlString m_backgroundMusic;
-		int m_nBackgroundMusicGUID;
-
 		int m_iProductImageID;
 		int m_nProductImageWide;
 		int m_nProductImageTall;
@@ -191,16 +183,14 @@ namespace BaseModUI
 		IMaterial *m_pBackgroundMaterial;
 		KeyValues *m_pVMTKeyValues;
 
+		int m_iPlayGameStartupSound;
+
 		void PrepareStartupGraphic();
 		void ReleaseStartupGraphic();
 		void DrawStartupGraphic( float flNormalizedAlpha );
 		IVTFTexture			*m_pBackgroundTexture;
-	};
 
-	//-----------------------------------------------------------------------------
-	// Purpose: singleton accessor
-	//-----------------------------------------------------------------------------
-	extern CBaseModPanel *BasePanel();
+	};
 };
 
 #endif
