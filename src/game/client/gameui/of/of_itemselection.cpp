@@ -28,8 +28,8 @@
 
 #include "of_itemselection.h"
 #include "of_scrollableitemlist.h"
-#include "game_ui/BaseModPanel.h"
-#include "game_ui/VDMLoadout.h"
+#include "gameui/BaseModPanel.h"
+#include "gameui/of/dm_loadout.h"
 
 #include "engine/IEngineSound.h"
 #include "basemodelpanel.h"

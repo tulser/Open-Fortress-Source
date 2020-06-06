@@ -27,6 +27,7 @@
 #include "datacache/imdlcache.h"
 
 #include "of_headeritem.h"
+#include "of_loadoutheader.h"
 
 #include "engine/IEngineSound.h"
 #include "basemodelpanel.h"
@@ -38,9 +39,6 @@
 #include "fmtstr.h"
 
 #include "tier0/dbg.h"
-
-#include "game_ui/BaseModPanel.h"
-#include "of/game_ui/VDMLoadout.h"
 
 using namespace vgui;
 

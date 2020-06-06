@@ -29,7 +29,7 @@
 #include "of_commandbutton.h"
 #include "of_editablebutton.h"
 
-#include "VDMLoadout.h"
+#include "dm_loadout.h"
 
 #include "engine/IEngineSound.h"
 #include "basemodelpanel.h"

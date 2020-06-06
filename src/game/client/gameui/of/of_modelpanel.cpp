@@ -39,9 +39,6 @@
 
 #include "tier0/dbg.h"
 
-#include "game_ui/BaseModPanel.h"
-#include "of/game_ui/VDMLoadout.h"
-
 using namespace vgui;
 
 DECLARE_BUILD_FACTORY( CTFModelPanel );

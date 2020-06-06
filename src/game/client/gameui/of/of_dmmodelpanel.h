@@ -11,7 +11,7 @@
 #pragma once
 #endif
 
-#include "game_ui/basemodui.h"
+#include "gameui/basemodui.h"
 
 #include "tf_controls.h"
 #include "basemodel_panel.h"

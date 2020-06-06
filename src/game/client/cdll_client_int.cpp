@@ -122,7 +122,7 @@
 #include "fmod_manager.h"
 #include "c_of_music_player.h"
 #include "of_shared_schemas.h"
-#include "game_ui/BaseModPanel.h"
+#include "gameui/BaseModPanel.h"
 #include <GameUI/IGameUI.h>
 #endif
 #include "clientsteamcontext.h"

@@ -3,16 +3,13 @@
 #include "./GameUI/IGameUI.h"
 #include "ienginevgui.h"
 #include "engine/IEngineSound.h"
-// #include "EngineInterface.h"
 #include "tier0/dbg.h"
 #include "utlbuffer.h"
 #include "ixboxsystem.h"
-// #include "GameUI_Interface.h"
 #include "game/client/IGameClientExports.h"
 #include "GameUI/IGameConsole.h"
 #include "inputsystem/iinputsystem.h"
 #include "filesystem.h"
-//#include "filesystem/IXboxInstaller.h"
 #include "tier2/renderutils.h"
 #include "vgui_video_player.h"
 
@@ -21,53 +18,27 @@
 #endif
 
 // BaseModUI High-level windows
-// #include "PlayerListDialog.h"
 #include "VTransitionScreen.h"
-//#include "VAchievements.h"
 #include "vaddonassociation.h"
 #include "VAddons.h"
 #include "VAttractScreen.h"
 #include "VAudio.h"
 #include "VAudioVideo.h"
-//#include "VCloud.h"
-//#include "VControllerOptions.h"
-//#include "VControllerOptionsButtons.h"
-//#include "VControllerOptionsSticks.h"
-//#include "VDownloads.h"
-//#include "VFoundGames.h"
 #include "VFlyoutMenu.h"
-//#include "VFoundGroupGames.h"
-//#include "vfoundpublicgames.h"
-//#include "VGameLobby.h"
-//#include "VGameOptions.h"
-//#include "VGameSettings.h"
 #include "VGenericConfirmation.h"
-//#include "VGenericWaitScreen.h"
-//#include "vgetlegacydata.h"
-//#include "VInGameDifficultySelect.h"
 #include "VInGameMainMenu.h"
-//#include "VInGameChapterSelect.h"
-//#include "VInGameKickPlayerList.h"
 #include "VKeyboardMouse.h"
 #include "vkeyboard.h"
-//#include "VVoteOptions.h"
 #include "VLoadingProgress.h"
 #include "VMainMenu.h"
 #include "VMultiplayer.h"
-//#include "VOptions.h"
-//#include "VSignInDialog.h"
 #include "VFooterPanel.h"
-//#include "VPasswordEntry.h"
 #include "VVideo.h"
-//#include "VSteamCloudConfirmation.h"
 #include "vcustomcampaigns.h"
-//#include "vdownloadcampaign.h"
-//#include "vjukebox.h"
-//#include "vleaderboard.h"
 #include "vmyugc.h"
 
 #include "vtestpanel.h"
-#include "of/game_ui/VDMLoadout.h"
+#include "gameui/of/dm_loadout.h"
 
 #include "vgui/ISystem.h"
 #include "vgui/ISurface.h"
@@ -81,8 +52,8 @@
 #include "fmtstr.h"
 #include "smartptr.h"
 #include "nb_header_footer.h"
+
 #include "vgui_controls/ControllerMap.h"
-// #include "ModInfo.h"
 #include "vgui_controls/AnimationController.h"
 #include "vgui_controls/ImagePanel.h"
 #include "vgui_controls/Label.h"
@@ -115,7 +86,7 @@ extern ISoundEmitterSystemBase *soundemitterbase;
 bool g_bIsCreatingNewGameMenuForPreFetching = false;
 
 //=============================================================================
-CBaseModPanel* CBaseModPanel::m_CFactoryBasePanel = 0;
+CBaseModPanel* CBaseModPanel::m_CFactoryBasePanel = NULL;
 
 static CDllDemandLoader g_GameUIDLL("GameUI");
 
@@ -145,7 +116,7 @@ IGameConsole& GameConsole()
 	if (!g_pGameConsole)
 	{
 		CreateInterfaceFn gameUIFactory = g_GameUIDLL.GetFactory();
-		if (!g_pGameConsole)
+		if (!gameUIFactory)
 		{
 			Assert(0);
 		}
@@ -444,7 +415,6 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 
 		case WT_DM_LOADOUT:
 			m_Frames[wt] = new DMLoadout(this, "DMLoadout");
-			// m_Frames[wt] = new TestPanel1(this, "TestPanel1");
 			break;
 
 		default:

@@ -121,12 +121,12 @@ $Project "GameUI"
 				"KeyToggleCheckButton.cpp" \
 				"LabeledCommandComboBox.cpp" \
 				"LoadingDialog.cpp" \
-				"loadingtippanel.cpp" \
 				"logofile.cpp" \
 				"ModInfo.cpp" \
 				"MouseMessageForwardingPanel.cpp" \
 				"MultiplayerAdvancedDialog.cpp" \
 				"OptionsDialog.cpp" \
+				"optionsmousedialog.cpp" \
 				"OptionsSubAudio.cpp" \
 				"OptionsSubDifficulty.cpp" \
 				"OptionsSubGame.cpp" \

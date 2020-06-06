@@ -81,7 +81,7 @@
 #include "iclientmode.h"
 #include "tf_viewmodel.h"
 
-#include "of/game_ui/VDMLoadout.h"
+#include "gameui/of/dm_loadout.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
