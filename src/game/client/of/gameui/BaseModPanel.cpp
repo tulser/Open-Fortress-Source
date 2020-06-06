@@ -39,6 +39,8 @@
 
 #include "gameui/of/dm_loadout.h"
 
+#include "transitionpanel.h"
+
 #include "vgui/ISystem.h"
 #include "vgui/ISurface.h"
 #include "vgui/ILocalize.h"
@@ -246,6 +248,10 @@ m_lastActiveUserId(0)
 	//Make it pausable When we reload, the game stops pausing on +esc
 	ConVar *sv_pausable = cvar->FindVar("sv_pausable");
 	sv_pausable->SetValue(1);
+	   
+	m_pTransitionPanel = new CBaseModTransitionPanel("TransitionPanel");
+	// m_pTransitionPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
+	m_pTransitionPanel->SetParent(this);
 
 	m_pVideo = new CVideoBackground( NULL, "VideoBackground" );
 	m_pVideo->SetParent( enginevgui->GetPanel( PANEL_GAMEUIDLL ) );
@@ -299,6 +305,9 @@ void CBaseModPanel::ReloadScheme()
 //=============================================================================
 CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame * caller, bool hidePrevious, KeyValues *pParameters)
 {
+	GetTransitionEffectPanel()->SetInitialState();
+	GetTransitionEffectPanel()->MoveToFront();
+
 	CBaseModFrame *newNav = m_Frames[ wt ].Get();
 	bool setActiveWindow = true;
 
@@ -496,6 +505,8 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 		newNav->InvalidateLayout(false, false);
 		newNav->OnOpen();
 	}
+
+	GetTransitionEffectPanel()->SetExpectedDirection(true, wt);
 
 	if ( UI_IsDebug() && (wt != WT_LOADINGPROGRESS) )
 	{
@@ -768,6 +779,8 @@ void CBaseModPanel::OnGameUIActivated()
 	{
 		Msg( "[GAMEUI] CBaseModPanel::OnGameUIActivated( delay = %d )\n", m_DelayActivation );
 	}
+
+	GetTransitionEffectPanel()->SetInitialState();
 
 	if ( m_DelayActivation )
 	{
@@ -1472,6 +1485,12 @@ void CBaseModPanel::DrawCopyStats()
 #endif
 }
 
+CBaseModTransitionPanel *CBaseModPanel::GetTransitionEffectPanel()
+{
+	return m_pTransitionPanel;
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we're currently playing the game
 //-----------------------------------------------------------------------------
@@ -1493,7 +1512,7 @@ void CBaseModPanel::PaintBackground()
 		int wide, tall;
 		GetSize( wide, tall );
 
-		if ( false /*engine->IsTransitioningToLoad()*/ )
+		if (false /*engine->IsTransitioningToLoad()*/)
 		{
 			// ensure the background is clear
 			// the loading progress is about to take over in a few frames
@@ -1960,4 +1979,10 @@ void CBaseModPanel::SafeNavigateTo( Panel *pExpectedFrom, Panel *pDesiredTo, boo
 CON_COMMAND_F(gamemenurefresh, "Refresh main menu", 0)
 {
 	CBaseModPanel::GetSingleton().InvalidateLayout(true, true);
+
+}
+
+CON_COMMAND_F(testest, "Refresh main menu", 0)
+{
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MarkTilesInRect(20, 20, 1000, 1000, WT_DM_LOADOUT, true);
 }

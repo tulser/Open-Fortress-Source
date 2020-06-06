@@ -7,9 +7,9 @@
 #include "cbase.h"
 
 #include <ctype.h>
+#include "basemodpanel.h"
 #include "basemodframe.h"
-
-#include "BaseModPanel.h"
+#include "transitionpanel.h"
 // #include "EngineInterface.h"
 
 #include "VFooterPanel.h"
@@ -398,7 +398,10 @@ Panel* CBaseModFrame::NavigateBack()
 	{
 		SetFadeEffectDisableOverride(false);
 	}
-
+	
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MoveToFront();
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->SetExpectedDirection(false, navBack ? navBack->GetWindowType() : WT_NONE);
+	
 	return navBack;
 }
 
@@ -451,6 +454,7 @@ void CBaseModFrame::PostChildPaint()
 void CBaseModFrame::PaintBackground()
 {
 	BaseClass::PaintBackground();
+	DrawDialogBackground();
 }
 
 //=============================================================================
