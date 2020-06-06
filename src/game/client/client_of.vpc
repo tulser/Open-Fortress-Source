@@ -476,6 +476,7 @@ $Project "Client (Open Fortress)"
 			$File	"gameui\VInGameMainMenu.cpp"
 			$File	"gameui\VLoadingProgress.cpp"
 			$File	"gameui\VMainMenu.cpp"
+			$File	"gameui\VSliderControl.cpp"
 			$File	"gameui\vmenubackground.cpp"
 			
 			$Folder "OF"
