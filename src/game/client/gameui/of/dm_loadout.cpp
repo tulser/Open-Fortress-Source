@@ -88,7 +88,7 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 {
 	InitLoadoutHandle();
 	BaseClass::ApplySettings( inResourceData );
-	
+
 	KeyValues *inNewResourceData = new KeyValues("ResourceData");	
 	if( !inNewResourceData->LoadFromFile( filesystem, m_ResourceName) )
 		return;	
@@ -160,6 +160,7 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 			hCategories.AddToTail(pLoop->GetString("region"));
 			CTFScrollableItemList *pNew = new CTFScrollableItemList( m_pItemHeader->GetParent(), VarArgs("%sList",pLoop->GetString("region")) );
 			pNew->ApplySettings(inCosmeticPanel->FindKey("ListTemplate"));
+			pNew->AddActionSignalTarget(this);
 			Q_strncpy(pNew->szCategoryName, pLoop->GetString("region"), sizeof(pNew->szCategoryName));
 			m_pItemCategories.AddToTail(pNew);
 			m_pItemCategories[m_pItemCategories.Count()-1]->AddItem(atoi(pLoop->GetName()), false);
@@ -495,6 +496,14 @@ void DMLoadout::OnCommand(const char *command)
 	{
 		OnKeyCodePressed(KEY_XBUTTON_B);
 	}
+	else if (Q_strncmp(command, "loadout_equip", strlen("loadout_equip")) == 0)
+	{
+		GetClassModel()->SetLoadoutCosmetics();
+	}
+	else if (Q_strncmp(command, "loadout_unequip", strlen("loadout_unequip")) == 0)
+	{
+		GetClassModel()->SetLoadoutCosmetics();
+	}
 	else
 	{
 		BaseClass::OnCommand(command);
@@ -508,13 +517,12 @@ void DMLoadout::ApplySchemeSettings(IScheme *pScheme)
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
+	m_pClassModel = dynamic_cast<vgui::DMModelPanel*>(FindChildByName("classmodelpanel"));
 	m_bControlsLoaded = true;
 	
 	// required for new style
 	SetPaintBackgroundEnabled(true);
 	// SetupAsDialogStyle();
-
-	m_pClassModel = static_cast< vgui::DMModelPanel* >( FindChildByName( "classmodelpanel" ) );
 	
 	if( !pVisualPanel )
 		return;

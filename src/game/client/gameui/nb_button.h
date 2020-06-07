@@ -25,16 +25,6 @@ public:
 	virtual void Paint();
 	virtual void PaintBackground();
 	virtual void OnCursorEntered();
-
-	void DrawRoundedBox( int x, int y, int wide, int tall, Color color, float normalizedAlpha, bool bHighlightGradient, Color highlightCenterColor );
-	
-	// == MANAGED_MEMBER_POINTERS_START: Do not edit by hand ==
-	// == MANAGED_MEMBER_POINTERS_END ==
-
-	CPanelAnimationVarAliasType( int, m_nNBBgTextureId1, "NBTexture1", "vgui/hud/800corner1", "textureid" );
-	CPanelAnimationVarAliasType( int, m_nNBBgTextureId2, "NBTexture2", "vgui/hud/800corner2", "textureid" );
-	CPanelAnimationVarAliasType( int, m_nNBBgTextureId3, "NBTexture3", "vgui/hud/800corner3", "textureid" );
-	CPanelAnimationVarAliasType( int, m_nNBBgTextureId4, "NBTexture4", "vgui/hud/800corner4", "textureid" );
 };
 
 #endif // _INCLUDED_NB_BUTTON_H
