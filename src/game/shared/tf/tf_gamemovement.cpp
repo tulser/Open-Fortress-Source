@@ -93,7 +93,7 @@ public:
 	virtual unsigned int PlayerSolidMask(bool brushOnly = false);
 	virtual void ProcessMovement(CBasePlayer *pBasePlayer, CMoveData *pMove);
 	virtual bool CanAccelerate();
-	virtual bool CheckJumpButton();
+	virtual bool CheckJumpButton(bool CSliding = false);
 	bool CheckLunge();
 	virtual bool CheckWater(void);
 	virtual void WaterMove(void);
@@ -434,7 +434,7 @@ void CTFGameMovement::PreventBunnyJumping()
 	}
 }
 
-bool CTFGameMovement::CheckJumpButton()
+bool CTFGameMovement::CheckJumpButton(bool CSliding)
 {
 	// Are we dead?  Then we cannot jump.
 	if (player->pl.deadflag)
@@ -454,8 +454,7 @@ bool CTFGameMovement::CheckJumpButton()
 	bool bOnGround = player->GetGroundEntity() != NULL;
 
 	//jumping cvars
-	int JumpBuffer = of_jumpbuffer.GetInt();
-	bool CrouchJump = of_crouchjump.GetBool() && !JumpBuffer;
+	bool CrouchJump = of_crouchjump.GetBool() && !CSliding;
 
 	// Cannot jump while ducked.
 	if (player->GetFlags() & FL_DUCKING)
@@ -472,6 +471,7 @@ bool CTFGameMovement::CheckJumpButton()
 		return false;
 
 	//Jump buffer shenanigans
+	int JumpBuffer = of_jumpbuffer.GetInt();
 	if (JumpBuffer)
 	{
 		if (JumpBuffer == 2 ||																				//everybody buffer
@@ -1608,11 +1608,22 @@ void CTFGameMovement::FullWalkMove()
 		return;
 	}
 
+	//Ivory: Check if player is CSliding, ideally I would place it right before Friction but
+	//there are some complications when crouch jump is on that are evaluated in CheckJumpButton()
+	//so this has to happen every frame
+	bool CSliding = (player->GetGroundEntity() != NULL &&								//player is on the ground
+					 of_cslide.GetBool() &&												//crouch sliding is enabled
+					 mv->m_flMaxSpeed > 5 &&											//player is allowed to move
+					 !m_pTFPlayer->GetWaterLevel() &&		 							//player is not in water
+					 (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&		//player is ducked/ducking
+					 (mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
+					 gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration());	//there is crouch slide charge to spend
+
 	//Jumping stuff
 	if (mv->m_nButtons & IN_JUMP)
 	{
 		if (!m_pTFPlayer->m_Shared.GetJumpBuffer())
-			CheckJumpButton();
+			CheckJumpButton(CSliding);
 	}
 	else
 	{
@@ -1628,16 +1639,8 @@ void CTFGameMovement::FullWalkMove()
 	CheckVelocity();
 
 	//Ground and air movement
-	bool CSliding = false;
 	if (player->GetGroundEntity() != NULL)
 	{
-		CSliding = (of_cslide.GetBool() &&												//crouch sliding is enabled
-					mv->m_flMaxSpeed > 5 &&												//player is allowed to move
-					!m_pTFPlayer->GetWaterLevel() &&		 							//player is not in water
-					(player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&		//player is ducked/ducking
-					(mv->m_flForwardMove || mv->m_flSideMove) &&						//player is moving
-					gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration());	//there is crouch slide to spend
-
 		Friction(CSliding);
 		WalkMove(CSliding);
 
@@ -1648,6 +1651,7 @@ void CTFGameMovement::FullWalkMove()
 	else
 	{
 		AirMove();
+		CSliding = false;
 	}
 
 	// Set final flags.
