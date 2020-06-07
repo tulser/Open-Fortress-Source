@@ -9312,14 +9312,16 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 	}
 	else
 	{
-		if (V_atoi(engine->GetClientConVarValue(entindex(), "of_snipervoice")) && !IsFakeClient()) {
+		if (V_atoi(engine->GetClientConVarValue(entindex(), "of_snipervoice")) && !IsFakeClient())
+		{
 			// sniper voice!
 			CSingleUserRecipientFilter filter(this);
 			CMultiplayer_Expresser *pExpresser = GetMultiplayerExpresser();
 			pExpresser->AllowMultipleScenes();
 			char buf[128];
 			Q_snprintf(buf, sizeof(buf), "disguiseclass:%s", g_aPlayerClassNames_NonLocalized[TF_CLASS_SNIPER]);
-			if (modifiers) {
+			if (modifiers)
+			{
 				Q_strncat(buf, ",", sizeof(buf), 1);
 				Q_strncat(buf, modifiers, sizeof(buf), COPY_ALL_CHARACTERS);
 			}
@@ -9328,7 +9330,9 @@ bool CTFPlayer::SpeakConceptIfAllowed( int iConcept, const char *modifiers, char
 			bReturn = SpeakIfAllowed(g_pszMPConcepts[iConcept], buf, pszOutResponseChosen, bufsize, &everyoneFilter);
 			m_bSpeakingConceptAsDisguisedSpy = false;
 			pExpresser->DisallowMultipleScenes();
-		} else {
+		}
+		else
+		{
 			// play normally
 			bReturn = SpeakIfAllowed( g_pszMPConcepts[iConcept], modifiers, pszOutResponseChosen, bufsize, filter );
 		}

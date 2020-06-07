@@ -81,7 +81,8 @@ extern ConVar of_multiweapons;
 // Purpose: Callback for the soft-zoom speed convars. Caches them in variables for efficiency!
 //-----------------------------------------------------------------------------
 
-void QuickzoomConVarChanged(IConVar *var, const char *pOldValue, float flOldValue) {
+void QuickzoomConVarChanged(IConVar *var, const char *pOldValue, float flOldValue)
+{
 	fConVarQuickZoomInTime = cl_quickzoom_in_time.GetFloat();
 	fConVarQuickZoomOutTime = cl_quickzoom_out_time.GetFloat();
 	Log("Updated zoom values successfully!");
