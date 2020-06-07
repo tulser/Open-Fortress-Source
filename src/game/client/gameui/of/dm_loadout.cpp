@@ -74,7 +74,6 @@ DMLoadout::DMLoadout(Panel *parent, const char *panelName) : BaseClass(parent, p
 	}
 
 	m_pItemHeader = new CTFLoadoutHeader( pCosmeticPanel, "ItemHeader" );
-	m_pClassModel = new vgui::DMModelPanel( this, "classmodelpanel" );
 	
 	m_bControlsLoaded = false;
 	m_bInteractive = false;
@@ -514,6 +513,8 @@ void DMLoadout::ApplySchemeSettings(IScheme *pScheme)
 	// required for new style
 	SetPaintBackgroundEnabled(true);
 	// SetupAsDialogStyle();
+
+	m_pClassModel = static_cast< vgui::DMModelPanel* >( FindChildByName( "classmodelpanel" ) );
 	
 	if( !pVisualPanel )
 		return;
