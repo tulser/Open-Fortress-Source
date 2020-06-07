@@ -59,7 +59,6 @@
 #include "tf_viewmodel.h"
 #include "cdll_int.h"
 #include "filesystem.h"
-#include "of_loadout.h"
 
 #include "dt_utlvector_recv.h"
 
@@ -81,6 +80,8 @@
 #include "tf_hud_chat.h"
 #include "iclientmode.h"
 #include "tf_viewmodel.h"
+
+#include "gameui/of/dm_loadout.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -124,6 +125,9 @@ ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces dea
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
 
 ConVar of_respawn_particles( "of_respawn_particles", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Draw respawn particles of players?" );
+
+// Easter egg!
+ConVar of_snipervoice("of_snipervoice", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN | FCVAR_USERINFO, "???");
 
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
@@ -214,6 +218,8 @@ void OnWeaponEquip( const CCommand& args, KeyValues *pClass )
 
 	if( !pValue )
 		return;
+
+	BaseModUI::DMLoadout *pDMLoadout = static_cast<BaseModUI::DMLoadout*>(BaseModUI::CBaseModPanel::GetSingleton().GetWindow(BaseModUI::WT_DM_LOADOUT));
 	
 	KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
 	if( pWeapons )
@@ -226,9 +232,9 @@ void OnWeaponEquip( const CCommand& args, KeyValues *pClass )
 			if( !Q_strcmp( args[3], szOtherWeapon ) )
 			{
 				pLoadoutClass->SetString( VarArgs( "%d", iOtherSlot), pLoadoutClass->GetString( args[4] ) );
-				if( GLoadoutPanel() )
+				if(pDMLoadout)
 				{
-					GLoadoutPanel()->SelectWeapon( iOtherSlot, pLoadoutClass->GetString(args[4]), true );
+					pDMLoadout->SelectWeapon( iOtherSlot, pLoadoutClass->GetString(args[4]), true );
 				}
 			}
 		}
@@ -238,8 +244,10 @@ void OnWeaponEquip( const CCommand& args, KeyValues *pClass )
 
 	GetLoadout()->SaveToFile( filesystem, "cfg/loadout.cfg" );
 
-	if( GLoadoutPanel() )
-		GLoadoutPanel()->SelectWeapon( atoi(args[4]), args[3] );
+	if (pDMLoadout)
+	{
+		pDMLoadout->SelectWeapon(atoi(args[4]), args[3]);
+	}
 
 	RefreshDesiredWeapons( GetClassIndexFromString( args[2], TF_CLASS_COUNT_ALL ) );		
 }
