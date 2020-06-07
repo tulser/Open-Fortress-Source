@@ -217,10 +217,10 @@ void CTFModelPanel::SetParticleName(const char* name)
 	int iGreen = of_tennisball.GetBool() ? 255 : of_color_g.GetInt();
 	int iBlue = of_tennisball.GetBool() ? 0 : of_color_b.GetInt();
 	
-	// TODO: uncomment this when alignment on linux is fixed!!!
-	CStudioHdr* mdl = GetModelPtr();
-	if ( mdl )
-		m_pData->SetParticleColor( mdl, &m_RootMDL.m_MDLToWorld, iRed, iGreen, iBlue );
+	// TODO: remove this when alignment on linux is fixed!!!
+	#ifndef LINUX
+	m_pData->SetParticleColor( GetModelPtr(), &m_RootMDL.m_MDLToWorld, iRed, iGreen, iBlue );
+	#endif
 
 	m_pData->m_bIsUpdateToDate = true;
 }
