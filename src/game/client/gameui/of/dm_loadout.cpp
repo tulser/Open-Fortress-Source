@@ -88,7 +88,9 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 {
 	InitLoadoutHandle();
 	BaseClass::ApplySettings( inResourceData );
-	
+
+	m_pClassModel = static_cast<vgui::DMModelPanel*>(FindChildByName("classmodelpanel"));
+
 	KeyValues *inNewResourceData = new KeyValues("ResourceData");	
 	if( !inNewResourceData->LoadFromFile( filesystem, m_ResourceName) )
 		return;	
@@ -513,8 +515,6 @@ void DMLoadout::ApplySchemeSettings(IScheme *pScheme)
 	// required for new style
 	SetPaintBackgroundEnabled(true);
 	// SetupAsDialogStyle();
-
-	m_pClassModel = static_cast< vgui::DMModelPanel* >( FindChildByName( "classmodelpanel" ) );
 	
 	if( !pVisualPanel )
 		return;

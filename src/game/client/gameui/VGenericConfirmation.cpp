@@ -563,7 +563,7 @@ void GenericConfirmation::ApplySchemeSettings(IScheme *pScheme)
 	m_pLblCancelButton->SetFont( pScheme->GetFont( "GameUIButtonsMini", true ) );
 
 	m_hTitleFont = pScheme->GetFont( "HudFontSmallBold", true );
-	m_hMessageFont = pScheme->GetFont( "Default", true );
+	m_hMessageFont = pScheme->GetFont( "HudFontSmall", true );
 
 	if ( m_LblTitle )
 	{
