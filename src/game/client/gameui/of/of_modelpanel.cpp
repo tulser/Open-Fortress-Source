@@ -124,11 +124,8 @@ void CTFModelPanel::Paint()
 // Update our Studio Hdr to our current model
 void CTFModelPanel::RefreshModel()
 {
-	MDLCACHE_CRITICAL_SECTION();
 	//Fenteale: using m_RootMDL.m_MDL.GetStudioHdr() doesnt work in linux.  use this instead
-	MDLHandle_t hSelectedMDL = g_pMDLCache->FindMDL(m_BMPResData.m_pszModelName);
-	g_pMDLCache->PreloadModel(hSelectedMDL);
-	studiohdr_t *pStudioHdr = g_pMDLCache->GetStudioHdr( hSelectedMDL );
+	studiohdr_t *pStudioHdr = GetStudioHdr();
 	
 	if ( !pStudioHdr )
 		return;
