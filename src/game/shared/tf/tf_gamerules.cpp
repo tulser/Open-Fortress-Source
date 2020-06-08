@@ -114,6 +114,7 @@ extern ConVar of_q3airaccelerate;
 extern ConVar of_cslide;
 extern ConVar of_cslideaccelerate;
 extern ConVar of_cslidefriction;
+extern ConVar of_cslideduration;
 
 extern ConVar mp_capstyle;
 extern ConVar sv_turbophysics;

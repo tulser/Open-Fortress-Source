@@ -1688,7 +1688,7 @@ void CTFGameMovement::FullWalkMove()
 	{
 		//Determine ramp jump vel and crouch slide duration
 		m_fRampJumpVel = mv->m_vecVelocity[2];
-		m_fCSlideDuration = gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f;
+		m_fCSlideDuration = gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f * of_cslideduration.GetFloat();
 	}
 
 	// Handling falling.
