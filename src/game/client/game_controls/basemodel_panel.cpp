@@ -242,7 +242,11 @@ void CBaseModelPanel::SetModelAnim( int iAnim )
 	MDLCACHE_CRITICAL_SECTION();
 
 	// Get the studio header of the root model.
-	studiohdr_t *pStudioHdr = m_RootMDL.m_MDL.GetStudioHdr();
+	//Fenteale: m_RootMdl.m_MDL.GetStudioHdr() doesnt work in linux.  please do it this way.
+	MDLHandle_t hSelectedMDL = g_pMDLCache->FindMDL(m_BMPResData.m_pszModelName);
+	g_pMDLCache->PreloadModel(hSelectedMDL);
+	studiohdr_t *pStudioHdr = g_pMDLCache->GetStudioHdr( hSelectedMDL );
+	
 	if ( !pStudioHdr )
 		return;
 
