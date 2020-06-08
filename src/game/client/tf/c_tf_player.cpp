@@ -126,6 +126,9 @@ ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "
 
 ConVar of_respawn_particles( "of_respawn_particles", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Draw respawn particles of players?" );
 
+// Easter egg!
+ConVar of_snipervoice("of_snipervoice", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_HIDDEN | FCVAR_USERINFO, "???");
+
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
 
