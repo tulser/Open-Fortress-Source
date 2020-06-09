@@ -1045,13 +1045,13 @@ void CBaseModPanel::OnLevelLoadingStarted( char const *levelName, bool bShowProg
 	{
 		static KeyValues *s_pFakeMissionInfo = new KeyValues( "" );
 		pMissionInfo = s_pFakeMissionInfo;
-		pMissionInfo->SetString( "displaytitle", "#L4D360UI_Lobby_Unknown_Campaign" );
+		pMissionInfo->SetString( "displaytitle", "#GameUI_Lobby_Unknown_Campaign" );
 	}
 	if ( !pChapterInfo )
 	{
 		static KeyValues *s_pFakeChapterInfo = new KeyValues( "1" );
 		pChapterInfo = s_pFakeChapterInfo;
-//		pChapterInfo->SetString( "displayname", levelName ? levelName : "#L4D360UI_Lobby_Unknown_Campaign" );
+//		pChapterInfo->SetString( "displayname", levelName ? levelName : "#GameUI_Lobby_Unknown_Campaign" );
 //		pChapterInfo->SetString( "map", levelName ? levelName : "" );
 	}
 	
@@ -1170,7 +1170,7 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 		if ( pMsg )
 		{
 			GenericConfirmation::Data_t data;
-			data.pWindowTitle = "#L4D360UI_MsgBx_DisconnectedFromServer";			
+			data.pWindowTitle = "#GameUI_DisconnectedFrom";			
 			data.bOkButtonEnabled = true;
 			data.pMessageText = failureReason;
 			pMsg->SetUsageData( data );
