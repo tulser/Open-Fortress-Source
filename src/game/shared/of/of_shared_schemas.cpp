@@ -532,33 +532,36 @@ void InitLoadoutHandle()
 }
 
 
-ConVar UndefinedCosmeticLoadout("_Undefined_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar ScoutCosmeticLoadout("_Scout_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar SniperCosmeticLoadout("_Sniper_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar SoldierCosmeticLoadout("_Soldier_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar DemomanCosmeticLoadout("_Demoman_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar MedicCosmeticLoadout("_Medic_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar HeavyCosmeticLoadout("_Heavy_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar PryoCosmeticLoadout("_Pyro_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar SpyCosmeticLoadout("_Spy_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar EngineerCosmeticLoadout("_Engineer_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar MercenaryCosmeticLoadout("_Mercenary_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar CivilianCosmeticLoadout("_Civilian_cosmetic_loadout", "", FCVAR_USERINFO);
-ConVar JuggernautCosmeticLoadout("_Juggernaut_cosmetic_loadout", "", FCVAR_USERINFO);
+extern const char *g_aLoadoutConvarNames[];
+extern const char *g_aArsenalConvarNames[];
 
-ConVar UndefinedWeaponLoadout("_Undefined_weapon_loadout", "", FCVAR_USERINFO);
-ConVar ScoutWeaponLoadout("_Scout_weapon_loadout", "", FCVAR_USERINFO);
-ConVar SniperWeaponLoadout("_Sniper_weapon_loadout", "", FCVAR_USERINFO);
-ConVar SoldierWeaponLoadout("_Soldier_weapon_loadout", "", FCVAR_USERINFO);
-ConVar DemomanWeaponLoadout("_Demoman_weapon_loadout", "", FCVAR_USERINFO);
-ConVar MedicWeaponLoadout("_Medic_weapon_loadout", "", FCVAR_USERINFO);
-ConVar HeavyWeaponLoadout("_Heavy_weapon_loadout", "", FCVAR_USERINFO);
-ConVar PryoWeaponLoadout("_Pyro_weapon_loadout", "", FCVAR_USERINFO);
-ConVar SpyWeaponLoadout("_Spy_weapon_loadout", "", FCVAR_USERINFO);
-ConVar EngineerWeaponLoadout("_Engineer_weapon_loadout", "", FCVAR_USERINFO);
-ConVar MercenaryWeaponLoadout("_Mercenary_weapon_loadout", "", FCVAR_USERINFO);
-ConVar CivilianWeaponLoadout("_Civilian_weapon_loadout", "", FCVAR_USERINFO);
-ConVar JuggernautWeaponLoadout("_Juggernaut_weapon_loadout", "", FCVAR_USERINFO);
+ConVar UndefinedCosmeticLoadout( g_aLoadoutConvarNames[0], "", FCVAR_USERINFO );
+ConVar ScoutCosmeticLoadout( g_aLoadoutConvarNames[1], "", FCVAR_USERINFO );
+ConVar SniperCosmeticLoadout( g_aLoadoutConvarNames[2], "", FCVAR_USERINFO );
+ConVar SoldierCosmeticLoadout( g_aLoadoutConvarNames[3], "", FCVAR_USERINFO );
+ConVar DemomanCosmeticLoadout( g_aLoadoutConvarNames[4], "", FCVAR_USERINFO );
+ConVar MedicCosmeticLoadout( g_aLoadoutConvarNames[5], "", FCVAR_USERINFO );
+ConVar HeavyCosmeticLoadout( g_aLoadoutConvarNames[6], "", FCVAR_USERINFO );
+ConVar PryoCosmeticLoadout( g_aLoadoutConvarNames[7], "", FCVAR_USERINFO );
+ConVar SpyCosmeticLoadout( g_aLoadoutConvarNames[8], "", FCVAR_USERINFO );
+ConVar EngineerCosmeticLoadout( g_aLoadoutConvarNames[9], "", FCVAR_USERINFO );
+ConVar MercenaryCosmeticLoadout( g_aLoadoutConvarNames[10], "", FCVAR_USERINFO );
+ConVar CivilianCosmeticLoadout( g_aLoadoutConvarNames[11], "", FCVAR_USERINFO );
+ConVar JuggernautCosmeticLoadout( g_aLoadoutConvarNames[12], "", FCVAR_USERINFO );
+
+ConVar UndefinedWeaponLoadout( g_aArsenalConvarNames[0], "", FCVAR_USERINFO );
+ConVar ScoutWeaponLoadout( g_aArsenalConvarNames[1], "", FCVAR_USERINFO );
+ConVar SniperWeaponLoadout( g_aArsenalConvarNames[2], "", FCVAR_USERINFO );
+ConVar SoldierWeaponLoadout( g_aArsenalConvarNames[3], "", FCVAR_USERINFO );
+ConVar DemomanWeaponLoadout( g_aArsenalConvarNames[4], "", FCVAR_USERINFO );
+ConVar MedicWeaponLoadout( g_aArsenalConvarNames[5], "", FCVAR_USERINFO );
+ConVar HeavyWeaponLoadout( g_aArsenalConvarNames[6], "", FCVAR_USERINFO );
+ConVar PryoWeaponLoadout( g_aArsenalConvarNames[7], "", FCVAR_USERINFO );
+ConVar SpyWeaponLoadout( g_aArsenalConvarNames[8], "", FCVAR_USERINFO );
+ConVar EngineerWeaponLoadout( g_aArsenalConvarNames[9], "", FCVAR_USERINFO );
+ConVar MercenaryWeaponLoadout( g_aArsenalConvarNames[10], "", FCVAR_USERINFO );
+ConVar CivilianWeaponLoadout( g_aArsenalConvarNames[11], "", FCVAR_USERINFO );
+ConVar JuggernautWeaponLoadout( g_aArsenalConvarNames[12], "", FCVAR_USERINFO );
 
 CTFLoadoutHandler::CTFLoadoutHandler()
 {
