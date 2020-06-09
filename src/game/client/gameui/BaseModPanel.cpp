@@ -1148,7 +1148,7 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 	if ( !pFrame )
 	{
 		// no confirmation up, hide the UI
-		// GameUI().HideGameUI();
+		GameUI().OnGameUIHidden();
 	}
 
 	// if we are loading into the lobby, then skip the UIActivation code path
@@ -1158,7 +1158,7 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 		// if we are loading into the front-end, then activate the main menu (or attract screen, depending on state)
 		// or if a message box is pending force open game ui
 		// if ( GameUI().IsInBackgroundLevel() || pFrame )
-		if ( false )
+		if ( pFrame )
 		{
 			GameUI().OnGameUIActivated();
 		}
