@@ -836,62 +836,46 @@ void CInput::ComputeSideMove( CUserCmd *cmd )
 		cmd->sidemove -= cl_sidespeed.GetFloat() * KeyState (&in_left);
 	}
 
+#if defined(OF_CLIENT_DLL)
 	float moveright = KeyState(&in_moveright);
 	float moveleft = KeyState(&in_moveleft);
-	/*
-	I want to put a lot of documentation for this so I can see where I'm going wrong...
-	so let's review:
-	KeyState tells us what the key was doing during the current frame:
-	0 = not held at all or let go of in that frame
-	0.25 = pressed then let go in same frame
-	0.5 = just pressed during, then held for the rest of the frame
-	1 = held down throughout the frame
-
-	In order to do null movement script, we need to figure out:
-	1. if both keys are being held down at the same time, and
-	2. which key was pressed soonest
-	the key that was pressed soonest gets priority; the other key gets its input nullified.
-	*/
 	if (of_nullmovescript.GetBool()){
-		if (moveright == 1 && moveleft == 1) //oh shit, we have both held down what the fuck do we do
+		if (moveright == 1 && moveleft == 1)
 		{
-			//we've already documented which side we've pressed last, so let's just stick with that
-			if (curside == 1) //if we're moving right...
+			if (curside == 1) 
 			{
-				moveleft = 0; //get rid of the left input
+				moveleft = 0; 
 			}
-			if (curside == -1) //if we're moving left...
+			if (curside == -1) 
 			{
-				moveright = 0; //get rid of the right input
+				moveright = 0; 
 			}
 		}
-		else if (moveright == 1) //otherwise, if just the right movement key is held down:
+		else if (moveright == 1) 
 		{
-			//let's see what the other guy is doin!
-			//0 - 0.25 = we don't have to worry
-			if (moveleft == 0.5) //if we just pressed it...
+			if (moveleft == 0.5) 
 			{
-				curside = -1; //we'll switch over to the other side!
-				moveright = 0; //get rid of the input for this side
+				curside = -1;
+				moveright = 0; 
 			}
-			//1 = we already covered it above
 		}
-		else if (moveleft == 1) //otherwise, if just the left movement key is held down:
+		else if (moveleft == 1) 
 		{
-			//let's see what the other guy is doin!
-			//0 - 0.25 = we don't have to worry
-			if (moveright == 0.5) //if we just pressed it...
+			if (moveright == 0.5) 
 			{
-				curside = 1; //we'll switch over to the other side!
-				moveleft = 0; //get rid of the input for this side
+				curside = 1; 
+				moveleft = 0; 
 			}
-			//1 = we already covered it above
 		}
 	}
 
 	// Otherwise, check strafe keys
 	cmd->sidemove += cl_sidespeed.GetFloat() * moveright;
 	cmd->sidemove -= cl_sidespeed.GetFloat() * moveleft;
+#else
+	cmd->sidemove += cl_sidespeed.GetFloat() * KeyState(&in_moveright);
+	cmd->sidemove -= cl_sidespeed.GetFloat() * KeyState(&in_moveleft);
+#endif
 }
 
 /*
@@ -948,6 +932,7 @@ void CInput::ComputeForwardMove( CUserCmd *cmd )
 
 	if ( !(in_klook.state & 1 ) )
 	{	
+#if defined(OF_CLIENT_DLL)
 		//I already explained how this works above so no comments this time
 		float forward = KeyState(&in_forward);
 		float back = KeyState(&in_back);
@@ -984,6 +969,10 @@ void CInput::ComputeForwardMove( CUserCmd *cmd )
 		}
 		cmd->forwardmove += cl_forwardspeed.GetFloat() * forward;
 		cmd->forwardmove -= cl_backspeed.GetFloat() * back;
+#else
+		cmd->forwardmove += cl_forwardspeed.GetFloat() * KeyState(&in_forward);
+		cmd->forwardmove -= cl_backspeed.GetFloat() * KeyState(&in_back);
+#endif
 	}	
 }
 
