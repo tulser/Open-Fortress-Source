@@ -460,7 +460,7 @@ bool CTFGameMovement::CheckJumpButton()
 	bool bOnGround = player->GetGroundEntity() != NULL;
 
 	//jumping cvars
-	bool CrouchJump = of_crouchjump.GetBool() && !of_cslide.GetBool();
+	bool CrouchJump = of_crouchjump.GetBool() && (of_cslidejump.GetBool() ? 1 : !of_cslide.GetBool());
 
 	// Cannot jump while ducked.
 	if (player->GetFlags() & FL_DUCKING)
@@ -1646,12 +1646,12 @@ void CTFGameMovement::FullWalkMove()
 	if (player->GetGroundEntity() != NULL)
 	{
 		//check if player can CSlide
-		CSliding = of_cslide.GetBool() &&												//crouch sliding is enabled
-				   mv->m_flMaxSpeed > 5 &&												//player is allowed to move
-				   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
-				   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
-				   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
-				   gpGlobals->curtime <= m_fCSlideDuration;								//there is crouch slide charge to spend
+		CSliding = of_cslide.GetBool() &&															//crouch sliding is enabled
+				   mv->m_flMaxSpeed > 5 &&															//player is allowed to move
+				   !m_pTFPlayer->GetWaterLevel() &&		 											//player is not in water
+				   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&						//player is ducked/ducking
+				   (mv->m_flForwardMove || mv->m_flSideMove) &&										//player is moving
+				   (of_cslideduration.GetFloat() > 0 ? gpGlobals->curtime <= m_fCSlideDuration : 1);	//there is crouch slide charge to spend & a crouch slide charge in the first place
 
 		Friction(CSliding);
 		WalkMove(CSliding);
