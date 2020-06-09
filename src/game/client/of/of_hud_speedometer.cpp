@@ -100,43 +100,28 @@ void SpeedometerConvarChanged(IConVar *var, const char *pOldValue, float flOldVa
 
 // const char *name, const char *defaultvalue, int flags (use pipe operator to add), const char *helpstring, bool bMin, float fMin, bool bMax, float fMax
 // Ar ôl i valve dev wiki, default value doesn't set the value. Instead you have to actually set it with pName->SetVale([value]); , if I understand?
-ConVar hud_speedometer("hud_speedometer", "0", FCVAR_ARCHIVE, "0: Off. 1: Shows horizontal speed as a number under the crosshair. 2: Shows the number as well as a meter ranging from 0 to the maximum BHop speed.", SpeedometerConvarChanged);
-ConVar hud_speedometer_maxspeed("hud_speedometer_maxspeed", "1000", FCVAR_ARCHIVE, "The maximum speed to use when drawing the speedometer bar with hud_speedometer set to 2.", true, 400.0f, true, 2000.0f, SpeedometerConvarChanged);
-ConVar hud_speedometer_delta("hud_speedometer_delta", "1", FCVAR_ARCHIVE, "0: Off, 1: Shows the change in speed between each jump.", SpeedometerConvarChanged);
+ConVar hud_speedometer("hud_speedometer", "0", FCVAR_ARCHIVE, "0: Off. 1: Shows horizontal speed as a number under the crosshair. 2: Shows the delta (change in speed between jumps). 3: Shows the number as well as a speed meter ranging from 0 to 1000.", SpeedometerConvarChanged);
 ConVar hud_speedometer_opacity("hud_speedometer_opacity", "150", FCVAR_ARCHIVE, "Sets the opacity of the speedometer overlay.", true, 0.0f, true, 255.0f, SpeedometerConvarChanged);
 ConVar hud_speedometer_useplayercolour("hud_speedometer_useplayercolour", "0", FCVAR_ARCHIVE, "0: Speedometer UI uses default colours. 1: Speedometer UI uses the player's colour. 2: Uses complimentary colour.", SpeedometerConvarChanged);
-//ConVar hud_speedometer_normaliseplayercolour("hud_speedometer_normaliseplayercolour", "0", FCVAR_ARCHIVE, "0: If using player colour, use the raw colour. 1: Use the normalised colour (Forces a level of saturation and brightness), allowing dark user colours over the dropshadow to be visible.");
 
 
 ConVar hud_speedometer_vectors("hud_speedometer_vectors", "1", FCVAR_ARCHIVE, "Enables velocity and input vectors on the speedometer UI.", SpeedometerConvarChanged);
-ConVar hud_speedometer_vectors_length("hud_speedometer_vectors_length", "0.2f", FCVAR_ARCHIVE, "Sets the length of the velocity and input lines.", true, 0.01f, true, 1.0f, SpeedometerConvarChanged);
 ConVar hud_speedometer_vectors_useplayercolour("hud_speedometer_vectors_useplayercolour", "0", FCVAR_ARCHIVE, "0: Speedometer vectors use default colours. 1: Speedometer vectors use the player's colour and complimentary colour.", SpeedometerConvarChanged);
 
-ConVar hud_speedometer_keeplevel("hud_speedometer_keeplevel", "1", FCVAR_ARCHIVE, "0: Speedometer is centred on screen. 1: Speedometer shifts up and down to keep level with the horizon.", SpeedometerConvarChanged);
-ConVar hud_speedometer_optimalangle("hud_speedometer_optimalangle", "0", FCVAR_ARCHIVE, "Enables the optimal angle indicator for airstrafing.", SpeedometerConvarChanged);
-//ConVar hud_speedometer_optimalangle_max("hud_speedometer_optimalangle_max", "10", FCVAR_ARCHIVE, "The maximum range of the optimal angle indicator. The smaller, the easier it is to see the final few degrees as you get closer to perfection.", true, 5.0f, true, 90.0f, SpeedometerConvarChanged);
-// This effectively gets halved (0.4 -> 0.2 or 20% of either side of centre)
-//ConVar hud_speedometer_optimalangle_screenwidth("hud_speedometer_optimalangle_screenwidth", "0.4", FCVAR_ARCHIVE, "The proportion of the screen the optimal angle indicator that will fill, at most.", true, 0.01f, true, 1.0f, SpeedometerConvarChanged);
-//ConVar hud_speedometer_optimalangle_exponential("hud_speedometer_optimalangle_exponential", "0", FCVAR_ARCHIVE, "Enables exponential scaling on the optimal angle indicator.", SpeedometerConvarChanged);
+//ConVar hud_speedometer_keeplevel("hud_speedometer_keeplevel", "1", FCVAR_ARCHIVE, "0: Speedometer is centred on screen. 1: Speedometer shifts up and down to keep level with the horizon.", SpeedometerConvarChanged);
+//ConVar hud_speedometer_optimalangle("hud_speedometer_optimalangle", "0", FCVAR_ARCHIVE, "Enables the optimal angle indicator for airstrafing.", SpeedometerConvarChanged);
 
 
 // Cached versions of the ConVars that get used every frame/draw update (More efficient).
 // These shouldn't be members, as their ConVar counterparts are static and global anyway
 int iSpeedometer = hud_speedometer.GetInt();
-bool bDelta = hud_speedometer_delta.GetBool();
+bool bDelta = hud_speedometer.GetInt() > 1;
 bool bVectors = hud_speedometer_vectors.GetBool();
-float flVectorlength = hud_speedometer_vectors_length.GetFloat();
-float flSpeedometermax = hud_speedometer_maxspeed.GetFloat();
-float flMaxspeed = -1.0f;
+const float flSpeedometermax = 1000.0f;
+//float flMaxspeed = -1.0f;
 
 int iCentreScreenX = 0;
 int iCentreScreenY = 0;
-
-bool bKeepLevel = hud_speedometer_keeplevel.GetBool();
-bool bOptimalAngle = hud_speedometer_optimalangle.GetBool();
-//float flOptimalAngleMax = hud_speedometer_optimalangle_max.GetFloat();
-//float flOptimalAngleScreenwidth = hud_speedometer_optimalangle_screenwidth.GetFloat();
-//bool bOptimalAngleExponential = hud_speedometer_optimalangle_exponential.GetBool();
 
 // Used to colour certain parts of the UI in code, while still giving users control over it (Not ideal, ought to be in .res)
 extern ConVar of_color_r;
@@ -150,28 +135,14 @@ extern ConVar sv_maxspeed;
 extern ConVar sv_airaccelerate;
 extern ConVar sv_stopspeed;
 
-// This has to be a non-member/static type of thing otherwise it doesn't work
 void SpeedometerConvarChanged(IConVar *var, const char *pOldValue, float flOldValue) {
-	// I know this might look like YandereDev levels of if-else, but switching ain't possible on strings
-	// (I could have enums and a function to resolve enums to strings but that's just as long-winded for a few strings.)
-	// Assumably, the == operator is OK for comparing C++ strings. Send sternly worded emails to alexjames0011@gmail.com if not.
 	iSpeedometer = hud_speedometer.GetInt();
-	bDelta = hud_speedometer_delta.GetInt() > 0;
+	bDelta = hud_speedometer.GetInt() > 1;
 
 	// Only draw vectors only if we're also drawing the speedometer - this isn't entirely necessary - if users want it to be separate it's easy enough to change.
 	bVectors = (hud_speedometer_vectors.GetInt() > 0) && (iSpeedometer > 0);
-	flVectorlength = hud_speedometer_vectors_length.GetFloat();
-
-	flSpeedometermax = hud_speedometer_maxspeed.GetFloat();
-	
-	bKeepLevel = hud_speedometer_keeplevel.GetBool();
-	bOptimalAngle = hud_speedometer_optimalangle.GetBool();
-	//flOptimalAngleMax = hud_speedometer_optimalangle_max.GetFloat();
-	//flOptimalAngleScreenwidth = hud_speedometer_optimalangle_screenwidth.GetFloat();
-	//bOptimalAngleExponential = hud_speedometer_optimalangle_exponential.GetBool();
 	
 	// Attempt to automatically reload the HUD and scheme each time
-	// Ought to add a ConVar to prevent this optionally
 	engine->ExecuteClientCmd("hud_reloadscheme");
 }
 
@@ -193,8 +164,6 @@ CHudSpeedometer::CHudSpeedometer(const char *pElementName) : CHudElement(pElemen
 	m_pSpeedTextLabelDropshadow = new Label(this, "HudSpeedometerTextDropshadow", "CYMRUAMBYTH");	
 
 	SetDialogVariable("speeddelta", "~0");
-
-	flMaxspeed = sv_maxspeed.GetFloat();
 
 	UpdateColours();
 
@@ -244,9 +213,7 @@ void CHudSpeedometer::ApplySchemeSettings(IScheme *pScheme) {
 	SetDialogVariable("speeddelta", "~0");
 
 	BaseClass::ApplySchemeSettings(pScheme);
-
-	flMaxspeed = sv_maxspeed.GetFloat();
-
+	
 	UpdateColours();
 	UpdateScreenCentre();
 }
@@ -322,8 +289,8 @@ bool CHudSpeedometer::ShouldDraw(void)
 	if (iSpeedometer <= 0)
 		return false;
 	
-	// Meter shows only when hud_speedometer is 2
-	m_pSpeedPercentageMeter->SetVisible(iSpeedometer >= 2);
+	// Meter shows only when hud_speedometer is 3
+	m_pSpeedPercentageMeter->SetVisible(iSpeedometer >= 3);
 	
 	// Delta between jumps text only shows if convar is 1 or above
 	m_pDeltaTextLabel->SetVisible(bDelta);
@@ -396,7 +363,6 @@ void CHudSpeedometer::OnTick(void) {
 	if (!(pPlayer && pPlayerBase))
 		return;
 
-	//float maxSpeed = pPlayer->MaxSpeed(); // Should get the maximum player move speed respective of class
 	Vector velHor(0, 0, 0);
 	velHor = pPlayerBase->GetLocalVelocity() * Vector(1, 1, 0); // Player's horizontal velocity.
 	float horSpeed = velHor.Length();
@@ -408,7 +374,7 @@ void CHudSpeedometer::OnTick(void) {
 		}
 
 		// Draw speed bar, one might call it a "speedometer"... patent pending.
-		if (iSpeedometer >= 2) {
+		if (iSpeedometer >= 3) {
 			// Set the bar completeness.
 			m_pSpeedPercentageMeter->SetProgress(clamp(horSpeed / flSpeedometermax, 0.0f, 1.0f));
 		}
@@ -444,13 +410,14 @@ void CHudSpeedometer::OnTick(void) {
 }
 
 
-
+#define V_LENGTH 200
 void CHudSpeedometer::Paint(void) {
 	BaseClass::Paint();
 
-	if (bOptimalAngle) {
+	// Omitted currently due to optimal angle display being incorrect
+	/*if (bOptimalAngle) {
 		QStrafeJumpHelp();
-	}
+	}*/
 
 	if (bVectors) {
 		C_BasePlayer *pPlayerBase = C_TFPlayer::GetLocalPlayer();
@@ -459,7 +426,6 @@ void CHudSpeedometer::Paint(void) {
 			return;
 
 		Vector velGlobal(0, 0, 0);
-		//velGlobal = pPlayerBase->GetAbsVelocity();
 		pPlayerBase->EstimateAbsVelocity(velGlobal);
 
 		// Get the movement angles.
@@ -479,20 +445,18 @@ void CHudSpeedometer::Paint(void) {
 			((vecForward.y * fl_forwardmove_global) + (vecRight.y * fl_sidemove_global)),
 			0.0f);
 
-		float velocityLongitudinalGlobal = -vecVelocityDirection.x * flVectorlength;
-		float velocityLateralGlobal = vecVelocityDirection.y * flVectorlength;
-
+		vecVelocityDirection = vecVelocityDirection.Normalized() * V_LENGTH;
 
 		// Draw the input vectors (The player's WASD, as a line)
-		float inputLongitudinal = -g_pMoveData->m_flForwardMove * flVectorlength;
-		float inputLateral = g_pMoveData->m_flSideMove * flVectorlength;
-		surface()->DrawSetColor(*vectorColor_input);
-		surface()->DrawLine(iCentreScreenX, iCentreScreenY, iCentreScreenX + inputLateral, iCentreScreenY + inputLongitudinal);
+		Vector input = Vector(g_pMoveData->m_flSideMove, g_pMoveData->m_flForwardMove, 0.0f);
+		input = input.Normalized() * V_LENGTH;
 
+		surface()->DrawSetColor(*vectorColor_input);
+		surface()->DrawLine(iCentreScreenX, iCentreScreenY, iCentreScreenX + input.x, iCentreScreenY - input.y);
 
 		// Draw the velocity vectors (The player's actual velocity, horizontally, relative to the view direction)
 		surface()->DrawSetColor(*vectorColor_vel);
-		surface()->DrawLine(iCentreScreenX, iCentreScreenY, iCentreScreenX + velocityLateralGlobal, iCentreScreenY + velocityLongitudinalGlobal);
+		surface()->DrawLine(iCentreScreenX, iCentreScreenY, iCentreScreenX + vecVelocityDirection.y, iCentreScreenY - vecVelocityDirection.x);
 	}
 }
 
@@ -587,12 +551,14 @@ void CHudSpeedometer::QStrafeJumpHelp() {
 
 
 	int yHorizon = iCentreScreenY;
-	if (bKeepLevel) {
+
+	// Tries to keep the UI level with the horizon
+	/*if (bKeepLevel) {
 		int iX, iY;
 		Vector vecTarget = MainViewOrigin() + Vector(MainViewForward().x, MainViewForward().y, 0.0f);
 		GetVectorInScreenSpace(vecTarget, iX, iY);
 		yHorizon = iY;
-	}
+	}*/
 
 	int yTop = yHorizon;
 	int yBottom = yHorizon + thickness;
