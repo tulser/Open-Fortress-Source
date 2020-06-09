@@ -22,9 +22,6 @@
 #include <vgui_controls/Label.h>
 #include "view.h"
 #include <../shared/gamemovement.h>
-#undef min
-#undef max 
-#include <string>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -83,8 +80,6 @@ private:
 	Color *vectorColor_input = &defaultInputVectorCol;
 
 	void UpdateScreenCentre(void);
-
-	void DrawTextFromNumber(std::string, double num, Color col, int xpos, int ypos);
 
 	void QStrafeJumpHelp(void);
 };
@@ -392,14 +387,11 @@ void CHudSpeedometer::OnTick(void) {
 
 				// Set the sign (More clarity, keeps width nice and consistent :)
 				// If negative, continue as usual, but otherwise prepend a + or ~ if we're >0 or ==0
-				std::string s = std::to_string(difference);
-				if (difference >= 0) {
-					s = (difference == 0 ? "~" : "+") + s;
-				}
+				char* s = "";
+				char sign = (difference > 0 ? '+' : (difference == 0 ? '~' : '-'));
+				Q_snprintf( s, sizeof(s), "%c%i", sign, difference);
 
-				char const *pchar = s.c_str();
-
-				SetDialogVariable("speeddelta", pchar);
+				SetDialogVariable("speeddelta", s);
 
 				groundedInPreviousFrame = false;
 			} else {
@@ -460,23 +452,6 @@ void CHudSpeedometer::Paint(void) {
 	}
 }
 
-void CHudSpeedometer::DrawTextFromNumber(std::string prefix,  double num, Color col, int x_fromcenter, int y_fromcenter) {
-	std::string str = prefix + std::to_string((int)num);
-	const char* charlist = str.c_str();
-	size_t size = strlen(charlist) + 1;
-	wchar_t* iconText = new wchar_t[size];
-	mbstowcs(iconText, charlist, size);
-
-	//shadow
-	surface()->DrawSetTextColor(0, 0, 0, 255);
-	surface()->DrawSetTextPos(iCentreScreenX + x_fromcenter + 2, iCentreScreenY + y_fromcenter + 2);
-	surface()->DrawPrintText(iconText, wcslen(iconText));
-	//text readout of num
-	surface()->DrawSetTextColor(col.r(), col.g(), col.b(), 255);
-	surface()->DrawSetTextPos(iCentreScreenX + x_fromcenter, iCentreScreenY + y_fromcenter);
-	surface()->DrawPrintText(iconText, wcslen(iconText));
-}
-
 // Working in Radians, outputting in degrees
 // DeltaAngle is implemented above.
 // VectorAngle is just atan2 according to https://zdoom.org/wiki/VectorAngle, hence atan2 has been used (radians) whereby VectorAngle(x,y) = atan2(y,x)
@@ -518,7 +493,7 @@ void CHudSpeedometer::QStrafeJumpHelp() {
 	}
 
 
-	float maxAccel = std::min(sv_airaccelerate.GetFloat() * wishSpeed * gpGlobals->interval_per_tick, wishSpeed); //often 30
+	float maxAccel = min(sv_airaccelerate.GetFloat() * wishSpeed * gpGlobals->interval_per_tick, wishSpeed); //often 30
 	float maxCurSpeed = wishSpeed - maxAccel; // often 0
 
 	float minAngle = acosf(wishSpeed / speed);
