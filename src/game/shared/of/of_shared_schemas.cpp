@@ -531,10 +531,7 @@ void InitLoadoutHandle()
 	gLoadoutHandle = new CTFLoadoutHandler();
 }
 
-extern const char *g_aLoadoutConvarNames[];
-extern const char *g_aArsenalConvarNames[];
 
-//fuck runtime convars, all my homies hate runtime convars
 ConVar UndefinedCosmeticLoadout("_Undefined_cosmetic_loadout", "", FCVAR_USERINFO);
 ConVar ScoutCosmeticLoadout("_Scout_cosmetic_loadout", "", FCVAR_USERINFO);
 ConVar SniperCosmeticLoadout("_Sniper_cosmetic_loadout", "", FCVAR_USERINFO);
@@ -583,12 +580,9 @@ CTFLoadoutHandler::CTFLoadoutHandler()
 					Q_snprintf( szCommand, sizeof(szCommand), "%s %s", szCommand, sub->GetString() );
 			}
 		}
-
-		ConVar *pLol = cvar->FindVar(g_aLoadoutConvarNames[i]);
-		pLol->SetValue(szCommand);
-		
-		m_hClassLoadouts.AddToTail( pLol );
-		
+		ConVar *var = cvar->FindVar(g_aLoadoutConvarNames[i]);
+		var->SetValue(szCommand);
+		m_hClassLoadouts.AddToTail(var);
 		
 		// Weapons here
 		kvClass = GetWeaponLoadoutForClass( i );
@@ -602,10 +596,9 @@ CTFLoadoutHandler::CTFLoadoutHandler()
 					Q_snprintf( szCommand, sizeof(szCommand), "%s %s", szCommand, sub->GetString() );
 			}
 		}
-		ConVar *pNewLol = cvar->FindVar(g_aArsenalConvarNames[i]);
-		pNewLol->SetValue(szCommand);
-		
-		m_hClassArsenal.AddToTail( pNewLol );
+		var = cvar->FindVar(g_aArsenalConvarNames[i]); //why have two pointers when you can reuse the previous one
+		var->SetValue(szCommand);
+		m_hClassArsenal.AddToTail(var);
 	}
 }
 #endif
