@@ -1,7 +1,7 @@
 // OPEN FORTRESS shared_activities.h:
 //  ActivityList_RegisterSharedActivities and Activity enum
 //  brought into one place, so that we don't repeat ourselves.
-// See Also: ai_activity.h activitylist.cpp
+// See Also: ai_activity.h activitylist.cpp server/ai_activity.cpp
 // -Nopey
 #ifndef ACT
 #error "Don't include this file. You probably wanted ai_activity.h"
