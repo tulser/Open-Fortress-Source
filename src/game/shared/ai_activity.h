@@ -23,6 +23,7 @@ typedef enum
 	LAST_SHARED_ACTIVITY,
 } Activity;
 
+COMPILE_TIME_ASSERT(ACT_RESET==0);
 
 #endif // AI_ACTIVITY_H
 

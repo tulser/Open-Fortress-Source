@@ -312,6 +312,7 @@ enum CastVote
 //  than two, sigh
 // NOTE: Must be able to fit inside an int of baseviewmodel_shared's VIEWMODEL_INDEX_BITS length.
 #if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
+// "one for the weapon, one for the arms, one for the spy watch" (thanks ficool!)
 #define MAX_VIEWMODELS			4
 #else
 #define MAX_VIEWMODELS			2	
