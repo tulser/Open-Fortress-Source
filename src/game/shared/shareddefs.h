@@ -310,6 +310,7 @@ enum CastVote
 
 // Humans only have left and right hands, though we might have aliens with more
 //  than two, sigh
+// NOTE: Must be able to fit inside an int of baseviewmodel_shared's VIEWMODEL_INDEX_BITS length.
 #if defined ( OF_DLL ) || defined ( OF_CLIENT_DLL )
 #define MAX_VIEWMODELS			4
 #else
