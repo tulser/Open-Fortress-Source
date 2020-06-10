@@ -73,7 +73,6 @@ ConVar	of_cslide("of_cslide", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Lets you pr
 ConVar	of_cslideaccelerate("of_cslideaccelerate", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "Acceleration while csliding.");
 ConVar	of_cslidefriction("of_cslidefriction", "0.8", FCVAR_NOTIFY | FCVAR_REPLICATED, "Friction / decceleration while csliding.");
 ConVar  of_cslideduration("of_cslideduration", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Multiplier for how long one can cslide. Set to 0 to disable hard duration limit.");
-ConVar  of_cslidejump("of_cslidejump", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allows you to jump while csliding.");
 #endif
 
 #if defined( CSTRIKE_DLL ) || defined( HL1MP_DLL )
