@@ -401,8 +401,7 @@ void CHudSpeedometer::OnTick(void)
 				// Set the sign (More clarity, keeps width nice and consistent :)
 				// If negative, continue as usual, but otherwise prepend a + or ~ if we're >0 or ==0
 				char s[8];
-				char sign = (difference > 0 ? '+' : (difference == 0 ? '~' : '-'));
-				Q_snprintf(s, sizeof(s), "%c%i", sign, difference);
+				Q_snprintf(s, sizeof(s), "%+d", difference);
 
 				SetDialogVariable("speeddelta", s);
 
