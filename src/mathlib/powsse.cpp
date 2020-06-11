@@ -9,6 +9,16 @@
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
 
+//TODO: check for newer gcc5 abi
+#ifdef __clang__
+// NOPEY: HACK: ABI has changed, this is an alias for particles.a to use
+extern "C" {
+	fltx4 _Z28Pow_FixedPoint_Exponent_SIMDRKU8__vectorfi( const fltx4 & x, int exponent)
+	{
+		return Pow_FixedPoint_Exponent_SIMD(x, exponent);
+	}
+}
+#endif
 
 fltx4 Pow_FixedPoint_Exponent_SIMD( const fltx4 & x, int exponent)
 {

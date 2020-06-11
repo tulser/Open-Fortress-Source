@@ -489,11 +489,19 @@ public:
 	void Lock()											{ m_mutex.Lock(); }
 	void Unlock()										{ m_mutex.Unlock(); }
 
+#ifdef __clang__ 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-bool-conversion"
+#endif
 	//-----------------------------------------------------
 	// Thread event support (safe for NULL this to simplify code )
 	//-----------------------------------------------------
 	bool WaitForFinish( uint32 dwTimeout = TT_INFINITE ) { if (!this) return true; return ( !IsFinished() ) ? g_pThreadPool->YieldWait( this, dwTimeout ) : true; }
 	bool WaitForFinishAndRelease( uint32 dwTimeout = TT_INFINITE ) { if (!this) return true; bool bResult = WaitForFinish( dwTimeout); Release(); return bResult; }
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 	CThreadEvent *AccessEvent()						{ return &m_CompleteEvent; }
 
 	//-----------------------------------------------------

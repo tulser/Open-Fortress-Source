@@ -308,7 +308,7 @@ void CVoteSetupDialog::InitializeIssueList( void )
 
 	for ( int index = 0; index < m_VoteIssues.Count(); index++ )
 	{
-		if ( !m_VoteIssues[index].szName || !m_VoteIssues[index].szName[0] )
+		if ( !m_VoteIssues[index].szName[0] )
 			continue;
 
 		bool bActive = m_VoteIssues[index].bIsActive;

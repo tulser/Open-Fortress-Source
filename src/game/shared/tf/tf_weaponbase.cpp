@@ -286,7 +286,7 @@ CTFWeaponBase::~CTFWeaponBase()
 		return;
 	WeaponHandle hHandle;
 	hHandle = this;	
-	if ( pTFOwner->m_hWeaponInSlot && pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] == hHandle )
+	if ( pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] == hHandle )
 		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] = NULL;
 #endif
 }
@@ -340,7 +340,7 @@ void CTFWeaponBase::Equip( CBaseCombatCharacter *pOwner )
 		return;
 	WeaponHandle hHandle;
 	hHandle = this;	
-	if ( hHandle && pTFOwner->m_hWeaponInSlot && 
+	if ( hHandle &&
 		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] && 
 		pTFOwner->m_hWeaponInSlot[GetSlot()][GetPosition()] 
 		!= hHandle )
@@ -487,7 +487,7 @@ void CTFWeaponBase::Precache()
 
 	const CTFWeaponInfo *pTFInfo = &GetTFWpnData();
 
-	if ( pTFInfo->m_szExplosionSound && pTFInfo->m_szExplosionSound[0] )
+	if ( pTFInfo->m_szExplosionSound[0] )
 	{
 		CBaseEntity::PrecacheScriptSound( pTFInfo->m_szExplosionSound );
 	}
@@ -502,7 +502,7 @@ void CTFWeaponBase::Precache()
 		PrecacheModel( pTFInfo->m_szMagModel );
 	}
 
-	if ( pTFInfo->m_szMuzzleFlashParticleEffect && pTFInfo->m_szMuzzleFlashParticleEffect[0] )
+	if ( pTFInfo->m_szMuzzleFlashParticleEffect[0] )
 	{
 		if(pTFInfo->m_bTeamColorMuzzleFlash)
 		{
@@ -515,7 +515,7 @@ void CTFWeaponBase::Precache()
 			PrecacheParticleSystem( pTFInfo->m_szMuzzleFlashParticleEffect );
 	}	
 
-	if ( pTFInfo->m_szExplosionEffect && pTFInfo->m_szExplosionEffect[0] )
+	if ( pTFInfo->m_szExplosionEffect[0] )
 	{
 		if( pTFInfo->m_bTeamExplosion )
 		{
@@ -530,7 +530,7 @@ void CTFWeaponBase::Precache()
 			PrecacheParticleSystem( pTFInfo->m_szExplosionEffect );
 	}
 
-	if ( pTFInfo->m_szExplosionPlayerEffect && pTFInfo->m_szExplosionPlayerEffect[0] )
+	if ( pTFInfo->m_szExplosionPlayerEffect[0] )
 	{
 		if( pTFInfo->m_bTeamExplosion )
 		{
@@ -545,7 +545,7 @@ void CTFWeaponBase::Precache()
 			PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffect );
 	}
 
-	if ( pTFInfo->m_szExplosionWaterEffect && pTFInfo->m_szExplosionWaterEffect[0] )
+	if ( pTFInfo->m_szExplosionWaterEffect[0] )
 	{
 		if( pTFInfo->m_bTeamExplosion )
 		{
@@ -562,7 +562,7 @@ void CTFWeaponBase::Precache()
 	
 	if( pTFInfo->m_bDropBomblets )
 	{
-		if ( pTFInfo->m_szExplosionEffectBomblets && pTFInfo->m_szExplosionEffectBomblets[0] )
+		if ( pTFInfo->m_szExplosionEffectBomblets[0] )
 		{
 			if( pTFInfo->m_bTeamExplosion )
 			{
@@ -577,7 +577,7 @@ void CTFWeaponBase::Precache()
 				PrecacheParticleSystem( pTFInfo->m_szExplosionEffectBomblets );
 		}
 
-		if ( pTFInfo->m_szExplosionPlayerEffectBomblets && pTFInfo->m_szExplosionPlayerEffectBomblets[0] )
+		if ( pTFInfo->m_szExplosionPlayerEffectBomblets[0] )
 		{
 			if( pTFInfo->m_bTeamExplosion )
 			{
@@ -592,7 +592,7 @@ void CTFWeaponBase::Precache()
 				PrecacheParticleSystem( pTFInfo->m_szExplosionPlayerEffectBomblets );
 		}
 
-		if ( pTFInfo->m_szExplosionWaterEffectBomblets && pTFInfo->m_szExplosionWaterEffectBomblets[0] )
+		if ( pTFInfo->m_szExplosionWaterEffectBomblets[0] )
 		{
 			if( pTFInfo->m_bTeamExplosion )
 			{
@@ -608,7 +608,7 @@ void CTFWeaponBase::Precache()
 		}		
 	}
 
-	if ( pTFInfo->m_szTracerEffect && pTFInfo->m_szTracerEffect[0] )
+	if ( pTFInfo->m_szTracerEffect[0] )
 	{
 		char pTracerEffect[128];
 		char pTracerEffectCrit[128];
@@ -629,47 +629,47 @@ void CTFWeaponBase::Precache()
 		PrecacheParticleSystem( pTracerEffectCrit );		
 	}
 
-	if ( pTFInfo->szScoutViewModel && pTFInfo->szScoutViewModel[0] )
+	if ( pTFInfo->szScoutViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szScoutViewModel );
 	}
-	if ( pTFInfo->szSoldierViewModel && pTFInfo->szSoldierViewModel[0] )
+	if ( pTFInfo->szSoldierViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szSoldierViewModel );
 	}
-	if ( pTFInfo->szPyroViewModel && pTFInfo->szPyroViewModel[0] )
+	if ( pTFInfo->szPyroViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szPyroViewModel );
 	}
-	if ( pTFInfo->szDemomanViewModel && pTFInfo->szDemomanViewModel[0] )
+	if ( pTFInfo->szDemomanViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szDemomanViewModel );
 	}
-	if ( pTFInfo->szHeavyViewModel && pTFInfo->szHeavyViewModel[0] )
+	if ( pTFInfo->szHeavyViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szHeavyViewModel );
 	}
-	if ( pTFInfo->szEngineerViewModel && pTFInfo->szEngineerViewModel[0] )
+	if ( pTFInfo->szEngineerViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szEngineerViewModel );
 	}
-	if ( pTFInfo->szMedicViewModel && pTFInfo->szMedicViewModel[0] )
+	if ( pTFInfo->szMedicViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szMedicViewModel );
 	}
-	if ( pTFInfo->szSniperViewModel && pTFInfo->szSniperViewModel[0] )
+	if ( pTFInfo->szSniperViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szSniperViewModel );
 	}
-	if ( pTFInfo->szSpyViewModel && pTFInfo->szSpyViewModel[0] )
+	if ( pTFInfo->szSpyViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szSpyViewModel );
 	}
-	if ( pTFInfo->szMercenaryViewModel && pTFInfo->szMercenaryViewModel[0] )
+	if ( pTFInfo->szMercenaryViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szMercenaryViewModel );
 	}
-	if ( pTFInfo->szCivilianViewModel && pTFInfo->szCivilianViewModel[0] )
+	if ( pTFInfo->szCivilianViewModel[0] )
 	{
 		PrecacheModel( pTFInfo->szCivilianViewModel );
 	}
@@ -2056,7 +2056,7 @@ float CTFWeaponBase::GetWindupTime( void )
 //-----------------------------------------------------------------------------
 const char *CTFWeaponBase::GetTracerType( void )
 { 
-	if ( tf_useparticletracers.GetBool() && GetTFWpnData().m_szTracerEffect && GetTFWpnData().m_szTracerEffect[0] )
+	if ( tf_useparticletracers.GetBool() && GetTFWpnData().m_szTracerEffect[0] )
 	{
 		if ( !m_szTracerName[0] )
 		{

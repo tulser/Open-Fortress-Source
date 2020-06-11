@@ -428,7 +428,6 @@ private:
 	unsigned short	m_cachedBoneCount;
 	unsigned short	m_matrixOffset;
 	unsigned short	m_cachedToStudioOffset;
-	unsigned short	m_boneOutOffset;
 };
 
 CBoneCache *Studio_GetBoneCache( memhandle_t cacheHandle );

@@ -5207,10 +5207,6 @@ void C_BaseEntity::DestroyIntermediateData( void )
 void C_BaseEntity::ShiftIntermediateDataForward( int slots_to_remove, int number_of_commands_run )
 {
 #if !defined( NO_ENTITY_PREDICTION )
-	Assert( m_pIntermediateData );
-	if ( !m_pIntermediateData )
-		return;
-
 	Assert( number_of_commands_run >= slots_to_remove );
 
 	// Just moving pointers, yeah

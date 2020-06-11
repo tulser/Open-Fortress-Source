@@ -995,8 +995,13 @@ inline unsigned IFileSystem::GetOptimalReadSize( FileHandle_t hFile, unsigned nL
 
 //-----------------------------------------------------------------------------
 
+#if 0
+// I've disabled this because VMPI is long dead,
+// and the filesystem passthru crashes   -Nopey
+
 // We include this here so it'll catch compile errors in VMPI early.
 #include "filesystem_passthru.h"
+#endif // 0
 
 //-----------------------------------------------------------------------------
 // Async memory tracking

@@ -226,7 +226,7 @@ void CTripmineGrenade::MakeBeam( void )
 	m_hBeam = CBeam::BeamCreate( TRIPMINE_BEAM_SPRITE, 1.0 );
 	m_hBeam->PointEntInit( vecTmpEnd, this );
 	m_hBeam->SetColor( 255, 0, 0 );
-	m_hBeam->SetScrollRate( 25.5 );
+	m_hBeam->SetScrollRate( 25 );
 	m_hBeam->SetBrightness( 255 );
 	m_hBeam->AddSpawnFlags( SF_BEAM_TEMPORARY );	// so it won't save and come back to haunt us later..
 }

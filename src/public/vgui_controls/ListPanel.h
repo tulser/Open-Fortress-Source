@@ -335,7 +335,6 @@ private:
 	bool 			m_bSortAscending : 1;
 	bool 			m_bSortAscendingSecondary : 1;
 	bool			m_bCanSelectIndividualCells : 1;
-	bool			m_bShiftHeldDown : 1;
 	bool			m_bMultiselectEnabled : 1;
 	bool			m_bAllowUserAddDeleteColumns : 1;
 	bool 			m_bDeleteImageListWhenDone : 1;

@@ -48,7 +48,7 @@ private:
 	bool IsAtGoal( INextBot *bot ) const;			// return true if reached current path goal
 
 	//bool IsOnStairs( INextBot *bot ) const;		// return true if bot is standing on a stairway
-	bool m_isOnStairs;
+	//bool m_isOnStairs;
 
 	CountdownTimer m_avoidTimer;					// do avoid check more often if we recently avoided
 

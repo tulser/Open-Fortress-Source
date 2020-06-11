@@ -568,7 +568,9 @@ public:
 // of our complicated templates properly.  Use some preprocessor trickery
 // to workaround this
 
-#ifdef __GNUC__
+#ifdef __clang__
+	#define COMPILE_TIME_ASSERT( pred ) static_assert(pred, "Compile time assert constraint is not true: " #pred)
+#elif defined(__GNUC__)
 	#if __GNUC__ > 4 || \
     __GNUC__ == 4 && __GNUC_MINOR__ >= 3
 	// static_assert is supported in gcc since version 4.3,
@@ -594,9 +596,39 @@ public:
 // scope. However the new COMPILE_TIME_ASSERT macro supports that by default.
 #define ASSERT_INVARIANT( pred )	COMPILE_TIME_ASSERT( pred )
 
+//-----------------------------------------------------------------------------
+//
+// Purpose: Inline string formatter
+// I moved this up in the file to satisfy clang -Nopey
+//
+
+#include "tier0/valve_off.h"
+class CDbgFmtMsg
+{
+public:
+	CDbgFmtMsg(PRINTF_FORMAT_STRING const tchar *pszFormat, ...) FMTFUNCTION( 2, 3 )
+	{ 
+		va_list arg_ptr;
+
+		va_start(arg_ptr, pszFormat);
+		_vsntprintf(m_szBuf, sizeof(m_szBuf)-1, pszFormat, arg_ptr);
+		va_end(arg_ptr);
+
+		m_szBuf[sizeof(m_szBuf)-1] = 0;
+	}
+
+	operator const tchar *() const				
+	{ 
+		return m_szBuf; 
+	}
+
+private:
+	tchar m_szBuf[256];
+};
+#include "tier0/valve_on.h"
+
 
 #ifdef _DEBUG
-class CDbgFmtMsg;
 template<typename DEST_POINTER_TYPE, typename SOURCE_POINTER_TYPE>
 inline DEST_POINTER_TYPE assert_cast(SOURCE_POINTER_TYPE* pSource)
 {
@@ -668,36 +700,6 @@ private:
 #else
 #define ASSERT_NO_REENTRY()
 #endif
-
-//-----------------------------------------------------------------------------
-//
-// Purpose: Inline string formatter
-//
-
-#include "tier0/valve_off.h"
-class CDbgFmtMsg
-{
-public:
-	CDbgFmtMsg(PRINTF_FORMAT_STRING const tchar *pszFormat, ...) FMTFUNCTION( 2, 3 )
-	{ 
-		va_list arg_ptr;
-
-		va_start(arg_ptr, pszFormat);
-		_vsntprintf(m_szBuf, sizeof(m_szBuf)-1, pszFormat, arg_ptr);
-		va_end(arg_ptr);
-
-		m_szBuf[sizeof(m_szBuf)-1] = 0;
-	}
-
-	operator const tchar *() const				
-	{ 
-		return m_szBuf; 
-	}
-
-private:
-	tchar m_szBuf[256];
-};
-#include "tier0/valve_on.h"
 
 //-----------------------------------------------------------------------------
 //

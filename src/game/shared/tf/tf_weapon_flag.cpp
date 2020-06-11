@@ -120,7 +120,7 @@ void CTFFlag::PrimaryAttack( void )
 	if ( !m_bInPlantZone )
 		return;
 	
-	if ( m_bPlanting = false || gpGlobals->curtime < m_flPlantStart + 5.0f )
+	if ( m_bPlanting == false || gpGlobals->curtime < m_flPlantStart + 5.0f )
 		return;
 
 #ifndef CLIENT_DLL
@@ -156,19 +156,19 @@ void CTFFlag::ItemPostFrame( void )
 
 	if ( m_bInPlantZone )
 	{
-		if ( m_bPlanting = false && pOwner->m_nButtons & IN_ATTACK )
+		if ( m_bPlanting == false && pOwner->m_nButtons & IN_ATTACK )
 		{
 			m_bPlanting = true;
 			m_flPlantStart = gpGlobals->curtime;
 			SendWeaponAnim( ACT_VM_HITCENTER );
 			SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 		}
-		else if ( m_bPlanting = true && !( pOwner->m_nButtons & IN_ATTACK ) )
+		else if ( m_bPlanting == true && !( pOwner->m_nButtons & IN_ATTACK ) )
 		{
 			m_bPlanting = false;
 			m_flPlantStart = gpGlobals->curtime;
 		}
-		if ( m_bPlanting = true && gpGlobals->curtime >= m_flPlantStart + 5.0f )
+		if ( m_bPlanting == true && gpGlobals->curtime >= m_flPlantStart + 5.0f )
 		{
 			PrimaryAttack();
 			m_bPlanting = false;

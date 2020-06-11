@@ -81,7 +81,6 @@ protected:
 	float _analogValue;
 
 private:
-	int   _segmentCount;
 	int _segmentGap;
 	int _segmentWide;
 	int m_iBarInset;

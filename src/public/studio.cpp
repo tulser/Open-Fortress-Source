@@ -819,7 +819,7 @@ const virtualmodel_t * CStudioHdr::ResetVModel( const virtualmodel_t *pVModel ) 
 
 const studiohdr_t *CStudioHdr::GroupStudioHdr( int i )
 {
-	if ( !this )
+	if ( !(void *)this ) // hehe funny cast to silence `this` clang warning -Nopey
 	{
 		ExecuteNTimes( 5, Warning( "Call to NULL CStudioHdr::GroupStudioHdr()\n" ) );
 	}

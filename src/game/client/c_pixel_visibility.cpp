@@ -259,7 +259,6 @@ private:
 	unsigned short					m_wasQueriedThisFrame : 1;
 	unsigned short					m_failed : 1;
 	unsigned short					m_hasValidQueryResults : 1;
-	unsigned short					m_pad : 13;
 	unsigned short					m_viewID;
 
 	friend void PixelVisibility_ShiftVisibilityViews( int iSourceViewID, int iDestViewID ); //need direct access to private data to make shifting smooth
@@ -499,7 +498,6 @@ private:
 	unsigned short m_freeQueriesList;
 	unsigned short m_activeSetsList;
 	unsigned short m_freeSetsList;
-	unsigned short m_pad0;
 
 	IMaterial	*m_pProxyMaterial;
 	IMaterial	*m_pDrawMaterial;

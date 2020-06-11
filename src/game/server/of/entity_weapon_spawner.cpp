@@ -161,9 +161,9 @@ void CWeaponSpawner::Precache( void )
 	PrecacheScriptSound( m_iszPickupSound );
 	Update();
 
-	if ( m_iszWeaponModel )
+	if ( m_iszWeaponModel[0] )
 	{
-		if( m_iszWeaponModelOLD )
+		if( m_iszWeaponModelOLD[0] )
 		{
 			if ( pWeaponInfo )
 				PrecacheModel( pWeaponInfo->szWorldModel );
@@ -213,11 +213,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		int iPos = pWeaponInfo->iPosition;
 		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 			iPos = pWeaponInfo->iPositionDM;
-
-		if( !pTFPlayer->m_hWeaponInSlot )
-		{	
-			return false;
-		}
 
 		// We have it already, dont take it Freeman, but get ammo
 		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )

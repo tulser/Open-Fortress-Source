@@ -5711,7 +5711,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	// we want the ragdoll to burn if the player was burning and was not a pryo (who only burns momentarily)
 	bool bBurning = m_Shared.InCond( TF_COND_BURNING ) && ( TF_CLASS_PYRO != GetPlayerClass()->GetClassIndex() );
 	// no playing death anims in midair, as it looks awkward
-	bool bFlagOnGround = ( ( GetFlags() & FL_ONGROUND ) != NULL );
+	bool bFlagOnGround = ( ( GetFlags() & FL_ONGROUND ) != 0 );
 
 	// Remove all conditions...
 	if (m_Shared.InPowerupCond())
@@ -6772,7 +6772,7 @@ void CTFPlayer::UpdateSkin( int iTeam )
 //-----------------------------------------------------------------------------
 void CTFPlayer::UpdatePlayerClass( int iPlayerClass, bool bRefreshWeapons )
 {
-	if ( !iPlayerClass == TF_CLASS_UNDEFINED )
+	if ( iPlayerClass != TF_CLASS_UNDEFINED )
 	{
 		TeamFortress_RemoveEverythingFromWorld();
 

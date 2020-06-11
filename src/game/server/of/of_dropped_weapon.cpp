@@ -169,12 +169,6 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	int iPos = pWeaponInfo->iPosition;
 	if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
 		iPos = pWeaponInfo->iPositionDM;
-		
-	
-	if ( !(pTFPlayer->m_hWeaponInSlot) )
-	{	
-		return;
-	}
 	
 	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == WeaponID )
 	{	

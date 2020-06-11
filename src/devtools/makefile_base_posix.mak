@@ -182,12 +182,18 @@ else
 	WARN_FLAGS = -Wall -Wno-invalid-offsetof -Wno-multichar -Wno-overloaded-virtual
 	WARN_FLAGS += -Wno-write-strings
 	WARN_FLAGS += -Wno-unused-variable
-	WARN_FLAGS += -Wno-unused-but-set-variable
+	ifneq ($(CLANG_BUILD), 1)
+		WARN_FLAGS += -Wno-unused-but-set-variable
+	endif
 	WARN_FLAGS += -Wno-unused-function
 endif
 
 ifeq ($(CLANG_BUILD),1)
 	# Clang specific flags
+	#TODO: NOPEY: Re-enable inconsistent override.
+	WARN_FLAGS += -Wno-inconsistent-missing-override 
+	#TODO: NOPEY: Re-enable absolute values.
+	WARN_FLAGS += -Wno-absolute-value
 else ifeq ($(GCC_VER),-4.8)
 	WARN_FLAGS += -Wno-unused-local-typedefs
 	WARN_FLAGS += -Wno-unused-result

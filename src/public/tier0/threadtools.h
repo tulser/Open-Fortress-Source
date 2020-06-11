@@ -762,6 +762,13 @@ private:
 	int				m_depth;
 };
 
+#ifdef __clang__
+// warning: private field 'pad' is not used
+// Surprise! we don't care.          -Nopey
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
+#endif
+
 class ALIGN128 CAlignedThreadFastMutex : public CThreadFastMutex
 {
 public:
@@ -773,6 +780,10 @@ public:
 private:
 	uint8 pad[128-sizeof(CThreadFastMutex)];
 } ALIGN128_POST;
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #else
 typedef CThreadMutex CThreadFastMutex;

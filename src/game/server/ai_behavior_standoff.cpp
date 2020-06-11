@@ -232,7 +232,8 @@ CAI_StandoffBehavior::CAI_StandoffBehavior( CAI_BaseNPC *pOuter )
 	SetPosture( AIP_STANDING );
 	m_SavedDistTooFar = FLT_MAX;
 	m_fForceNewEnemy = false;
-	m_TimePreventForceNewEnemy.Set( 3.0, 6.0 );
+	// NOPEY: I removed the 6.0, as this isn't a CRandSimTimer.
+	m_TimePreventForceNewEnemy.Set( 3.0/*, 6.0 */ );
 	m_fIgnoreFronts = false;
 	m_bHasLowCoverActivity = false;
 }

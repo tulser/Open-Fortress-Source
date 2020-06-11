@@ -342,7 +342,6 @@ private:
 	// Next factory in list
 	CBuildFactoryHelper	*m_pNext;
 
-	int					m_Type;
 	PANELCREATEFUNC		m_CreateFunc;
 	char const			*m_pClassName;
 };

@@ -1,5 +1,5 @@
 #ifndef VSLIDERCONTROL_H
-#define VSLIDERCONTORL_H
+#define VSLIDERCONTROL_H
 
 #include "basemodui.h"
 #include "vgui/MouseCode.h"
@@ -93,4 +93,4 @@ namespace BaseModUI
 	};
 };
 
-#endif
+#endif // VSLIDERCONTROL_H

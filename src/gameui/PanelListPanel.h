@@ -71,8 +71,6 @@ private:
 	vgui::ScrollBar		*_vbar;
 	vgui::Panel			*_embedded;
 
-	int					_tableStartX;
-	int					_tableStartY;
 	int					_sliderYOffset;
 };
 

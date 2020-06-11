@@ -1241,7 +1241,7 @@ void CBaseGameStats_Driver::ResetData()
 	int dest_width,dest_height;
 	pRenderContext->GetRenderTargetDimensions( dest_width, dest_height );
 
-	if ( gpu.m_pDriverName )
+	if ( *gpu.m_pDriverName )
 	{
 		OverWriteCharsWeHate( gpu.m_pDriverName );
 	}

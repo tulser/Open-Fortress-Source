@@ -151,7 +151,7 @@ public:
 private:
 	vgui::PanelListPanel *m_pParent;
 	vgui::Label *m_pChapterLabel;
-	CTGAImagePanel *m_pSaveGameImage;
+	// CTGAImagePanel *m_pSaveGameImage;
 	ImagePanel *m_pAutoSaveImage;
 	
 	// things to change color when the selection changes

@@ -133,7 +133,10 @@ const char *AI_CriteriaSet::GetValue( int index ) const
 		return "";
 
 	const CritEntry_t *entry = &m_Lookup[ index ];
-	return entry->value ? entry->value : "";
+	// If this trips regularly, then change the return
+	// stmt to `entry ? entry->value : ""`. -Nopey
+	AssertMsg( entry, "CritEntry m_Lookup[%d] was NULL!", index);
+	return entry->value;
 }
 
 //-----------------------------------------------------------------------------
@@ -158,14 +161,15 @@ void AI_CriteriaSet::Describe()
 	for ( short i = m_Lookup.FirstInorder(); i != m_Lookup.InvalidIndex(); i = m_Lookup.NextInorder( i ) )
 	{
 		CritEntry_t *entry = &m_Lookup[ i ];
+		AssertMsg( entry, "CritEntry m_Lookup[%d] was NULL! (in Describe())", i);
 
 		if ( entry->weight != 1.0f )
 		{
-			DevMsg( "  %20s = '%s' (weight %f)\n", entry->criterianame.String(), entry->value ? entry->value : "", entry->weight );
+			DevMsg( "  %20s = '%s' (weight %f)\n", entry->criterianame.String(), entry->value, entry->weight );
 		}
 		else
 		{
-			DevMsg( "  %20s = '%s'\n", entry->criterianame.String(), entry->value ? entry->value : "" );
+			DevMsg( "  %20s = '%s'\n", entry->criterianame.String(), entry->value );
 		}
 	}
 }

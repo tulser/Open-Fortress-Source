@@ -957,7 +957,7 @@ void BaseModHybridButton::OnKeyCodePressed( vgui::KeyCode code )
 
 	KeyCode localCode = GetBaseButtonCode( code );
 
-	if ( ( localCode == KEY_XBUTTON_A ) )
+	if ( localCode == KEY_XBUTTON_A )
 	{
 		if ( m_bIgnoreButtonA )
 		{

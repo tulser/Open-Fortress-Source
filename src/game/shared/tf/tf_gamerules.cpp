@@ -3276,8 +3276,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 								hHandle = pWeapon;
 								if( hHandle )
 								{
-									if( pPlayer->m_hWeaponInSlot 
-										&& pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] 
+									if( pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] 
 										&& pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] != hHandle)
 									{
 										pPlayer->DropWeapon( pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()].Get(),

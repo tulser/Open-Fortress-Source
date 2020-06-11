@@ -2990,6 +2990,14 @@ bool KeyValues::ProcessResolutionKeys( const char *pResString )
 
 
 
+#ifdef __clang__
+// warning: 'this' pointer cannot be null in well-defined C++ code;
+//				  pointer may be assumed to always convert to true.
+// We don't care, the people who call Dump are untrustworthy. -Nopey
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-bool-conversion"
+#endif
+
 //
 // KeyValues dumping implementation
 //
@@ -3014,6 +3022,10 @@ bool KeyValues::Dump( IKeyValuesDumpContext *pDump, int nIndentLevel /* = 0 */ )
 
 	return pDump->KvEndKey( this, nIndentLevel );
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 bool IKeyValuesDumpContextAsText::KvBeginKey( KeyValues *pKey, int nIndentLevel )
 {

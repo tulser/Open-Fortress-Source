@@ -19,14 +19,13 @@ class CCollectPayloadGuardVantagePoints : public ISearchSurroundingAreasFunctor
 {
 public:
 	CCollectPayloadGuardVantagePoints( CTFBot *actor, CBaseEntity *target ) :
-		m_pActor( actor ), m_hTarget( target ) {}
+		m_hTarget( target ) {}
 
 	virtual bool operator()( CNavArea *area, CNavArea *priorArea, float travelDistanceSoFar ) override;
 
 	Vector const& GetResult( void ) const;
 
 private:
-	CTFBot *m_pActor;
 	CHandle<CBaseEntity> m_hTarget;
 	CUtlVector<Vector> m_VantagePoints;
 };

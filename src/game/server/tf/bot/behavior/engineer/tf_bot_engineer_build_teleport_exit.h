@@ -1,4 +1,4 @@
-#ifndef TF_BOT_ENGINEER_BUILD_TELEPORT_EXIt_H
+#ifndef TF_BOT_ENGINEER_BUILD_TELEPORT_EXIT_H
 #define TF_BOT_ENGINEER_BUILD_TELEPORT_EXIT_H
 #ifdef _WIN32
 #pragma once
@@ -33,4 +33,4 @@ private:
 	CountdownTimer m_retryTimer;
 };
 
-#endif
+#endif // TF_BOT_ENGINEER_BUILD_TELEPORT_EXIT_H
