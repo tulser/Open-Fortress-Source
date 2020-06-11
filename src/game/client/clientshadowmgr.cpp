@@ -3320,7 +3320,7 @@ bool CClientShadowMgr::CullReceiver( ClientShadowHandle_t handle, IClientRendera
 									IClientRenderable* pSourceRenderable )
 {
 #ifdef OF_CLIENT_DLL
-	if ( !pRenderable )
+	if ( !pRenderable || !pSourceRenderable )
 		return true;
 #endif
 
