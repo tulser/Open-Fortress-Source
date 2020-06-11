@@ -2499,7 +2499,8 @@ void CClientShadowMgr::BuildRenderToTextureShadow( IClientRenderable* pRenderabl
 	
 	// we initialize this, not because its ever read,
 	// but just to satisfy gcc :(  				-Nopey
-	Vector yvec = { .x = 0, .y = 0, .z = 0 };
+	Vector yvec;
+	yvec.x = ( yvec.y = ( yvec.z = 0 ) );
 	float fProjMax = 0.0f;
 	for( int i = 0; i != 3; ++i )
 	{
