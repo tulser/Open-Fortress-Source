@@ -234,6 +234,8 @@ public:
 	void    SetGrapple( bool bGrapple );
 	void	SetBlockJump(bool buffer);
 	bool	IsJumpBlocked() { return m_bBlockJump; }
+	void	SetCSlide(bool csliding);
+	bool	IsCSliding() { return m_bCSlide; }
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration() { return m_fCSlideDuration; }
 	void	SetRampJumpVel(float vel);
@@ -392,6 +394,7 @@ private:
 	CNetworkVar( bool, m_bGrapple );
 	CNetworkVar( bool, m_bBlockJump );
 	CNetworkVar( float, m_fRampJumpVel );
+	CNetworkVar( bool, m_bCSlide );
 	CNetworkVar( float, m_fCSlideDuration );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );

@@ -984,7 +984,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 	if (CSliding)
 	{
 		VectorNormalize(vecWishDirection);
-		flWishSpeed = min(mv->m_vecVelocity.Length(), 320.f);
+		flWishSpeed = min(mv->m_vecVelocity.Length(), of_cslidestopspeed.GetFloat());
 		mv->m_vecVelocity.z = 0;
 		AirAccelerate(vecWishDirection, flWishSpeed, of_cslideaccelerate.GetFloat(), false);
 	}
@@ -994,17 +994,17 @@ void CTFGameMovement::WalkMove(bool CSliding)
 		flWishSpeed = VectorNormalize(vecWishDirection);
 		flWishSpeed = clamp(flWishSpeed, 0.f, mv->m_flMaxSpeed);
 		mv->m_vecVelocity.z = 0;
-
 		Accelerate(vecWishDirection, flWishSpeed, sv_accelerate.GetFloat());
 
 		// Clamp the players speed in x,y.
+		/* no we don't so we can circle jump
 		float flNewSpeed = VectorLength(mv->m_vecVelocity);
 		if (flNewSpeed > mv->m_flMaxSpeed)
 		{
 			float flScale = (mv->m_flMaxSpeed / flNewSpeed);
 			mv->m_vecVelocity.x *= flScale;
 			mv->m_vecVelocity.y *= flScale;
-		}
+		}*/
 	}
 	Assert(mv->m_vecVelocity.z == 0.0f);
 
@@ -1123,10 +1123,7 @@ void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float acce
 
 	wishspd = wishspeed;
 
-	if (player->pl.deadflag)
-		return;
-
-	if (player->m_flWaterJumpTime)
+	if (player->pl.deadflag || player->m_flWaterJumpTime)
 		return;
 
 	// Cap speed, this is the only thing to edit to allow
@@ -1660,6 +1657,8 @@ void CTFGameMovement::FullWalkMove()
 	{
 		AirMove();
 	}
+
+	m_pTFPlayer->m_Shared.SetCSlide(CSliding);
 
 	// Set final flags.
 	CategorizePosition();

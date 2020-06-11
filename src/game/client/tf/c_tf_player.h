@@ -241,6 +241,8 @@ public:
 
 	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 
+	float	GetSurfaceFriction() { return m_surfaceFriction; }
+
 public:
 	// Ragdolls.
 	virtual C_BaseAnimating *BecomeRagdollOnClient();
