@@ -1010,10 +1010,6 @@ void CGameUI::SendMainMenuCommand(const char *pszCommand)
 	{
 		GameUI().OpenOptionsDialog(pGameUIPanel);
 	}
-	else if (!Q_strcmp(pszCommand, "OpenOptionsMouseDialog"))
-	{
-		GameUI().OpenOptionsMouseDialog(pGameUIPanel);
-	}
 	else if (!Q_strcmp(pszCommand, "OpenKeyBindingsDialog"))
 	{
 		GameUI().OpenKeyBindingsDialog(pGameUIPanel);
@@ -1025,10 +1021,6 @@ void CGameUI::SendMainMenuCommand(const char *pszCommand)
 	else if (!Q_strcmp(pszCommand, "OpenPlayerListDialog"))
 	{
 		GameUI().OpenPlayerListDialog(pGameUIPanel);
-	}
-	else if (!Q_strcmp(pszCommand, "OpenOptionsMouseDialog"))
-	{
-		GameUI().OpenOptionsMouseDialog(pGameUIPanel);
 	}
 }
 
@@ -1099,21 +1091,6 @@ void CGameUI::OpenOptionsDialog(vgui::Panel *parent)
 }
 
 //=============================================================================
-void CGameUI::OpenOptionsMouseDialog(vgui::Panel *parent)
-{
-	if (IsPC())
-	{
-		if (!m_hOptionsMouseDialog.Get())
-		{
-			m_hOptionsMouseDialog = new COptionsMouseDialog(parent);
-			BaseUI_PositionDialog(m_hOptionsMouseDialog);
-		}
-
-		m_hOptionsMouseDialog->Activate();
-	}
-}
-
-//=============================================================================
 void CGameUI::OpenKeyBindingsDialog(vgui::Panel *parent)
 {
 	if (IsPC())
@@ -1130,19 +1107,9 @@ void CGameUI::OpenKeyBindingsDialog(vgui::Panel *parent)
 
 static char *g_rgValidCommands[] =
 {
-	"OpenGameMenu",
 	"OpenPlayerListDialog",
-	"OpenNewGameDialog",
-	"OpenLoadGameDialog",
-	"OpenSaveGameDialog",
-	"OpenCustomMapsDialog",
 	"OpenOptionsDialog",
-	"OpenBenchmarkDialog",
-	"OpenFriendsDialog",
-	"OpenLoadDemoDialog",
 	"OpenCreateMultiplayerGameDialog",
-	"OpenChangeGameDialog",
-	"OpenLoadCommentaryDialog",
 	"Quit",
 	"QuitNoConfirm",
 	"ResumeGame",
