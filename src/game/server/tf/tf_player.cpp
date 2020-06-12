@@ -571,6 +571,18 @@ void CTFPlayer::TFPlayerThink()
 		}
 	}
 */
+
+	//midair medal, record player airtime
+	if (!GetGroundEntity() && GetWaterLevel() <= WL_Feet) //always go here when player is in the air
+	{
+		if (!m_fAirStartTime)
+			m_fAirStartTime = gpGlobals->curtime;
+	}
+	else
+	{
+		m_fAirStartTime = 0.f;
+	}
+
 	SetContextThink( &CTFPlayer::TFPlayerThink, gpGlobals->curtime, "TFPlayerThink" );
 }
 
@@ -1327,6 +1339,7 @@ void CTFPlayer::Spawn()
 	m_iPowerupKills = 0;
 	m_iEXKills = 0;
 	m_fEXTime = 0;
+	m_fAirStartTime = 0.f;
 	m_iSpreeKills = 0;
 	m_iImpressiveCount = 0;
 	m_SuicideEntity = NULL;

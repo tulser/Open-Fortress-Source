@@ -5312,13 +5312,18 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				//weapon specifics
 				int weaponType = GetKillingWeaponType(pInflictor, pScorer);
 				event->SetBool("humiliation", weaponType == 1 ? true : false);
-				event->SetBool("midair", !(pTFPlayerVictim->GetFlags() & (FL_ONGROUND|FL_INWATER)) && weaponType == 2 ? true : false); //not on the ground and not in water
+				event->SetBool("midair", pTFPlayerVictim->m_fAirStartTime &&								//player is in the air
+										 gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + 0.8f &&	//player has been in the air for a second
+										 weaponType == 2 ? true : false);									//player hit with explosive projectile
 
-				//Kamikaze, suicide entity exists, inflictor is the suicide entity of the scorer, inflictor is an explosive projectile
-				bool Kamikaze = pVictim != pKiller && pTFPlayerScorer->m_SuicideEntity && pInflictor == pTFPlayerScorer->m_SuicideEntity && weaponType == 2;
+				//Kamikaze
+				bool Kamikaze = pVictim != pKiller &&								//the non suicidal victim
+								pTFPlayerScorer->m_SuicideEntity &&					//scorer killed himself with something
+								pInflictor == pTFPlayerScorer->m_SuicideEntity &&	//the thing that cause the death of the victim is the thing that killed the scorer
+								weaponType == 2;									//the thing that killed both is an explosive projectile
 				event->SetBool("kamikaze", Kamikaze);
 				if(Kamikaze)
-					pTFPlayerScorer->m_SuicideEntity = NULL;
+					pTFPlayerScorer->m_SuicideEntity = NULL;						//clean up the suicide entity
 			}
 
 			//first blood
