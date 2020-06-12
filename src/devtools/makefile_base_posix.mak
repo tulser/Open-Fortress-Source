@@ -38,7 +38,8 @@ ifeq ($(CFG), release)
 	OptimizerLevel_CompilerSpecific = -O2 -fno-strict-aliasing -ffast-math -fno-omit-frame-pointer -ftree-vectorize
 	ifeq ($(CLANG_BUILD),1)
 		# These aren't supported wit Clang 3.5. Need to remove when we update that.
-		OptimizerLevel_CompilerSpecific += -fpredictive-commoning -funswitch-loops
+		# TODO: NOPEY: Disabling these to test clang 10 :3
+		#OptimizerLevel_CompilerSpecific += -fpredictive-commoning -funswitch-loops
 	else
 		OptimizerLevel_CompilerSpecific += -fpredictive-commoning -funswitch-loops
 	endif
@@ -232,7 +233,8 @@ VSIGN ?= true
 
 ifeq ($(SOURCE_SDK), 1)
 	Srv_GAMEOUTPUTFILE := $(GAMEOUTPUTFILE:.so=_srv.so)
-	# NOPEY: i'm just gonna disable this for now.. whoopsi-daisy!
+	# NOPEY: i'm just gonna disable this.. whoopsi-daisy!
+	# ( it saves bandwidth for our svn )
 	# COPY_DLL_TO_SRV := 1
 endif
 

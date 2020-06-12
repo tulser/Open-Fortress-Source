@@ -682,7 +682,7 @@ template< typename Type, bool IS_ARRAY >
 inline void CInterpolatedVarArrayBase<Type, IS_ARRAY>::RestoreToLastNetworked()
 {
 	Assert( m_pValue );
-	memcpy( m_pValue, m_LastNetworkedValue, m_nMaxCount * sizeof( Type ) );
+	memcpy( (void *) m_pValue, (void *) m_LastNetworkedValue, m_nMaxCount * sizeof( Type ) );
 }
 
 template< typename Type, bool IS_ARRAY >

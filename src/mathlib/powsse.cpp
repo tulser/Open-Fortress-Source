@@ -9,8 +9,8 @@
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
 
-//TODO: check for newer gcc5 abi
-#ifdef __clang__
+//if we're not on windows and we're compiling with clang or gcc5+
+#if (!defined(WIN32)) && (defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5))
 // NOPEY: HACK: ABI has changed, this is an alias for particles.a to use
 extern "C" {
 	fltx4 _Z28Pow_FixedPoint_Exponent_SIMDRKU8__vectorfi( const fltx4 & x, int exponent)
