@@ -60,8 +60,7 @@ CBaseModFrame::CBaseModFrame( vgui::Panel *parent, const char *panelName, bool o
 	bool cancelButtonEnabled, bool imgBloodSplatterEnabled, bool doButtonEnabled ):
 		BaseClass(parent, panelName, true, false ),
 		m_ActiveControl(0),
-		m_UpperGarnishEnabled(false),
-		m_LowerGarnishEnabled(false),
+		m_FooterEnabled(false),
 		m_OkButtonEnabled(okButtonEnabled),
 		m_CancelButtonEnabled(cancelButtonEnabled),
 		m_WindowType(WT_NONE),
@@ -292,7 +291,7 @@ void CBaseModFrame::OnOpen()
 	Panel *pFooter = BaseModUI::CBaseModPanel::GetSingleton().GetFooterPanel();
 	if ( pFooter )
 	{
-		if ( GetLowerGarnishEnabled() )
+		if ( GetFooterEnabled() )
 		{
 			pFooter->SetVisible( true );
 			pFooter->MoveToFront();
@@ -523,9 +522,9 @@ void CBaseModFrame::RunFrameOnListeners()
 }
 
 //=============================================================================
-bool CBaseModFrame::GetLowerGarnishEnabled()
+bool CBaseModFrame::GetFooterEnabled()
 {
-	return m_LowerGarnishEnabled;
+	return m_FooterEnabled;
 }
 
 //=============================================================================
@@ -693,14 +692,12 @@ void CBaseModFrame::SetCancelButtonEnabled(bool enabled)
 //=============================================================================
 void CBaseModFrame::SetUpperGarnishEnabled(bool enabled)
 {
-	m_UpperGarnishEnabled = enabled;
 }
 
 //=============================================================================
-void CBaseModFrame::SetLowerGarnishEnabled(bool enabled)
+void CBaseModFrame::SetFooterEnabled(bool enabled)
 {
-	m_LowerGarnishEnabled = enabled;
-	
+	m_FooterEnabled = enabled;
 }
 
 //=============================================================================
@@ -875,40 +872,9 @@ CBaseModFrame* CBaseModFrame::SetNavBack( CBaseModFrame* navBack )
 void CBaseModFrame::DrawGenericBackground()
 {
 	int wide, tall;
-	GetSize( wide, tall );
-	int iHalfWide = wide * 0.5f;
-	//DrawHollowBox( 0, 0, wide, tall, Color( 150, 150, 150, 255 ), 1.0f );
-	//DrawBox( 2, 2, wide-4, tall-4, Color( 48, 48, 48, 255 ), 1.0f );
-
-	float flAlpha = 200.0f / 255.0f;
-
-	// fill background
-	vgui::surface()->DrawSetColor( Color( 0, 0, 0, 255 * flAlpha ) );
-	vgui::surface()->DrawFilledRect( 0, 0, GetWide(), GetTall() );
-
-	vgui::surface()->DrawSetColor( Color (BACKGROUND_CLR * flAlpha) );
-	//vgui::surface()->DrawFilledRect( 0, YRES( 4 ), wide, tall - YRES( 4 ) );
-
-	int nBarPosY = YRES( 4 );
-	int nBarHeight = tall - nBarPosY * 2;
-	vgui::surface()->DrawFilledRectFade( iHalfWide, nBarPosY, wide, nBarPosY + nBarHeight, 255, 0, true );
-	vgui::surface()->DrawFilledRectFade( 0, nBarPosY, iHalfWide, nBarPosY + nBarHeight, 0, 255, true );
-
-	nBarPosY = tall - YRES( 2 );
-	vgui::surface()->DrawFilledRectFade( iHalfWide, nBarPosY, wide, nBarPosY + nBarHeight, 255, 0, true );
-	vgui::surface()->DrawFilledRectFade( 0, nBarPosY, iHalfWide, nBarPosY + nBarHeight, 0, 255, true );
-
-	// draw highlights
-	nBarHeight = YRES( 2 );
-	nBarPosY = 0;
-	//vgui::surface()->DrawSetColor( Color( 97, 210, 255, 255 * flAlpha ) );
-	vgui::surface()->DrawSetColor( Color( HIGHLIGHT_CLR * flAlpha ) );
-	vgui::surface()->DrawFilledRectFade( iHalfWide, nBarPosY, wide, nBarPosY + nBarHeight, 255, 0, true );
-	vgui::surface()->DrawFilledRectFade( 0, nBarPosY, iHalfWide, nBarPosY + nBarHeight, 0, 255, true );
-
-	nBarPosY = tall - YRES( 2 );
-	vgui::surface()->DrawFilledRectFade( iHalfWide, nBarPosY, wide, nBarPosY + nBarHeight, 255, 0, true );
-	vgui::surface()->DrawFilledRectFade( 0, nBarPosY, iHalfWide, nBarPosY + nBarHeight, 0, 255, true );
+	GetSize(wide, tall);
+	DrawHollowBox(0, 0, wide, tall, Color(150, 150, 150, 255), 1.0f);
+	DrawBox(2, 2, wide - 4, tall - 4, Color(48, 48, 48, 255), 1.0f);
 }
 
 #define VERTICAL_GAP			10
@@ -1020,34 +986,6 @@ void CBaseModFrame::DrawDialogBackground( const char *pMajor, const wchar_t *pMa
 
 	Color bgColor( 0, 0, 0, 200 );
 	surface()->DrawSetColor( bgColor );
-
-	// draw title header band
-	int y = DrawSmearBackground( 0, 0, wide, titleTall );
-	int yBottom = tall;
-
-	// draw major title in header band
-	vgui::surface()->DrawSetTextFont( hTitleFont );
-	vgui::surface()->DrawSetTextPos( majorX, majorY );
-	vgui::surface()->DrawSetTextColor( TEXT_CLR );
-	vgui::surface()->DrawPrintText( szMajor, V_wcslen( szMajor ) );
-
-	if ( pMinorString )
-	{
-		// draw minor title in header band
-		vgui::surface()->DrawSetTextFont( hDefaultFont );
-		vgui::surface()->DrawSetTextPos( minorX, minorY );
-		vgui::surface()->DrawSetTextColor( TEXT_CLR );
-		vgui::surface()->DrawPrintText( pMinorString, V_wcslen( pMinorString ) );
-	}
-
-	// draw dialog body background
-	DrawSmearBackground( 0, y, wide, yBottom - y );
-
-	if ( pMetrics )
-	{
-		pMetrics->dialogY = y;
-		pMetrics->dialogHeight = yBottom - y;
-	}
 }
 
 void CBaseModFrame::SetupAsDialogStyle()
@@ -1087,95 +1025,4 @@ void CBaseModFrame::SetupAsDialogStyle()
 
 	// force panel to be larger so drawing can exceed
 	SetBounds( 0, y, screenWide, screenTall - y );
-}
-
-int CBaseModFrame::DrawSmearBackground( int x, int y, int wide, int tall, bool bIsFooter )
-{
-	//Draw blur before everything else
-	ITexture *pTexture = materials->FindTexture("_rt_FullFrameFB", TEXTURE_GROUP_RENDER_TARGET);
-
-	CMatRenderContextPtr pRenderContext(materials);
-
-	int realwide, realtall;
-	surface()->GetScreenSize(realwide, realtall);
-	pRenderContext->DrawScreenSpaceRectangle(m_nBlurImage, 0, 0, realwide, realtall,
-		0, 0, realwide, realtall,
-		pTexture->GetActualWidth(), pTexture->GetActualHeight());
-
-	
-	int topTall = scheme()->GetProportionalScaledValue( TOP_BORDER_HEIGHT );
-	int bottomTall = scheme()->GetProportionalScaledValue( BOTTOM_BORDER_HEIGHT );
-
-	if ( bIsFooter )
-	{
-		topTall  = 0.75f * topTall;
-		bottomTall = 0.75f * bottomTall;
-	}
-
-	int middleTall = tall - ( topTall + bottomTall );
-	if ( middleTall < 0 )
-	{
-		middleTall = 0;
-	}
-
-	surface()->DrawSetColor( m_smearColor );
-
-	// top
-	surface()->DrawSetTexture( m_nTopBorderImageId );
-	surface()->DrawTexturedSubRect( x, y, x + wide, y + topTall, 0, 0, 1, 1 );
-	y += topTall;
-
-	if ( middleTall )
-	{
-		// middle
-		surface()->DrawFilledRect( x, y, x + wide, y + middleTall );
-		y += middleTall;
-	}
-
-	// bottom
-	surface()->DrawSetTexture( m_nBottomBorderImageId );
-	surface()->DrawTexturedSubRect( x, y, x + wide, y + bottomTall, 0, 0, 1, 1 );
-	y += bottomTall;
-
-	return topTall + middleTall + bottomTall;
-}
-
-
-int CBaseModFrame::DrawBlackBackground( int x, int y, int wide, int tall, bool bIsFooter )
-{
-
-	CMatRenderContextPtr pRenderContext(materials);
-
-	int realwide, realtall;
-	surface()->GetScreenSize(realwide, realtall);
-	
-	int topTall = scheme()->GetProportionalScaledValue( TOP_BORDER_HEIGHT );
-	int bottomTall = scheme()->GetProportionalScaledValue( BOTTOM_BORDER_HEIGHT );
-
-	int middleTall = tall - ( topTall + bottomTall );
-	if ( middleTall < 0 )
-	{
-		middleTall = 0;
-	}
-
-	surface()->DrawSetColor( m_smearColor );
-
-	// top
-	surface()->DrawSetTexture( m_nTopBorderImageId );
-	surface()->DrawTexturedSubRect( x, y, x + wide, y + topTall, 0, 0, 1, 1 );
-	y += topTall;
-
-	if ( middleTall )
-	{
-		// middle
-		surface()->DrawFilledRect( x, y, x + wide, y + middleTall );
-		y += middleTall;
-	}
-
-	// bottom
-	surface()->DrawSetTexture( m_nBottomBorderImageId );
-	surface()->DrawTexturedSubRect( x, y, x + wide, y + bottomTall, 0, 0, 1, 1 );
-	y += bottomTall;
-
-	return topTall + middleTall + bottomTall;
 }

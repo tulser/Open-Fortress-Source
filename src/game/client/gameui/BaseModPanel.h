@@ -150,6 +150,7 @@ namespace BaseModUI
 		void OnEngineLevelLoadingSession( KeyValues *pEvent );
 		bool ActivateBackgroundEffects();
 
+		bool IsInLevel();
 		void PlayGameStartupSound();
 
 		static CBaseModPanel* m_CFactoryBasePanel;

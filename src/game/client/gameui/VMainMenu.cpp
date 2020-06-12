@@ -84,7 +84,7 @@ MainMenu::MainMenu( Panel *parent, const char *panelName ):
 	SetMoveable( false );
 	SetSizeable( false );
 
-	SetLowerGarnishEnabled( true );
+	SetFooterEnabled( true );
 
 	AddFrameListener( this );
 
@@ -577,7 +577,7 @@ void MainMenu::PaintBackground()
 
 	int x, y, wide, tall;
 	pPanel->GetBounds( x, y, wide, tall );
-	DrawBlackBackground( x, y, wide, tall, false );	
+	// DrawBlackBackground( x, y, wide, tall, false );	
 }
 
 void MainMenu::SetFooterState()

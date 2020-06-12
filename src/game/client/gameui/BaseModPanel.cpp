@@ -1356,14 +1356,23 @@ void CBaseModPanel::ApplySchemeSettings(IScheme *pScheme)
 	m_nProductImageWide = vgui::scheme()->GetProportionalScaledValue( logoW );
 	m_nProductImageTall = vgui::scheme()->GetProportionalScaledValue( logoH );
 
+	char background[MAX_PATH];
+	engine->GetMainMenuBackgroundName(background, MAX_PATH);
+
 	if ( aspectRatio >= 1.6f )
 	{
 		// use the widescreen version
-		Q_snprintf( m_szFadeFilename, sizeof( m_szFadeFilename ), "materials/console/%s_widescreen.vtf", "background01" );
+		Q_snprintf( m_szFadeFilename, sizeof( m_szFadeFilename ), "materials/console/%s_widescreen.vtf", background);
 	}
 	else
 	{
-		Q_snprintf( m_szFadeFilename, sizeof( m_szFadeFilename ), "materials/console/%s_widescreen.vtf", "background01" );
+		Q_snprintf( m_szFadeFilename, sizeof( m_szFadeFilename ), "materials/console/%s.vtf", background );
+	}
+
+	// Active hidden console
+	if ( GameConsole().IsConsoleVisible() )
+	{
+		GameConsole().Activate();
 	}
 }
 
@@ -1455,16 +1464,45 @@ void CBaseModPanel::DrawCopyStats()
 #endif
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: returns true if we're currently playing the game
+//-----------------------------------------------------------------------------
+bool CBaseModPanel::IsInLevel()
+{
+	const char *levelName = engine->GetLevelName();
+	if (levelName && levelName[0])//  && !engine->IsLevelMainMenuBackground())
+	{
+		return true;
+	}
+	return false;
+}
+
 //=============================================================================
 void CBaseModPanel::PaintBackground()
 {
-	if (!m_LevelLoading) // && !GameUI().IsInLevel() && !GameUI().IsInBackgroundLevel() )
+	if (!m_LevelLoading && !IsInLevel())
 	{
 		int wide, tall;
 		GetSize( wide, tall );
 
+		if (!m_flMovieFadeInTime)
+		{
+			// do the fade a little bit after the movie starts (needs to be stable)
+			// the product overlay will fade out
+			m_flMovieFadeInTime = Plat_FloatTime() + TRANSITION_TO_MOVIE_DELAY_TIME;
+		}
+
+		float flFadeDelta = RemapValClamped(Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f);
+		if ( flFadeDelta > 0.0f )
+		{
+			if (!m_pBackgroundMaterial)
+			{
+				PrepareStartupGraphic();
+			}
+			DrawStartupGraphic(flFadeDelta);
+		}
 #if 0
-		if ( true /*engine->IsTransitioningToLoad()*/ )
+		if ( false /*engine->IsTransitioningToLoad()*/ )
 		{
 			ActivateBackgroundEffects();
 

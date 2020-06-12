@@ -88,7 +88,7 @@ namespace BaseModUI {
 		static void RemoveFrameListener( IBaseModFrameListener * frameListener );
 		static void RunFrameOnListeners();
 
-		virtual bool GetLowerGarnishEnabled();
+		virtual bool GetFooterEnabled();
 
 		void CloseWithoutFade();
 
@@ -102,8 +102,6 @@ namespace BaseModUI {
 		void DrawGenericBackground();
 		void DrawDialogBackground( const char *pMajor, const wchar_t *pMajorFormatted, const char *pMinor, const wchar_t *pMinorFormatted, DialogMetrics_t *pMetrics = NULL, bool bAllCapsTitle = false, int iTitleXOffset = INT_MAX );
 		void SetupAsDialogStyle();
-		int DrawSmearBackground( int x, int y, int wide, int tall, bool bIsFooter = false );
-		int DrawBlackBackground( int x, int y, int wide, int tall, bool bIsFooter = false );	
 	protected:
 		virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 		virtual void ApplySettings(KeyValues *inResourceData);
@@ -113,7 +111,7 @@ namespace BaseModUI {
 		void SetOkButtonEnabled(bool enabled);
 		void SetCancelButtonEnabled(bool enabled);
 		void SetUpperGarnishEnabled(bool enabled);
-		void SetLowerGarnishEnabled(bool enabled);
+		void SetFooterEnabled(bool enabled);
 		void SetBloodSplatterImageEnabled( bool enabled );
 
 
@@ -127,9 +125,7 @@ namespace BaseModUI {
 		int m_TitleInsetY;
 		vgui::Label* m_LblTitle;
 
-		bool m_LowerGarnishEnabled;
-
-		bool m_UpperGarnishEnabled;
+		bool m_FooterEnabled;
 
 		bool m_OkButtonEnabled;
 		bool m_CancelButtonEnabled;
