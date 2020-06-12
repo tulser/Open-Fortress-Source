@@ -244,6 +244,9 @@ m_lastActiveUserId(0)
 	//Make it pausable When we reload, the game stops pausing on +esc
 	ConVar *sv_pausable = cvar->FindVar("sv_pausable");
 	sv_pausable->SetValue(1);
+
+	m_pVideo = new CTFVideoPanel( NULL, "BackgroundVideo" );
+	m_pVideo->SetParent( enginevgui->GetPanel( PANEL_GAMEUIDLL ) );
 }
 
 //=============================================================================
@@ -1374,6 +1377,30 @@ void CBaseModPanel::ApplySchemeSettings(IScheme *pScheme)
 	{
 		GameConsole().Activate();
 	}
+
+#define DEFAULT_RATIO_WIDE 1920.0 / 1080.0
+#define DEFAULT_RATIO 1024.0 / 768.0
+
+	if ( m_pVideo )
+	{
+		int width, height;
+		surface()->GetScreenSize( width, height );
+
+		float fRatio = ( float )width / ( float )height;
+		bool bWidescreen = ( fRatio < 1.5 ? false : true );
+
+		// GetRandomVideo( m_szVideoFile, sizeof( m_szVideoFile ), bWidescreen );
+
+		float iRatio = ( bWidescreen ? DEFAULT_RATIO_WIDE : DEFAULT_RATIO );
+		int iWide = ( float )height * iRatio + 4;
+		m_pVideo->SetBounds( -1, -1, iWide, iWide );
+
+		const char* m_szVideoFile = "media/bg_01.bik";
+
+		m_pVideo->Activate();
+		m_pVideo->BeginPlaybackNoAudio( m_szVideoFile );
+		m_pVideo->SetZPos( -10 );
+	}
 }
 
 void CBaseModPanel::DrawColoredText( vgui::HFont hFont, int x, int y, unsigned int color, const char *pAnsiText )
@@ -1498,38 +1525,33 @@ void CBaseModPanel::PaintBackground()
 		{
 			ActivateBackgroundEffects();
 
-			if ( ASWBackgroundMovie() )
+			/*
+			surface()->DrawSetColor( 255, 255, 255, 255 );
+			int x, y, w, h;
+			GetBounds( x, y, w, h );
+
+			// center, 16:9 aspect ratio
+			int width_at_ratio = h * ( 16.0f / 9.0f );
+			x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
+
+			surface()->DrawTexturedRect( x, y, x + width_at_ratio, y + h );
+			*/
+
+			if ( !m_flMovieFadeInTime )
 			{
-				ASWBackgroundMovie()->Update();
-				if ( ASWBackgroundMovie()->SetTextureMaterial() != -1 )
+				// do the fade a little bit after the movie starts (needs to be stable)
+				// the product overlay will fade out
+				m_flMovieFadeInTime = Plat_FloatTime() + TRANSITION_TO_MOVIE_DELAY_TIME;
+			}
+
+			float flFadeDelta = RemapValClamped( Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f );
+			if ( flFadeDelta > 0.0f )
+			{
+				if ( !m_pBackgroundMaterial )
 				{
-					surface()->DrawSetColor( 255, 255, 255, 255 );
-					int x, y, w, h;
-					GetBounds( x, y, w, h );
-
-					// center, 16:9 aspect ratio
-					int width_at_ratio = h * ( 16.0f / 9.0f );
-					x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
-
-					surface()->DrawTexturedRect( x, y, x + width_at_ratio, y + h );
-
-					if ( !m_flMovieFadeInTime )
-					{
-						// do the fade a little bit after the movie starts (needs to be stable)
-						// the product overlay will fade out
-						m_flMovieFadeInTime = Plat_FloatTime() + TRANSITION_TO_MOVIE_DELAY_TIME;
-					}
-
-					float flFadeDelta = RemapValClamped( Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f );
-					if ( flFadeDelta > 0.0f )
-					{
-						if ( !m_pBackgroundMaterial )
-						{
-							PrepareStartupGraphic();
-						}
-						DrawStartupGraphic( flFadeDelta );
-					}
+					PrepareStartupGraphic();
 				}
+				DrawStartupGraphic( flFadeDelta );
 			}
 		}
 	}

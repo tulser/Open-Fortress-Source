@@ -17,6 +17,7 @@
 #include "customizationdialog.h"
 
 #include <GameUI/IBasePanel.h>
+#include "vgui/tf_vgui_video.h"
 
 //#include "avi/ibik.h"
 #include "ixboxsystem.h"
@@ -251,6 +252,7 @@ namespace BaseModUI
 		void ReleaseStartupGraphic();
 		void DrawStartupGraphic( float flNormalizedAlpha );
 		IVTFTexture			*m_pBackgroundTexture;
+		CTFVideoPanel		*m_pVideo;
 
 	};
 };
