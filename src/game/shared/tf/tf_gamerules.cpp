@@ -72,7 +72,7 @@
 	#include "tf_voteissues.h"
 	#include "nav_mesh.h"
 	#include "bot/tf_bot_manager.h"
-
+	#include <../shared/gamemovement.h>
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -5263,6 +5263,9 @@ CBasePlayer *CTFGameRules::GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pI
 //			*pKiller - 
 //			*pInflictor - 
 //-----------------------------------------------------------------------------
+
+extern CMoveData *g_pMoveData;
+
 void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info)
 {
 	// Find the killer & the scorer
@@ -5312,9 +5315,9 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				//weapon specifics
 				int weaponType = GetKillingWeaponType(pInflictor, pScorer);
 				event->SetBool("humiliation", weaponType == 1 ? true : false);
-				event->SetBool("midair", pTFPlayerVictim->m_fAirStartTime &&								//player is in the air
-										 gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + 0.8f &&	//player has been in the air for a second
-										 weaponType == 2 ? true : false);									//player hit with explosive projectile
+
+				bool MidAirTime = pTFPlayerVictim->m_fAirStartTime && gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + (g_pMoveData->m_vecVelocity[2] >= 0.f ? 0.4f : 0.8f);
+				event->SetBool("midair", MidAirTime && weaponType == 2 ? true : false);
 
 				//Kamikaze
 				bool Kamikaze = pVictim != pKiller &&								//the non suicidal victim
