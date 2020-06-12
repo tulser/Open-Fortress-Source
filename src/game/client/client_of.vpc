@@ -435,6 +435,8 @@ $Project "Client (Open Fortress)"
 
 			$File	"gameui\nb_button.h"
 			$File	"gameui\nb_button.cpp"
+			$File	"gameui\nb_header_footer.h"
+			$File	"gameui\nb_header_footer.cpp"
 	
 			$File	"gameui\UI_Shared.h"
 			$File	"gameui\UIGameData.h"

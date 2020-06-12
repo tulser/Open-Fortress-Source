@@ -311,10 +311,6 @@ void MainMenu::OnCommand( const char *command )
 		CBaseModPanel::GetSingleton().OpenWindow( WT_ADDONS, this, true );
 	}
 #endif
-	else if( !Q_strcmp( command, "MyUGC" ) )
-	{
-		CBaseModPanel::GetSingleton().OpenWindow( WT_MYUGC, this, true );
-	}
 	else if ( !Q_stricmp( command, "QuitGame_NoConfirm" ) )
 	{
 		if ( IsPC() )

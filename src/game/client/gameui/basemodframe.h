@@ -12,9 +12,7 @@
 #include "vgui_controls/Panel.h"
 #include "vgui_controls/Frame.h"
 #include "tier1/utllinkedlist.h"
-
-#include <GameUI/gameui_shared.h>
-// #include "BaseModPanel.h"
+#include "BaseModPanel.h"
 
 namespace BaseModUI {
 

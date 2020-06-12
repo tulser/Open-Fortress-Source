@@ -1485,24 +1485,16 @@ void CBaseModPanel::PaintBackground()
 		int wide, tall;
 		GetSize( wide, tall );
 
-		if (!m_flMovieFadeInTime)
-		{
-			// do the fade a little bit after the movie starts (needs to be stable)
-			// the product overlay will fade out
-			m_flMovieFadeInTime = Plat_FloatTime() + TRANSITION_TO_MOVIE_DELAY_TIME;
-		}
-
-		float flFadeDelta = RemapValClamped(Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f);
-		if ( flFadeDelta > 0.0f )
-		{
-			if (!m_pBackgroundMaterial)
-			{
-				PrepareStartupGraphic();
-			}
-			DrawStartupGraphic(flFadeDelta);
-		}
-#if 0
 		if ( false /*engine->IsTransitioningToLoad()*/ )
+		{
+			// ensure the background is clear
+			// the loading progress is about to take over in a few frames
+			// this keeps us from flashing a different graphic
+			surface()->DrawSetColor(0, 0, 0, 255);
+			surface()->DrawSetTexture(m_iBackgroundImageID);
+			surface()->DrawTexturedRect(0, 0, wide, tall);
+		}
+		else
 		{
 			ActivateBackgroundEffects();
 
@@ -1516,7 +1508,7 @@ void CBaseModPanel::PaintBackground()
 					GetBounds( x, y, w, h );
 
 					// center, 16:9 aspect ratio
-					int width_at_ratio = h * (16.0f / 9.0f);
+					int width_at_ratio = h * ( 16.0f / 9.0f );
 					x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
 
 					surface()->DrawTexturedRect( x, y, x + width_at_ratio, y + h );
@@ -1525,7 +1517,7 @@ void CBaseModPanel::PaintBackground()
 					{
 						// do the fade a little bit after the movie starts (needs to be stable)
 						// the product overlay will fade out
-						m_flMovieFadeInTime	= 0;
+						m_flMovieFadeInTime = Plat_FloatTime() + TRANSITION_TO_MOVIE_DELAY_TIME;
 					}
 
 					float flFadeDelta = RemapValClamped( Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + TRANSITION_TO_MOVIE_FADE_TIME, 1.0f, 0.0f );
@@ -1540,87 +1532,6 @@ void CBaseModPanel::PaintBackground()
 				}
 			}
 		}
-		else
-		{
-			ActivateBackgroundEffects();
-
-			if ( ASWBackgroundMovie() )
-			{
-				ASWBackgroundMovie()->Update();
-
-				if (ASWBackgroundMovie()->GetVideoMaterial())
-				{
-					// Draw the polys to draw this out
-					CMatRenderContextPtr pRenderContext( materials );
-	
-					pRenderContext->MatrixMode( MATERIAL_VIEW );
-					pRenderContext->PushMatrix();
-					pRenderContext->LoadIdentity();
-
-					pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-					pRenderContext->PushMatrix();
-					pRenderContext->LoadIdentity();
-
-					pRenderContext->Bind( ASWBackgroundMovie()->GetVideoMaterial()->GetMaterial(), NULL );
-
-					CMeshBuilder meshBuilder;
-					IMesh* pMesh = pRenderContext->GetDynamicMesh( true );
-					meshBuilder.Begin( pMesh, MATERIAL_QUADS, 1 );
-
-					int xpos = 0;
-					int ypos = 0;
-					vgui::ipanel()->GetAbsPos(GetVPanel(), xpos, ypos);
-
-					float flLeftX = xpos;
-					float flRightX = xpos + ( ASWBackgroundMovie()->m_nPlaybackWidth-1 );
-
-					float flTopY = ypos;
-					float flBottomY = ypos + ( ASWBackgroundMovie()->m_nPlaybackHeight-1 );
-
-					// Map our UVs to cut out just the portion of the video we're interested in
-					float flLeftU = 0.0f;
-					float flTopV = 0.0f;
-
-					// We need to subtract off a pixel to make sure we don't bleed
-					float flRightU = ASWBackgroundMovie()->m_flU - ( 1.0f / (float) ASWBackgroundMovie()->m_nPlaybackWidth );
-					float flBottomV = ASWBackgroundMovie()->m_flV - ( 1.0f / (float) ASWBackgroundMovie()->m_nPlaybackHeight );
-
-					// Get the current viewport size
-					int vx, vy, vw, vh;
-					pRenderContext->GetViewport( vx, vy, vw, vh );
-
-					// map from screen pixel coords to -1..1
-					flRightX = FLerp( -1, 1, 0, vw, flRightX );
-					flLeftX = FLerp( -1, 1, 0, vw, flLeftX );
-					flTopY = FLerp( 1, -1, 0, vh ,flTopY );
-					flBottomY = FLerp( 1, -1, 0, vh, flBottomY );
-
-					float alpha = ((float)GetFgColor()[3]/255.0f);
-
-					for ( int corner=0; corner<4; corner++ )
-					{
-						bool bLeft = (corner==0) || (corner==3);
-						meshBuilder.Position3f( (bLeft) ? flLeftX : flRightX, (corner & 2) ? flBottomY : flTopY, 0.0f );
-						meshBuilder.Normal3f( 0.0f, 0.0f, 1.0f );
-						meshBuilder.TexCoord2f( 0, (bLeft) ? flLeftU : flRightU, (corner & 2) ? flBottomV : flTopV );
-						meshBuilder.TangentS3f( 0.0f, 1.0f, 0.0f );
-						meshBuilder.TangentT3f( 1.0f, 0.0f, 0.0f );
-						meshBuilder.Color4f( 1.0f, 1.0f, 1.0f, alpha );
-						meshBuilder.AdvanceVertex();
-					}
-	
-					meshBuilder.End();
-					pMesh->Draw();
-
-					pRenderContext->MatrixMode( MATERIAL_VIEW );
-					pRenderContext->PopMatrix();
-
-					pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-					pRenderContext->PopMatrix();
-				}
-			}
-		}
-#endif
 	}
 
 #if defined( _X360 )
