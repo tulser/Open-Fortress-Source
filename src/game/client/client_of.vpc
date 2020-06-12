@@ -512,6 +512,9 @@ $Project "Client (Open Fortress)"
 				$File	"gameui\of\of_scrollableitemlist.cpp"
 				$File	"gameui\of\of_scrollablepanellist.cpp"
 				$File	"gameui\of\of_selectionpanel.cpp"
+			
+				$File	"gameui\of\videobackground.h"
+				$File	"gameui\of\videobackground.cpp"
 			}
 		}
 	}

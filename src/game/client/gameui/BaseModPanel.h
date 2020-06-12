@@ -30,6 +30,11 @@ class CMatchmakingBasePanel;
 class CBackgroundMenuButton;
 class CGameMenu;
 
+namespace vgui
+{
+	class CVideoBackground;
+}
+
 enum
 {
 	DIALOG_STACK_IDX_STANDARD,
@@ -252,7 +257,8 @@ namespace BaseModUI
 		void ReleaseStartupGraphic();
 		void DrawStartupGraphic( float flNormalizedAlpha );
 		IVTFTexture			*m_pBackgroundTexture;
-		CTFVideoPanel		*m_pVideo;
+
+		vgui::CVideoBackground		*m_pVideo;
 
 	};
 };
