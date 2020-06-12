@@ -381,8 +381,7 @@ void CTFHudDeathNotice::Paint()
 
 		x += xMargin;
 
-		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
-
+		//C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
 
 		if ( killer[0] )
 		{
@@ -826,23 +825,20 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 			// msg.Killer.iColor = FindAcceptableContrast(tf_PR->GetPlayerColor(iKillerID), !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor, of_killfeed_color_threshold.GetFloat());
 			// msg.Assister.iColor = FindAcceptableContrast(tf_PR->GetPlayerColor(iAssisterID), !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor, of_killfeed_color_threshold.GetFloat());
 			// msg.Victim.iColor = FindAcceptableContrast(tf_PR->GetPlayerColor(iVictimID), !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor, of_killfeed_color_threshold.GetFloat());
-			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iKillerID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat()) {
+			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iKillerID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
 				msg.Killer.iColor = tf_PR->GetPlayerColor(iKillerID);
-			} else {
+			else
 				msg.Killer.iColor = !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
-			}
 
-			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iAssisterID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat()) {
+			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iAssisterID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
 				msg.Assister.iColor = tf_PR->GetPlayerColor(iAssisterID);
-			} else {
+			else
 				msg.Assister.iColor = !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
-			}
 
-			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iVictimID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat()) {
+			if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iVictimID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
 				msg.Victim.iColor = tf_PR->GetPlayerColor(iVictimID);
-			} else {
+			else
 				msg.Victim.iColor = !msg.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
-			}
 
 
 			if (event->GetInt("dominated") > 0)
