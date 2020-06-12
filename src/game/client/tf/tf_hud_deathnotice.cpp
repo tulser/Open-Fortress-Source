@@ -294,14 +294,14 @@ Color FindAcceptableContrast(Color fg, Color bg, float minimum)
 
 		}
 		
-		printf("fg_HSV: %f %f %f\n", fg_HSV.x, fg_HSV.y, fg_HSV.z);
+		// printf("fg_HSV: %f %f %f\n", fg_HSV.x, fg_HSV.y, fg_HSV.z);
 
 		HSVtoRGB(fg_HSV, new_col);
 		fg_l = Luminance( Color( new_col.x, new_col.y, new_col.z, 255 ) );
 		contrast = LuminanceContrast(fg_l, bg_l);
 	}
 
-	Msg("Old color: (%i, %i, %i) New color: (%i, %i, %i)\n", fg.r(), fg.g(), fg.b(), (int)ceil( new_col.x ), (int)ceil( new_col.y ), (int)ceil( new_col.z) );
+	// Msg("Old color: (%i, %i, %i) New color: (%i, %i, %i)\n", fg.r(), fg.g(), fg.b(), (int)ceil( new_col.x ), (int)ceil( new_col.y ), (int)ceil( new_col.z) );
 	return Color( new_col.x, new_col.y, new_col.z, 255 );
 }
 
