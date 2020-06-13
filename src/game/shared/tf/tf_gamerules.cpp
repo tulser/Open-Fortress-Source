@@ -1334,6 +1334,8 @@ CTFGameRules::CTFGameRules()
 	m_bEntityLimitPrevented = false;
 
 	m_bFirstBlood = false;
+	for(int i = 1; i <= 64; i++)
+		m_InflictorsArray[i] = NULL;
 
 	m_flIntermissionEndTime = 0.0f;
 	m_flNextPeriodicThink = 0.0f;
@@ -5304,6 +5306,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		//medals, only activate after warmup
 		if(!IsInWaitingForPlayers())
 		{
+			int weaponType = 0;
 			if(pScorer)
 			{
 				//streaks
@@ -5311,35 +5314,65 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
 				event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
 				event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
+				weaponType = GetKillingWeaponType(pInflictor, pScorer);
+			}
 
-				//weapon specifics
-				int weaponType = GetKillingWeaponType(pInflictor, pScorer);
-				event->SetBool("humiliation", weaponType == 1 ? true : false);
+			//more streaks
+			event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
+			event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 
+			//Humiliation
+			event->SetBool("humiliation", weaponType == 1 ? true : false);
+			
+			if(weaponType == 2) //inflictor is an explosive projectile
+			{
+				//***************************
+				//Midair
 				bool MidAirTime = pTFPlayerVictim->m_fAirStartTime && gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + (g_pMoveData->m_vecVelocity[2] >= 0.f ? 0.4f : 0.8f);
-				event->SetBool("midair", MidAirTime && weaponType == 2 ? true : false);
+				event->SetBool("midair", MidAirTime ? true : false);
 
+				//***************************
 				//Kamikaze
-				bool Kamikaze = pVictim != pKiller &&								//the non suicidal victim
-								pTFPlayerScorer->m_SuicideEntity &&					//scorer killed himself with something
-								pInflictor == pTFPlayerScorer->m_SuicideEntity &&	//the thing that cause the death of the victim is the thing that killed the scorer
-								weaponType == 2;									//the thing that killed both is an explosive projectile
+				m_InflictorsArray[pVictim->entindex()] = pInflictor;
+				bool Kamikaze = false;
+
+				if(pKiller != pVictim) //evaluating death of the victim
+				{
+					//scorer was killed by the same inflictor of the victim
+					Kamikaze = m_InflictorsArray[pKiller->entindex()] && pInflictor == m_InflictorsArray[pKiller->entindex()];
+				}
+				else //evaluating death of the suicidal killer
+				{
+					//kiler killed itself with something that might have caused the death of a player
+					//who died before it, we need to scout through the array to see if we find a match
+					for(int i = 1; i <= gpGlobals->maxClients; i++)
+					{
+						if(!m_InflictorsArray[i] || i == pKiller->entindex()) //ignore the index of the killer, it's a suicide of course it will match
+							continue;
+
+						if(pInflictor == m_InflictorsArray[i])
+						{
+							Kamikaze = true;
+							break;
+						}
+					}
+				}
+
 				event->SetBool("kamikaze", Kamikaze);
-				if(Kamikaze)
-					pTFPlayerScorer->m_SuicideEntity = NULL;						//clean up the suicide entity
 			}
 
 			//first blood
 			event->SetBool("firstblood", !m_bFirstBlood ? true : false);
 			m_bFirstBlood = true;
-
-			//more streaks
-			event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
-			event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
 		}
 
 		gameeventmanager->FireEvent(event);
 	}
+}
+
+void CTFGameRules::ResetDeathInflictor(int index)
+{
+	m_InflictorsArray[index] = NULL;
 }
 
 int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer)
