@@ -276,9 +276,7 @@ void CTFGameMovement::ProcessMovement(CBasePlayer *pBasePlayer, CMoveData *pMove
 
 	// Run the command.
 	if (m_pTFPlayer->m_Shared.InCond(TF_COND_SHIELD_CHARGE))
-	{
 		ShieldChargeMove();
-	}
 
 	PlayerMove();
 	FinishMove();
@@ -505,10 +503,7 @@ bool CTFGameMovement::CheckJumpButton()
 		if (bCanAirDash && m_pTFPlayer->m_Shared.GetAirDashCount() < m_pTFPlayer->GetPlayerClass()->MaxAirDashCount())
 			bAirDash = true;
 		else
-		{
-			mv->m_nOldButtons |= IN_JUMP;
 			return false;
-		}
 	}
 
 	// Check for an air dash.
@@ -580,7 +575,6 @@ bool CTFGameMovement::CheckJumpButton()
 	m_pTFPlayer->m_Shared.m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 
 	// Flag that we jumped and don't jump again until it is released.
-	mv->m_nOldButtons |= IN_JUMP;
 	m_pTFPlayer->m_Shared.SetBlockJump(JumpBuffer == 1 ? true : false); //jump successful, set the buffer
 	return true;
 }
@@ -659,10 +653,7 @@ bool CTFGameMovement::CheckLunge()
 
 	// In air, so ignore jumps
 	if (!bOnGround)
-	{
-		mv->m_nOldButtons |= IN_JUMP;
 		return false;
-	}
 
 	// Start jump animation and player sound (specific TF animation and flags).
 	m_pTFPlayer->DoAnimationEvent(PLAYERANIMEVENT_JUMP);
@@ -709,7 +700,6 @@ bool CTFGameMovement::CheckLunge()
 	mv->m_outStepHeight += 0.15f;
 
 	// Flag that we jumped and don't jump again until it is released.
-	mv->m_nOldButtons |= IN_JUMP;
 	mv->m_nOldButtons |= IN_ATTACK2;
 	m_pTFPlayer->m_Shared.SetBlockJump(true);
 	return true;
@@ -809,9 +799,7 @@ void CTFGameMovement::WaterMove(void)
 	if (mv->m_nButtons & IN_JUMP)
 	{
 		if (player->GetWaterLevel() == WL_Eyes)
-		{
 			vecWishVelocity[2] += mv->m_flClientMaxSpeed;
-		}
 	}
 	// Sinking if not moving.
 	else if (!mv->m_flForwardMove && !mv->m_flSideMove && !mv->m_flUpMove)
@@ -1399,7 +1387,7 @@ void CTFGameMovement::CheckWaterJump(void)
 	float curspeed;
 
 	// Jump button down?
-	bool bJump = ((mv->m_nButtons & IN_JUMP) != 0);
+	bool bJump = (mv->m_nButtons & IN_JUMP) != 0;
 
 	Vector forward, right;
 	AngleVectors(mv->m_vecViewAngles, &forward, &right, NULL);  // Determine movement angles
@@ -1474,8 +1462,8 @@ void CTFGameMovement::CheckWaterJump(void)
 			if ((tr.fraction < 1.0f) && (tr.plane.normal.z >= 0.7))
 			{
 				mv->m_vecVelocity[2] = TF_WATERJUMP_UP/*tf_waterjump_up.GetFloat()*/;		// Push up
-				mv->m_nOldButtons |= IN_JUMP;		// Don't jump again until released
 				player->AddFlag(FL_WATERJUMP);
+				m_pTFPlayer->m_Shared.SetBlockJump(true);
 				player->m_flWaterJumpTime = 2000.0f;	// Do this for 2 seconds
 			}
 		}
@@ -1506,11 +1494,16 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 		player->m_flWaterJumpTime = 0.0f;
 	}
 
-	// Was jump button pressed?
+	//Jumping stuff
 	if (mv->m_nButtons & IN_JUMP)
-		CheckJumpButton();
+	{
+		if (!m_pTFPlayer->m_Shared.IsJumpBlocked())
+			CheckJumpButton();
+	}
 	else
-		mv->m_nOldButtons &= ~IN_JUMP;
+	{
+		m_pTFPlayer->m_Shared.SetBlockJump(false);
+	}
 
 	// Perform regular water movement
 	WaterMove();
@@ -1597,6 +1590,9 @@ void CTFGameMovement::Friction(bool CSliding)
 //-----------------------------------------------------------------------------
 void CTFGameMovement::FullWalkMove()
 {
+	//deny jump and cslide at the start of the match when you can't move
+	bool CanMove = int(mv->m_flClientMaxSpeed) != 1;
+
 	if (!InWater())
 		StartGravity();
 
@@ -1619,14 +1615,13 @@ void CTFGameMovement::FullWalkMove()
 	}
 
 	//Jumping stuff
-	if (mv->m_nButtons & IN_JUMP)
+	if (mv->m_nButtons & IN_JUMP && CanMove)
 	{
 		if (!m_pTFPlayer->m_Shared.IsJumpBlocked())
 			CheckJumpButton();
 	}
 	else
 	{
-		mv->m_nOldButtons &= ~IN_JUMP;
 		m_pTFPlayer->m_Shared.SetBlockJump(false);
 	}
 
@@ -1643,7 +1638,7 @@ void CTFGameMovement::FullWalkMove()
 	{
 		//check if player can CSlide
 		CSliding = of_cslide.GetBool() &&												//crouch sliding is enabled
-				   mv->m_flMaxSpeed > 5 &&												//player is allowed to move
+				   CanMove &&															//player allowed to move
 				   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
 				   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
 				   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
