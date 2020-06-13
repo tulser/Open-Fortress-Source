@@ -107,11 +107,10 @@ public:
  	bool HasSavedThisMenuSession();
  	void SetSavedThisMenuSession( bool bState );
 
-	void OpenOptionsDialog(vgui::Panel *parent);
-	void OpenKeyBindingsDialog(vgui::Panel *parent);
-	void OpenCreateMultiplayerGameDialog(vgui::Panel *parent);
-	void OpenPlayerListDialog(vgui::Panel *parent);
-	void OnOpenServerBrowser(vgui::Panel *parent);
+	void OpenOptionsDialog();
+	void OpenCreateMultiplayerGameDialog();
+	void OpenPlayerListDialog();
+	void OnOpenServerBrowser();
 
 private:
 	void SendConnectedToGameMessage();
