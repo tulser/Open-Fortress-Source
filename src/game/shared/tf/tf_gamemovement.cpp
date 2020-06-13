@@ -590,7 +590,13 @@ float CTFGameMovement::CheckRamp(float flMul, int rampMode)
 	if (rampMode == 1) //Quake style
 	{
 		mv->m_vecVelocity[2] = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel()); //set velocity to what it was before touching the ground
-		flMul *= mv->m_vecVelocity[2] ? of_ramp_up_multiplier.GetFloat() : 1;
+
+		if (mv->m_vecVelocity[2]) //player has positive vertical velocity
+		{
+			float endflMul = flMul * of_ramp_up_multiplier.GetFloat();
+			if (mv->m_vecVelocity[2] + endflMul > flMul) //only demultiply if the overall resulting velZ is higher than the non-demultiplied jump velZ
+				flMul = endflMul;
+		}
 	}
 	else //source trimping
 	{
