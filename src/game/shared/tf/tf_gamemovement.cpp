@@ -473,16 +473,16 @@ bool CTFGameMovement::CheckJumpButton()
 	int JumpBuffer = of_jumpbuffer.GetInt();
 	if (JumpBuffer)
 	{
-		if (JumpBuffer == 2 ||																				//everybody buffer
-			(JumpBuffer == 1 && !m_pTFPlayer->m_Shared.IsZombie()) ||										//no zombie allowed
-			(JumpBuffer == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY))		//only Merc can have jump buffer
+		//people without buffer get to jump like when bunnyhop is off
+		if ((m_pTFPlayer->m_Shared.IsZombie() && JumpBuffer != 2) ||										//player is zombie and jump buffer is not 2
+			(JumpBuffer == -1 && m_pTFPlayer->GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY))		//jump buffer is -1 and player is not a Merc
 		{
-			JumpBuffer = 1;
+			if (mv->m_nOldButtons & IN_JUMP)
+				return false;
 		}
 		else
 		{
-			if (mv->m_nOldButtons & IN_JUMP)																//people without buffer get to jump like when bunnyhop is off
-				return false;
+			JumpBuffer = 1;
 		}
 	}
 	else //jump buffering excludes the regular OF jumping routing, only evaluate is of_jumpbuffer == 0
