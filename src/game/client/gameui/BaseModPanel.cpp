@@ -1741,11 +1741,8 @@ void CBaseModPanel::DrawStartupGraphic( float flNormalizedAlpha )
 	int h = GetTall();
 	int tw = m_pBackgroundTexture->Width();
 	int th = m_pBackgroundTexture->Height();
-
 	float depth = 0.5f;
-	int width_at_ratio = h * (16.0f / 9.0f);
-	int x = ( w * 0.5f ) - ( width_at_ratio * 0.5f );
-	DrawScreenSpaceRectangleAlpha( m_pBackgroundMaterial, x, 0, width_at_ratio, h, 8, 8, tw-8, th-8, tw, th, NULL,1,1,depth,flNormalizedAlpha );
+	DrawScreenSpaceRectangleAlpha( m_pBackgroundMaterial, 0, 0, w, h, 0, 0, tw, th, tw, th, NULL, 1, 1, depth, flNormalizedAlpha );
 }
 
 void CBaseModPanel::OnCommand(const char *command)
