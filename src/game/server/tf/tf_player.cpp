@@ -5686,7 +5686,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		else
 		{
 			//Powerup Massacre
-			pPlayerAttacker->m_iPowerupKills = m_Shared.InPowerupCond() ? pPlayerAttacker->m_iPowerupKills + 1 : 0; //count kills while holding powerup
+			pPlayerAttacker->m_iPowerupKills += m_Shared.InPowerupCond() ? 1 : 0; //count kills while holding powerup
 
 			//Excellent
 			if (pPlayerAttacker->m_iEXKills >= 9) //reset after achieving the highest EX medal
