@@ -43,7 +43,7 @@
 #include "tier0/icommandline.h"
 #include "fmtstr.h"
 
-#include "of/of_dmmodelpanel.h"
+#include "vgui/of_dmmodelpanel.h"
 
 #include <IVGuiModuleLoader.h>
 

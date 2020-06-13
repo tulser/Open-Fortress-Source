@@ -66,7 +66,7 @@
 #include "vgui/IInput.h"
 #include "vgui/IVGui.h"
 
-#include "of/videobackground.h"
+#include "vgui/videobackground.h"
 
 #include "../cdll_client_int.h"
 

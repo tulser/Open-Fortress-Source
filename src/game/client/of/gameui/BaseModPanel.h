@@ -14,7 +14,6 @@
 #include "vgui_controls/MenuItem.h"
 #include "vgui_controls/MessageDialog.h"
 #include "tier1/utllinkedlist.h"
-#include "customizationdialog.h"
 
 #include <GameUI/IBasePanel.h>
 #include "vgui/tf_vgui_video.h"
