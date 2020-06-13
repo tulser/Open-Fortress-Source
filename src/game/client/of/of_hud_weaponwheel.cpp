@@ -25,7 +25,6 @@
 #include <vgui_controls/Controls.h>
 #include "view.h"
 #include "iclientmode.h"
-#include <array>
 
 #include <vgui_controls/Controls.h>
 
@@ -55,10 +54,7 @@ public:
 	virtual bool	ShouldDraw(void);
 	virtual void	OnTick(void);
 	virtual void	Paint(void);
-	//virtual void OnMousePressed(MouseCode code);
-	//virtual void OnMessage(const KeyValues *params, VPANEL fromPanel);
-	//virtual void cursorEntered(Panel* panel);
-	//virtual void cursorExited(Panel* panel);
+	virtual void OnMouseWheeled(int delta);
 
 	void	WeaponSelected(int id);
 
@@ -84,9 +80,9 @@ public:
 
 private:
 	// How many segments do we have? Probably should be dependent on gamemode/mutator (Arsenal = 3, Otherwise = 7)
-	int		numberOfSegments = 7;
+	int		numberOfSegments = 8;
 	// The degrees of margin between each of the wheel segments
-	//int		marginBetweenSegments = 10;
+	int		marginBetweenSegments = 10;
 	// Which segment is currently selected
 	int		currentlySelectedSegment = -1;
 	// Wheel centre radius (in px)
@@ -100,6 +96,11 @@ private:
 	// The extra "height" added to each segment (helps with low-slot instances)
 	float	verticalHeight = 10.0f;
 
+	int		slotSelected = -1;
+
+	// If the player is mousewheeling on a slot, use that instead of the highlighted
+	bool	useHighlighted = false;
+
 	void RefreshWheel(void);
 
 	void RefreshCentre(void);
@@ -109,7 +110,7 @@ private:
 	bool	lastWheel = false;
 	void	CheckWheel();
 
-	std::array<Color,7> weaponColors;
+	Color* weaponColors;
 };
 
 DECLARE_HUDELEMENT(CHudWeaponWheel);
@@ -152,6 +153,8 @@ extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
 
+ConVar hud_weaponwheel_quickswitch("hud_weaponwheel_quickswitch", "0", FCVAR_ARCHIVE, "Weapon wheel selects as soon as the mouse leaves the centre circle, instead of when the weapon wheel key is lifted.");
+
 bool bWheelActive = false;
 void IN_WeaponWheelDown() {
 	bWheelActive = true;
@@ -189,17 +192,6 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 
 	RefreshCentre();
 	RefreshWheel();
-
-	
-	weaponColors = { {
-			Color(200, 200, 200, 150),
-			Color(255, 255, 100, 150),
-			Color(255, 100, 100, 150),
-			Color(25, 25, 100, 150),
-			Color(255, 255, 255, 150),
-			Color(50, 25, 10, 150),
-			Color(255, 50, 255, 150)
-		} };
 	
 	//SetUseCaptureMouse(true);
 
@@ -232,14 +224,38 @@ void CHudWeaponWheel::CheckMousePos()
 	x -= iCentreScreenX;
 	y -= iCentreScreenY;
 	float distanceSqrd = (x*x) + (y*y);
+
+	// width of each segment
+	float pointAngleFromCentre = 360 / (numberOfSegments);
+
 	// If the cursor is outside of the wheel (+ the margin size)
 	if (distanceSqrd >= (wheelRadius + wheelMargin)*(wheelRadius + wheelMargin))
 	{
-		float mousePosAsAngle = RAD2DEG ( atan2((float)y, (float)x) );
-		int selected = RoundFloatToInt( mousePosAsAngle / (360 / numberOfSegments) );
+		float mousePosAsAngle = RAD2DEG(atan2(-(float)y, (float)x)) + 90.0f - pointAngleFromCentre;
+		int selected = RoundFloatToInt( mousePosAsAngle / (360 / numberOfSegments) ) + 1;
 		if (selected < 0)
-			selected += 8;
-		WeaponSelected( selected );
+			selected += 8; //+= numberOfSegments
+		
+		char s[10];
+		Q_snprintf(s, sizeof(s), "Angle: %d.\n", mousePosAsAngle);
+
+		if (hud_weaponwheel_quickswitch.GetInt() > 0)
+		{
+			WeaponSelected( selected );
+		}
+		else
+		{
+			if (slotSelected != selected)
+			{
+				slotSelected = selected;
+				useHighlighted = true;
+			}
+		}
+	}
+	else
+	{
+		slotSelected = -1;
+		useHighlighted = false;
 	}
 }
 void CHudWeaponWheel::RefreshWheel(void)
@@ -265,17 +281,17 @@ void CHudWeaponWheel::RefreshWheel(void)
 
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
 
-		segments[i].vertices[1].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre)) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
+		segments[i].vertices[1].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
 
-		segments[i].vertices[2].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre)) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
+		segments[i].vertices[2].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
 
 		segments[i].vertices[3].Init(Vector2D(segments[i].vertices[2].m_Position.x + (centreToPoint.x * segmentExtensionLength), segments[i].vertices[2].m_Position.y + (centreToPoint.y * segmentExtensionLength)));
 
-		segments[i].vertices[5].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre)) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
+		segments[i].vertices[5].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
 
 		segments[i].vertices[4].Init(Vector2D(segments[i].vertices[5].m_Position.x + (centreToPoint.x * segmentExtensionLength), segments[i].vertices[5].m_Position.y + (centreToPoint.y * segmentExtensionLength)));
 
-		segments[i].vertices[6].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre)) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
+		segments[i].vertices[6].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
 
 		//segments[i].vertices[7].Init(Vector2D(segments[i].centreX, segments[i].centreY));
 
@@ -306,7 +322,8 @@ void CHudWeaponWheel::RefreshWheel(void)
 
 }
 
-void CHudWeaponWheel::RefreshCentre(void) {
+void CHudWeaponWheel::RefreshCentre(void)
+{
 	int width, height;
 	GetSize(width, height);
 	iCentreScreenX = width / 2;
@@ -320,6 +337,8 @@ void CHudWeaponWheel::Paint(void)
 		surface()->DrawSetColor(Color (255, 255, 0, 255));
 		surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
 	
+		surface()->DrawSetColor(Color(255, 255, 255, 100));
+
 		// Spokes!
 		for (int i = 0; i < numberOfSegments; i++) {
 			surface()->DrawSetColor(weaponColors[i]);
@@ -341,6 +360,21 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 	RefreshCentre();
 
 	RefreshWheel();
+
+	if (weaponColors) 
+	{
+		delete[] weaponColors;
+	}
+
+	weaponColors = new Color[8];
+	weaponColors[0] = Color(200, 200, 200, 150);	//melee
+	weaponColors[1] = Color(255, 255, 100, 150);	//pistols
+	weaponColors[2] = Color(255, 100, 100, 150);	//shotguns
+	weaponColors[3] = Color(25, 25, 100, 150);		//automatics
+	weaponColors[4] = Color(25, 150, 25, 150);		//rifles
+	weaponColors[5] = Color(255, 255, 255, 150);	//specials
+	weaponColors[6] = Color(50, 25, 10, 150);		//explosives
+	weaponColors[7] = Color(255, 50, 255, 150);		//supers
 
 	BaseClass::ApplySchemeSettings(pScheme);
 }
@@ -394,7 +428,8 @@ void CHudWeaponWheel::OnTick(void)
 	lastWheel = bWheelActive;
 }
 
-void CHudWeaponWheel::CheckWheel() {
+void CHudWeaponWheel::CheckWheel()
+{
 	if (bWheelActive) {
 		Activate();
 		SetMouseInputEnabled(true);
@@ -402,14 +437,44 @@ void CHudWeaponWheel::CheckWheel() {
 		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
 	}
 	else {
+		// Switch to the one the mouse is over
+		if (useHighlighted/* && hud_fastswitch.GetInt() <= 0*/)
+		{
+			// Select it and close
+			WeaponSelected( slotSelected );
+			char s[16];
+			Q_snprintf(s, 16, "slot: %d\n", slotSelected + 1);
+			Msg(s);
+			Msg("Selected weapon on close (useHighlighted was true!)\n");
+		}
 		SetMouseInputEnabled(false);
 		SetVisible(false);
 	}
 }
 
-CHudWeaponWheel::~CHudWeaponWheel() {
+void CHudWeaponWheel::OnMouseWheeled(int delta)
+{
+	if (bWheelActive) {
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if (!pPlayer)
+			return;
+
+		if (slotSelected >= 0) {
+			CBaseHudWeaponSelection::GetInstance()->SelectWeaponSlot(slotSelected + 1);
+			// Until the player highlights another slot, if they release the key then just use whatever was selected with the mousewheel ^
+			useHighlighted = false;
+		}
+	}
+}
+
+CHudWeaponWheel::~CHudWeaponWheel()
+{
 	for (int i = 0; i<numberOfSegments; i++){
 		delete buttons[i];
 	}
 	delete[] buttons;
+	if (weaponColors)
+	{
+		delete[] weaponColors;
+	}
 }
