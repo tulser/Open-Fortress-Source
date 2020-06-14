@@ -336,7 +336,6 @@ void CHudWeaponWheel::Paint(void)
 		for (int i = 0; i < numberOfSegments; i++) {
 			//surface()->DrawOutlinedCircle(segments[i].centreX, segments[i].centreY, 10, 12);
 			surface()->DrawSetTexture(-1);
-			surface()->DrawPolyLine(NUM_VERTS_SPOKE, segments[i].vertices);
 		}
 	}
 }
