@@ -28,8 +28,9 @@
 
 using namespace vgui;
 
-#define SHADOW_OFFSET 2
 #define V_LENGTH 200
+#define LINE_THICKNESS 20
+#define MIN_LINE_WIDTH 4
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -479,14 +480,14 @@ void CHudSpeedometer::QStrafeJumpHelp()
 	float sideMove = g_pMoveData->m_flSideMove;
 
 	//No movement keys pressed
-	if (!g_pMoveData->m_flForwardMove && !g_pMoveData->m_flSideMove)
+	if ((!g_pMoveData->m_flForwardMove && !g_pMoveData->m_flSideMove) || pPlayerBase->GetWaterLevel() > WL_Feet)
 		return;
 
 	Vector vel = Vector(g_pMoveData->m_vecVelocity.x, g_pMoveData->m_vecVelocity.y, 0);
 	float speed = vel.Length();
 
 	//no speed
-	if (!speed)
+	if (speed < 1.f)
 		return;
 
 	//===============================================
@@ -508,9 +509,7 @@ void CHudSpeedometer::QStrafeJumpHelp()
 
 		if (pPlayerBase->GetGroundEntity() && !(g_pMoveData->m_nButtons & (1 << 1))) //On the ground and not jumping
 		{
-			//indicator glitches off sometimes so until addressed cancel the drawing
-			return;
-
+			if (speed <= g_pMoveData->m_flMaxSpeed + 0.1f) return;
 			maxAccel = min(sv_accelerate.GetFloat() * wishSpeed * gpGlobals->interval_per_tick * pPlayerBase->GetSurfaceFriction(), wishSpeed);
 		}
 		else
@@ -524,6 +523,7 @@ void CHudSpeedometer::QStrafeJumpHelp()
 			}
 			else //Q3
 			{
+				if (speed <= g_pMoveData->m_flMaxSpeed + 0.1f) return;
 				maxAccel = min(of_q3airaccelerate.GetFloat() * wishSpeed * gpGlobals->interval_per_tick, wishSpeed);
 			}
 		}
@@ -544,35 +544,26 @@ void CHudSpeedometer::QStrafeJumpHelp()
 	minAngle = RAD2DEG(DeltaAngleRad(PAngle, minAngle + velAngle)) * FOVScale;
 	optimalAngle = RAD2DEG(DeltaAngleRad(PAngle, optimalAngle + velAngle))  * FOVScale;
 
-
 	//===============================================
 	//Draw angle indicators
-	const float thickness = 20;
-	int xOpt = iCentreScreenX - optimalAngle;
 	int xMin = iCentreScreenX - minAngle;
+	int xOpt = iCentreScreenX - optimalAngle;
 
 	int yHorizon = iCentreScreenY;
 	int yTop = yHorizon;
-	int yBottom = yHorizon + thickness;
-	yTop = clamp(yTop, 0, ScreenHeight() - thickness);
-	yBottom = clamp(yBottom, 0 + thickness, ScreenHeight());
+	int yBottom = yHorizon + LINE_THICKNESS;
+	yTop = clamp(yTop, 0, ScreenHeight() - LINE_THICKNESS);
+	yBottom = clamp(yBottom, LINE_THICKNESS, ScreenHeight());
 
 	// Gotta do it top left to bottom right
 	if (xMin >= xOpt)
 	{
-		surface()->DrawSetColor(playerColourComplementary);
-		surface()->DrawFilledRect(xOpt + SHADOW_OFFSET, yTop + SHADOW_OFFSET, xMin + SHADOW_OFFSET, yBottom + SHADOW_OFFSET);
-		surface()->DrawSetColor(*playerColour);
-		surface()->DrawFilledRect(xOpt, yTop, xMin, yBottom);
-	}
-	else
-	{
-		surface()->DrawSetColor(playerColourComplementary);
-		surface()->DrawFilledRect(xMin + SHADOW_OFFSET, yTop + SHADOW_OFFSET, xOpt + SHADOW_OFFSET, yBottom + SHADOW_OFFSET);
-		surface()->DrawSetColor(*playerColour);
-		surface()->DrawFilledRect(xMin, yTop, xOpt, yBottom);
+		int temp = xOpt;
+		xOpt = xMin;
+		xMin = temp;
 	}
 
-	//DrawTextFromNumber("MIN: ", minAngle / FOVScale, Color(200, 255, 200, 25), 150, -20);
-	//DrawTextFromNumber("OPTIMAL: ", optimalAngle / FOVScale, Color(255, 200, 200, 25), 150, -10);
+	xMin = min(xMin, xOpt - MIN_LINE_WIDTH);
+	surface()->DrawSetColor(playerColourComplementary);
+	surface()->DrawFilledRect(xMin, yTop, xOpt, yBottom);
 }

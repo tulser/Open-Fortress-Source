@@ -1002,6 +1002,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 	}
 	Assert(mv->m_vecVelocity.z == 0.0f);
 
+	/* no make it quake like
 	// Now reduce their backwards speed to some percent of max, if they are travelling backwards
 	// unless they are under some minimum, to not penalize deployed snipers or heavies
 	if (tf_clamp_back_speed.GetFloat() < 1.0 && VectorLength(mv->m_vecVelocity) > tf_clamp_back_speed_min.GetFloat())
@@ -1036,6 +1037,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 			}
 		}
 	}
+	*/
 
 	// Add base velocity to the player's current velocity - base velocity = velocity from conveyors, etc.
 	VectorAdd(mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity);
