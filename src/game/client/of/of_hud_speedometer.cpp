@@ -564,6 +564,6 @@ void CHudSpeedometer::QStrafeJumpHelp()
 	}
 
 	xMin = min(xMin, xOpt - MIN_LINE_WIDTH);
-	surface()->DrawSetColor(playerColourComplementary);
+	surface()->DrawSetColor(*playerColour);
 	surface()->DrawFilledRect(xMin, yTop, xOpt, yBottom);
 }
