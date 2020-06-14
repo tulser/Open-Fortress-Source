@@ -67,7 +67,9 @@ public:
 		}
 		// Screenspace XY centre
 		int centreX, centreY;
-		
+
+		int *outLinesX, *outLinesY;
+
 		vgui::Vertex_t vertices[NUM_VERTS_SPOKE];
 
 		// The angle around the wheel that this segment is centred
@@ -106,6 +108,9 @@ private:
 	void RefreshCentre(void);
 	int iCentreScreenX;
 	int iCentreScreenY;
+
+	int iCentreScreenX_const;
+	int iCentreScreenY_const;
 
 	bool	lastWheel = false;
 	void	CheckWheel();
@@ -189,7 +194,6 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	SetTitleBarVisible(false);
 	SetProportional(true);
 
-
 	RefreshCentre();
 	RefreshWheel();
 	
@@ -200,10 +204,6 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 
 void CHudWeaponWheel::WeaponSelected(int id) 
 {
-	// HOW?
-	if(!bWheelActive) 
-		return;
-
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 		return;
@@ -258,6 +258,7 @@ void CHudWeaponWheel::CheckMousePos()
 		useHighlighted = false;
 	}
 }
+
 void CHudWeaponWheel::RefreshWheel(void)
 {
 	if (segments) {
@@ -308,6 +309,23 @@ void CHudWeaponWheel::RefreshWheel(void)
 		delete[] buttons;
 	}
 
+	for (int i = 0; i < numberOfSegments; i++){
+		if (segments[i].outLinesX) {
+			delete[] segments[i].outLinesX;
+		}
+		if (segments[i].outLinesY) {
+			delete[] segments[i].outLinesY;
+		}
+		segments[i].outLinesX = new int[numberOfSegments];
+		segments[i].outLinesY = new int[numberOfSegments];
+
+		for (int j = 0; j < NUM_VERTS_SPOKE; j++)
+		{
+			segments[i].outLinesX[j] = segments[i].vertices[j].m_Position.x;
+			segments[i].outLinesY[j] = segments[i].vertices[j].m_Position.y;
+		}
+	}
+
 	/*buttons = new CHudWeaponSpoke*[numberOfSegments];
 	for (int i = 0; i < numberOfSegments; i++) {
 		char s[8];
@@ -326,8 +344,10 @@ void CHudWeaponWheel::RefreshCentre(void)
 {
 	int width, height;
 	GetSize(width, height);
-	iCentreScreenX = width / 2;
-	iCentreScreenY = height / 2;
+	iCentreScreenX_const = width / 2;
+	iCentreScreenY_const = height / 2;
+	iCentreScreenX = iCentreScreenX_const;
+	iCentreScreenY = iCentreScreenY_const;
 }
 
 void CHudWeaponWheel::Paint(void)
@@ -341,10 +361,16 @@ void CHudWeaponWheel::Paint(void)
 
 		// Spokes!
 		for (int i = 0; i < numberOfSegments; i++) {
-			surface()->DrawSetColor(weaponColors[i]);
-			//surface()->DrawOutlinedCircle(segments[i].centreX, segments[i].centreY, 10, 12);
+			surface()->DrawSetColor(weaponColors[i]); //surface()->DrawSetColor(*weaponColors[i]);
 			surface()->DrawSetTexture(-1);
 			surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segments[i].vertices);
+		}
+
+		// Now the outline
+		surface()->DrawSetColor(Color(255, 255, 255, 255));
+		for (int i = 0; i < numberOfSegments; i++) {
+			surface()->DrawSetTexture(-1);
+			surface()->DrawPolyLine(segments[i].outLinesX, segments[i].outLinesY, NUM_VERTS_SPOKE);
 		}
 	}
 }
@@ -434,7 +460,15 @@ void CHudWeaponWheel::CheckWheel()
 		Activate();
 		SetMouseInputEnabled(true);
 		RequestFocus();
-		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
+
+		vgui::input()->SetCursorPos(iCentreScreenX_const, iCentreScreenY_const);
+		
+		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
+		// On Windows, this should still let us start at iCentreScreenXY
+//		int x = 0;
+//		int y = 0;
+		vgui::input()->GetCursorPos(iCentreScreenX, iCentreScreenY);
+		Msg("Pos: %i, %i\n", iCentreScreenX, iCentreScreenY);
 	}
 	else {
 		// Switch to the one the mouse is over
@@ -451,6 +485,7 @@ void CHudWeaponWheel::CheckWheel()
 		SetVisible(false);
 	}
 }
+
 
 void CHudWeaponWheel::OnMouseWheeled(int delta)
 {

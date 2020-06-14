@@ -550,7 +550,6 @@ public:
 	int					m_iEXKills;
 	int					m_iSpreeKills;
 	int					m_iImpressiveCount;
-	CBaseEntity			*m_SuicideEntity;
 
 private:
 
