@@ -1176,6 +1176,7 @@ void CBaseEntity::VPhysicsUpdate( IPhysicsObject *pPhysics )
 					SetMoveType( MOVETYPE_NONE );
 					Vector vecOrigin;
 					SetAbsOrigin( vecOrigin );
+					VPhysicsDestroyObject();
 #ifdef OF_DLL					
 					UTIL_Remove( this );
 #else
