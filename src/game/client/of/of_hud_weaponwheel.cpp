@@ -81,6 +81,7 @@ public:
 
 		// Keeps track of the weapon we have currently selected in this slot
 		int bucketSelected = 0;
+		int defaultBucket = 0;
 	};
 
 	WheelSegment *segments;
@@ -100,8 +101,6 @@ private:
 	float	segmentExtensionLength = 60.0f;
 	// px margin between wheel centre circle and the segments
 	int		wheelMargin = 20;
-	// The extra "height" added to each segment (helps with low-slot instances) removeme
-	//float	verticalHeight = 20.0f;
 	
 	// Offset from the centre that the slot text resides
 	int		textOffset = 25;
@@ -121,8 +120,8 @@ private:
 	int iCentreScreenX;
 	int iCentreScreenY;
 
-	int iCentreScreenX_const;
-	int iCentreScreenY_const;
+	int iCentreWheelX;
+	int iCentreWheelY;
 
 	bool	lastWheel = false;
 	void	CheckWheel();
@@ -177,7 +176,7 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 
 	SetTitle("", true);
 
-	// load the new scheme early!!
+	// load the new scheme early
 	SetScheme("ClientScheme");
 	SetMoveable(false);
 	SetSizeable(false);
@@ -189,8 +188,6 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	RefreshCentre();
 	RefreshWheelVerts();
 	
-	//SetUseCaptureMouse(true);
-
 	ivgui()->AddTickSignal(GetVPanel());
 }
 
@@ -201,10 +198,6 @@ void CHudWeaponWheel::WeaponSelected(int id)
 		return;
 
 	CBaseHudWeaponSelection::GetInstance()->SelectWeaponSlot( id+1 );
-	
-	char s[24];
-	Q_snprintf(s, sizeof(s), "weapon %d selected. \n", id+1);
-	Msg(s);
 
 	bWheelActive = false;
 }
@@ -251,26 +244,6 @@ void CHudWeaponWheel::CheckMousePos()
 	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Gets specified icon
-//-----------------------------------------------------------------------------
-/*CHudTexture *CHudWeaponWheel::GetIcon(const char *szIcon, bool bInvert)
-{
-	// get the inverted version if specified
-	if (bInvert && 0 == V_strncmp("d_", szIcon, 2))
-	{
-		// change prefix from d_ to dneg_
-		char szIconTmp[255] = "dneg_";
-		V_strcat(szIconTmp, szIcon + 2, ARRAYSIZE(szIconTmp));
-		CHudTexture *pIcon = gHUD.GetIcon(szIconTmp);
-		// return inverted version if found
-		if (pIcon)
-			return pIcon;
-		// if we didn't find the inverted version, keep going and try the normal version
-	}
-	return gHUD.GetIcon(szIcon);
-}*/
-
 void CHudWeaponWheel::RefreshEquippedWeapons(void)
 {
 	if (!segments)
@@ -286,7 +259,6 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 			CBaseCombatWeapon *weaponInSlot;
 			for (int bucketSlot = 0; bucketSlot < MAX_WEPS_PER_SLOT; bucketSlot++)
 			{
-				
 				weaponInSlot = GetHudWeaponSelection()->GetWeaponInSlot(slot, bucketSlot);
 				if (weaponInSlot)
 				{
@@ -294,6 +266,7 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 					segments[slot].bHasIcon = true;
 					if (isFirstBucket)
 					{ 
+						segments[slot].defaultBucket = bucketSlot;
 						segments[slot].bucketSelected = bucketSlot;
 						isFirstBucket = false;
 					}
@@ -303,10 +276,6 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 		}
 
 	}
-
-	/*Q_snprintf(segment.iconName, sizeof(segment.iconName), "d_%s", iconWeaponNames[i]);
-	segment.imageIcon = GetIcon(segment.iconName, false);
-	segment.bHasIcon = true;*/
 }
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
@@ -368,10 +337,11 @@ void CHudWeaponWheel::RefreshCentre(void)
 {
 	int width, height;
 	GetSize(width, height);
-	iCentreScreenX_const = width / 2;
-	iCentreScreenY_const = height / 2;
-	iCentreScreenX = iCentreScreenX_const;
-	iCentreScreenY = iCentreScreenY_const;
+	//iCentreWheelX = width / 2;
+	iCentreWheelX = 3 * width / 4;
+	iCentreWheelY = height / 2;
+	iCentreScreenX = iCentreWheelX;
+	iCentreScreenY = iCentreWheelY;
 }
 
 void CHudWeaponWheel::DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
@@ -422,26 +392,15 @@ void CHudWeaponWheel::DrawString(wchar_t *text, int xpos, int ypos, Color col, b
 	//charCount *= m_flTextScan;
 	for (wchar_t *pch = text; charCount > 0; pch++)
 	{
-		/*if (*pch == '\n')
-		{
-			// newline character, move to the next line
-			surface()->DrawSetTextPos(x + ((m_flLargeBoxWide - slen) / 2), ypos + (surface()->GetFontTall(m_hTextFont) * 1.1f));
-		}
-		else if (*pch == '\r')
-		{
-			// do nothing
-		}
-		else*/
-		//{
-			surface()->DrawUnicodeChar(*pch);
-			charCount--;
-		//}
+		surface()->DrawUnicodeChar(*pch);
+		charCount--;
 	}
 }
 
 void CHudWeaponWheel::Paint(void)
 {
-	if (bWheelActive &&  bWheelLoaded) {
+	if (bWheelActive &&  bWheelLoaded)
+	{
 		// Wheel centre
 		surface()->DrawSetColor(Color(255, 255, 0, 255));
 		surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
@@ -449,7 +408,8 @@ void CHudWeaponWheel::Paint(void)
 		surface()->DrawSetColor(Color(255, 255, 255, 100));
 
 		// Spokes!
-		for (int i = 0; i < numberOfSegments; i++) {
+		for (int i = 0; i < numberOfSegments; i++)
+		{
 			WheelSegment segment = segments[i];
 			surface()->DrawSetColor(weaponColors[i]);
 			surface()->DrawSetTexture(-1);
@@ -457,7 +417,8 @@ void CHudWeaponWheel::Paint(void)
 		}
 
 		// Now the outline, slot number, and ammo
-		for (int i = 0; i < numberOfSegments; i++) {
+		for (int i = 0; i < numberOfSegments; i++)
+		{
 			WheelSegment segment = segments[i];
 
 			surface()->DrawSetColor(Color(255, 255, 255, 255));
@@ -470,8 +431,8 @@ void CHudWeaponWheel::Paint(void)
 			int xpos = iCentreScreenX + (segment.angleSin * offset);
 			int ypos = iCentreScreenY + (segment.angleCos * offset);
 
-			DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
-			DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
+			//DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
+			//DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
 
 			CBaseHudWeaponSelection* weaponSelect = GetHudWeaponSelection();
 
@@ -483,22 +444,19 @@ void CHudWeaponWheel::Paint(void)
 				// Draw the icon
 				if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
 				{
-					offset += 50;
+					offset += 60;
 					xpos = iCentreScreenX + (segment.angleSin * offset);
 					ypos = iCentreScreenY + (segment.angleCos * offset);
 
 					const float flScale = 0.5f;
-					int iconActualWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
+					int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
 					int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f);
 
-					iconActualWide *= flScale;
+					iconWide *= flScale;
 					iconTall *= flScale;
-
-					xpos -= iconActualWide / 2;
-					ypos -= iconTall / 2;
-
+					
 					// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos, ypos, iconActualWide, iconTall, weaponColors[i]);
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, weaponColors[i]);
 
 				}
 
@@ -562,7 +520,7 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 	iconWeaponNames[6] = "dynamite_bundle";
 	iconWeaponNames[7] = "bfg";*/
 
-	for (int i = 0; i < numberOfSegments; i++) {
+	/*for (int i = 0; i < numberOfSegments; i++) {
 		
 		wchar_t slotText[64];
 		char text[64];
@@ -573,7 +531,7 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 		slotNames[i] = new wchar_t[sizeof(slotText)];
 
 		Q_wcsncpy(slotNames[i], slotText, sizeof(slotText));
-	}
+	}*/
 
 	BaseClass::ApplySchemeSettings(pScheme);
 }
@@ -597,9 +555,8 @@ bool CHudWeaponWheel::ShouldDraw(void)
 
 	// Now let the base class decide our fate... (Used for turning of during deathcams etc., trust Robin)
 	if (bWheelActive)
-	{
 		return CHudElement::ShouldDraw();
-	}
+
 	return false;
 }
 
@@ -615,14 +572,12 @@ void CHudWeaponWheel::OnTick(void)
 		return;
 
 	// If weapon wheel active bool has changed, change mouse input capabilities etc
-	if (lastWheel != bWheelActive) {
+	if (lastWheel != bWheelActive)
 		CheckWheel();
-	}
+
 
 	if (bWheelActive) 
-	{
 		CheckMousePos();
-	}
 
 	// Scan for changes in the number of weapons we have
 	int weaponsThisTick = 0;
@@ -666,11 +621,17 @@ void CHudWeaponWheel::CheckWheel()
 			RefreshEquippedWeapons();
 		}
 
+		// Switch all the selected buckets back to the default
+		for (int slot = 0; slot < numberOfSegments; slot++)
+		{
+			segments[slot].bucketSelected = segments[slot].defaultBucket;
+		}
+
 		Activate();
 		SetMouseInputEnabled(true);
 		RequestFocus();
 
-		vgui::input()->SetCursorPos(iCentreScreenX_const, iCentreScreenY_const);
+		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
 		
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
@@ -686,10 +647,6 @@ void CHudWeaponWheel::CheckWheel()
 		{
 			// Select it and close
 			WeaponSelected( slotSelected );
-			char s[16];
-			Q_snprintf(s, 16, "slot: %d\n", slotSelected + 1);
-			Msg(s);
-			Msg("Selected weapon on close (useHighlighted was true!)\n");
 		}
 		SetMouseInputEnabled(false);
 		SetVisible(false);
