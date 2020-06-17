@@ -443,9 +443,9 @@ void CHudWeaponWheel::Paint(void)
 {
 	if (bWheelActive &&  bWheelLoaded) {
 		// Wheel centre
-		surface()->DrawSetColor(Color (255, 255, 0, 255));
+		surface()->DrawSetColor(Color(255, 255, 0, 255));
 		surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
-	
+
 		surface()->DrawSetColor(Color(255, 255, 255, 100));
 
 		// Spokes!
@@ -469,8 +469,8 @@ void CHudWeaponWheel::Paint(void)
 
 			int xpos = iCentreScreenX + (segment.angleSin * offset);
 			int ypos = iCentreScreenY + (segment.angleCos * offset);
-			
-			DrawString(slotNames[i], xpos+1, ypos+1, Color(0,0,0,255), true);
+
+			DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
 			DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
 
 			CBaseHudWeaponSelection* weaponSelect = GetHudWeaponSelection();
@@ -478,18 +478,30 @@ void CHudWeaponWheel::Paint(void)
 			// Display the currently select weapon's icon and ammo
 			C_BaseCombatWeapon *pWeapon = weaponSelect->GetWeaponInSlot(i, segment.bucketSelected);
 
-			/*for (int bucket = 0; bucket < 16; bucket++)
-			{
-				pWeapon = weaponSelect->GetWeaponInSlot(i, bucket);
-				if (pWeapon)
-				{
-					// Found a valid weapon! exit the lop
-					break;
-				}
-			}*/
-
 			if (pWeapon)
 			{
+				// Draw the icon
+				if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
+				{
+					offset += 50;
+					xpos = iCentreScreenX + (segment.angleSin * offset);
+					ypos = iCentreScreenY + (segment.angleCos * offset);
+
+					const float flScale = 0.5f;
+					int iconActualWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
+					int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f);
+
+					iconActualWide *= flScale;
+					iconTall *= flScale;
+
+					xpos -= iconActualWide / 2;
+					ypos -= iconTall / 2;
+
+					// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos, ypos, iconActualWide, iconTall, weaponColors[i]);
+
+				}
+
 				Color ammoColor = Color(255, 255, 255, 255);
 
 				if (!pWeapon->CanBeSelected())
@@ -497,59 +509,18 @@ void CHudWeaponWheel::Paint(void)
 					ammoColor = Color(255, 0, 0, 255);
 				}
 
-				offset += 32;
-				xpos = iCentreScreenX + (segment.angleSin * offset);
-				ypos = iCentreScreenY + (segment.angleCos * offset);
-				
 				ammoColor = Color(255, 255, 255, 255);
 				wchar_t pText[64];
 
 				if (pWeapon->Clip1() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo() ), 0);
+					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo()), 0);
 				else if (pWeapon->Clip2() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip2(), pWeapon->ReserveAmmo() ), 0);
+					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip2(), pWeapon->ReserveAmmo()), 0);
 				else if (pWeapon->ReserveAmmo() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d", pWeapon->ReserveAmmo() ), 0);
+					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d", pWeapon->ReserveAmmo()), 0);
 
-				/*g_pVGuiLocalize->ConstructString(pText, sizeof(pText),
-					pWeapon->Clip1() > -1 ? VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo()) : VarArgs("%d", pWeapon->ReserveAmmo()),
-					0);*/
-
-				//surface()->DrawSetTextPos(xpos, ypos);
-				//surface()->DrawSetTextColor(ammoColor);
-				//surface()->DrawPrintText(pText, sizeof(pText));
+				DrawString(pText, xpos - 1, ypos - 1, Color(0,0,0,255), true);
 				DrawString(pText, xpos, ypos, ammoColor, true);
-			}
-			
-
-			// Draw the icon
-			if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
-			{
-				const float flScale = 0.5f;
-				int iconActualWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
-				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f);
-
-				iconActualWide *= flScale;
-				iconTall *= flScale;
-
-				offset += 80;
-				xpos = iCentreScreenX + (segment.angleSin * offset);
-				ypos = iCentreScreenY + (segment.angleCos * offset);
-
-				xpos -= iconActualWide / 2;
-				ypos -= iconTall / 2;
-
-				// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
-				segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos, ypos, iconActualWide, iconTall, weaponColors[i]);
-			}
-			else
-			{
-				// error!
-				offset += 80;
-				xpos = iCentreScreenX + (segment.angleSin * offset);
-				ypos = iCentreScreenY + (segment.angleCos * offset);
-				surface()->DrawSetColor(Color(255, 0, 0, 255));
-				surface()->DrawFilledRect(xpos - 5, ypos - 5, xpos + 5, ypos + 5);
 			}
 		}
 	}
