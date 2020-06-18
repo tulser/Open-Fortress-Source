@@ -25,7 +25,7 @@
 #include <vgui_controls/Controls.h>
 #include "view.h"
 #include "iclientmode.h"
-
+#include "tf_imagepanel.h"
 #include <vgui_controls/Controls.h>
 
 
@@ -35,7 +35,7 @@
 using namespace vgui;
 
 // Vertices per segment of the wheel (todo make me 4)
-#define NUM_VERTS_SPOKE 7
+#define NUM_VERTS_SPOKE 4
 // Realistically, how many weapons are we gonna have in each slot
 #define MAX_WEPS_PER_SLOT 8
 
@@ -96,9 +96,9 @@ private:
 	// Wheel centre radius (in px)
 	float	wheelRadius = 100.0f;
 	// Wheel outer spoke radius (in px) (calculated as wheelRadius + outerRadius)
-	float	outerRadius = 60.0f;
+	float	outerRadius = 100.0f;
 	// The length extra squared bit we add to the end
-	float	segmentExtensionLength = 60.0f;
+	// float	segmentExtensionLength = 60.0f;
 	// px margin between wheel centre circle and the segments
 	int		wheelMargin = 20;
 	
@@ -138,7 +138,11 @@ private:
 	void DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
 	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText");
-
+	
+	// The texture to use for each segment (gets loaded from the .res file)
+	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
+	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
+	
 	// Used as the default icon for each slot
 	//const char *defaultIconWeaponNames[8];
 };
@@ -174,7 +178,7 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	SetHiddenBits(HIDEHUD_MISCSTATUS);
 	//SetHiddenBits(HIDEHUD_WEAPONSELECTION);
 
-	SetTitle("", true);
+	//SetTitle("", true);
 
 	// load the new scheme early
 	SetScheme("ClientScheme");
@@ -305,9 +309,11 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 		segment.centreX = iCentreScreenX + ( sin(DEG2RAD(currentCentreAngle) ) * (wheelRadius + wheelMargin));
 		segment.centreY = iCentreScreenY + ( cos(DEG2RAD(currentCentreAngle) ) * (wheelRadius + wheelMargin));
 
-		segment.vertices[0].Init(Vector2D(segment.centreX, segment.centreY));
-
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
+
+		// If using primative blockcolour beta UI
+		/*
+		segment.vertices[0].Init(Vector2D(segment.centreX, segment.centreY));
 
 		segment.vertices[1].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
 
@@ -320,8 +326,30 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 		segment.vertices[4].Init(Vector2D(segment.vertices[5].m_Position.x + (centreToPoint.x * segmentExtensionLength), segment.vertices[5].m_Position.y + (centreToPoint.y * segmentExtensionLength)));
 
 		segment.vertices[6].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
+		*/
 
-		
+		// If using materials/hud/weaponwheel_panel.vtf icon
+		// 1 2 5 6
+		segment.vertices[0].Init(
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))),
+			Vector2D(0, 0)
+			);
+
+		segment.vertices[1].Init(
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))),
+			Vector2D(1, 0)
+			);
+
+		segment.vertices[2].Init(
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))),
+			Vector2D(1, 1)
+			);
+
+		segment.vertices[3].Init(
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))),
+			Vector2D(0, 1)
+			);
+
 		segment.angleSin = sin(DEG2RAD(currentCentreAngle));
 		segment.angleCos = cos(DEG2RAD(currentCentreAngle));
 	
@@ -403,7 +431,9 @@ void CHudWeaponWheel::Paint(void)
 	{
 		// Wheel centre
 		surface()->DrawSetColor(Color(255, 255, 0, 255));
-		surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
+		//surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
+		surface()->DrawSetTexture(m_nCircleTextureId);
+		surface()->DrawTexturedRect(iCentreScreenX - wheelRadius, iCentreScreenY - wheelRadius, iCentreScreenX + wheelRadius, iCentreScreenY + wheelRadius);
 
 		surface()->DrawSetColor(Color(255, 255, 255, 100));
 
@@ -412,18 +442,37 @@ void CHudWeaponWheel::Paint(void)
 		{
 			WheelSegment segment = segments[i];
 			surface()->DrawSetColor(weaponColors[i]);
-			surface()->DrawSetTexture(-1);
+			surface()->DrawSetTexture(m_nPanelTextureId);
 			surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
 		}
+
+		//deleteme
+		/*surface()->DrawSetColor(Color(255, 255, 255, 255));
+		surface()->DrawSetTexture(m_nPanelTextureId);
+		surface()->DrawTexturedRect(250, 250, 500, 500);
+		
+		//deletemetoo
+		//clockwise
+		Vertex_t vertices[4];
+		vertices[0].Init(Vector2D(64, 0), Vector2D(0, 0));
+		vertices[1].Init(Vector2D(64 + 128, 0), Vector2D(1, 0));
+		vertices[2].Init(Vector2D(256, 256), Vector2D(1, 1));
+		vertices[3].Init(Vector2D(0, 256), Vector2D(0, 1));
+		// maybe clipverts?
+		surface()->DrawTexturedPolygon(4, vertices);*/
+
+		
+		//this->DrawTexturedBox(50, 250, 50, 50, Color(255, 255, 255, 255), 0.5f);
 
 		// Now the outline, slot number, and ammo
 		for (int i = 0; i < numberOfSegments; i++)
 		{
 			WheelSegment segment = segments[i];
 
-			surface()->DrawSetColor(Color(255, 255, 255, 255));
-			surface()->DrawSetTexture(-1);
-			surface()->DrawTexturedPolyLine(segment.vertices, NUM_VERTS_SPOKE);
+			// Outline
+			//surface()->DrawSetColor(Color(255, 255, 255, 255));
+			//surface()->DrawSetTexture(m_nPanelTextureId);
+			//surface()->DrawTexturedPolyLine(segment.vertices, NUM_VERTS_SPOKE);
 
 			// Slot number + shadow
 			int offset = wheelRadius + textOffset;
