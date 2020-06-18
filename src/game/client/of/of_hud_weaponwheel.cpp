@@ -94,7 +94,7 @@ private:
 	// Which segment is currently selected
 	int		currentlySelectedSegment = -1;
 	// Wheel centre radius (in px)
-	float	wheelRadius = 100.0f;
+	float	wheelRadius = 128.0f;//100.0f;
 	// Wheel outer spoke radius (in px) (calculated as wheelRadius + outerRadius)
 	float	outerRadius = 100.0f;
 	// The length extra squared bit we add to the end
@@ -127,7 +127,7 @@ private:
 	void	CheckWheel();
 
 	Color* weaponColors;
-
+	
 	// Slot numbers formatted & ready for printing. Assumes that we never have more than 16 slots, which is a safe bet.
 	wchar_t* slotNames[16];
 
@@ -175,10 +175,8 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent(pParent);
 
-	SetHiddenBits(HIDEHUD_MISCSTATUS);
-	//SetHiddenBits(HIDEHUD_WEAPONSELECTION);
-
-	//SetTitle("", true);
+	//SetHiddenBits(HIDEHUD_MISCSTATUS);
+	SetHiddenBits(HIDEHUD_WEAPONSELECTION);
 
 	// load the new scheme early
 	SetScheme("ClientScheme");
@@ -223,7 +221,7 @@ void CHudWeaponWheel::CheckMousePos()
 		float mousePosAsAngle = RAD2DEG(atan2(-(float)y, (float)x)) + 90.0f - pointAngleFromCentre;
 		int selected = RoundFloatToInt( mousePosAsAngle / (360 / numberOfSegments) ) + 1;
 		if (selected < 0)
-			selected += 8; //+= numberOfSegments
+			selected += 8;
 		
 		char s[10];
 		Q_snprintf(s, sizeof(s), "Angle: %d.\n", mousePosAsAngle);
@@ -328,8 +326,6 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 		segment.vertices[6].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
 		*/
 
-		// If using materials/hud/weaponwheel_panel.vtf icon
-		// 1 2 5 6
 		segment.vertices[0].Init(
 			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))),
 			Vector2D(0, 0)
@@ -352,20 +348,19 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		segment.angleSin = sin(DEG2RAD(currentCentreAngle));
 		segment.angleCos = cos(DEG2RAD(currentCentreAngle));
-	
+
 		segments[i] = segment;
 
 		currentCentreAngle += 360 / numberOfSegments;
 	}
 
-	 bWheelLoaded = true;
+	bWheelLoaded = true;
 }
 
 void CHudWeaponWheel::RefreshCentre(void)
 {
 	int width, height;
 	GetSize(width, height);
-	//iCentreWheelX = width / 2;
 	iCentreWheelX = 3 * width / 4;
 	iCentreWheelY = height / 2;
 	iCentreScreenX = iCentreWheelX;
@@ -429,51 +424,22 @@ void CHudWeaponWheel::Paint(void)
 {
 	if (bWheelActive &&  bWheelLoaded)
 	{
-		// Wheel centre
-		surface()->DrawSetColor(Color(255, 255, 0, 255));
-		//surface()->DrawOutlinedCircle(iCentreScreenX, iCentreScreenY, wheelRadius, 12);
+		surface()->DrawSetColor(Color (255, 255, 255, 255));
 		surface()->DrawSetTexture(m_nCircleTextureId);
 		surface()->DrawTexturedRect(iCentreScreenX - wheelRadius, iCentreScreenY - wheelRadius, iCentreScreenX + wheelRadius, iCentreScreenY + wheelRadius);
-
-		surface()->DrawSetColor(Color(255, 255, 255, 100));
-
+		
 		// Spokes!
+		surface()->DrawSetTexture(m_nPanelTextureId);
 		for (int i = 0; i < numberOfSegments; i++)
 		{
 			WheelSegment segment = segments[i];
-			surface()->DrawSetColor(weaponColors[i]);
-			surface()->DrawSetTexture(m_nPanelTextureId);
 			surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
 		}
-
-		//deleteme
-		/*surface()->DrawSetColor(Color(255, 255, 255, 255));
-		surface()->DrawSetTexture(m_nPanelTextureId);
-		surface()->DrawTexturedRect(250, 250, 500, 500);
-		
-		//deletemetoo
-		//clockwise
-		Vertex_t vertices[4];
-		vertices[0].Init(Vector2D(64, 0), Vector2D(0, 0));
-		vertices[1].Init(Vector2D(64 + 128, 0), Vector2D(1, 0));
-		vertices[2].Init(Vector2D(256, 256), Vector2D(1, 1));
-		vertices[3].Init(Vector2D(0, 256), Vector2D(0, 1));
-		// maybe clipverts?
-		surface()->DrawTexturedPolygon(4, vertices);*/
-
-		
-		//this->DrawTexturedBox(50, 250, 50, 50, Color(255, 255, 255, 255), 0.5f);
 
 		// Now the outline, slot number, and ammo
 		for (int i = 0; i < numberOfSegments; i++)
 		{
 			WheelSegment segment = segments[i];
-
-			// Outline
-			//surface()->DrawSetColor(Color(255, 255, 255, 255));
-			//surface()->DrawSetTexture(m_nPanelTextureId);
-			//surface()->DrawTexturedPolyLine(segment.vertices, NUM_VERTS_SPOKE);
-
 			// Slot number + shadow
 			int offset = wheelRadius + textOffset;
 
@@ -488,6 +454,7 @@ void CHudWeaponWheel::Paint(void)
 			// Display the currently select weapon's icon and ammo
 			C_BaseCombatWeapon *pWeapon = weaponSelect->GetWeaponInSlot(i, segment.bucketSelected);
 
+			Color playerColour = Color(of_color_r.GetInt(), of_color_g.GetInt(), of_color_b.GetInt(), 255);
 			if (pWeapon)
 			{
 				// Draw the icon
@@ -505,7 +472,7 @@ void CHudWeaponWheel::Paint(void)
 					iconTall *= flScale;
 					
 					// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, weaponColors[i]);
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, playerColour);
 
 				}
 
