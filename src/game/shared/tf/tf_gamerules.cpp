@@ -5307,6 +5307,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		if(!IsInWaitingForPlayers())
 		{
 			int weaponType = 0;
+
 			if(pScorer)
 			{
 				//streaks
@@ -5336,7 +5337,7 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				m_InflictorsArray[pVictim->entindex()] = pInflictor;
 				bool Kamikaze = false;
 
-				if(pKiller != pVictim) //evaluating death of the victim
+				if(pVictim != pKiller) //evaluating death of the victim
 				{
 					//scorer was killed by the same inflictor of the victim
 					Kamikaze = m_InflictorsArray[pKiller->entindex()] && pInflictor == m_InflictorsArray[pKiller->entindex()];
@@ -5369,8 +5370,14 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			}
 
 			//first blood
-			event->SetBool("firstblood", !m_bFirstBlood ? true : false);
-			m_bFirstBlood = true;
+			if(!m_bFirstBlood)
+			{
+				if(pVictim != pKiller) //only award first blood if it's not a suicide kill
+				{
+					event->SetBool("firstblood", true);
+					m_bFirstBlood = true;
+				}
+			}
 		}
 
 		gameeventmanager->FireEvent(event);
