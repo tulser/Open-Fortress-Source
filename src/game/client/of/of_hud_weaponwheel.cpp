@@ -629,7 +629,8 @@ void CHudWeaponWheel::CheckWheel()
 
 		Activate();
 		SetMouseInputEnabled(true);
-		RequestFocus();
+		SetKeyBoardInputEnabled(false);
+		//RequestFocus();
 
 		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
 		
