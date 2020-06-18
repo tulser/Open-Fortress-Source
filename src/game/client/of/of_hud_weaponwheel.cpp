@@ -101,6 +101,8 @@ private:
 	// float	segmentExtensionLength = 60.0f;
 	// px margin between wheel centre circle and the segments
 	int		wheelMargin = 20;
+
+	//float blurRadius = 250.0f;
 	
 	// Offset from the centre that the slot text resides
 	int		textOffset = 25;
@@ -142,6 +144,8 @@ private:
 	// The texture to use for each segment (gets loaded from the .res file)
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
+	CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
+	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500")
 	
 	// Used as the default icon for each slot
 	//const char *defaultIconWeaponNames[8];
@@ -424,10 +428,14 @@ void CHudWeaponWheel::Paint(void)
 {
 	if (bWheelActive &&  bWheelLoaded)
 	{
+		// Draw the blurry boy behind the UI
+		surface()->DrawSetTexture(m_nBlurTextureId);
+		surface()->DrawTexturedRect(iCentreScreenX - m_flBlurCircleRadius, iCentreScreenY - m_flBlurCircleRadius, iCentreScreenX + m_flBlurCircleRadius, iCentreScreenY + m_flBlurCircleRadius);
+
 		surface()->DrawSetColor(Color (255, 255, 255, 255));
 		surface()->DrawSetTexture(m_nCircleTextureId);
 		surface()->DrawTexturedRect(iCentreScreenX - wheelRadius, iCentreScreenY - wheelRadius, iCentreScreenX + wheelRadius, iCentreScreenY + wheelRadius);
-		
+
 		// Spokes!
 		surface()->DrawSetTexture(m_nPanelTextureId);
 		for (int i = 0; i < numberOfSegments; i++)
@@ -648,6 +656,7 @@ void CHudWeaponWheel::CheckWheel()
 		SetKeyBoardInputEnabled(false);
 		//RequestFocus();
 
+		//engine->SetBlurFade( 0.5f );
 		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
 		
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
