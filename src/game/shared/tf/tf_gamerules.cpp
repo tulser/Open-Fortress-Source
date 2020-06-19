@@ -2945,12 +2945,41 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 
 		// Check that the explosion can 'see' this entity.
-		vecSpot = pEntity->BodyTarget( vecSrc, false );
+		// Ivory: edited to have multiple traceline checks on top of player center for better accuracy
+		// (feet, eyes, elbows). If one check is successful all other checks are skipped
+		vecSpot = pEntity->WorldSpaceCenter() - (pEntity->WorldSpaceCenter() - pEntity->GetAbsOrigin()) * .25; //feet position as calculated in pEntity->BodyTarget()
+		Vector DeltaHeight = Vector(vecSpot - pEntity->EyePosition()) * 0.5;								   //half height as calculated in pEntity->BodyTarget()
 		CTraceFilterIgnorePlayers filter( info.GetInflictor(), COLLISION_GROUP_PROJECTILE );
-		UTIL_TraceLine( vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
 
-		if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
-			continue;
+		for(int i = 0; i < 3; i++)
+		{
+			Vector TargetPos = vecSpot + i * DeltaHeight;
+			UTIL_TraceLine( vecSrc, TargetPos, MASK_RADIUS_DAMAGE, &filter, &tr );
+
+			if ( tr.fraction == 1.0 || tr.m_pEnt == pEntity )
+				goto TargetHit;
+
+			//evaluate elbows when target pos is mid height
+			if(i == 1)
+			{
+				float flViewAngle = pEntity->EyeAngles().y;																//get player view XY angle
+				Vector ViewAngleVector = Vector(cos(flViewAngle), sin(flViewAngle), 0.f) * pEntity->BoundingRadius();	//create elbow vector
+
+				for(int j = -1; j < 2; j++)
+				{
+					if(!j) continue;
+
+					UTIL_TraceLine( vecSrc, TargetPos + j * ViewAngleVector, MASK_RADIUS_DAMAGE, &filter, &tr );
+					if ( tr.fraction == 1.0 || tr.m_pEnt == pEntity )
+						goto TargetHit;
+				}
+			}
+		}
+
+		//No results
+		continue;
+
+TargetHit:
 
 		// Adjust the damage - apply falloff.
 		float flAdjustedDamage = 0.0f;
