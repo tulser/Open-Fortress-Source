@@ -2959,10 +2959,10 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			if ( tr.fraction == 1.0 || tr.m_pEnt == pEntity )
 				goto TargetHit;
 
-			//evaluate elbows when target pos is mid height
+			//evaluate elbows when TargetPos is mid height
 			if(i == 1)
 			{
-				float flViewAngle = pEntity->EyeAngles().y;																//get player view XY angle
+				float flViewAngle = pEntity->EyeAngles().y + 90.f;														//get player view XY angle and add 90 (elbow angle)
 				Vector ViewAngleVector = Vector(cos(flViewAngle), sin(flViewAngle), 0.f) * pEntity->BoundingRadius();	//create elbow vector
 
 				for(int j = -1; j < 2; j++)
