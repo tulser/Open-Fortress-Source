@@ -119,11 +119,15 @@ private:
 	int iNumberOfWeaponsEquipped = -1;
 
 	void RefreshCentre(void);
+
 	int iCentreScreenX;
 	int iCentreScreenY;
-
 	int iCentreWheelX;
 	int iCentreWheelY;
+
+	// Due to vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY); being delayed by several frames, we must wait for 
+	// it to finish moving the mouse cursor before we check the mouse cursor's position, otherwise with quickswitch it will immediately close
+	bool	bHasCursorBeenInWheel = false;
 
 	bool	lastWheel = false;
 	void	CheckWheel();
@@ -219,28 +223,34 @@ void CHudWeaponWheel::CheckMousePos()
 	// width of each segment
 	float pointAngleFromCentre = 360 / (numberOfSegments);
 
-	// If the cursor is outside of the wheel (+ the margin size)
+	// If the cursor is outside of the wheel (+ the margin size) and it's been inside of the wheel previously (workaround)
 	if (distanceSqrd >= (wheelRadius + wheelMargin)*(wheelRadius + wheelMargin))
 	{
-		float mousePosAsAngle = RAD2DEG(atan2(-(float)y, (float)x)) + 90.0f - pointAngleFromCentre;
-		int selected = RoundFloatToInt( mousePosAsAngle / (360 / numberOfSegments) ) + 1;
-		if (selected < 0)
-			selected += 8;
-		
-		char s[10];
-		Q_snprintf(s, sizeof(s), "Angle: %d.\n", mousePosAsAngle);
+		if (bHasCursorBeenInWheel)
+		{
+			float mousePosAsAngle = RAD2DEG(atan2(-(float)y, (float)x)) + 90.0f - pointAngleFromCentre;
+			int selected = RoundFloatToInt(mousePosAsAngle / (360 / numberOfSegments)) + 1;
+			if (selected < 0)
+				selected += 8;
 
-		if (hud_weaponwheel_quickswitch.GetInt() > 0)
-		{
-			WeaponSelected( selected );
-		}
-		else
-		{
-			if (slotSelected != selected)
+			if (hud_weaponwheel_quickswitch.GetInt() > 0)
 			{
-				slotSelected = selected;
-				useHighlighted = true;
+				WeaponSelected(selected);
 			}
+			else
+			{
+				if (slotSelected != selected)
+				{
+					slotSelected = selected;
+					useHighlighted = true;
+				}
+			}
+		}
+		else 
+		{
+			// The cursor has been registered as having been inside the centre circle;
+			// after this, it can select things (see above).
+			bHasCursorBeenInWheel = true;
 		}
 	}
 	else
@@ -291,7 +301,6 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 	if (!pPlayer) {
 		return;
 	}
-
 
 	if (segments) {
 		delete[] segments;
@@ -365,10 +374,15 @@ void CHudWeaponWheel::RefreshCentre(void)
 {
 	int width, height;
 	GetSize(width, height);
-	iCentreWheelX = 3 * width / 4;
-	iCentreWheelY = height / 2;
-	iCentreScreenX = iCentreWheelX;
-	iCentreScreenY = iCentreWheelY;
+
+	// iCentreScreen where the UI will attempt to create the wheel each time - it's basically constant
+	iCentreScreenX = 3 * width / 4;
+	iCentreScreenY = height / 2;
+
+	// iCentreWheel is where the mouse was immediately after the UI was opened (This is the same as the above on Windows,
+	// but Linux currently struggles to set the cursor position so it can be variable.)
+	iCentreWheelX = iCentreScreenX;
+	iCentreWheelY = iCentreScreenY;
 }
 
 void CHudWeaponWheel::DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
@@ -430,11 +444,11 @@ void CHudWeaponWheel::Paint(void)
 	{
 		// Draw the blurry boy behind the UI
 		surface()->DrawSetTexture(m_nBlurTextureId);
-		surface()->DrawTexturedRect(iCentreScreenX - m_flBlurCircleRadius, iCentreScreenY - m_flBlurCircleRadius, iCentreScreenX + m_flBlurCircleRadius, iCentreScreenY + m_flBlurCircleRadius);
+		surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
 
 		surface()->DrawSetColor(Color (255, 255, 255, 255));
 		surface()->DrawSetTexture(m_nCircleTextureId);
-		surface()->DrawTexturedRect(iCentreScreenX - wheelRadius, iCentreScreenY - wheelRadius, iCentreScreenX + wheelRadius, iCentreScreenY + wheelRadius);
+		surface()->DrawTexturedRect(iCentreWheelX - wheelRadius, iCentreWheelY - wheelRadius, iCentreWheelX + wheelRadius, iCentreWheelY + wheelRadius);
 
 		// Spokes!
 		surface()->DrawSetTexture(m_nPanelTextureId);
@@ -451,8 +465,8 @@ void CHudWeaponWheel::Paint(void)
 			// Slot number + shadow
 			int offset = wheelRadius + textOffset;
 
-			int xpos = iCentreScreenX + (segment.angleSin * offset);
-			int ypos = iCentreScreenY + (segment.angleCos * offset);
+			int xpos = iCentreWheelX + (segment.angleSin * offset);
+			int ypos = iCentreWheelY + (segment.angleCos * offset);
 
 			//DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
 			//DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
@@ -469,8 +483,8 @@ void CHudWeaponWheel::Paint(void)
 				if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
 				{
 					offset += 60;
-					xpos = iCentreScreenX + (segment.angleSin * offset);
-					ypos = iCentreScreenY + (segment.angleCos * offset);
+					xpos = iCentreWheelX + (segment.angleSin * offset);
+					ypos = iCentreWheelY + (segment.angleCos * offset);
 
 					const float flScale = 0.5f;
 					int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
@@ -493,6 +507,7 @@ void CHudWeaponWheel::Paint(void)
 
 				ammoColor = Color(255, 255, 255, 255);
 				wchar_t pText[64];
+				bool hasAmmo = true;
 
 				if (pWeapon->Clip1() > -1)
 					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo()), 0);
@@ -500,9 +515,14 @@ void CHudWeaponWheel::Paint(void)
 					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip2(), pWeapon->ReserveAmmo()), 0);
 				else if (pWeapon->ReserveAmmo() > -1)
 					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d", pWeapon->ReserveAmmo()), 0);
+				else
+					hasAmmo = false;
 
-				DrawString(pText, xpos - 1, ypos - 1, Color(0,0,0,255), true);
-				DrawString(pText, xpos, ypos, ammoColor, true);
+				if (hasAmmo)
+				{
+					DrawString(pText, xpos - 1, ypos - 1, Color(0, 0, 0, 255), true);
+					DrawString(pText, xpos, ypos, ammoColor, true);
+				}
 			}
 		}
 	}
@@ -640,10 +660,12 @@ void CHudWeaponWheel::OnTick(void)
 void CHudWeaponWheel::CheckWheel()
 {
 	if (bWheelActive) {
-		if (! bWheelLoaded) {
+		if (!bWheelLoaded) {
 			RefreshWheelVerts();
 			RefreshEquippedWeapons();
 		}
+
+		bHasCursorBeenInWheel = false;
 
 		// Switch all the selected buckets back to the default
 		for (int slot = 0; slot < numberOfSegments; slot++)
@@ -657,14 +679,18 @@ void CHudWeaponWheel::CheckWheel()
 		//RequestFocus();
 
 		//engine->SetBlurFade( 0.5f );
-		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
+		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
 		
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
 //		int x = 0;
 //		int y = 0;
-		vgui::input()->GetCursorPos(iCentreScreenX, iCentreScreenY);
+		vgui::input()->GetCursorPos(iCentreWheelX, iCentreWheelY);
 		//Msg("Pos: %i, %i\n", iCentreScreenX, iCentreScreenY);
+
+		iCentreWheelX += 4;
+		iCentreWheelX -= 2;
+		iCentreWheelX -= 2;
 	}
 	else
 	{
