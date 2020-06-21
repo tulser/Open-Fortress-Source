@@ -149,7 +149,8 @@ private:
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
 	CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
-	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500")
+	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
+	CPanelAnimationVar(float, m_iShadowOffset, "ShadowOffset", "3");
 	
 	// Used as the default icon for each slot
 	//const char *defaultIconWeaponNames[8];
@@ -476,7 +477,7 @@ void CHudWeaponWheel::Paint(void)
 			// Display the currently select weapon's icon and ammo
 			C_BaseCombatWeapon *pWeapon = weaponSelect->GetWeaponInSlot(i, segment.bucketSelected);
 
-			Color playerColour = Color(of_color_r.GetInt(), of_color_g.GetInt(), of_color_b.GetInt(), 255);
+			//Color playerColour = Color(of_color_r.GetInt(), of_color_g.GetInt(), of_color_b.GetInt(), 255);
 			if (pWeapon)
 			{
 				// Draw the icon
@@ -494,8 +495,10 @@ void CHudWeaponWheel::Paint(void)
 					iconTall *= flScale;
 					
 					// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, playerColour);
-
+					// Icon Shadow
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, 255));
+					// Icon
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, Color(255, 255, 255, 255));
 				}
 
 				Color ammoColor = Color(255, 255, 255, 255);
