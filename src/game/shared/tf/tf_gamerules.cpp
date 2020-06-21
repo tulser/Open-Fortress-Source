@@ -2903,9 +2903,40 @@ ConVar tf_fixedup_damage_radius ( "tf_fixedup_damage_radius", "1", FCVAR_CHEAT )
 //			iClassIgnore - 
 //			*pEntityIgnore - 
 //-----------------------------------------------------------------------------
-void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
+
+bool CTFGameRules::TraceRadiusDamage( const CTakeDamageInfo &info, const CBaseEntity *entity, const Vector &vecSrc, const Vector &vecSpot, const Vector &delta, trace_t *tr  )
 {
 	const int MASK_RADIUS_DAMAGE = MASK_SHOT&(~CONTENTS_HITBOX);
+	CTraceFilterIgnorePlayers filter( info.GetInflictor(), COLLISION_GROUP_PROJECTILE );
+
+	//feet, center, eyes
+	for(int i = -1; i < 2; i++)
+	{
+		UTIL_TraceLine( vecSrc, vecSpot + i * delta, MASK_RADIUS_DAMAGE, &filter, tr );
+
+		if ( tr->fraction == 1.0 || tr->m_pEnt == entity )
+			return true;
+	}
+
+	//evaluate elbows as last resource since it is more expensive
+	float flElbowAngle = entity->EyeAngles().y + 90.f;
+	Vector ElbowVector = Vector(cos(flElbowAngle), sin(flElbowAngle), 0.f);
+	VectorNormalize(ElbowVector);
+	ElbowVector *= entity->BoundingRadius();
+
+	UTIL_TraceLine( vecSrc, vecSpot + ElbowVector, MASK_RADIUS_DAMAGE, &filter, tr );
+	if ( tr->fraction == 1.0 || tr->m_pEnt == entity )
+		return true;;
+
+	UTIL_TraceLine( vecSrc, vecSpot - ElbowVector, MASK_RADIUS_DAMAGE, &filter, tr );
+	if ( tr->fraction == 1.0 || tr->m_pEnt == entity )
+		return true;
+
+	return false;
+}
+
+void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrcIn, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore )
+{
 	CBaseEntity *pEntity = NULL;
 	trace_t		tr;
 	float		falloff;
@@ -2945,11 +2976,12 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 
 		// Check that the explosion can 'see' this entity.
-		vecSpot = pEntity->BodyTarget( vecSrc, false );
-		CTraceFilterIgnorePlayers filter( info.GetInflictor(), COLLISION_GROUP_PROJECTILE );
-		UTIL_TraceLine( vecSrc, vecSpot, MASK_RADIUS_DAMAGE, &filter, &tr );
-
-		if ( tr.fraction != 1.0 && tr.m_pEnt != pEntity )
+		// Ivory: edited to have multiple traceline checks on top of player center for better accuracy
+		// (feet, eyes, elbows). If one check is successful all other checks are skipped
+		vecSpot = pEntity->WorldSpaceCenter() - (pEntity->WorldSpaceCenter() - pEntity->GetAbsOrigin()) * .25;		//feet position as calculated in pEntity->BodyTarget()
+		Vector halfDeltaHeight = Vector(vecSpot - pEntity->EyePosition()) * 0.5;									//half height as calculated in pEntity->BodyTarget()
+		vecSpot += halfDeltaHeight;																					//body center
+		if(!TraceRadiusDamage(info, pEntity, vecSrc, vecSpot, halfDeltaHeight, &tr))
 			continue;
 
 		// Adjust the damage - apply falloff.
@@ -5370,13 +5402,10 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			}
 
 			//first blood
-			if(!m_bFirstBlood)
+			if(!m_bFirstBlood && pVictim != pKiller) //only award first blood if it's not a suicide kill
 			{
-				if(pVictim != pKiller) //only award first blood if it's not a suicide kill
-				{
-					event->SetBool("firstblood", true);
-					m_bFirstBlood = true;
-				}
+				event->SetBool("firstblood", true);
+				m_bFirstBlood = true;
 			}
 		}
 
