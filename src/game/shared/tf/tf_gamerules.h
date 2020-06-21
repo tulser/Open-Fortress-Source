@@ -487,6 +487,7 @@ public:
 	virtual void ClientDisconnected( edict_t *pClient );
 
 	virtual void  RadiusDamage( const CTakeDamageInfo &info, const Vector &vecSrc, float flRadius, int iClassIgnore, CBaseEntity *pEntityIgnore );
+	bool		  TraceRadiusDamage( const CTakeDamageInfo &info, const CBaseEntity *entity, const Vector &vecSrc, const Vector &vecSpot, const Vector &delta, trace_t *tr  );
 
 	virtual float FlPlayerFallDamage( CBasePlayer *pPlayer );
 
