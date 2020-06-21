@@ -5402,13 +5402,10 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			}
 
 			//first blood
-			if(!m_bFirstBlood)
+			if(!m_bFirstBlood && pVictim != pKiller) //only award first blood if it's not a suicide kill
 			{
-				if(pVictim != pKiller) //only award first blood if it's not a suicide kill
-				{
-					event->SetBool("firstblood", true);
-					m_bFirstBlood = true;
-				}
+				event->SetBool("firstblood", true);
+				m_bFirstBlood = true;
 			}
 		}
 
