@@ -114,8 +114,6 @@ private:
 
 	bool	lastWheel = false;
 	void	CheckWheel();
-
-	Color* weaponColors;
 	
 	// Slot numbers formatted & ready for printing. Assumes that we never have more than 16 slots, which is a safe bet.
 	wchar_t* slotNames[16];
@@ -349,10 +347,16 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 		return;
 	}
 
-	if (segments) {
+	// Better memory alloc
+	if (!segments)
+	{
+		segments = new WheelSegment[numberOfSegments];
+	}
+	// BAD MEMORY ALLOCATION!!!
+	/*if (segments) {
 		delete[] segments;
 	}
-	segments = new WheelSegment[numberOfSegments];
+	segments = new WheelSegment[numberOfSegments];*/
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
 
@@ -578,30 +582,6 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 
 	RefreshWheelVerts();
 
-	if (weaponColors) 
-	{
-		delete[] weaponColors;
-	}
-
-	weaponColors = new Color[8];
-	weaponColors[0] = Color(200, 200, 200, 150);	//melee
-	weaponColors[1] = Color(255, 255, 100, 150);	//pistols
-	weaponColors[2] = Color(255, 100, 100, 150);	//shotguns
-	weaponColors[3] = Color(25, 25, 100, 150);		//automatics
-	weaponColors[4] = Color(25, 150, 25, 150);		//rifles
-	weaponColors[5] = Color(255, 255, 255, 150);	//specials
-	weaponColors[6] = Color(50, 25, 10, 150);		//explosives
-	weaponColors[7] = Color(255, 50, 255, 150);		//supers
-
-	/*iconWeaponNames[0] = "crowbar";
-	iconWeaponNames[1] = "pistol_mercenary";
-	iconWeaponNames[2] = "shotgun";
-	iconWeaponNames[3] = "smg_mercenary";
-	iconWeaponNames[4] = "railgun";
-	iconWeaponNames[5] = "nailgun";
-	iconWeaponNames[6] = "dynamite_bundle";
-	iconWeaponNames[7] = "bfg";*/
-
 	/*for (int i = 0; i < numberOfSegments; i++) {
 		
 		wchar_t slotText[64];
@@ -804,8 +784,8 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 
 CHudWeaponWheel::~CHudWeaponWheel()
 {
-	if (weaponColors)
+	if (segments)
 	{
-		delete[] weaponColors;
+		delete[] segments;
 	}
 }
