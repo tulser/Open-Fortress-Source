@@ -218,7 +218,8 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 	// If the player has Crowbar (0), Assault Rifle (4), and Dynamite (6),
 	// these will be flattened to 0, 1, 2
 	// We reverse this here because we want the wheel selection to be fixed in place, but still compatible if flat weaopn switch is on.
-	if (of_weaponswitch_flat.GetBool())
+	// We only need to do this if a bucket is not specified; if we know the bucket, the flat weapon switching doesn't apply.
+	if (of_weaponswitch_flat.GetBool() && bucket < 0)
 	{
 		CTFWeaponBase *pWeapon = { 0 };
 		int flattenedPos = 0;
@@ -243,47 +244,19 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 
 	if (bucket >= 0)
 	{
-		//CTFWeaponBase *pWeapon = (CTFWeaponBase *) hudSelection->GetWeaponInSlot(iSlot, bucket); 
-		// MakeWeaponSelection
-
-		/*
-		
-		pNextWeapon = FindNextWeaponInWeaponSelection(iWeaponSlot, iPosition);
-		
-		// select the new weapon
-		::input->MakeWeaponSelection( pNextWeapon );
-
-		*/
-//		C_BaseCombatWeapon *pWeapon = dynamic_cast< C_BaseCombatWeapon * >(CBaseEntity::Instance( hudSelection->GetWeaponInSlot(iSlot, bucket)->entindex() )); //weapon->entindex()
 		
 		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >(hudSelection->GetWeaponInSlot(iSlot, bucket)); //weapon->entindex()
-		
-		/*
-
-		CTFWeaponBase *pNextWeapon = FindNextWeaponInWeaponSelection(iWeaponSlot, iPosition);
-				CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(i);	// is 0 to Max player weapons
-				return pWeapon;
-
-				//dynamic_cast< CTFWeaponBase* >
-		*/
 
 		if (pWeapon)
 		{
-			// Idea: do a for loop over all of player's weapons until we find one with a name or id that matches the one we want
-			// select the new weapon
 			::input->MakeWeaponSelection(pWeapon);
-
-			//CBasePlayer *pBasePlayer = ToBasePlayer(pPlayer);
-			//pBasePlayer->SelectItem( pWeapon->GetName() );
 			char success[128];
 			Q_snprintf(success, 128, "SELECTED \"%s\", slot:%i, bucket:%i\n", pWeapon->GetName(), iSlot, bucket);
 			Msg(success);
 		}
 		else
 		{
-			char errormsg[128];
-			Q_snprintf(errormsg, 128, "COULD NOT select weapon \"%s\", slot:%i, bucket:%i\n", pWeapon->GetName(), iSlot, bucket);
-			Msg(errormsg);
+			Msg("Could not select weapon.");
 		}
 	}
 	else
@@ -877,8 +850,12 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 					segments[slotSelected].bucketSelected = bucket;
 				}
 			}
-
-			useHighlighted = false;
+			
+			// We only need to disable selecting the highlighted one if the player actually changes a slot's weapon
+			if (wepsCurrentlyInSlot > 1)
+			{
+				useHighlighted = false;
+			}
 		}
 	}
 }
