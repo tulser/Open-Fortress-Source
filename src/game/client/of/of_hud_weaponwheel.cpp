@@ -89,23 +89,6 @@ public:
 private:
 	// How many segments do we have? Probably should be dependent on gamemode/mutator (Arsenal = 3, Otherwise = 7)
 	int		numberOfSegments = 8;
-	// The degrees of margin between each of the wheel segments
-	int		marginBetweenSegments = 10;
-	// Which segment is currently selected
-	// int		currentlySelectedSegment = -1; //deleteme unused!
-	// Wheel centre radius (in px)
-	float	wheelRadius = 128.0f;//100.0f;
-	// Wheel outer spoke radius (in px) (calculated as wheelRadius + outerRadius)
-	float	outerRadius = 100.0f;
-	// The length extra squared bit we add to the end
-	// float	segmentExtensionLength = 60.0f;
-	// px margin between wheel centre circle and the segments
-	int		wheelMargin = 20;
-
-	//float blurRadius = 250.0f;
-	
-	// Offset from the centre that the slot text resides
-	int		textOffset = 25;
 
 	int		slotSelected = -1;
 
@@ -145,18 +128,22 @@ private:
 
 	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText");
 
-	//panel_texture_highlighted
 	// The texture to use for each segment (gets loaded from the .res file)
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
 	CPanelAnimationVarAliasType(int, m_nPanelHighlightedTextureId, "panel_texture_highlighted", "hud/weaponwheel_panel_highlighted", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
 	CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
 
+
+	// Other vars that are loaded from the .res
 	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
-	CPanelAnimationVar(float, m_iShadowOffset, "ShadowOffset", "3");
-	
-	// Used as the default icon for each slot
-	//const char *defaultIconWeaponNames[8];
+	CPanelAnimationVar(int, m_iShadowOffset, "ShadowOffset", "3");
+	CPanelAnimationVar(int, m_iShadowAlpha, "ShadowAlpha", "255");
+	CPanelAnimationVar(float, m_flSegmentMargin, "segment_margin", "10");
+	CPanelAnimationVar(float, m_flWheelRadius, "wheel_radius", "128");
+	CPanelAnimationVar(float, m_flOuterRadius, "outer_radius", "100");
+	CPanelAnimationVar(int, m_iWheelMargin, "wheel_margin", "20");
+	CPanelAnimationVar(int, m_iTextOffset, "text_offset", "25");
 };
 
 DECLARE_HUDELEMENT(CHudWeaponWheel);
@@ -253,20 +240,12 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 		if (pWeapon)
 		{
 			::input->MakeWeaponSelection(pWeapon);
-			char success[128];
-			Q_snprintf(success, 128, "SELECTED \"%s\", slot:%i, bucket:%i\n", pWeapon->GetName(), iSlot, bucket);
-			Msg(success);
-		}
-		else
-		{
-			Msg("Could not select weapon.");
 		}
 	}
 	else
 	{
-		// Select the weapon
+		// Select the weapon without a bucket
 		hudSelection->SelectWeaponSlot(iSlot + 1);
-		Msg("Selected without bucket!\n");
 	}
 
 	// This does the equivalent of selecting a slot and clicking to select it
@@ -292,7 +271,7 @@ void CHudWeaponWheel::CheckMousePos()
 	float pointAngleFromCentre = 360 / (numberOfSegments);
 
 	// If the cursor is outside of the wheel (+ the margin size) and it's been inside of the wheel previously (workaround)
-	if (distanceSqrd >= (wheelRadius + wheelMargin)*(wheelRadius + wheelMargin))
+	if (distanceSqrd >= (m_flWheelRadius + m_iWheelMargin)*(m_flWheelRadius + m_iWheelMargin))
 	{
 		if (bHasCursorBeenInWheel)
 		{
@@ -385,45 +364,28 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		segment.centreAngle = currentCentreAngle;
 
-		segment.centreX = iCentreScreenX + ( sin(DEG2RAD(currentCentreAngle) ) * (wheelRadius + wheelMargin));
-		segment.centreY = iCentreScreenY + ( cos(DEG2RAD(currentCentreAngle) ) * (wheelRadius + wheelMargin));
+		segment.centreX = iCentreScreenX + (sin(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin));
+		segment.centreY = iCentreScreenY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin));
 
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
 
-		// If using primative blockcolour beta UI
-		/*
-		segment.vertices[0].Init(Vector2D(segment.centreX, segment.centreY));
-
-		segment.vertices[1].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
-
-		segment.vertices[2].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
-
-		segment.vertices[3].Init(Vector2D(segment.vertices[2].m_Position.x + (centreToPoint.x * segmentExtensionLength), segment.vertices[2].m_Position.y + (centreToPoint.y * segmentExtensionLength)));
-
-		segment.vertices[5].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))));
-
-		segment.vertices[4].Init(Vector2D(segment.vertices[5].m_Position.x + (centreToPoint.x * segmentExtensionLength), segment.vertices[5].m_Position.y + (centreToPoint.y * segmentExtensionLength)));
-
-		segment.vertices[6].Init(Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))));
-		*/
-
 		segment.vertices[0].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin))),
 			Vector2D(0, 0)
 			);
 
 		segment.vertices[1].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin))),
 			Vector2D(1, 0)
 			);
 
 		segment.vertices[2].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius))),
 			Vector2D(1, 1)
 			);
 
 		segment.vertices[3].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (marginBetweenSegments / 2))) * (wheelRadius + wheelMargin + outerRadius))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius))),
 			Vector2D(0, 1)
 			);
 
@@ -516,7 +478,7 @@ void CHudWeaponWheel::Paint(void)
 
 		surface()->DrawSetColor(Color (255, 255, 255, 255));
 		surface()->DrawSetTexture(m_nCircleTextureId);
-		surface()->DrawTexturedRect(iCentreWheelX - wheelRadius, iCentreWheelY - wheelRadius, iCentreWheelX + wheelRadius, iCentreWheelY + wheelRadius);
+		surface()->DrawTexturedRect(iCentreWheelX - m_flWheelRadius, iCentreWheelY - m_flWheelRadius, iCentreWheelX + m_flWheelRadius, iCentreWheelY + m_flWheelRadius);
 
 		// Spokes!	
 		for (int i = 0; i < numberOfSegments; i++)
@@ -538,7 +500,7 @@ void CHudWeaponWheel::Paint(void)
 		{
 			WheelSegment segment = segments[i];
 			// Slot number + shadow
-			int offset = wheelRadius + textOffset;
+			int offset = m_flWheelRadius + m_iTextOffset;
 
 			int xpos = iCentreWheelX + (segment.angleSin * offset);
 			int ypos = iCentreWheelY + (segment.angleCos * offset);
@@ -568,9 +530,8 @@ void CHudWeaponWheel::Paint(void)
 					iconWide *= flScale;
 					iconTall *= flScale;
 					
-					// TODO Move colour to:		CPanelAnimationVar( Color, m_clrIcon, "IconColor", "255 80 0 255" );
 					// Icon Shadow
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, 255));
+					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
 					// Icon
 					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, Color(255, 255, 255, 255));
 				}
@@ -744,28 +705,15 @@ void CHudWeaponWheel::CheckWheel()
 
 		bHasCursorBeenInWheel = false;
 
-		// Switch all the selected buckets back to the default
-		// REMOVED: Phasing this out in favour of allowing the player to cycle through weapons and have them stay
-		// (If the user highlights the shotgun, changes to SSG, the next time they open the menu it'll be the SSG still)
-		/*for (int slot = 0; slot < numberOfSegments; slot++)
-		{
-			segments[slot].bucketSelected = segments[slot].defaultBucket;
-		}*/
-
 		Activate();
-		SetMouseInputEnabled(true);
-		SetKeyBoardInputEnabled(false);
-		//RequestFocus();
+		SetMouseInputEnabled(true);			// Capture the mouse...
+		SetKeyBoardInputEnabled(false);		// ...but not the keyboard!
 
-		//engine->SetBlurFade( 0.5f );
 		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
 		
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
-//		int x = 0;
-//		int y = 0;
 		vgui::input()->GetCursorPos(iCentreWheelX, iCentreWheelY);
-		//Msg("Pos: %i, %i\n", iCentreScreenX, iCentreScreenY);
 
 		iCentreWheelX += 4;
 		iCentreWheelX -= 2;
@@ -798,22 +746,6 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 
 		if (slotSelected >= 0)
 		{
-			// Reselect the slot, iterating through it
-			/* WeaponSelected(slotSelected, -1, false);
-			
-			// Set the slot image/ammo to the newly selected weapon
-			CTFWeaponBase *pNextWeapon = NULL;
-			pNextWeapon = pPlayer->GetActiveTFWeapon();
-			segments[slotSelected].bucketSelected = pNextWeapon->GetPosition();
-
-			// Until the player highlights another slot, if they release the key then just use whatever was selected with the mousewheel ^
-			useHighlighted = false;
-			*/
-
-			char chars[64];
-			Q_snprintf(chars, 64, "delta:%i, bucket: %i\n", delta, segments[slotSelected].bucketSelected);
-			Msg(chars);
-
 			// proper forward and backward cycling
 			CBaseHudWeaponSelection *pHUDSelection = CBaseHudWeaponSelection::GetInstance();
 			// How many weapons are there in the slot we've selected?
