@@ -243,11 +243,47 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 
 	if (bucket >= 0)
 	{
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *) hudSelection->GetWeaponInSlot(iSlot, bucket);
+		//CTFWeaponBase *pWeapon = (CTFWeaponBase *) hudSelection->GetWeaponInSlot(iSlot, bucket); 
+		// MakeWeaponSelection
+
+		/*
+		
+		pNextWeapon = FindNextWeaponInWeaponSelection(iWeaponSlot, iPosition);
+		
+		// select the new weapon
+		::input->MakeWeaponSelection( pNextWeapon );
+
+		*/
+//		C_BaseCombatWeapon *pWeapon = dynamic_cast< C_BaseCombatWeapon * >(CBaseEntity::Instance( hudSelection->GetWeaponInSlot(iSlot, bucket)->entindex() )); //weapon->entindex()
+		
+		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >(hudSelection->GetWeaponInSlot(iSlot, bucket)); //weapon->entindex()
+		
+		/*
+
+		CTFWeaponBase *pNextWeapon = FindNextWeaponInWeaponSelection(iWeaponSlot, iPosition);
+				CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(i);	// is 0 to Max player weapons
+				return pWeapon;
+
+				//dynamic_cast< CTFWeaponBase* >
+		*/
+
 		if (pWeapon)
 		{
-			pPlayer->SelectItem( pWeapon->GetClassname() );
-			Msg("Selected using bucket!\n");
+			// Idea: do a for loop over all of player's weapons until we find one with a name or id that matches the one we want
+			// select the new weapon
+			::input->MakeWeaponSelection(pWeapon);
+
+			//CBasePlayer *pBasePlayer = ToBasePlayer(pPlayer);
+			//pBasePlayer->SelectItem( pWeapon->GetName() );
+			char success[128];
+			Q_snprintf(success, 128, "SELECTED \"%s\", slot:%i, bucket:%i\n", pWeapon->GetName(), iSlot, bucket);
+			Msg(success);
+		}
+		else
+		{
+			char errormsg[128];
+			Q_snprintf(errormsg, 128, "COULD NOT select weapon \"%s\", slot:%i, bucket:%i\n", pWeapon->GetName(), iSlot, bucket);
+			Msg(errormsg);
 		}
 	}
 	else
