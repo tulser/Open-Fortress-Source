@@ -56,7 +56,7 @@ public:
 	virtual void	Paint(void);
 	virtual void OnMouseWheeled(int delta);
 
-	void	WeaponSelected(int id);
+	void	WeaponSelected(int id, int bucket = -1, bool bCloseAfterwards = true);
 
 	void	CheckMousePos();
 
@@ -161,6 +161,8 @@ DECLARE_HUDELEMENT(CHudWeaponWheel);
 extern ConVar of_color_r;
 extern ConVar of_color_g;
 extern ConVar of_color_b;
+extern ConVar of_weaponswitch_flat;
+extern ConVar hud_fastswitch;
 
 ConVar hud_weaponwheel_quickswitch("hud_weaponwheel_quickswitch", "0", FCVAR_ARCHIVE, "Weapon wheel selects as soon as the mouse leaves the centre circle, instead of when the weapon wheel key is lifted.");
 
@@ -202,15 +204,68 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	ivgui()->AddTickSignal(GetVPanel());
 }
 
-void CHudWeaponWheel::WeaponSelected(int id) 
+void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pPlayer )
+	if (!pPlayer)
 		return;
 
-	CBaseHudWeaponSelection::GetInstance()->SelectWeaponSlot( id+1 );
+	CBaseHudWeaponSelection *hudSelection = CBaseHudWeaponSelection::GetInstance();
 
-	bWheelActive = false;
+	int iSlot = id;
+
+	// Reverse the flat weapon switch
+	// If the player has Crowbar (0), Assault Rifle (4), and Dynamite (6),
+	// these will be flattened to 0, 1, 2
+	// We reverse this here because we want the wheel selection to be fixed in place, but still compatible if flat weaopn switch is on.
+	if (of_weaponswitch_flat.GetBool())
+	{
+		CTFWeaponBase *pWeapon = { 0 };
+		int flattenedPos = 0;
+		// Iterate up to the normal slot of the weapon we've selected (e.g. Nailgun is 5 (Slot6))
+		for (int i = 0; i < id; i++)
+		{
+			// Each non-empty weapon slot from 0 to id (Nailgun: 0 to 5) adds 1 to the flattenedPos
+			// e.g. Crowbar, Revolver, Nailgun = +3 in total
+			if (hudSelection->GetFirstPos(i))
+			{
+				pWeapon = (CTFWeaponBase *)hudSelection->GetFirstPos(i);
+				if (!pWeapon) continue;
+
+				flattenedPos++;
+			}
+		}
+
+		// Send the flattened position (+1 to make it a slot rather than an index (+3 -> Slot4))
+		//hudSelection->SelectWeaponSlot(flattenedPos + 1);
+		iSlot = flattenedPos;
+	}
+
+	if (bucket >= 0)
+	{
+		CTFWeaponBase *pWeapon = (CTFWeaponBase *) hudSelection->GetWeaponInSlot(iSlot, bucket);
+		if (pWeapon)
+		{
+			pPlayer->SelectItem( pWeapon->GetClassname() );
+			Msg("Selected using bucket!\n");
+		}
+	}
+	else
+	{
+		// Select the weapon
+		hudSelection->SelectWeaponSlot(iSlot + 1);
+		Msg("Selected without bucket!\n");
+	}
+
+	// This does the equivalent of selecting a slot and clicking to select it
+	if (!hud_fastswitch.GetBool())
+	{
+		hudSelection->SelectWeapon();
+	}
+
+	if (bCloseAfterwards) {
+		bWheelActive = false;
+	}
 }
 
 void CHudWeaponWheel::CheckMousePos()
@@ -671,10 +726,12 @@ void CHudWeaponWheel::CheckWheel()
 		bHasCursorBeenInWheel = false;
 
 		// Switch all the selected buckets back to the default
-		for (int slot = 0; slot < numberOfSegments; slot++)
+		// REMOVED: Phasing this out in favour of allowing the player to cycle through weapons and have them stay
+		// (If the user highlights the shotgun, changes to SSG, the next time they open the menu it'll be the SSG still)
+		/*for (int slot = 0; slot < numberOfSegments; slot++)
 		{
 			segments[slot].bucketSelected = segments[slot].defaultBucket;
-		}
+		}*/
 
 		Activate();
 		SetMouseInputEnabled(true);
@@ -698,10 +755,10 @@ void CHudWeaponWheel::CheckWheel()
 	else
 	{
 		// Switch to the one the mouse is over
-		if (useHighlighted/* && hud_fastswitch.GetInt() <= 0*/)
+		if (useHighlighted)
 		{
 			// Select it and close
-			WeaponSelected( slotSelected );
+			WeaponSelected( slotSelected, segments[slotSelected].bucketSelected);
 		}
 		SetMouseInputEnabled(false);
 		SetVisible(false);
@@ -711,6 +768,9 @@ void CHudWeaponWheel::CheckWheel()
 
 void CHudWeaponWheel::OnMouseWheeled(int delta)
 {
+	// Simplify it to +1 or -1
+	delta = delta / abs(delta);
+
 	if (bWheelActive)
 	{
 		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -719,10 +779,8 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 
 		if (slotSelected >= 0)
 		{
-			CBaseHudWeaponSelection* weaponSelect = CBaseHudWeaponSelection::GetInstance();
-
 			// Reselect the slot, iterating through it
-			weaponSelect->SelectWeaponSlot(slotSelected + 1);
+			/* WeaponSelected(slotSelected, -1, false);
 			
 			// Set the slot image/ammo to the newly selected weapon
 			CTFWeaponBase *pNextWeapon = NULL;
@@ -730,6 +788,60 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 			segments[slotSelected].bucketSelected = pNextWeapon->GetPosition();
 
 			// Until the player highlights another slot, if they release the key then just use whatever was selected with the mousewheel ^
+			useHighlighted = false;
+			*/
+
+			char chars[64];
+			Q_snprintf(chars, 64, "delta:%i, bucket: %i\n", delta, segments[slotSelected].bucketSelected);
+			Msg(chars);
+
+			// proper forward and backward cycling
+			CBaseHudWeaponSelection *pHUDSelection = CBaseHudWeaponSelection::GetInstance();
+			// How many weapons are there in the slot we've selected?
+			int wepsCurrentlyInSlot = 0;
+			int lastValidIndex = -1;
+			int currentBucket = segments[slotSelected].bucketSelected;
+			for (int i = 0; i < MAX_WEPS_PER_SLOT; i++)
+			{
+				if (pHUDSelection->GetWeaponInSlot(slotSelected, i))
+				{
+					wepsCurrentlyInSlot++;
+					lastValidIndex = i;
+				}
+			}
+
+
+			
+			if (wepsCurrentlyInSlot > 0)
+			{
+				int iterations = 0;
+				int bucket = currentBucket; // e.g. bucket 4 - 1 = 3
+				// Keep going in the direction of delta until we find a valid weapon (+1 = forwards, -1 = backwards)
+				while (iterations < MAX_WEPS_PER_SLOT)
+				{
+					bucket += delta;
+
+					// wrap it around
+					if (bucket > lastValidIndex)
+						bucket = 0;
+					if (bucket < 0)
+						bucket = lastValidIndex;
+
+					if (pHUDSelection->GetWeaponInSlot(slotSelected, bucket)) {
+						break;
+					}
+
+					iterations++;
+				}
+				
+				// Used to stop being able to cycle slots with 1 weapon
+				if ( segments[slotSelected].bucketSelected != bucket )
+				{
+					WeaponSelected(slotSelected, bucket, false);
+					segments[slotSelected].bucketSelected = bucket;
+				}
+			}
+
 			useHighlighted = false;
 		}
 	}
