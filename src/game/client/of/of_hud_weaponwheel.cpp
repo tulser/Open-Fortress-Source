@@ -117,11 +117,9 @@ private:
 	void	CheckWheel();
 	
 	// Slot numbers formatted & ready for printing. Assumes that we never have more than 16 slots, which is a safe bet.
-	wchar_t* slotNames[16];
+	wchar_t *slotNames[16];
 
 	CHudTexture *GetIcon(const char *szIcon, bool bInvert);
-
-	bool  bWheelLoaded = false;
 
 	void DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
@@ -203,9 +201,6 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 	// load control settings...
 	LoadControlSettings("resource/UI/HudWeaponwheel.res");
 
-	RefreshCentre();
-	RefreshWheelVerts();
-
 	/*for (int i = 0; i < numberOfSegments; i++) {
 
 	wchar_t slotText[64];
@@ -220,6 +215,20 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 	}*/
 
 	BaseClass::ApplySchemeSettings(pScheme);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CHudWeaponWheel::ShouldDraw(void)
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+	// Do I even exist? - Dead men inspect no elements
+	if (!pPlayer || !pPlayer->IsAlive() || !bWheelActive)
+		return false;
+
+	return CHudElement::ShouldDraw();
 }
 
 void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
@@ -355,13 +364,11 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 
 			}
 		}
-
 	}
 }
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
-	bWheelLoaded = false;
 	CTFPlayer* pPlayer = CTFPlayer::GetLocalTFPlayer();
 	if (!pPlayer)
 		return;
@@ -408,8 +415,6 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		currentCentreAngle += 360 / numberOfSegments;
 	}
-
-	bWheelLoaded = true;
 }
 
 void CHudWeaponWheel::RefreshCentre(void)
@@ -460,111 +465,88 @@ void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color 
 
 void CHudWeaponWheel::Paint(void)
 {
-	if (bWheelActive &&  bWheelLoaded)
+	/* not needed, if ShouldDraw is false Paint is not computed
+	if (!bWheelActive)
+		return;
+	*/
+
+	// Draw the blurry boy behind the UI
+	surface()->DrawSetTexture(m_nBlurTextureId);
+	surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
+
+	surface()->DrawSetColor(Color (255, 255, 255, 255));
+	surface()->DrawSetTexture(m_nCircleTextureId);
+	surface()->DrawTexturedRect(iCentreWheelX - m_flWheelRadius, iCentreWheelY - m_flWheelRadius, iCentreWheelX + m_flWheelRadius, iCentreWheelY + m_flWheelRadius);
+
+	// Spokes!	
+	for (int i = 0; i < numberOfSegments; i++)
 	{
-		// Draw the blurry boy behind the UI
-		surface()->DrawSetTexture(m_nBlurTextureId);
-		surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
+		if (i == slotSelected)
+			surface()->DrawSetTexture(m_nPanelHighlightedTextureId);
+		else 
+			surface()->DrawSetTexture(m_nPanelTextureId);
 
-		surface()->DrawSetColor(Color (255, 255, 255, 255));
-		surface()->DrawSetTexture(m_nCircleTextureId);
-		surface()->DrawTexturedRect(iCentreWheelX - m_flWheelRadius, iCentreWheelY - m_flWheelRadius, iCentreWheelX + m_flWheelRadius, iCentreWheelY + m_flWheelRadius);
+		WheelSegment segment = segments[i];
+		surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
+	}
 
-		// Spokes!	
-		for (int i = 0; i < numberOfSegments; i++)
+	// Now the outline, slot number, and ammo
+	for (int i = 0; i < numberOfSegments; i++)
+	{
+		WheelSegment segment = segments[i];
+		// Slot number + shadow
+		int offset = m_flWheelRadius + m_iTextOffset;
+
+		int xpos = iCentreWheelX + (segment.angleSin * offset);
+		int ypos = iCentreWheelY + (segment.angleCos * offset);
+
+		//DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
+		//DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
+
+		CBaseHudWeaponSelection* weaponSelect = GetHudWeaponSelection();
+
+		// Display the currently select weapon's icon and ammo
+		C_BaseCombatWeapon *pWeapon = weaponSelect->GetWeaponInSlot(i, segment.bucketSelected);
+
+		//Color playerColour = Color(of_color_r.GetInt(), of_color_g.GetInt(), of_color_b.GetInt(), 255);
+		if (pWeapon)
 		{
-			if (i == slotSelected)
+			// Draw the icon
+			if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
 			{
-				surface()->DrawSetTexture(m_nPanelHighlightedTextureId);
-			}
-			else 
-			{
-				surface()->DrawSetTexture(m_nPanelTextureId);
-			}
-			WheelSegment segment = segments[i];
-			surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
-		}
+				offset += 60;
+				xpos = iCentreWheelX + (segment.angleSin * offset);
+				ypos = iCentreWheelY + (segment.angleCos * offset);
 
-		// Now the outline, slot number, and ammo
-		for (int i = 0; i < numberOfSegments; i++)
-		{
-			WheelSegment segment = segments[i];
-			// Slot number + shadow
-			int offset = m_flWheelRadius + m_iTextOffset;
-
-			int xpos = iCentreWheelX + (segment.angleSin * offset);
-			int ypos = iCentreWheelY + (segment.angleCos * offset);
-
-			//DrawString(slotNames[i], xpos + 1, ypos + 1, Color(0, 0, 0, 255), true);
-			//DrawString(slotNames[i], xpos, ypos, Color(255, 255, 255, 255), true);
-
-			CBaseHudWeaponSelection* weaponSelect = GetHudWeaponSelection();
-
-			// Display the currently select weapon's icon and ammo
-			C_BaseCombatWeapon *pWeapon = weaponSelect->GetWeaponInSlot(i, segment.bucketSelected);
-
-			//Color playerColour = Color(of_color_r.GetInt(), of_color_g.GetInt(), of_color_b.GetInt(), 255);
-			if (pWeapon)
-			{
-				// Draw the icon
-				if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
-				{
-					offset += 60;
-					xpos = iCentreWheelX + (segment.angleSin * offset);
-					ypos = iCentreWheelY + (segment.angleCos * offset);
-
-					int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE;
-					int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE;
+				int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE;
+				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE;
 					
-					// Icon Shadow
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
-					// Icon
-					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, Color(255, 255, 255, 255));
-				}
+				// Icon Shadow
+				segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
+				// Icon
+				segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, Color(255, 255, 255, 255));
+			}
 
-				Color ammoColor = !pWeapon->CanBeSelected() ? Color(255, 0, 0, 255) : Color(255, 255, 255, 255);
-				wchar_t pText[64];
-				bool hasAmmo = true;
+			Color ammoColor = !pWeapon->CanBeSelected() ? Color(255, 0, 0, 255) : Color(255, 255, 255, 255);
+			wchar_t pText[64];
+			bool hasAmmo = true;
 
-				if (pWeapon->Clip1() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo()), 0);
-				else if (pWeapon->Clip2() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip2(), pWeapon->ReserveAmmo()), 0);
-				else if (pWeapon->ReserveAmmo() > -1)
-					g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d", pWeapon->ReserveAmmo()), 0);
-				else
-					hasAmmo = false;
+			if (pWeapon->Clip1() > -1)
+				g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip1(), pWeapon->ReserveAmmo()), 0);
+			else if (pWeapon->Clip2() > -1)
+				g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d/%d", pWeapon->Clip2(), pWeapon->ReserveAmmo()), 0);
+			else if (pWeapon->ReserveAmmo() > -1)
+				g_pVGuiLocalize->ConstructString(pText, sizeof(pText), VarArgs("%d", pWeapon->ReserveAmmo()), 0);
+			else
+				hasAmmo = false;
 
-				if (hasAmmo)
-				{
-					DrawString(pText, xpos - 1, ypos - 1, Color(0, 0, 0, 255), true);
-					DrawString(pText, xpos, ypos, ammoColor, true);
-				}
+			if (hasAmmo)
+			{
+				DrawString(pText, xpos - 1, ypos - 1, Color(0, 0, 0, 255), true);
+				DrawString(pText, xpos, ypos, ammoColor, true);
 			}
 		}
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CHudWeaponWheel::ShouldDraw(void)
-{
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-
-	// Do I even exist?
-	if (!pPlayer)
-		return false;
-
-	// Dead men inspect no elements
-	if (!pPlayer->IsAlive())
-		return false;
-
-	// Now let the base class decide our fate... (Used for turning of during deathcams etc., trust Robin)
-	if (bWheelActive)
-		return CHudElement::ShouldDraw();
-
-	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -581,9 +563,13 @@ void CHudWeaponWheel::OnTick(void)
 	// If weapon wheel active bool has changed, change mouse input capabilities etc
 	if (lastWheel != bWheelActive)
 		CheckWheel();
+	lastWheel = bWheelActive;
 
-	if (bWheelActive) 
-		CheckMousePos();
+	if (!bWheelActive)
+		return;
+
+	//Do the thing
+	CheckMousePos();
 
 	// Scan for changes in the number of weapons we have
 	int weaponsThisTick = 0;
@@ -614,19 +600,15 @@ void CHudWeaponWheel::OnTick(void)
 			segments[pSelectedWeapon->GetSlot()].bucketSelected = pSelectedWeapon->GetPosition();
 		}
 	}
-
-	lastWheel = bWheelActive;
 }
 
 void CHudWeaponWheel::CheckWheel()
 {
 	if (bWheelActive)
 	{
-		if (!bWheelLoaded)
-		{
-			RefreshWheelVerts();
-			RefreshEquippedWeapons();
-		}
+		RefreshCentre();
+		RefreshWheelVerts();
+		RefreshEquippedWeapons();
 
 		bHasCursorBeenInWheel = false;
 
