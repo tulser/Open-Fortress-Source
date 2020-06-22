@@ -122,7 +122,7 @@ private:
 
 	bool  bWheelLoaded = false;
 
-	void DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
+	void DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
 	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText");
 
@@ -155,11 +155,13 @@ extern ConVar hud_fastswitch;
 ConVar hud_weaponwheel_quickswitch("hud_weaponwheel_quickswitch", "0", FCVAR_ARCHIVE, "Weapon wheel selects as soon as the mouse leaves the centre circle, instead of when the weapon wheel key is lifted.");
 
 bool bWheelActive = false;
-void IN_WeaponWheelDown() {
+void IN_WeaponWheelDown()
+{
 	bWheelActive = true;
 }
 
-void IN_WeaponWheelUp() {
+void IN_WeaponWheelUp()
+{
 	bWheelActive = false;
 }
 
@@ -419,57 +421,35 @@ void CHudWeaponWheel::RefreshCentre(void)
 	iCentreWheelY = iCentreScreenY;
 }
 
-void CHudWeaponWheel::DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
+void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
 {
 	surface()->DrawSetTextColor(col);
 	surface()->DrawSetTextFont(m_hTextFont);
 
 	// count the position
 	int slen = 0, charCount = 0, maxslen = 0;
+		
+	for (const wchar_t *pch = text; *pch != 0; pch++)
 	{
-		for (wchar_t *pch = text; *pch != 0; pch++)
+		if (*pch == '\n')
 		{
-			if (*pch == '\n')
-			{
-				// newline character, drop to the next line
-				if (slen > maxslen)
-				{
-					maxslen = slen;
-				}
-				slen = 0;
-			}
-			else if (*pch == '\r')
-			{
-				// do nothing
-			}
-			else
-			{
-				slen += surface()->GetCharacterWidth(m_hTextFont, *pch);
-				charCount++;
-			}
+			//store the current max line length and reset
+			maxslen = max(slen, maxslen);
+			slen = 0;
+		}
+		else if (*pch != '\r')
+		{
+			slen += surface()->GetCharacterWidth(m_hTextFont, *pch);
+			charCount++;
 		}
 	}
-	if (slen > maxslen)
-	{
-		maxslen = slen;
-	}
 
-	int x = xpos;
-
+	//set x pos depending on the maximum line length
 	if (bCenter)
-	{
-		x = xpos - slen * 0.5;
-	}
+		xpos -= max(slen, maxslen) * 0.5;
 
-	surface()->DrawSetTextPos(x, ypos);
-
-	// adjust the charCount by the scan amount
-	//charCount *= m_flTextScan;
-	for (wchar_t *pch = text; charCount > 0; pch++)
-	{
-		surface()->DrawUnicodeChar(*pch);
-		charCount--;
-	}
+	surface()->DrawSetTextPos(xpos, ypos);
+	surface()->DrawPrintText(text, charCount);
 }
 
 void CHudWeaponWheel::Paint(void)
