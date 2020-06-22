@@ -92,7 +92,7 @@ private:
 	// The degrees of margin between each of the wheel segments
 	int		marginBetweenSegments = 10;
 	// Which segment is currently selected
-	int		currentlySelectedSegment = -1;
+	// int		currentlySelectedSegment = -1; //deleteme unused!
 	// Wheel centre radius (in px)
 	float	wheelRadius = 128.0f;//100.0f;
 	// Wheel outer spoke radius (in px) (calculated as wheelRadius + outerRadius)
@@ -144,11 +144,14 @@ private:
 	void DrawString(wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
 	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText");
-	
+
+	//panel_texture_highlighted
 	// The texture to use for each segment (gets loaded from the .res file)
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
+	CPanelAnimationVarAliasType(int, m_nPanelHighlightedTextureId, "panel_texture_highlighted", "hud/weaponwheel_panel_highlighted", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
 	CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
+
 	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
 	CPanelAnimationVar(float, m_iShadowOffset, "ShadowOffset", "3");
 	
@@ -515,10 +518,17 @@ void CHudWeaponWheel::Paint(void)
 		surface()->DrawSetTexture(m_nCircleTextureId);
 		surface()->DrawTexturedRect(iCentreWheelX - wheelRadius, iCentreWheelY - wheelRadius, iCentreWheelX + wheelRadius, iCentreWheelY + wheelRadius);
 
-		// Spokes!
-		surface()->DrawSetTexture(m_nPanelTextureId);
+		// Spokes!	
 		for (int i = 0; i < numberOfSegments; i++)
 		{
+			if (i == slotSelected)
+			{
+				surface()->DrawSetTexture(m_nPanelHighlightedTextureId);
+			}
+			else 
+			{
+				surface()->DrawSetTexture(m_nPanelTextureId);
+			}
 			WheelSegment segment = segments[i];
 			surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
 		}
