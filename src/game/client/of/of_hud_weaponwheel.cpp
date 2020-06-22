@@ -38,6 +38,7 @@ using namespace vgui;
 #define NUM_VERTS_SPOKE 4
 // Realistically, how many weapons are we gonna have in each slot
 #define MAX_WEPS_PER_SLOT 8
+#define WEAP_IMAGE_SCALE 0.5
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -48,21 +49,21 @@ class CHudWeaponWheel : public CHudElement, public vgui::Frame
 
 public:
 	CHudWeaponWheel(const char *pElementName);
-	~CHudWeaponWheel();
 
-	virtual void	ApplySchemeSettings(IScheme *scheme);
-	virtual bool	ShouldDraw(void);
-	virtual void	OnTick(void);
-	virtual void	Paint(void);
+	virtual void ApplySchemeSettings(IScheme *scheme);
+	virtual bool ShouldDraw(void);
+	virtual void OnTick(void);
+	virtual void Paint(void);
 	virtual void OnMouseWheeled(int delta);
 
-	void	WeaponSelected(int id, int bucket = -1, bool bCloseAfterwards = true);
+	void WeaponSelected(int id, int bucket = -1, bool bCloseAfterwards = true);
 
-	void	CheckMousePos();
+	void CheckMousePos();
 
-	class WheelSegment {
+	class WheelSegment
+	{
 	public:
-		WheelSegment() { }
+		WheelSegment() {}
 		// Screenspace XY centre
 		int centreX, centreY;
 
@@ -188,10 +189,37 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 	SetTitleBarVisible(false);
 	SetProportional(true);
 
-	RefreshCentre();
-	RefreshWheelVerts();
+	//allocate the wheel
+	segments = new WheelSegment[numberOfSegments];
 	
 	ivgui()->AddTickSignal(GetVPanel());
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Reloads/Applies the RES scheme
+//-----------------------------------------------------------------------------
+void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
+{
+	// load control settings...
+	LoadControlSettings("resource/UI/HudWeaponwheel.res");
+
+	RefreshCentre();
+	RefreshWheelVerts();
+
+	/*for (int i = 0; i < numberOfSegments; i++) {
+
+	wchar_t slotText[64];
+	char text[64];
+
+	Q_snprintf(text, sizeof(text), "[%d]", i + 1);
+	g_pVGuiLocalize->ConvertANSIToUnicode(text, slotText, sizeof(slotText));
+
+	slotNames[i] = new wchar_t[sizeof(slotText)];
+
+	Q_wcsncpy(slotNames[i], slotText, sizeof(slotText));
+	}*/
+
+	BaseClass::ApplySchemeSettings(pScheme);
 }
 
 void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
@@ -234,13 +262,10 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 
 	if (bucket >= 0)
 	{
-		
 		CTFWeaponBase *pWeapon = dynamic_cast< CTFWeaponBase * >(hudSelection->GetWeaponInSlot(iSlot, bucket)); //weapon->entindex()
 
 		if (pWeapon)
-		{
 			::input->MakeWeaponSelection(pWeapon);
-		}
 	}
 	else
 	{
@@ -250,13 +275,10 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 
 	// This does the equivalent of selecting a slot and clicking to select it
 	if (!hud_fastswitch.GetBool())
-	{
 		hudSelection->SelectWeapon();
-	}
 
-	if (bCloseAfterwards) {
+	if (bCloseAfterwards)
 		bWheelActive = false;
-	}
 }
 
 void CHudWeaponWheel::CheckMousePos()
@@ -265,10 +287,10 @@ void CHudWeaponWheel::CheckMousePos()
 	vgui::input()->GetCursorPosition(x, y);
 	x -= iCentreScreenX;
 	y -= iCentreScreenY;
-	float distanceSqrd = (x*x) + (y*y);
+	float distanceSqrd = x * x + y * y;
 
 	// width of each segment
-	float pointAngleFromCentre = 360 / (numberOfSegments);
+	float pointAngleFromCentre = 360 / numberOfSegments;
 
 	// If the cursor is outside of the wheel (+ the margin size) and it's been inside of the wheel previously (workaround)
 	if (distanceSqrd >= (m_flWheelRadius + m_iWheelMargin)*(m_flWheelRadius + m_iWheelMargin))
@@ -309,12 +331,8 @@ void CHudWeaponWheel::CheckMousePos()
 
 void CHudWeaponWheel::RefreshEquippedWeapons(void)
 {
-	if (!segments)
-		RefreshWheelVerts();
-
 	if (GetHudWeaponSelection())
 	{
-
 		for (int slot = 0; slot < numberOfSegments; slot++)
 		{
 			bool isFirstBucket = true;
@@ -343,22 +361,10 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
-	 bWheelLoaded = false;
+	bWheelLoaded = false;
 	CTFPlayer* pPlayer = CTFPlayer::GetLocalTFPlayer();
-	if (!pPlayer) {
+	if (!pPlayer)
 		return;
-	}
-
-	// Better memory alloc
-	if (!segments)
-	{
-		segments = new WheelSegment[numberOfSegments];
-	}
-	// BAD MEMORY ALLOCATION!!!
-	/*if (segments) {
-		delete[] segments;
-	}
-	segments = new WheelSegment[numberOfSegments];*/
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
 
@@ -507,12 +513,8 @@ void CHudWeaponWheel::Paint(void)
 					xpos = iCentreWheelX + (segment.angleSin * offset);
 					ypos = iCentreWheelY + (segment.angleCos * offset);
 
-					const float flScale = 0.5f;
-					int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f);
-					int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f);
-
-					iconWide *= flScale;
-					iconTall *= flScale;
+					int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE;
+					int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE;
 					
 					// Icon Shadow
 					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
@@ -520,14 +522,7 @@ void CHudWeaponWheel::Paint(void)
 					segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2), ypos - (iconTall / 2), iconWide, iconTall, Color(255, 255, 255, 255));
 				}
 
-				Color ammoColor = Color(255, 255, 255, 255);
-
-				if (!pWeapon->CanBeSelected())
-				{
-					ammoColor = Color(255, 0, 0, 255);
-				}
-
-				ammoColor = Color(255, 255, 255, 255);
+				Color ammoColor = !pWeapon->CanBeSelected() ? Color(255, 0, 0, 255) : Color(255, 255, 255, 255);
 				wchar_t pText[64];
 				bool hasAmmo = true;
 
@@ -551,35 +546,6 @@ void CHudWeaponWheel::Paint(void)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Reloads/Applies the RES scheme
-//-----------------------------------------------------------------------------
-void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
-{
-	// load control settings...
-	LoadControlSettings("resource/UI/HudWeaponwheel.res");
-	
-	RefreshCentre();
-
-	RefreshWheelVerts();
-
-	/*for (int i = 0; i < numberOfSegments; i++) {
-		
-		wchar_t slotText[64];
-		char text[64];
-		
-		Q_snprintf(text, sizeof(text), "[%d]", i + 1);
-		g_pVGuiLocalize->ConvertANSIToUnicode(text, slotText, sizeof(slotText));
-
-		slotNames[i] = new wchar_t[sizeof(slotText)];
-
-		Q_wcsncpy(slotNames[i], slotText, sizeof(slotText));
-	}*/
-
-	BaseClass::ApplySchemeSettings(pScheme);
-}
-
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 bool CHudWeaponWheel::ShouldDraw(void)
@@ -593,7 +559,6 @@ bool CHudWeaponWheel::ShouldDraw(void)
 	// Dead men inspect no elements
 	if (!pPlayer->IsAlive())
 		return false;
-
 
 	// Now let the base class decide our fate... (Used for turning of during deathcams etc., trust Robin)
 	if (bWheelActive)
@@ -617,7 +582,6 @@ void CHudWeaponWheel::OnTick(void)
 	if (lastWheel != bWheelActive)
 		CheckWheel();
 
-
 	if (bWheelActive) 
 		CheckMousePos();
 
@@ -631,14 +595,13 @@ void CHudWeaponWheel::OnTick(void)
 			for (int bucket = 0; bucket < MAX_WEPS_PER_SLOT; bucket++) 
 			{
 				if (weaponSelect->GetWeaponInSlot(slot, bucket))
-				{
 					weaponsThisTick++;
-				}
 			}
 		}
 
 		// If there is a discrepancy, check the weapons and their icons again
-		if (weaponsThisTick != iNumberOfWeaponsEquipped) {
+		if (weaponsThisTick != iNumberOfWeaponsEquipped)
+		{
 			RefreshEquippedWeapons();
 			iNumberOfWeaponsEquipped = weaponsThisTick;
 		}
@@ -657,8 +620,10 @@ void CHudWeaponWheel::OnTick(void)
 
 void CHudWeaponWheel::CheckWheel()
 {
-	if (bWheelActive) {
-		if (!bWheelLoaded) {
+	if (bWheelActive)
+	{
+		if (!bWheelLoaded)
+		{
 			RefreshWheelVerts();
 			RefreshEquippedWeapons();
 		}
@@ -696,7 +661,7 @@ void CHudWeaponWheel::CheckWheel()
 void CHudWeaponWheel::OnMouseWheeled(int delta)
 {
 	// Simplify it to +1 or -1
-	delta = delta / abs(delta);
+	delta /= abs(delta);
 
 	if (bWheelActive)
 	{
@@ -720,8 +685,6 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 					lastValidIndex = i;
 				}
 			}
-
-
 			
 			if (wepsCurrentlyInSlot > 0)
 			{
@@ -738,9 +701,8 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 					if (bucket < 0)
 						bucket = lastValidIndex;
 
-					if (pHUDSelection->GetWeaponInSlot(slotSelected, bucket)) {
+					if (pHUDSelection->GetWeaponInSlot(slotSelected, bucket))
 						break;
-					}
 
 					iterations++;
 				}
@@ -755,17 +717,7 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 			
 			// We only need to disable selecting the highlighted one if the player actually changes a slot's weapon
 			if (wepsCurrentlyInSlot > 1)
-			{
 				useHighlighted = false;
-			}
 		}
-	}
-}
-
-CHudWeaponWheel::~CHudWeaponWheel()
-{
-	if (segments)
-	{
-		delete[] segments;
 	}
 }
