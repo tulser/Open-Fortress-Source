@@ -935,6 +935,13 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
 			m_flFlameRemoveTime -= flReduction * gpGlobals->frametime;
 		}
+
+		if (InCond(TF_COND_POISON))
+		{
+			// Reduce the duration of this burn 
+			float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
+			m_flPoisonRemoveTime -= flReduction * gpGlobals->frametime;
+		}
 	}
 
 	if ( bDecayHealth )
@@ -1008,6 +1015,17 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		{
 			m_pOuter->SpeakConceptIfAllowed( MP_CONCEPT_ONFIRE );
 			m_flNextBurningSound = gpGlobals->curtime + 2.5;
+		}
+	}
+
+	if (InCond(TF_COND_POISON))
+	{
+
+		if ((gpGlobals->curtime >= m_flPoisonTime))
+		{
+			CTakeDamageInfo info(m_hPoisonAttacker, m_hPoisonAttacker, TF_POISON_DMG, DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON);
+			m_pOuter->TakeDamage(info);
+			m_flPoisonTime = gpGlobals->curtime + TF_POISON_FREQUENCY;
 		}
 	}
 
@@ -1604,7 +1622,35 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker, float flTime )
 	m_hBurnAttacker = pAttacker;
 #endif
 }
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::Poison(CTFPlayer *pAttacker, float flTime)
+{
+#ifndef CLIENT_DLL
+	// Don't bother igniting players who have just been killed by the fire damage.
+	if (!m_pOuter->IsAlive())
+		return;
 
+	if (!InCond(TF_COND_POISON))
+	{
+		// Start burning
+		AddCond(TF_COND_POISON);
+		m_flPoisonTime = gpGlobals->curtime;    //asap
+	}
+
+	if (flTime > 0.0f)
+	{
+		m_flPoisonRemoveTime = gpGlobals->curtime + flTime;
+	}
+	else
+	{
+		m_flPoisonRemoveTime = gpGlobals->curtime + TF_POISON_STING_LIFE;
+	}
+
+	m_hPoisonAttacker = pAttacker;
+#endif
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -1633,6 +1679,32 @@ void CTFPlayerShared::OnRemoveBurning( void )
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		view->SetScreenOverlayMaterial( NULL );
+	}
+
+	m_pOuter->m_flBurnEffectStartTime = 0;
+	m_pOuter->m_flBurnEffectEndTime = 0;
+#else
+	m_hBurnAttacker = NULL;
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnRemovePoison(void)
+{
+#ifdef CLIENT_DLL
+	m_pOuter->StopBurningSound();
+
+	if (m_pOuter->m_pBurningEffect)
+	{
+		m_pOuter->ParticleProp()->StopEmission(m_pOuter->m_pBurningEffect);
+		m_pOuter->m_pBurningEffect = NULL;
+	}
+
+	if (m_pOuter->IsLocalPlayer())
+	{
+		view->SetScreenOverlayMaterial(NULL);
 	}
 
 	m_pOuter->m_flBurnEffectStartTime = 0;
@@ -1798,6 +1870,54 @@ void CTFPlayerShared::OnAddBurning( void )
 
 	// play a fire-starting sound
 	m_pOuter->EmitSound( "Fire.Engulf" );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddPoison(void)
+{
+#ifdef CLIENT_DLL
+	// Start the burning effect
+	if (!m_pOuter->m_pBurningEffect)
+	{
+		const char *pEffectName;
+		if (m_pOuter->GetTeamNumber() == TF_TEAM_RED)
+			pEffectName = "burningplayer_red";
+		else if (m_pOuter->GetTeamNumber() == TF_TEAM_BLUE)
+			pEffectName = "burningplayer_blue";
+		else
+			pEffectName = "burningplayer_dm";
+		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create(pEffectName, PATTACH_ABSORIGIN_FOLLOW);
+
+		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
+		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + TF_BURNING_FLAME_LIFE;
+	}
+	// set the burning screen overlay
+	if (m_pOuter->IsLocalPlayer())
+	{
+		IMaterial *pMaterial = materials->FindMaterial("effects/imcookin", TEXTURE_GROUP_CLIENT_EFFECTS, false);
+		if (!IsErrorMaterial(pMaterial))
+		{
+			view->SetScreenOverlayMaterial(pMaterial);
+		}
+	}
+#endif
+
+	/*
+	#ifdef GAME_DLL
+
+	if ( player == robin || player == cook )
+	{
+	CSingleUserRecipientFilter filter( m_pOuter );
+	TFGameRules()->SendHudNotification( filter, HUD_NOTIFY_SPECIAL );
+	}
+
+	#endif
+	*/
+
+	// play a fire-starting sound
+	m_pOuter->EmitSound("Fire.Engulf");
 }
 
 //-----------------------------------------------------------------------------
@@ -2315,9 +2435,10 @@ void CTFPlayerShared::SetInvulnerable( bool bState, bool bInstant )
 		AddCond( TF_COND_INVULNERABLE );
 
 		// remove any persistent damaging conditions
-		if ( InCond( TF_COND_BURNING ) )
+		if ( InCond( TF_COND_BURNING ) || InCond( TF_COND_POISON ))
 		{
 			RemoveCond( TF_COND_BURNING );
+			RemoveCond(TF_COND_POISON);
 		}
 
 		CSingleUserRecipientFilter filter( m_pOuter );

@@ -196,6 +196,7 @@ public:
 	bool	IsControlStunned( void );
 
 	void	Burn( CTFPlayer *pPlayer, float flTime );
+	void	Poison(CTFPlayer *pPlayer, float flTime);
 
 	// Weapons.
 	CTFWeaponBase *GetActiveTFWeapon() const;
@@ -276,6 +277,7 @@ private:
 	void OnAddShieldCharge( void );
 	void OnAddHaste( void );
 	void OnAddJauggernaught( void );
+	void OnAddPoison(void);
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -291,6 +293,7 @@ private:
 	void OnRemoveShieldCharge( void );
 	void OnRemoveHaste( void );
 	void OnRemoveJauggernaught( void );
+	void OnRemovePoison(void);
 
 	float GetCritMult( void );
 
@@ -370,6 +373,10 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
+
+	CHandle<CTFPlayer>		m_hPoisonAttacker;
+	float					m_flPoisonTime;
+	float					m_flPoisonRemoveTime;
 
 
 	float m_flDisguiseCompleteTime;

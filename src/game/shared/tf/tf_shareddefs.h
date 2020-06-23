@@ -542,6 +542,10 @@ extern const char *g_szProjectileNames[];
 #define TF_BURNING_FLAME_LIFE_PYRO	0.25		// pyro only displays burning effect momentarily
 #define TF_BURNING_DMG				3
 
+#define TF_POISON_FREQUENCY			0.5f
+#define TF_POISON_STING_LIFE		10.0
+#define TF_POISON_DMG				3
+
 // disguising
 #define TF_TIME_TO_DISGUISE 2.0
 #define TF_TIME_TO_SHOW_DISGUISED_FINISHED_EFFECT 5.0
@@ -695,6 +699,7 @@ enum
 	TF_COND_INVIS_POWERUP, // 132
 	TF_COND_HASTE, // 133
 	TF_COND_JAUGGERNAUGHT, // 134
+	TF_COND_POISON,
 
 	TF_COND_LAST
 };
@@ -1046,6 +1051,7 @@ enum
 
 	// open fortress
 	TF_DMG_CUSTOM_CRIT_POWERUP,
+	TF_DMG_CUSTOM_POISON,
 };
 
 enum

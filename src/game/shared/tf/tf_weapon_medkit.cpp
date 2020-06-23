@@ -166,6 +166,7 @@ float CTFMedkit::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 			{
 #ifdef GAME_DLL
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_ATTACKER_PAIN );
+				pTFPlayer->m_Shared.Poison(pTFPlayer, 1.0f);
 #endif
 			}
 			else if ( pTarget->GetTeamNumber() == pPlayer->GetTeamNumber() )
@@ -184,6 +185,7 @@ float CTFMedkit::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 
 				pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MEDIC_STOPPEDHEALING, pTFPlayer->IsAlive() ? "healtarget:alive" : "healtarget:dead" );
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_HEALTARGET_STOPPEDHEALING );
+				pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
 #endif
 			}
 		}

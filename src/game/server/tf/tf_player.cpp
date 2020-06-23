@@ -333,6 +333,8 @@ BEGIN_DATADESC( CTFPlayer )
 	DEFINE_INPUTFUNC( FIELD_STRING, "SpeakResponseConcept", InputSpeakResponseConcept ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"IgnitePlayer",	InputIgnitePlayer ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"ExtinguishPlayer",	InputExtinguishPlayer ),
+	DEFINE_INPUTFUNC(FIELD_VOID, "PoisonPlayer", InputPoisonPlayer),
+	DEFINE_INPUTFUNC(FIELD_VOID, "DePoisonPlayer", InputDePoisonPlayer),
 	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetZombie", InputSetZombie ),
 	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetTeamNoKill", InputSetTeamNoKill ),
 END_DATADESC()
@@ -1505,9 +1507,10 @@ void CTFPlayer::Regenerate( void )
 		SetHealth( iCurrentHealth );
 	}
 
-	if ( m_Shared.InCond( TF_COND_BURNING ) )
+	if ( m_Shared.InCond(TF_COND_BURNING) ||  m_Shared.InCond(TF_COND_POISON))
 	{
 		m_Shared.RemoveCond( TF_COND_BURNING );
+		m_Shared.RemoveCond(TF_COND_POISON);
 	}
 }
 
@@ -9582,6 +9585,24 @@ void CTFPlayer::InputExtinguishPlayer( inputdata_t &inputdata )
 		EmitSound( "TFPlayer.FlameOut" );
 
 		m_Shared.RemoveCond( TF_COND_BURNING );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFPlayer::InputPoisonPlayer(inputdata_t &inputdata)
+{
+	m_Shared.Poison(ToTFPlayer(inputdata.pActivator), inputdata.value.Float());
+}
+
+void CTFPlayer::InputDePoisonPlayer(inputdata_t &inputdata)
+{
+	if (m_Shared.InCond(TF_COND_POISON))
+	{
+		EmitSound("TFPlayer.FlameOut");
+
+		m_Shared.RemoveCond(TF_COND_POISON);
 	}
 }
 
