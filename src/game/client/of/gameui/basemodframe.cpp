@@ -399,8 +399,8 @@ Panel* CBaseModFrame::NavigateBack()
 		SetFadeEffectDisableOverride(false);
 	}
 	
-	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MoveToFront();
 	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->SetExpectedDirection(false, navBack ? navBack->GetWindowType() : WT_NONE);
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MoveToFront();
 	
 	return navBack;
 }
@@ -890,6 +890,15 @@ void CBaseModFrame::DrawDialogBackground( const char *pMajor, const wchar_t *pMa
 {
 	Color bgColor( 0, 0, 0, 200 );
 	surface()->DrawSetColor( bgColor );
+
+	int wide;
+	int tall;
+	GetSize(wide, tall);
+
+	int xpos, ypos;
+	GetPos(xpos, ypos);
+
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MarkTilesInRect(xpos, ypos, wide, tall, m_WindowType);
 }
 
 void CBaseModFrame::SetupAsDialogStyle()

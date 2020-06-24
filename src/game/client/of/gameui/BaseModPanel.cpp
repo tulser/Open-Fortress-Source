@@ -254,7 +254,7 @@ m_lastActiveUserId(0)
 	m_pTransitionPanel->SetParent(this);
 
 	m_pVideo = new CVideoBackground( NULL, "VideoBackground" );
-	m_pVideo->SetParent( enginevgui->GetPanel( PANEL_GAMEUIDLL ) );
+	// m_pVideo->SetParent( enginevgui->GetPanel( PANEL_GAMEUIDLL ) );
 }
 
 //=============================================================================

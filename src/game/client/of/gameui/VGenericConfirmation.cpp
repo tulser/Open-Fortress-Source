@@ -485,6 +485,7 @@ void GenericConfirmation::PaintBackground()
 	// Disabled ugly ASW background
 	// BaseClass::DrawGenericBackground();
 
+	DrawDialogBackground();
 
 	if ( m_bNeedsMoveToFront )
 	{

@@ -309,6 +309,8 @@ void CBaseModTransitionPanel::MarkTilesInRect( int x, int y, int wide, int tall,
 	if ( !IsEffectEnabled() )
 		return;
 
+	MoveToFront();
+
 	if ( wide == -1 && tall == -1 )
 	{
 		// hint to use screen extents
