@@ -423,8 +423,4 @@ void CHudWeaponWheel::CheckWheel() {
 }
 
 CHudWeaponWheel::~CHudWeaponWheel() {
-	for (int i = 0; i<numberOfSegments; i++){
-		delete buttons[i];
-	}
-	delete[] buttons;
 }

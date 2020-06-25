@@ -400,7 +400,7 @@ Panel* CBaseModFrame::NavigateBack()
 	}
 	
 	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->SetExpectedDirection(false, navBack ? navBack->GetWindowType() : WT_NONE);
-	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->MoveToFront();
+	CBaseModPanel::GetSingleton().GetTransitionEffectPanel()->StartTransition();
 	
 	return navBack;
 }

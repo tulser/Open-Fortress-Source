@@ -507,6 +507,7 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 	}
 
 	GetTransitionEffectPanel()->SetExpectedDirection(true, wt);
+	GetTransitionEffectPanel()->StartTransition();
 
 	if ( UI_IsDebug() && (wt != WT_LOADINGPROGRESS) )
 	{

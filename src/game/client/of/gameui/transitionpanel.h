@@ -13,6 +13,7 @@
 namespace BaseModUI
 {
 
+/*
 struct RectParms_t
 {
 	RectParms_t()
@@ -59,6 +60,7 @@ struct TileQuad_t
 	WINDOW_TYPE		m_nPreviousWindow;
 	int				m_nFrameCount;
 };
+*/
 
 class CBaseModTransitionPanel : public vgui::EditablePanel
 {
@@ -90,6 +92,8 @@ public:
 
 	void SetExpectedDirection( bool bForward, WINDOW_TYPE wt );
 
+	void StartTransition();
+
 protected:
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	virtual void Paint();
@@ -97,12 +101,9 @@ protected:
 	virtual void OnKeyCodePressed( vgui::KeyCode code );
 
 private:
-	int		GetTileIndex( int x, int y );
-	void	TouchTile( int nTile, WINDOW_TYPE wt, bool bForce );
 	void	SaveCurrentScreen( ITexture *pRenderTarget );
 	void	BuildTiles();
-	void	DrawEffect();
-	void	ScanTilesForTransition();
+	void	DrawEffect(float flNormalizedAlpha);
 	void	StartPaint3D();
 	void	EndPaint3D();
 	void	DrawBackground3D();
@@ -118,15 +119,18 @@ private:
 	IMaterial	*m_pFromScreenMaterial;
 	IMaterial	*m_pCurrentScreenMaterial;
 
-	int		m_nPinFromBottom;
-	int		m_nPinFromLeft;
-	int		m_nTileWidth; 
-	int		m_nTileHeight;
+	float	m_flStartTime;
+	float	m_flEndTime;
 
-	int		m_nNumRows;
-	int		m_nNumColumns;
 	int		m_nXOffset;
 	int		m_nYOffset;
+	int		m_nWidth; 
+	int		m_nHeight;
+
+	float m_flMovieFadeInTime = 0;
+
+	// int		m_nNumRows;
+	// int		m_nNumColumns;
 
 	bool	m_bTransitionActive;
 	bool	m_bForwardHint;
@@ -136,9 +140,8 @@ private:
 	WINDOW_TYPE	m_WindowTypeHint;
 	WINDOW_TYPE	m_PreviousWindowTypeHint;
 
-	CUtlVector< TileQuad_t > m_Tiles;
-	
-	CUtlVector< int >	m_Sounds;
+	// CUtlVector< TileQuad_t > m_Tiles;	
+	// CUtlVector< int >	m_Sounds;
 
 	float	m_flDirection;
 };
