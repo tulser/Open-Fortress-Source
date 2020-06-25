@@ -697,7 +697,11 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		break;
 	case TF_COND_JAUGGERNAUGHT:
 		OnAddJauggernaught();
-		break;		
+		break;
+	case TF_COND_POISON:
+		OnAddPoison();
+		break;
+
 	default:
 		break;
 	}
@@ -775,6 +779,12 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_JAUGGERNAUGHT:
 		OnRemoveJauggernaught();
 		break;
+
+	case TF_COND_POISON:
+		OnRemovePoison();
+		break;
+
+
 	default:
 		break;
 	}
@@ -938,8 +948,8 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 
 		if (InCond(TF_COND_POISON))
 		{
-			// Reduce the duration of this burn 
-			float flReduction = 2;	 // ( flReduction + 1 ) x faster reduction
+			// Reduce the duration of this poison
+			float flReduction = 2;
 			m_flPoisonRemoveTime -= flReduction * gpGlobals->frametime;
 		}
 	}
@@ -1023,7 +1033,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 
 		if ((gpGlobals->curtime >= m_flPoisonTime))
 		{
-			CTakeDamageInfo info(m_hPoisonAttacker, m_hPoisonAttacker, TF_POISON_DMG, DMG_CLUB | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON);
+			CTakeDamageInfo info(m_hPoisonAttacker, m_hPoisonAttacker, TF_POISON_DMG, DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON);
 			m_pOuter->TakeDamage(info);
 			m_flPoisonTime = gpGlobals->curtime + TF_POISON_FREQUENCY;
 		}
@@ -1635,7 +1645,7 @@ void CTFPlayerShared::Poison(CTFPlayer *pAttacker, float flTime)
 	if (!InCond(TF_COND_POISON))
 	{
 		// Start burning
-		AddCond(TF_COND_POISON);
+		AddCond(TF_COND_POISON, flTime);
 		m_flPoisonTime = gpGlobals->curtime;    //asap
 	}
 
@@ -1694,23 +1704,13 @@ void CTFPlayerShared::OnRemoveBurning( void )
 void CTFPlayerShared::OnRemovePoison(void)
 {
 #ifdef CLIENT_DLL
-	m_pOuter->StopBurningSound();
-
-	if (m_pOuter->m_pBurningEffect)
-	{
-		m_pOuter->ParticleProp()->StopEmission(m_pOuter->m_pBurningEffect);
-		m_pOuter->m_pBurningEffect = NULL;
-	}
-
 	if (m_pOuter->IsLocalPlayer())
 	{
 		view->SetScreenOverlayMaterial(NULL);
 	}
 
-	m_pOuter->m_flBurnEffectStartTime = 0;
-	m_pOuter->m_flBurnEffectEndTime = 0;
 #else
-	m_hBurnAttacker = NULL;
+	m_hPoisonAttacker = NULL;
 #endif
 }
 
@@ -1878,46 +1878,16 @@ void CTFPlayerShared::OnAddBurning( void )
 void CTFPlayerShared::OnAddPoison(void)
 {
 #ifdef CLIENT_DLL
-	// Start the burning effect
-	if (!m_pOuter->m_pBurningEffect)
-	{
-		const char *pEffectName;
-		if (m_pOuter->GetTeamNumber() == TF_TEAM_RED)
-			pEffectName = "burningplayer_red";
-		else if (m_pOuter->GetTeamNumber() == TF_TEAM_BLUE)
-			pEffectName = "burningplayer_blue";
-		else
-			pEffectName = "burningplayer_dm";
-		m_pOuter->m_pBurningEffect = m_pOuter->ParticleProp()->Create(pEffectName, PATTACH_ABSORIGIN_FOLLOW);
-
-		m_pOuter->m_flBurnEffectStartTime = gpGlobals->curtime;
-		m_pOuter->m_flBurnEffectEndTime = gpGlobals->curtime + TF_BURNING_FLAME_LIFE;
-	}
-	// set the burning screen overlay
+	// set the poison screen overlay
 	if (m_pOuter->IsLocalPlayer())
 	{
-		IMaterial *pMaterial = materials->FindMaterial("effects/imcookin", TEXTURE_GROUP_CLIENT_EFFECTS, false);
+		IMaterial *pMaterial = materials->FindMaterial("effects/poison_overlay", TEXTURE_GROUP_CLIENT_EFFECTS, false);
 		if (!IsErrorMaterial(pMaterial))
 		{
 			view->SetScreenOverlayMaterial(pMaterial);
 		}
 	}
 #endif
-
-	/*
-	#ifdef GAME_DLL
-
-	if ( player == robin || player == cook )
-	{
-	CSingleUserRecipientFilter filter( m_pOuter );
-	TFGameRules()->SendHudNotification( filter, HUD_NOTIFY_SPECIAL );
-	}
-
-	#endif
-	*/
-
-	// play a fire-starting sound
-	m_pOuter->EmitSound("Fire.Engulf");
 }
 
 //-----------------------------------------------------------------------------
@@ -3857,6 +3827,10 @@ bool CTFPlayerShared::InPowerupCond()
 {
 	for (int i = TF_COND_BERSERK; i < TF_COND_LAST; i++)
 	{
+		//poison is not a powerup
+		if (i == TF_COND_POISON)
+			continue;
+
 		if (InCond(i))
 			return true;
 	}

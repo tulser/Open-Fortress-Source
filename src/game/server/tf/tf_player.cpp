@@ -9600,8 +9600,6 @@ void CTFPlayer::InputDePoisonPlayer(inputdata_t &inputdata)
 {
 	if (m_Shared.InCond(TF_COND_POISON))
 	{
-		EmitSound("TFPlayer.FlameOut");
-
 		m_Shared.RemoveCond(TF_COND_POISON);
 	}
 }
