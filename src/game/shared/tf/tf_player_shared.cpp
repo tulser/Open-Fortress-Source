@@ -89,6 +89,9 @@ ConVar of_haste_movespeed_multplier("of_haste_movespeed_multplier", "1.5",FCVAR_
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
 
+#define COND_FIRST_POWERUP TF_COND_BERSERK
+#define COND_LAST_POWERUP TF_COND_JAUGGERNAUGHT
+
 #define TF_PLAYER_CONDITION_CONTEXT	"TFPlayerConditionContext"
 
 #define MAX_DAMAGE_EVENTS		128
@@ -3825,12 +3828,9 @@ void CTFPlayerShared::RemoveCondInvis( void )
 
 bool CTFPlayerShared::InPowerupCond()
 {
-	for (int i = TF_COND_BERSERK; i < TF_COND_LAST; i++)
+	for (int i = COND_FIRST_POWERUP; i < COND_LAST_POWERUP; i++)
 	{
 		//poison is not a powerup
-		if (i == TF_COND_POISON)
-			continue;
-
 		if (InCond(i))
 			return true;
 	}
