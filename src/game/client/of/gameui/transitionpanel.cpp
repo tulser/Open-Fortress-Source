@@ -29,44 +29,6 @@ ConVar ui_transition_time( "ui_transition_time", "0.55", FCVAR_DEVELOPMENTONLY, 
 ConVar ui_transition_delay( "ui_transition_delay", "0", FCVAR_DEVELOPMENTONLY, "" );
 ConVar ui_transition_effect( "ui_transition_effect", "1", FCVAR_DEVELOPMENTONLY, "" );
 
-#define TILE_NEAR_PLANE		1.0f
-#define TILE_FAR_PLANE		257.0f
-#define TILE_Z				( -128.0f )
-#define GRID_WIDTH_WC		( 2.0f * -TILE_Z )
-#define HALF_GRID_WIDTH_WC	( -TILE_Z )
-
-struct ShaderStencilState_t
-{
-	bool m_bEnable;
-	StencilOperation_t m_FailOp;
-	StencilOperation_t m_ZFailOp;
-	StencilOperation_t m_PassOp;
-	StencilComparisonFunction_t m_CompareFunc;
-	int m_nReferenceValue;
-	uint32 m_nTestMask;
-	uint32 m_nWriteMask;
-
-	ShaderStencilState_t()
-	{
-		m_bEnable = false;
-		m_PassOp = m_FailOp = m_ZFailOp = STENCILOPERATION_KEEP;
-		m_CompareFunc = STENCILCOMPARISONFUNCTION_ALWAYS;
-		m_nReferenceValue = 0;
-		m_nTestMask = m_nWriteMask = 0xFFFFFFFF;
-	}
-
-	void SetStencilState(CMatRenderContextPtr &pRenderContext)
-	{
-		pRenderContext->SetStencilEnable(m_bEnable);
-		pRenderContext->SetStencilFailOperation(m_FailOp);
-		pRenderContext->SetStencilZFailOperation(m_ZFailOp);
-		pRenderContext->SetStencilPassOperation(m_PassOp);
-		pRenderContext->SetStencilCompareFunction(m_CompareFunc);
-		pRenderContext->SetStencilReferenceValue(m_nReferenceValue);
-		pRenderContext->SetStencilTestMask(m_nTestMask);
-		pRenderContext->SetStencilWriteMask(m_nWriteMask);
-	}
-};
 
 CBaseModTransitionPanel::CBaseModTransitionPanel( const char *pPanelName ) :
 	BaseClass( NULL, pPanelName )
@@ -410,12 +372,11 @@ void CBaseModTransitionPanel::DrawEffect(float flNormalizedAlpha)
 	CMatRenderContextPtr pRenderContext(g_pMaterialSystem);
 	int w = GetWide();
 	int h = GetTall();
-	float depth = 0.5f;
+	float depth = 0.0f;
 
-	DrawScreenSpaceRectangleAlpha11(m_pCurrentScreenMaterial, 0, 0, w, h, 0, 0, w, h, w, h, NULL, 1, 1, depth, 
-		1.0f);
+	DrawScreenSpaceRectangleAlpha11(m_pCurrentScreenMaterial, 0, 0, w, h, 0, 0, w-1, h-1, w, h, NULL, 0, 0, depth, 1.0f);
 
-	DrawScreenSpaceRectangleAlpha11(m_pFromScreenMaterial, m_nXOffset, m_nYOffset, m_nWidth, m_nHeight, m_nXOffset, m_nYOffset, m_nWidth + m_nXOffset, m_nHeight + m_nYOffset, w, h, NULL, 1, 1, depth, flNormalizedAlpha);
+	DrawScreenSpaceRectangleAlpha11(m_pFromScreenMaterial, m_nXOffset, m_nYOffset, m_nWidth, m_nHeight, m_nXOffset, m_nYOffset, m_nWidth + m_nXOffset -1, m_nHeight + m_nYOffset -1, w, h, NULL, 1, 1, depth, flNormalizedAlpha);
 }
 
 void CBaseModTransitionPanel::Paint()
@@ -433,7 +394,7 @@ void CBaseModTransitionPanel::Paint()
 			m_flMovieFadeInTime = Plat_FloatTime();
 		}
 
-		float flFadeDelta = RemapValClamped(Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + 0.1f, 1.0f, 0.0f);
+		float flFadeDelta = RemapValClamped(Plat_FloatTime(), m_flMovieFadeInTime, m_flMovieFadeInTime + 0.2f, 1.0f, 0.0f);
 		if (flFadeDelta > 0.0f)
 		{
 			DrawEffect(flFadeDelta);
@@ -457,80 +418,4 @@ void CBaseModTransitionPanel::PostChildPaint()
 		// keep saving the current frame buffer to use as the 'from'
 		SaveCurrentScreen( m_pFromScreenRT );
 	}
-}
-
-void CBaseModTransitionPanel::StartPaint3D()
-{
-	// Save off the matrices in case the painting method changes them.
-	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
-
-	pRenderContext->MatrixMode( MATERIAL_MODEL );
-	pRenderContext->PushMatrix();
-	pRenderContext->LoadIdentity();
-
-	pRenderContext->MatrixMode( MATERIAL_VIEW );
-	pRenderContext->PushMatrix();
-	pRenderContext->LoadIdentity();
-
-	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-	pRenderContext->PushMatrix();
-	pRenderContext->LoadIdentity();
-
-	// const AspectRatioInfo_t &aspectRatioInfo = materials->GetAspectRatioInfo();
-	// pRenderContext->PerspectiveX( 90, aspectRatioInfo.m_flFrameBufferAspectRatio, TILE_NEAR_PLANE, TILE_FAR_PLANE );
-	pRenderContext->PerspectiveX(90, 1.78f, TILE_NEAR_PLANE, TILE_FAR_PLANE);
-
-	pRenderContext->CullMode( MATERIAL_CULLMODE_CCW );
-
-	// Don't draw the 3D scene w/ stencil
-	ShaderStencilState_t state;
-	state.m_bEnable = false;
-	// pRenderContext->SetStencilState( state );
-	state.SetStencilState(pRenderContext);
-
-	pRenderContext->ClearBuffers( false, true, true );
-	pRenderContext->OverrideDepthEnable(true, true); // , true );
-}
-
-void CBaseModTransitionPanel::EndPaint3D()
-{
-	// Reset stencil to set stencil everywhere we draw 
-	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
-
-	if ( !IsGameConsole() )
-	{
-		pRenderContext->OverrideDepthEnable(false, true); // , true );
-	}
-
-	ShaderStencilState_t state;
-	state.m_bEnable = true;
-	state.m_FailOp = STENCILOPERATION_KEEP;
-	state.m_ZFailOp = STENCILOPERATION_KEEP;
-	state.m_PassOp = STENCILOPERATION_REPLACE;
-	state.m_CompareFunc = STENCILCOMPARISONFUNCTION_GREATEREQUAL;
-	state.m_nReferenceValue = 0;
-	state.m_nTestMask = 0xFFFFFFFF;
-	state.m_nWriteMask = 0xFFFFFFFF;
-	// pRenderContext->SetStencilState( state );
-	state.SetStencilState(pRenderContext);
-
-	// Restore the matrices
-	pRenderContext->MatrixMode( MATERIAL_MODEL );
-	pRenderContext->PopMatrix();
-
-	pRenderContext->MatrixMode( MATERIAL_VIEW );
-	pRenderContext->PopMatrix();
-
-	pRenderContext->MatrixMode( MATERIAL_PROJECTION );
-	pRenderContext->PopMatrix();
-
-	pRenderContext->CullMode( MATERIAL_CULLMODE_CCW );
-
-	surface()->DrawSetTexture( -1 );
-}
-
-void CBaseModTransitionPanel::DrawTiles3D()
-{
-	CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
-
 }

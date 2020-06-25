@@ -104,11 +104,6 @@ private:
 	void	SaveCurrentScreen( ITexture *pRenderTarget );
 	void	BuildTiles();
 	void	DrawEffect(float flNormalizedAlpha);
-	void	StartPaint3D();
-	void	EndPaint3D();
-	void	DrawBackground3D();
-	void	DrawTiles3D();
-	void	ShortenEffectDuration();
 
 	ITexture *m_pFromScreenRT;
 	ITexture *m_pCurrentScreenRT;
