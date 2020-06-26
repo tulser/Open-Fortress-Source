@@ -2580,31 +2580,6 @@ void CTFPlayerShared::SetHook(CBaseEntity *hook)
 	m_Hook = hook;
 }
 
-void CTFPlayerShared::SetPendulum(bool swing)
-{
-	m_bPendulum = swing;
-}
-
-void CTFPlayerShared::SetBlockJump(bool buffer)
-{
-	m_bBlockJump = buffer;
-}
-
-void CTFPlayerShared::SetCSlide(bool csliding)
-{
-	m_bCSlide = csliding;
-}
-
-void CTFPlayerShared::SetCSlideDuration(float duration)
-{
-	m_fCSlideDuration = duration;
-}
-
-void CTFPlayerShared::SetRampJumpVel(float vel)
-{
-	m_fRampJumpVel = vel;
-}
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

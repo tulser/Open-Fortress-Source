@@ -378,13 +378,7 @@ void CWeaponGrapple::PrimaryAttack(void)
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::SecondaryAttack(void)
 {
-	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
-
-	//signal player it should swing
-	if (pPlayer && pPlayer->GetWaterLevel() > WL_Feet && m_bAttached)
-		pPlayer->m_Shared.SetPendulum(true);
-
-	 m_flNextSecondaryAttack = gpGlobals->curtime + 1.f;
+	//nothing
 }
  
 //-----------------------------------------------------------------------------
@@ -429,11 +423,13 @@ void CWeaponGrapple::ItemPostFrame(void)
 		m_flNextPrimaryAttack = gpGlobals->curtime - 0.1f;
 	}
 
+	/*
 	if (pOwner->m_afButtonPressed & IN_ATTACK2)
 	{
 		if (m_flNextSecondaryAttack < gpGlobals->curtime)
 			SecondaryAttack();
 	}
+	*/
 
 	CBaseEntity *Hook = NULL;
 #ifdef GAME_DLL
@@ -454,7 +450,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 	{
 		//remove hook
 		if (!(pOwner->m_nButtons & IN_ATTACK) ||													//if player lets go of the attack button
-			 (m_bAttached && (Hook->GetAbsOrigin() - pOwner->GetAbsOrigin()).Length() <= 320.f))	//or player is very close to the attached hook
+			 (m_bAttached && (Hook->GetAbsOrigin() - pOwner->GetAbsOrigin()).Length() <= 100.f))	//or player is very close to the attached hook
 		{
 			RemoveHook();
 		}
@@ -480,10 +476,7 @@ void CWeaponGrapple::RemoveHook(void)
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
 
 	if (pPlayer)
-	{
 		pPlayer->m_Shared.SetHook(NULL);
-		pPlayer->m_Shared.SetPendulum(false);
-	}
 }
 
 //-----------------------------------------------------------------------------

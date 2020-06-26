@@ -232,15 +232,6 @@ public:
 	void    SetAirDashCount( int iAirDashCount );
 	CBaseEntity	*GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
-	void    SetPendulum(bool swing);
-	void	SetBlockJump(bool buffer);
-	bool	IsJumpBlocked() { return m_bBlockJump; }
-	void	SetCSlide(bool csliding);
-	bool	IsCSliding() { return m_bCSlide; }
-	void	SetCSlideDuration(float duration);
-	float	GetCSlideDuration() { return m_fCSlideDuration; }
-	void	SetRampJumpVel(float vel);
-	float	GetRampJumpVel() { return m_fRampJumpVel; }
 
 	// loser state
 	bool	IsLoser( void );
