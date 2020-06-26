@@ -24,18 +24,16 @@
     #include "player.h"                
 	#include "te_effect_dispatch.h"
 	#include "IEffects.h"
-	#include "Sprite.h"
 	#include "SpriteTrail.h"
 	#include "beam_shared.h"
 	#include "explode.h"
 
 	#include "ammodef.h"		/* This is needed for the tracing done later */
-	#include "gamestats.h" //
-	#include "soundent.h" //
+	#include "gamestats.h"
+	#include "soundent.h"
  
 	#include "vphysics/constraints.h"
 	#include "physics_saverestore.h"
- 
 #endif
 
 //#include "effect_dispatch_data.h"
@@ -49,21 +47,16 @@
 #define BOLT_AIR_VELOCITY	3500
 #define BOLT_WATER_VELOCITY	1500
  
-#ifndef CLIENT_DLL
- 
+#ifdef GAME_DLL
+
 LINK_ENTITY_TO_CLASS( grapple_hook, CGrappleHook );
  
 BEGIN_DATADESC( CGrappleHook )
 	// Function Pointers
 	DEFINE_THINKFUNC( FlyThink ),
-	DEFINE_THINKFUNC( HookedThink ),
 	DEFINE_FUNCTION( HookTouch ),
-
 	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_hOwner, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_hBolt, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_bPlayerWasStanding, FIELD_BOOLEAN ),
- 
 END_DATADESC()
  
 CGrappleHook *CGrappleHook::HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner )
@@ -86,13 +79,7 @@ CGrappleHook *CGrappleHook::HookCreate( const Vector &vecOrigin, const QAngle &a
 // Purpose: 
 //-----------------------------------------------------------------------------
 CGrappleHook::~CGrappleHook( void )
-{ 
-	if ( m_hBolt )
-	{
-		UTIL_Remove( m_hBolt );
-		m_hBolt = NULL;
-	}
- 
+{
 	// Revert Jay's gai flag
 	if ( m_hPlayer )
 		m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, false );
@@ -114,7 +101,7 @@ bool CGrappleHook::CreateVPhysics( void )
 //-----------------------------------------------------------------------------
 unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
 {
-	return ( BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX ) & ~CONTENTS_GRATE;
+	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
 }
  
 //-----------------------------------------------------------------------------
@@ -122,7 +109,7 @@ unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
 //-----------------------------------------------------------------------------
 void CGrappleHook::Spawn( void )
 {
-	Precache( );
+	Precache();
  
 	SetModel( HOOK_MODEL );
 	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
@@ -135,31 +122,25 @@ void CGrappleHook::Spawn( void )
  
 	// Make sure we're updated if we're underwater
 	UpdateWaterState();
- 
-	SetTouch( &CGrappleHook::HookTouch );
- 
-	SetThink( &CGrappleHook::FlyThink );
-	SetNextThink( gpGlobals->curtime + 0.1f );
- 
-	m_pSpring		= NULL;
-	m_fSpringLength = 0.0f;
-	m_bPlayerWasStanding = false;
 
 	// Create bolt model and parent it
-	CBaseEntity *pBolt = CBaseEntity::CreateNoSpawn( "prop_dynamic", GetAbsOrigin(), GetAbsAngles(), this );
-	pBolt->SetModelName( MAKE_STRING( BOLT_MODEL ) );
-	pBolt->SetModel( BOLT_MODEL );
-	DispatchSpawn( pBolt );
-	pBolt->SetParent( this );
+	CBaseEntity *pBolt = CBaseEntity::CreateNoSpawn("prop_dynamic", GetAbsOrigin(), GetAbsAngles(), this);
+	pBolt->SetModelName(MAKE_STRING(BOLT_MODEL));
+	pBolt->SetModel(BOLT_MODEL);
+	DispatchSpawn(pBolt);
+	pBolt->SetParent(this);
+
+	SetTouch(&CGrappleHook::HookTouch);
+	SetThink(&CGrappleHook::FlyThink);
+	SetNextThink(gpGlobals->curtime + 0.1f);
 }
- 
- 
+
 void CGrappleHook::Precache( void )
 {
 	PrecacheModel( HOOK_MODEL );
 	PrecacheModel( BOLT_MODEL );
 }
- 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pOther - 
@@ -167,18 +148,18 @@ void CGrappleHook::Precache( void )
 void CGrappleHook::HookTouch( CBaseEntity *pOther )
 {
 	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) )
-		return;
- 
-	if ( (pOther != m_hOwner) && (pOther->m_takedamage != DAMAGE_NO) )
 	{
 		m_hOwner->NotifyHookDied();
-
-		if ( m_hPlayer )
-			m_hPlayer->m_Shared.SetGrapple( false );
+		return;
+	}
+ 
+	if ( pOther != m_hOwner && pOther->m_takedamage != DAMAGE_NO )
+	{
+		m_hOwner->NotifyHookDied();
  
 		SetTouch( NULL );
 		SetThink( NULL );
- 
+
 		UTIL_Remove( this );
 	}
 	else
@@ -226,8 +207,7 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
  
 			// Set Jay's gai flag
 			m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, true );
-
-			m_hPlayer->m_Shared.SetGrapple( true );
+			m_hOwner->NotifyHookAttached();
 			m_hPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START );
 
 			//IPhysicsObject *pPhysObject = m_hPlayer->VPhysicsGetObject();
@@ -244,15 +224,6 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 		//	float damping = 3;
 		//	pPhysObject->SetDamping( &damping, &damping );
 			*/
- 
-			Vector origin = m_hPlayer->GetAbsOrigin();
-			Vector rootOrigin = GetAbsOrigin();
-			m_fSpringLength = (origin - rootOrigin).Length();
- 
-			m_bPlayerWasStanding = ( ( m_hPlayer->GetFlags() & FL_DUCKING ) == 0 );
- 
-			SetThink( &CGrappleHook::HookedThink );
-			SetNextThink( gpGlobals->curtime + 0.1f );
 		}
 		else
 		{
@@ -266,35 +237,9 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 			SetThink( NULL );
  
 			m_hOwner->NotifyHookDied();
+
 			UTIL_Remove( this );
 		}
-	}
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGrappleHook::HookedThink( void )
-{
-	//set next globalthink
-	SetNextThink( gpGlobals->curtime + 0.05f ); //0.1f
-
-	//All of this push the player far from the hook
-	Vector tempVec1 = m_hPlayer->GetAbsOrigin() - GetAbsOrigin();
-	VectorNormalize(tempVec1);
-
-	int temp_multiplier = -1;
-
-	m_hPlayer->SetGravity(0.0f);
-	m_hPlayer->SetGroundEntity(NULL);
-
-	if (m_hOwner->m_bHook){
-		//temp_multiplier = 1;
-		m_hPlayer->SetAbsVelocity(tempVec1*temp_multiplier*45); //50
-	}
-	else
-	{
-		m_hPlayer->SetAbsVelocity(tempVec1*temp_multiplier*800); //400
 	}
 }
  
@@ -310,49 +255,49 @@ void CGrappleHook::FlyThink( void )
  
 	SetNextThink( gpGlobals->curtime + 0.1f );
 }
- 
 #endif
- 
-IMPLEMENT_NETWORKCLASS_ALIASED( WeaponGrapple, DT_WeaponGrapple )
- 
-#ifdef CLIENT_DLL
-void RecvProxy_HookDied( const CRecvProxyData *pData, void *pStruct, void *pOut )
-{
-	CWeaponGrapple *pGrapple = ((CWeaponGrapple*)pStruct);
- 
-	RecvProxy_IntToEHandle( pData, pStruct, pOut );
- 
-	CBaseEntity *pNewHook = pGrapple->GetHook();
- 
-	if ( pNewHook == NULL )
-	{
-		if ( pGrapple->GetOwner() && pGrapple->GetOwner()->GetActiveWeapon() == pGrapple )
-		{
-			pGrapple->NotifyHookDied();
-		}
-	}
-}
-#endif
- 
-BEGIN_NETWORK_TABLE( CWeaponGrapple, DT_WeaponGrapple )
-#ifdef CLIENT_DLL
-	RecvPropBool( RECVINFO( m_bInZoom ) ),
-	RecvPropBool( RECVINFO( m_bMustReload ) ),
-	RecvPropEHandle( RECVINFO( m_hHook ), RecvProxy_HookDied ),
 
-	RecvPropInt ( RECVINFO (m_nBulletType)),
-#else
-	SendPropBool( SENDINFO( m_bInZoom ) ),
-	SendPropBool( SENDINFO( m_bMustReload ) ),
-	SendPropEHandle( SENDINFO( m_hHook ) ),
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
+//*******************************************************************************************************************************************************************
 
-	SendPropInt ( SENDINFO (m_nBulletType)),
-#endif
+#ifdef CLIENT_DLL
+
+#undef CWeaponGrapple
+
+IMPLEMENT_CLIENTCLASS_DT(C_WeaponGrapple, DT_WeaponGrapple, CWeaponGrapple)
+	RecvPropBool(RECVINFO(m_bMustReload)),
+	RecvPropBool(RECVINFO(m_bAttached)),
+	RecvPropInt(RECVINFO(m_nBulletType)),
+	RecvPropEHandle(RECVINFO(m_hHook)),
 END_NETWORK_TABLE()
- 
+
+#define CWeaponGrapple C_WeaponGrapple
+
+#else
+IMPLEMENT_SERVERCLASS_ST(CWeaponGrapple, DT_WeaponGrapple)
+	SendPropBool( SENDINFO( m_bMustReload ) ),
+	SendPropBool( SENDINFO( m_bAttached ) ),
+	SendPropInt ( SENDINFO (m_nBulletType)),
+	SendPropEHandle( SENDINFO( m_hHook ) ),
+END_NETWORK_TABLE()
+#endif
+
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CWeaponGrapple )
-	DEFINE_PRED_FIELD( m_bInZoom, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bMustReload, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
@@ -361,53 +306,6 @@ LINK_ENTITY_TO_CLASS( tf_weapon_grapple, CWeaponGrapple );
  
 //PRECACHE_WEAPON_REGISTER( tf_weapon_grapple );
  
-#ifndef CLIENT_DLL
-/*
-acttable_t	CWeaponGrapple::m_acttable[] = 
-{
-	{ ACT_MP_STAND_IDLE,		ACT_MP_STAND_MELEE,				false },
-	{ ACT_MP_CROUCH_IDLE,		ACT_MP_CROUCH_MELEE,			false },
-	{ ACT_MP_RUN,				ACT_MP_RUN_MELEE,				false },
-	{ ACT_MP_WALK,				ACT_MP_WALK_MELEE,				false },
-	{ ACT_MP_AIRWALK,			ACT_MP_AIRWALK_MELEE,			false },
-	{ ACT_MP_CROUCHWALK,		ACT_MP_CROUCHWALK_MELEE,		false },
-	{ ACT_MP_JUMP,				ACT_MP_JUMP_MELEE,				false },
-	{ ACT_MP_JUMP_START,		ACT_MP_JUMP_START_MELEE,		false },
-	{ ACT_MP_JUMP_FLOAT,		ACT_MP_JUMP_FLOAT_MELEE,		false },
-	{ ACT_MP_JUMP_LAND,			ACT_MP_JUMP_LAND_MELEE,			false },
-	{ ACT_MP_SWIM,				ACT_MP_SWIM_MELEE,				false },
-
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,		ACT_MP_ATTACK_STAND_MELEE,		false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,		ACT_MP_ATTACK_CROUCH_MELEE,		false },
-	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE,		ACT_MP_ATTACK_SWIM_MELEE,		false },
-	{ ACT_MP_ATTACK_AIRWALK_PRIMARYFIRE,	ACT_MP_ATTACK_AIRWALK_MELEE,	false },
-
-	{ ACT_MP_ATTACK_STAND_SECONDARYFIRE,	ACT_MP_ATTACK_STAND_MELEE_SECONDARY, false },
-	{ ACT_MP_ATTACK_CROUCH_SECONDARYFIRE,	ACT_MP_ATTACK_CROUCH_MELEE_SECONDARY,false },
-	{ ACT_MP_ATTACK_SWIM_SECONDARYFIRE,		ACT_MP_ATTACK_SWIM_MELEE,		false },
-	{ ACT_MP_ATTACK_AIRWALK_SECONDARYFIRE,	ACT_MP_ATTACK_AIRWALK_MELEE,	false },
-
-	{ ACT_MP_GESTURE_FLINCH,	ACT_MP_GESTURE_FLINCH_MELEE, false },
-
-	{ ACT_MP_GRENADE1_DRAW,		ACT_MP_MELEE_GRENADE1_DRAW,	false },
-	{ ACT_MP_GRENADE1_IDLE,		ACT_MP_MELEE_GRENADE1_IDLE,	false },
-	{ ACT_MP_GRENADE1_ATTACK,	ACT_MP_MELEE_GRENADE1_ATTACK,	false },
-	{ ACT_MP_GRENADE2_DRAW,		ACT_MP_MELEE_GRENADE2_DRAW,	false },
-	{ ACT_MP_GRENADE2_IDLE,		ACT_MP_MELEE_GRENADE2_IDLE,	false },
-	{ ACT_MP_GRENADE2_ATTACK,	ACT_MP_MELEE_GRENADE2_ATTACK,	false },
-
-	{ ACT_MP_GESTURE_VC_HANDMOUTH,	ACT_MP_GESTURE_VC_HANDMOUTH_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_FINGERPOINT,	ACT_MP_GESTURE_VC_FINGERPOINT_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_FISTPUMP,	ACT_MP_GESTURE_VC_FISTPUMP_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_THUMBSUP,	ACT_MP_GESTURE_VC_THUMBSUP_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_NODYES,	ACT_MP_GESTURE_VC_NODYES_MELEE,	false },
-	{ ACT_MP_GESTURE_VC_NODNO,	ACT_MP_GESTURE_VC_NODNO_MELEE,	false },                             
-};
- 
-IMPLEMENT_ACTTABLE(CWeaponGrapple);
- */
-#endif
- 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
@@ -415,17 +313,15 @@ CWeaponGrapple::CWeaponGrapple( void )
 {
 	m_bReloadsSingly	= true;
 	m_bFiresUnderwater	= true;
-	m_bInZoom			= false;
 	m_bMustReload		= false;
-
+	m_bAttached			= false;
 	m_nBulletType = -1;
-
 	
-	#ifndef CLIENT_DLL
-		m_pLightGlow= NULL;
-
-		pBeam	= NULL;
-	#endif
+#ifdef GAME_DLL
+	m_hHook = NULL;
+	m_pLightGlow = NULL;
+	pBeam = NULL;
+#endif
 }
   
 //-----------------------------------------------------------------------------
@@ -433,7 +329,7 @@ CWeaponGrapple::CWeaponGrapple( void )
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::Precache( void )
 {
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	UTIL_PrecacheOther( "grapple_hook" );
 #endif
  
@@ -450,33 +346,15 @@ void CWeaponGrapple::Precache( void )
 void CWeaponGrapple::PrimaryAttack( void )
 {
 	// Can't have an active hook out
-	if ( m_hHook != NULL )
+	if ( m_hHook )
 		return;
- 
-	#ifndef CLIENT_DLL
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+
+	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
 
 	if ( !pPlayer )
-	{
 		return;
-	}
-
-	//Disabled on MP it makes think the weapon that it needs to reload 
-	/*if ( m_iClip1 <= 0 )
-	{
-		if ( !m_bFireOnEmpty )
-		{
-			Reload();
-		}
-		else
-		{
-			WeaponSound( EMPTY );
-			m_flNextPrimaryAttack = 0.15;
-		}
-
-		return;
-	}*/
-
+ 
+#ifdef GAME_DLL
 	//m_iPrimaryAttacks++;
 	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
 
@@ -489,15 +367,6 @@ void CWeaponGrapple::PrimaryAttack( void )
 
 	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
 	m_flNextSecondaryAttack = gpGlobals->curtime + 0.75;
-
-	//Disabled so we can shoot all the time that we want
-	//m_iClip1--;
-
-	Vector vecSrc		= pPlayer->Weapon_ShootPosition();
-	Vector vecAiming	= pPlayer->GetAutoaimVector( AUTOAIM_SCALE_DEFAULT );	
-
-	//We will not shoot bullets anymore
-	//pPlayer->FireBullets( 1, vecSrc, vecAiming, vec3_origin, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 0 );
 
 	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 0.5 );
 
@@ -519,27 +388,64 @@ void CWeaponGrapple::PrimaryAttack( void )
 	vecShootOrigin = pPlayer->Weapon_ShootPosition();
 
 	//Gets the position where the hook will hit
-	vecEnd	= vecShootOrigin + (vecDir * MAX_TRACE_LENGTH);	
-	
+	vecEnd = vecShootOrigin + (vecDir * MAX_TRACE_LENGTH);
+
 	//Traces a line between the two vectors
-	UTIL_TraceLine( vecShootOrigin, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
+	UTIL_TraceLine(vecShootOrigin, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
 
 	//Draws the beam
-	DrawBeam( vecShootOrigin, tr.endpos, 2 );
-
-	#endif
+	DrawBeam(vecShootOrigin, tr.endpos, 2);
+#endif
 
 	FireHook();
  
 	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration( ACT_VM_PRIMARYATTACK ) );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Fires the hook
+//-----------------------------------------------------------------------------
+void CWeaponGrapple::FireHook(void)
+{
+	if (m_bMustReload)
+		return;
+
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+
+	if (!pOwner)
+		return;
+
+#ifdef GAME_DLL
+	Vector vecAiming = pOwner->GetAutoaimVector(0);
+	Vector vecSrc = pOwner->Weapon_ShootPosition();
+
+	QAngle angAiming;
+	VectorAngles(vecAiming, angAiming);
+
+	CGrappleHook *pHook = CGrappleHook::HookCreate(vecSrc, angAiming, this);
+
+	//hook flies faster the faster player moves
+	float vel = pOwner->GetWaterLevel() == 3 ? BOLT_WATER_VELOCITY : BOLT_AIR_VELOCITY;
+	pHook->SetAbsVelocity(vecAiming * vel);
+
+	m_hHook = pHook;
+#endif
+
+	SendWeaponAnim(ACT_VM_PRIMARYATTACK);
+}
  
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CWeaponGrapple::SecondaryAttack( void )
+void CWeaponGrapple::SecondaryAttack(void)
 {
-	// nothing
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+
+	//signal player it should swing
+	if (pPlayer && pPlayer->GetWaterLevel() > WL_Feet && m_bAttached)
+		pPlayer->m_Shared.SetPendulum(true);
+
+	 m_flNextSecondaryAttack = gpGlobals->curtime + 1.f;
 }
  
 //-----------------------------------------------------------------------------
@@ -548,162 +454,89 @@ void CWeaponGrapple::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 bool CWeaponGrapple::Reload( void )
 {
-	if ( ( m_bMustReload ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
-	{
-		//Redraw the weapon
-		SendWeaponAnim( ACT_VM_IDLE ); //ACT_VM_RELOAD
+	//Redraw the weapon
+	SendWeaponAnim( ACT_VM_IDLE ); //ACT_VM_RELOAD
  
-		//Update our times
-		m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+	//Update our times
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
  
-		//Mark this as done
-		m_bMustReload = false;
-	}
- 
+	//Mark this as done
+	m_bMustReload = false;
+
 	return true;
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: Toggles between pull and rappel mode
-//-----------------------------------------------------------------------------
-bool CWeaponGrapple::ToggleHook( void )
-{
-	#ifndef CLIENT_DLL
-
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
  
-	if ( m_bHook )
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponGrapple::ItemPostFrame(void)
+{
+	//Enforces being able to use PrimaryAttack and Secondary Attack
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+
+	if (pOwner->m_nButtons & IN_ATTACK)
 	{
-		//m_bHook = false;
-		ClientPrint(pPlayer,HUD_PRINTCENTER, "Pull mode");
-		//return m_bHook;
+		if (m_flNextPrimaryAttack < gpGlobals->curtime)
+			PrimaryAttack();
 	}
 	else
 	{
-		//m_bHook = true;
-		ClientPrint(pPlayer,HUD_PRINTCENTER, "Rappel mode");
-		//return m_bHook;
-	}
-	#endif
-	return !m_bHook;
-}
-  
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWeaponGrapple::ItemBusyFrame( void )
-{
-	// Allow zoom toggling even when we're reloading
-	//CheckZoomToggle();
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CWeaponGrapple::ItemPostFrame( void )
-{
-	//Enforces being able to use PrimaryAttack and Secondary Attack
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
- 
-	if ( ( pOwner->m_nButtons & IN_ATTACK ) )
-	{
-		if ( m_flNextPrimaryAttack < gpGlobals->curtime )
-		{
-			PrimaryAttack();
-		}
-	}
-	else if ( m_bMustReload ) //&& HasWeaponIdleTimeElapsed() )
-	{
-		Reload();
-	}
+		if (m_bMustReload) //&& HasWeaponIdleTimeElapsed() )
+			Reload();
 
-	if ( ( pOwner->m_afButtonPressed & IN_ATTACK2 ) )
-	{
-		if ( m_flNextPrimaryAttack < gpGlobals->curtime )
-		{
-			SecondaryAttack();
-		}
-	}
-	else if ( m_bMustReload ) //&& HasWeaponIdleTimeElapsed() )
-	{
-		Reload();
-	}
- 
-	//Allow a refire as fast as the player can click
-	if ( ( ( pOwner->m_nButtons & IN_ATTACK ) == false ) )
-	{
 		m_flNextPrimaryAttack = gpGlobals->curtime - 0.1f;
 	}
 
-#ifndef CLIENT_DLL
-	if ( m_hHook )
+	if (pOwner->m_afButtonPressed & IN_ATTACK2)
 	{
-		if ( !(pOwner->m_nButtons & IN_ATTACK) && !(pOwner->m_nButtons & IN_ATTACK2))
-		{
-			m_hHook->SetTouch( NULL );
-			m_hHook->SetThink( NULL );
- 
-			UTIL_Remove( m_hHook );
-			m_hHook = NULL;
-
-			CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-
-			if ( pPlayer )
-				pPlayer->m_Shared.SetGrapple( false );
+		if (m_flNextSecondaryAttack < gpGlobals->curtime)
+			SecondaryAttack();
+	}
 	
-			NotifyHookDied();
- 
-			m_bMustReload = true;
+	CBaseEntity *Hook = NULL;
+#ifdef GAME_DLL
+	Hook = m_hHook;
+#else
+	Hook = m_hHook.Get();
+#endif
+
+	if ( Hook )
+	{
+		//remove hook if player lets go of the attack button
+		if (!(pOwner->m_nButtons & IN_ATTACK))
+		{
+			RemoveHook();
+		}
+		else if(m_bAttached && !pOwner->m_Shared.GetHook())
+		{
+			//the hook is attached to a surface, notify player
+			pOwner->m_Shared.SetHook(Hook);
 		}
 	}
-#endif
- 
+
 //	BaseClass::ItemPostFrame();
 }
- 
-//-----------------------------------------------------------------------------
-// Purpose: Fires the hook
-//-----------------------------------------------------------------------------
-void CWeaponGrapple::FireHook( void )
+
+void CWeaponGrapple::RemoveHook(void)
 {
-	if ( m_bMustReload )
-		return;
- 
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
- 
-	if ( pOwner == NULL )
-		return;
- 
-#ifndef CLIENT_DLL
-	Vector vecAiming	= pOwner->GetAutoaimVector( 0 );	
-	Vector vecSrc		= pOwner->Weapon_ShootPosition();
- 
-	QAngle angAiming;
-	VectorAngles( vecAiming, angAiming );
- 
-	CGrappleHook *pHook = CGrappleHook::HookCreate( vecSrc, angAiming, this );
- 
-	if ( pOwner->GetWaterLevel() == 3 )
-	{
-		pHook->SetAbsVelocity( vecAiming * BOLT_WATER_VELOCITY );
-	}
-	else
-	{
-		pHook->SetAbsVelocity( vecAiming * BOLT_AIR_VELOCITY );
-	}
- 
-	m_hHook = pHook;
- 
+#ifdef GAME_DLL
+	m_hHook->SetTouch(NULL);
+	m_hHook->SetThink(NULL);
+
+	UTIL_Remove(m_hHook);
 #endif
- 
-	//WeaponSound( SINGLE );
-	//WeaponSound( SPECIAL2 );
- 
-	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
- 
-	m_flNextPrimaryAttack = m_flNextSecondaryAttack	= gpGlobals->curtime + 0.75;
+
+	NotifyHookDied();
+
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+
+	if (pPlayer)
+	{
+		pPlayer->m_Shared.SetHook(NULL);
+		pPlayer->m_Shared.SetPendulum(false);
+	}
 }
- 
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : Returns true on success, false on failure.
@@ -711,9 +544,7 @@ void CWeaponGrapple::FireHook( void )
 bool CWeaponGrapple::Deploy( void )
 {
 	if ( m_bMustReload )
-	{
 		return DefaultDeploy( (char*)GetViewModel(), (char*)GetWorldModel(), ACT_CROSSBOW_DRAW_UNLOADED, (char*)GetAnimPrefix() );
-	}
  
 	return BaseClass::Deploy();
 }
@@ -725,25 +556,8 @@ bool CWeaponGrapple::Deploy( void )
 //-----------------------------------------------------------------------------
 bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
-#ifndef CLIENT_DLL
 	if ( m_hHook )
-	{
-		m_hHook->SetTouch( NULL );
-		m_hHook->SetThink( NULL );
- 
-		UTIL_Remove( m_hHook );
-		m_hHook = NULL;
-
-		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-
-		if ( pPlayer )
-			pPlayer->m_Shared.SetGrapple( false );
- 
-		NotifyHookDied();
- 
-		m_bMustReload = true;
-	}
-#endif
+		RemoveHook();
  
 	return BaseClass::Holster( pSwitchingTo );
 }
@@ -753,25 +567,8 @@ bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::Drop( const Vector &vecVelocity )
 {
-#ifndef CLIENT_DLL
-	if ( m_hHook )
-	{
-		m_hHook->SetTouch( NULL );
-		m_hHook->SetThink( NULL );
- 
-		UTIL_Remove( m_hHook );
-		m_hHook = NULL;
-
-		CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
-
-		if ( pPlayer )
-			pPlayer->m_Shared.SetGrapple( false );
- 
-		NotifyHookDied();
- 
-		m_bMustReload = true;
-	}
-#endif
+	if (m_hHook)
+		RemoveHook();
  
 	BaseClass::Drop( vecVelocity );
 }
@@ -781,8 +578,8 @@ void CWeaponGrapple::Drop( const Vector &vecVelocity )
 //-----------------------------------------------------------------------------
 bool CWeaponGrapple::HasAnyAmmo( void )
 {
-	if ( m_hHook != NULL )
-		return true;
+	if (m_hHook)
+		RemoveHook();
  
 	return BaseClass::HasAnyAmmo();
 }
@@ -793,8 +590,8 @@ bool CWeaponGrapple::HasAnyAmmo( void )
 bool CWeaponGrapple::CanHolster( void )
 {
 	//Can't have an active hook out
-	if ( m_hHook != NULL )
-		return false;
+	if (m_hHook)
+		RemoveHook();
  
 	return BaseClass::CanHolster();
 }
@@ -804,9 +601,7 @@ bool CWeaponGrapple::CanHolster( void )
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::NotifyHookDied( void )
 {
-	m_hHook = NULL;
- 
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	if ( pBeam )
 	{
 		UTIL_Remove( pBeam ); //Kill beam
@@ -816,6 +611,17 @@ void CWeaponGrapple::NotifyHookDied( void )
 		m_pLightGlow = NULL;
 	}
 #endif
+
+	//force a reload after the hook is removed
+	m_hHook = NULL;
+	m_bMustReload = true;
+	m_bAttached = false;
+	Reload();
+}
+
+void CWeaponGrapple::NotifyHookAttached(void)
+{
+	m_bAttached = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -826,10 +632,10 @@ void CWeaponGrapple::NotifyHookDied( void )
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, float width )
 {
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	//Tracer down the middle (NOT NEEDED, IT WILL FIRE A TRACER)
 	//UTIL_Tracer( startPos, endPos, 0, TRACER_DONT_USE_ATTACHMENT, 6500, false, "GaussTracer" );
- 
+
 	trace_t tr;
 	//Draw the main beam shaft
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
@@ -850,16 +656,16 @@ void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, flo
 
 	// It starts at startPos
 	pBeam->SetStartPos( startPos );
- 
+
 	// This sets up some things that the beam uses to figure out where
 	// it should start and end
 	pBeam->PointEntInit( endPos, this );
- 
+
 	// This makes it so that the beam appears to come from the muzzle of the pistol
 	pBeam->SetEndAttachment( LookupAttachment("muzzle") );
 	pBeam->SetWidth( width );
 //	pBeam->SetEndWidth( 0.05f );
- 
+
 	// Higher brightness means less transparent
 	pBeam->SetBrightness( 255 );
 	//pBeam->SetColor( 255, 185+random->RandomInt( -16, 16 ), 40 );
@@ -868,18 +674,18 @@ void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, flo
 	//Sets scrollrate of the beam sprite 
 	float scrollOffset = gpGlobals->curtime + 5.5;
 	pBeam->SetScrollRate(scrollOffset);
- 
+
 	// The beam should only exist for a very short time
 	//pBeam->LiveForTime( 0.1f );
-
+	
 	UpdateWaterState();
- 
+
 	SetTouch( &CGrappleHook::HookTouch );
- 
 	SetThink( &CGrappleHook::FlyThink );
 	SetNextThink( gpGlobals->curtime + 0.1f );
 #endif
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : &tr - used to figure out where to do the effect
@@ -887,8 +693,8 @@ void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, flo
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::DoImpactEffect( trace_t &tr, int nDamageType )
 {
-#ifndef CLIENT_DLL
-	if ( (tr.surface.flags & SURF_SKY) == false )
+#ifdef GAME_DLL
+	if ( !(tr.surface.flags & SURF_SKY) )
 	{
 		CPVSFilter filter( tr.endpos );
 		te->GaussExplosion( filter, 0.0f, tr.endpos, tr.plane.normal, 0 );

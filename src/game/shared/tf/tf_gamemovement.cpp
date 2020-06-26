@@ -101,6 +101,7 @@ public:
 	virtual void FullWalkMove();
 	virtual void WalkMove(bool CSliding = false);
 	virtual void AirMove(void);
+	virtual void GrapplingMove(CBaseEntity *hook);
 	virtual float GetAirSpeedCap(void);
 	virtual void FullTossMove(void);
 	virtual void CategorizePosition(void);
@@ -1649,6 +1650,10 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
+	CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
+	if (Hook && CanMove)
+		GrapplingMove(Hook);
+
 	//Ground and air movement
 	bool CSliding = false;
 	if (player->GetGroundEntity() != NULL)
@@ -1725,6 +1730,19 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 		player->StopSound("Player.Slide");
 		player->m_bIsCSliding = false;
 	}
+}
+
+void CTFGameMovement::GrapplingMove(CBaseEntity *hook)
+{
+	m_pTFPlayer->SetGroundEntity(NULL);
+
+	//TODO: adjust the speed player is pushed depending on the pre-hook velocity, add pendulum physics
+	Vector PlayerOrigin = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+	Vector PlayerCenter = PlayerOrigin + (m_pTFPlayer->EyePosition() - PlayerOrigin) * 0.5;
+	Vector PlayerToHookVec = hook->GetAbsOrigin() - PlayerCenter;
+	VectorNormalize(PlayerToHookVec);
+
+	mv->m_vecVelocity = PlayerToHookVec * 800;
 }
 
 //-----------------------------------------------------------------------------

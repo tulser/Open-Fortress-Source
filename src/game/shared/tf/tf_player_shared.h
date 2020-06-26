@@ -230,8 +230,9 @@ public:
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
-	bool	IsGrappling( void ) { return m_bGrapple; }
-	void    SetGrapple( bool bGrapple );
+	CBaseEntity	*GetHook( void ) { return m_Hook; }
+	void    SetHook(CBaseEntity *hook);
+	void    SetPendulum(bool swing);
 	void	SetBlockJump(bool buffer);
 	bool	IsJumpBlocked() { return m_bBlockJump; }
 	void	SetCSlide(bool csliding);
@@ -391,7 +392,8 @@ private:
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
-	CNetworkVar( bool, m_bGrapple );
+	CNetworkHandle( CBaseEntity, m_Hook );
+	CNetworkVar( bool, m_bPendulum );
 	CNetworkVar( bool, m_bBlockJump );
 	CNetworkVar( float, m_fRampJumpVel );
 	CNetworkVar( bool, m_bCSlide );

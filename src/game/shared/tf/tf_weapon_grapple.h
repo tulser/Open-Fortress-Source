@@ -10,30 +10,26 @@
 
 #ifndef WEAPON_GRAPPLE_H
 #define WEAPON_GRAPPLE_H
- 
 #ifdef _WIN32
 #pragma once
 #endif
 
 #include "tf_weaponbase_gun.h"
-//#include "basehlcombatweapon.h"                
-#include "Sprite.h"                            
-#include "props.h"                             
- 
-#ifndef CLIENT_DLL
-    #include "rope.h"
-    #include "props.h"
-#endif
- 
+//#include "basehlcombatweapon.h"
+#include "Sprite.h"
 #include "rope_shared.h"
-
-#include "te_effect_dispatch.h"
 #include "beam_shared.h"
- 
-#ifndef CLIENT_DLL
- 
+
+#ifdef CLIENT_DLL
+#define CWeaponGrapple C_WeaponGrapple
+#else
+#include "props.h"
+#include "te_effect_dispatch.h"
+#endif
+
+#ifdef GAME_DLL
 class CWeaponGrapple;
- 
+
 //-----------------------------------------------------------------------------
 // Grapple Hook
 //-----------------------------------------------------------------------------
@@ -44,44 +40,34 @@ class CGrappleHook : public CBaseCombatCharacter
 public:
     CGrappleHook() { };
     ~CGrappleHook();
- 
+
+#ifdef GAME_DLL
     Class_T Classify( void ) { return CLASS_NONE; }
+#endif
  
 public:
     void Spawn( void );
     void Precache( void );
     void FlyThink( void );
-    void HookedThink( void );
     void HookTouch( CBaseEntity *pOther );
     bool CreateVPhysics( void );
     unsigned int PhysicsSolidMaskForEntity() const;
     static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
  
 protected:
- 
+
     DECLARE_DATADESC();
  
 private:
   
     CHandle<CWeaponGrapple>     m_hOwner;
 	CHandle<CTFPlayer>          m_hPlayer;
-    CHandle<CDynamicProp>       m_hBolt;
-    IPhysicsSpring              *m_pSpring;
-    float                       m_fSpringLength;
-    bool                        m_bPlayerWasStanding;
-
-	
 };
- 
 #endif
- 
+
 //-----------------------------------------------------------------------------
 // CWeaponGrapple
 //-----------------------------------------------------------------------------
- 
-#ifdef CLIENT_DLL
-#define CWeaponGrapple C_WeaponGrapple
-#endif
 
 class CWeaponGrapple : public CTFWeaponBaseGun
 //class CWeaponGrapple : public CBaseHLCombatWeapon           
@@ -101,20 +87,14 @@ public:
     void            Drop( const Vector &vecVelocity );
     virtual bool    Reload( void );
     virtual void    ItemPostFrame( void );
-    virtual void    ItemBusyFrame( void );
- 
+	
     void            NotifyHookDied( void );
+	void			NotifyHookAttached(void);
  
     bool            HasAnyAmmo( void );
- 
-    CBaseEntity     *GetHook( void ) { return m_hHook; }
-
-	bool ToggleHook( void );
 
 	void   	DrawBeam( const Vector &startPos, const Vector &endPos, float width );
 	void	DoImpactEffect( trace_t &tr, int nDamageType );
-
-	bool                        m_bHook;
  
     DECLARE_NETWORKCLASS(); 
     DECLARE_PREDICTABLE();
@@ -122,29 +102,20 @@ public:
 private:
 
     void    FireHook( void );
- 
-#ifndef CLIENT_DLL
- 
-    //DECLARE_ACTTABLE();
-#endif
- 
-private:
+	void	RemoveHook(void);
 
-#ifndef CLIENT_DLL
-	CHandle<CBeam>        pBeam;
+#ifdef GAME_DLL
+	CHandle<CBeam>		pBeam;
 	CHandle<CSprite>	m_pLightGlow;
+	CNetworkHandle(CBaseEntity, m_hHook);	//server hook
+#else
+	EHANDLE			m_hHook;				//client hook relay
 #endif
- 
-    CNetworkVar( bool,    m_bInZoom );
-    CNetworkVar( bool,    m_bMustReload );
- 
-    CNetworkHandle( CBaseEntity, m_hHook );
- 
-    CWeaponGrapple( const CWeaponGrapple & );
 
+	CWeaponGrapple(const CWeaponGrapple &);
+	CNetworkVar( bool, m_bAttached );
+    CNetworkVar( bool, m_bMustReload );
 	CNetworkVar( int, m_nBulletType );
 };
- 
- 
- 
+
 #endif // WEAPON_GRAPPLE_H
