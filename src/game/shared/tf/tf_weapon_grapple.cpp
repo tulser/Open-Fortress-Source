@@ -52,8 +52,6 @@
 LINK_ENTITY_TO_CLASS( grapple_hook, CGrappleHook );
  
 BEGIN_DATADESC( CGrappleHook )
-	// Function Pointers
-	DEFINE_THINKFUNC( FlyThink ),
 	DEFINE_FUNCTION( HookTouch ),
 	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_hOwner, FIELD_EHANDLE ),
@@ -61,7 +59,6 @@ END_DATADESC()
  
 CGrappleHook *CGrappleHook::HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner )
 {
-	// Create a new entity with CGrappleHook private data
 	CGrappleHook *pHook = (CGrappleHook *)CreateEntityByName( "grapple_hook" );
 	UTIL_SetOrigin( pHook, vecOrigin );
 	pHook->SetAbsAngles( angAngles );
@@ -112,7 +109,7 @@ void CGrappleHook::Spawn( void )
 	Precache();
  
 	SetModel( HOOK_MODEL );
-	SetMoveType( MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM );
+	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
 	UTIL_SetSize( this, -Vector(1,1,1), Vector(1,1,1) );
 	SetSolid( SOLID_BBOX );
 	SetGravity( 0.05f );
@@ -131,8 +128,6 @@ void CGrappleHook::Spawn( void )
 	pBolt->SetParent(this);
 
 	SetTouch(&CGrappleHook::HookTouch);
-	SetThink(&CGrappleHook::FlyThink);
-	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 void CGrappleHook::Precache( void )
@@ -172,24 +167,20 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 		{
 			EmitSound( "Weapon_AR2.Reload_Push" );
  
-			// if what we hit is static architecture, can stay around for a while.
-			Vector vecDir = GetAbsVelocity();
- 
-			//FIXME: We actually want to stick (with hierarchy) to what we've hit
-			SetMoveType( MOVETYPE_NONE );
- 
 			Vector vForward;
  
 			AngleVectors( GetAbsAngles(), &vForward );
 			VectorNormalize ( vForward );
  
+			/*
 			CEffectData	data;
  
 			data.m_vOrigin = tr.endpos;
 			data.m_vNormal = vForward;
 			data.m_nEntIndex = 0;
  
-		//	DispatchEffect( "Impact", data );
+			DispatchEffect( "Impact", data );
+			*/
  
 		//	AddEffects( EF_NODRAW );
 			SetTouch( NULL );
@@ -197,7 +188,6 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 			VPhysicsDestroyObject();
 			VPhysicsInitNormal( SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false );
 			AddSolidFlags( FSOLID_NOT_SOLID );
-		//	SetMoveType( MOVETYPE_NONE );
  
 			if ( !m_hPlayer )
 			{
@@ -227,12 +217,6 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 		}
 		else
 		{
-			// Put a mark unless we've hit the sky
-			/*if ( ( tr.surface.flags & SURF_SKY ) == false )
-			{
-				UTIL_ImpactTrace( &tr, DMG_BULLET );
-			}*/
- 
 			SetTouch( NULL );
 			SetThink( NULL );
  
@@ -241,19 +225,6 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 			UTIL_Remove( this );
 		}
 	}
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGrappleHook::FlyThink( void )
-{
-	QAngle angNewAngles;
- 
-	VectorAngles( GetAbsVelocity(), angNewAngles );
-	SetAbsAngles( angNewAngles );
- 
-	SetNextThink( gpGlobals->curtime + 0.1f );
 }
 #endif
 
@@ -340,23 +311,18 @@ void CWeaponGrapple::Precache( void )
 	BaseClass::Precache();
 }
  
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-void CWeaponGrapple::PrimaryAttack( void )
+void CWeaponGrapple::PrimaryAttack(void)
 {
 	// Can't have an active hook out
-	if ( m_hHook )
+	if (m_hHook || m_bMustReload)
 		return;
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
-
-	if ( !pPlayer )
+	if (!pPlayer)
 		return;
- 
+
 #ifdef GAME_DLL
-	//m_iPrimaryAttacks++;
-	gamestats->Event_WeaponFired( pPlayer, true, GetClassname() );
+	gamestats->Event_WeaponFired(pPlayer, true, GetClassname());
 
 	//Obligatory for MP so the sound can be played
 	CDisablePredictionFiltering disabler;
@@ -365,75 +331,48 @@ void CWeaponGrapple::PrimaryAttack( void )
 	SendWeaponAnim( ACT_VM_PRIMARYATTACK );
 	pPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GRAPPLE_FIRE_START );
 
-	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
-	m_flNextSecondaryAttack = gpGlobals->curtime + 0.75;
-
 	pPlayer->SetMuzzleFlashTime( gpGlobals->curtime + 0.5 );
 
 	CSoundEnt::InsertSound( SOUND_COMBAT, GetAbsOrigin(), 600, 0.2, GetOwner() );
 
-	if ( !m_iClip1 && pPlayer->GetAmmoCount( m_iPrimaryAmmoType ) <= 0 )
-	{
-		// HEV suit - indicate out of ammo condition
-		pPlayer->SetSuitUpdate( "!HEV_AMO0", FALSE, 0 ); 
-	}
+	Vector vecSrc;
+	Vector vecOffset(30.f, 4.f, -6.0f);
+	QAngle angForward;
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
 
-	trace_t tr;
-	Vector vecShootOrigin, vecShootDir, vecDir, vecEnd;
-
-	//Gets the direction where the player is aiming
-	AngleVectors (pPlayer->EyeAngles(), &vecDir);
-
-	//Gets the position of the player
-	vecShootOrigin = pPlayer->Weapon_ShootPosition();
+	//fire direction
+	Vector vecDir;
+	AngleVectors(angForward, &vecDir);
+	VectorNormalize(vecDir);
 
 	//Gets the position where the hook will hit
-	vecEnd = vecShootOrigin + (vecDir * MAX_TRACE_LENGTH);
+	Vector vecEnd = vecSrc + (vecDir * MAX_TRACE_LENGTH);	
 
 	//Traces a line between the two vectors
-	UTIL_TraceLine(vecShootOrigin, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
+	trace_t tr;
+	UTIL_TraceLine( vecSrc, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
 
-	//Draws the beam
-	DrawBeam(vecShootOrigin, tr.endpos, 2);
-#endif
-
-	FireHook();
- 
-	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration( ACT_VM_PRIMARYATTACK ) );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Fires the hook
-//-----------------------------------------------------------------------------
-void CWeaponGrapple::FireHook(void)
-{
-	if (m_bMustReload)
-		return;
-
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-
-	if (!pOwner)
-		return;
-
-#ifdef GAME_DLL
-	Vector vecAiming = pOwner->GetAutoaimVector(0);
-	Vector vecSrc = pOwner->Weapon_ShootPosition();
-
-	QAngle angAiming;
-	VectorAngles(vecAiming, angAiming);
-
-	CGrappleHook *pHook = CGrappleHook::HookCreate(vecSrc, angAiming, this);
+	//A hook that is not fired out of your face, what a mindblowing concept!
+	CGrappleHook *pHook = CGrappleHook::HookCreate(vecSrc, angForward, this);
 
 	//hook flies faster the faster player moves
-	float vel = pOwner->GetWaterLevel() == 3 ? BOLT_WATER_VELOCITY : BOLT_AIR_VELOCITY;
-	pHook->SetAbsVelocity(vecAiming * vel);
+	float vel = pPlayer->GetWaterLevel() == 3 ? BOLT_WATER_VELOCITY : BOLT_AIR_VELOCITY;
+	Vector HookVelocity = vecDir * vel;
+	pHook->SetAbsVelocity(HookVelocity);
 
 	m_hHook = pHook;
+
+	//Initialize the beam
+	DrawBeam(m_hHook->GetAbsOrigin());
 #endif
 
+	m_flNextPrimaryAttack = gpGlobals->curtime + 0.75;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.75;
+
 	SendWeaponAnim(ACT_VM_PRIMARYATTACK);
+	SetWeaponIdleTime(gpGlobals->curtime + SequenceDuration(ACT_VM_PRIMARYATTACK));
 }
- 
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -474,6 +413,9 @@ void CWeaponGrapple::ItemPostFrame(void)
 	//Enforces being able to use PrimaryAttack and Secondary Attack
 	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
 
+	if (!pOwner)
+		return;
+
 	if (pOwner->m_nButtons & IN_ATTACK)
 	{
 		if (m_flNextPrimaryAttack < gpGlobals->curtime)
@@ -492,29 +434,36 @@ void CWeaponGrapple::ItemPostFrame(void)
 		if (m_flNextSecondaryAttack < gpGlobals->curtime)
 			SecondaryAttack();
 	}
-	
+
 	CBaseEntity *Hook = NULL;
 #ifdef GAME_DLL
 	Hook = m_hHook;
+
+	//Update the beam depending on the hook position
+	if(pBeam && !m_bAttached)
+	{
+		//Set where it ends
+		pBeam->PointEntInit(m_hHook->GetAbsOrigin(), this);
+		pBeam->SetEndAttachment(LookupAttachment("muzzle"));
+	}
 #else
 	Hook = m_hHook.Get();
 #endif
-
+	
 	if ( Hook )
 	{
-		//remove hook if player lets go of the attack button
-		if (!(pOwner->m_nButtons & IN_ATTACK))
+		//remove hook
+		if (!(pOwner->m_nButtons & IN_ATTACK) ||													//if player lets go of the attack button
+			 (m_bAttached && (Hook->GetAbsOrigin() - pOwner->GetAbsOrigin()).Length() <= 320.f))	//or player is very close to the attached hook
 		{
 			RemoveHook();
 		}
-		else if(m_bAttached && !pOwner->m_Shared.GetHook())
+		else if (m_bAttached && !pOwner->m_Shared.GetHook())
 		{
 			//the hook is attached to a surface, notify player
 			pOwner->m_Shared.SetHook(Hook);
 		}
 	}
-
-//	BaseClass::ItemPostFrame();
 }
 
 void CWeaponGrapple::RemoveHook(void)
@@ -630,59 +579,38 @@ void CWeaponGrapple::NotifyHookAttached(void)
 //          &endPos - where the beam should end
 //          width - what the diameter of the beam should be (units?)
 //-----------------------------------------------------------------------------
-void CWeaponGrapple::DrawBeam( const Vector &startPos, const Vector &endPos, float width )
+void CWeaponGrapple::DrawBeam(const Vector &endPos, const float width)
 {
 #ifdef GAME_DLL
-	//Tracer down the middle (NOT NEEDED, IT WILL FIRE A TRACER)
-	//UTIL_Tracer( startPos, endPos, 0, TRACER_DONT_USE_ATTACHMENT, 6500, false, "GaussTracer" );
-
-	trace_t tr;
 	//Draw the main beam shaft
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
-	if ( pPlayer )
-	{
-		if ( pPlayer->GetTeamNumber() == TF_TEAM_RED  )
-			pBeam = CBeam::BeamCreate("cable/cable_red.vmt", 2);
-		else if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
-			pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", 2);
-		else
-			pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
-	}
+	if ( !pPlayer )
+		return;
+	
+	//Pick cable color
+	if (pPlayer->GetTeamNumber() == TF_TEAM_RED)
+		pBeam = CBeam::BeamCreate("cable/cable_red.vmt", width);
+	else if (pPlayer->GetTeamNumber() == TF_TEAM_BLUE)
+		pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", width);
 	else
-	{
-		pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", 2);
-	}
+		pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", width);
 
-	// It starts at startPos
-	pBeam->SetStartPos( startPos );
-
-	// This sets up some things that the beam uses to figure out where
-	// it should start and end
+	//Set where it ends
 	pBeam->PointEntInit( endPos, this );
+	pBeam->SetEndAttachment(LookupAttachment("muzzle"));
 
-	// This makes it so that the beam appears to come from the muzzle of the pistol
-	pBeam->SetEndAttachment( LookupAttachment("muzzle") );
-	pBeam->SetWidth( width );
-//	pBeam->SetEndWidth( 0.05f );
+	pBeam->SetWidth(width);
 
 	// Higher brightness means less transparent
-	pBeam->SetBrightness( 255 );
-	//pBeam->SetColor( 255, 185+random->RandomInt( -16, 16 ), 40 );
+	pBeam->SetBrightness(255);
 	pBeam->RelinkBeam();
 
 	//Sets scrollrate of the beam sprite 
 	float scrollOffset = gpGlobals->curtime + 5.5;
 	pBeam->SetScrollRate(scrollOffset);
-
-	// The beam should only exist for a very short time
-	//pBeam->LiveForTime( 0.1f );
 	
 	UpdateWaterState();
-
-	SetTouch( &CGrappleHook::HookTouch );
-	SetThink( &CGrappleHook::FlyThink );
-	SetNextThink( gpGlobals->curtime + 0.1f );
 #endif
 }
 

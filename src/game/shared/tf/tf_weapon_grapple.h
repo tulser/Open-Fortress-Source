@@ -48,7 +48,6 @@ public:
 public:
     void Spawn( void );
     void Precache( void );
-    void FlyThink( void );
     void HookTouch( CBaseEntity *pOther );
     bool CreateVPhysics( void );
     unsigned int PhysicsSolidMaskForEntity() const;
@@ -93,15 +92,14 @@ public:
  
     bool            HasAnyAmmo( void );
 
-	void   	DrawBeam( const Vector &startPos, const Vector &endPos, float width );
-	void	DoImpactEffect( trace_t &tr, int nDamageType );
+	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
+	void			DoImpactEffect( trace_t &tr, int nDamageType );
  
     DECLARE_NETWORKCLASS(); 
     DECLARE_PREDICTABLE();
  
 private:
 
-    void    FireHook( void );
 	void	RemoveHook(void);
 
 #ifdef GAME_DLL
