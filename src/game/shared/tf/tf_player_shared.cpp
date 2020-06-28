@@ -184,7 +184,6 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flMegaOverheal, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flNextZoomTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
@@ -255,7 +254,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
 	m_Hook = NULL;
-	m_bPendulum = false;
+	m_flGHookPull = 0.f;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_flNextLungeTime = 0.0f;
@@ -2579,6 +2578,18 @@ void CTFPlayerShared::SetHook(CBaseEntity *hook)
 {
 	m_Hook = hook;
 }
+
+void CTFPlayerShared::SetPullSpeed(float pull)
+{
+	m_flGHookPull = pull;
+}
+
+/*
+void CTFPlayerShared::SetHookSpeedCap(float speed)
+{
+	m_flGHSpeedCap = speed;
+}
+*/
 
 //-----------------------------------------------------------------------------
 // Purpose: 

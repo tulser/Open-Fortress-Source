@@ -80,7 +80,6 @@ public:
     virtual void    Precache( void );
     virtual void    PrimaryAttack( void );
     virtual void    SecondaryAttack( void );
-    virtual bool    Deploy( void );
     bool            CanHolster( void );
     virtual bool    Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
     void            Drop( const Vector &vecVelocity );
@@ -111,8 +110,7 @@ private:
 #endif
 
 	CWeaponGrapple(const CWeaponGrapple &);
-	CNetworkVar( bool, m_bAttached );
-    CNetworkVar( bool, m_bMustReload );
+	CNetworkVar( int, m_iAttached );
 	CNetworkVar( int, m_nBulletType );
 };
 

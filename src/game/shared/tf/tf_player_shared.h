@@ -232,6 +232,12 @@ public:
 	void    SetAirDashCount( int iAirDashCount );
 	CBaseEntity	*GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
+	void    SetPullSpeed(float pull);
+	float	GetPullSpeed() { return m_flGHookPull; }
+	/*
+	void    SetHookSpeedCap(float speed);
+	float   GetHookSpeedCap() { return m_flGHSpeedCap; }
+	*/
 
 	// loser state
 	bool	IsLoser( void );
@@ -384,7 +390,10 @@ private:
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
 	CNetworkHandle( CBaseEntity, m_Hook );
-	CNetworkVar( bool, m_bPendulum );
+	CNetworkVar( float, m_flGHookPull );
+	/*
+	CNetworkVar( float, m_flGHSpeedCap );
+	*/
 	CNetworkVar( bool, m_bBlockJump );
 	CNetworkVar( float, m_fRampJumpVel );
 	CNetworkVar( bool, m_bCSlide );
@@ -395,11 +404,10 @@ private:
 
 	CNetworkVar( float, m_flNextLungeTime );
 
-
 	CNetworkVar( int, m_iCritMult );
 
-	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS+1 );		// array of state per other player whether player is dominating other players
-	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS+1 );	// array of state per other player whether other players are dominating this player
+	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS + 1 );		// array of state per other player whether player is dominating other players
+	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS + 1 );	// array of state per other player whether other players are dominating this player
 	
 #ifdef GAME_DLL
 	float	m_flNextCritUpdate;

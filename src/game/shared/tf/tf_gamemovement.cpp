@@ -60,7 +60,6 @@ ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVA
 #define TF_MAX_SPEED		  720
 #define TF_WATERJUMP_FORWARD  30
 #define TF_WATERJUMP_UP       300
-#define OF_GRAPPLE_PULL       30.f
 
 static ConVar sv_autoladderdismount("sv_autoladderdismount", "1", FCVAR_REPLICATED, "Automatically dismount from ladders when you reach the end (don't have to +USE).");
 static ConVar sv_ladderautomountdot("sv_ladderautomountdot", "0.4", FCVAR_REPLICATED, "When auto-mounting a ladder by looking up its axis, this is the tolerance for looking now directly along the ladder axis.");
@@ -1730,15 +1729,53 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 
 void CTFGameMovement::GrapplingMove(CBaseEntity *hook)
 {
-	m_pTFPlayer->SetGroundEntity(NULL);
+	if (m_pTFPlayer->m_Shared.GetPullSpeed())
+	{
+		m_pTFPlayer->SetGroundEntity(NULL);
 
-	//TODO: this needs a rewrite, pendulum only
-	Vector PlayerOrigin = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
-	Vector PlayerCenter = PlayerOrigin + (m_pTFPlayer->EyePosition() - PlayerOrigin) * 0.5;
-	Vector PlayerToHookVec = hook->GetAbsOrigin() - PlayerCenter;
-	VectorNormalize(PlayerToHookVec);
+		Vector PlayerOrigin = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+		Vector PlayerCenter = PlayerOrigin + (m_pTFPlayer->EyePosition() - PlayerOrigin) * 0.5;
+		Vector Rope = hook->GetAbsOrigin() - PlayerCenter;
+		VectorNormalize(Rope);
 
-	mv->m_vecVelocity += PlayerToHookVec * OF_GRAPPLE_PULL;
+		mv->m_vecVelocity = Rope * m_pTFPlayer->m_Shared.GetPullSpeed();
+	}
+	else
+	{
+		//Get Hook to player vector
+		Vector PlayerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+		PlayerCenter += (m_pTFPlayer->EyePosition() - PlayerCenter) * 0.5;
+		Vector Rope = hook->GetAbsOrigin() - PlayerCenter; //vector of the beam
+
+		//Convert pitch and angle atan2 results to match the values needed by the engine
+		float RopePitch = 270.f + RAD2DEG(atan2(Vector2D(Rope.x, Rope.y).Length(), Rope.z));
+		if (RopePitch > 360.f)
+			RopePitch -= 360.f;
+
+		if (RopePitch < 270.f || RopePitch > 355.f) //Trust me, we don't want this
+			return;
+
+		float SwingAngle = RAD2DEG(atan2(Rope.y, Rope.x));
+		if (SwingAngle < 0)
+			SwingAngle = 360.f - abs(SwingAngle);
+
+		//We must do some adjustements when player has to go up in the pendulum motion.
+		//The signal is the dot product between the rope and the velocity less than 0
+		Vector2D VelXY = Vector2D(mv->m_vecVelocity.x, mv->m_vecVelocity.y);
+		if (VelXY.Dot(Vector2D(Rope.x, Rope.y)) < 0.f)
+		{
+			RopePitch = 270.f - (RopePitch - 270.f);
+			SwingAngle = SwingAngle - 180.f;
+		}
+
+		//Create QAngle of the swing movement, player needs to move along the vector perpendicular to the rope
+		QAngle dirAngle = QAngle(RopePitch + 90.f, SwingAngle, 0.f);
+
+		//Use the QAngle to redirect player movement
+		Vector dir;
+		AngleVectors(dirAngle, &dir);
+		mv->m_vecVelocity = mv->m_vecVelocity.Length() * dir;
+	}
 }
 
 //-----------------------------------------------------------------------------
