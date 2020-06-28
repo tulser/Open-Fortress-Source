@@ -6,10 +6,10 @@
 #include "cbase.h"
 #include "tf_gamerules.h"
 #include "tf_player_shared.h"
-#include "takedamageinfo.h"
+//#include "takedamageinfo.h"
 #include "tf_weaponbase.h"
-#include "effect_dispatch_data.h"
-#include "tf_item.h"
+//#include "effect_dispatch_data.h"
+//#include "tf_item.h"
 #include "entity_capture_flag.h"
 #include "baseobject_shared.h"
 #include "tf_weapon_medigun.h"
@@ -18,27 +18,24 @@
 #include "fmtstr.h"
 #include "tf_viewmodel.h"
 
-// Client specific.
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "c_te_effect_dispatch.h"
-#include "c_tf_fx.h"
-#include "soundenvelope.h"
-#include "c_tf_playerclass.h"
-#include "iviewrender.h"
+	#include "c_tf_player.h"
+	//#include "c_te_effect_dispatch.h"
+	//#include "c_tf_fx.h"
+	//#include "soundenvelope.h"
+	#include "c_tf_playerclass.h"
+	#include "iviewrender.h"
 
-#define CTFPlayerClass C_TFPlayerClass
-
-// Server specific.
+	#define CTFPlayerClass C_TFPlayerClass
 #else
-#include "tf_player.h"
-#include "te_effect_dispatch.h"
-#include "tf_fx.h"
-#include "util.h"
-#include "tf_team.h"
-#include "tf_gamestats.h"
-#include "tf_playerclass.h"
-#include "tf_weapon_builder.h"
+	#include "tf_player.h"
+	#include "te_effect_dispatch.h"
+	//#include "tf_fx.h"
+	//#include "util.h"
+	//#include "tf_team.h"
+	#include "tf_gamestats.h"
+	//#include "tf_playerclass.h"
+	#include "tf_weapon_builder.h"
 #endif
 
 ConVar tf_spy_invis_time( "tf_spy_invis_time", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
@@ -155,7 +152,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_iCritMult) ),
 	RecvPropInt( RECVINFO( m_bAirDash) ),
 	RecvPropInt( RECVINFO( m_iAirDashCount) ),
-	RecvPropInt( RECVINFO( m_bGrapple) ),
+	RecvPropFloat( RECVINFO( m_flGHookPull ) ),
 	RecvPropInt( RECVINFO( m_nPlayerState ) ),
 	RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 	RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
@@ -185,8 +182,7 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_bGrapple, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_flInvisChangeCompleteTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD( m_flGHookPull, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flMegaOverheal, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flNextZoomTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
@@ -223,7 +219,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_iAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_bGrapple ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+	SendPropFloat( SENDINFO( m_flGHookPull ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ), 
 	SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL )+1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
@@ -257,18 +253,14 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bIsZombie = false,
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
-	m_bGrapple = false;
+	m_Hook = NULL;
+	m_flGHookPull = 0.f;
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_flNextLungeTime = 0.0f;
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
-
-	m_bBlockJump = false;
-	m_fRampJumpVel = 0.f;
-	m_bCSlide = false;
-	m_fCSlideDuration = 0.f;
 
 	m_flStepSoundDelay = 0.f;
 	m_flJumpSoundDelay = 0.f;
@@ -2577,30 +2569,22 @@ void CTFPlayerShared::SetAirDashCount( int iAirDashCount )
 	m_iAirDashCount = iAirDashCount;
 }
 
-void CTFPlayerShared::SetGrapple( bool bGrapple )
+void CTFPlayerShared::SetHook(CBaseEntity *hook)
 {
-	m_bGrapple = bGrapple;
+	m_Hook = hook;
 }
 
-void CTFPlayerShared::SetBlockJump(bool buffer)
+void CTFPlayerShared::SetPullSpeed(float pull)
 {
-	m_bBlockJump = buffer;
+	m_flGHookPull = pull;
 }
 
-void CTFPlayerShared::SetCSlide(bool csliding)
+/*
+void CTFPlayerShared::SetHookSpeedCap(float speed)
 {
-	m_bCSlide = csliding;
+	m_flGHSpeedCap = speed;
 }
-
-void CTFPlayerShared::SetCSlideDuration(float duration)
-{
-	m_fCSlideDuration = duration;
-}
-
-void CTFPlayerShared::SetRampJumpVel(float vel)
-{
-	m_fRampJumpVel = vel;
-}
+*/
 
 //-----------------------------------------------------------------------------
 // Purpose: 

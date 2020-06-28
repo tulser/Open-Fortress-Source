@@ -71,7 +71,7 @@
 #include "entity_ammopack.h"
 #include "entity_healthkit.h"
 #include "of_dropped_powerup.h"
-
+#include "basegrenade_shared.h"
 #include "dt_utlvector_send.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

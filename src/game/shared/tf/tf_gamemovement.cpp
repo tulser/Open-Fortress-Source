@@ -13,23 +13,19 @@
 #include "collisionutils.h"
 #include "debugoverlay_shared.h"
 #include "baseobject_shared.h"
-#include "particle_parse.h"
-#include "baseobject_shared.h"
 #include "coordsize.h"
 
-#include "func_ladder.h"
-
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "c_world.h"
-#include "c_team.h"
+	#include "c_tf_player.h"
+	#include "c_world.h"
+	#include "c_team.h"
 
-#define CTeam C_Team
-
+	#define CTeam C_Team
 #else
-#include "tf_player.h"
-#include "team.h"
-#include "shareddefs.h"
+	#include "tf_player.h"
+	#include "team.h"
+	#include "shareddefs.h"
+	#include "tf_weapon_grapple.h"
 #endif
 
 ConVar	tf_maxspeed("tf_maxspeed", "720", FCVAR_NOTIFY | FCVAR_REPLICATED);
@@ -57,12 +53,9 @@ ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FC
 ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hough", true, 0, true, 2);
 #endif
 
-#define TF_MAX_SPEED   720
-
+#define TF_MAX_SPEED		  720
 #define TF_WATERJUMP_FORWARD  30
 #define TF_WATERJUMP_UP       300
-//ConVar	tf_waterjump_up( "tf_waterjump_up", "300", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_CHEAT );
-//ConVar	tf_waterjump_forward( "tf_waterjump_forward", "30", FCVAR_REPLICATED | FCVAR_CHEAT | FCVAR_CHEAT );
 
 static ConVar sv_autoladderdismount("sv_autoladderdismount", "1", FCVAR_REPLICATED, "Automatically dismount from ladders when you reach the end (don't have to +USE).");
 static ConVar sv_ladderautomountdot("sv_ladderautomountdot", "0.4", FCVAR_REPLICATED, "When auto-mounting a ladder by looking up its axis, this is the tolerance for looking now directly along the ladder axis.");
@@ -101,6 +94,7 @@ public:
 	virtual void FullWalkMove();
 	virtual void WalkMove(bool CSliding = false);
 	virtual void AirMove(void);
+	virtual void GrapplingMove(CBaseEntity *hook);
 	virtual float GetAirSpeedCap(void);
 	virtual void FullTossMove(void);
 	virtual void CategorizePosition(void);
@@ -108,10 +102,10 @@ public:
 
 	virtual Vector GetPlayerViewOffset(bool ducked) const;
 
-	virtual void	TracePlayerBBox(const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm);
+	virtual void TracePlayerBBox(const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm);
 	virtual CBaseHandle	TestPlayerPosition(const Vector& pos, int collisionGroup, trace_t& pm);
-	virtual void	StepMove(Vector &vecDestination, trace_t &trace);
-	virtual bool	GameHasLadders() const;
+	virtual void StepMove(Vector &vecDestination, trace_t &trace);
+	virtual bool GameHasLadders() const;
 	virtual void SetGroundEntity(trace_t *pm);
 	virtual void PlayerRoughLandingEffects(float fvol);
 protected:
@@ -120,6 +114,7 @@ protected:
 	virtual void HandleDuckingSpeedCrop();
 	virtual void AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel = true);
 	void		 Friction(bool CSliding);
+	virtual int	 TryPlayerMove(Vector *pFirstDest = NULL, trace_t *pFirstTrace = NULL);
 
 private:
 
@@ -210,6 +205,27 @@ void CTFGameMovement::PlayerMove()
 			}
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFGameMovement::TryPlayerMove(Vector *pFirstDest, trace_t *pFirstTrace)
+{
+	int iBlocked = BaseClass::TryPlayerMove(pFirstDest, pFirstTrace);
+
+#ifdef GAME_DLL
+	//if player is blocked see if there is a hook that needs to be removed
+	if (iBlocked == 2 || (iBlocked == 1 && !player->GetGroundEntity()))
+	{
+		//nested if to avoid this thing happening every frame
+		CGrappleHook *Hook = (CGrappleHook *)m_pTFPlayer->m_Shared.GetHook();
+		if (Hook)
+			Hook->GetOwner()->RemoveHook();
+	}
+#endif
+
+	return iBlocked;
 }
 
 //-----------------------------------------------------------------------------
@@ -590,7 +606,7 @@ bool CTFGameMovement::CheckJumpButton()
 	m_pTFPlayer->m_Shared.m_flJumpSoundDelay = gpGlobals->curtime + 0.5f;
 
 	// Flag that we jumped and don't jump again until it is released.
-	m_pTFPlayer->m_Shared.SetBlockJump(JumpBuffer == 1 ? true : false); //jump successful, set the buffer
+	mv->m_bBlockJump = JumpBuffer == 1 ? true : false; //jump successful, set the buffer
 	return true;
 }
 
@@ -598,7 +614,7 @@ float CTFGameMovement::CheckRamp(float flMul, int rampMode)
 {
 	if (rampMode == 1) //Quake style
 	{
-		mv->m_vecVelocity[2] = max(0, m_pTFPlayer->m_Shared.GetRampJumpVel()); //set velocity to what it was before touching the ground
+		mv->m_vecVelocity[2] = max(0, mv->m_fRampJumpVel); //set velocity to what it was before touching the ground
 
 		if (mv->m_vecVelocity[2]) //player has positive vertical velocity
 		{
@@ -716,7 +732,7 @@ bool CTFGameMovement::CheckLunge()
 
 	// Flag that we jumped and don't jump again until it is released.
 	mv->m_nOldButtons |= IN_ATTACK2;
-	m_pTFPlayer->m_Shared.SetBlockJump(true);
+	mv->m_bBlockJump = true;
 	return true;
 }
 
@@ -1015,7 +1031,6 @@ void CTFGameMovement::WalkMove(bool CSliding)
 			mv->m_vecVelocity.y *= flScale;
 		}*/
 	}
-	Assert(mv->m_vecVelocity.z == 0.0f);
 
 	/* no make it quake like
 	// Now reduce their backwards speed to some percent of max, if they are travelling backwards
@@ -1480,7 +1495,7 @@ void CTFGameMovement::CheckWaterJump(void)
 			{
 				mv->m_vecVelocity[2] = TF_WATERJUMP_UP/*tf_waterjump_up.GetFloat()*/;		// Push up
 				player->AddFlag(FL_WATERJUMP);
-				m_pTFPlayer->m_Shared.SetBlockJump(true);
+				mv->m_bBlockJump = true;
 				player->m_flWaterJumpTime = 2000.0f;	// Do this for 2 seconds
 			}
 		}
@@ -1514,12 +1529,12 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 	//Jumping stuff
 	if (mv->m_nButtons & IN_JUMP)
 	{
-		if (!m_pTFPlayer->m_Shared.IsJumpBlocked())
+		if (!mv->m_bBlockJump)
 			CheckJumpButton();
 	}
 	else
 	{
-		m_pTFPlayer->m_Shared.SetBlockJump(false);
+		mv->m_bBlockJump = false;
 	}
 
 	// Perform regular water movement
@@ -1634,12 +1649,12 @@ void CTFGameMovement::FullWalkMove()
 	//Jumping stuff
 	if (mv->m_nButtons & IN_JUMP && CanMove)
 	{
-		if (!m_pTFPlayer->m_Shared.IsJumpBlocked())
+		if (!mv->m_bBlockJump)
 			CheckJumpButton();
 	}
 	else
 	{
-		m_pTFPlayer->m_Shared.SetBlockJump(false);
+		mv->m_bBlockJump = false;
 	}
 
 	//Zombie lunge
@@ -1648,6 +1663,10 @@ void CTFGameMovement::FullWalkMove()
 
 	// Make sure velocity is valid.
 	CheckVelocity();
+
+	CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
+	if (Hook)
+		GrapplingMove(Hook);
 
 	//Ground and air movement
 	bool CSliding = false;
@@ -1659,24 +1678,22 @@ void CTFGameMovement::FullWalkMove()
 				   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
 				   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
 				   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
-				   gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration();		//there is crouch slide charge to spend
+				   gpGlobals->curtime <= mv->m_flCSlideDuration;						//there is crouch slide charge to spend
 
 		Friction(CSliding);
 		WalkMove(CSliding);
 
 		//If not using CSlide right away clear it
 		if (!CSliding)
-			m_pTFPlayer->m_Shared.SetCSlideDuration(0);
+			mv->m_flCSlideDuration = 0.f;
 
 		//If not using ramp jump vel right away clear it
-		m_pTFPlayer->m_Shared.SetRampJumpVel(0);
+		mv->m_fRampJumpVel = 0.f;
 	}
 	else
 	{
 		AirMove();
 	}
-
-	m_pTFPlayer->m_Shared.SetCSlide(CSliding);
 
 	// Set final flags.
 	CategorizePosition();
@@ -1696,8 +1713,8 @@ void CTFGameMovement::FullWalkMove()
 	else
 	{
 		//Determine ramp jump vel and crouch slide duration
-		m_pTFPlayer->m_Shared.SetRampJumpVel(mv->m_vecVelocity[2]);
-		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f);
+		mv->m_fRampJumpVel = mv->m_vecVelocity[2];
+		mv->m_flCSlideDuration = gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f;
 	}
 
 	// Handling falling.
@@ -1724,6 +1741,57 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 	{
 		player->StopSound("Player.Slide");
 		player->m_bIsCSliding = false;
+	}
+}
+
+void CTFGameMovement::GrapplingMove(CBaseEntity *hook)
+{
+	if (m_pTFPlayer->m_Shared.GetPullSpeed())
+	{
+		m_pTFPlayer->SetGroundEntity(NULL);
+
+		Vector PlayerOrigin = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+		Vector PlayerCenter = PlayerOrigin + (m_pTFPlayer->EyePosition() - PlayerOrigin) * 0.5;
+		Vector Rope = hook->GetAbsOrigin() - PlayerCenter;
+		VectorNormalize(Rope);
+
+		mv->m_vecVelocity = Rope * m_pTFPlayer->m_Shared.GetPullSpeed();
+	}
+	else
+	{
+		//Get Hook to player vector
+		Vector PlayerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+		PlayerCenter += (m_pTFPlayer->EyePosition() - PlayerCenter) * 0.5;
+		Vector Rope = hook->GetAbsOrigin() - PlayerCenter; //vector of the beam
+
+		//Convert pitch and angle atan2 results to match the values needed by the engine
+		float RopePitch = 270.f + RAD2DEG(atan2(Vector2D(Rope.x, Rope.y).Length(), Rope.z));
+		if (RopePitch > 360.f)
+			RopePitch -= 360.f;
+
+		if (RopePitch < 270.f || RopePitch > 355.f) //Trust me, we don't want this
+			return;
+
+		float SwingAngle = RAD2DEG(atan2(Rope.y, Rope.x));
+		if (SwingAngle < 0)
+			SwingAngle = 360.f - abs(SwingAngle);
+
+		//We must do some adjustements when player has to go up in the pendulum motion.
+		//The signal is the dot product between the rope and the velocity less than 0
+		Vector2D VelXY = Vector2D(mv->m_vecVelocity.x, mv->m_vecVelocity.y);
+		if (VelXY.Dot(Vector2D(Rope.x, Rope.y)) < 0.f)
+		{
+			RopePitch = 270.f - (RopePitch - 270.f);
+			SwingAngle = SwingAngle - 180.f;
+		}
+
+		//Create QAngle of the swing movement, player needs to move along the vector perpendicular to the rope
+		QAngle dirAngle = QAngle(RopePitch + 90.f, SwingAngle, 0.f);
+
+		//Use the QAngle to redirect player movement
+		Vector dir;
+		AngleVectors(dirAngle, &dir);
+		mv->m_vecVelocity = mv->m_vecVelocity.Length() * dir;
 	}
 }
 
@@ -1915,6 +1983,8 @@ void CTFGameMovement::StepMove(Vector &vecDestination, trace_t &trace)
 	{
 		mv->m_outStepHeight += flStepDist;
 	}
+
+	
 }
 
 bool CTFGameMovement::GameHasLadders() const
