@@ -227,7 +227,7 @@ public:
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
-	CBaseEntity	*GetHook( void ) { return m_Hook; }
+	const	CBaseEntity *GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
 	void    SetPullSpeed(float pull);
 	float	GetPullSpeed() { return m_flGHookPull; }

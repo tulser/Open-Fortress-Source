@@ -473,7 +473,7 @@ void CHudSpeedometer::Paint(void)
 void CHudSpeedometer::QStrafeJumpHelp()
 {
 	C_TFPlayer *pPlayerBase = C_TFPlayer::GetLocalTFPlayer();
-	if (!pPlayerBase)
+	if (!pPlayerBase || pPlayerBase->GetWaterLevel() > 2 || pPlayerBase->m_Shared.GetHook() || pPlayerBase->GetMoveType() == MOVETYPE_LADDER)
 		return;
 
 	float forwardMove = g_pMoveData->m_flForwardMove;

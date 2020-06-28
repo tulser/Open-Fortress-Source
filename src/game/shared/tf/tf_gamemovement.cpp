@@ -94,7 +94,7 @@ public:
 	virtual void FullWalkMove();
 	virtual void WalkMove(bool CSliding = false);
 	virtual void AirMove(void);
-	virtual void GrapplingMove(CBaseEntity *hook);
+	virtual void GrapplingMove(const CBaseEntity *hook);
 	virtual float GetAirSpeedCap(void);
 	virtual void FullTossMove(void);
 	virtual void CategorizePosition(void);
@@ -319,17 +319,12 @@ bool CTFGameMovement::CanAccelerate()
 	// Only allow the player to accelerate when in certain states.
 	int nCurrentState = m_pTFPlayer->m_Shared.GetState();
 	if (nCurrentState == TF_STATE_ACTIVE)
-	{
-		return player->GetWaterJumpTime() == 0;
-	}
-	else if (player->IsObserver())
-	{
+		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook();
+	
+	if (player->IsObserver())
 		return true;
-	}
-	else
-	{
-		return false;
-	}
+	
+	return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -474,6 +469,10 @@ bool CTFGameMovement::CheckJumpButton()
 
 	// Cannot jump while taunting
 	if (m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
+		return false;
+
+	//hooked, cannot jump
+	if (m_pTFPlayer->m_Shared.GetHook())
 		return false;
 
 	// Check to see if the player is a scout.
@@ -1144,6 +1143,9 @@ void CTFGameMovement::WalkMove(bool CSliding)
 
 void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
+	if (m_pTFPlayer->m_Shared.GetHook())
+		return;
+
 	float addspeed, currentspeed;
 	float wishspd;
 
@@ -1664,7 +1666,7 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
+	const CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
 	if (Hook)
 		GrapplingMove(Hook);
 
@@ -1744,7 +1746,7 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 	}
 }
 
-void CTFGameMovement::GrapplingMove(CBaseEntity *hook)
+void CTFGameMovement::GrapplingMove(const CBaseEntity *hook)
 {
 	if (m_pTFPlayer->m_Shared.GetPullSpeed())
 	{

@@ -31,7 +31,7 @@
 
 #define BOLT_AIR_VELOCITY	3500
 #define BOLT_WATER_VELOCITY	1500
-#define MAX_ROPE_LENGTH		1440.f
+#define MAX_ROPE_LENGTH		720.f
 #define HOOK_PULL			720.f
 
 #ifdef CLIENT_DLL
@@ -172,7 +172,7 @@ bool CWeaponGrapple::Reload(void)
 	//Redraw the weapon
 	SendWeaponAnim(ACT_VM_IDLE); //ACT_VM_RELOAD
 	//Update our times
-	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+	m_flNextPrimaryAttack = gpGlobals->curtime + 1.f;
 	//Mark this as done
 	m_iAttached = false;
 
@@ -184,31 +184,31 @@ bool CWeaponGrapple::Reload(void)
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::ItemPostFrame(void)
 {
+	if (!CanAttack())
+		return;
+
 	//Enforces being able to use PrimaryAttack and Secondary Attack
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
 
-	if (!pPlayer)
+	if (!pPlayer || !pPlayer->IsAlive())
 	{
 		RemoveHook();
 		return;
 	}
 
-	if (pPlayer->m_nButtons & IN_ATTACK)
+	if (pPlayer->IsAlive() && pPlayer->m_nButtons & IN_ATTACK)
 	{
 		if (m_flNextPrimaryAttack < gpGlobals->curtime)
 			PrimaryAttack();
 	}
 	else
 	{
-		if (m_iAttached) //&& HasWeaponIdleTimeElapsed() )
+		if (m_iAttached)
 			Reload();
 	}
 
-	if (pPlayer->m_nButtons & IN_ATTACK2)
-	{
-		if (m_iAttached && pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetWaterLevel() < WL_Feet)
-			SecondaryAttack();
-	}
+	if (pPlayer->IsAlive() && (pPlayer->m_nButtons & IN_ATTACK2) && m_iAttached && pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetWaterLevel() < WL_Feet)
+		SecondaryAttack();
 
 	CBaseEntity *Hook = NULL;
 #ifdef GAME_DLL
@@ -238,7 +238,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 			{
 				RemoveHook();
 			}
-			else if (!pPlayer->m_Shared.GetHook()) //notify player how it should behave
+			else if (m_iAttached == 2) //notify player how it should behave
 			{
 				pPlayer->m_Shared.SetHook(Hook);
 
