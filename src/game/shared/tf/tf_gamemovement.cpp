@@ -106,10 +106,10 @@ public:
 
 	virtual Vector GetPlayerViewOffset(bool ducked) const;
 
-	virtual void	TracePlayerBBox(const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm);
+	virtual void TracePlayerBBox(const Vector& start, const Vector& end, unsigned int fMask, int collisionGroup, trace_t& pm);
 	virtual CBaseHandle	TestPlayerPosition(const Vector& pos, int collisionGroup, trace_t& pm);
-	virtual void	StepMove(Vector &vecDestination, trace_t &trace);
-	virtual bool	GameHasLadders() const;
+	virtual void StepMove(Vector &vecDestination, trace_t &trace);
+	virtual bool GameHasLadders() const;
 	virtual void SetGroundEntity(trace_t *pm);
 	virtual void PlayerRoughLandingEffects(float fvol);
 protected:

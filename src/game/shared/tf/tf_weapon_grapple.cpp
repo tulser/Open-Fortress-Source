@@ -237,7 +237,7 @@ void CGrappleHook::HookTouch( CBaseEntity *pOther )
 #undef CWeaponGrapple
 
 IMPLEMENT_CLIENTCLASS_DT(C_WeaponGrapple, DT_WeaponGrapple, CWeaponGrapple)
-	RecvPropBool(RECVINFO(m_iAttached)),
+	RecvPropInt(RECVINFO(m_iAttached)),
 	RecvPropInt(RECVINFO(m_nBulletType)),
 	RecvPropEHandle(RECVINFO(m_hHook)),
 END_NETWORK_TABLE()
@@ -246,14 +246,17 @@ END_NETWORK_TABLE()
 
 #else
 IMPLEMENT_SERVERCLASS_ST(CWeaponGrapple, DT_WeaponGrapple)
-	SendPropBool( SENDINFO( m_iAttached ) ),
-	SendPropInt ( SENDINFO ( m_nBulletType ) ),
+	SendPropInt( SENDINFO( m_iAttached ) ),
+	SendPropInt( SENDINFO ( m_nBulletType ) ),
 	SendPropEHandle( SENDINFO( m_hHook ) ),
 END_NETWORK_TABLE()
 #endif
 
+#ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CWeaponGrapple )
+	DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
 END_PREDICTION_DATA()
+#endif
  
 LINK_ENTITY_TO_CLASS( tf_weapon_grapple, CWeaponGrapple );
  
@@ -265,7 +268,7 @@ CWeaponGrapple::CWeaponGrapple( void )
 	m_flNextPrimaryAttack = 0.f;
 	m_bReloadsSingly	  = true;
 	m_bFiresUnderwater	  = true;
-	m_iAttached			  = false;
+	m_iAttached			  = 0;
 	m_nBulletType		  = -1;
 	
 #ifdef GAME_DLL
