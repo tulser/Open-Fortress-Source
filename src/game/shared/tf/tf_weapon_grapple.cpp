@@ -33,7 +33,6 @@
 #define BOLT_WATER_VELOCITY	1500
 #define MAX_ROPE_LENGTH		1440.f
 #define HOOK_PULL			720.f
-#define MIN_HOOK_SPEED		540.f
 
 #ifdef CLIENT_DLL
 
@@ -255,8 +254,8 @@ void CWeaponGrapple::ItemPostFrame(void)
 
 				//Resulting velocity
 				Vector newVel = pVel + rope;
-				float velLength = max(pVel.Length() + 200.f, MIN_HOOK_SPEED);
-				float newVelLength = clamp(newVel.Length(), MIN_HOOK_SPEED, velLength);
+				float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
+				float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
 				pPlayer->m_Shared.SetPullSpeed(newVelLength);
 
 				m_iAttached = 1;
