@@ -127,12 +127,12 @@ void CWeaponGrapple::PrimaryAttack(void)
 
 	Vector vecSrc;
 	Vector vecOffset(30.f, 4.f, -6.0f);
-	QAngle angForward;
-	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
+	QAngle angle;
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angle, false);
 
 	//fire direction
 	Vector vecDir;
-	AngleVectors(angForward, &vecDir);
+	AngleVectors(angle, &vecDir);
 	VectorNormalize(vecDir);
 
 	//Gets the position where the hook will hit
@@ -143,12 +143,14 @@ void CWeaponGrapple::PrimaryAttack(void)
 	UTIL_TraceLine( vecSrc, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
 
 	//A hook that is not fired out of your face, what a mindblowing concept!
-	CGrappleHook *pHook = CGrappleHook::HookCreate(vecSrc, angForward, this);
+	CGrappleHook *pHook = CGrappleHook::HookCreate(vecSrc, angle, this);
 
-	//hook flies faster the faster player moves
+	//Set hook velocity and angle
 	float vel = pPlayer->GetWaterLevel() == 3 ? BOLT_WATER_VELOCITY : BOLT_AIR_VELOCITY;
 	Vector HookVelocity = vecDir * vel;
 	pHook->SetAbsVelocity(HookVelocity);
+	VectorAngles(HookVelocity, angle); //reuse already allocated QAngle
+	SetAbsAngles(angle);
 
 	m_hHook = pHook;
 
@@ -170,11 +172,8 @@ bool CWeaponGrapple::Reload(void)
 {
 	//Redraw the weapon
 	SendWeaponAnim(ACT_VM_IDLE); //ACT_VM_RELOAD
-
 	//Update our times
-	if (m_iAttached)
-		m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
-
+	m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 	//Mark this as done
 	m_iAttached = false;
 
@@ -235,10 +234,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 		}
 		else if (m_iAttached) //hook is attached to a surface
 		{
-			float RopeLength = (Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length();
-
-			if (RopeLength <= 100.f ||																		//player is very close to the attached hook
-				RopeLength >= MAX_ROPE_LENGTH ||															//rope reached its maximum length				
+			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f ||						//player is very close to the attached hook			
 				(m_iAttached == 1 && !pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetGroundEntity()))		//player touched the ground while swinging
 			{
 				RemoveHook();
@@ -251,17 +247,17 @@ void CWeaponGrapple::ItemPostFrame(void)
 				Vector pVel = pPlayer->GetAbsVelocity();
 
 				//rope vector
-				Vector PlayerOrigin = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
-				Vector PlayerCenter = PlayerOrigin + (pPlayer->EyePosition() - PlayerOrigin) * 0.5;
-				Vector Rope = Hook->GetAbsOrigin() - PlayerCenter;
-				VectorNormalize(Rope);
-				Rope = Rope * HOOK_PULL;
+				Vector playerOrigin = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
+				Vector playerCenter = playerOrigin + (pPlayer->EyePosition() - playerOrigin) * 0.5;
+				Vector rope = Hook->GetAbsOrigin() - playerCenter;
+				VectorNormalize(rope);
+				rope = rope * HOOK_PULL;
 
 				//Resulting velocity
-				Vector NewVel = pVel + Rope;
-				float VelLength = max(pVel.Length() + 200.f, MIN_HOOK_SPEED);
-				float NewVelLength = clamp(NewVel.Length(), MIN_HOOK_SPEED, VelLength);
-				pPlayer->m_Shared.SetPullSpeed(NewVelLength);
+				Vector newVel = pVel + rope;
+				float velLength = max(pVel.Length() + 200.f, MIN_HOOK_SPEED);
+				float newVelLength = clamp(newVel.Length(), MIN_HOOK_SPEED, velLength);
+				pPlayer->m_Shared.SetPullSpeed(newVelLength);
 
 				m_iAttached = 1;
 			}
@@ -437,6 +433,7 @@ void CWeaponGrapple::DoImpactEffect( trace_t &tr, int nDamageType )
 LINK_ENTITY_TO_CLASS(grapple_hook, CGrappleHook);
 
 BEGIN_DATADESC(CGrappleHook)
+	DEFINE_THINKFUNC(FlyThink),
 	DEFINE_FUNCTION(HookTouch),
 	DEFINE_FIELD(m_hPlayer, FIELD_EHANDLE),
 	DEFINE_FIELD(m_hOwner, FIELD_EHANDLE),
@@ -513,12 +510,31 @@ void CGrappleHook::Spawn(void)
 	pBolt->SetParent(this);
 
 	SetTouch(&CGrappleHook::HookTouch);
+	SetThink(&CGrappleHook::FlyThink);
+	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 void CGrappleHook::Precache(void)
 {
 	PrecacheModel(HOOK_MODEL);
 	PrecacheModel(BOLT_MODEL);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CGrappleHook::FlyThink(void)
+{
+	if ((GetAbsOrigin() - m_hOwner->GetAbsOrigin()).Length() >= MAX_ROPE_LENGTH)
+	{
+		m_hOwner->NotifyHookDied();
+		SetTouch(NULL);
+		SetThink(NULL);
+		UTIL_Remove(this);
+		return;
+	}
+
+	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
 //-----------------------------------------------------------------------------
@@ -536,10 +552,8 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 	if (pOther != m_hOwner && pOther->m_takedamage != DAMAGE_NO)
 	{
 		m_hOwner->NotifyHookDied();
-
 		SetTouch(NULL);
 		SetThink(NULL);
-
 		UTIL_Remove(this);
 	}
 	else
@@ -571,6 +585,7 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 			//	AddEffects( EF_NODRAW );
 
 			SetTouch(NULL);
+			SetThink(NULL);
 
 			VPhysicsDestroyObject();
 			VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
@@ -587,11 +602,9 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 		}
 		else
 		{
+			m_hOwner->NotifyHookDied();
 			SetTouch(NULL);
 			SetThink(NULL);
-
-			m_hOwner->NotifyHookDied();
-
 			UTIL_Remove(this);
 		}
 	}

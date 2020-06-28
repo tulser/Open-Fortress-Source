@@ -9,17 +9,14 @@
 #pragma once
 #endif
 
-#include "networkvar.h"
+//#include "networkvar.h"
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
-#include "basegrenade_shared.h"
 
-// Client specific.
 #ifdef CLIENT_DLL
-class C_TFPlayer;
-// Server specific.
+	class C_TFPlayer;
 #else
-class CTFPlayer;
+	class CTFPlayer;
 #endif
 
 //=============================================================================

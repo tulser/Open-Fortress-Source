@@ -83,15 +83,15 @@ class CGrappleHook : public CBaseCombatCharacter
     DECLARE_CLASS( CGrappleHook, CBaseCombatCharacter );
 
 public:
-    CGrappleHook() { };
-    ~CGrappleHook();
 
+	CGrappleHook(void) {}
+    ~CGrappleHook(void);
     void Spawn( void );
     void Precache( void );
-    void HookTouch( CBaseEntity *pOther );
-    bool CreateVPhysics( void );
-    unsigned int PhysicsSolidMaskForEntity() const;
-    static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
+	static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
+
+	bool CreateVPhysics( void );
+	unsigned int PhysicsSolidMaskForEntity() const;
 	CWeaponGrapple *GetOwner(void) { return m_hOwner; }
 	Class_T Classify( void ) { return CLASS_NONE; }
  
@@ -100,6 +100,9 @@ protected:
     DECLARE_DATADESC();
  
 private:
+
+	void HookTouch( CBaseEntity *pOther );
+	void FlyThink( void );
   
     CHandle<CWeaponGrapple>     m_hOwner;
 	CHandle<CTFPlayer>          m_hPlayer;
