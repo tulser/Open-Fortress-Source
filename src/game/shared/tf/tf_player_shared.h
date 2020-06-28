@@ -234,10 +234,6 @@ public:
 	void    SetHook(CBaseEntity *hook);
 	void    SetPullSpeed(float pull);
 	float	GetPullSpeed() { return m_flGHookPull; }
-	/*
-	void    SetHookSpeedCap(float speed);
-	float   GetHookSpeedCap() { return m_flGHSpeedCap; }
-	*/
 
 	// loser state
 	bool	IsLoser( void );
@@ -391,13 +387,6 @@ private:
 	CNetworkVar( int,  m_iAirDashCount );
 	CNetworkHandle( CBaseEntity, m_Hook );
 	CNetworkVar( float, m_flGHookPull );
-	/*
-	CNetworkVar( float, m_flGHSpeedCap );
-	*/
-	CNetworkVar( bool, m_bBlockJump );
-	CNetworkVar( float, m_fRampJumpVel );
-	CNetworkVar( bool, m_bCSlide );
-	CNetworkVar( float, m_fCSlideDuration );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );

@@ -9,34 +9,19 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "npcevent.h"
 #include "in_buttons.h"
 #include "tf_weapon_grapple.h"
  
 #ifdef CLIENT_DLL
-	#include "c_tf_player.h"      
-    //#include "player.h"                
-	#include "c_te_effect_dispatch.h"
-    //#include "te_effect_dispatch.h"    
+	#include "c_tf_player.h"
 #else                                  
-	#include "game.h"                  
-    #include "tf_player.h"        
-    #include "player.h"                
-	#include "te_effect_dispatch.h"
-	#include "IEffects.h"
-	#include "SpriteTrail.h"
-	#include "beam_shared.h"
-	#include "explode.h"
-
-	#include "ammodef.h"		/* This is needed for the tracing done later */
+    #include "tf_player.h"
+	#include "ammodef.h"
 	#include "gamestats.h"
 	#include "soundent.h"
- 
 	#include "vphysics/constraints.h"
 	#include "physics_saverestore.h"
 #endif
-
-//#include "effect_dispatch_data.h"
  
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -46,191 +31,9 @@
 
 #define BOLT_AIR_VELOCITY	3500
 #define BOLT_WATER_VELOCITY	1500
+#define MAX_ROPE_LENGTH		1440.f
 #define HOOK_PULL			720.f
 #define MIN_HOOK_SPEED		540.f
- 
-#ifdef GAME_DLL
-
-LINK_ENTITY_TO_CLASS( grapple_hook, CGrappleHook );
- 
-BEGIN_DATADESC( CGrappleHook )
-	DEFINE_FUNCTION( HookTouch ),
-	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_hOwner, FIELD_EHANDLE ),
-END_DATADESC()
- 
-CGrappleHook *CGrappleHook::HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner )
-{
-	CGrappleHook *pHook = (CGrappleHook *)CreateEntityByName( "grapple_hook" );
-	UTIL_SetOrigin( pHook, vecOrigin );
-	pHook->SetAbsAngles( angAngles );
-	pHook->Spawn();
- 
-	CWeaponGrapple *pOwner = (CWeaponGrapple *)pentOwner;
-	pHook->m_hOwner = pOwner;
-	pHook->SetOwnerEntity( pOwner->GetOwner() );
-	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
- 
-	return pHook;
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CGrappleHook::~CGrappleHook( void )
-{
-	// Revert Jay's gai flag
-	if ( m_hPlayer )
-		m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, false );
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : Returns true on success, false on failure.
-//-----------------------------------------------------------------------------
-bool CGrappleHook::CreateVPhysics( void )
-{
-	// Create the object in the physics system
-	VPhysicsInitNormal( SOLID_BBOX, FSOLID_NOT_STANDABLE, false );
- 
-	return true;
-}
- 
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
-{
-	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: Spawn
-//-----------------------------------------------------------------------------
-void CGrappleHook::Spawn( void )
-{
-	Precache();
- 
-	SetModel( HOOK_MODEL );
-	SetMoveType( MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM );
-	UTIL_SetSize( this, -Vector(1,1,1), Vector(1,1,1) );
-	SetSolid( SOLID_BBOX );
-	SetGravity( 0.05f );
- 
-	// The rock is invisible, the crossbow bolt is the visual representation
-	AddEffects( EF_NODRAW );
- 
-	// Make sure we're updated if we're underwater
-	UpdateWaterState();
-
-	// Create bolt model and parent it
-	CBaseEntity *pBolt = CBaseEntity::CreateNoSpawn("prop_dynamic", GetAbsOrigin(), GetAbsAngles(), this);
-	pBolt->SetModelName(MAKE_STRING(BOLT_MODEL));
-	pBolt->SetModel(BOLT_MODEL);
-	DispatchSpawn(pBolt);
-	pBolt->SetParent(this);
-
-	SetTouch(&CGrappleHook::HookTouch);
-}
-
-void CGrappleHook::Precache( void )
-{
-	PrecacheModel( HOOK_MODEL );
-	PrecacheModel( BOLT_MODEL );
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pOther - 
-//-----------------------------------------------------------------------------
-void CGrappleHook::HookTouch( CBaseEntity *pOther )
-{
-	if ( !pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) )
-	{
-		m_hOwner->NotifyHookDied();
-		return;
-	}
- 
-	if ( pOther != m_hOwner && pOther->m_takedamage != DAMAGE_NO )
-	{
-		m_hOwner->NotifyHookDied();
- 
-		SetTouch( NULL );
-		SetThink( NULL );
-
-		UTIL_Remove( this );
-	}
-	else
-	{
-		trace_t	tr;
-		tr = BaseClass::GetTouchTrace();
- 
-		// See if we struck the world
-		if ( pOther->GetMoveType() == MOVETYPE_NONE && !( tr.surface.flags & SURF_SKY ) )
-		{
-			SetAbsVelocity(Vector(0.f, 0.f, 0.f));
-			EmitSound( "Weapon_AR2.Reload_Push" );
- 
-			Vector vForward;
- 
-			AngleVectors( GetAbsAngles(), &vForward );
-			VectorNormalize ( vForward );
- 
-			/*
-			CEffectData	data;
- 
-			data.m_vOrigin = tr.endpos;
-			data.m_vNormal = vForward;
-			data.m_nEntIndex = 0;
- 
-			DispatchEffect( "Impact", data );
-			*/
- 
-		//	AddEffects( EF_NODRAW );
-
-			SetTouch( NULL );
-
-			VPhysicsDestroyObject();
-			VPhysicsInitNormal( SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false );
-			AddSolidFlags( FSOLID_NOT_SOLID );
- 
-			if ( !m_hPlayer )
-				return;
- 
-			// Set Jay's gai flag
-			m_hPlayer->SetPhysicsFlag( PFLAG_VPHYSICS_MOTIONCONTROLLER, true );
-
-			m_hOwner->NotifyHookAttached();
-			m_hPlayer->DoAnimationEvent( PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START );
-		}
-		else
-		{
-			SetTouch( NULL );
-			SetThink( NULL );
- 
-			m_hOwner->NotifyHookDied();
-
-			UTIL_Remove( this );
-		}
-	}
-}
-#endif
-
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
-//*******************************************************************************************************************************************************************
 
 #ifdef CLIENT_DLL
 
@@ -254,11 +57,15 @@ END_NETWORK_TABLE()
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CWeaponGrapple )
-	DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
+	DEFINE_PRED_FIELD( m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
  
 LINK_ENTITY_TO_CLASS( tf_weapon_grapple, CWeaponGrapple );
+
+
+//**************************************************************************
+//GRAPPLING WEAPON
  
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -428,8 +235,11 @@ void CWeaponGrapple::ItemPostFrame(void)
 		}
 		else if (m_iAttached) //hook is attached to a surface
 		{
-			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f ||						//player is very close to the attached hook
-				(m_iAttached == 1 && !pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetGroundEntity()))		//player is on the ground while swinging)
+			float RopeLength = (Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length();
+
+			if (RopeLength <= 100.f ||																		//player is very close to the attached hook
+				RopeLength >= MAX_ROPE_LENGTH ||															//rope reached its maximum length				
+				(m_iAttached == 1 && !pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetGroundEntity()))		//player touched the ground while swinging
 			{
 				RemoveHook();
 			}
@@ -449,7 +259,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 
 				//Resulting velocity
 				Vector NewVel = pVel + Rope;
-				float VelLength = max(pVel.Length(), MIN_HOOK_SPEED);
+				float VelLength = max(pVel.Length() + 200.f, MIN_HOOK_SPEED);
 				float NewVelLength = clamp(NewVel.Length(), MIN_HOOK_SPEED, VelLength);
 				pPlayer->m_Shared.SetPullSpeed(NewVelLength);
 
@@ -494,9 +304,16 @@ void CWeaponGrapple::RemoveHook(void)
  
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  : *pSwitchingTo - 
-// Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
+bool CWeaponGrapple::CanHolster(void)
+{
+	//Can't have an active hook out
+	if (m_hHook)
+		RemoveHook();
+
+	return BaseClass::CanHolster();
+}
+
 bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	if ( m_hHook )
@@ -525,18 +342,6 @@ bool CWeaponGrapple::HasAnyAmmo( void )
 		RemoveHook();
  
 	return BaseClass::HasAnyAmmo();
-}
- 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CWeaponGrapple::CanHolster( void )
-{
-	//Can't have an active hook out
-	if (m_hHook)
-		RemoveHook();
- 
-	return BaseClass::CanHolster();
 }
  
 //-----------------------------------------------------------------------------
@@ -623,3 +428,172 @@ void CWeaponGrapple::DoImpactEffect( trace_t &tr, int nDamageType )
 	}
 #endif
 }
+
+//**************************************************************************
+//HOOK
+
+#ifdef GAME_DLL
+
+LINK_ENTITY_TO_CLASS(grapple_hook, CGrappleHook);
+
+BEGIN_DATADESC(CGrappleHook)
+	DEFINE_FUNCTION(HookTouch),
+	DEFINE_FIELD(m_hPlayer, FIELD_EHANDLE),
+	DEFINE_FIELD(m_hOwner, FIELD_EHANDLE),
+END_DATADESC()
+
+CGrappleHook *CGrappleHook::HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner)
+{
+	CGrappleHook *pHook = (CGrappleHook *)CreateEntityByName("grapple_hook");
+	UTIL_SetOrigin(pHook, vecOrigin);
+	pHook->SetAbsAngles(angAngles);
+	pHook->Spawn();
+
+	CWeaponGrapple *pOwner = (CWeaponGrapple *)pentOwner;
+	pHook->m_hOwner = pOwner;
+	pHook->SetOwnerEntity(pOwner->GetOwner());
+	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
+
+	return pHook;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CGrappleHook::~CGrappleHook(void)
+{
+	// Revert Jay's gai flag
+	if (m_hPlayer)
+		m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output : Returns true on success, false on failure.
+//-----------------------------------------------------------------------------
+bool CGrappleHook::CreateVPhysics(void)
+{
+	// Create the object in the physics system
+	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
+{
+	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Spawn
+//-----------------------------------------------------------------------------
+void CGrappleHook::Spawn(void)
+{
+	Precache();
+
+	SetModel(HOOK_MODEL);
+	SetMoveType(MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
+	UTIL_SetSize(this, -Vector(1, 1, 1), Vector(1, 1, 1));
+	SetSolid(SOLID_BBOX);
+	SetGravity(0.05f);
+
+	// The rock is invisible, the crossbow bolt is the visual representation
+	AddEffects(EF_NODRAW);
+
+	// Make sure we're updated if we're underwater
+	UpdateWaterState();
+
+	// Create bolt model and parent it
+	CBaseEntity *pBolt = CBaseEntity::CreateNoSpawn("prop_dynamic", GetAbsOrigin(), GetAbsAngles(), this);
+	pBolt->SetModelName(MAKE_STRING(BOLT_MODEL));
+	pBolt->SetModel(BOLT_MODEL);
+	DispatchSpawn(pBolt);
+	pBolt->SetParent(this);
+
+	SetTouch(&CGrappleHook::HookTouch);
+}
+
+void CGrappleHook::Precache(void)
+{
+	PrecacheModel(HOOK_MODEL);
+	PrecacheModel(BOLT_MODEL);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Input  : *pOther - 
+//-----------------------------------------------------------------------------
+void CGrappleHook::HookTouch(CBaseEntity *pOther)
+{
+	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS))
+	{
+		m_hOwner->NotifyHookDied();
+		return;
+	}
+
+	if (pOther != m_hOwner && pOther->m_takedamage != DAMAGE_NO)
+	{
+		m_hOwner->NotifyHookDied();
+
+		SetTouch(NULL);
+		SetThink(NULL);
+
+		UTIL_Remove(this);
+	}
+	else
+	{
+		trace_t	tr;
+		tr = BaseClass::GetTouchTrace();
+
+		// See if we struck the world
+		if (pOther->GetMoveType() == MOVETYPE_NONE && !(tr.surface.flags & SURF_SKY))
+		{
+			SetAbsVelocity(Vector(0.f, 0.f, 0.f));
+			EmitSound("Weapon_AR2.Reload_Push");
+
+			Vector vForward;
+
+			AngleVectors(GetAbsAngles(), &vForward);
+			VectorNormalize(vForward);
+
+			/*
+			CEffectData	data;
+
+			data.m_vOrigin = tr.endpos;
+			data.m_vNormal = vForward;
+			data.m_nEntIndex = 0;
+
+			DispatchEffect( "Impact", data );
+			*/
+
+			//	AddEffects( EF_NODRAW );
+
+			SetTouch(NULL);
+
+			VPhysicsDestroyObject();
+			VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
+			AddSolidFlags(FSOLID_NOT_SOLID);
+
+			if (!m_hPlayer)
+				return;
+
+			// Set Jay's gai flag
+			m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
+
+			m_hOwner->NotifyHookAttached();
+			m_hPlayer->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
+		}
+		else
+		{
+			SetTouch(NULL);
+			SetThink(NULL);
+
+			m_hOwner->NotifyHookDied();
+
+			UTIL_Remove(this);
+		}
+	}
+}
+#endif

@@ -13,23 +13,19 @@
 #include "collisionutils.h"
 #include "debugoverlay_shared.h"
 #include "baseobject_shared.h"
-#include "particle_parse.h"
-#include "baseobject_shared.h"
 #include "coordsize.h"
 
-#include "func_ladder.h"
-
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
-#include "c_world.h"
-#include "c_team.h"
+	#include "c_tf_player.h"
+	#include "c_world.h"
+	#include "c_team.h"
 
-#define CTeam C_Team
-
+	#define CTeam C_Team
 #else
-#include "tf_player.h"
-#include "team.h"
-#include "shareddefs.h"
+	#include "tf_player.h"
+	#include "team.h"
+	#include "shareddefs.h"
+	#include "tf_weapon_grapple.h"
 #endif
 
 ConVar	tf_maxspeed("tf_maxspeed", "720", FCVAR_NOTIFY | FCVAR_REPLICATED);
@@ -118,6 +114,7 @@ protected:
 	virtual void HandleDuckingSpeedCrop();
 	virtual void AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel = true);
 	void		 Friction(bool CSliding);
+	virtual int	 TryPlayerMove(Vector *pFirstDest = NULL, trace_t *pFirstTrace = NULL);
 
 private:
 
@@ -208,6 +205,27 @@ void CTFGameMovement::PlayerMove()
 			}
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CTFGameMovement::TryPlayerMove(Vector *pFirstDest, trace_t *pFirstTrace)
+{
+	int iBlocked = BaseClass::TryPlayerMove(pFirstDest, pFirstTrace);
+
+#ifdef GAME_DLL
+	//if player is blocked see if there is a hook that needs to be removed
+	if (iBlocked == 2 || (iBlocked == 1 && !player->GetGroundEntity()))
+	{
+		//nested if to avoid this thing happening every frame
+		CGrappleHook *Hook = (CGrappleHook *)m_pTFPlayer->m_Shared.GetHook();
+		if (Hook)
+			Hook->GetOwner()->RemoveHook();
+	}
+#endif
+
+	return iBlocked;
 }
 
 //-----------------------------------------------------------------------------
@@ -1013,7 +1031,6 @@ void CTFGameMovement::WalkMove(bool CSliding)
 			mv->m_vecVelocity.y *= flScale;
 		}*/
 	}
-	Assert(mv->m_vecVelocity.z == 0.0f);
 
 	/* no make it quake like
 	// Now reduce their backwards speed to some percent of max, if they are travelling backwards
@@ -1966,6 +1983,8 @@ void CTFGameMovement::StepMove(Vector &vecDestination, trace_t &trace)
 	{
 		mv->m_outStepHeight += flStepDist;
 	}
+
+	
 }
 
 bool CTFGameMovement::GameHasLadders() const
