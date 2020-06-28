@@ -31,7 +31,7 @@
 
 #define BOLT_AIR_VELOCITY	3500
 #define BOLT_WATER_VELOCITY	1500
-#define MAX_ROPE_LENGTH		720.f
+#define MAX_ROPE_LENGTH		900.f
 #define HOOK_PULL			720.f
 
 #ifdef CLIENT_DLL
