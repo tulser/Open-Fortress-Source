@@ -6,14 +6,14 @@
 #include "cbase.h"
 #include "tf_gamerules.h"
 #include "tf_weapon_medkit.h"
-#include "decals.h"
+//#include "decals.h"
 
 // Client specific.
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
+//#include "c_tf_player.h"
 // Server specific.
 #else
-#include "tf_player.h"
+//#include "tf_player.h"
 #include "tf_gamestats.h"
 #include "ilagcompensationmanager.h"
 #endif

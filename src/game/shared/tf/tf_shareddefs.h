@@ -11,10 +11,8 @@
 
 #include "shareddefs.h"
 #include "mp_shareddefs.h"
-
 #include "KeyValues.h"
 #include "filesystem.h"
-
 #include "bone_setup.h"
 
 // Using MAP_DEBUG mode?
