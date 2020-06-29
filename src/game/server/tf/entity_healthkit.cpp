@@ -132,10 +132,12 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 
 		Assert( pTFPlayer );
 
-		// Healthkits also contain a fire blanket.
-		if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING) || pTFPlayer->m_Shared.InCond(TF_COND_POISON))
-				pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );	
-				pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
+		// Healthkits cures burning...
+		if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING))
+			pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
+		//...and poison
+		if (pTFPlayer->m_Shared.InCond(TF_COND_POISON))
+			pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
 		AddEffects( EF_NODRAW );
 	}
 

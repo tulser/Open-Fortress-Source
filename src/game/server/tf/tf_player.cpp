@@ -325,19 +325,20 @@ int SendProxyArrayLength_PlayerObjects( const void *pStruct, int objectID )
 }
 
 BEGIN_DATADESC( CTFPlayer )
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetCustomModel", SetCustomModel ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "SetCustomArmModel", SetCustomArmModel ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "AddMoney", AddMoney ),
-	DEFINE_INPUTFUNC( FIELD_INTEGER, "SetMoney", SetMoney ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "StripWeapons", InputStripWeapons ),
-	DEFINE_INPUTFUNC( FIELD_STRING, "SpeakResponseConcept", InputSpeakResponseConcept ),
-	DEFINE_INPUTFUNC( FIELD_VOID,	"IgnitePlayer",	InputIgnitePlayer ),
-	DEFINE_INPUTFUNC( FIELD_VOID,	"ExtinguishPlayer",	InputExtinguishPlayer ),
-	DEFINE_INPUTFUNC(FIELD_VOID, "PoisonPlayer", InputPoisonPlayer),
-	DEFINE_INPUTFUNC(FIELD_VOID, "DePoisonPlayer", InputDePoisonPlayer),
-	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetZombie", InputSetZombie ),
-	DEFINE_INPUTFUNC( FIELD_BOOLEAN, "SetTeamNoKill", InputSetTeamNoKill ),
+	DEFINE_INPUTFUNC( FIELD_STRING,		"SetCustomModel",		SetCustomModel ),
+	DEFINE_INPUTFUNC( FIELD_STRING,		"SetCustomArmModel",	SetCustomArmModel ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER,	"AddMoney",				AddMoney ),
+	DEFINE_INPUTFUNC( FIELD_INTEGER,	"SetMoney",				SetMoney ),
+	DEFINE_INPUTFUNC( FIELD_VOID,		"StripWeapons",			InputStripWeapons ),
+	DEFINE_INPUTFUNC( FIELD_STRING,		"SpeakResponseConcept", InputSpeakResponseConcept ),
+	DEFINE_INPUTFUNC( FIELD_VOID,		"IgnitePlayer",			InputIgnitePlayer ),
+	DEFINE_INPUTFUNC( FIELD_VOID,		"ExtinguishPlayer",		InputExtinguishPlayer ),
+	DEFINE_INPUTFUNC( FIELD_VOID,		"PoisonPlayer",			InputPoisonPlayer),
+	DEFINE_INPUTFUNC( FIELD_VOID,		"DePoisonPlayer",		InputDePoisonPlayer),
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN,	"SetZombie",			InputSetZombie ),
+	DEFINE_INPUTFUNC( FIELD_BOOLEAN,	"SetTeamNoKill",		InputSetTeamNoKill ),
 END_DATADESC()
+
 extern void SendProxy_Origin( const SendProp *pProp, const void *pStruct, const void *pData, DVariant *pOut, int iElement, int objectID );
 
 // specific to the local player
@@ -1503,15 +1504,13 @@ void CTFPlayer::Regenerate( void )
 	
 	m_bRegenerating = false;
 	if ( iCurrentHealth > GetHealth() )
-	{
 		SetHealth( iCurrentHealth );
-	}
 
-	if ( m_Shared.InCond(TF_COND_BURNING) ||  m_Shared.InCond(TF_COND_POISON))
-	{
-		m_Shared.RemoveCond( TF_COND_BURNING );
+	if ( m_Shared.InCond(TF_COND_BURNING))
+		m_Shared.RemoveCond(TF_COND_BURNING);
+
+	if (m_Shared.InCond(TF_COND_POISON))
 		m_Shared.RemoveCond(TF_COND_POISON);
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -9578,12 +9577,11 @@ void CTFPlayer::InputIgnitePlayer( inputdata_t &inputdata )
 	m_Shared.Burn( ToTFPlayer( inputdata.pActivator ), inputdata.value.Float() );
 }
 
-void CTFPlayer::InputExtinguishPlayer( inputdata_t &inputdata )
+void CTFPlayer::InputExtinguishPlayer(inputdata_t &inputdata)
 {
 	if ( m_Shared.InCond( TF_COND_BURNING ) )
 	{
 		EmitSound( "TFPlayer.FlameOut" );
-
 		m_Shared.RemoveCond( TF_COND_BURNING );
 	}
 }
@@ -9599,9 +9597,7 @@ void CTFPlayer::InputPoisonPlayer(inputdata_t &inputdata)
 void CTFPlayer::InputDePoisonPlayer(inputdata_t &inputdata)
 {
 	if (m_Shared.InCond(TF_COND_POISON))
-	{
 		m_Shared.RemoveCond(TF_COND_POISON);
-	}
 }
 
 //-----------------------------------------------------------------------------
