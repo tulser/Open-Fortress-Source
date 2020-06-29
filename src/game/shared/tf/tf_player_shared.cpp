@@ -704,6 +704,9 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_POISON:
 		OnAddPoison();
 		break;
+	case TF_COND_TRANQ:
+		OnAddTranq();
+		break;
 
 	default:
 		break;
@@ -782,9 +785,11 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_JAUGGERNAUGHT:
 		OnRemoveJauggernaught();
 		break;
-
 	case TF_COND_POISON:
 		OnRemovePoison();
+		break;
+	case TF_COND_TRANQ:
+		OnRemoveTranq();
 		break;
 
 
@@ -1470,6 +1475,22 @@ void CTFPlayerShared::OnRemoveHaste( void )
 	m_pOuter->TeamFortress_SetSpeed();
 }
 
+void CTFPlayerShared::OnAddTranq(void)
+{
+#ifdef CLIENT_DLL
+	m_pOuter->ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
+
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
+
+void CTFPlayerShared::OnRemoveTranq(void)
+{
+#ifdef CLIENT_DLL
+	m_pOuter->ParticleProp()->StopParticlesNamed("sleepy_overhead", true);
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1711,7 +1732,10 @@ void CTFPlayerShared::OnRemovePoison(void)
 	{
 		view->SetScreenOverlayMaterial(NULL);
 	}
+	m_pOuter->ParticleProp()->StopParticlesNamed("poison_overhead", true);
 
+	m_pOuter->m_flPoisonEffectStartTime = 0;
+	m_pOuter->m_flPoisonEffectEndTime = 0;
 #else
 	m_hPoisonAttacker = NULL;
 #endif
@@ -1890,6 +1914,9 @@ void CTFPlayerShared::OnAddPoison(void)
 			view->SetScreenOverlayMaterial(pMaterial);
 		}
 	}
+
+	m_pOuter->ParticleProp()->Create("poison_overhead", PATTACH_POINT_FOLLOW, "head");
+
 #endif
 }
 
@@ -3175,7 +3202,10 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	if ( m_Shared.InCond( TF_COND_HASTE ) )
 		maxfbspeed *= of_haste_movespeed_multplier.GetFloat();
-	
+
+	if (m_Shared.InCond(TF_COND_TRANQ))
+			maxfbspeed *= 0.5f;
+
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );
 }

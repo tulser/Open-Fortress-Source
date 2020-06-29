@@ -278,6 +278,7 @@ private:
 	void OnAddHaste( void );
 	void OnAddJauggernaught( void );
 	void OnAddPoison(void);
+	void OnAddTranq(void);
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -294,6 +295,7 @@ private:
 	void OnRemoveHaste( void );
 	void OnRemoveJauggernaught( void );
 	void OnRemovePoison(void);
+	void OnRemoveTranq(void);
 
 	float GetCritMult( void );
 
