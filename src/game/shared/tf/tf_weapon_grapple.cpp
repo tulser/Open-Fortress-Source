@@ -14,13 +14,12 @@
  
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
-#else                                  
+#else
     #include "tf_player.h"
 	#include "ammodef.h"
 	#include "gamestats.h"
 	#include "soundent.h"
 	#include "vphysics/constraints.h"
-	#include "physics_saverestore.h"
 #endif
  
 // memdbgon must be the last include file in a .cpp file!!!
@@ -207,8 +206,10 @@ void CWeaponGrapple::ItemPostFrame(void)
 			Reload();
 	}
 
+	/*
 	if (pPlayer->IsAlive() && (pPlayer->m_nButtons & IN_ATTACK2) && m_iAttached && pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetWaterLevel() < WL_Feet)
 		SecondaryAttack();
+	*/
 
 	CBaseEntity *Hook = NULL;
 #ifdef GAME_DLL
@@ -246,8 +247,8 @@ void CWeaponGrapple::ItemPostFrame(void)
 				Vector pVel = pPlayer->GetAbsVelocity();
 
 				//rope vector
-				Vector playerOrigin = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
-				Vector playerCenter = playerOrigin + (pPlayer->EyePosition() - playerOrigin) * 0.5;
+				Vector playerCenter = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
+				playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
 				Vector rope = Hook->GetAbsOrigin() - playerCenter;
 				VectorNormalize(rope);
 				rope = rope * HOOK_PULL;
