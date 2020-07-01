@@ -230,8 +230,8 @@ public:
 	void    SetAirDashCount( int iAirDashCount );
 	const	CBaseEntity *GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
-	void    SetPullSpeed(float pull);
-	float	GetPullSpeed() { return m_flGHookPull; }
+	void    SetHookProperty(float pull);
+	float	GetHookProperty() { return m_flGHookProp; }
 
 	// loser state
 	bool	IsLoser( void );
@@ -392,7 +392,7 @@ private:
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
 	CNetworkHandle( CBaseEntity, m_Hook );
-	CNetworkVar( float, m_flGHookPull );
+	CNetworkVar( float, m_flGHookProp );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );

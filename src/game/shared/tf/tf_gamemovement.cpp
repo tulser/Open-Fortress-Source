@@ -48,6 +48,7 @@ ConVar  of_ramp_up_multiplier("of_ramp_up_multiplier", "0.7", FCVAR_REPLICATED |
 ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect.");
 ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge.");
+ConVar  of_hook_mode("of_hook_mode", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "0: Pull\n1: Pendulum");
 
 #if defined (CLIENT_DLL)
 ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hough", true, 0, true, 2);
@@ -1608,10 +1609,8 @@ void CTFGameMovement::FullWalkMove()
 {
 	//deny jump and cslide at the start of the match when you can't move
 	bool canMove = int(mv->m_flClientMaxSpeed) != 1;
-	const CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
-	bool doGravity = !InWater() && !Hook; //!(Hook && m_pTFPlayer->m_Shared.GetPullSpeed());
 
-	if (doGravity)
+	if (!InWater())
 		StartGravity();
 
 	// If we are leaping out of the water, just update the counters.
@@ -1651,6 +1650,7 @@ void CTFGameMovement::FullWalkMove()
 	CheckVelocity();
 
 	bool CSliding = false;
+	const CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
 	if (Hook)
 	{
 		GrapplingMove(Hook);
@@ -1688,7 +1688,7 @@ void CTFGameMovement::FullWalkMove()
 	CategorizePosition();
 
 	// Add any remaining gravitational component if we are not in water.
-	if (doGravity)
+	if (!InWater())
 		FinishGravity();
 
 	//Post gravity settings
@@ -1735,70 +1735,34 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 
 void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
 {
-	//Acceleration
-	m_pTFPlayer->SetGroundEntity(NULL);
-
+	//Get Hook to player vector
 	Vector playerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
 	playerCenter += (m_pTFPlayer->EyePosition() - playerCenter) * 0.5;
-	Vector rope = hook->GetAbsOrigin() - playerCenter; //vector of the beam
-	VectorNormalize(rope);
 
-	float pullSpeed = m_pTFPlayer->m_Shared.GetPullSpeed() * (InWater ? 0.75f : 1.f);
-	mv->m_vecVelocity = rope * pullSpeed;
-
-	/*
-	if (m_pTFPlayer->m_Shared.GetPullSpeed())
+	//if the projected rope is longer than it should be
+	if (!of_hook_mode.GetBool())
 	{
-		m_pTFPlayer->SetGroundEntity(NULL);
-
-		Vector playerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
-		playerCenter += (m_pTFPlayer->EyePosition() - playerCenter) * 0.5;
-		Vector rope = hook->GetAbsOrigin() - playerCenter; //vector of the beam
-		VectorNormalize(rope);
-
-		float pullSpeed = m_pTFPlayer->m_Shared.GetPullSpeed() * (InWater ? 0.75f : 1.f);
-		mv->m_vecVelocity = rope * pullSpeed;
+		float pullVel = m_pTFPlayer->m_Shared.GetHookProperty() * (InWater ? 0.75f : 1.f);
+		Vector dir = hook->GetAbsOrigin() - playerCenter;
+		VectorNormalize(dir);
+		mv->m_vecVelocity = dir * pullVel;
 	}
 	else
 	{
-		//Get Hook to player vector
-		Vector playerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
-		playerCenter += (m_pTFPlayer->EyePosition() - playerCenter) * 0.5;
-		Vector rope = hook->GetAbsOrigin() - playerCenter; //vector of the beam
+		Vector projRopeVec = hook->GetAbsOrigin() - (playerCenter + mv->m_vecVelocity * gpGlobals->frametime); //projected rope vector
 
-		//Convert pitch and angle atan2 results to match the values needed by the engine
-		float ropePitch = 270.f + RAD2DEG(atan2(Vector2D(rope.x, rope.y).Length(), rope.z));
-		if (ropePitch > 360.f)
-			ropePitch -= 360.f;
-
-		if (ropePitch < 270.f || ropePitch > 355.f) //Trust me, we don't want this
+		if (projRopeVec.Length() > m_pTFPlayer->m_Shared.GetHookProperty())
 		{
-			AirMove();
-			return;
+			VectorNormalize(projRopeVec);
+			projRopeVec *= m_pTFPlayer->m_Shared.GetHookProperty(); //get the vector of the rope with allowed length
+
+			//find the necessary velocity player needs to have to get from its current position
+			//to the allowed rope length position
+			Vector dir = (hook->GetAbsOrigin() - projRopeVec) - playerCenter;
+			VectorNormalize(dir);
+			mv->m_vecVelocity = dir * mv->m_vecVelocity.Length();
 		}
-
-		float swingAngle = RAD2DEG(atan2(rope.y, rope.x));
-		if (swingAngle < 0)
-			swingAngle = 360.f - abs(swingAngle);
-
-		//We must do some adjustements when player has to go up in the pendulum motion.
-		//The signal is the dot product between the rope and the velocity less than 0
-		Vector2D VelXY = Vector2D(mv->m_vecVelocity.x, mv->m_vecVelocity.y);
-		if (VelXY.Dot(Vector2D(rope.x, rope.y)) < 0.f)
-		{
-			ropePitch = 270.f - (ropePitch - 270.f);
-			swingAngle = swingAngle - 180.f;
-		}
-
-		//Create QAngle of the swing movement, player needs to move along the vector perpendicular to the rope
-		QAngle dirAngle = QAngle(ropePitch + 90.f, swingAngle, 0.f);
-
-		//Use the QAngle to redirect player movement
-		Vector dir;
-		AngleVectors(dirAngle, &dir);
-		mv->m_vecVelocity = mv->m_vecVelocity.Length() * dir;
 	}
-	*/
 
 	//Regular stuff
 	VectorAdd(mv->m_vecVelocity, player->GetBaseVelocity(), mv->m_vecVelocity);
@@ -1830,7 +1794,7 @@ void CTFGameMovement::FullTossMove(void)
 	Vector move;
 
 	// add velocity if player is moving 
-	if ((mv->m_flForwardMove != 0.0f) || (mv->m_flSideMove != 0.0f) || (mv->m_flUpMove != 0.0f))
+	if (mv->m_flForwardMove || mv->m_flSideMove || mv->m_flUpMove)
 	{
 		Vector forward, right, up;
 		float fmove, smove;
