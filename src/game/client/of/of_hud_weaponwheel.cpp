@@ -28,6 +28,10 @@
 #include "tf_imagepanel.h"
 #include <vgui_controls/Controls.h>
 
+// For the DOF blur
+#include "viewpostprocess.h"
+#include "materialsystem/imaterial.h"
+#include "materialsystem/imaterialvar.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -39,6 +43,9 @@ using namespace vgui;
 // Realistically, how many weapons are we gonna have in each slot
 #define MAX_WEPS_PER_SLOT 8
 #define WEAP_IMAGE_SCALE 0.5
+
+// 2px shadow offset for text
+#define TEXT_SHADOW_OFFSET 2
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -73,7 +80,8 @@ public:
 		//int textCentreX, textCentreY;
 
 		bool bHasIcon = false;
-		const CHudTexture *imageIcon[8];
+#define	NUMICONS 8
+		const CHudTexture *imageIcon[NUMICONS];
 
 		vgui::Vertex_t vertices[NUM_VERTS_SPOKE];
 
@@ -115,11 +123,14 @@ private:
 
 	bool	lastWheel = false;
 	void	CheckWheel();
-	
+
 	// Slot numbers formatted & ready for printing. Assumes that we never have more than 16 slots, which is a safe bet.
 	wchar_t *slotNames[16];
 
-	CHudTexture *GetIcon(const char *szIcon, bool bInvert);
+	// The DOF Blur post process material that we want to control in here.
+	//IMaterialVar *m_pBlurScale;
+
+	//CHudTexture *GetIcon(const char *szIcon, bool bInvert);
 
 	void DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
@@ -129,11 +140,11 @@ private:
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
 	CPanelAnimationVarAliasType(int, m_nPanelHighlightedTextureId, "panel_texture_highlighted", "hud/weaponwheel_panel_highlighted", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
-	CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
-
+	//CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
+	CPanelAnimationVarAliasType(int, m_nBlurShaderId, "blur_material", "dofblur", "textureid");
 
 	// Other vars that are loaded from the .res
-	CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
+	//CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
 	CPanelAnimationVar(int, m_iShadowOffset, "ShadowOffset", "3");
 	CPanelAnimationVar(int, m_iShadowAlpha, "ShadowAlpha", "255");
 	CPanelAnimationVar(float, m_flSegmentMargin, "segment_margin", "10");
@@ -141,6 +152,26 @@ private:
 	CPanelAnimationVar(float, m_flOuterRadius, "outer_radius", "100");
 	CPanelAnimationVar(int, m_iWheelMargin, "wheel_margin", "20");
 	CPanelAnimationVar(int, m_iTextOffset, "text_offset", "25");
+
+	// These are used to parameterise and defer the DoF blur's lerp settings to the .res layout file
+	CPanelAnimationVar(float, m_flDOFBlurScaleMax, "dof_blur_scale_max", "0.5");
+	CPanelAnimationVar(float, m_flDOFBlurScaleMin, "dof_blur_scale_min", "0.15");
+	CPanelAnimationVar(float, m_flDOFBlurDistance, "dof_blur_dist", "0.175");
+	CPanelAnimationVar(float, m_flBlurLerpTimeOn, "dof_blur_transitiontime_on", "0.5");
+	CPanelAnimationVar(float, m_flBlurLerpTimeOff, "dof_blur_transitiontime_off", "0.1");
+
+	float	m_flLerpTime = 0.0f;		// Timer
+	float	m_flTargetFadeTime = -1.0f;		// The fade time (different for turning blur on and off, two directions)
+	bool	m_bBlurEnabled = false;		// Controls the lerp direction
+	bool	m_bLerpDone = true;
+	void	SetBlurLerpTimer(float t);
+	void	PerformBlurLerp();
+
+	// Check for resolution changes by polling the vertical size of the screen
+	// Pixel measurements need to be relative to 1080p, otherwise they stay literal on 720p and double in size lol
+	int		m_iLastScreenHeight = -1;
+	const int iReferenceScreenHeight = 1080;
+	bool	bLayoutInvalidated = true;
 };
 
 DECLARE_HUDELEMENT(CHudWeaponWheel);
@@ -189,7 +220,11 @@ CHudWeaponWheel::CHudWeaponWheel(const char *pElementName) : CHudElement(pElemen
 
 	//allocate the wheel
 	segments = new WheelSegment[numberOfSegments];
-	
+
+	// Make the wheel vertices
+	RefreshWheelVerts();
+	//RefreshEquippedWeapons(); //deleteme - inappropriate in the constructor.
+
 	ivgui()->AddTickSignal(GetVPanel());
 }
 
@@ -200,6 +235,9 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 {
 	// load control settings...
 	LoadControlSettings("resource/UI/HudWeaponwheel.res");
+
+	bLayoutInvalidated = true;
+
 
 	/*for (int i = 0; i < numberOfSegments; i++) {
 
@@ -324,7 +362,7 @@ void CHudWeaponWheel::CheckMousePos()
 				}
 			}
 		}
-		else 
+		else
 		{
 			// The cursor has been registered as having been inside the centre circle;
 			// after this, it can select things (see above).
@@ -338,6 +376,7 @@ void CHudWeaponWheel::CheckMousePos()
 	}
 }
 
+// DO NOT CALL THIS EVERY FRAME.
 void CHudWeaponWheel::RefreshEquippedWeapons(void)
 {
 	if (GetHudWeaponSelection())
@@ -354,8 +393,9 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 				{
 					segments[slot].imageIcon[bucketSlot] = weaponInSlot->GetSpriteActive();
 					segments[slot].bHasIcon = true;
+
 					if (isFirstBucket)
-					{ 
+					{
 						segments[slot].defaultBucket = bucketSlot;
 						segments[slot].bucketSelected = bucketSlot;
 						isFirstBucket = false;
@@ -367,11 +407,52 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 	}
 }
 
+void CHudWeaponWheel::SetBlurLerpTimer(float t)
+{
+	// Set the timer to m_flBlurLerpTimeOn or m_flBlurLerpTimeOff
+	m_flLerpTime = gpGlobals->curtime + t;
+	m_bLerpDone = false;
+	m_flTargetFadeTime = t;
+}
+void CHudWeaponWheel::PerformBlurLerp()
+{
+	// Remap time to a 0 to 1 lerp amount
+	float timeRemaining = max(m_flLerpTime - gpGlobals->curtime, 0.0f);
+	float lerpAmount = 1.0f - (timeRemaining / m_flTargetFadeTime);
+
+	// if blur is turning on (true), lerp between min and max. If it's turning off, lerp between max and min.
+	float blurScale = Lerp(
+		lerpAmount,
+		m_bBlurEnabled ? m_flDOFBlurScaleMin : m_flDOFBlurScaleMax,
+		m_bBlurEnabled ? m_flDOFBlurScaleMax : m_flDOFBlurScaleMin
+		);
+
+	SetDOFBlurScale(blurScale);
+
+	if (lerpAmount >= 1.0f)  {
+		m_bLerpDone = true;
+
+		if (!bWheelActive)
+		{
+			// Switches off the DoF Blur for good (stops it even being considered in the post process cycle; performance!)
+			SetDOFBlurEnabled(false);
+		}
+	}
+}
+
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
+
+	// This check isn't necessary at all. Deleteme
+	/*
 	CTFPlayer* pPlayer = CTFPlayer::GetLocalTFPlayer();
 	if (!pPlayer)
-		return;
+	return;
+	*/
+
+	// Scale things relative to 1080p, otherwise 720p looks bloody HUGE
+	// Fucking integer logic...
+	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
 
@@ -383,38 +464,56 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		segment.centreAngle = currentCentreAngle;
 
-		segment.centreX = iCentreScreenX + (sin(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin));
-		segment.centreY = iCentreScreenY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin));
+		segment.centreX = iCentreScreenX + (sin(DEG2RAD(currentCentreAngle)) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor));
+		segment.centreY = iCentreScreenY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin) * scaleFactor);
 
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
 
 		segment.vertices[0].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
 			Vector2D(0, 0)
 			);
 
 		segment.vertices[1].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
 			Vector2D(1, 0)
 			);
 
 		segment.vertices[2].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
 			Vector2D(1, 1)
 			);
 
 		segment.vertices[3].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * (m_flWheelRadius + m_iWheelMargin + m_flOuterRadius))),
+			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
 			Vector2D(0, 1)
 			);
 
 		segment.angleSin = sin(DEG2RAD(currentCentreAngle));
 		segment.angleCos = cos(DEG2RAD(currentCentreAngle));
 
+		// To prevent the invalidated layout from overriding the weapon slot, copy the selected bucket info
+		segment.bHasIcon = segments[i].bHasIcon;
+		if (segment.bHasIcon)
+		{
+			for (int n = 0; n < NUMICONS; n++)
+			{
+				if (segments[i].imageIcon[n] != NULL)
+				{
+					segment.imageIcon[n] = segments[i].imageIcon[n];
+				}
+			}
+		}
+
+		segment.bucketSelected = segments[i].bucketSelected;
+		segment.defaultBucket = segments[i].defaultBucket;
+
 		segments[i] = segment;
 
 		currentCentreAngle += 360 / numberOfSegments;
 	}
+
+	bLayoutInvalidated = false;
 }
 
 void CHudWeaponWheel::RefreshCentre(void)
@@ -430,6 +529,13 @@ void CHudWeaponWheel::RefreshCentre(void)
 	// but Linux currently struggles to set the cursor position so it can be variable.)
 	iCentreWheelX = iCentreScreenX;
 	iCentreWheelY = iCentreScreenY;
+
+	// If the user has changed resolution, invalidate and reload the vertices
+	if (height != m_iLastScreenHeight)
+	{
+		m_iLastScreenHeight = height;
+		bLayoutInvalidated = true;
+	}
 }
 
 void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
@@ -439,7 +545,7 @@ void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color 
 
 	// count the position
 	int slen = 0, charCount = 0, maxslen = 0;
-		
+
 	for (const wchar_t *pch = text; *pch != 0; pch++)
 	{
 		if (*pch == '\n')
@@ -467,35 +573,40 @@ void CHudWeaponWheel::Paint(void)
 {
 	/* not needed, if ShouldDraw is false Paint is not computed
 	if (!bWheelActive)
-		return;
+	return;
 	*/
 
-	// Draw the blurry boy behind the UI
-	surface()->DrawSetTexture(m_nBlurTextureId);
-	surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
+	// Draw the blurry boy behind the UI - REMOVED 30/06/2020 in favour of a new DoF post process! <3
+	//surface()->DrawSetTexture(m_nBlurTextureId);
+	//surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
 
-	surface()->DrawSetColor(Color (255, 255, 255, 255));
+	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
+	float wheelRadius = m_flWheelRadius * scaleFactor;
+
+	surface()->DrawSetColor(Color(255, 255, 255, 255));
 	surface()->DrawSetTexture(m_nCircleTextureId);
-	surface()->DrawTexturedRect(iCentreWheelX - m_flWheelRadius, iCentreWheelY - m_flWheelRadius, iCentreWheelX + m_flWheelRadius, iCentreWheelY + m_flWheelRadius);
+	surface()->DrawTexturedRect(iCentreWheelX - wheelRadius, iCentreWheelY - wheelRadius, iCentreWheelX + wheelRadius, iCentreWheelY + wheelRadius);
 
 	// Spokes!	
 	for (int i = 0; i < numberOfSegments; i++)
 	{
 		if (i == slotSelected)
 			surface()->DrawSetTexture(m_nPanelHighlightedTextureId);
-		else 
+		else
 			surface()->DrawSetTexture(m_nPanelTextureId);
 
 		WheelSegment segment = segments[i];
 		surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
 	}
 
+	//	surface()->DrawSetAlphaMultiplier(1.0f); //deleteme
+
 	// Now the outline, slot number, and ammo
 	for (int i = 0; i < numberOfSegments; i++)
 	{
 		WheelSegment segment = segments[i];
 		// Slot number + shadow
-		int offset = m_flWheelRadius + m_iTextOffset;
+		int offset = (m_flWheelRadius + m_iTextOffset * scaleFactor);
 
 		int xpos = iCentreWheelX + (segment.angleSin * offset);
 		int ypos = iCentreWheelY + (segment.angleCos * offset);
@@ -514,13 +625,13 @@ void CHudWeaponWheel::Paint(void)
 			// Draw the icon
 			if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
 			{
-				offset += 60;
+				offset += (60 * scaleFactor);
 				xpos = iCentreWheelX + (segment.angleSin * offset);
 				ypos = iCentreWheelY + (segment.angleCos * offset);
 
-				int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE;
-				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE;
-					
+				int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE * scaleFactor;
+				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE * scaleFactor;
+
 				// Icon Shadow
 				segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
 				// Icon
@@ -542,8 +653,16 @@ void CHudWeaponWheel::Paint(void)
 
 			if (hasAmmo)
 			{
-				DrawString(pText, xpos - 1, ypos - 1, Color(0, 0, 0, 255), true);
+				DrawString(pText, xpos + TEXT_SHADOW_OFFSET, ypos + TEXT_SHADOW_OFFSET, Color(0, 0, 0, 255), true);
 				DrawString(pText, xpos, ypos, ammoColor, true);
+			}
+
+			if (i == slotSelected)
+			{
+				wchar_t wepText[64];
+				g_pVGuiLocalize->ConstructString(wepText, sizeof(wepText), VarArgs("%s", pWeapon->GetPrintName()), 0);
+				DrawString(wepText, iCentreWheelX + TEXT_SHADOW_OFFSET, iCentreWheelY + TEXT_SHADOW_OFFSET, Color(0, 0, 0, 255), true);
+				DrawString(wepText, iCentreWheelX, iCentreWheelY, Color(245, 245, 245, 255), true);
 			}
 		}
 	}
@@ -560,16 +679,30 @@ void CHudWeaponWheel::OnTick(void)
 	if (!(pPlayer && pPlayerBase))
 		return;
 
+	// attempt to tell the darkening overlay to FUCK OFFFFFFFFFFFFFFFFFFFFFF
+	SetPaintBackgroundEnabled(false);
+
+	// If we've still lerping to be done, do it!
+	if (!m_bLerpDone)
+	{
+		PerformBlurLerp();
+	}
+
 	// If weapon wheel active bool has changed, change mouse input capabilities etc
 	if (lastWheel != bWheelActive)
 		CheckWheel();
+
 	lastWheel = bWheelActive;
 
-	if (!bWheelActive)
-		return;
+	// This optimisation is bad
+	//	if (!bWheelActive)
+	//		return;
 
-	//Do the thing
-	CheckMousePos();
+	//	//Do the thing
+	//	CheckMousePos();
+
+	if (bWheelActive)
+		CheckMousePos();
 
 	// Scan for changes in the number of weapons we have
 	int weaponsThisTick = 0;
@@ -578,7 +711,7 @@ void CHudWeaponWheel::OnTick(void)
 	{
 		for (int slot = 0; slot < numberOfSegments; slot++)
 		{
-			for (int bucket = 0; bucket < MAX_WEPS_PER_SLOT; bucket++) 
+			for (int bucket = 0; bucket < MAX_WEPS_PER_SLOT; bucket++)
 			{
 				if (weaponSelect->GetWeaponInSlot(slot, bucket))
 					weaponsThisTick++;
@@ -606,9 +739,20 @@ void CHudWeaponWheel::CheckWheel()
 {
 	if (bWheelActive)
 	{
+		// This is safe to do every frame/opening of the wheel
 		RefreshCentre();
-		RefreshWheelVerts();
-		RefreshEquippedWeapons();
+
+		// THIS IS NOT. Doing so will reset the player's chosen weapons constantly. We do not want to do this.
+		// If we do that, each slot will revert back to the same weapon every frame, forgetting what the player selected in that slot.
+
+		if (bLayoutInvalidated)
+		{
+			RefreshWheelVerts();
+			RefreshEquippedWeapons();
+		}
+
+		// Call this when the player's equipped weapons change. This is done in ::OnTick and ONLY when the player picks up a new weapon/drops one.
+		//RefreshEquippedWeapons();
 
 		bHasCursorBeenInWheel = false;
 
@@ -617,14 +761,16 @@ void CHudWeaponWheel::CheckWheel()
 		SetKeyBoardInputEnabled(false);		// ...but not the keyboard!
 
 		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
-		
+
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
 		vgui::input()->GetCursorPos(iCentreWheelX, iCentreWheelY);
 
-		iCentreWheelX += 4;
-		iCentreWheelX -= 2;
-		iCentreWheelX -= 2;
+		SetDOFBlurEnabled(true);
+
+		// this var is just used to decide the lerp direction, it doesn't toggle it on/off
+		m_bBlurEnabled = true;
+		SetBlurLerpTimer(m_flBlurLerpTimeOn);
 	}
 	else
 	{
@@ -632,11 +778,16 @@ void CHudWeaponWheel::CheckWheel()
 		if (useHighlighted)
 		{
 			// Select it and close
-			WeaponSelected( slotSelected, segments[slotSelected].bucketSelected);
+			WeaponSelected(slotSelected, segments[slotSelected].bucketSelected);
 		}
 		SetMouseInputEnabled(false);
 		SetVisible(false);
+
+		m_bBlurEnabled = false;
+		SetBlurLerpTimer(m_flBlurLerpTimeOff);
 	}
+
+	SetDOFBlurDistance(m_flDOFBlurDistance);
 }
 
 
@@ -667,7 +818,7 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 					lastValidIndex = i;
 				}
 			}
-			
+
 			if (wepsCurrentlyInSlot > 0)
 			{
 				int iterations = 0;
@@ -688,15 +839,15 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 
 					iterations++;
 				}
-				
+
 				// Used to stop being able to cycle slots with 1 weapon
-				if ( segments[slotSelected].bucketSelected != bucket )
+				if (segments[slotSelected].bucketSelected != bucket)
 				{
 					WeaponSelected(slotSelected, bucket, false);
 					segments[slotSelected].bucketSelected = bucket;
 				}
 			}
-			
+
 			// We only need to disable selecting the highlighted one if the player actually changes a slot's weapon
 			if (wepsCurrentlyInSlot > 1)
 				useHighlighted = false;
