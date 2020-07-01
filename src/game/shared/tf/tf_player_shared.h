@@ -9,17 +9,14 @@
 #pragma once
 #endif
 
-#include "networkvar.h"
+//#include "networkvar.h"
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
-#include "basegrenade_shared.h"
 
-// Client specific.
 #ifdef CLIENT_DLL
-class C_TFPlayer;
-// Server specific.
+	class C_TFPlayer;
 #else
-class CTFPlayer;
+	class CTFPlayer;
 #endif
 
 //=============================================================================
@@ -196,6 +193,7 @@ public:
 	bool	IsControlStunned( void );
 
 	void	Burn( CTFPlayer *pPlayer, float flTime );
+	void	Poison(CTFPlayer *pPlayer, float flTime);
 
 	// Weapons.
 	CTFWeaponBase *GetActiveTFWeapon() const;
@@ -230,16 +228,10 @@ public:
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
-	bool	IsGrappling( void ) { return m_bGrapple; }
-	void    SetGrapple( bool bGrapple );
-	void	SetBlockJump(bool buffer);
-	bool	IsJumpBlocked() { return m_bBlockJump; }
-	void	SetCSlide(bool csliding);
-	bool	IsCSliding() { return m_bCSlide; }
-	void	SetCSlideDuration(float duration);
-	float	GetCSlideDuration() { return m_fCSlideDuration; }
-	void	SetRampJumpVel(float vel);
-	float	GetRampJumpVel() { return m_fRampJumpVel; }
+	const	CBaseEntity *GetHook( void ) { return m_Hook; }
+	void    SetHook(CBaseEntity *hook);
+	void    SetPullSpeed(float pull);
+	float	GetPullSpeed() { return m_flGHookPull; }
 
 	// loser state
 	bool	IsLoser( void );
@@ -276,6 +268,8 @@ private:
 	void OnAddShieldCharge( void );
 	void OnAddHaste( void );
 	void OnAddJauggernaught( void );
+	void OnAddPoison(void);
+	void OnAddTranq(void);
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -291,6 +285,8 @@ private:
 	void OnRemoveShieldCharge( void );
 	void OnRemoveHaste( void );
 	void OnRemoveJauggernaught( void );
+	void OnRemovePoison(void);
+	void OnRemoveTranq(void);
 
 	float GetCritMult( void );
 
@@ -371,6 +367,10 @@ private:
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
 
+	CHandle<CTFPlayer>		m_hPoisonAttacker;
+	float					m_flPoisonTime;
+	float					m_flPoisonRemoveTime;
+
 
 	float m_flDisguiseCompleteTime;
 
@@ -391,22 +391,18 @@ private:
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
-	CNetworkVar( bool, m_bGrapple );
-	CNetworkVar( bool, m_bBlockJump );
-	CNetworkVar( float, m_fRampJumpVel );
-	CNetworkVar( bool, m_bCSlide );
-	CNetworkVar( float, m_fCSlideDuration );
+	CNetworkHandle( CBaseEntity, m_Hook );
+	CNetworkVar( float, m_flGHookPull );
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );
 
 	CNetworkVar( float, m_flNextLungeTime );
 
-
 	CNetworkVar( int, m_iCritMult );
 
-	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS+1 );		// array of state per other player whether player is dominating other players
-	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS+1 );	// array of state per other player whether other players are dominating this player
+	CNetworkArray( bool, m_bPlayerDominated, MAX_PLAYERS + 1 );		// array of state per other player whether player is dominating other players
+	CNetworkArray( bool, m_bPlayerDominatingMe, MAX_PLAYERS + 1 );	// array of state per other player whether other players are dominating this player
 	
 #ifdef GAME_DLL
 	float	m_flNextCritUpdate;
