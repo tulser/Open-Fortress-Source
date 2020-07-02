@@ -146,7 +146,6 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	RecvPropInt( RECVINFO( m_nPlayerCondEx2 ) ),
 	RecvPropInt( RECVINFO( m_nPlayerCondEx3 ) ),
 	RecvPropInt( RECVINFO( m_nPlayerCondEx4 ) ),
-	RecvPropInt( RECVINFO( m_nPlayerCosmetics ) ),
 	RecvPropInt( RECVINFO( m_bJumping) ),
 	RecvPropBool( RECVINFO( m_bIsTopThree ) ),
 	RecvPropBool( RECVINFO( bWatchReady ) ),
@@ -177,7 +176,6 @@ BEGIN_PREDICTION_DATA_NO_BASE( CTFPlayerShared )
 	DEFINE_PRED_FIELD( m_nPlayerCondEx2, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCondEx3, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_nPlayerCondEx4, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
-	DEFINE_PRED_FIELD( m_nPlayerCosmetics, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCloakMeter, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bJumping, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
@@ -214,7 +212,6 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerShared )
 	SendPropInt( SENDINFO( m_nPlayerCondEx2 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx3 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nPlayerCondEx4 ), -1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-	SendPropInt( SENDINFO( m_nPlayerCosmetics ), 32, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bJumping ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_bIsTopThree ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( bWatchReady ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
@@ -451,36 +448,6 @@ bool CTFPlayerShared::InCond( int nCond )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFPlayerShared::WearsHat( int nHat )
-{
-	Assert( nHat >= 0 && nHat < GetWearableCount() );
-
-	return ( ( m_nPlayerCosmetics & (1<<nHat) ) != 0 );
-
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Add a hat 
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::WearHat( int nHat )
-{
-	Assert( nHat >= 0 && nHat < GetWearableCount() );
-	m_nPlayerCosmetics |= (1<<nHat);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Forcibly remove a hat
-//-----------------------------------------------------------------------------
-void CTFPlayerShared::RemoveHat( int nHat )
-{
-	Assert( nHat >= 0 && nHat < GetWearableCount() );
-
-	m_nPlayerCosmetics &= ~(1<<nHat);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
 float CTFPlayerShared::GetConditionDuration( int nCond )
 {
 	Assert( nCond >= 0 && nCond < TF_COND_LAST );
@@ -679,6 +646,7 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 				// cancel any reload in progress.
 				pWpn->AbortReload();
 			}
+			m_pOuter->TeamFortress_SetSpeed();
 		}
 		break;
 	case TF_COND_CRITBOOSTED:
@@ -1562,6 +1530,7 @@ void CTFPlayerShared::OnRemoveTaunting( void )
 	m_pOuter->m_iTaunt = -1;
 	m_pOuter->m_iTauntLayer = 0;
 #endif
+	m_pOuter->TeamFortress_SetSpeed();
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2983,6 +2952,12 @@ void CTFPlayer::TeamFortress_SetSpeed()
 		return;
 	}
 
+	if( m_Shared.InCond( TF_COND_TAUNTING ) )
+	{
+		SetMaxSpeed( 1 );
+		return;
+	}	
+
 	// First, get their max class speed
 	maxfbspeed = GetPlayerClass()->GetData()->m_flMaxSpeed;
 
@@ -3284,6 +3259,9 @@ bool CTFPlayer::CanAttack( void )
 	CTFGameRules *pRules = TFGameRules();
 
 	Assert( pRules );
+
+	if( m_Shared.InCond( TF_COND_TAUNTING ) )
+		return false;
 
 	if ( TFGameRules()->InRoundRestart() && TFGameRules()->IsDMGamemode() )
 		return false;

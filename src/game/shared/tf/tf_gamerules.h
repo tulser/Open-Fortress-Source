@@ -548,6 +548,9 @@ private:
 	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
 
 #endif
+
+	CUtlVector< int > m_hDuelQueueL;
+    CUtlVector< int > m_hDuelQueueR;
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nMutator ); // What mutator are we using?
 	CNetworkVar( int, m_nRetroMode ); // The TFC mode type
@@ -601,6 +604,7 @@ public:
 	int				m_iRequiredKills;
 	bool			m_bIsFreeRoamMap;
 	bool			m_bIsCoop;
+
 	bool	IsDMGamemode(void);
 	bool	IsTDMGamemode(void);
 	bool	IsDOMGamemode(void);
@@ -610,6 +614,7 @@ public:
 	bool	IsGGGamemode(void);
 	bool	Is3WaveGamemode(void);
 	bool	IsArenaGamemode(void);
+	bool	IsDuelGamemode(void);
 	bool	IsESCGamemode(void);
 	bool	IsZSGamemode(void);
 	bool	IsInfGamemode(void);
@@ -633,7 +638,7 @@ public:
 
 	bool InGametype( int nGametype );
 	void AddGametype( int nGametype );	
-	void RemoveGametype( int nGametype );	
+	void RemoveGametype( int nGametype );
 
 	int GetMutator( void );
 	bool IsMutator( int nMutator );
@@ -643,6 +648,11 @@ public:
 #ifdef GAME_DLL
 	void SetRetroMode( int nRetroMode );
 #endif
+
+	int		GetDuelQueuePos( CBasePlayer *pPlayer );
+	void 	PlaceIntoDuelQueue( CBasePlayer *pPlayer );
+	void	RemoveFromDuelQueue( CBasePlayer *pPlayer );
+	void	ProgressDuelQueues();
 
 	bool	IsAllClassEnabled( void ) { return m_bAllClass; }
 	bool	IsAllClassZombieEnabled( void ) { return m_bAllClassZombie; }

@@ -24,6 +24,7 @@
 	#include <game/client/iviewport.h>
 	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
+	#include "dt_utlvector_recv.h"
 #else
 	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
@@ -73,6 +74,8 @@
 	#include "nav_mesh.h"
 	#include "bot/tf_bot_manager.h"
 	#include <../shared/gamemovement.h>
+	
+	#include "dt_utlvector_send.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -136,6 +139,7 @@ ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, 
 ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar of_juggernaught				( "of_juggernaught", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Juggernaught mode." );
 ConVar of_coop						( "of_coop", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Coop mode. (Pacifism)" );
+ConVar of_duel						( "of_duel", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Duel mode." );
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
@@ -311,7 +315,6 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropInt( RECVINFO( m_nGameType ) ),
 	RecvPropInt( RECVINFO( m_nMutator ) ),
 	RecvPropInt( RECVINFO( m_nRetroMode ) ),
-	RecvPropInt( RECVINFO( m_iCosmeticCount ) ),
 	RecvPropInt( RECVINFO( m_nCurrFrags ) ),
 	RecvPropInt( RECVINFO( m_nHuntedCount_red ) ),
 	RecvPropInt( RECVINFO( m_nMaxHunted_red ) ),
@@ -340,12 +343,14 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	RecvPropEHandle( RECVINFO( m_hInfectionTimer ) ),
 	RecvPropInt( RECVINFO( m_halloweenScenario ) ),
 	RecvPropInt( RECVINFO( m_iMaxLevel ) ),
+	
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDuelQueueR ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDuelQueueL ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
 #else
 
 	SendPropInt( SENDINFO( m_nGameType ), TF_GAMETYPE_LAST, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nMutator ), 3, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 	SendPropInt( SENDINFO( m_nRetroMode ), 3, SPROP_UNSIGNED ),
-	SendPropInt( SENDINFO( m_iCosmeticCount ) ),
 	SendPropInt( SENDINFO( m_nCurrFrags ), 3, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nHuntedCount_red ), 7, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nMaxHunted_red ), 7, SPROP_UNSIGNED ),
@@ -373,7 +378,10 @@ BEGIN_NETWORK_TABLE_NOBASE( CTFGameRules, DT_TFGameRules )
 	SendPropEHandle( SENDINFO( m_hInfectionTimer ) ),
 	SendPropEHandle( SENDINFO( m_itHandle ) ),
 	SendPropInt( SENDINFO( m_halloweenScenario ) ),
-	SendPropInt( SENDINFO( m_iMaxLevel ) )
+	SendPropInt( SENDINFO( m_iMaxLevel ) ),
+	
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_hDuelQueueR ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
+	SendPropUtlVector( SENDINFO_UTLVECTOR( m_hDuelQueueL ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -1475,6 +1483,61 @@ void CTFGameRules::SetRetroMode( int nRetroMode)
 }
 #endif
 
+int CTFGameRules::GetDuelQueuePos( CBasePlayer *pPlayer )
+{
+	if( m_hDuelQueueR.HasElement( pPlayer->entindex() ) )
+		return m_hDuelQueueR.Find(pPlayer->entindex());
+	else
+		return m_hDuelQueueL.Find( pPlayer->entindex() );
+
+}
+
+void CTFGameRules::PlaceIntoDuelQueue( CBasePlayer *pPlayer )
+{
+	if( m_hDuelQueueR.Count() > m_hDuelQueueL.Count() )
+		m_hDuelQueueL.AddToTail( pPlayer->entindex() );
+	else
+		m_hDuelQueueR.AddToTail( pPlayer->entindex() );
+}
+
+void CTFGameRules::RemoveFromDuelQueue( CBasePlayer *pPlayer )
+{
+	CUtlVector<int> *m_hMyQueue;
+	CUtlVector<int> *m_hOtherQueue;
+	if( m_hDuelQueueR.HasElement( pPlayer->entindex() ) )
+	{
+		m_hMyQueue = &m_hDuelQueueR;
+		m_hOtherQueue = &m_hDuelQueueL;
+	}
+	else
+	{
+		m_hMyQueue = &m_hDuelQueueL;
+		m_hOtherQueue = &m_hDuelQueueR;
+	}
+	m_hMyQueue->FindAndRemove( pPlayer->entindex() );
+	
+	if( m_hOtherQueue->Count() - m_hMyQueue->Count() >= 2 )
+	{
+		m_hMyQueue->AddToTail( m_hOtherQueue->Tail() );
+		m_hOtherQueue->Remove( m_hOtherQueue->Count() - 1 );
+	}
+}
+
+void CTFGameRules::ProgressDuelQueues()
+{
+	int iFirst = m_hDuelQueueR[0];
+	int iSecond = m_hDuelQueueL[0];
+
+	// We do it this way round so that we dont accidentally
+	// remove the only person on one team
+	
+	m_hDuelQueueL.Remove(0);
+	m_hDuelQueueR.Remove(0);
+	
+	m_hDuelQueueL.AddToTail( iFirst  );
+	m_hDuelQueueR.AddToTail( iSecond );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1576,6 +1639,8 @@ static const char *s_PreserveEnts[] =
 	"tf_logic_competitive",
 	"tf_wearable_razorback",
 	"info_ladder",
+	"of_music_player",
+	"dm_music_manager",
 	"", // END Marker
 };
 
@@ -2081,6 +2146,11 @@ bool CTFGameRules::Is3WaveGamemode( void )
 bool CTFGameRules::IsArenaGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_ARENA );
+}
+
+bool CTFGameRules::IsDuelGamemode( void )
+{ 
+	return of_duel.GetBool();
 }
 
 bool CTFGameRules::IsESCGamemode( void )
@@ -2597,7 +2667,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 			for ( int i = FIRST_GAME_TEAM; i < GetNumberOfTeams(); i++ )
 			{
 				BroadcastSound( i, "InfectionMusic.Warmup", false );
-				BroadcastSound( i, "Benja.RoundStart" );
+				BroadcastSound( i, "RoundStart" );
 			}
 		}
 	}
@@ -5005,7 +5075,13 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 
 					if ( pTFPlayerScorer->FragCount() >= iFragLimit )
 					{
-						SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
+/*						if( IsDuelGamemode() )
+						{
+							SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, false, false, true);
+							ProgressDuelQueues();
+						}
+						else*/
+							SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
 					}
 
 					// one of our players is at 80% of the fragcount, start voting for next map
@@ -5588,7 +5664,7 @@ void CTFGameRules::SendWinPanelInfo( void )
 		for ( int i = 0; i < numPlayers; i++ )
 		{
 			// only include players who have non-zero points this round; if we get to a player with 0 round points, stop
-			if ( 0 == vecPlayerScore[i].iRoundScore )
+			if( 0 == vecPlayerScore[i].iRoundScore )
 				break;
 
 			// set the player index and their round score in the event

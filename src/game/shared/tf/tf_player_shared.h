@@ -97,11 +97,7 @@ public:
 	void	AddCond( int nCond, float flDuration = PERMANENT_CONDITION );
 	void	RemoveCond( int nCond );
 	
-	void	WearHat( int nHat );
-	void	RemoveHat( int nHat );	
-	
 	bool	InCond( int nCond );
-	bool	WearsHat( int nHat );
 	void	RemoveAllCond(CTFPlayer *pPlayer);
 	void	OnConditionAdded( int nCond );
 	void	OnConditionRemoved( int nCond );
@@ -319,7 +315,6 @@ private:
 	CNetworkVar( int, m_nPlayerCondEx3 );		// Disgusting, don't blame me -ficool2
 	CNetworkVar( int, m_nPlayerCondEx4 );
 
-	CNetworkVar( int, m_nPlayerCosmetics );			// Player condition flags.
 	CNetworkArray( float, m_flCondExpireTimeLeft, TF_COND_LAST );	// Time until each condition expires
 
 //TFTODO: What if the player we're disguised as leaves the server?

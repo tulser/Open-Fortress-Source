@@ -712,8 +712,6 @@ enum
 	TF_WEARABLE_LAST
 };
 
-int GetWearableCount( void );
-
 enum
 {
 	TF_CLASSMOD_NONE = 0,		// Sniper aiming, Heavy minigun.
