@@ -6,15 +6,15 @@
 
 #include "cbase.h"
 #include "tf_shareddefs.h"
-#include "KeyValues.h"
-#include "takedamageinfo.h"
+//#include "KeyValues.h"
+//#include "takedamageinfo.h"
 #include "tf_gamerules.h"
-#include "bone_setup.h"
+//#include "bone_setup.h"
 
 #if defined( CLIENT_DLL )
 #include "c_team.h"
-#include "c_tf_player.h"
-#include "filesystem.h"
+//#include "c_tf_player.h"
+//#include "filesystem.h"
 #else
 #include "team.h"
 #endif
