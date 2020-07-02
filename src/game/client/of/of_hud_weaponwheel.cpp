@@ -41,7 +41,8 @@ using namespace vgui;
 // Vertices per segment of the wheel (todo make me 4)
 #define NUM_VERTS_SPOKE 4
 // Realistically, how many weapons are we gonna have in each slot
-#define MAX_WEPS_PER_SLOT 8
+//#define MAX_WEPS_PER_SLOT 8
+// #define MAX_WEPS_PER_SLOT 24
 #define WEAP_IMAGE_SCALE 0.5
 
 // 2px shadow offset for text
@@ -80,8 +81,9 @@ public:
 		//int textCentreX, textCentreY;
 
 		bool bHasIcon = false;
-#define	NUMICONS 8
-		const CHudTexture *imageIcon[NUMICONS];
+
+		// todo streamline this into a dictionary of bucket ints to CHudTexture pointers
+		const CHudTexture *imageIcon[MAX_WEAPON_POSITIONS];
 
 		vgui::Vertex_t vertices[NUM_VERTS_SPOKE];
 
@@ -386,7 +388,7 @@ void CHudWeaponWheel::RefreshEquippedWeapons(void)
 			bool isFirstBucket = true;
 			// Iterate over the slot & buckets
 			CBaseCombatWeapon *weaponInSlot;
-			for (int bucketSlot = 0; bucketSlot < MAX_WEPS_PER_SLOT; bucketSlot++)
+			for (int bucketSlot = 0; bucketSlot < MAX_WEAPON_POSITIONS; bucketSlot++)
 			{
 				weaponInSlot = GetHudWeaponSelection()->GetWeaponInSlot(slot, bucketSlot);
 				if (weaponInSlot)
@@ -496,7 +498,7 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 		segment.bHasIcon = segments[i].bHasIcon;
 		if (segment.bHasIcon)
 		{
-			for (int n = 0; n < NUMICONS; n++)
+			for (int n = 0; n < MAX_WEAPON_POSITIONS; n++)
 			{
 				if (segments[i].imageIcon[n] != NULL)
 				{
@@ -711,7 +713,7 @@ void CHudWeaponWheel::OnTick(void)
 	{
 		for (int slot = 0; slot < numberOfSegments; slot++)
 		{
-			for (int bucket = 0; bucket < MAX_WEPS_PER_SLOT; bucket++)
+			for (int bucket = 0; bucket < MAX_WEAPON_POSITIONS; bucket++)
 			{
 				if (weaponSelect->GetWeaponInSlot(slot, bucket))
 					weaponsThisTick++;
@@ -810,7 +812,7 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 			int wepsCurrentlyInSlot = 0;
 			int lastValidIndex = -1;
 			int currentBucket = segments[slotSelected].bucketSelected;
-			for (int i = 0; i < MAX_WEPS_PER_SLOT; i++)
+			for (int i = 0; i < MAX_WEAPON_POSITIONS; i++)
 			{
 				if (pHUDSelection->GetWeaponInSlot(slotSelected, i))
 				{
@@ -824,7 +826,7 @@ void CHudWeaponWheel::OnMouseWheeled(int delta)
 				int iterations = 0;
 				int bucket = currentBucket; // e.g. bucket 4 - 1 = 3
 				// Keep going in the direction of delta until we find a valid weapon (+1 = forwards, -1 = backwards)
-				while (iterations < MAX_WEPS_PER_SLOT)
+				while (iterations < MAX_WEAPON_POSITIONS)
 				{
 					bucket += delta;
 
