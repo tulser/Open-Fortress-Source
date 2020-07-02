@@ -141,11 +141,18 @@ private:
 	CPanelAnimationVarAliasType(int, m_nBlurShaderId, "blur_material", "dofblur", "textureid");
 
 	// Other vars that are loaded from the .res
-	//CPanelAnimationVar(float, m_flBlurCircleRadius, "BlurRadius", "500");
+
+	// Determines the centre of the wheel in terms of proportions of the screen
+	CPanelAnimationVar(float, m_flWheelPosX, "wheelPosX", "0.75");
+	CPanelAnimationVar(float, m_flWheelPosY, "wheelPosY", "0.5");
+
 	CPanelAnimationVar(int, m_iShadowOffset, "ShadowOffset", "3");
 	CPanelAnimationVar(int, m_iShadowAlpha, "ShadowAlpha", "255");
 	CPanelAnimationVar(float, m_flSegmentMargin, "segment_margin", "10");
+	
 	CPanelAnimationVar(float, m_flWheelRadius, "wheel_radius", "128");
+	CPanelAnimationVar(float, m_flWheelDeadzone, "wheel_deadzone", "0.75");
+
 	CPanelAnimationVar(float, m_flOuterRadius, "outer_radius", "100");
 	CPanelAnimationVar(int, m_iWheelMargin, "wheel_margin", "20");
 	CPanelAnimationVar(int, m_iTextOffset, "text_offset", "25");
@@ -313,8 +320,8 @@ void CHudWeaponWheel::CheckMousePos()
 {
 	int x, y;
 	vgui::input()->GetCursorPosition(x, y);
-	x -= iCentreScreenX;
-	y -= iCentreScreenY;
+	x -= iCentreWheelX;
+	y -= iCentreWheelY;
 	float distanceSqrd = x * x + y * y;
 
 	// width of each segment
@@ -439,28 +446,28 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		segment.centreAngle = currentCentreAngle;
 
-		segment.centreX = iCentreScreenX + (sin(DEG2RAD(currentCentreAngle)) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor));
-		segment.centreY = iCentreScreenY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin) * scaleFactor);
+		segment.centreX = iCentreWheelX + (sin(DEG2RAD(currentCentreAngle)) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor));
+		segment.centreY = iCentreWheelY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin) * scaleFactor);
 
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
 
 		segment.vertices[0].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
 			Vector2D(0, 0)
 			);
 
 		segment.vertices[1].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
 			Vector2D(1, 0)
 			);
 
 		segment.vertices[2].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
 			Vector2D(1, 1)
 			);
 
 		segment.vertices[3].Init(
-			Vector2D(iCentreScreenX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreScreenY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
 			Vector2D(0, 1)
 			);
 
@@ -497,13 +504,13 @@ void CHudWeaponWheel::RefreshCentre(void)
 	GetSize(width, height);
 
 	// iCentreScreen where the UI will attempt to create the wheel each time - it's basically constant
-	iCentreScreenX = 3 * width / 4;
+	iCentreScreenX = width / 2;
 	iCentreScreenY = height / 2;
 
 	// iCentreWheel is where the mouse was immediately after the UI was opened (This is the same as the above on Windows,
 	// but Linux currently struggles to set the cursor position so it can be variable.)
-	iCentreWheelX = iCentreScreenX;
-	iCentreWheelY = iCentreScreenY;
+	iCentreWheelX = width * m_flWheelPosX;
+	iCentreWheelY = height * m_flWheelPosY;
 
 	// If the user has changed resolution, invalidate and reload the vertices
 	if (height != m_iLastScreenHeight)
@@ -712,11 +719,11 @@ void CHudWeaponWheel::CheckWheel()
 		SetMouseInputEnabled(true);			// Capture the mouse...
 		SetKeyBoardInputEnabled(false);		// ...but not the keyboard!
 
-		vgui::input()->SetCursorPos(iCentreScreenX, iCentreScreenY);
+		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
 
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
-		vgui::input()->GetCursorPos(iCentreWheelX, iCentreWheelY);
+		// vgui::input()->GetCursorPos(iCentreWheelX, iCentreWheelY);
 
 		SetDOFBlurEnabled(true);
 
