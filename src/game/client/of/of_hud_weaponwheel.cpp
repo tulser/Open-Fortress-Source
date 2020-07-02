@@ -129,11 +129,6 @@ private:
 	// Slot numbers formatted & ready for printing. Assumes that we never have more than 16 slots, which is a safe bet.
 	wchar_t *slotNames[16];
 
-	// The DOF Blur post process material that we want to control in here.
-	//IMaterialVar *m_pBlurScale;
-
-	//CHudTexture *GetIcon(const char *szIcon, bool bInvert);
-
 	void DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter);
 
 	CPanelAnimationVar(vgui::HFont, m_hTextFont, "TextFont", "HudSelectionText");
@@ -237,23 +232,7 @@ void CHudWeaponWheel::ApplySchemeSettings(IScheme *pScheme)
 {
 	// load control settings...
 	LoadControlSettings("resource/UI/HudWeaponwheel.res");
-
 	bLayoutInvalidated = true;
-
-
-	/*for (int i = 0; i < numberOfSegments; i++) {
-
-	wchar_t slotText[64];
-	char text[64];
-
-	Q_snprintf(text, sizeof(text), "[%d]", i + 1);
-	g_pVGuiLocalize->ConvertANSIToUnicode(text, slotText, sizeof(slotText));
-
-	slotNames[i] = new wchar_t[sizeof(slotText)];
-
-	Q_wcsncpy(slotNames[i], slotText, sizeof(slotText));
-	}*/
-
 	BaseClass::ApplySchemeSettings(pScheme);
 }
 
@@ -416,6 +395,7 @@ void CHudWeaponWheel::SetBlurLerpTimer(float t)
 	m_bLerpDone = false;
 	m_flTargetFadeTime = t;
 }
+
 void CHudWeaponWheel::PerformBlurLerp()
 {
 	// Remap time to a 0 to 1 lerp amount
@@ -431,7 +411,8 @@ void CHudWeaponWheel::PerformBlurLerp()
 
 	SetDOFBlurScale(blurScale);
 
-	if (lerpAmount >= 1.0f)  {
+	if (lerpAmount >= 1.0f)
+	{
 		m_bLerpDone = true;
 
 		if (!bWheelActive)
@@ -444,16 +425,8 @@ void CHudWeaponWheel::PerformBlurLerp()
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
-
-	// This check isn't necessary at all. Deleteme
-	/*
-	CTFPlayer* pPlayer = CTFPlayer::GetLocalTFPlayer();
-	if (!pPlayer)
-	return;
-	*/
-
 	// Scale things relative to 1080p, otherwise 720p looks bloody HUGE
-	// Fucking integer logic...
+	// Screw integer logic...
 	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
@@ -573,15 +546,6 @@ void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color 
 
 void CHudWeaponWheel::Paint(void)
 {
-	/* not needed, if ShouldDraw is false Paint is not computed
-	if (!bWheelActive)
-	return;
-	*/
-
-	// Draw the blurry boy behind the UI - REMOVED 30/06/2020 in favour of a new DoF post process! <3
-	//surface()->DrawSetTexture(m_nBlurTextureId);
-	//surface()->DrawTexturedRect(iCentreWheelX - m_flBlurCircleRadius, iCentreWheelY - m_flBlurCircleRadius, iCentreWheelX + m_flBlurCircleRadius, iCentreWheelY + m_flBlurCircleRadius);
-
 	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
 	float wheelRadius = m_flWheelRadius * scaleFactor;
 
@@ -600,8 +564,6 @@ void CHudWeaponWheel::Paint(void)
 		WheelSegment segment = segments[i];
 		surface()->DrawTexturedPolygon(NUM_VERTS_SPOKE, segment.vertices);
 	}
-
-	//	surface()->DrawSetAlphaMultiplier(1.0f); //deleteme
 
 	// Now the outline, slot number, and ammo
 	for (int i = 0; i < numberOfSegments; i++)
@@ -676,32 +638,20 @@ void CHudWeaponWheel::Paint(void)
 void CHudWeaponWheel::OnTick(void)
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	C_BasePlayer *pPlayerBase = C_TFPlayer::GetLocalPlayer();
-
-	if (!(pPlayer && pPlayerBase))
+	if (!pPlayer)
 		return;
 
-	// attempt to tell the darkening overlay to FUCK OFFFFFFFFFFFFFFFFFFFFFF
+	// attempt to tell the darkening overlay to go away
 	SetPaintBackgroundEnabled(false);
 
 	// If we've still lerping to be done, do it!
 	if (!m_bLerpDone)
-	{
 		PerformBlurLerp();
-	}
 
 	// If weapon wheel active bool has changed, change mouse input capabilities etc
 	if (lastWheel != bWheelActive)
 		CheckWheel();
-
 	lastWheel = bWheelActive;
-
-	// This optimisation is bad
-	//	if (!bWheelActive)
-	//		return;
-
-	//	//Do the thing
-	//	CheckMousePos();
 
 	if (bWheelActive)
 		CheckMousePos();
