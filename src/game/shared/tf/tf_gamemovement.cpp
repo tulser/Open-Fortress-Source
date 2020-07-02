@@ -48,7 +48,7 @@ ConVar  of_ramp_up_multiplier("of_ramp_up_multiplier", "0.7", FCVAR_REPLICATED |
 ConVar  of_ramp_down_multiplier("of_ramp_down_multiplier", "0.7", FCVAR_REPLICATED | FCVAR_NOTIFY);
 ConVar  of_ramp_min_speed("of_ramp_min_speed", "50", FCVAR_REPLICATED | FCVAR_NOTIFY, "Minimal speed you need to be for ramp jumps to take effect.");
 ConVar  of_zombie_lunge_speed("of_zombie_lunge_speed", "800", FCVAR_ARCHIVE | FCVAR_NOTIFY, "How much velocity, in units, to apply to a zombie lunge.");
-ConVar  of_hook_mode("of_hook_mode", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "0: Pull\n1: Pendulum");
+ConVar  of_hook_pendulum("of_hook_pendulum", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on pendulum physics for the hook");
 
 #if defined (CLIENT_DLL)
 ConVar 	of_jumpsound("of_jumpsound", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hough", true, 0, true, 2);
@@ -186,7 +186,7 @@ void CTFGameMovement::PlayerMove()
 			else
 			{
 				// Look at the water depth below the player.  If it's significantly deep, play a splash to accompany the sinking that's about to happen.
-				Vector vecStart = m_pTFPlayer->GetAbsOrigin();
+				Vector vecStart = mv->GetAbsOrigin();
 				Vector vecEnd = vecStart;
 				vecEnd.z -= 20;	// roughly thigh deep
 				trace_t tr;
@@ -657,12 +657,35 @@ bool CTFGameMovement::CheckLunge()
 	if (m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
 		return false;
 
-	// Check to see if the player is a scout.
-	bool bOnGround = (player->GetGroundEntity() != NULL);
-
 	// In air, so ignore jumps
-	if (!bOnGround)
+	if (!player->GetGroundEntity())
 		return false;
+
+	// Check the surface the player is standing on to see if it impacts jumping.
+	float flGroundFactor = 1.0f;
+	if (player->m_pSurfaceData)
+		flGroundFactor = player->m_pSurfaceData->game.jumpFactor;
+
+	//Get the lounge direction
+	Vector vecDir;
+	player->EyeVectors(&vecDir);
+
+	//Test the lounge direction to make sure player does not touch the floor in the next few frames
+	float loungeSpeed = of_zombie_lunge_speed.GetFloat() * flGroundFactor;
+	trace_t pm;
+	TracePlayerBBox(mv->GetAbsOrigin(),
+					mv->GetAbsOrigin() + vecDir * loungeSpeed * (4.f * gpGlobals->frametime) - Vector(0.f, 0.f, 20.f),
+					MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
+
+	if (pm.fraction != 1.0f) //If the tracer touched the ground
+	{
+		//get the vector from the player origin to the tracer endpos
+		QAngle tempAngle;
+		VectorAngles(pm.endpos - mv->GetAbsOrigin(), tempAngle);
+		//offset the vector slightly upward and make it the desired movement direction
+		tempAngle.x += -12.f;
+		AngleVectors(tempAngle, &vecDir);
+	}
 
 	// Start jump animation and player sound (specific TF animation and flags).
 	m_pTFPlayer->DoAnimationEvent(PLAYERANIMEVENT_JUMP);
@@ -672,31 +695,9 @@ bool CTFGameMovement::CheckLunge()
 	// Set the player as in the air.
 	SetGroundEntity(NULL);
 
-	// Check the surface the player is standing on to see if it impacts jumping.
-	float flGroundFactor = 1.0f;
-	if (player->m_pSurfaceData)
-	{
-		flGroundFactor = player->m_pSurfaceData->game.jumpFactor;
-	}
-
-	// Get the start and endpoints.
-	Vector vecMuzzlePos = player->Weapon_ShootPosition();
-	Vector forward;
-	player->EyeVectors(&forward);
-	Vector vecEndPos = vecMuzzlePos + (forward * MAX_TRACE_LENGTH);
-
-	trace_t	trace;
-	UTIL_TraceLine(vecMuzzlePos, vecEndPos, (MASK_SHOT & ~CONTENTS_WINDOW), player, COLLISION_GROUP_NONE, &trace);
-
-	Vector vecTarget = trace.endpos;
-	Vector vecDir = vecTarget - player->GetAbsOrigin();
-	VectorNormalize(vecDir);
-	float flSpeed = of_zombie_lunge_speed.GetFloat();
-	vecDir *= flSpeed;
-
+	//Lounge!
 	Vector vecTmpStart = mv->m_vecVelocity;
-
-	mv->m_vecVelocity = vecDir * flGroundFactor;
+	mv->m_vecVelocity = vecDir * loungeSpeed;
 
 	// Apply gravity.
 	FinishGravity();
@@ -1736,11 +1737,10 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
 {
 	//Get Hook to player vector
-	Vector playerCenter = m_pTFPlayer->WorldSpaceCenter() - (m_pTFPlayer->WorldSpaceCenter() - m_pTFPlayer->GetAbsOrigin()) * .25;
+	Vector playerCenter = mv->GetAbsOrigin();
 	playerCenter += (m_pTFPlayer->EyePosition() - playerCenter) * 0.5;
 
-	//if the projected rope is longer than it should be
-	if (!of_hook_mode.GetBool())
+	if (!of_hook_pendulum.GetBool())
 	{
 		float pullVel = m_pTFPlayer->m_Shared.GetHookProperty() * (InWater ? 0.75f : 1.f);
 		Vector dir = hook->GetAbsOrigin() - playerCenter;
@@ -1751,6 +1751,7 @@ void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
 	{
 		Vector projRopeVec = hook->GetAbsOrigin() - (playerCenter + mv->m_vecVelocity * gpGlobals->frametime); //projected rope vector
 
+		//if the projected rope is longer than it should be
 		if (projRopeVec.Length() > m_pTFPlayer->m_Shared.GetHookProperty())
 		{
 			VectorNormalize(projRopeVec);

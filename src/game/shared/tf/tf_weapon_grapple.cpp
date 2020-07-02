@@ -33,7 +33,7 @@
 #define MAX_ROPE_LENGTH		900.f
 #define HOOK_PULL			720.f
 
-extern ConVar of_hook_mode;
+extern ConVar of_hook_pendulum;
 
 #ifdef CLIENT_DLL
 
@@ -253,7 +253,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 				playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
 				Vector rope = Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
 
-				if (!of_hook_mode.GetBool())
+				if (!of_hook_pendulum.GetBool())
 				{
 					VectorNormalize(rope);
 					rope = rope * HOOK_PULL;
