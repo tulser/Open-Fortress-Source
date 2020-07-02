@@ -180,6 +180,7 @@ CTFDMMusicManager::~CTFDMMusicManager()
 {
 	UTIL_Remove( pWaitingMusicPlayer );
 	UTIL_Remove( pRoundMusicPlayer );
+	gDMMusicManager = NULL;
 }
 
 extern KeyValues *GetSoundscript( const char *szSoundScript );

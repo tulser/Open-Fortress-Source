@@ -234,7 +234,7 @@ C_TFDMMusicManager::C_TFDMMusicManager()
 
 C_TFDMMusicManager::~C_TFDMMusicManager()
 {
-
+	gDMMusicManager = NULL;
 }
 
 using namespace vgui;
