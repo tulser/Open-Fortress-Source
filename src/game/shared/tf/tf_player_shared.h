@@ -228,6 +228,12 @@ public:
 	void    SetHook(CBaseEntity *hook);
 	void    SetHookProperty(float pull);
 	float	GetHookProperty() { return m_flGHookProp; }
+	void	SetJumpBuffer(bool buffer);
+	bool	GetJumpBuffer() { return m_bBlockJump; }
+	void	SetCSlideDuration(float duration);
+	float	GetCSlideDuration() { return m_flCSlideDuration; }
+	void	SetRampJumpVel(float vel);
+	float	GetRampJumpVel() { return m_flRampJumpVel; }
 
 	// loser state
 	bool	IsLoser( void );
@@ -388,6 +394,9 @@ private:
 	CNetworkVar( int,  m_iAirDashCount );
 	CNetworkHandle( CBaseEntity, m_Hook );
 	CNetworkVar( float, m_flGHookProp );
+	CNetworkVar( bool, m_bBlockJump);
+	CNetworkVar( float, m_flCSlideDuration );
+	CNetworkVar(float, m_flRampJumpVel);
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );

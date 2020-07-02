@@ -253,6 +253,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bIsZombie = false,
 	m_bAirDash = false;
 	m_iAirDashCount = 0;
+	m_bBlockJump = false;
 	m_Hook = NULL;
 	m_flGHookProp = 0.f;
 	m_flStealthNoAttackExpire = 0.0f;
@@ -2666,12 +2667,20 @@ void CTFPlayerShared::SetHookProperty(float pull)
 	m_flGHookProp = pull;
 }
 
-/*
-void CTFPlayerShared::SetHookSpeedCap(float speed)
+void CTFPlayerShared::SetJumpBuffer(bool buffer)
 {
-	m_flGHSpeedCap = speed;
+	m_bBlockJump = buffer;
 }
-*/
+
+void CTFPlayerShared::SetCSlideDuration(float duration)
+{
+	m_flCSlideDuration = duration;
+}
+
+void CTFPlayerShared::SetRampJumpVel(float vel)
+{
+	m_flRampJumpVel = vel;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

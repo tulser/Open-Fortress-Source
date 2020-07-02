@@ -75,12 +75,6 @@ public:
 	void			SetAbsOrigin( const Vector &vec );
 	const Vector	&GetAbsOrigin() const;
 
-#if defined (OF_DLL) || defined (OF_CLIENT_DLL)
-	bool			m_bBlockJump;
-	float			m_fRampJumpVel;
-	float			m_flCSlideDuration;
-#endif
-
 private:
 	Vector			m_vecAbsOrigin;		// edict::origin
 };
