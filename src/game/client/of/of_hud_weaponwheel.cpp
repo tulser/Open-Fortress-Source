@@ -28,6 +28,12 @@
 #include "tf_imagepanel.h"
 #include <vgui_controls/Controls.h>
 
+#include "iinput.h"
+#include "vgui/Cursor.h"
+#include "cdll_client_int.h"
+#include "cdll_util.h"
+#include "inputsystem/iinputsystem.h"
+
 // For the DOF blur
 #include "viewpostprocess.h"
 #include "materialsystem/imaterial.h"
@@ -137,8 +143,9 @@ private:
 	CPanelAnimationVarAliasType(int, m_nPanelTextureId, "panel_texture", "hud/weaponwheel_panel", "textureid");
 	CPanelAnimationVarAliasType(int, m_nPanelHighlightedTextureId, "panel_texture_highlighted", "hud/weaponwheel_panel_highlighted", "textureid");
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
-	//CPanelAnimationVarAliasType(int, m_nBlurTextureId, "blur_material", "hud/weaponwheel_blur", "textureid");
 	CPanelAnimationVarAliasType(int, m_nBlurShaderId, "blur_material", "dofblur", "textureid");
+	CPanelAnimationVarAliasType(int, m_nDotTextureId, "dot_texture", "hud/weaponwheel_dot", "textureid");
+	CPanelAnimationVarAliasType(int, m_nArrowTextureId, "arrow_texture", "hud/weaponwheel_arrow", "textureid");
 
 	// Other vars that are loaded from the .res
 
@@ -151,8 +158,9 @@ private:
 	CPanelAnimationVar(float, m_flSegmentMargin, "segment_margin", "10");
 	
 	CPanelAnimationVar(float, m_flWheelRadius, "wheel_radius", "128");
-	CPanelAnimationVar(float, m_flWheelDeadzone, "wheel_deadzone", "0.75");
-
+	CPanelAnimationVar(float, m_flWheelDeadzone, "wheel_deadzone", "0.2");
+	CPanelAnimationVar(float, m_flWheelCursorLimit, "wheel_cursormax", "0.3");
+	
 	CPanelAnimationVar(float, m_flOuterRadius, "outer_radius", "100");
 	CPanelAnimationVar(int, m_iWheelMargin, "wheel_margin", "20");
 	CPanelAnimationVar(int, m_iTextOffset, "text_offset", "25");
@@ -171,6 +179,10 @@ private:
 	void	SetBlurLerpTimer(float t);
 	void	PerformBlurLerp();
 
+	Vector2D	m_v2virtualCursorPos;	// The virtual softawre cursor that we draw (relative units)
+#define CURSOR_VERTS 4
+	vgui::Vertex_t cursorBaseVerts[CURSOR_VERTS];
+
 	// Check for resolution changes by polling the vertical size of the screen
 	// Pixel measurements need to be relative to 1080p, otherwise they stay literal on 720p and double in size lol
 	int		m_iLastScreenHeight = -1;
@@ -187,6 +199,7 @@ extern ConVar of_weaponswitch_flat;
 extern ConVar hud_fastswitch;
 
 ConVar hud_weaponwheel_quickswitch("hud_weaponwheel_quickswitch", "0", FCVAR_ARCHIVE, "Weapon wheel selects as soon as the mouse leaves the centre circle, instead of when the weapon wheel key is lifted.");
+//ConVar hud_weaponwheel_cursormode("hud_weaponwheel_cursormode", "0", FCVAR_ARCHIVE, "0: The WeaponWheel will select a slot based on the direction of your mouse movement. 1: The WeaponWheel will have a small cursor that snaps to the edge that selects slots (try both!)");
 
 bool bWheelActive = false;
 void IN_WeaponWheelDown()
@@ -318,20 +331,43 @@ void CHudWeaponWheel::WeaponSelected(int id, int bucket, bool bCloseAfterwards)
 
 void CHudWeaponWheel::CheckMousePos()
 {
-	int x, y;
-	vgui::input()->GetCursorPosition(x, y);
-	x -= iCentreWheelX;
-	y -= iCentreWheelY;
-	float distanceSqrd = x * x + y * y;
+	::input->ActivateMouse();
+	::input->AccumulateMouse();
+
+	int deltaX = ::inputsystem->GetAnalogDelta( AnalogCode_t::MOUSE_X );
+	int deltaY = ::inputsystem->GetAnalogDelta( AnalogCode_t::MOUSE_Y );
+//	Msg("DELTA: %i|%i \n", deltaX, deltaY);
+
+	//::inputsystem->GetRawMouseAccumulators(deltaX, deltaY);
+	//::input->ResetMouse();
+
+	// the Cursor Limit is the farthest the cursor can go from the centre, the
+	// deadzone is the minimum distance before the graphic snaps to the edge and can select spokes
+	m_v2virtualCursorPos += Vector2D(deltaX, deltaY);
+	if (m_v2virtualCursorPos.Length() > m_flWheelRadius * m_flWheelCursorLimit)
+	{
+		m_v2virtualCursorPos = (m_v2virtualCursorPos / m_v2virtualCursorPos.Length()) * (m_flWheelRadius * m_flWheelCursorLimit);
+	}
+
+
+	int x = m_v2virtualCursorPos.x;
+	int y = m_v2virtualCursorPos.y;
+	float distance = m_v2virtualCursorPos.Length();
 
 	// width of each segment
 	float pointAngleFromCentre = 360 / numberOfSegments;
 
 	// If the cursor is outside of the wheel (+ the margin size) and it's been inside of the wheel previously (workaround)
-	if (distanceSqrd >= (m_flWheelRadius + m_iWheelMargin)*(m_flWheelRadius + m_iWheelMargin))
+	//if (distanceSqrd >= (m_flWheelRadius + m_iWheelMargin)*(m_flWheelRadius + m_iWheelMargin))
+	
+	// This is the minimum displacement before the cursor is able to select something
+	float deadzone = (m_flWheelRadius * m_flWheelDeadzone);
+
+	// If the virtual cursor is outside the deadzone, select the closest panel based on angle
+	if (distance >= deadzone)
 	{
-		if (bHasCursorBeenInWheel)
-		{
+		//if (bHasCursorBeenInWheel)
+		//{
 			float mousePosAsAngle = RAD2DEG(atan2(-(float)y, (float)x)) + 90.0f - pointAngleFromCentre;
 			int selected = RoundFloatToInt(mousePosAsAngle / (360 / numberOfSegments)) + 1;
 			if (selected < 0)
@@ -349,13 +385,13 @@ void CHudWeaponWheel::CheckMousePos()
 					useHighlighted = true;
 				}
 			}
-		}
+		/*}
 		else
 		{
 			// The cursor has been registered as having been inside the centre circle;
 			// after this, it can select things (see above).
 			bHasCursorBeenInWheel = true;
-		}
+		}*/
 	}
 	else
 	{
@@ -432,8 +468,13 @@ void CHudWeaponWheel::PerformBlurLerp()
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
+	// Cursor vertices
+	cursorBaseVerts[0].Init(Vector2D(-1, 1), Vector2D(0, 1));
+	cursorBaseVerts[1].Init(Vector2D(-1, -1), Vector2D(0, 0));
+	cursorBaseVerts[2].Init(Vector2D(1, -1), Vector2D(1, 0));
+	cursorBaseVerts[3].Init(Vector2D(1, 1), Vector2D(1, 1));
+
 	// Scale things relative to 1080p, otherwise 720p looks bloody HUGE
-	// Screw integer logic...
 	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
@@ -518,6 +559,8 @@ void CHudWeaponWheel::RefreshCentre(void)
 		m_iLastScreenHeight = height;
 		bLayoutInvalidated = true;
 	}
+
+	m_v2virtualCursorPos = Vector2D(0.0f, 0.0f);
 }
 
 void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color col, bool bCenter)
@@ -637,6 +680,68 @@ void CHudWeaponWheel::Paint(void)
 			}
 		}
 	}
+
+	surface()->DrawSetColor(Color(255, 255, 255, 255));
+
+	// Draw the virtual cursor
+	// Draw an arrow at the edge of the wheel if beyond the deadzone
+	if (m_v2virtualCursorPos.Length() > m_flWheelRadius * m_flWheelDeadzone)
+	{
+		float angle = atanf(m_v2virtualCursorPos.y / m_v2virtualCursorPos.x);
+		float cosAngle = cosf(angle);
+		float sinAngle = sinf(angle);
+
+		Vertex_t rotatedVerts[CURSOR_VERTS];
+		for (int i = 0; i < CURSOR_VERTS; i++)
+		{
+			// Copy
+			rotatedVerts[i] = Vertex_t(cursorBaseVerts[i]);
+			float x = rotatedVerts[i].m_Position.x;
+			float y = rotatedVerts[i].m_Position.y;
+			// Rotate by angle
+			rotatedVerts[i].m_Position = Vector2D(
+				(x * cosAngle) - (y * sinAngle),
+				(x * sinAngle) + (y * cosAngle)
+				);
+		}
+		Vector2D edgePos = (m_v2virtualCursorPos / m_v2virtualCursorPos.Length()) * m_flWheelRadius;
+//		surface()->DrawOutlinedCircle(iCentreWheelX + edgePos.x, iCentreWheelY + edgePos.y, 10, 12);
+		//cursorBaseVerts  m_nDotTextureId
+		surface()->DrawSetTexture(m_nArrowTextureId);
+		surface()->DrawTexturedPolygon(CURSOR_VERTS, rotatedVerts);
+	}
+	else
+	{
+//		surface()->DrawSetColor(Color(50, 50, 255, 255));
+//		surface()->DrawOutlinedCircle(iCentreWheelX + m_v2virtualCursorPos.x, iCentreWheelY + m_v2virtualCursorPos.y, 10, 12);
+		surface()->DrawSetTexture(m_nDotTextureId);
+		surface()->DrawTexturedPolygon(CURSOR_VERTS, cursorBaseVerts);
+	}
+
+	
+/*	// test
+	int x, y;
+	x = iCentreScreenX;
+	y = iCentreScreenY;
+	Vertex_t testverts[4];
+	testverts[0].Init(
+		Vector2D(x, y),
+		Vector2D(0, 1)
+		);
+	testverts[1].Init(
+		Vector2D(x, y - 25),
+		Vector2D(0, 0)
+		);
+	testverts[2].Init(
+		Vector2D(x + 25, y - 25),
+		Vector2D(1, 0)
+		);
+	testverts[3].Init(
+		Vector2D(x + 25, y),
+		Vector2D(1, 1)
+		);
+	surface()->DrawSetTexture(m_nArrowTextureId);
+	surface()->DrawTexturedPolygon(CURSOR_VERTS, testverts);*/
 }
 
 //-----------------------------------------------------------------------------
@@ -700,7 +805,7 @@ void CHudWeaponWheel::CheckWheel()
 	{
 		// This is safe to do every frame/opening of the wheel
 		RefreshCentre();
-
+		
 		// THIS IS NOT. Doing so will reset the player's chosen weapons constantly. We do not want to do this.
 		// If we do that, each slot will revert back to the same weapon every frame, forgetting what the player selected in that slot.
 
@@ -715,11 +820,13 @@ void CHudWeaponWheel::CheckWheel()
 
 		bHasCursorBeenInWheel = false;
 
-		Activate();
+//		Activate();
 		SetMouseInputEnabled(true);			// Capture the mouse...
 		SetKeyBoardInputEnabled(false);		// ...but not the keyboard!
+		// Replaced the cursor with an $alpha 0 image, since Valve didn't want to give me a way to hide the cursor or prevent mouselook.
+		surface()->SetSoftwareCursor(true);
 
-		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
+//		vgui::input()->SetCursorPos(iCentreWheelX, iCentreWheelY);
 
 		// since Linux can't snap to centre :( we just start the weapon wheel wherever their mouse is
 		// On Windows, this should still let us start at iCentreScreenXY
