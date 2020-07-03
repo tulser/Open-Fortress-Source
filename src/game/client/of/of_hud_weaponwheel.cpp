@@ -145,7 +145,9 @@ private:
 	CPanelAnimationVarAliasType(int, m_nCircleTextureId, "circle_texture", "hud/weaponwheel_circle", "textureid");
 	CPanelAnimationVarAliasType(int, m_nBlurShaderId, "blur_material", "dofblur", "textureid");
 	CPanelAnimationVarAliasType(int, m_nDotTextureId, "dot_texture", "hud/weaponwheel_dot", "textureid");
-	CPanelAnimationVarAliasType(int, m_nArrowTextureId, "arrow_texture", "hud/weaponwheel_arrow", "textureid");
+	CPanelAnimationVarAliasType(int, m_nDotShadowTextureId, "dot_texture_shadow", "hud/weaponwheel_dot_dropshadow", "textureid");
+	CPanelAnimationVarAliasType(int, m_nArrowTextureId, "arrow_texture", "hud/weaponwheel_arrow_dropshadow", "textureid");
+	CPanelAnimationVarAliasType(int, m_nArrowShadowTextureId, "arrow_texture_shadow", "hud/weaponwheel_arrow_dropshadow", "textureid");
 
 	// Other vars that are loaded from the .res
 
@@ -160,6 +162,9 @@ private:
 	CPanelAnimationVar(float, m_flWheelRadius, "wheel_radius", "128");
 	CPanelAnimationVar(float, m_flWheelDeadzone, "wheel_deadzone", "0.2");
 	CPanelAnimationVar(float, m_flWheelCursorLimit, "wheel_cursormax", "0.3");
+	CPanelAnimationVar(float, m_flDotSize, "wheel_cursor_dotsize", "1.0");
+	CPanelAnimationVar(float, m_flArrowSize, "wheel_cursor_arrowsize", "2.0");
+	CPanelAnimationVar(float, m_iCursorShadowOffset, "wheel_cursor_dropshadowdist", "3");
 	
 	CPanelAnimationVar(float, m_flOuterRadius, "outer_radius", "100");
 	CPanelAnimationVar(int, m_iWheelMargin, "wheel_margin", "20");
@@ -468,11 +473,26 @@ void CHudWeaponWheel::PerformBlurLerp()
 
 void CHudWeaponWheel::RefreshWheelVerts(void)
 {
+	//============================================================================
 	// Cursor vertices
-	cursorBaseVerts[0].Init(Vector2D(-1, 1), Vector2D(0, 1));
-	cursorBaseVerts[1].Init(Vector2D(-1, -1), Vector2D(0, 0));
-	cursorBaseVerts[2].Init(Vector2D(1, -1), Vector2D(1, 0));
-	cursorBaseVerts[3].Init(Vector2D(1, 1), Vector2D(1, 1));
+	Vertex_t testverts[4];
+	cursorBaseVerts[0].Init(
+		Vector2D(-12, 12),
+		Vector2D(0, 1)
+		);
+	cursorBaseVerts[1].Init(
+		Vector2D(-12, -12),
+		Vector2D(0, 0)
+		);
+	cursorBaseVerts[2].Init(
+		Vector2D(12, -12),
+		Vector2D(1, 0)
+		);
+	cursorBaseVerts[3].Init(
+		Vector2D(12, 12),
+		Vector2D(1, 1)
+		);
+	//============================================================================
 
 	// Scale things relative to 1080p, otherwise 720p looks bloody HUGE
 	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
@@ -687,26 +707,34 @@ void CHudWeaponWheel::Paint(void)
 	// Draw an arrow at the edge of the wheel if beyond the deadzone
 	if (m_v2virtualCursorPos.Length() > m_flWheelRadius * m_flWheelDeadzone)
 	{
-		float angle = atanf(m_v2virtualCursorPos.y / m_v2virtualCursorPos.x);
+		float angle = atan2f(m_v2virtualCursorPos.y, m_v2virtualCursorPos.x) + (M_PI_F / 2);
 		float cosAngle = cosf(angle);
 		float sinAngle = sinf(angle);
+		Vector2D edgePos = (m_v2virtualCursorPos / m_v2virtualCursorPos.Length()) * m_flWheelRadius;
 
 		Vertex_t rotatedVerts[CURSOR_VERTS];
+		Vertex_t rotatedVertsShadow[CURSOR_VERTS];
 		for (int i = 0; i < CURSOR_VERTS; i++)
 		{
-			// Copy
+			// Copy & Scale
 			rotatedVerts[i] = Vertex_t(cursorBaseVerts[i]);
-			float x = rotatedVerts[i].m_Position.x;
-			float y = rotatedVerts[i].m_Position.y;
-			// Rotate by angle
+			float x = rotatedVerts[i].m_Position.x * m_flArrowSize;
+			float y = rotatedVerts[i].m_Position.y * m_flArrowSize;
+
+			// Rotate by angle and translate
 			rotatedVerts[i].m_Position = Vector2D(
-				(x * cosAngle) - (y * sinAngle),
-				(x * sinAngle) + (y * cosAngle)
+				(x * cosAngle) - (y * sinAngle) + edgePos.x + iCentreWheelX,
+				(x * sinAngle) + (y * cosAngle) + edgePos.y + iCentreWheelY
 				);
+
+			rotatedVertsShadow[i] = Vertex_t( rotatedVerts[i] );
+			rotatedVertsShadow[i].m_Position += Vector2D(m_iCursorShadowOffset, m_iCursorShadowOffset);
 		}
-		Vector2D edgePos = (m_v2virtualCursorPos / m_v2virtualCursorPos.Length()) * m_flWheelRadius;
+//		Vector2D edgePos = (m_v2virtualCursorPos / m_v2virtualCursorPos.Length()) * m_flWheelRadius;
 //		surface()->DrawOutlinedCircle(iCentreWheelX + edgePos.x, iCentreWheelY + edgePos.y, 10, 12);
 		//cursorBaseVerts  m_nDotTextureId
+		surface()->DrawSetTexture(m_nArrowShadowTextureId);
+		surface()->DrawTexturedPolygon(CURSOR_VERTS, rotatedVertsShadow);
 		surface()->DrawSetTexture(m_nArrowTextureId);
 		surface()->DrawTexturedPolygon(CURSOR_VERTS, rotatedVerts);
 	}
@@ -714,8 +742,31 @@ void CHudWeaponWheel::Paint(void)
 	{
 //		surface()->DrawSetColor(Color(50, 50, 255, 255));
 //		surface()->DrawOutlinedCircle(iCentreWheelX + m_v2virtualCursorPos.x, iCentreWheelY + m_v2virtualCursorPos.y, 10, 12);
+
+		Vertex_t translatedVerts[CURSOR_VERTS];
+		Vertex_t translatedVertsShadow[CURSOR_VERTS];
+		for (int i = 0; i < CURSOR_VERTS; i++)
+		{
+			// Copy
+			translatedVerts[i] = Vertex_t( cursorBaseVerts[i] );
+			// Scale
+			translatedVerts[i].m_Position *= m_flDotSize;
+			// Translate
+			translatedVerts[i].m_Position.x += m_v2virtualCursorPos.x + iCentreWheelX;
+			translatedVerts[i].m_Position.y += m_v2virtualCursorPos.y + iCentreWheelY;
+
+			translatedVertsShadow[i] = Vertex_t( cursorBaseVerts[i] );
+			// Scale (*2 because the dot shadow texture is 128x128 to allow the shadow to cover a larger area)
+			translatedVertsShadow[i].m_Position *= m_flDotSize * 2;
+			// Translate
+			translatedVertsShadow[i].m_Position.x += m_v2virtualCursorPos.x + iCentreWheelX + m_iCursorShadowOffset;
+			translatedVertsShadow[i].m_Position.y += m_v2virtualCursorPos.y + iCentreWheelY + m_iCursorShadowOffset;
+		}
+
+		surface()->DrawSetTexture(m_nDotShadowTextureId);
+		surface()->DrawTexturedPolygon(CURSOR_VERTS, translatedVertsShadow);
 		surface()->DrawSetTexture(m_nDotTextureId);
-		surface()->DrawTexturedPolygon(CURSOR_VERTS, cursorBaseVerts);
+		surface()->DrawTexturedPolygon(CURSOR_VERTS, translatedVerts);
 	}
 
 	
@@ -741,7 +792,7 @@ void CHudWeaponWheel::Paint(void)
 		Vector2D(1, 1)
 		);
 	surface()->DrawSetTexture(m_nArrowTextureId);
-	surface()->DrawTexturedPolygon(CURSOR_VERTS, testverts);*/
+	surface()->DrawTexturedPolygon(CURSOR_VERTS, testverts); */
 }
 
 //-----------------------------------------------------------------------------
@@ -848,6 +899,8 @@ void CHudWeaponWheel::CheckWheel()
 		}
 		SetMouseInputEnabled(false);
 		SetVisible(false);
+
+		surface()->SetSoftwareCursor(false);
 
 		m_bBlurEnabled = false;
 		SetBlurLerpTimer(m_flBlurLerpTimeOff);
