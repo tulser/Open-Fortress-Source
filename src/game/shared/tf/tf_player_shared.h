@@ -208,6 +208,8 @@ public:
 	float	GetPercentInvisible( void );
 	float	GetNextLungeTime( void ){ return m_flNextLungeTime; }
 	void	SetNextLungeTime( float flNextLungeTime ){ m_flNextLungeTime = flNextLungeTime; }
+	bool	IsLunging(void) { return m_bIsLunging; }
+	void	StopLunge() { m_bIsLunging = false; }
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
@@ -402,6 +404,7 @@ private:
 	CNetworkVar( float, m_flStealthNextChangeTime );
 
 	CNetworkVar( float, m_flNextLungeTime );
+	CNetworkVar( bool, m_bIsLunging );
 
 	CNetworkVar( int, m_iCritMult );
 

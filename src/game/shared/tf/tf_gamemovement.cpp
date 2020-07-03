@@ -89,7 +89,7 @@ public:
 	virtual void ProcessMovement(CBasePlayer *pBasePlayer, CMoveData *pMove);
 	virtual bool CanAccelerate();
 	virtual bool CheckJumpButton();
-	bool CheckLunge();
+	bool		 CheckLunge();
 	virtual bool CheckWater(void);
 	virtual void WaterMove(void);
 	virtual void FullWalkMove();
@@ -649,32 +649,20 @@ float CTFGameMovement::CheckRamp(float flMul, int rampMode)
 
 bool CTFGameMovement::CheckLunge()
 {
-	// Check to see if we are in water.
-	if (player->GetWaterLevel() >= 2)
-		return false;
-
-	// Cannot lunge jump while taunting
-	if (m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
-		return false;
-
-	// In air, so ignore jumps
-	if (!player->GetGroundEntity())
-		return false;
-
 	// Check the surface the player is standing on to see if it impacts jumping.
 	float flGroundFactor = 1.0f;
 	if (player->m_pSurfaceData)
 		flGroundFactor = player->m_pSurfaceData->game.jumpFactor;
 
-	//Get the lounge direction
+	//Get the lunge direction
 	Vector vecDir;
 	player->EyeVectors(&vecDir);
 
-	//Test the lounge direction to make sure player does not touch the floor in the next few frames
-	float loungeSpeed = of_zombie_lunge_speed.GetFloat() * flGroundFactor;
+	//Test the lunge direction to make sure player does not touch the floor in the next few frames
+	float lungeSpeed = of_zombie_lunge_speed.GetFloat() * flGroundFactor;
 	trace_t pm;
-	TracePlayerBBox(mv->GetAbsOrigin(),
-					mv->GetAbsOrigin() + vecDir * loungeSpeed * (4.f * gpGlobals->frametime) - Vector(0.f, 0.f, 20.f),
+	TracePlayerBBox(mv->GetAbsOrigin() + Vector(0.f, 0.f, 4.f),
+					mv->GetAbsOrigin() + vecDir * lungeSpeed * (4.f * gpGlobals->frametime) - Vector(0.f, 0.f, 10.f),
 					MASK_PLAYERSOLID, COLLISION_GROUP_PLAYER_MOVEMENT, pm);
 
 	if (pm.fraction != 1.0f) //If the tracer touched the ground
@@ -697,7 +685,7 @@ bool CTFGameMovement::CheckLunge()
 
 	//Lounge!
 	Vector vecTmpStart = mv->m_vecVelocity;
-	mv->m_vecVelocity = vecDir * loungeSpeed;
+	mv->m_vecVelocity = vecDir * lungeSpeed;
 
 	// Apply gravity.
 	FinishGravity();
@@ -1673,11 +1661,12 @@ void CTFGameMovement::FullWalkMove()
 			WalkMove(CSliding);
 
 			//If not using CSlide right away clear it
-			if (!CSliding)
+			if (!CSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
 				m_pTFPlayer->m_Shared.SetCSlideDuration(0.f);
 
 			//If not using ramp jump vel right away clear it
-			m_pTFPlayer->m_Shared.SetRampJumpVel(0.f);
+			if (m_pTFPlayer->m_Shared.GetRampJumpVel())
+				m_pTFPlayer->m_Shared.SetRampJumpVel(0.f);
 		}
 		else
 		{

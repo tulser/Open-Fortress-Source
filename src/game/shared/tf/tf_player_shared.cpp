@@ -17,6 +17,7 @@
 #include "in_buttons.h"
 #include "fmtstr.h"
 #include "tf_viewmodel.h"
+#include "tf_weapon_fists.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
@@ -133,6 +134,7 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	RecvPropTime( RECVINFO( m_flStealthNoAttackExpire ) ),
 	RecvPropTime( RECVINFO( m_flStealthNextChangeTime ) ),
 	RecvPropTime( RECVINFO( m_flNextLungeTime ) ),
+	RecvPropBool( RECVINFO( m_bIsLunging ) ),
 	RecvPropTime( RECVINFO( m_flNextZoomTime ) ),	
 	RecvPropFloat( RECVINFO( m_flCloakMeter) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
@@ -198,6 +200,7 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerShared, DT_TFPlayerSharedLocal )
 	SendPropTime( SENDINFO( m_flStealthNoAttackExpire ) ),
 	SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
 	SendPropTime( SENDINFO( m_flNextLungeTime ) ),
+	SendPropBool( SENDINFO( m_bIsLunging ) ),
 	SendPropTime( SENDINFO( m_flNextZoomTime ) ),	
 	SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
 	SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
@@ -259,6 +262,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_flNextLungeTime = 0.0f;
+	m_bIsLunging = false;
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
@@ -2167,17 +2171,32 @@ void CTFPlayerShared::RemoveDisguise( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::DoLungeCheck( void )
 {
-	if ( ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT ) && (m_pOuter->m_nButtons & IN_ATTACK2) )
+	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		if ( m_flNextLungeTime <= gpGlobals->curtime )
-		{
-			return true;
-		}
-		else
-		{
-			CSingleUserRecipientFilter filter( m_pOuter );
-			m_pOuter->EmitSound(filter, m_pOuter->entindex(), "Player.DenyWeaponSelection");
+		bool OnGround = m_pOuter->GetGroundEntity() != NULL;
+
+		if (m_bIsLunging && OnGround)
+			m_bIsLunging = false;
+
+		CTFClaws *pWeapon = dynamic_cast<CTFClaws*>(m_pOuter->GetActiveWeapon());
+
+		if (!pWeapon)
 			return false;
+
+		if ((m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() &&
+			m_pOuter->GetWaterLevel() < 2 && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) && OnGround)
+		{
+			if (m_flNextLungeTime <= gpGlobals->curtime)
+			{
+				m_bIsLunging = true;
+				return true;
+			}
+			else
+			{
+				CSingleUserRecipientFilter filter(m_pOuter);
+				m_pOuter->EmitSound(filter, m_pOuter->entindex(), "Player.DenyWeaponSelection");
+				return false;
+			}
 		}
 	}
 
