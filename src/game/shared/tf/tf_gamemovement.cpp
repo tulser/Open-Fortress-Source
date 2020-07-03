@@ -1111,7 +1111,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 
 void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
-	if (m_pTFPlayer->m_Shared.GetHook())
+	if (m_pTFPlayer->m_Shared.GetHook() || m_pTFPlayer->m_Shared.IsLunging())
 		return;
 
 	float addspeed, currentspeed;
