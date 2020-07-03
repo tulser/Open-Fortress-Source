@@ -191,6 +191,7 @@ private:
 	// Check for resolution changes by polling the vertical size of the screen
 	// Pixel measurements need to be relative to 1080p, otherwise they stay literal on 720p and double in size lol
 	int		m_iLastScreenHeight = -1;
+	float	m_flScreenScaleFactor = 1.0f;
 	const int iReferenceScreenHeight = 1080;
 	bool	bLayoutInvalidated = true;
 };
@@ -495,7 +496,7 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 	//============================================================================
 
 	// Scale things relative to 1080p, otherwise 720p looks bloody HUGE
-	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
+	m_flScreenScaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
 
 	float pointAngleFromCentre = 360 / (2 * numberOfSegments);
 
@@ -507,28 +508,28 @@ void CHudWeaponWheel::RefreshWheelVerts(void)
 
 		segment.centreAngle = currentCentreAngle;
 
-		segment.centreX = iCentreWheelX + (sin(DEG2RAD(currentCentreAngle)) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor));
-		segment.centreY = iCentreWheelY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin) * scaleFactor);
+		segment.centreX = iCentreWheelX + (sin(DEG2RAD(currentCentreAngle)) * ((m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor));
+		segment.centreY = iCentreWheelY + (cos(DEG2RAD(currentCentreAngle)) * (m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor);
 
 		Vector2D centreToPoint = Vector2D(sin(DEG2RAD(currentCentreAngle)), cos(DEG2RAD(currentCentreAngle)));
 
 		segment.vertices[0].Init(
-			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor))),
 			Vector2D(0, 0)
 			);
 
 		segment.vertices[1].Init(
-			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin) * m_flScreenScaleFactor))),
 			Vector2D(1, 0)
 			);
 
 		segment.vertices[2].Init(
-			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * m_flScreenScaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle + pointAngleFromCentre - (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * m_flScreenScaleFactor))),
 			Vector2D(1, 1)
 			);
 
 		segment.vertices[3].Init(
-			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * scaleFactor))),
+			Vector2D(iCentreWheelX + (sin(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * m_flScreenScaleFactor)), iCentreWheelY + (cos(DEG2RAD(currentCentreAngle - pointAngleFromCentre + (m_flSegmentMargin / 2))) * ((m_flWheelRadius + m_iWheelMargin + m_flOuterRadius) * m_flScreenScaleFactor))),
 			Vector2D(0, 1)
 			);
 
@@ -616,8 +617,8 @@ void CHudWeaponWheel::DrawString(const wchar_t *text, int xpos, int ypos, Color 
 
 void CHudWeaponWheel::Paint(void)
 {
-	float scaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
-	float wheelRadius = m_flWheelRadius * scaleFactor;
+	m_flScreenScaleFactor = (float)m_iLastScreenHeight / (float)iReferenceScreenHeight;
+	float wheelRadius = m_flWheelRadius * m_flScreenScaleFactor;
 
 	surface()->DrawSetColor(Color(255, 255, 255, 255));
 	surface()->DrawSetTexture(m_nCircleTextureId);
@@ -640,7 +641,7 @@ void CHudWeaponWheel::Paint(void)
 	{
 		WheelSegment segment = segments[i];
 		// Slot number + shadow
-		int offset = (m_flWheelRadius + m_iTextOffset * scaleFactor);
+		int offset = (m_flWheelRadius + m_iTextOffset * m_flScreenScaleFactor);
 
 		int xpos = iCentreWheelX + (segment.angleSin * offset);
 		int ypos = iCentreWheelY + (segment.angleCos * offset);
@@ -659,12 +660,12 @@ void CHudWeaponWheel::Paint(void)
 			// Draw the icon
 			if (segment.imageIcon[segment.bucketSelected] != NULL && segment.bHasIcon)
 			{
-				offset += (60 * scaleFactor);
+				offset += (60 * m_flScreenScaleFactor);
 				xpos = iCentreWheelX + (segment.angleSin * offset);
 				ypos = iCentreWheelY + (segment.angleCos * offset);
 
-				int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE * scaleFactor;
-				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE * scaleFactor;
+				int iconWide = segment.imageIcon[segment.bucketSelected]->EffectiveWidth(1.0f) * WEAP_IMAGE_SCALE * m_flScreenScaleFactor;
+				int iconTall = segment.imageIcon[segment.bucketSelected]->EffectiveHeight(1.0f) * WEAP_IMAGE_SCALE * m_flScreenScaleFactor;
 
 				// Icon Shadow
 				segment.imageIcon[segment.bucketSelected]->DrawSelf(xpos - (iconWide / 2) + m_iShadowOffset, ypos - (iconTall / 2) + m_iShadowOffset, iconWide, iconTall, Color(0, 0, 0, m_iShadowAlpha));
@@ -750,14 +751,14 @@ void CHudWeaponWheel::Paint(void)
 			// Copy
 			translatedVerts[i] = Vertex_t( cursorBaseVerts[i] );
 			// Scale
-			translatedVerts[i].m_Position *= m_flDotSize;
+			translatedVerts[i].m_Position *= m_flDotSize * m_flScreenScaleFactor;
 			// Translate
 			translatedVerts[i].m_Position.x += m_v2virtualCursorPos.x + iCentreWheelX;
 			translatedVerts[i].m_Position.y += m_v2virtualCursorPos.y + iCentreWheelY;
 
 			translatedVertsShadow[i] = Vertex_t( cursorBaseVerts[i] );
 			// Scale (*2 because the dot shadow texture is 128x128 to allow the shadow to cover a larger area)
-			translatedVertsShadow[i].m_Position *= m_flDotSize * 2;
+			translatedVertsShadow[i].m_Position *= m_flDotSize * 2 * m_flScreenScaleFactor;
 			// Translate
 			translatedVertsShadow[i].m_Position.x += m_v2virtualCursorPos.x + iCentreWheelX + m_iCursorShadowOffset;
 			translatedVertsShadow[i].m_Position.y += m_v2virtualCursorPos.y + iCentreWheelY + m_iCursorShadowOffset;
