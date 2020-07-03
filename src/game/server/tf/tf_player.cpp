@@ -6400,9 +6400,6 @@ void CTFPlayer::DropAmmoPack( void )
 //-----------------------------------------------------------------------------
 void CC_DropWeapon( void )
 {
-	IGameEvent *musicevent = gameeventmanager->CreateEvent( "music_round_start" );
-	if ( musicevent )
-		gameeventmanager->FireEvent( musicevent );
 
 	if ( !of_dropweapons.GetBool() )
 		return;
@@ -6667,6 +6664,8 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 		
 		if( pWeapon->GetTeamNumber() > LAST_SHARED_TEAM )
 			pDroppedWeapon->SetTeamNum( pWeapon->GetTeamNumber() );
+		else
+			pDroppedWeapon->SetTeamNum( TEAM_UNASSIGNED );
 		
 		// Give the ammo pack some health, so that trains can destroy it.
 		pDroppedWeapon->SetCollisionGroup( COLLISION_GROUP_DEBRIS );

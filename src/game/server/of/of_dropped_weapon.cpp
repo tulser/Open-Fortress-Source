@@ -37,6 +37,11 @@ LINK_ENTITY_TO_CLASS( tf_dropped_weapon, CTFDroppedWeapon );
 
 PRECACHE_REGISTER( tf_dropped_weapon );
 
+CTFDroppedWeapon::CTFDroppedWeapon()
+{
+	m_iTeamNum = TEAM_UNASSIGNED;
+}
+
 void CTFDroppedWeapon::Spawn( void )
 {
 	Precache();
@@ -129,8 +134,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	if ( !pTFPlayer )
 		return;
 	
-	if( GetTeamNum() > LAST_SHARED_TEAM && pTFPlayer->GetTeamNumber() != GetTeamNum() )
-		return;
+//	if( GetTeamNum() != TEAM_UNASSIGNED && GetTeamNum() > LAST_SHARED_TEAM && pTFPlayer->GetTeamNumber() != GetTeamNum() )
+//		return;
 
 	if ( pTFPlayer->m_Shared.IsZombie() )
 		return;

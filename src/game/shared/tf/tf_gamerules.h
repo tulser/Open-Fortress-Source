@@ -320,11 +320,6 @@ public:
 	void			SetInfectionRoundTimer(CTeamRoundTimer *pTimer) { m_hInfectionTimer.Set( pTimer ); }
 	void			SetRedKothRoundTimer(CTeamRoundTimer *pTimer) { m_hRedKothTimer.Set( pTimer ); }
 	void			SetBlueKothRoundTimer(CTeamRoundTimer *pTimer) { m_hBlueKothTimer.Set( pTimer ); }
-	
-	void			RegisterBoss( CBaseCombatCharacter *pNPC )  { if( m_hBosses.Find( pNPC ) == m_hBosses.InvalidIndex() ) m_hBosses.AddToHead( pNPC ); }
-	void			RemoveBoss( CBaseCombatCharacter *pNPC )    { EHANDLE hNPC( pNPC ); m_hBosses.FindAndRemove( hNPC ); }
-	CBaseCombatCharacter *GetActiveBoss( void ) const           { if ( m_hBosses.IsEmpty() ) return nullptr; return m_hBosses[0]; }
-	void			StartBossTimer( float time )				{ m_bossSpawnTimer.Start( time ); }
 
 	virtual void	Activate();
 
@@ -507,13 +502,6 @@ public:
 private:
 
 	int				DefaultFOV( void ) { return 90; }
-
-	void			SpawnHalloweenBoss( void );
-	void			SpawnZombieMob( void );
-	CountdownTimer	m_bossSpawnTimer;
-	CountdownTimer	m_mobSpawnTimer;
-	int				m_nZombiesToSpawn;
-	Vector			m_vecMobSpawnLocation;
 	bool			m_bFirstBlood;
 	CBaseEntity		*m_InflictorsArray[64 + 1];
 

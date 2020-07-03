@@ -284,7 +284,7 @@ bool CTFHudNowPlaying::ShouldDraw( void )
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "NowPlaying");
 	
 	if( TeamplayRoundBasedRules() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers()
-		&& flDrawTime > gpGlobals->curtime )
+		&& flDrawTime > gpGlobals->curtime && TeamplayRoundBasedRules()->InRoundRestart() )
 		return CHudElement::ShouldDraw();
 	else
 		return false;

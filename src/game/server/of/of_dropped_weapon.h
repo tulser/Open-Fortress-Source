@@ -18,7 +18,7 @@ public:
 	DECLARE_CLASS( CTFDroppedWeapon, CItem );
 	DECLARE_SERVERCLASS();
 
-	CTFDroppedWeapon() {}
+	CTFDroppedWeapon();
 
 	virtual void Spawn();
 	virtual void Precache();	
