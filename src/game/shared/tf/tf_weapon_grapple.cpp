@@ -33,6 +33,8 @@
 #define MAX_ROPE_LENGTH		900.f
 #define HOOK_PULL			720.f
 
+extern ConVar of_hook_pendulum;
+
 #ifdef CLIENT_DLL
 
 #undef CWeaponGrapple
@@ -77,9 +79,9 @@ CWeaponGrapple::CWeaponGrapple( void )
 	m_nBulletType		  = -1;
 	
 #ifdef GAME_DLL
-	m_hHook = NULL;
-	m_pLightGlow = NULL;
-	pBeam = NULL;
+	m_hHook			= NULL;
+	m_pLightGlow	= NULL;
+	pBeam			= NULL;
 #endif
 }
   
@@ -234,8 +236,8 @@ void CWeaponGrapple::ItemPostFrame(void)
 		}
 		else if (m_iAttached) //hook is attached to a surface
 		{
-			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f ||						//player is very close to the attached hook			
-				(m_iAttached == 1 && !pPlayer->m_Shared.GetPullSpeed() && pPlayer->GetGroundEntity()))		//player touched the ground while swinging
+			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f ||	//player is very close to the attached hook			
+				(m_iAttached == 1 && pPlayer->GetGroundEntity()))						//player touched the ground while swinging
 			{
 				RemoveHook();
 			}
@@ -249,15 +251,24 @@ void CWeaponGrapple::ItemPostFrame(void)
 				//rope vector
 				Vector playerCenter = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
 				playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
-				Vector rope = Hook->GetAbsOrigin() - playerCenter;
-				VectorNormalize(rope);
-				rope = rope * HOOK_PULL;
+				Vector rope = Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
 
-				//Resulting velocity
-				Vector newVel = pVel + rope;
-				float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
-				float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
-				pPlayer->m_Shared.SetPullSpeed(newVelLength);
+				if (!of_hook_pendulum.GetBool())
+				{
+					VectorNormalize(rope);
+					rope = rope * HOOK_PULL;
+
+					//Resulting velocity
+					Vector newVel = pVel + rope;
+					float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
+					float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
+
+					pPlayer->m_Shared.SetHookProperty(newVelLength);
+				}
+				else
+				{
+					pPlayer->m_Shared.SetHookProperty(rope.Length());
+				}
 
 				m_iAttached = 1;
 			}
@@ -268,6 +279,7 @@ void CWeaponGrapple::ItemPostFrame(void)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+/*
 void CWeaponGrapple::SecondaryAttack(void)
 {
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -277,6 +289,7 @@ void CWeaponGrapple::SecondaryAttack(void)
 	//signal player it should swing
 	pPlayer->m_Shared.SetPullSpeed(0.f);
 }
+*/
 
 void CWeaponGrapple::RemoveHook(void)
 {
@@ -294,7 +307,7 @@ void CWeaponGrapple::RemoveHook(void)
 	if (pPlayer)
 	{
 		pPlayer->m_Shared.SetHook(NULL);
-		pPlayer->m_Shared.SetPullSpeed(0.f);
+		pPlayer->m_Shared.SetHookProperty(0.f);
 	}
 }
  

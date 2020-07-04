@@ -94,11 +94,7 @@ public:
 	void	AddCond( int nCond, float flDuration = PERMANENT_CONDITION );
 	void	RemoveCond( int nCond );
 	
-	void	WearHat( int nHat );
-	void	RemoveHat( int nHat );	
-	
 	bool	InCond( int nCond );
-	bool	WearsHat( int nHat );
 	void	RemoveAllCond(CTFPlayer *pPlayer);
 	void	OnConditionAdded( int nCond );
 	void	OnConditionRemoved( int nCond );
@@ -212,6 +208,8 @@ public:
 	float	GetPercentInvisible( void );
 	float	GetNextLungeTime( void ){ return m_flNextLungeTime; }
 	void	SetNextLungeTime( float flNextLungeTime ){ m_flNextLungeTime = flNextLungeTime; }
+	bool	IsLunging(void) { return m_bIsLunging; }
+	void	StopLunge() { m_bIsLunging = false; }
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
@@ -230,8 +228,14 @@ public:
 	void    SetAirDashCount( int iAirDashCount );
 	const	CBaseEntity *GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
-	void    SetPullSpeed(float pull);
-	float	GetPullSpeed() { return m_flGHookPull; }
+	void    SetHookProperty(float pull);
+	float	GetHookProperty() { return m_flGHookProp; }
+	void	SetJumpBuffer(bool buffer);
+	bool	GetJumpBuffer() { return m_bBlockJump; }
+	void	SetCSlideDuration(float duration);
+	float	GetCSlideDuration() { return m_flCSlideDuration; }
+	void	SetRampJumpVel(float vel);
+	float	GetRampJumpVel() { return m_flRampJumpVel; }
 
 	// loser state
 	bool	IsLoser( void );
@@ -315,7 +319,6 @@ private:
 	CNetworkVar( int, m_nPlayerCondEx3 );		// Disgusting, don't blame me -ficool2
 	CNetworkVar( int, m_nPlayerCondEx4 );
 
-	CNetworkVar( int, m_nPlayerCosmetics );			// Player condition flags.
 	CNetworkArray( float, m_flCondExpireTimeLeft, TF_COND_LAST );	// Time until each condition expires
 
 //TFTODO: What if the player we're disguised as leaves the server?
@@ -392,12 +395,16 @@ private:
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
 	CNetworkHandle( CBaseEntity, m_Hook );
-	CNetworkVar( float, m_flGHookPull );
+	CNetworkVar( float, m_flGHookProp );
+	CNetworkVar( bool, m_bBlockJump);
+	CNetworkVar( float, m_flCSlideDuration );
+	CNetworkVar(float, m_flRampJumpVel);
 
 	CNetworkVar( float, m_flStealthNoAttackExpire );
 	CNetworkVar( float, m_flStealthNextChangeTime );
 
 	CNetworkVar( float, m_flNextLungeTime );
+	CNetworkVar( bool, m_bIsLunging );
 
 	CNetworkVar( int, m_iCritMult );
 

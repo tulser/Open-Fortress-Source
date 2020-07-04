@@ -2917,7 +2917,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 	if ( ( TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) ) )
 		return;
 
-	if ( stricmp(pTeamName, "spectate") != 0 && TFGameRules()->IsDMGamemode() )
+	if ( stricmp(pTeamName, "spectate") && TFGameRules()->IsDMGamemode() )
 	{
 		if ( TFGameRules()->IsTeamplay() ) 
 		{
@@ -2928,16 +2928,20 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		{
 			if ( !of_allowteams.GetBool() )			
 				ChangeTeam( TF_TEAM_MERCENARY, false );
+
 			if ( !TFGameRules()->IsAllClassEnabled() ) 
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 			else
 				ShowViewPortPanel( PANEL_CLASS );
-
+			
+			// TFGameRules()->PlaceIntoDuelQueue( this );
+			
 			if ( !of_allowteams.GetBool() ) 
 				return;
 		}
-		
 	}
+	
+	// TFGameRules()->RemoveFromDuelQueue( this );
 	
 	int iTeam = TEAM_INVALID;
 	if ( stricmp( pTeamName, "auto" ) == 0 )
@@ -6396,10 +6400,13 @@ void CTFPlayer::DropAmmoPack( void )
 //-----------------------------------------------------------------------------
 void CC_DropWeapon( void )
 {
+
 	if ( !of_dropweapons.GetBool() )
 		return;
+
 	if( of_randomizer.GetBool() )
 		return;
+
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
 	if ( !pPlayer )
 		return;
@@ -6655,6 +6662,11 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 		else
 			pDroppedWeapon->m_nSkin = 2;
 		
+		if( pWeapon->GetTeamNumber() > LAST_SHARED_TEAM )
+			pDroppedWeapon->SetTeamNum( pWeapon->GetTeamNumber() );
+		else
+			pDroppedWeapon->SetTeamNum( TEAM_UNASSIGNED );
+		
 		// Give the ammo pack some health, so that trains can destroy it.
 		pDroppedWeapon->SetCollisionGroup( COLLISION_GROUP_DEBRIS );
 		pDroppedWeapon->m_takedamage = DAMAGE_YES;		
@@ -6877,6 +6889,9 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	DeathSound( info );
 
 	EmitSound( "Player.Gib" );
+	
+	if( TFGameRules() )
+		TFGameRules()->RemoveFromDuelQueue( this );
 
 	RemoveNemesisRelationships();
 

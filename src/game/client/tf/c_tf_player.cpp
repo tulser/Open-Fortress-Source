@@ -3330,7 +3330,7 @@ void C_TFPlayer::UpdatePlayerAttachedModels( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && ( m_Shared.WearsHat( 0 ) || GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && ( GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
 	{
 		if ( m_hPartyHat )
 		{
@@ -3417,7 +3417,6 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 }
 void C_TFPlayer::UpdateWearables( void )
 {
-	DevMsg("UpdateWearables: Triggered Update Wearables\n");
 	for( int i = 0; i < GetNumBodyGroups(); i++ )
 	{
 		SetBodygroup( i, 0 );
@@ -3434,7 +3433,7 @@ void C_TFPlayer::UpdateWearables( void )
 
 	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
 	{
-		DevMsg("UpdateWearables: Mismatching cosmetic count\n");
+		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
 		return;
 	}
 
@@ -3443,7 +3442,7 @@ void C_TFPlayer::UpdateWearables( void )
 		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
 		if( !pCosmetic )
 		{
-			DevMsg("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
 			continue;
 		}
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
@@ -3475,10 +3474,6 @@ void C_TFPlayer::UpdateWearables( void )
 
 				m_hCosmetic.AddToTail(handle);
 			}
-		}
-		else
-		{
-			DevMsg("UpdateWearables: Blank model\n");
 		}
 	}
 }
