@@ -1644,7 +1644,7 @@ void CTFGameMovement::FullWalkMove()
 				   !m_pTFPlayer->GetWaterLevel() &&		 											//player is not in water
 				   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&						//player is ducked/ducking
 				   (mv->m_flForwardMove || mv->m_flSideMove) &&										//player is moving
-				   (of_cslideduration.GetFloat() > 0 ? gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration() : 1);	//there is crouch slide charge to spend & a crouch slide charge in the first place
+				   gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration();					//there is crouch slide charge to spend
 
 		Friction(CSliding);
 		WalkMove(CSliding);
@@ -1680,7 +1680,7 @@ void CTFGameMovement::FullWalkMove()
 	{
 		//Determine ramp jump vel and crouch slide duration
 		m_pTFPlayer->m_Shared.SetRampJumpVel(mv->m_vecVelocity[2]);
-		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f * of_cslideduration.GetFloat());
+		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - (mv->m_vecVelocity[2] / 200.f) * of_cslideduration.GetFloat());
 	}
 
 	// Handling falling.
