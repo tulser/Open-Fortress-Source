@@ -25,6 +25,7 @@
 #include "tf_controls.h"
 #include "cvartogglecheckbutton.h"
 #include "datacache/imdlcache.h"
+#include <vgui_controls/ScrollBar.h>
 
 #include "engine/IEngineSound.h"
 #include "basemodelpanel.h"
