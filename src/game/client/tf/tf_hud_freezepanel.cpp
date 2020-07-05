@@ -15,6 +15,7 @@
 #include "tf_hud_statpanel.h"
 #include "view.h"
 #include "viewrender.h"
+#include <vgui/ILocalize.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

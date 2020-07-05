@@ -10,6 +10,7 @@
 #include "tf_gamerules.h"
 #include "c_tf_team.h"
 #include "tf_hud_freezepanel.h"
+#include <vgui/ILocalize.h>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

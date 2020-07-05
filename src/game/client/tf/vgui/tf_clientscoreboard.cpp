@@ -13,6 +13,7 @@
 #include "tf_gamerules.h"
 #include "c_tf_playerresource.h"
 #include "c_tf_team.h"
+#include <vgui/ILocalize.h>
 
 #if defined ( _X360 )
 #include "engine/imatchmaking.h"
