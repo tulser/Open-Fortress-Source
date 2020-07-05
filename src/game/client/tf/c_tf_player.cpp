@@ -48,7 +48,7 @@
 #include "tf_hud_chat.h"
 #include "iclientmode.h"
 #include "tf_viewmodel.h"
-#include "gameui/of/dm_loadout.h"
+#include "gameui/dm_loadout.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

@@ -37,7 +37,7 @@
 #include "vcustomcampaigns.h"
 #include "vmyugc.h"
 
-#include "gameui/of/dm_loadout.h"
+#include "gameui/dm_loadout.h"
 
 #include "vgui/ISystem.h"
 #include "vgui/ISurface.h"

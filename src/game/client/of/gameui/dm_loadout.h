@@ -15,12 +15,14 @@
 #include "of_dmmodelpanel.h"
 #include "of_scrollablepanellist.h"
 #include "of_selectionpanel.h"
+#include "basemodframe.h"
 
 class CStudioHdr;
 class CCvarToggleCheckButton;
 class CModelPanel;
 
-namespace BaseModUI {
+namespace BaseModUI
+{
 
 	class DMLoadout : public CBaseModFrame
 	{
