@@ -6,13 +6,9 @@
 //=============================================================================
 
 #include "cbase.h"
-#include "mathlib/mathlib.h"
 #include "team_control_point_master.h"
-#include "team_train_watcher.h"
 #include "tf_gamerules.h"
-#include "tf_obj.h"
 #include "tf_obj_sentrygun.h"
-//#include "tf_weapon_buff_item.h"
 #include "entity_capture_flag.h"
 #include "func_capture_zone.h"
 #include "tf_bot.h"
@@ -22,7 +18,8 @@
 #include "tf_weapon_medigun.h"
 #include "nav_mesh/tf_nav_mesh.h"
 #include "behavior/tf_bot_behavior.h"
-#include "behavior/tf_bot_use_item.h"
+#include "func_respawnroom.h"
+#include "team_train_watcher.h"
 #include "NextBotUtil.h"
 
 void DifficultyChanged( IConVar *var, const char *pOldValue, float flOldValue );

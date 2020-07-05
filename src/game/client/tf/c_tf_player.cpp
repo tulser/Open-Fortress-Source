@@ -34,6 +34,7 @@
 #include "collisionutils.h"
 #include "dt_utlvector_recv.h"
 #include "filesystem.h"
+#include "gamevars_shared.h"
 
 // for spy material proxy
 #include "proxyentity.h"

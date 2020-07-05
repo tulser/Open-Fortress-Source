@@ -13,6 +13,7 @@
 #include "tf_hud_building_status.h"
 #include "tf_tips.h"
 #include <vgui/ILocalize.h>
+#include "gamevars_shared.h"
 
 using namespace vgui;
 

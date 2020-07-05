@@ -5,8 +5,6 @@
 //=============================================================================
 #include "cbase.h"
 #include "tf_gamerules.h"
-#include "tf_player_shared.h"
-#include "tf_weaponbase.h"
 #include "entity_capture_flag.h"
 #include "baseobject_shared.h"
 #include "tf_weapon_medigun.h"
@@ -17,13 +15,11 @@
 #include "tf_weapon_fists.h"
 
 #ifdef CLIENT_DLL
-	#include "c_tf_player.h"
 	#include "c_tf_playerclass.h"
 	#include "iviewrender.h"
 
 	#define CTFPlayerClass C_TFPlayerClass
 #else
-	#include "tf_player.h"
 	#include "te_effect_dispatch.h"
 	#include "tf_gamestats.h"
 	#include "tf_weapon_builder.h"
