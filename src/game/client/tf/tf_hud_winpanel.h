@@ -12,12 +12,8 @@
 #endif
 
 #include <vgui_controls/EditablePanel.h>
-#include <game/client/iviewport.h>
-#include <vgui/IScheme.h>
-#include "hud.h"
+#include <vgui_controls/ImagePanel.h>
 #include "hudelement.h"
-#include "basemodelpanel.h"
-#include "tf_controls.h"
 
 using namespace vgui;
 

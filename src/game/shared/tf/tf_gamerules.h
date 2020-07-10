@@ -19,19 +19,14 @@
 #pragma once
 #endif
 
-
 #include "teamplayroundbased_gamerules.h"
-#include "convar.h"
-#include "gamevars_shared.h"
-#include "GameEventListener.h"
 #include "tf_gamestats_shared.h"
 
 #ifdef CLIENT_DLL
-#include "c_tf_player.h"
+	#include "c_tf_player.h"
 #else
-#include "tf_player.h"
-#include "trains.h"
-#include "team_train_watcher.h"
+	#include "tf_player.h"
+	#include "pathtrack.h"
 #endif
 
 #ifdef CLIENT_DLL

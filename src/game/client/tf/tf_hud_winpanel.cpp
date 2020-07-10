@@ -8,27 +8,18 @@
 
 #include "cbase.h"
 #include "tf_hud_winpanel.h"
-#include "tf_hud_statpanel.h"
-#include "tf_spectatorgui.h"
 #include "vgui_controls/AnimationController.h"
 #include "iclientmode.h"
 #include "engine/IEngineSound.h"
 #include "c_tf_playerresource.h"
-#include "c_team.h"
-#include "tf_clientscoreboard.h"
-#include <vgui_controls/Label.h>
-#include <vgui_controls/ImagePanel.h>
 #include <vgui/ILocalize.h>
-#include <vgui/ISurface.h>
 #include "vgui_avatarimage.h"
 #include "fmtstr.h"
-#include "teamplayroundbased_gamerules.h"
 #include "tf_gamerules.h"
-#include "tf_classmenu.h"
-#include "KeyValues.h"
-#include "tier2/tier2.h"
 #include "of_shared_schemas.h"
 #include "c_of_music_player.h"
+#include "basemodelpanel.h"
+#include "filesystem.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

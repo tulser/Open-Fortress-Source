@@ -7,31 +7,15 @@
 #include "cbase.h"
 #include "tf_weaponbase_gun.h"
 #include "tf_fx_shared.h"
-#include "effect_dispatch_data.h"
-#include "takedamageinfo.h"
 #include "tf_projectile_nail.h"
 #include "in_buttons.h"
-#include "tf_gamerules.h"
 #include "of_projectile_bfg.h"
 #include "tf_weapon_grenade_pipebomb.h"
 #include "tf_weapon_rocketlauncher.h"
 
-#if !defined( CLIENT_DLL )	// Server specific.
-
+#ifdef GAME_DLL
 	#include "tf_gamestats.h"
-	#include "tf_player.h"
-	#include "tf_fx.h"
-	#include "te_effect_dispatch.h"
-
-	#include "tf_projectile_rocket.h"
-	#include "te.h"
 	#include "of_projectile_tripmine.h"
-
-#else	// Client specific.
-
-	#include "c_tf_player.h"
-	#include "c_te_effect_dispatch.h"
-
 #endif
 
 //=============================================================================
@@ -179,7 +163,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 
 	CalcIsAttackCritical();
 
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	pPlayer->RemoveInvisibility();
 	pPlayer->RemoveDisguise();
 	pPlayer->m_Shared.RemoveCond( TF_COND_SPAWNPROTECT );
@@ -931,7 +915,7 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 {
 	PlayWeaponShootSound();
 
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 
 	CTripmineGrenade *pProjectile = NULL;
 

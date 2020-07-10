@@ -9,7 +9,6 @@
 #pragma once
 #endif
 
-//#include "networkvar.h"
 #include "tf_shareddefs.h"
 #include "tf_weaponbase.h"
 

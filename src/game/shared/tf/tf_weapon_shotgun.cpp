@@ -6,15 +6,11 @@
 
 #include "cbase.h"
 #include "tf_weapon_shotgun.h"
-#include "decals.h"
-#include "tf_fx_shared.h"
 
-// Client specific.
-#if defined( CLIENT_DLL )
-#include "c_tf_player.h"
-// Server specific.
+#ifdef CLIENT_DLL
+	#include "c_tf_player.h"
 #else
-#include "tf_player.h"
+	#include "tf_player.h"
 #endif
 
 #define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\

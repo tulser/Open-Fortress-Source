@@ -7,41 +7,22 @@
 #include "cbase.h"
 #include "tf_gamerules.h"
 #include "ammodef.h"
-#include "KeyValues.h"
-#include "tf_weaponbase.h"
 #include "time.h"
-#include "tf_shareddefs.h"
-#include <vgui/IScheme.h>
 #include <vgui/ILocalize.h>
 #include "tier3/tier3.h"
 #include "tf_weapon_grenade_pipebomb.h"
-#include "gameeventdefs.h"
-	
+
 #ifdef CLIENT_DLL
-	#include <game/client/iviewport.h>
-	#include "c_tf_player.h"
 	#include "c_tf_objective_resource.h"
 	#include "dt_utlvector_recv.h"
 #else
-	#include "basemultiplayerplayer.h"
 	#include "voice_gamemgr.h"
-	#include "items.h"
-	#include "team.h"
-	#include "tf_bot_temp.h"
-	#include "tf_player.h"
 	#include "tf_team.h"
 	#include "player_resource.h"
-	#include "entity_tfstart.h"
-	#include "filesystem.h"
-	#include "tf_obj.h"
 	#include "tf_objective_resource.h"
 	#include "tf_player_resource.h"
 	#include "team_control_point_master.h"
-	#include "entity_roundwin.h"
 	#include "playerclass_info_parse.h"
-	#include "team_train_watcher.h"
-	#include "entity_roundwin.h"
-	#include "coordsize.h"
 	#include "entity_healthkit.h"
 	#include "entity_ammopack.h"
 	#include "func_respawnroom.h"
@@ -50,29 +31,17 @@
 	#include "entity_capture_flag.h"
 	#include "entity_weapon_spawner.h"
 	#include "entity_condpowerup.h"
-	#include "tf_player_resource.h"
 	#include "tf_obj_sentrygun.h"
-	#include "tier0/icommandline.h"
 	#include "activitylist.h"
-	#include "AI_ResponseSystem.h"
 	#include "hl2orange.spa.h"
 	#include "hltvdirector.h"
-	#include "globalstate.h"
-    #include "igameevents.h"
-	#include "trains.h"
-	#include "pathtrack.h"
 	#include "entitylist.h"
-	#include "trigger_area_capture.h"
-	#include "ai_basenpc.h"
-	#include "ai_dynamiclink.h"
-	#include "vote_controller.h"
-	#include "tf_weaponbase_grenadeproj.h"
 	#include "tf_voteissues.h"
 	#include "nav_mesh.h"
 	#include "bot/tf_bot_manager.h"
 	#include <../shared/gamemovement.h>
-	
 	#include "dt_utlvector_send.h"
+	#include "team_train_watcher.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
