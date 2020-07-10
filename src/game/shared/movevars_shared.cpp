@@ -68,11 +68,11 @@ ConVar	sv_maxspeed		( "sv_maxspeed", "320", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
 #if defined( OF_CLIENT_DLL ) || defined( OF_DLL )
 ConVar	of_movementmode("of_movementmode", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Change movement mode\n0: Default OF\n1: Quake 3\n2: CPMA");
-ConVar	of_q3airaccelerate("of_q3airaccelerate", "1.5", FCVAR_NOTIFY | FCVAR_REPLICATED, "Air acceleration while in Quake 3 movement mode or while NOT airstrafing in CPMA movement mode.");
-ConVar	of_cslide("of_cslide", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Lets you pretend you're playing Warface.");
-ConVar	of_cslideaccelerate("of_cslideaccelerate", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "Acceleration while csliding.");
-ConVar	of_cslidefriction("of_cslidefriction", "0.8", FCVAR_NOTIFY | FCVAR_REPLICATED, "Friction / decceleration while csliding.");
-ConVar  of_cslideduration("of_cslideduration", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Multiplier for how long one can cslide. Set to 0 to disable hard duration limit.");
+ConVar	of_q3airaccelerate("of_q3airaccelerate", "1.5", FCVAR_NOTIFY | FCVAR_REPLICATED, "Q3 Air acceleration");
+ConVar	of_cslide("of_cslide", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Quake 4 style crouch sliding");
+ConVar	of_cslideaccelerate("of_cslideaccelerate", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "Crouch slide acceleration");
+ConVar	of_cslidefriction("of_cslidefriction", "0.8", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ground friction while crouch sliding");
+ConVar  of_cslideduration("of_cslideduration", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Crouch slide duration multiplier");
 #endif
 
 #if defined( CSTRIKE_DLL ) || defined( HL1MP_DLL )
