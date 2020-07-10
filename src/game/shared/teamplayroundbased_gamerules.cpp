@@ -1488,11 +1488,10 @@ void CTeamplayRoundBasedRules::State_Think_PREGAME( void )
 	if ( IsInCommentaryMode() )
 		return;
 #ifdef OF_DLL
-	if (((CountActivePlayers() > 0 && !TFGameRules()->IsDuelGamemode()) || (CountActivePlayers() > 1 && TFGameRules()->IsDuelGamemode())) || (IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f))
+	if (CountActivePlayers() > 1 || (IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f))
 #else
-
-#endif
 	if( CountActivePlayers() > 0 || (IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f) )
+#endif
 	{
 		State_Transition( GR_STATE_STARTGAME );
 	}
