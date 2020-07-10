@@ -108,6 +108,10 @@ void CTFWeaponBaseGun::BurstFire( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::BeginBurstFire(void)
 {
+	//Ivory: Otherwise animations and sounds play even if gun cannot shoot
+	if (!CanAttack())
+		return;
+
 	BaseClass::BeginBurstFire();
 }
 

@@ -499,6 +499,8 @@ CTFPlayer::CTFPlayer()
 	m_bIsJuggernaught = false;
 	m_iJuggernaughtScore = 0;
 	m_iJuggernaughtTimer = 0;
+
+	m_iDuelWins = 0;
 }
 
 
@@ -1006,8 +1008,7 @@ void CTFPlayer::PrecachePlayerModels( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayer::IsReadyToPlay( void )
 {
-	return ( ( GetTeamNumber() > LAST_SHARED_TEAM ) &&
-			 ( GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED ) );
+	return GetTeamNumber() > LAST_SHARED_TEAM && GetDesiredPlayerClassIndex() > TF_CLASS_UNDEFINED;
 }
 
 //-----------------------------------------------------------------------------
@@ -1196,10 +1197,11 @@ void CTFPlayer::Spawn()
 		{
 			m_Shared.AddCond( TF_COND_HEALTH_BUFF );
 		}
-		if ( TFGameRules()->IsDMGamemode() || of_forcespawnprotect.GetBool() == 1 )
-		{
+
+		//in duel only give spawn protection the first spawn
+		if ((TFGameRules()->IsDMGamemode() || of_forcespawnprotect.GetBool() == 1) && !(TFGameRules()->IsDuelGamemode() && int(MaxSpeed()) != 1))
 			m_Shared.AddCond( TF_COND_SPAWNPROTECT , of_spawnprotecttime.GetFloat() );
-		}
+
 		m_Shared.SetSpawnEffect( V_atoi(engine->GetClientConVarValue(entindex(), "of_respawn_particle")) );
 		
 		if ( !m_bSeenRoundInfo )
@@ -2877,14 +2879,21 @@ int CTFPlayer::GetAutoTeam( void )
 //-----------------------------------------------------------------------------
 void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 {
-	if ( !TFGameRules() )
+	if (!TFGameRules())
 		return;
 
 	// civ can't change teams
-	if ( ( TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) ) )
+	if ( TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
 		return;
 
-	if ( stricmp(pTeamName, "spectate") && TFGameRules()->IsDMGamemode() )
+	//add player to the duel queue if it's not in it
+	if (TFGameRules()->IsDuelGamemode() && TFGameRules()->GetDuelQueuePos(this) == -1)
+		TFGameRules()->PlaceIntoDuelQueue(this);
+
+	//force spectating if player is not one of the two duelers
+	bool bSpectate = !Q_strcmp(pTeamName, "spectate");
+
+	if (!bSpectate && TFGameRules()->IsDMGamemode())
 	{
 		if ( TFGameRules()->IsTeamplay() ) 
 		{
@@ -2893,29 +2902,25 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		}
 		else 
 		{
-			if ( !of_allowteams.GetBool() )			
-				ChangeTeam( TF_TEAM_MERCENARY, false );
-
 			if ( !TFGameRules()->IsAllClassEnabled() ) 
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
 			else
 				ShowViewPortPanel( PANEL_CLASS );
 			
-			// TFGameRules()->PlaceIntoDuelQueue( this );
-			
-			if ( !of_allowteams.GetBool() ) 
+			if (!of_allowteams.GetBool())
+			{
+				ChangeTeam(TF_TEAM_MERCENARY, false);
 				return;
+			}
 		}
 	}
 	
-	// TFGameRules()->RemoveFromDuelQueue( this );
-	
 	int iTeam = TEAM_INVALID;
-	if ( stricmp( pTeamName, "auto" ) == 0 )
+	if (!Q_strcmp(pTeamName, "auto"))
 	{
 		iTeam = GetAutoTeam();
 	}
-	else if ( stricmp( pTeamName, "spectate" ) == 0 )
+	else if (bSpectate)
 	{
 		iTeam = TEAM_SPECTATOR;
 	}
@@ -3170,7 +3175,6 @@ void CTFPlayer::ChangeTeam( int iTeamNum, bool bNoKill )
 	{
 		RemoveNemesisRelationships();
 	}
-
 
 	BaseClass::ChangeTeam( iTeamNum );
 
@@ -6801,6 +6805,15 @@ void CTFPlayer::BecomeJuggernaught()
 	m_Shared.OnAddJauggernaught();
 }
 
+void CTFPlayer::IncrementDuelWins()
+{
+	m_iDuelWins++;
+}
+
+void CTFPlayer::ResetDuelWins()
+{
+	m_iDuelWins = 0;
+}
 
 //=========================================================================
 // Displays the state of the items specified by the Goal passed in
@@ -6856,11 +6869,21 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	DeathSound( info );
 
 	EmitSound( "Player.Gib" );
-	
-	if( TFGameRules() )
-		TFGameRules()->RemoveFromDuelQueue( this );
 
 	RemoveNemesisRelationships();
+
+	//if it's duel mode remove this player from the queue
+	if (TFGameRules()->IsDuelGamemode())
+	{
+		//if player leaves in the mid of a duel (ragequit) it resigns,
+		//player who did not leave wins and match ends
+		if (TFGameRules()->IsDueler(this) && !TFGameRules()->IsInWaitingForPlayers())
+			TFGameRules()->DuelRageQuit(this);
+		else
+			TFGameRules()->RemoveFromDuelQueue(this);
+
+		return;
+	}
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
@@ -6882,10 +6905,9 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	}
 	else
 #endif
-		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 
+	DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 	TeamFortress_RemoveEverythingFromWorld();
-
 	RemoveAllWeapons();
 }
 

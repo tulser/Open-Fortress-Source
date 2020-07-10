@@ -424,6 +424,10 @@ public:
 	void BecomeJuggernaught();
 	bool IsJuggernaught() { return m_bIsJuggernaught; }
 
+	int GetDuelWins() { return m_iDuelWins; }
+	void IncrementDuelWins();
+	void ResetDuelWins();
+
 	// TEAMFORTRESS VARIABLES
 	int		no_sentry_message;
 	int		no_dispenser_message;
@@ -701,6 +705,9 @@ private:
 	bool				m_bAutoRezoom;	// does the player want to re-zoom after each shot for sniper rifles
 	bool				m_bAutoReload;	// does the player want to reload after each shot
 	bool				m_bAutoSwitchWeapons;
+
+	//Duel mode
+	int m_iDuelWins;
 	
 public:
 //	bool				SetPowerplayEnabled( bool bOn );

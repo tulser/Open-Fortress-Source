@@ -40,7 +40,6 @@ public:
 
 	virtual void    Precache( void );
 	virtual void    PrimaryAttack( void );
-	//virtual void    SecondaryAttack( void );
 	bool            CanHolster( void );
 	virtual bool    Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	void            Drop( const Vector &vecVelocity );
@@ -48,10 +47,7 @@ public:
 	virtual void    ItemPostFrame( void );
 
 	void			RemoveHook(void);
-	void            NotifyHookDied(void);
 	void			NotifyHookAttached(void);
-
-	bool            HasAnyAmmo( void );
 
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
 	void			DoImpactEffect( trace_t &tr, int nDamageType );
@@ -61,10 +57,12 @@ public:
 
 private:
 
+	void InitiateHook(CTFPlayer * pPlayer, CBaseEntity *hook);
+
 #ifdef GAME_DLL
 	CHandle<CBeam>		pBeam;
 	CHandle<CSprite>	m_pLightGlow;
-	CNetworkHandle(CBaseEntity, m_hHook);	//server hook
+	CNetworkHandle(CBaseEntity, m_hHook);		//server hook
 #else
 	EHANDLE			m_hHook;				//client hook relay
 #endif
@@ -89,6 +87,7 @@ public:
     void Spawn( void );
     void Precache( void );
 	static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
+	bool HookLOS();
 
 	bool CreateVPhysics( void );
 	unsigned int PhysicsSolidMaskForEntity() const;
