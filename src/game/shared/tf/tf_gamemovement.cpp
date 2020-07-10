@@ -1693,7 +1693,7 @@ void CTFGameMovement::FullWalkMove()
 	{
 		//Determine ramp jump vel and crouch slide duration
 		m_pTFPlayer->m_Shared.SetRampJumpVel(mv->m_vecVelocity[2]);
-		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - mv->m_vecVelocity[2] / 200.f);
+		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - (mv->m_vecVelocity[2] / 200.f) * of_cslideduration.GetFloat());
 	}
 
 	// Handling falling.
