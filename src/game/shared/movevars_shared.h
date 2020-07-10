@@ -21,6 +21,7 @@ extern ConVar of_cslide;
 extern ConVar of_cslideaccelerate;
 extern ConVar of_cslidefriction;
 extern ConVar of_cslideduration;
+extern ConVar of_cslidestopspeed;
 #endif
 
 extern ConVar sv_gravity;

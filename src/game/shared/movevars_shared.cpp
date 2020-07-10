@@ -73,6 +73,7 @@ ConVar	of_cslide("of_cslide", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Turn on Qua
 ConVar	of_cslideaccelerate("of_cslideaccelerate", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "Crouch slide acceleration");
 ConVar	of_cslidefriction("of_cslidefriction", "0.8", FCVAR_NOTIFY | FCVAR_REPLICATED, "Ground friction while crouch sliding");
 ConVar  of_cslideduration("of_cslideduration", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Crouch slide duration multiplier");
+ConVar	of_cslidestopspeed("of_cslidestopspeed", "320", FCVAR_NOTIFY | FCVAR_REPLICATED, "Crouch slide stop speed");
 #endif
 
 #if defined( CSTRIKE_DLL ) || defined( HL1MP_DLL )
