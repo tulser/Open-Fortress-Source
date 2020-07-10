@@ -371,12 +371,8 @@ CTFWinPanelDM::CTFWinPanelDM(const char *pElementName) : EditablePanel(NULL, "Wi
 	ListenForGameEvent("teamplay_round_start");
 	ListenForGameEvent("teamplay_game_over");
 	ListenForGameEvent("tf_game_over");
-
-	//Exit button
-	m_XClose = new ExitCircle(this, "X_Circle", "cancelmenu");
 	
 	m_flDisplayTime = -1;
-	
 	m_pRoundEndEvent = new KeyValues("RoundEndEvent");
 }
 
@@ -427,12 +423,18 @@ extern ConVar mp_bonusroundtime;
 //-----------------------------------------------------------------------------
 void CTFWinPanelDM::FireGameEvent(IGameEvent *event)
 {
+	//Only draw for Mercenary deathmatch
+	if (Q_strcmp("teamplay_win_panel", event->GetName()) || event->GetInt("winning_team") != TF_TEAM_MERCENARY)
+	{
+		SetVisible(false);
+		return;
+	}
+
+	//Store event info and display them when the time comes
 	if( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
-		m_flDisplayTime = gpGlobals->curtime + ( mp_bonusroundtime.GetFloat() * of_winscreenratio.GetFloat() );
+		m_flDisplayTime = gpGlobals->curtime + mp_bonusroundtime.GetFloat() * of_winscreenratio.GetFloat();
 	else
 		m_flDisplayTime = gpGlobals->curtime;
-	
-	// Really hacky but transfer all the values to the round end event
 	
 	m_pRoundEndEvent->SetName(event->GetName());
 	
@@ -463,7 +465,7 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent *event)
 		m_pRoundEndEvent->SetInt( szPlayerScoreVal, event->GetInt( szPlayerScoreVal ) );
 	}
 	
-		// play a sound
+	// play a sound
 	CLocalPlayerFilter filter;
 	C_BaseEntity::EmitSound(filter, SOUND_FROM_LOCAL_PLAYER, "Hud.DMEndRoundScored");
 }
@@ -472,17 +474,9 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 {
 	m_flDisplayTime = -1;
 
-	//Should it draw or not
-	if( Q_strcmp("teamplay_win_panel", event->GetName() ) || event->GetInt("winning_team") != TF_TEAM_MERCENARY )
-	{
-		SetVisible(false);
-		return;
-	}
-	
 	if (!g_PR)
 		return;
-
-	//It should
+	
 	LoadControlSettings("resource/UI/WinPanelDM.res");
 	InvalidateLayout(false, true);
 
@@ -544,14 +538,14 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 			switch( i )
 			{
 				case 1:
-				TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "FirstPlace", "" );
-				break;
+					TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "FirstPlace", "" );
+					break;
 				case 2:
-				TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "SecondPlace", "" );
-				break;
+					TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "SecondPlace", "" );
+					break;
 				case 3:
-				TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "ThirdPlace", "" );
-				break;
+					TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "ThirdPlace", "" );
+					break;
 			}
 		}
 
@@ -649,36 +643,22 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 	switch( iPlayerAmount )
 	{
 		case 1:
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelFirst");
-		break;
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelFirst");
+			break;
 		case 2:
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelSecond");
-		break;
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelSecond");
+			break;
 		case 3:
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelIntro");
-		break;
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "HudDMWinpanelIntro");
+			break;
 	}
 
 	pModelAttachement->deleteThis();
 	SetVisible(true);
 	MoveToFront();
-
-	if (m_XClose)
-		m_XClose->RequestFocus();
 }
 
 void CTFWinPanelDM::OnTick( void )
 {
 	BaseClass::OnTick();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFWinPanelDM::OnCommand(const char *command)
-{
-	if (!Q_strcmp(command, "cancelmenu"))
-		SetVisible(false);
-	else
-		BaseClass::OnCommand(command);
 }

@@ -292,13 +292,11 @@ void CTFGameMovement::ProcessMovement(CBasePlayer *pBasePlayer, CMoveData *pMove
 	FinishMove();
 }
 
-
 bool CTFGameMovement::CanAccelerate()
 {
 	// Only allow the player to accelerate when in certain states.
-	int nCurrentState = m_pTFPlayer->m_Shared.GetState();
-	if (nCurrentState == TF_STATE_ACTIVE)
-		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook();
+	if (m_pTFPlayer->m_Shared.GetState() == TF_STATE_ACTIVE)
+		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook() && !m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED);
 	
 	if (player->IsObserver())
 		return true;
@@ -438,6 +436,10 @@ void CTFGameMovement::PreventBunnyJumping()
 
 bool CTFGameMovement::CheckJumpButton()
 {
+	//hooked
+	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
+		return false;
+
 	// Are we dead?  Then we cannot jump.
 	if (player->pl.deadflag)
 		return false;
@@ -780,6 +782,7 @@ void CTFGameMovement::WaterMove(void)
 	Vector  temp;
 	trace_t	pm;
 	float speed, newspeed, addspeed, accelspeed;
+	bool hooked = m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED);
 
 	// Determine movement angles.
 	Vector vecForward, vecRight, vecUp;
@@ -796,7 +799,7 @@ void CTFGameMovement::WaterMove(void)
 	// Check for upward velocity (JUMP).
 	if (mv->m_nButtons & IN_JUMP)
 	{
-		if (player->GetWaterLevel() == WL_Eyes)
+		if (player->GetWaterLevel() == WL_Eyes && !hooked)
 			vecWishVelocity[2] += mv->m_flClientMaxSpeed;
 	}
 	// Sinking if not moving.
@@ -805,7 +808,7 @@ void CTFGameMovement::WaterMove(void)
 		vecWishVelocity[2] -= 60;
 	}
 	// Move up based on view angle.
-	else
+	else if (!hooked)
 	{
 		vecWishVelocity[2] += mv->m_flUpMove;
 	}
@@ -815,11 +818,13 @@ void CTFGameMovement::WaterMove(void)
 	wishspeed = VectorNormalize(wishdir);
 
 	// Cap speed.
+	/*
 	if (wishspeed > mv->m_flMaxSpeed)
 	{
 		VectorScale(vecWishVelocity, mv->m_flMaxSpeed / wishspeed, vecWishVelocity);
 		wishspeed = mv->m_flMaxSpeed;
 	}
+	*/
 
 	// Slow us down a bit.
 	wishspeed *= 0.8;
@@ -843,7 +848,7 @@ void CTFGameMovement::WaterMove(void)
 	}
 
 	// water acceleration
-	if (wishspeed >= 0.1f)  // old !
+	if (wishspeed >= 0.1f && !hooked)  // old !
 	{
 		addspeed = wishspeed - newspeed;
 		if (addspeed > 0)
@@ -1049,10 +1054,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 	}
 
 	// Calculate the destination.
-	Vector vecDestination;
-	vecDestination.x = mv->GetAbsOrigin().x + (mv->m_vecVelocity.x * gpGlobals->frametime);
-	vecDestination.y = mv->GetAbsOrigin().y + (mv->m_vecVelocity.y * gpGlobals->frametime);
-	vecDestination.z = mv->GetAbsOrigin().z;
+	Vector vecDestination = mv->GetAbsOrigin() + mv->m_vecVelocity * gpGlobals->frametime;
 
 	// Try moving to the destination.
 	trace_t trace;
@@ -1108,10 +1110,9 @@ void CTFGameMovement::WalkMove(bool CSliding)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-
 void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
-	if (m_pTFPlayer->m_Shared.GetHook() || m_pTFPlayer->m_Shared.IsLunging())
+	if (m_pTFPlayer->m_Shared.GetHook() || m_pTFPlayer->m_Shared.IsLunging() || m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
 		return;
 
 	float addspeed, currentspeed;
@@ -1731,6 +1732,7 @@ void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
 
 	if (!of_hook_pendulum.GetBool())
 	{
+		SetGroundEntity(NULL);
 		float pullVel = m_pTFPlayer->m_Shared.GetHookProperty() * (InWater ? 0.75f : 1.f);
 		Vector dir = hook->GetAbsOrigin() - playerCenter;
 		VectorNormalize(dir);
@@ -1803,7 +1805,8 @@ void CTFGameMovement::FullTossMove(void)
 		for (int i = 0; i < 3; i++)       // Determine x and y parts of velocity
 			wishdir[i] = forward[i] * fmove + right[i] * smove;
 
-		wishdir[2] += mv->m_flUpMove;
+		if (!m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
+			wishdir[2] += mv->m_flUpMove;
 
 		// Determine maginitude of speed of move
 		wishspeed = VectorNormalize(wishdir);
@@ -1963,8 +1966,6 @@ void CTFGameMovement::StepMove(Vector &vecDestination, trace_t &trace)
 	{
 		mv->m_outStepHeight += flStepDist;
 	}
-
-	
 }
 
 bool CTFGameMovement::GameHasLadders() const

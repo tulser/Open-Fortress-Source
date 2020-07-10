@@ -530,10 +530,9 @@ private:
 	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
 
+	CUtlVector<CTFPlayer *> m_hDuelQueue;
 #endif
 
-	CUtlVector< int > m_hDuelQueueL;
-    CUtlVector< int > m_hDuelQueueR;
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
 	CNetworkVar( int, m_nMutator ); // What mutator are we using?
 	CNetworkVar( int, m_nRetroMode ); // The TFC mode type
@@ -549,6 +548,7 @@ private:
 	CNetworkString( m_pszTeamGoalStringRed, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringBlue, MAX_TEAMGOAL_STRING );
 	CNetworkString( m_pszTeamGoalStringMercenary, MAX_TEAMGOAL_STRING );
+
 public:
 	bool m_bControlSpawnsPerTeam[ MAX_TEAMS ][ MAX_CONTROL_POINTS ];
 	int	 m_iPreviousRoundWinners;
@@ -632,10 +632,15 @@ public:
 	void SetRetroMode( int nRetroMode );
 #endif
 
+#ifdef GAME_DLL
 	int		GetDuelQueuePos( CBasePlayer *pPlayer );
+	bool	CheckDuelOvertime();
+	bool	IsDueler( CBasePlayer *pPlayer );
 	void 	PlaceIntoDuelQueue( CBasePlayer *pPlayer );
-	void	RemoveFromDuelQueue( CBasePlayer *pPlayer );
-	void	ProgressDuelQueues();
+	void	RemoveFromDuelQueue( CTFPlayer *pPlayer );
+	void	DuelRageQuit( CTFPlayer *pRager );
+	void	ProgressDuelQueues( CTFPlayer *pWinner, CTFPlayer *pLoser, bool rageQuit = false );
+#endif
 
 	bool	IsAllClassEnabled( void ) { return m_bAllClass; }
 	bool	IsAllClassZombieEnabled( void ) { return m_bAllClassZombie; }
