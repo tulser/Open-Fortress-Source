@@ -642,14 +642,6 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
 	}
-	
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		if ( bCenter || iQuakeCvar )
-			vecOffset.z = 0.0f;
-		else
-			vecOffset.z = 8.0f;
-	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
 	CTFBFGProjectile *pProjectile = CTFBFGProjectile::Create( this, vecSrc, angForward, pPlayer, pPlayer );
@@ -694,13 +686,6 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 		vecOffset.z = -8.0f; //up down
 	}
 	
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		if ( bCenter || iQuakeCvar )
-			vecOffset.z = 0.0f;
-		else
-			vecOffset.z = 8.0f;
-	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
 	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
@@ -749,7 +734,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
-		vecOffset.z = -8.0f; //up down
+		vecOffset.z = -8.0f;
 	}
 	
 	GetProjectileFireSetup( pPlayer, vecOffset , &vecSrc, &angForward );
@@ -821,14 +806,6 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 		vecOffset.z = -8.0f; //up down
 	}
 	
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		if ( bCenter || iQuakeCvar )
-			vecOffset.z = 0.0f;
-		else
-			vecOffset.z = 8.0f;
-	}
-	
 	vecSrc +=  vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
 	
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
@@ -880,14 +857,6 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
-	}
-	
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		if ( bCenter || iQuakeCvar )
-			vecOffset.z = 0.0f;
-		else
-			vecOffset.z = 8.0f;
 	}
 	
 	vecSrc +=  vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
@@ -983,14 +952,6 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
-	}
-	
-	if ( pPlayer->GetFlags() & FL_DUCKING )
-	{
-		if ( iQuakeCvar )
-			vecOffset.z = 0.0f;
-		else
-			vecOffset.z = 8.0f;
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 

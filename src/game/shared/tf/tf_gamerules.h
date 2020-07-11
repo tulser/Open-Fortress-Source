@@ -469,8 +469,7 @@ public:
 
 	void CalcDominationAndRevenge( CTFPlayer *pAttacker, CTFPlayer *pVictim, bool bIsAssist, int *piDeathFlags );
 
-	int GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer);
-	const char *GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim );
+	const char *GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim, int *weaponType = NULL );
 	CBasePlayer *GetAssister( CBasePlayer *pVictim, CBasePlayer *pScorer, CBaseEntity *pInflictor );
 	CTFPlayer *GetRecentDamager( CTFPlayer *pVictim, int iDamager, float flMaxElapsed );
 
@@ -529,8 +528,6 @@ private:
 	CHandle<CTeamTrainWatcher> m_hBlueAttackTrain;
 	CHandle<CTeamTrainWatcher> m_hRedDefendTrain;
 	CHandle<CTeamTrainWatcher> m_hBlueDefendTrain;
-
-	CUtlVector<CTFPlayer *> m_hDuelQueue;
 #endif
 
 	CNetworkVar( int, m_nGameType ); // Type of game this map is (CTF, CP)
@@ -636,8 +633,9 @@ public:
 	int		GetDuelQueuePos( CBasePlayer *pPlayer );
 	bool	CheckDuelOvertime();
 	bool	IsDueler( CBasePlayer *pPlayer );
+	bool	IsRageQuitter(CBasePlayer *pPlayer) { return IsDueler(pPlayer) && !IsInWaitingForPlayers() && State_Get() > GR_STATE_PREGAME; }
 	void 	PlaceIntoDuelQueue( CBasePlayer *pPlayer );
-	void	RemoveFromDuelQueue( CTFPlayer *pPlayer );
+	void	RemoveFromDuelQueue( CBasePlayer *pPlayer );
 	void	DuelRageQuit( CTFPlayer *pRager );
 	void	ProgressDuelQueues( CTFPlayer *pWinner, CTFPlayer *pLoser, bool rageQuit = false );
 #endif

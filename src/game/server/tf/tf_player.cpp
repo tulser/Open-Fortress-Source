@@ -499,8 +499,6 @@ CTFPlayer::CTFPlayer()
 	m_bIsJuggernaught = false;
 	m_iJuggernaughtScore = 0;
 	m_iJuggernaughtTimer = 0;
-
-	m_iDuelWins = 0;
 }
 
 
@@ -2888,7 +2886,10 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 
 	//add player to the duel queue if it's not in it
 	if (TFGameRules()->IsDuelGamemode() && TFGameRules()->GetDuelQueuePos(this) == -1)
+	{
+		//Msg("player with index %d was placed in the queue for the first time\n", entindex());
 		TFGameRules()->PlaceIntoDuelQueue(this);
+	}
 
 	//force spectating if player is not one of the two duelers
 	bool bSpectate = !Q_strcmp(pTeamName, "spectate");
@@ -6805,16 +6806,6 @@ void CTFPlayer::BecomeJuggernaught()
 	m_Shared.OnAddJauggernaught();
 }
 
-void CTFPlayer::IncrementDuelWins()
-{
-	m_iDuelWins++;
-}
-
-void CTFPlayer::ResetDuelWins()
-{
-	m_iDuelWins = 0;
-}
-
 //=========================================================================
 // Displays the state of the items specified by the Goal passed in
 void CTFPlayer::DisplayLocalItemStatus( CTFGoal *pGoal )
@@ -6877,7 +6868,7 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 	{
 		//if player leaves in the mid of a duel (ragequit) it resigns,
 		//player who did not leave wins and match ends
-		if (TFGameRules()->IsDueler(this) && !TFGameRules()->IsInWaitingForPlayers())
+		if (TFGameRules()->IsRageQuitter(this))
 			TFGameRules()->DuelRageQuit(this);
 		else
 			TFGameRules()->RemoveFromDuelQueue(this);

@@ -112,6 +112,12 @@ void CWeaponGrapple::PrimaryAttack(void)
 #ifdef GAME_DLL
 	gamestats->Event_WeaponFired(pPlayer, true, GetClassname());
 
+	bool bCenter = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_bCenterfireProjectile;
+	int iQuakeCvar = 0;
+
+	if ( !pPlayer->IsFakeClient() )
+		iQuakeCvar = V_atoi( engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered") );
+
 	//Obligatory for MP so the sound can be played
 	CDisablePredictionFiltering disabler;
 	WeaponSound( SINGLE );
@@ -125,6 +131,12 @@ void CWeaponGrapple::PrimaryAttack(void)
 
 	Vector vecSrc;
 	Vector vecOffset(30.f, 4.f, -6.0f);
+	if ( bCenter || iQuakeCvar )
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
 	QAngle angle;
 	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angle, false);
 

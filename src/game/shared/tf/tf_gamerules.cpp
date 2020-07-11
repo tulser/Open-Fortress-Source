@@ -1448,33 +1448,108 @@ void CTFGameRules::SetRetroMode( int nRetroMode)
 // Purpose: Duel stuff
 //-----------------------------------------------------------------------------
 #ifdef GAME_DLL
+
+//The goal of this is keeping track of the duel queue throughtout the matches
+class CDuelQueue : CAutoGameSystem
+{
+public:
+
+	CDuelQueue() : CAutoGameSystem("CDuelQueue") {}
+
+	virtual bool Init();
+
+	int		GetDuelQueuePos(CBaseEntity *pPlayer);
+	CTFPlayer *GetDueler(int index);
+	void 	PlaceIntoDuelQueue(CBaseEntity *pPlayer);
+	void	RemoveFromDuelQueue(CBaseEntity *pPlayer);
+
+	void	IncreaseDuelerWins(CBaseEntity *pPlayer);
+	void	ResetDuelerWins(CBaseEntity *pPlayer);
+	int		GetDuelerWins(CBaseEntity *pPlayer);
+
+private:
+
+	CUtlVector<int> m_hDuelQueue;
+	int m_iDuelerWins[32];
+};
+
+bool CDuelQueue::Init()
+{
+	for (int i = 0; i < 32; i++)
+		m_iDuelerWins[i] = 0;
+
+	return true;
+}
+
+int CDuelQueue::GetDuelQueuePos(CBaseEntity *pPlayer)
+{
+	return m_hDuelQueue.Find(pPlayer->entindex());
+}
+
+CTFPlayer *CDuelQueue::GetDueler(int index)
+{
+	return ToTFPlayer( UTIL_PlayerByIndex (m_hDuelQueue[index] ) );
+}
+
+void CDuelQueue::PlaceIntoDuelQueue(CBaseEntity *pPlayer)
+{
+	m_hDuelQueue.AddToTail(pPlayer->entindex());
+	//Msg("player with index %d was placed in queue position %d\n", pPlayer->entindex(), GetDuelQueuePos(pPlayer));
+}
+
+void CDuelQueue::RemoveFromDuelQueue(CBaseEntity *pPlayer)
+{
+	if (m_hDuelQueue.HasElement(pPlayer->entindex()))
+	{
+		//Msg("player with index %d was removed from the queue\n", pPlayer->entindex());
+		m_hDuelQueue.FindAndRemove(pPlayer->entindex());
+		ResetDuelerWins(pPlayer);
+	}
+}
+
+void CDuelQueue::IncreaseDuelerWins(CBaseEntity *pPlayer)
+{
+	m_iDuelerWins[pPlayer->entindex()]++;
+}
+
+int CDuelQueue::GetDuelerWins(CBaseEntity *pPlayer)
+{
+	return m_iDuelerWins[pPlayer->entindex()];
+}
+
+void CDuelQueue::ResetDuelerWins(CBaseEntity *pPlayer)
+{
+	m_iDuelerWins[pPlayer->entindex()] = 0;
+}
+
+CDuelQueue g_pDuelQueue;
+
+//**************************************************************
+//**************************************************************
+
 int CTFGameRules::GetDuelQueuePos( CBasePlayer *pPlayer )
 {
-	return m_hDuelQueue.Find( ToTFPlayer(pPlayer) );
+	return g_pDuelQueue.GetDuelQueuePos( pPlayer );
 }
 
 bool CTFGameRules::CheckDuelOvertime()
 {
-	return m_hDuelQueue[0]->FragCount() == m_hDuelQueue[1]->FragCount();
+	return g_pDuelQueue.GetDueler(0)->FragCount() == g_pDuelQueue.GetDueler(1)->FragCount();
 }
 
 bool CTFGameRules::IsDueler( CBasePlayer *pPlayer )
 {
-	return GetDuelQueuePos( ToTFPlayer(pPlayer) ) < 2;
+	return GetDuelQueuePos( pPlayer ) < 2;
 }
 
 void CTFGameRules::PlaceIntoDuelQueue( CBasePlayer *pPlayer )
 {
-	m_hDuelQueue.AddToTail( ToTFPlayer(pPlayer) );
+	g_pDuelQueue.PlaceIntoDuelQueue( pPlayer );
 }
 
-void CTFGameRules::RemoveFromDuelQueue( CTFPlayer *pPlayer )
+void CTFGameRules::RemoveFromDuelQueue(CBasePlayer *pPlayer)
 {
-	if( m_hDuelQueue.HasElement( pPlayer ) )
-	{
-		m_hDuelQueue.FindAndRemove(pPlayer);
-		pPlayer->ResetDuelWins();
-	}
+	g_pDuelQueue.RemoveFromDuelQueue( pPlayer );
 }
 
 void CTFGameRules::DuelRageQuit( CTFPlayer *pRager )
@@ -1486,33 +1561,28 @@ void CTFGameRules::DuelRageQuit( CTFPlayer *pRager )
 	//find the winner, it is the player at index 1 or 0 of the duel queue
 	int iRagerIndex = GetDuelQueuePos(pRager);
 	//update queue
-	ProgressDuelQueues( m_hDuelQueue[iRagerIndex == 1 ? 0 : 1], pRager, true );
+	ProgressDuelQueues(g_pDuelQueue.GetDueler(iRagerIndex == 1 ? 0 : 1), pRager, true);
 }
 
 void CTFGameRules::ProgressDuelQueues(CTFPlayer *pWinner, CTFPlayer *pLoser, bool rageQuit)
 {
-	//If there is only one player in queue nothing happens
-	if (m_hDuelQueue.Size() <= 1)
-		return;
-
 	//Loser gets thrown to the bottom of the queue
-	RemoveFromDuelQueue(pLoser);
-	if(!rageQuit)
-		PlaceIntoDuelQueue(pLoser);
+	g_pDuelQueue.RemoveFromDuelQueue(pLoser);
+	if (!rageQuit)
+		g_pDuelQueue.PlaceIntoDuelQueue(pLoser);
 
 	//winner gets thrown to the bottom of the queue if server
 	//is using a wins limit, to ensure a player with a much
 	//higher skill set does not suck the fun out of everybody
+	g_pDuelQueue.IncreaseDuelerWins(pWinner);
 	int iWinLimit = of_duel_winlimit.GetInt();
-	if (iWinLimit && iWinLimit <= pWinner->GetDuelWins())
+	if (iWinLimit && g_pDuelQueue.GetDuelerWins(pWinner) >= iWinLimit)
 	{
-		RemoveFromDuelQueue(pWinner);
-		PlaceIntoDuelQueue(pWinner);
+		g_pDuelQueue.RemoveFromDuelQueue(pWinner);
+		g_pDuelQueue.PlaceIntoDuelQueue(pWinner);
 	}
-	else
-	{
-		pWinner->IncrementDuelWins();
-	}
+
+	//Msg("queue has progressed, winner now has positon %d with %d wins and loser position %d\n", GetDuelQueuePos(pWinner), g_pDuelQueue.GetDuelerWins(pWinner), GetDuelQueuePos(pLoser));
 }
 #endif
 
@@ -1561,7 +1631,7 @@ bool CTFGameRules::CanChangelevelBecauseOfTimeLimit( void )
 //-----------------------------------------------------------------------------
 bool CTFGameRules::CanGoToStalemate( void )
 {
-	if(TFGameRules()->IsDuelGamemode() && TFGameRules()->CheckDuelOvertime())
+	if(IsDuelGamemode() && CheckDuelOvertime())
 		return false;
 
 	// In CTF, don't go to stalemate if one of the flags isn't at home
@@ -4914,7 +4984,7 @@ void CTFGameRules::CreateStandardEntities()
 //-----------------------------------------------------------------------------
 // Purpose: determine the class name of the weapon that got a kill
 //-----------------------------------------------------------------------------
-const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim )
+const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTFPlayer *pVictim, int *weaponType )
 {
 	CBaseEntity *pInflictor = info.GetInflictor();
 	CBaseEntity *pKiller = info.GetAttacker();
@@ -4939,15 +5009,23 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	}
 	else if ( pScorer && pInflictor && ( pInflictor == pScorer ) )
 	{
+		CTFWeaponBase *pWeapon = ToTFPlayer(pScorer)->GetActiveTFWeapon();
+		
 		// If the inflictor is the killer,  then it must be their current weapon doing the damage
-		if ( pScorer->GetActiveWeapon() )
+		if (pWeapon)
 		{
-			killer_weapon_name = pScorer->GetActiveWeapon()->GetClassname(); 
+			killer_weapon_name = pWeapon->GetClassname();
+
+			if (weaponType != NULL && WeaponID_IsMeleeWeapon(pWeapon->GetWeaponID()))
+				*weaponType = 1;
 		}
 	}
 	else if ( pInflictor )
 	{
 		killer_weapon_name = STRING( pInflictor->m_iClassname );
+
+		if (weaponType != NULL && IsExplosiveProjectile(killer_weapon_name))
+			*weaponType = 2; //explosive projectile
 	}
 	
 	static char temp[128];
@@ -5105,7 +5183,8 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 	CTFPlayer *pAssister = ToTFPlayer(GetAssister(pVictim, pScorer, pInflictor));
 
 	// Work out what killed the player, and send a message to all clients about it
-	const char *killer_weapon_name = GetKillingWeaponName(info, pTFPlayerVictim);
+	int weaponType = 0;
+	const char *killer_weapon_name = GetKillingWeaponName(info, pTFPlayerVictim, &weaponType);
 
 	IGameEvent *event = gameeventmanager->CreateEvent("player_death");
 
@@ -5131,10 +5210,8 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 			event->SetInt("attacker", pScorer->GetUserID());
 
 		//medals, only activate after warmup
-		if(!IsInWaitingForPlayers())
+		if (!IsInWaitingForPlayers() && State_Get() > GR_STATE_PREGAME)
 		{
-			int weaponType = 0;
-
 			if(pScorer)
 			{
 				//streaks
@@ -5142,9 +5219,6 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
 				event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
 				event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
-
-				if(info.GetDamageCustom() != TF_DMG_CUSTOM_BURNING)
-					weaponType = GetKillingWeaponType(pInflictor, pScorer);
 			}
 
 			//more streaks
@@ -5213,30 +5287,6 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 void CTFGameRules::ResetDeathInflictor(int index)
 {
 	m_InflictorsArray[index] = NULL;
-}
-
-int CTFGameRules::GetKillingWeaponType(CBaseEntity *pInflictor, CBasePlayer *pScorer)
-{
-	if (pScorer && pInflictor && (pInflictor == pScorer))
-	{
-		CTFWeaponBase *pWeapon = ToTFPlayer(pScorer)->GetActiveTFWeapon();
-		int weaponID = 0;
-
-		if (pWeapon)
-			weaponID = pWeapon->GetWeaponID();
-		else
-			return weaponID;
-
-		if(WeaponID_IsMeleeWeapon(weaponID))
-			return 1; //meleee
-	}
-	else if (pInflictor)
-	{
-		if(IsExplosiveProjectile(STRING(pInflictor->m_iClassname)))
-			return 2; //explosive projectile
-	}
-
-	return 0; //no special weapon
 }
 
 void CTFGameRules::ClientDisconnected( edict_t *pClient )

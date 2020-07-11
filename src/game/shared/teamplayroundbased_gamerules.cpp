@@ -2930,7 +2930,7 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 		// If duel is on, only respawn the first two players in the queue
 		if( TFGameRules()->IsDuelGamemode() )
 		{
-			if( TFGameRules()->GetDuelQueuePos(pPlayer) > 1 )
+			if ( !TFGameRules()->IsDueler( pPlayer ) )
 			{
 				pPlayer->CommitSuicide(true, true);
 				continue;

@@ -7669,8 +7669,13 @@ void CBasePlayer::ChangeTeam( int iTeamNum, bool bAutoTeam, bool bSilent)
 
 #ifdef OF_DLL
 	//Duel Ragequit
-	if (TFGameRules()->IsDuelGamemode() && iTeamNum == TEAM_SPECTATOR && TFGameRules()->IsDueler(this) && !TFGameRules()->IsInWaitingForPlayers())
-		TFGameRules()->DuelRageQuit(ToTFPlayer(this));
+	if (TFGameRules()->IsDuelGamemode() && iTeamNum == TEAM_SPECTATOR)
+	{
+		if (TFGameRules()->IsRageQuitter(this))
+			TFGameRules()->DuelRageQuit(ToTFPlayer(this));
+		else
+			TFGameRules()->RemoveFromDuelQueue(this);
+	}
 #endif
 
 	BaseClass::ChangeTeam( iTeamNum );
