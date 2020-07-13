@@ -176,22 +176,6 @@ void CWeaponGrapple::PrimaryAttack(void)
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Output : Returns true on success, false on failure.
-//-----------------------------------------------------------------------------
-bool CWeaponGrapple::Reload(void)
-{
-	//Redraw the weapon
-	SendWeaponAnim(ACT_VM_IDLE); //ACT_VM_RELOAD
-	//Update our times
-	m_flNextPrimaryAttack = gpGlobals->curtime + 1.f;
-	//Mark this as done
-	m_iAttached = 0;
-
-	return true;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::ItemPostFrame(void)
 {
@@ -243,10 +227,9 @@ void CWeaponGrapple::ItemPostFrame(void)
 			}
 		}
 	}
-	else
+	else if (m_iAttached)
 	{
-		if (m_iAttached)
-			RemoveHook();
+		RemoveHook();
 	}
 }
 
@@ -305,9 +288,6 @@ void CWeaponGrapple::RemoveHook(void)
 	}
 #endif
 
-	m_hHook = NULL;
-	Reload();
-
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
 
 	if (pPlayer)
@@ -315,6 +295,11 @@ void CWeaponGrapple::RemoveHook(void)
 		pPlayer->m_Shared.SetHook(NULL);
 		pPlayer->m_Shared.SetHookProperty(0.f);
 	}
+
+	m_hHook = NULL;
+	SendWeaponAnim(ACT_VM_IDLE); //ACT_VM_RELOAD
+	m_flNextPrimaryAttack = gpGlobals->curtime + 1.f;
+	m_iAttached = 0;
 }
  
 //-----------------------------------------------------------------------------
@@ -347,7 +332,8 @@ void CWeaponGrapple::Drop( const Vector &vecVelocity )
  
 	BaseClass::Drop( vecVelocity );
 }
- 
+
+#ifdef GAME_DLL
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -364,7 +350,6 @@ void CWeaponGrapple::NotifyHookAttached(void)
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::DrawBeam(const Vector &endPos, const float width)
 {
-#ifdef GAME_DLL
 	//Draw the main beam shaft
 	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
 
@@ -394,8 +379,8 @@ void CWeaponGrapple::DrawBeam(const Vector &endPos, const float width)
 	pBeam->SetScrollRate(scrollOffset);
 	
 	UpdateWaterState();
-#endif
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -514,6 +499,14 @@ void CGrappleHook::Precache(void)
 //-----------------------------------------------------------------------------
 void CGrappleHook::FlyThink(void)
 {
+	if(!m_hOwner)
+	{
+		SetThink(NULL);
+		SetTouch(NULL);
+		UTIL_Remove(this);
+		return;
+	}
+
 	if ((GetAbsOrigin() - m_hOwner->GetAbsOrigin()).Length() >= MAX_ROPE_LENGTH)
 	{
 		m_hOwner->RemoveHook();
@@ -588,7 +581,7 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 
 bool CGrappleHook::HookLOS()
 {
-	CBaseEntity *player = m_hOwner->GetOwner();
+	CBaseEntity *player = (CGrappleHook *)m_hOwner->GetOwner();
 	Vector playerCenter = player->GetAbsOrigin();
 	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
 
