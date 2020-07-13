@@ -78,7 +78,6 @@ CWeaponGrapple::CWeaponGrapple( void )
 	
 #ifdef GAME_DLL
 	m_hHook			= NULL;
-	m_pLightGlow	= NULL;
 	pBeam			= NULL;
 #endif
 }
@@ -275,16 +274,12 @@ void CWeaponGrapple::RemoveHook(void)
 #ifdef GAME_DLL
 	m_hHook->SetTouch(NULL);
 	m_hHook->SetThink(NULL);
-
 	UTIL_Remove(m_hHook);
 
 	if (pBeam)
 	{
 		UTIL_Remove(pBeam); //Kill beam
 		pBeam = NULL;
-
-		UTIL_Remove(m_pLightGlow); //Kill sprite
-		m_pLightGlow = NULL;
 	}
 #endif
 
@@ -307,19 +302,17 @@ void CWeaponGrapple::RemoveHook(void)
 //-----------------------------------------------------------------------------
 bool CWeaponGrapple::CanHolster(void)
 {
-	//Can't have an active hook out
-	if (m_hHook)
-		RemoveHook();
+	CBaseEntity *Hook = NULL;
+#ifdef GAME_DLL
+	Hook = m_hHook;
+#else
+	Hook = m_hHook.Get();
+#endif
+
+	if (Hook)
+		return false;
 
 	return BaseClass::CanHolster();
-}
-
-bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
-{
-	if ( m_hHook )
-		RemoveHook();
- 
-	return BaseClass::Holster( pSwitchingTo );
 }
 
 //-----------------------------------------------------------------------------
@@ -327,8 +320,15 @@ bool CWeaponGrapple::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::Drop( const Vector &vecVelocity )
 {
-	if (m_hHook)
-		RemoveHook();
+	CBaseEntity *Hook = NULL;
+#ifdef GAME_DLL
+	Hook = m_hHook;
+#else
+	Hook = m_hHook.Get();
+#endif
+
+	if (Hook)
+		return;
  
 	BaseClass::Drop( vecVelocity );
 }
@@ -380,7 +380,6 @@ void CWeaponGrapple::DrawBeam(const Vector &endPos, const float width)
 	
 	UpdateWaterState();
 }
-#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -389,7 +388,6 @@ void CWeaponGrapple::DrawBeam(const Vector &endPos, const float width)
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::DoImpactEffect( trace_t &tr, int nDamageType )
 {
-#ifdef GAME_DLL
 	if ( !(tr.surface.flags & SURF_SKY) )
 	{
 		CPVSFilter filter( tr.endpos );
@@ -397,8 +395,9 @@ void CWeaponGrapple::DoImpactEffect( trace_t &tr, int nDamageType )
 		m_nBulletType = GetAmmoDef()->Index("GaussEnergy");
 		UTIL_ImpactTrace( &tr, m_nBulletType );
 	}
-#endif
 }
+
+#endif
 
 //**************************************************************************
 //HOOK

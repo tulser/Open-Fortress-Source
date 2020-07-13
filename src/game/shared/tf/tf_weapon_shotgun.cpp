@@ -242,7 +242,6 @@ CTFEternalShotgun::CTFEternalShotgun(void)
 
 #ifdef GAME_DLL
 	m_hHook = NULL;
-	m_pLightGlow = NULL;
 	pBeam = NULL;
 #endif
 }
@@ -252,10 +251,39 @@ void CTFEternalShotgun::Precache(void)
 #ifdef GAME_DLL
 	UTIL_PrecacheOther("grapple_hook");
 #endif
-
 	PrecacheModel("cable/cable_grey.vmt");
 
 	BaseClass::Precache();
+}
+
+bool CTFEternalShotgun::CanHolster(void) const
+{
+	CBaseEntity *Hook = NULL;
+#ifdef GAME_DLL
+	Hook = m_hHook;
+#else
+	Hook = m_hHook.Get();
+#endif
+
+	if (Hook)
+		return false;
+
+	return BaseClass::CanHolster();
+}
+
+void CTFEternalShotgun::Drop(const Vector &vecVelocity)
+{
+	CBaseEntity *Hook = NULL;
+#ifdef GAME_DLL
+	Hook = m_hHook;
+#else
+	Hook = m_hHook.Get();
+#endif
+
+	if (Hook)
+		return;
+
+	return BaseClass::Drop(vecVelocity);
 }
 
 void CTFEternalShotgun::ItemPostFrame()
@@ -444,9 +472,6 @@ void CTFEternalShotgun::RemoveHook(void)
 	{
 		UTIL_Remove(pBeam); //Kill beam
 		pBeam = NULL;
-
-		UTIL_Remove(m_pLightGlow); //Kill sprite
-		m_pLightGlow = NULL;
 	}
 
 	if (m_hHooked)

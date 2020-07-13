@@ -126,16 +126,19 @@ public:
 
 	CTFEternalShotgun();
 
-	virtual int		GetWeaponID(void) const { return TF_WEAPON_ETERNALSHOTGUN; }
+	int				GetWeaponID(void) const { return TF_WEAPON_ETERNALSHOTGUN; }
 
-	virtual void	Precache(void);
+	void			Precache(void);
 
-	virtual void	PrimaryAttack();
-	virtual void	SecondaryAttack();
-	virtual void	ItemPostFrame();
+	void			PrimaryAttack();
+	void			SecondaryAttack();
+	void			ItemPostFrame();
 	void			RemoveHook(void);
 
-	virtual bool	CanSoftZoom(void) { return false; }
+	bool			CanHolster(void) const;
+	void            Drop(const Vector &vecVelocity);
+
+	bool			CanSoftZoom(void) { return false; }
 
 #ifdef GAME_DLL
 	void			NotifyHookAttached(CTFPlayer *hooked = NULL);
@@ -147,9 +150,8 @@ private:
 	void InitiateHook(CTFPlayer * pPlayer, CBaseEntity *hook);
 
 #ifdef GAME_DLL
-	CHandle<CBeam>		pBeam;
-	CHandle<CSprite>	m_pLightGlow;
-	CNetworkHandle(CTFPlayer, m_hHooked);		//server hook
+	CHandle<CBeam>				pBeam;
+	CNetworkHandle(CTFPlayer,	m_hHooked);		//server hook
 	CNetworkHandle(CBaseEntity, m_hHook);		//server hooked player
 #else
 	EHANDLE			m_hHook;					//client hook relay

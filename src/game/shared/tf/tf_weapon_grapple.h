@@ -39,19 +39,18 @@ public:
 
 	CWeaponGrapple( void );
 
-	virtual void    Precache( void );
-	virtual void    PrimaryAttack( void );
+	void			Precache( void );
+	void			PrimaryAttack( void );
 	bool            CanHolster( void );
-	virtual bool    Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
 	void            Drop( const Vector &vecVelocity );
-	virtual void    ItemPostFrame( void );
-
+	void			ItemPostFrame( void );
 	void			RemoveHook(void);
-	void			DoImpactEffect(trace_t &tr, int nDamageType);
+	
 
 #ifdef GAME_DLL
 	void			NotifyHookAttached(void);
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
+	void			DoImpactEffect(trace_t &tr, int nDamageType);
 #endif
 
 	DECLARE_NETWORKCLASS(); 
@@ -59,19 +58,15 @@ public:
 
 private:
 
-	friend class CTFEternalShotgun;
-
 	void InitiateHook(CTFPlayer * pPlayer, CBaseEntity *hook);
 
 #ifdef GAME_DLL
-	CHandle<CBeam>		pBeam;
-	CHandle<CSprite>	m_pLightGlow;
+	CHandle<CBeam>				pBeam;
 	CNetworkHandle(CBaseEntity, m_hHook);		//server hook
 #else
-	EHANDLE			m_hHook;				//client hook relay
+	EHANDLE						m_hHook;		//client hook relay
 #endif
 
-	CWeaponGrapple(const CWeaponGrapple &);
 	CNetworkVar(int, m_iAttached);
 	CNetworkVar(int, m_nBulletType);
 };
