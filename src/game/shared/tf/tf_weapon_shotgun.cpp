@@ -253,9 +253,7 @@ void CTFEternalShotgun::Precache(void)
 	UTIL_PrecacheOther("grapple_hook");
 #endif
 
-	PrecacheModel("cable/cable_red.vmt");
-	PrecacheModel("cable/cable_blue.vmt");
-	PrecacheModel("cable/cable_purple.vmt");
+	PrecacheModel("cable/cable_grey.vmt");
 
 	BaseClass::Precache();
 }
@@ -398,7 +396,7 @@ void CTFEternalShotgun::SecondaryAttack()
 	m_hHook = pHook;
 
 	//Initialize the beam
-	DrawBeam(m_hHook->GetAbsOrigin());
+	DrawBeam(m_hHook->GetAbsOrigin(), 1.f);
 #endif
 
 	m_bCanRefire = false;
@@ -487,12 +485,7 @@ void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
 		return;
 
 	//Pick cable color
-	if (pPlayer->GetTeamNumber() == TF_TEAM_RED)
-		pBeam = CBeam::BeamCreate("cable/cable_red.vmt", width);
-	else if (pPlayer->GetTeamNumber() == TF_TEAM_BLUE)
-		pBeam = CBeam::BeamCreate("cable/cable_blue.vmt", width);
-	else
-		pBeam = CBeam::BeamCreate("cable/cable_purple.vmt", width);
+	pBeam = CBeam::BeamCreate("cable/cable_grey.vmt", width);
 
 	//Set where it ends
 	pBeam->PointEntInit(endPos, this);

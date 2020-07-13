@@ -502,6 +502,7 @@ bool CTFBot::IsHitScanWeapon( CTFWeaponBase *weapon ) const
 		// open fortress weaponry
 		case TF_WEAPON_RAILGUN:
 		case TF_WEAPON_SUPERSHOTGUN:
+		case TF_WEAPON_ETERNALSHOTGUN:
 		case TF_WEAPON_PISTOL_MERCENARY:
 		case TF_WEAPON_REVOLVER_MERCENARY:
 		case TF_WEAPON_GATLINGGUN:

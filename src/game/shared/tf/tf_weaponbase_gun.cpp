@@ -428,7 +428,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 
 	if ( m_iClip1 != -1 )
 	{
-		if ( !of_noreload.GetBool() || ReserveAmmo() <= 0 || ( pWeapon && (pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN) ) )
+		if ( !of_noreload.GetBool() || ReserveAmmo() <= 0 || ( pWeapon && (pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN || pWeapon->GetWeaponID() == TF_WEAPON_ETERNALSHOTGUN ) ) )
 		{
 			m_iClip1 -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
 		}
