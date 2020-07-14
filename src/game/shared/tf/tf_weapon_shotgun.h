@@ -11,7 +11,9 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
-#include "tf_weapon_grapple.h"
+#include "Sprite.h"
+#include "rope_shared.h"
+#include "beam_shared.h"
 
 #ifdef CLIENT_DLL
 #define CTFShotgun C_TFShotgun
@@ -163,9 +165,9 @@ private:
 };
 
 #ifdef GAME_DLL
-class CTFMeatHook : public CGrappleHook
+class CTFMeatHook : public CBaseCombatCharacter
 {
-	DECLARE_CLASS(CTFMeatHook, CGrappleHook);
+	DECLARE_CLASS(CTFMeatHook, CBaseCombatCharacter);
 
 public:
 
@@ -177,6 +179,10 @@ public:
 	CTFSuperShotgun *GetOwner(void) { return m_hOwner; }
 	bool HookLOS();
 
+	bool CreateVPhysics(void);
+	unsigned int PhysicsSolidMaskForEntity() const;
+	Class_T Classify(void) { return CLASS_NONE; }
+
 protected:
 
 	DECLARE_DATADESC();
@@ -186,7 +192,8 @@ private:
 	void HookTouch(CBaseEntity *pOther);
 	void FlyThink(void);
 	
-	CTFEternalShotgun		*m_hOwner;
+	CTFEternalShotgun	*m_hOwner;
+	CTFPlayer			*m_hPlayer;
 };
 #endif
 

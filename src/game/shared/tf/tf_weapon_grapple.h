@@ -88,10 +88,10 @@ public:
 	static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
 	bool HookLOS();
 
-	virtual bool CreateVPhysics( void );
-	virtual unsigned int PhysicsSolidMaskForEntity() const;
+	bool CreateVPhysics( void );
+	unsigned int PhysicsSolidMaskForEntity() const;
 	CWeaponGrapple *GetOwner(void) { return m_hOwner; }
-	virtual Class_T Classify( void ) { return CLASS_NONE; }
+	Class_T Classify( void ) { return CLASS_NONE; }
  
 protected:
 
@@ -99,10 +99,8 @@ protected:
  
 private:
 
-	friend class CTFMeatHook;
-
 	void HookTouch( CBaseEntity *pOther );
-	virtual void FlyThink( void );
+	void FlyThink( void );
   
 	CWeaponGrapple		*m_hOwner;
 	CTFPlayer			*m_hPlayer;
