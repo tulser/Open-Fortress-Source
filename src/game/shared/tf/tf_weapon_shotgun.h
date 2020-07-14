@@ -11,7 +11,9 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
-#include "tf_weapon_grapple.h"
+#include "Sprite.h"
+#include "rope_shared.h"
+#include "beam_shared.h"
 
 #ifdef CLIENT_DLL
 #define CTFShotgun C_TFShotgun
