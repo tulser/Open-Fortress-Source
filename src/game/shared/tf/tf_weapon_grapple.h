@@ -99,7 +99,7 @@ protected:
  
 private:
 
-	friend class MeatHook;
+	friend class CTFMeatHook;
 
 	void HookTouch( CBaseEntity *pOther );
 	virtual void FlyThink( void );

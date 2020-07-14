@@ -141,13 +141,13 @@ public:
 	bool			CanSoftZoom(void) { return false; }
 
 #ifdef GAME_DLL
-	void			NotifyHookAttached(CTFPlayer *hooked = NULL);
+	void			NotifyHookAttached(CTFPlayer *pTarget = NULL);
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
 #endif
 
 private:
 
-	void InitiateHook(CTFPlayer * pPlayer, CBaseEntity *hook);
+	void InitiateHook(CTFPlayer * pPlayer, CBaseEntity *pHook);
 
 #ifdef GAME_DLL
 	CHandle<CBeam>				pBeam;
@@ -163,17 +163,17 @@ private:
 };
 
 #ifdef GAME_DLL
-class MeatHook : public CGrappleHook
+class CTFMeatHook : public CGrappleHook
 {
-	DECLARE_CLASS(MeatHook, CGrappleHook);
+	DECLARE_CLASS(CTFMeatHook, CGrappleHook);
 
 public:
 
-	MeatHook(void) {}
-	~MeatHook(void);
+	CTFMeatHook(void) {}
+	~CTFMeatHook(void);
 	void Spawn(void);
 	void Precache(void);
-	static MeatHook *HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL);
+	static CTFMeatHook *HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pEntOwner = NULL);
 	CTFSuperShotgun *GetOwner(void) { return m_hOwner; }
 	bool HookLOS();
 

@@ -202,35 +202,29 @@ acttable_t *CTFSuperShotgun::ActivityList(int &iActivityCount)
 #define BOLT_WATER_VELOCITY	1500
 #define HOOK_PULL			720.f
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFEternalShotgun, DT_TFWeaponShovel )
+
+BEGIN_NETWORK_TABLE( CTFEternalShotgun, DT_EternalShotgun )
 #ifdef CLIENT_DLL
-
-#undef CTFEternalShotgun
-
-IMPLEMENT_CLIENTCLASS_DT(C_TFEternalShotgun, DT_EternalShotgun, CTFEternalShotgun)
 	RecvPropInt(RECVINFO(m_iAttached)),
 	RecvPropBool(RECVINFO(m_bCanRefire)),
 	RecvPropEHandle(RECVINFO(m_hHook)),
 	RecvPropEHandle(RECVINFO(m_hHooked)),
-END_NETWORK_TABLE()
-
-#define CTFEternalShotgun C_TFEternalShotgun
-
 #else
-IMPLEMENT_SERVERCLASS_ST(CTFEternalShotgun, DT_EternalShotgun)
 	SendPropInt(SENDINFO(m_iAttached)),
 	SendPropBool(SENDINFO(m_bCanRefire)),
 	SendPropEHandle(SENDINFO(m_hHook)),
 	SendPropEHandle(SENDINFO(m_hHooked)),
+#endif
 END_NETWORK_TABLE()
-#endif
 
+BEGIN_PREDICTION_DATA( CTFEternalShotgun )
 #ifdef CLIENT_DLL
-BEGIN_PREDICTION_DATA(CTFEternalShotgun)
-	DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
-END_PREDICTION_DATA()
+DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
 #endif
+END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS(tf_weapon_eternalshotgun, CTFEternalShotgun);
+LINK_ENTITY_TO_CLASS( tf_weapon_eternalshotgun, CTFEternalShotgun );
 
 CTFEternalShotgun::CTFEternalShotgun(void)
 {
@@ -258,14 +252,14 @@ void CTFEternalShotgun::Precache(void)
 
 bool CTFEternalShotgun::CanHolster(void) const
 {
-	CBaseEntity *Hook = NULL;
+	CBaseEntity *pHook = NULL;
 #ifdef GAME_DLL
-	Hook = m_hHook;
+	pHook = m_hHook;
 #else
-	Hook = m_hHook.Get();
+	pHook = m_hHook.Get();
 #endif
 
-	if (Hook)
+	if( pHook )
 		return false;
 
 	return BaseClass::CanHolster();
@@ -273,14 +267,14 @@ bool CTFEternalShotgun::CanHolster(void) const
 
 void CTFEternalShotgun::Drop(const Vector &vecVelocity)
 {
-	CBaseEntity *Hook = NULL;
+	CBaseEntity *pHook = NULL;
 #ifdef GAME_DLL
-	Hook = m_hHook;
+	pHook = m_hHook;
 #else
-	Hook = m_hHook.Get();
+	pHook = m_hHook.Get();
 #endif
 
-	if (Hook)
+	if( pHook )
 		return;
 
 	return BaseClass::Drop(vecVelocity);
@@ -288,42 +282,42 @@ void CTFEternalShotgun::Drop(const Vector &vecVelocity)
 
 void CTFEternalShotgun::ItemPostFrame()
 {
-	CBaseEntity *Hook = NULL;
+	CBaseEntity *pHook = NULL;
 #ifdef GAME_DLL
-	Hook = m_hHook;
+	pHook = m_hHook;
 
-	if (Hook)
+	if( pHook )
 	{
 		//Update the beam depending on the hook position
 		if (pBeam && !m_iAttached)
 		{
 			//Set where it ends
-			pBeam->PointEntInit(m_hHook->GetAbsOrigin(), this);
-			pBeam->SetEndAttachment(LookupAttachment("muzzle"));
+			pBeam->PointEntInit( m_hHook->GetAbsOrigin(), this );
+			pBeam->SetEndAttachment( LookupAttachment("muzzle") );
 		}
 
 		//Invalidate hook if it is not in sight
-		if (m_iAttached && !dynamic_cast<MeatHook *>(Hook)->HookLOS())
+		if (m_iAttached && !dynamic_cast<CTFMeatHook *>(pHook)->HookLOS())
 			RemoveHook();
 	}
 #else
-	Hook = m_hHook.Get();
+	pHook = m_hHook.Get();
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
 	if (!pPlayer || !pPlayer->IsAlive() || (m_iAttached && !m_hHooked) || (m_hHooked && !m_hHooked->IsAlive()))
 	{
-		if (Hook)
+		if (pHook)
 			RemoveHook();
 		return;
 	}
 
-	if (Hook && m_iAttached) //hook is attached to something
+	if (pHook && m_iAttached) //hook is attached to something
 	{
-		if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)
+		if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)
 			RemoveHook();
 		else if (m_iAttached == 2) //notify player how it should behave
-			InitiateHook(pPlayer, Hook);
+			InitiateHook(pPlayer, pHook);
 	}
 
 	BaseClass::ItemPostFrame();
@@ -336,14 +330,14 @@ void CTFEternalShotgun::PrimaryAttack()
 {
 	BaseClass::PrimaryAttack();
 
-	CBaseEntity *Hook = NULL;
+	CBaseEntity *pHook = NULL;
 #ifdef GAME_DLL
-	Hook = m_hHook;
+	pHook = m_hHook;
 #else
-	Hook = m_hHook.Get();
+	pHook = m_hHook.Get();
 #endif
 
-	if (Hook)
+	if( pHook )
 		RemoveHook();
 }
 
@@ -412,7 +406,7 @@ void CTFEternalShotgun::SecondaryAttack()
 	UTIL_TraceLine(vecSrc, vecEnd, MASK_SHOT, pPlayer, COLLISION_GROUP_NONE, &tr);
 
 	//A hook that is not fired out of your face, what a mindblowing concept!
-	MeatHook *pHook = MeatHook::HookCreate(vecSrc, angle, this);
+	CTFMeatHook *pHook = CTFMeatHook::HookCreate(vecSrc, angle, this);
 
 	//Set hook velocity and angle
 	float vel = pPlayer->GetWaterLevel() == 3 ? BOLT_WATER_VELOCITY : BOLT_AIR_VELOCITY;
@@ -431,9 +425,9 @@ void CTFEternalShotgun::SecondaryAttack()
 	m_flNextSecondaryAttack = gpGlobals->curtime + 1.f;
 }
 
-void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *hook)
+void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 {
-	pPlayer->m_Shared.SetHook(hook);
+	pPlayer->m_Shared.SetHook(pHook);
 
 	//player velocity
 	Vector pVel = pPlayer->GetAbsVelocity();
@@ -441,15 +435,15 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *hook)
 	//rope vector
 	Vector playerCenter = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
 	playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
-	Vector rope = hook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
+	Vector pRope = pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
 
 	pPlayer->SetGroundEntity(NULL);
 
-	VectorNormalize(rope);
-	rope = rope * HOOK_PULL;
+	VectorNormalize(pRope);
+	pRope = pRope * HOOK_PULL;
 
 	//Resulting velocity
-	Vector newVel = pVel + rope;
+	Vector newVel = pVel + pRope;
 	float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
 	float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
 
@@ -495,10 +489,10 @@ void CTFEternalShotgun::RemoveHook(void)
 }
 
 #ifdef GAME_DLL
-void CTFEternalShotgun::NotifyHookAttached(CTFPlayer *hooked)
+void CTFEternalShotgun::NotifyHookAttached(CTFPlayer *pTarget)
 {
 	m_iAttached = 2;
-	m_hHooked = hooked;
+	m_hHooked = pTarget;
 }
 
 void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
@@ -536,21 +530,21 @@ void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
 #define BOLT_MODEL			"models/weapons/c_models/c_grapple_proj/c_grapple_proj.mdl"
 #define MAX_ROPE_LENGTH		900.f
 
-LINK_ENTITY_TO_CLASS(meat_hook, MeatHook);
+LINK_ENTITY_TO_CLASS( tf_meat_hook, CTFMeatHook );
 
-BEGIN_DATADESC(MeatHook)
+BEGIN_DATADESC(CTFMeatHook)
 	DEFINE_FUNCTION(HookTouch),
 	DEFINE_FIELD(m_hOwner, FIELD_EHANDLE),
 END_DATADESC()
 
-MeatHook *MeatHook::HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner)
+CTFMeatHook *CTFMeatHook::HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pEntOwner)
 {
-	MeatHook *pHook = (MeatHook *)CreateEntityByName("meat_hook");
+	CTFMeatHook *pHook = (CTFMeatHook *)CreateEntityByName("tf_meat_hook");
 	UTIL_SetOrigin(pHook, vecOrigin);
 	pHook->SetAbsAngles(angAngles);
 	pHook->Spawn();
 
-	CTFEternalShotgun *pOwner = (CTFEternalShotgun *)pentOwner;
+	CTFEternalShotgun *pOwner = (CTFEternalShotgun *)pEntOwner;
 	pHook->m_hOwner = pOwner;
 	pHook->SetOwnerEntity(pOwner->GetOwner());
 	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
@@ -558,13 +552,13 @@ MeatHook *MeatHook::HookCreate(const Vector &vecOrigin, const QAngle &angAngles,
 	return pHook;
 }
 
-MeatHook::~MeatHook(void)
+CTFMeatHook::~CTFMeatHook(void)
 {
 	if (m_hPlayer)
 		m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
 }
 
-void MeatHook::Spawn(void)
+void CTFMeatHook::Spawn(void)
 {
 	Precache();
 
@@ -587,18 +581,18 @@ void MeatHook::Spawn(void)
 	DispatchSpawn(pBolt);
 	pBolt->SetParent(this);
 
-	SetTouch(&MeatHook::HookTouch);
-	SetThink(&MeatHook::FlyThink);
+	SetTouch(&CTFMeatHook::HookTouch);
+	SetThink(&CTFMeatHook::FlyThink);
 	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
-void MeatHook::Precache(void)
+void CTFMeatHook::Precache(void)
 {
 	PrecacheModel(HOOK_MODEL);
 	PrecacheModel(BOLT_MODEL);
 }
 
-void MeatHook::FlyThink(void)
+void CTFMeatHook::FlyThink(void)
 {
 	if (!m_hOwner)
 	{
@@ -617,7 +611,7 @@ void MeatHook::FlyThink(void)
 	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
-void MeatHook::HookTouch(CBaseEntity *pOther)
+void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 {
 	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !HookLOS() || !m_hPlayer)
 	{
@@ -641,9 +635,9 @@ void MeatHook::HookTouch(CBaseEntity *pOther)
 		
 		m_hPlayer->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
 
-		CTFPlayer *hooked = ToTFPlayer(pOther);
-		hooked->m_Shared.AddCond(TF_COND_HOOKED);
-		m_hOwner->NotifyHookAttached(hooked);
+		CTFPlayer *pTarget = ToTFPlayer(pOther);
+		pTarget->m_Shared.AddCond(TF_COND_HOOKED);
+		m_hOwner->NotifyHookAttached(pTarget);
 	}
 	else
 	{
@@ -651,7 +645,7 @@ void MeatHook::HookTouch(CBaseEntity *pOther)
 	}
 }
 
-bool MeatHook::HookLOS()
+bool CTFMeatHook::HookLOS()
 {
 	CBaseEntity *player = m_hOwner->GetOwner();
 	Vector playerCenter = player->GetAbsOrigin();
