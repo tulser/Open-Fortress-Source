@@ -233,8 +233,6 @@ public:
 	bool	GetJumpBuffer() { return m_bBlockJump; }
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration() { return m_flCSlideDuration; }
-	void	SetRampJumpVel(float vel);
-	float	GetRampJumpVel() { return m_flRampJumpVel; }
 
 	// loser state
 	bool	IsLoser( void );
