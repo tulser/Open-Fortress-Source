@@ -349,6 +349,9 @@ void CTFEternalShotgun::PrimaryAttack()
 
 void CTFEternalShotgun::SecondaryAttack()
 {
+	if (!CanAttack())
+		return;
+
 	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
 	if (!pOwner)
 		return;
@@ -596,6 +599,19 @@ void MeatHook::Precache(void)
 {
 	PrecacheModel(HOOK_MODEL);
 	PrecacheModel(BOLT_MODEL);
+}
+
+bool MeatHook::CreateVPhysics(void)
+{
+	// Create the object in the physics system
+	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
+
+	return true;
+}
+
+unsigned int MeatHook::PhysicsSolidMaskForEntity() const
+{
+	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
 }
 
 void MeatHook::FlyThink(void)

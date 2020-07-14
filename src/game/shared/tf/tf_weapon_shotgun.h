@@ -163,9 +163,9 @@ private:
 };
 
 #ifdef GAME_DLL
-class MeatHook : public CGrappleHook
+class MeatHook : public CBaseCombatCharacter
 {
-	DECLARE_CLASS(MeatHook, CGrappleHook);
+	DECLARE_CLASS(MeatHook, CBaseCombatCharacter);
 
 public:
 
@@ -177,6 +177,10 @@ public:
 	CTFSuperShotgun *GetOwner(void) { return m_hOwner; }
 	bool HookLOS();
 
+	bool CreateVPhysics(void);
+	unsigned int PhysicsSolidMaskForEntity() const;
+	Class_T Classify(void) { return CLASS_NONE; }
+
 protected:
 
 	DECLARE_DATADESC();
@@ -186,7 +190,8 @@ private:
 	void HookTouch(CBaseEntity *pOther);
 	void FlyThink(void);
 	
-	CTFEternalShotgun		*m_hOwner;
+	CTFEternalShotgun	*m_hOwner;
+	CTFPlayer			*m_hPlayer;
 };
 #endif
 
