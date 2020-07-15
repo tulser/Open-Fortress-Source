@@ -127,6 +127,7 @@ public:
 	DECLARE_PREDICTABLE();
 
 	CTFEternalShotgun();
+	~CTFEternalShotgun();
 
 	int				GetWeaponID(void) const { return TF_WEAPON_ETERNALSHOTGUN; }
 
@@ -136,8 +137,10 @@ public:
 	void			SecondaryAttack();
 	void			ItemPostFrame();
 	void			RemoveHook(void);
+	CBaseEntity		*GetHookEntity();
 
 	bool			CanHolster(void) const;
+	bool			Holster(CBaseCombatWeapon *pSwitchingTo);
 	void            Drop(const Vector &vecVelocity);
 
 	bool			CanSoftZoom(void) { return false; }
@@ -145,6 +148,7 @@ public:
 #ifdef GAME_DLL
 	void			NotifyHookAttached(CTFPlayer *hooked = NULL);
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
+	bool			HookLOS(Vector hookPos);
 #endif
 
 private:
@@ -153,7 +157,6 @@ private:
 
 #ifdef GAME_DLL
 	CHandle<CBeam>				pBeam;
-	CNetworkHandle(CTFPlayer,	m_hHooked);		//server hook
 	CNetworkHandle(CBaseEntity, m_hHook);		//server hooked player
 #else
 	EHANDLE			m_hHook;					//client hook relay
@@ -176,11 +179,10 @@ public:
 	void Spawn(void);
 	void Precache(void);
 	static MeatHook *HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL);
-	CTFSuperShotgun *GetOwner(void) { return m_hOwner; }
-	bool HookLOS();
+	CTFEternalShotgun *GetOwner(void) { return m_hOwner; }
 
-	bool CreateVPhysics(void);
 	unsigned int PhysicsSolidMaskForEntity() const;
+	bool CreateVPhysics(void);
 	Class_T Classify(void) { return CLASS_NONE; }
 
 protected:
@@ -193,7 +195,6 @@ private:
 	void FlyThink(void);
 	
 	CTFEternalShotgun	*m_hOwner;
-	CTFPlayer			*m_hPlayer;
 };
 #endif
 

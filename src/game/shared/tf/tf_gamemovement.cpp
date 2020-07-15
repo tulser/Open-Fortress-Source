@@ -26,6 +26,7 @@
 	#include "team.h"
 	#include "shareddefs.h"
 	#include "tf_weapon_grapple.h"
+	#include "tf_weapon_shotgun.h"
 #endif
 
 ConVar	tf_maxspeed("tf_maxspeed", "720", FCVAR_NOTIFY | FCVAR_REPLICATED);
@@ -94,7 +95,7 @@ public:
 	virtual void FullWalkMove();
 	virtual void WalkMove(bool CSliding = false);
 	virtual void AirMove(void);
-	virtual void GrapplingMove(const CBaseEntity *hook, bool InWater = false);
+	virtual void GrapplingMove(CBaseEntity *hook, bool InWater = false);
 	virtual float GetAirSpeedCap(void);
 	virtual void FullTossMove(void);
 	virtual void CategorizePosition(void);
@@ -1484,7 +1485,7 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 	}
 
 	// Perform regular water movement
-	const CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
+	CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
 	if (Hook)
 		GrapplingMove(Hook, true);
 	else
@@ -1614,8 +1615,9 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	bool CSliding = false;
-	const CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
+	bool cSliding = false;
+	bool cSlideOn = of_cslide.GetBool();
+	CBaseEntity *Hook = m_pTFPlayer->m_Shared.GetHook();
 	if (Hook)
 	{
 		GrapplingMove(Hook);
@@ -1626,18 +1628,18 @@ void CTFGameMovement::FullWalkMove()
 		if (player->GetGroundEntity() != NULL)
 		{
 			//check if player can CSlide
-			CSliding = of_cslide.GetBool() &&												//crouch sliding is enabled
+			cSliding = cSlideOn &&															//crouch sliding is enabled
 					   canMove &&															//player allowed to move
 					   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
 					   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
 					   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
 					   gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration();		//there is crouch slide charge to spend
 
-			Friction(CSliding);
-			WalkMove(CSliding);
+			Friction(cSliding);
+			WalkMove(cSliding);
 
 			//If not using CSlide right away clear it
-			if (!CSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
+			if (!cSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
 				m_pTFPlayer->m_Shared.SetCSlideDuration(0.f);
 		}
 		else
@@ -1661,7 +1663,7 @@ void CTFGameMovement::FullWalkMove()
 		if (!IsDead() && m_pTFPlayer->m_Shared.IsJumping())
 			m_pTFPlayer->m_Shared.SetJumping(false);
 	}
-	else
+	else if (cSlideOn)
 	{
 		//Determine crouch slide duration
 		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - (mv->m_vecVelocity[2] / 200.f) * of_cslideduration.GetFloat());
@@ -1674,7 +1676,7 @@ void CTFGameMovement::FullWalkMove()
 	CheckVelocity();
 
 	//Cslide sound turn on/off
-	CheckCSlideSound(CSliding);
+	CheckCSlideSound(cSliding);
 }
 
 void CTFGameMovement::CheckCSlideSound(bool CSliding)
@@ -1694,19 +1696,22 @@ void CTFGameMovement::CheckCSlideSound(bool CSliding)
 	}
 }
 
-void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
+void CTFGameMovement::GrapplingMove(CBaseEntity *hook, bool InWater)
 {
 	//Get Hook to player vector
 	Vector playerCenter = mv->GetAbsOrigin();
 	playerCenter += (m_pTFPlayer->EyePosition() - playerCenter) * 0.5;
 
-	if (!of_hook_pendulum.GetBool())
+	if (ToTFPlayer(hook) || !of_hook_pendulum.GetBool())
 	{
 		SetGroundEntity(NULL);
-		float pullVel = m_pTFPlayer->m_Shared.GetHookProperty() * (InWater ? 0.75f : 1.f);
-		Vector dir = hook->GetAbsOrigin() - playerCenter;
+		
+		Vector hookCenter = hook->GetAbsOrigin();
+		hookCenter += (hook->EyePosition() - hookCenter) * 0.5;
+		Vector dir = hookCenter - playerCenter;
 		VectorNormalize(dir);
-		mv->m_vecVelocity = dir * pullVel;
+
+		mv->m_vecVelocity = dir * m_pTFPlayer->m_Shared.GetHookProperty() * (InWater ? 0.75f : 1.f);
 	}
 	else
 	{
@@ -1735,11 +1740,21 @@ void CTFGameMovement::GrapplingMove(const CBaseEntity *hook, bool InWater)
 	//if player is blocked see if there is a hook that needs to be removed
 	if (iBlocked == 2 || (iBlocked == 1 && !player->GetGroundEntity()))
 	{
-		//nested if to avoid this thing happening every frame
-		CGrappleHook *Hook = (CGrappleHook *)m_pTFPlayer->m_Shared.GetHook();
-		if (Hook)
-			Hook->GetOwner()->RemoveHook();
+		//if the hook entity is a player it means we are hooked through the Eternal Shotgun
+		if (ToTFPlayer(m_pTFPlayer->m_Shared.GetHook()) != NULL)
+		{
+			CTFEternalShotgun *pShotgun = (CTFEternalShotgun *)player->GetActiveWeapon();
+			if (pShotgun)
+				pShotgun->RemoveHook();
+		}
+		else
+		{
+			CWeaponGrapple *pShotgun = (CWeaponGrapple *)player->GetActiveWeapon();
+			if (pShotgun)
+				pShotgun->RemoveHook();
+		}
 	}
+
 #else
 	TryPlayerMove();
 #endif
