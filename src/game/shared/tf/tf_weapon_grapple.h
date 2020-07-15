@@ -41,11 +41,13 @@ public:
 
 	void			Precache( void );
 	void			PrimaryAttack( void );
-	bool            CanHolster( void );
+	bool            CanHolster( void ) const;
+	bool			Holster(CBaseCombatWeapon *pSwitchingTo);
 	void            Drop( const Vector &vecVelocity );
 	void			ItemPostFrame( void );
 	void			RemoveHook(void);
-	
+	CBaseEntity		*GetHookEntity();
+	bool			HookLOS();
 
 #ifdef GAME_DLL
 	void			NotifyHookAttached(void);
@@ -82,14 +84,13 @@ class CGrappleHook : public CBaseCombatCharacter
 public:
 
 	CGrappleHook(void) {}
-    ~CGrappleHook(void);
+	~CGrappleHook(void);
     void Spawn( void );
     void Precache( void );
 	static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );
-	bool HookLOS();
-
-	bool CreateVPhysics( void );
+	
 	unsigned int PhysicsSolidMaskForEntity() const;
+	bool CreateVPhysics(void);
 	CWeaponGrapple *GetOwner(void) { return m_hOwner; }
 	Class_T Classify( void ) { return CLASS_NONE; }
  
@@ -103,7 +104,6 @@ private:
 	void FlyThink( void );
   
 	CWeaponGrapple		*m_hOwner;
-	CTFPlayer			*m_hPlayer;
 };
 #endif
 

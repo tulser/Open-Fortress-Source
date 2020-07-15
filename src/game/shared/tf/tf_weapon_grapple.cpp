@@ -181,12 +181,10 @@ void CWeaponGrapple::ItemPostFrame(void)
 	if (!CanAttack())
 		return;
 
-	CBaseEntity *Hook = NULL;
+	CBaseEntity *Hook = GetHookEntity();
 #ifdef GAME_DLL
-	Hook = m_hHook;
-
 	//Invalidate hook if it is not in sight
-	if (Hook && m_iAttached && !dynamic_cast<CGrappleHook *>(Hook)->HookLOS())
+	if (Hook && m_iAttached && !HookLOS())
 		RemoveHook();
 
 	//Update the beam depending on the hook position
@@ -196,8 +194,6 @@ void CWeaponGrapple::ItemPostFrame(void)
 		pBeam->PointEntInit(m_hHook->GetAbsOrigin(), this);
 		pBeam->SetEndAttachment(LookupAttachment("muzzle"));
 	}
-#else
-	Hook = m_hHook.Get();
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
@@ -272,9 +268,12 @@ void CWeaponGrapple::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *hook)
 void CWeaponGrapple::RemoveHook(void)
 {
 #ifdef GAME_DLL
-	m_hHook->SetTouch(NULL);
-	m_hHook->SetThink(NULL);
-	UTIL_Remove(m_hHook);
+	if (m_hHook)
+	{
+		m_hHook->SetTouch(NULL);
+		m_hHook->SetThink(NULL);
+		UTIL_Remove(m_hHook);
+	}
 
 	if (pBeam)
 	{
@@ -296,11 +295,20 @@ void CWeaponGrapple::RemoveHook(void)
 	m_flNextPrimaryAttack = gpGlobals->curtime + 1.f;
 	m_iAttached = 0;
 }
- 
+
+CBaseEntity *CWeaponGrapple::GetHookEntity(void)
+{
+#ifdef GAME_DLL
+	return m_hHook;
+#else
+	return m_hHook.Get();
+#endif
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CWeaponGrapple::CanHolster(void)
+bool CWeaponGrapple::CanHolster(void) const
 {
 	CBaseEntity *Hook = NULL;
 #ifdef GAME_DLL
@@ -308,11 +316,18 @@ bool CWeaponGrapple::CanHolster(void)
 #else
 	Hook = m_hHook.Get();
 #endif
-
 	if (Hook)
 		return false;
 
 	return BaseClass::CanHolster();
+}
+
+bool CWeaponGrapple::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	if (GetHookEntity())
+		RemoveHook();
+
+	return BaseClass::Holster(pSwitchingTo);
 }
 
 //-----------------------------------------------------------------------------
@@ -320,14 +335,7 @@ bool CWeaponGrapple::CanHolster(void)
 //-----------------------------------------------------------------------------
 void CWeaponGrapple::Drop( const Vector &vecVelocity )
 {
-	CBaseEntity *Hook = NULL;
-#ifdef GAME_DLL
-	Hook = m_hHook;
-#else
-	Hook = m_hHook.Get();
-#endif
-
-	if (Hook)
+	if (GetHookEntity())
 		return;
  
 	BaseClass::Drop( vecVelocity );
@@ -340,6 +348,18 @@ void CWeaponGrapple::Drop( const Vector &vecVelocity )
 void CWeaponGrapple::NotifyHookAttached(void)
 {
 	m_iAttached = 2;
+}
+
+bool CWeaponGrapple::HookLOS()
+{
+	CBaseEntity *player = GetOwner();
+	Vector playerCenter = player->GetAbsOrigin();
+	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
+
+	trace_t tr;
+	UTIL_TraceLine(m_hHook->GetAbsOrigin(), playerCenter, MASK_ALL, m_hHook, COLLISION_GROUP_NONE, &tr);
+
+	return (tr.endpos - playerCenter).Length() < 2.f;
 }
 
 //-----------------------------------------------------------------------------
@@ -409,7 +429,6 @@ LINK_ENTITY_TO_CLASS(grapple_hook, CGrappleHook);
 BEGIN_DATADESC(CGrappleHook)
 	DEFINE_THINKFUNC(FlyThink),
 	DEFINE_FUNCTION(HookTouch),
-	DEFINE_FIELD(m_hPlayer, FIELD_EHANDLE),
 	DEFINE_FIELD(m_hOwner, FIELD_EHANDLE),
 END_DATADESC()
 
@@ -423,7 +442,6 @@ CGrappleHook *CGrappleHook::HookCreate(const Vector &vecOrigin, const QAngle &an
 	CWeaponGrapple *pOwner = (CWeaponGrapple *)pentOwner;
 	pHook->m_hOwner = pOwner;
 	pHook->SetOwnerEntity(pOwner->GetOwner());
-	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
 
 	return pHook;
 }
@@ -433,20 +451,12 @@ CGrappleHook *CGrappleHook::HookCreate(const Vector &vecOrigin, const QAngle &an
 //-----------------------------------------------------------------------------
 CGrappleHook::~CGrappleHook(void)
 {
-	if (m_hPlayer)
-		m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
-}
+	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+	if (!pOwner)
+		return;
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : Returns true on success, false on failure.
-//-----------------------------------------------------------------------------
-bool CGrappleHook::CreateVPhysics(void)
-{
-	// Create the object in the physics system
-	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
-
-	return true;
+	if (pOwner)
+		pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
 }
 
 //-----------------------------------------------------------------------------
@@ -454,6 +464,14 @@ bool CGrappleHook::CreateVPhysics(void)
 unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
 {
 	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
+}
+
+bool CGrappleHook::CreateVPhysics(void)
+{
+	// Create the object in the physics system
+	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -521,7 +539,7 @@ void CGrappleHook::FlyThink(void)
 //-----------------------------------------------------------------------------
 void CGrappleHook::HookTouch(CBaseEntity *pOther)
 {
-	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !HookLOS() || !m_hPlayer)
+	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !m_hOwner->HookLOS() || !GetOwnerEntity())
 	{
 		m_hOwner->RemoveHook();
 		return;
@@ -543,51 +561,24 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 			SetMoveType(MOVETYPE_NONE);
 			EmitSound("Weapon_AR2.Reload_Push");
 
-			/*
-			Vector vForward;
-
-			AngleVectors(GetAbsAngles(), &vForward);
-			VectorNormalize(vForward);
-
-			CEffectData	data;
-
-			data.m_vOrigin = tr.endpos;
-			data.m_vNormal = vForward;
-			data.m_nEntIndex = 0;
-
-			DispatchEffect( "Impact", data );
-			*/
-
-			//	AddEffects( EF_NODRAW );
-
 			SetTouch(NULL);
 			SetThink(NULL);
+
+			m_hOwner->NotifyHookAttached();
 
 			VPhysicsDestroyObject();
 			VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
 			AddSolidFlags(FSOLID_NOT_SOLID);
-			m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
-
-			m_hOwner->NotifyHookAttached();
-			m_hPlayer->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
+			
+			CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+			pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
+			pOwner->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
 		}
 		else
 		{
 			m_hOwner->RemoveHook();
 		}
 	}
-}
-
-bool CGrappleHook::HookLOS()
-{
-	CBaseEntity *player = (CGrappleHook *)m_hOwner->GetOwner();
-	Vector playerCenter = player->GetAbsOrigin();
-	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
-
-	trace_t tr;
-	UTIL_TraceLine(GetAbsOrigin(), playerCenter, MASK_ALL, this, COLLISION_GROUP_NONE, &tr);
-
-	return (tr.endpos - playerCenter).Length() < 2.f;
 }
 
 #endif

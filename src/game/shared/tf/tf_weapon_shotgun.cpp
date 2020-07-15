@@ -240,6 +240,11 @@ CTFEternalShotgun::CTFEternalShotgun(void)
 #endif
 }
 
+CTFEternalShotgun::~CTFEternalShotgun(void)
+{
+	RemoveHook();
+}
+
 void CTFEternalShotgun::Precache(void)
 {
 #ifdef GAME_DLL
@@ -258,66 +263,68 @@ bool CTFEternalShotgun::CanHolster(void) const
 #else
 	pHook = m_hHook.Get();
 #endif
-
 	if( pHook )
 		return false;
 
 	return BaseClass::CanHolster();
 }
 
+bool CTFEternalShotgun::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	if (GetHookEntity())
+		RemoveHook();
+
+	return BaseClass::Holster(pSwitchingTo);
+}
+
 void CTFEternalShotgun::Drop(const Vector &vecVelocity)
 {
-	CBaseEntity *pHook = NULL;
-#ifdef GAME_DLL
-	pHook = m_hHook;
-#else
-	pHook = m_hHook.Get();
-#endif
-
-	if( pHook )
+	if (GetHookEntity())
 		return;
 
-	return BaseClass::Drop(vecVelocity);
+	BaseClass::Drop(vecVelocity);
 }
 
 void CTFEternalShotgun::ItemPostFrame()
 {
-	CBaseEntity *pHook = NULL;
-#ifdef GAME_DLL
-	pHook = m_hHook;
+	CBaseEntity *pHook = GetHookEntity();
 
+#ifdef GAME_DLL
 	if( pHook )
 	{
+		Vector hookPos = pHook->GetAbsOrigin();
+		hookPos += (pHook->EyePosition() - hookPos) * 0.75; //looks better than 0.5 on hooked players
+
 		//Update the beam depending on the hook position
-		if (pBeam && !m_iAttached)
+		if( pBeam )
 		{
 			//Set where it ends
-			pBeam->PointEntInit( m_hHook->GetAbsOrigin(), this );
-			pBeam->SetEndAttachment( LookupAttachment("muzzle") );
+			pBeam->PointEntInit(hookPos, this);
+			pBeam->SetEndAttachment(LookupAttachment("muzzle"));
 		}
 
 		//Invalidate hook if it is not in sight
-		if (m_iAttached && !dynamic_cast<CTFMeatHook *>(pHook)->HookLOS())
+		if (m_iAttached && !HookLOS(hookPos))
 			RemoveHook();
 	}
-#else
-	pHook = m_hHook.Get();
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
-	if (!pPlayer || !pPlayer->IsAlive() || (m_iAttached && !m_hHooked) || (m_hHooked && !m_hHooked->IsAlive()))
+	if (!pPlayer || !pPlayer->IsAlive() || ( m_iAttached && ToTFPlayer(Hook) && !ToTFPlayer(Hook)->IsAlive() ) )
 	{
-		if (pHook)
-			RemoveHook();
+		RemoveHook();
 		return;
 	}
 
-	if (pHook && m_iAttached) //hook is attached to something
+	if(pHook)
 	{
-		if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)
-			RemoveHook();
-		else if (m_iAttached == 2) //notify player how it should behave
-			InitiateHook(pPlayer, pHook);
+		if (m_iAttached) //hook is attached to something
+		{
+			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)
+				RemoveHook();
+			else if (m_iAttached == 2) //notify player how it should behave
+				InitiateHook(pPlayer, Hook);
+		}
 	}
 
 	BaseClass::ItemPostFrame();
@@ -330,12 +337,7 @@ void CTFEternalShotgun::PrimaryAttack()
 {
 	BaseClass::PrimaryAttack();
 
-	CBaseEntity *pHook = NULL;
-#ifdef GAME_DLL
-	pHook = m_hHook;
-#else
-	pHook = m_hHook.Get();
-#endif
+	CBaseEntity *pHook = GetHookEntity();
 
 	if( pHook )
 		RemoveHook();
@@ -353,8 +355,10 @@ void CTFEternalShotgun::SecondaryAttack()
 	if (!m_bCanRefire)
 		return;
 
+	CBaseEntity *Hook = GetHookEntity();
+	
 	// Can't have an active hook out
-	if (m_hHook)
+	if (Hook)
 	{
 		RemoveHook();
 		m_bCanRefire = false;
@@ -431,6 +435,7 @@ void CTFEternalShotgun::SecondaryAttack()
 void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 {
 	pPlayer->m_Shared.SetHook(pHook);
+	ToTFPlayer(m_hHook)->m_Shared.AddCond(TF_COND_HOOKED);
 
 	//player velocity
 	Vector pVel = pPlayer->GetAbsVelocity();
@@ -457,12 +462,18 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 
 void CTFEternalShotgun::RemoveHook(void)
 {
+	CTFPlayer *Hook = ToTFPlayer(GetHookEntity());
+
 #ifdef GAME_DLL
 	if (m_hHook)
 	{
 		m_hHook->SetTouch(NULL);
 		m_hHook->SetThink(NULL);
-		UTIL_Remove(m_hHook);
+		
+		if (Hook)
+			Hook->m_Shared.RemoveCond(TF_COND_HOOKED);
+		else
+			UTIL_Remove(m_hHook);
 	}
 
 	if (pBeam)
@@ -470,12 +481,9 @@ void CTFEternalShotgun::RemoveHook(void)
 		UTIL_Remove(pBeam); //Kill beam
 		pBeam = NULL;
 	}
-
-	if (m_hHooked)
-	{
-		m_hHooked->m_Shared.RemoveCond(TF_COND_HOOKED);
-		m_hHooked = NULL;
-	}
+#else
+	if (Hook)
+		Hook->m_Shared.RemoveCond(TF_COND_HOOKED);
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -491,11 +499,21 @@ void CTFEternalShotgun::RemoveHook(void)
 	m_iAttached = 0;
 }
 
+CBaseEntity *CTFEternalShotgun::GetHookEntity()
+{
+#ifdef GAME_DLL
+	return m_hHook;
+#else
+	return m_hHook.Get();
+#endif
+}
+
 #ifdef GAME_DLL
 void CTFEternalShotgun::NotifyHookAttached(CTFPlayer *pTarget)
 {
 	m_iAttached = 2;
-	m_hHooked = pTarget;
+	//transfer pointer
+	m_hHook = pTarget;
 }
 
 void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
@@ -525,6 +543,26 @@ void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
 
 	UpdateWaterState();
 }
+
+bool CTFEternalShotgun::HookLOS(Vector hookPos)
+{
+	CBaseEntity *player = GetOwner();
+
+	if (!player)
+		return false;
+
+	Vector playerCenter = player->GetAbsOrigin();
+	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
+
+	trace_t tr;
+	UTIL_TraceLine(hookPos, playerCenter, MASK_ALL, m_hHook, COLLISION_GROUP_NONE, &tr);
+
+	//Msg("%f %f %f %f\n", hookPos.Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
+	//(tr.endpos - playerCenter).Length() < 2.f;
+
+	return true;
+}
+
 #endif
 
 #ifdef GAME_DLL
@@ -536,6 +574,7 @@ void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
 LINK_ENTITY_TO_CLASS( tf_meat_hook, CTFMeatHook );
 
 BEGIN_DATADESC(CTFMeatHook)
+	DEFINE_THINKFUNC(FlyThink),
 	DEFINE_FUNCTION(HookTouch),
 	DEFINE_FIELD(m_hOwner, FIELD_EHANDLE),
 END_DATADESC()
@@ -550,15 +589,18 @@ CTFMeatHook *CTFMeatHook::HookCreate(const Vector &vecOrigin, const QAngle &angA
 	CTFEternalShotgun *pOwner = (CTFEternalShotgun *)pEntOwner;
 	pHook->m_hOwner = pOwner;
 	pHook->SetOwnerEntity(pOwner->GetOwner());
-	pHook->m_hPlayer = (CTFPlayer *)pOwner->GetOwner();
 
 	return pHook;
 }
 
 CTFMeatHook::~CTFMeatHook(void)
 {
-	if (m_hPlayer)
-		m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
+	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+	if (!pOwner)
+		return;
+
+	if (pOwner)
+		pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
 }
 
 void CTFMeatHook::Spawn(void)
@@ -595,17 +637,17 @@ void CTFMeatHook::Precache(void)
 	PrecacheModel(BOLT_MODEL);
 }
 
+unsigned int CTFMeatHook::PhysicsSolidMaskForEntity() const
+{
+	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
+}
+
 bool CTFMeatHook::CreateVPhysics(void)
 {
 	// Create the object in the physics system
 	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
 
 	return true;
-}
-
-unsigned int CTFMeatHook::PhysicsSolidMaskForEntity() const
-{
-	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
 }
 
 void CTFMeatHook::FlyThink(void)
@@ -629,48 +671,31 @@ void CTFMeatHook::FlyThink(void)
 
 void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 {
-	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !HookLOS() || !m_hPlayer)
+	if (pOther == m_hOwner || !pOther->IsPlayer() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !m_hOwner->HookLOS(GetAbsOrigin()) || !GetOwnerEntity())
 	{
 		m_hOwner->RemoveHook();
 		return;
 	}
 
 	//hooked an entity that can be damaged
-	if (pOther != m_hOwner && pOther->m_takedamage != DAMAGE_NO)
-	{
-		SetMoveType(MOVETYPE_NONE);
-		EmitSound("Weapon_AR2.Reload_Push");
+	SetMoveType(MOVETYPE_NONE);
+	EmitSound("Weapon_AR2.Reload_Push");
 
-		SetTouch(NULL);
-		SetThink(NULL);
+	SetTouch(NULL);
+	SetThink(NULL);
 
-		VPhysicsDestroyObject();
-		VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
-		AddSolidFlags(FSOLID_NOT_SOLID);
-		m_hPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
-		
-		m_hPlayer->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
+	VPhysicsDestroyObject();
+	VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
+	AddSolidFlags(FSOLID_NOT_SOLID);
 
-		CTFPlayer *pTarget = ToTFPlayer(pOther);
-		pTarget->m_Shared.AddCond(TF_COND_HOOKED);
-		m_hOwner->NotifyHookAttached(pTarget);
-	}
-	else
-	{
-		m_hOwner->RemoveHook();
-	}
-}
+	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+	pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
+	pOwner->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
 
-bool CTFMeatHook::HookLOS()
-{
-	CBaseEntity *player = m_hOwner->GetOwner();
-	Vector playerCenter = player->GetAbsOrigin();
-	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
-
-	trace_t tr;
-	UTIL_TraceLine(GetAbsOrigin(), playerCenter, MASK_ALL, this, COLLISION_GROUP_NONE, &tr);
-
-	return (tr.endpos - playerCenter).Length() < 2.f;
+	CTFPlayer *hooked = ToTFPlayer(pOther);
+	m_hOwner->NotifyHookAttached(hooked);
+	
+	UTIL_Remove(this);
 }
 
 #endif
