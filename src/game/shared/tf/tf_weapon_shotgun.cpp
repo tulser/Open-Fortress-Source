@@ -209,12 +209,10 @@ BEGIN_NETWORK_TABLE( CTFEternalShotgun, DT_EternalShotgun )
 	RecvPropInt(RECVINFO(m_iAttached)),
 	RecvPropBool(RECVINFO(m_bCanRefire)),
 	RecvPropEHandle(RECVINFO(m_hHook)),
-	RecvPropEHandle(RECVINFO(m_hHooked)),
 #else
 	SendPropInt(SENDINFO(m_iAttached)),
 	SendPropBool(SENDINFO(m_bCanRefire)),
 	SendPropEHandle(SENDINFO(m_hHook)),
-	SendPropEHandle(SENDINFO(m_hHooked)),
 #endif
 END_NETWORK_TABLE()
 
@@ -310,7 +308,7 @@ void CTFEternalShotgun::ItemPostFrame()
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
-	if (!pPlayer || !pPlayer->IsAlive() || ( m_iAttached && ToTFPlayer(Hook) && !ToTFPlayer(Hook)->IsAlive() ) )
+	if (!pPlayer || !pPlayer->IsAlive() || ( m_iAttached && ToTFPlayer(pHook) && !ToTFPlayer(pHook)->IsAlive() ) )
 	{
 		RemoveHook();
 		return;
@@ -323,7 +321,7 @@ void CTFEternalShotgun::ItemPostFrame()
 			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)
 				RemoveHook();
 			else if (m_iAttached == 2) //notify player how it should behave
-				InitiateHook(pPlayer, Hook);
+				InitiateHook(pPlayer, pHook);
 		}
 	}
 
@@ -355,10 +353,10 @@ void CTFEternalShotgun::SecondaryAttack()
 	if (!m_bCanRefire)
 		return;
 
-	CBaseEntity *Hook = GetHookEntity();
+	CBaseEntity *pOldHook = GetHookEntity();
 	
 	// Can't have an active hook out
-	if (Hook)
+	if (pOldHook)
 	{
 		RemoveHook();
 		m_bCanRefire = false;
@@ -462,7 +460,7 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 
 void CTFEternalShotgun::RemoveHook(void)
 {
-	CTFPlayer *Hook = ToTFPlayer(GetHookEntity());
+	CTFPlayer *pHook = ToTFPlayer(GetHookEntity());
 
 #ifdef GAME_DLL
 	if (m_hHook)
@@ -470,8 +468,8 @@ void CTFEternalShotgun::RemoveHook(void)
 		m_hHook->SetTouch(NULL);
 		m_hHook->SetThink(NULL);
 		
-		if (Hook)
-			Hook->m_Shared.RemoveCond(TF_COND_HOOKED);
+		if(pHook)
+			pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
 		else
 			UTIL_Remove(m_hHook);
 	}
@@ -482,8 +480,8 @@ void CTFEternalShotgun::RemoveHook(void)
 		pBeam = NULL;
 	}
 #else
-	if (Hook)
-		Hook->m_Shared.RemoveCond(TF_COND_HOOKED);
+	if(pHook)
+		pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -692,8 +690,8 @@ void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 	pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
 	pOwner->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
 
-	CTFPlayer *hooked = ToTFPlayer(pOther);
-	m_hOwner->NotifyHookAttached(hooked);
+	CTFPlayer *pHooked = ToTFPlayer(pOther);
+	m_hOwner->NotifyHookAttached(pHooked);
 	
 	UTIL_Remove(this);
 }

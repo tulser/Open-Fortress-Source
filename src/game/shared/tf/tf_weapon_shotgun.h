@@ -160,7 +160,6 @@ private:
 	CNetworkHandle(CBaseEntity, m_hHook);		//server hooked player
 #else
 	EHANDLE			m_hHook;					//client hook relay
-	EHANDLE			m_hHooked;					//client hooked player relay
 #endif
 
 	CNetworkVar(bool, m_bCanRefire);
