@@ -152,7 +152,7 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 			Q_strncpy( m_Songdata[1].artist, pSound->GetString( "Artist", "Unknown" ) , sizeof( m_Songdata[1].artist ) );
 			Q_strncpy( m_Songdata[1].path, pSound->GetString( "wave" ) , sizeof( m_Songdata[1].path ) );
 			m_Songdata[1].volume = pSound->GetFloat( "volume", 0.9f );
-			const char *pszSrc = NULL;
+
 			if ( !Q_strncmp( m_Songdata[1].path, "#", 1 ) )
 			{
 				memmove(&m_Songdata[1].path,&m_Songdata[1].path[1], strlen(m_Songdata[1].path)); // Use memmove for overlapping buffers.
