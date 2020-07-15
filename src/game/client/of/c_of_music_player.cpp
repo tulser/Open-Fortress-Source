@@ -155,8 +155,7 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 			const char *pszSrc = NULL;
 			if ( !Q_strncmp( m_Songdata[1].path, "#", 1 ) )
 			{
-				pszSrc = m_Songdata[1].path + 1;
-				Q_strncpy( m_Songdata[1].path, pszSrc, sizeof(m_Songdata[1].path) );
+				memmove(&m_Songdata[1].path,&m_Songdata[1].path[1], strlen(m_Songdata[1].path)); // Use memmove for overlapping buffers.
 			}
 			DevMsg("Intro is %s\nOutro is %s\n", pSound->GetString( "intro" ), pSound->GetString( "outro" ));
 			KeyValues *pSoundIntro = GetSoundscript( pSound->GetString( "intro" ) );
@@ -165,8 +164,7 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 				Q_strncpy( m_Songdata[0].path, pSoundIntro->GetString( "wave" ) , sizeof( m_Songdata[0].path ) );
 				if ( !Q_strncmp( m_Songdata[0].path, "#", 1 ) )
 				{
-					pszSrc = m_Songdata[0].path + 1;
-					Q_strncpy( m_Songdata[0].path, pszSrc, sizeof(m_Songdata[0].path) );
+					memmove(&m_Songdata[0].path,&m_Songdata[0].path[1], strlen(m_Songdata[0].path));
 				}
 				DevMsg("Intro wav is %s\n", m_Songdata[0].path);
 			}
@@ -176,8 +174,7 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 				Q_strncpy( m_Songdata[2].path, pSoundOutro->GetString( "wave" ) , sizeof( m_Songdata[2].path ) );
 				if ( !Q_strncmp( m_Songdata[2].path, "#", 1 ) )
 				{
-					pszSrc = m_Songdata[2].path + 1;
-					Q_strncpy( m_Songdata[2].path, pszSrc, sizeof(m_Songdata[2].path) );
+					memmove(&m_Songdata[2].path,&m_Songdata[2].path[1], strlen(m_Songdata[2].path));
 				}
 				DevMsg("Outro wav is %s\n", m_Songdata[2].path);
 			}
