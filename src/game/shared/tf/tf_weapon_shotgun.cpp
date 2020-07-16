@@ -202,7 +202,7 @@ acttable_t *CTFSuperShotgun::ActivityList(int &iActivityCount)
 #define BOLT_WATER_VELOCITY	1500
 #define HOOK_PULL			720.f
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFEternalShotgun, DT_TFWeaponShovel )
+IMPLEMENT_NETWORKCLASS_ALIASED(TFEternalShotgun, DT_EternalShotgun)
 
 BEGIN_NETWORK_TABLE( CTFEternalShotgun, DT_EternalShotgun )
 #ifdef CLIENT_DLL
@@ -218,7 +218,7 @@ END_NETWORK_TABLE()
 
 BEGIN_PREDICTION_DATA( CTFEternalShotgun )
 #ifdef CLIENT_DLL
-DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
+	DEFINE_PRED_FIELD(m_iAttached, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
 #endif
 END_PREDICTION_DATA()
 
@@ -288,13 +288,13 @@ void CTFEternalShotgun::ItemPostFrame()
 	CBaseEntity *pHook = GetHookEntity();
 
 #ifdef GAME_DLL
-	if( pHook )
+	if (pHook)
 	{
 		Vector hookPos = pHook->GetAbsOrigin();
 		hookPos += (pHook->EyePosition() - hookPos) * 0.75; //looks better than 0.5 on hooked players
 
 		//Update the beam depending on the hook position
-		if( pBeam )
+		if (pBeam)
 		{
 			//Set where it ends
 			pBeam->PointEntInit(hookPos, this);
@@ -432,8 +432,11 @@ void CTFEternalShotgun::SecondaryAttack()
 
 void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 {
+	//Set hook owner player pointer
 	pPlayer->m_Shared.SetHook(pHook);
-	ToTFPlayer(m_hHook)->m_Shared.AddCond(TF_COND_HOOKED);
+
+	//Tell target it has been hooked
+	ToTFPlayer(pHook)->m_Shared.AddCond(TF_COND_HOOKED);
 
 	//player velocity
 	Vector pVel = pPlayer->GetAbsVelocity();
@@ -462,26 +465,24 @@ void CTFEternalShotgun::RemoveHook(void)
 {
 	CTFPlayer *pHook = ToTFPlayer(GetHookEntity());
 
+	if (pHook)
+		pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
+
 #ifdef GAME_DLL
-	if (m_hHook)
+	//hook is an actual hook not a player
+	if (m_hHook && pHook == NULL)
 	{
 		m_hHook->SetTouch(NULL);
 		m_hHook->SetThink(NULL);
-		
-		if(pHook)
-			pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
-		else
-			UTIL_Remove(m_hHook);
+		UTIL_Remove(m_hHook);
 	}
 
+	//Kill beam
 	if (pBeam)
 	{
-		UTIL_Remove(pBeam); //Kill beam
+		UTIL_Remove(pBeam);
 		pBeam = NULL;
 	}
-#else
-	if(pHook)
-		pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -507,11 +508,29 @@ CBaseEntity *CTFEternalShotgun::GetHookEntity()
 }
 
 #ifdef GAME_DLL
-void CTFEternalShotgun::NotifyHookAttached(CTFPlayer *pTarget)
+void CTFEternalShotgun::NotifyHookAttached(CBaseEntity *pTarget)
 {
 	m_iAttached = 2;
 	//transfer pointer
 	m_hHook = pTarget;
+}
+
+bool CTFEternalShotgun::HookLOS(Vector hookPos)
+{
+	CBaseEntity *player = GetOwner();
+
+	if (!player)
+		return false;
+
+	Vector playerCenter = player->GetAbsOrigin();
+	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
+
+	trace_t tr;
+	UTIL_TraceLine(hookPos, playerCenter, MASK_ALL, m_hHook, COLLISION_GROUP_NONE, &tr);
+
+	//Msg("%f %f %f %f\n", hookPos.Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
+
+	return (tr.endpos - playerCenter).Length() < 40.f;
 }
 
 void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
@@ -540,25 +559,6 @@ void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
 	pBeam->SetScrollRate(scrollOffset);
 
 	UpdateWaterState();
-}
-
-bool CTFEternalShotgun::HookLOS(Vector hookPos)
-{
-	CBaseEntity *player = GetOwner();
-
-	if (!player)
-		return false;
-
-	Vector playerCenter = player->GetAbsOrigin();
-	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
-
-	trace_t tr;
-	UTIL_TraceLine(hookPos, playerCenter, MASK_ALL, m_hHook, COLLISION_GROUP_NONE, &tr);
-
-	//Msg("%f %f %f %f\n", hookPos.Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
-	//(tr.endpos - playerCenter).Length() < 2.f;
-
-	return true;
 }
 
 #endif

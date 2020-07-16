@@ -33,25 +33,19 @@
 
 extern ConVar of_hook_pendulum;
 
+IMPLEMENT_NETWORKCLASS_ALIASED(WeaponGrapple, DT_WeaponGrapple)
+
+BEGIN_NETWORK_TABLE(CWeaponGrapple, DT_WeaponGrapple)
 #ifdef CLIENT_DLL
-
-#undef CWeaponGrapple
-
-IMPLEMENT_CLIENTCLASS_DT(C_WeaponGrapple, DT_WeaponGrapple, CWeaponGrapple)
 	RecvPropInt(RECVINFO(m_iAttached)),
 	RecvPropInt(RECVINFO(m_nBulletType)),
 	RecvPropEHandle(RECVINFO(m_hHook)),
-END_NETWORK_TABLE()
-
-#define CWeaponGrapple C_WeaponGrapple
-
 #else
-IMPLEMENT_SERVERCLASS_ST(CWeaponGrapple, DT_WeaponGrapple)
-	SendPropInt( SENDINFO( m_iAttached ) ),
-	SendPropInt( SENDINFO ( m_nBulletType ) ),
-	SendPropEHandle( SENDINFO( m_hHook ) ),
-END_NETWORK_TABLE()
+	SendPropInt(SENDINFO(m_iAttached)),
+	SendPropInt(SENDINFO(m_nBulletType)),
+	SendPropEHandle(SENDINFO(m_hHook)),
 #endif
+END_NETWORK_TABLE()
 
 #ifdef CLIENT_DLL
 BEGIN_PREDICTION_DATA( CWeaponGrapple )
@@ -183,7 +177,6 @@ void CWeaponGrapple::ItemPostFrame(void)
 
 	CBaseEntity *Hook = GetHookEntity();
 #ifdef GAME_DLL
-	//Invalidate hook if it is not in sight
 	if (Hook && m_iAttached && !HookLOS())
 		RemoveHook();
 
@@ -211,15 +204,10 @@ void CWeaponGrapple::ItemPostFrame(void)
 
 		if (Hook && m_iAttached) //hook is attached to a surface
 		{
-			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f ||					//player is very close to the attached hook			
-				(m_iAttached == 1 && pPlayer->GetGroundEntity() && of_hook_pendulum.GetBool()))			//player touched the ground while swinging
-			{
+			if ((Hook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 100.f)	//player is very close to the attached hook
 				RemoveHook();
-			}
 			else if (m_iAttached == 2) //notify player how it should behave
-			{
 				InitiateHook(pPlayer, Hook);
-			}
 		}
 	}
 	else if (m_iAttached)
@@ -353,11 +341,17 @@ void CWeaponGrapple::NotifyHookAttached(void)
 bool CWeaponGrapple::HookLOS()
 {
 	CBaseEntity *player = GetOwner();
+
+	if (!player)
+		return false;
+
 	Vector playerCenter = player->GetAbsOrigin();
 	playerCenter += (player->EyePosition() - playerCenter) * 0.5;
 
 	trace_t tr;
 	UTIL_TraceLine(m_hHook->GetAbsOrigin(), playerCenter, MASK_ALL, m_hHook, COLLISION_GROUP_NONE, &tr);
+
+	//Msg("%f %f %f %f\n", m_hHook->GetAbsOrigin().Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
 
 	return (tr.endpos - playerCenter).Length() < 2.f;
 }
@@ -539,7 +533,7 @@ void CGrappleHook::FlyThink(void)
 //-----------------------------------------------------------------------------
 void CGrappleHook::HookTouch(CBaseEntity *pOther)
 {
-	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !m_hOwner->HookLOS() || !GetOwnerEntity())
+	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !GetOwnerEntity() || !m_hOwner->HookLOS())
 	{
 		m_hOwner->RemoveHook();
 		return;

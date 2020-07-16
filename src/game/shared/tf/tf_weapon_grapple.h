@@ -21,9 +21,7 @@
 
 #ifdef CLIENT_DLL
 	#define CWeaponGrapple C_WeaponGrapple
-	#define CTFEternalShotgun C_TFEternalShotgun
 #else
-	#include "props.h"
 	#include "te_effect_dispatch.h"
 #endif
 

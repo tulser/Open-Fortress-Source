@@ -313,7 +313,7 @@ ConVar mp_scrambleteams_auto_windifference( "mp_scrambleteams_auto_windifference
 // Classnames of entities that are preserved across round restarts
 static const char *s_PreserveEnts[] =
 {
-"player",
+	"player",
 	"viewmodel",
 	"worldspawn",
 	"soundent",
@@ -998,14 +998,15 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 	if( m_bInWaitingForPlayers )
 	{
 #ifdef OF_DLL
-		//if dueler leaves during the wait time go back to PREGAME
-		if(TFGameRules()->IsDuelGamemode() && CountActivePlayers() < 2)
+		//there is no match if there is only 1 player
+		if (CountActivePlayers() < 2)
 		{
-			SetInWaitingForPlayers( false );
+			SetInWaitingForPlayers(false);
 			State_Transition( GR_STATE_PREGAME );
 			return;
 		}
 #endif
+
 		if ( IsInTournamentMode() == true )
 			return;
 
@@ -1556,7 +1557,11 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 
 	if ( IsInArenaMode() == true )
 	{
+#ifdef OF_DLL
+		if ( CountActivePlayers() > 1 )
+#else
 		if ( CountActivePlayers() > 0 )
+#endif
 		{
 #ifndef CSTRIKE_DLL
 			variant_t sVariant;
@@ -1843,7 +1848,11 @@ bool CTeamplayRoundBasedRules::AreLobbyPlayersConnected( void )
 void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 {
 	//if we don't find any active players, return to GR_STATE_PREGAME
+#ifdef OF_DLL
+	if( CountActivePlayers() < 2 )
+#else
 	if( CountActivePlayers() <= 0 )
+#endif
 	{
 #if defined( REPLAY_ENABLED )
 		if ( g_pReplay )
@@ -2370,7 +2379,11 @@ void CTeamplayRoundBasedRules::RestoreActiveTimer( void )
 void CTeamplayRoundBasedRules::State_Think_STALEMATE( void )
 {
 	//if we don't find any active players, return to GR_STATE_PREGAME
-	if( CountActivePlayers() <= 0 && IsInArenaMode() == false )
+#ifdef OF_DLL
+	if (CountActivePlayers() < 2 && IsInArenaMode() == false)
+#else
+	if (CountActivePlayers() <= 0 && IsInArenaMode() == false)
+#endif
 	{
 #if defined( REPLAY_ENABLED )
 		if ( g_pReplay )

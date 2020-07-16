@@ -146,9 +146,9 @@ public:
 	bool			CanSoftZoom(void) { return false; }
 
 #ifdef GAME_DLL
-	void			NotifyHookAttached(CTFPlayer *pTarget = NULL);
-	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
+	void			NotifyHookAttached(CBaseEntity *pTarget);
 	bool			HookLOS(Vector hookPos);
+	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
 #endif
 
 private:
@@ -159,7 +159,7 @@ private:
 	CHandle<CBeam>				pBeam;
 	CNetworkHandle(CBaseEntity, m_hHook);		//server hooked player
 #else
-	EHANDLE			m_hHook;					//client hook relay
+	EHANDLE						m_hHook;		//client hook relay
 #endif
 
 	CNetworkVar(bool, m_bCanRefire);
