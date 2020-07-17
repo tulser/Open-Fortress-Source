@@ -50,5 +50,7 @@ bool CHealthKitMega::DoPowerupEffect( CTFPlayer *pTFPlayer )
 		return true;
 	}
 	else
+	{
 		return false;
+	}
 }

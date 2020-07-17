@@ -77,7 +77,7 @@ void C_CondPowerup::Spawn( void )
 	iTeamNum = TEAM_INVALID;
 	m_bShouldGlow = false;
 
-	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), TFGameRules()->IsDuelGamemode() ? 0.f : of_glow_alpha.GetFloat(), true, true );
 
 	UpdateGlowEffect();
 	

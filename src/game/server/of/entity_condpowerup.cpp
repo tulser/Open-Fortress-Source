@@ -62,8 +62,16 @@ CCondPowerup::CCondPowerup()
 
 void CCondPowerup::Spawn( void )
 {
+	//Remove
 	if (TFGameRules()->IsDuelGamemode())
-		UTIL_Remove(this);
+	{
+		//Most powerups need to be removed in duel mode
+		if (RemoveIfDuel())
+			UTIL_Remove(this);
+
+		//those that do not need to be removed must have outline turned off
+		m_bDisableShowOutline = true;
+	}
 
 	Precache();
 

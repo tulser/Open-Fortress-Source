@@ -36,6 +36,7 @@ public:
 	virtual bool	DoPowerupEffect( CTFPlayer *pTFPlayer );
 	virtual void 	Materialize(void);
 	void    		AnnouncerThink( void );
+	virtual bool	RemoveIfDuel() { return true; }
 
 	const char* GetPowerupRespawnLine(void);
 	const char* GetPowerupPickupLine(void);
