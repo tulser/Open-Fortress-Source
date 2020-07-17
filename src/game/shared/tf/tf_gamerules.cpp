@@ -1535,7 +1535,7 @@ int CDuelQueue::GetDuelQueuePos(CBaseEntity *pPlayer)
 
 CTFPlayer *CDuelQueue::GetDueler(int index)
 {
-	if( index > m_hDuelQueue.Count() )
+	if( index >= m_hDuelQueue.Count() )
 		return NULL;
 
 	return ToTFPlayer( UTIL_PlayerByIndex (m_hDuelQueue[index] ) );
