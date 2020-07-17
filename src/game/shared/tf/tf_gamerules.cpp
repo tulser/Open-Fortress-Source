@@ -1621,6 +1621,17 @@ void CTFGameRules::DuelRageQuit( CTFPlayer *pRager )
 	ProgressDuelQueues(g_pDuelQueue.GetDueler(iRagerIndex == 1 ? 0 : 1), pRager, true);
 }
 
+void CTFGameRules::ProgressDuelQueuesTimeLimit()
+{
+	CTFPlayer *pDuelerOne = g_pDuelQueue.GetDueler(0);
+	CTFPlayer *pDuelerTwo = g_pDuelQueue.GetDueler(1);
+
+	if(pDuelerOne->FragCount() > pDuelerTwo->FragCount())
+		ProgressDuelQueues(pDuelerOne, pDuelerTwo);
+	else
+		ProgressDuelQueues(pDuelerTwo, pDuelerOne);
+}
+
 void CTFGameRules::ProgressDuelQueues(CTFPlayer *pWinner, CTFPlayer *pLoser, bool rageQuit)
 {
 	//Loser gets thrown to the bottom of the queue
@@ -1639,7 +1650,7 @@ void CTFGameRules::ProgressDuelQueues(CTFPlayer *pWinner, CTFPlayer *pLoser, boo
 		g_pDuelQueue.PlaceIntoDuelQueue(pWinner);
 	}
 
-	//Msg("queue has progressed, winner now has positon %d with %d wins and loser position %d\n", GetDuelQueuePos(pWinner), g_pDuelQueue.GetDuelerWins(pWinner), GetDuelQueuePos(pLoser));
+	//Msg("queue has progressed, winner now has positon %d and loser position %d\n", GetDuelQueuePos(pWinner), GetDuelQueuePos(pLoser));
 }
 #endif
 

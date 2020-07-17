@@ -1897,9 +1897,16 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 		if ( TFGameRules()->IsDMGamemode() )
 		{
 			if(!CanGoToStalemate())
+			{
 				SetOvertime( true );
+			}
 			else
+			{
+				if (TFGameRules()->IsDuelGamemode())
+					TFGameRules()->ProgressDuelQueuesTimeLimit();
+				
 				SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false );
+			}
 		}	
 		else if ( m_bAllowStalemateAtTimelimit || ( mp_match_end_at_timelimit.GetBool() && !IsValveMap() ) )
 #else		

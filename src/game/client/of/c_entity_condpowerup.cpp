@@ -77,9 +77,11 @@ void C_CondPowerup::Spawn( void )
 	iTeamNum = TEAM_INVALID;
 	m_bShouldGlow = false;
 
-	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), TFGameRules()->IsDuelGamemode() ? 0.f : of_glow_alpha.GetFloat(), true, true );
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
 
-	UpdateGlowEffect();
+	//this value may not sync with the server immediately on spawn,
+	//so to prevent the first Mega from having an outline we set it here for safety
+	m_bDisableShowOutline = TFGameRules()->IsDuelGamemode() ? true : false;
 	
 	ClientThink();
 }

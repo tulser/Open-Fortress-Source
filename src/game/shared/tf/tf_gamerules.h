@@ -698,6 +698,7 @@ public:
 	void	RemoveFromDuelQueue( CBasePlayer *pPlayer );
 	void	DuelRageQuit( CTFPlayer *pRager );
 	void	ProgressDuelQueues( CTFPlayer *pWinner, CTFPlayer *pLoser, bool rageQuit = false );
+	void	ProgressDuelQueuesTimeLimit();
 #endif
 
 	bool	IsAllClassEnabled( void ) { return m_bAllClass; }

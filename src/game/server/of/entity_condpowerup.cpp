@@ -229,7 +229,10 @@ void CCondPowerup::AnnouncerThink()
 {
 	if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime < 10.0f && !bWarningTriggered ) && TeamplayRoundBasedRules() )
 	{
-		TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupPickupIncomingLine() );
+		//in duel mode powerups should not be announced, players should time them
+		if ( !TFGameRules()->IsDuelGamemode() )
+			TeamplayRoundBasedRules()->BroadcastSound( TEAM_UNASSIGNED, GetPowerupPickupIncomingLine() );
+
 		bWarningTriggered = true;
 	}
 	else if ( m_bRespawning && ( m_flRespawnTick - gpGlobals->curtime > 10.0f && bWarningTriggered ) ) // This fixes the case where you pick up the powerup as soon as it respawns
