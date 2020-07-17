@@ -1596,6 +1596,12 @@ bool CTFGameRules::IsDueler( CBasePlayer *pPlayer )
 
 bool CTFGameRules::CheckDuelOvertime()
 {
+	CTFPlayer *pDuelerOne = g_pDuelQueue.GetDueler(0);
+	CTFPlayer *pDuelerTwo = g_pDuelQueue.GetDueler(1);
+
+	if (!pDuelerOne || !pDuelerTwo)
+		return false;
+	
 	return g_pDuelQueue.GetDueler(0)->FragCount() == g_pDuelQueue.GetDueler(1)->FragCount();
 }
 
@@ -1625,6 +1631,9 @@ void CTFGameRules::ProgressDuelQueuesTimeLimit()
 {
 	CTFPlayer *pDuelerOne = g_pDuelQueue.GetDueler(0);
 	CTFPlayer *pDuelerTwo = g_pDuelQueue.GetDueler(1);
+
+	if (!pDuelerOne || !pDuelerTwo)
+		return;
 
 	if(pDuelerOne->FragCount() > pDuelerTwo->FragCount())
 		ProgressDuelQueues(pDuelerOne, pDuelerTwo);
