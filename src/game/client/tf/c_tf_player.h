@@ -156,7 +156,7 @@ public:
 	void CreateSaveMeEffect( void );
 	void CreateChattingEffect(void);
 
-	CGlowObject		   *m_pGlowEffect;
+	CGlowObject			*m_pGlowEffect;
 
 	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
 

@@ -13,6 +13,10 @@
 #include "cbase.h"
 #include "c_basecombatcharacter.h"
 
+#ifdef OF_CLIENT_DLL
+#include "tf_shareddefs.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
