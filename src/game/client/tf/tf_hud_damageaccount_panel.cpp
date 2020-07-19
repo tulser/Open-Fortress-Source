@@ -374,6 +374,21 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 {
+	static char const *const pHitsoundName[] = \
+	{
+		"Player.KillSoundDefaultDing",
+		"Player.KillSoundQuake3",
+		"Player.KillSoundElectro",
+		"Player.KillSoundNotes",
+		"Player.KillSoundPercussion",
+		"Player.KillSoundRetro",
+		"Player.KillSoundSpace",
+		"Player.KillSoundBeepo",
+		"Player.KillSoundVortex",
+		"Player.KillSoundSquasher",
+		"ui/killsound_custom.wav"
+	};
+	
 	if ( !bKill )
 	{
 		float flRepeatDelay = tf_dingalingaling_repeat_delay.GetFloat();
@@ -385,28 +400,7 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 
 	if ( bKill )
 	{
-		if ( tf_dingalingaling_last_effect.GetInt() == 0 )
-			params.m_pSoundName = "Player.KillSoundDefaultDing";
-		else if (tf_dingalingaling_last_effect.GetInt() == 1)
-			params.m_pSoundName = "Player.KillSoundQuake3";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 2 )
-			params.m_pSoundName = "Player.KillSoundElectro";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 3 )
-			params.m_pSoundName = "Player.KillSoundNotes";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 4 )
-			params.m_pSoundName = "Player.KillSoundPercussion";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 5 )
-			params.m_pSoundName = "Player.KillSoundRetro";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 6 )
-			params.m_pSoundName = "Player.KillSoundSpace";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 7 )
-			params.m_pSoundName = "Player.KillSoundBeepo";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 8 )
-			params.m_pSoundName = "Player.KillSoundVortex";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 9 )
-			params.m_pSoundName = "Player.KillSoundSquasher";
-		else if ( tf_dingalingaling_last_effect.GetInt() == 10 )
-			params.m_pSoundName = "ui/killsound_custom.wav";
+		params.m_pSoundName = pHitsoundName[tf_dingalingaling_last_effect.GetInt()];
 
 		params.m_flVolume = tf_dingaling_lasthit_volume.GetFloat();
 
@@ -416,28 +410,7 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 	}
 	else
 	{
-		if ( tf_dingalingaling_effect.GetInt() == 0 )
-			params.m_pSoundName = "Player.HitSoundDefaultDing";
-		else if ( tf_dingalingaling_effect.GetInt() == 1 )
-			params.m_pSoundName = "Player.HitSoundQuake3";
-		else if (tf_dingalingaling_effect.GetInt() == 2)
-			params.m_pSoundName = "Player.HitSoundElectro";
-		else if (tf_dingalingaling_effect.GetInt() == 3)
-			params.m_pSoundName = "Player.HitSoundNotes";
-		else if ( tf_dingalingaling_effect.GetInt() == 4 )
-			params.m_pSoundName = "Player.HitSoundPercussion";
-		else if ( tf_dingalingaling_effect.GetInt() == 5 )
-			params.m_pSoundName = "Player.HitSoundRetro";
-		else if ( tf_dingalingaling_effect.GetInt() == 6 )
-			params.m_pSoundName = "Player.HitSoundSpace";
-		else if ( tf_dingalingaling_effect.GetInt() == 7 )
-			params.m_pSoundName = "Player.HitSoundBeepo";
-		else if ( tf_dingalingaling_effect.GetInt() == 8 )
-			params.m_pSoundName = "Player.HitSoundVortex";
-		else if ( tf_dingalingaling_effect.GetInt() == 9 )
-			params.m_pSoundName = "Player.HitSoundSquasher";
-		else if ( tf_dingalingaling_effect.GetInt() == 10 )
-			params.m_pSoundName = "ui/hitsound_custom.wav";
+		params.m_pSoundName = pHitsoundName[tf_dingalingaling_effect.GetInt()];
 
 		params.m_flVolume = tf_dingaling_volume.GetFloat();
 
